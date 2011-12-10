@@ -25,26 +25,24 @@ static const char *op_names[] = {
 int print_disassembly(struct instruction *i)
 {
     switch (i->u._xxxx.t) {
+        case 0b1010:
         case 0b1000: {
             struct instruction_load_immediate_unsigned *g = &i->u._1000;
-            printf(" %c  <-  0x%x\n",
+            printf("%c%c%c <-  0x%x\n",
+                    g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
+                    g->d ? ']' : ' ',   // left side dereferenced ?
                     g->imm              // immediate value
                 );
             return 0;
         }
+        case 0b1011:
         case 0b1001: {
             struct instruction_load_immediate_signed *g = &i->u._1001;
-            printf(" %c  <-  0x%x\n",
+            printf("%c%c%c <-  0x%x\n",
+                    g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
-                    g->imm              // immediate value
-                );
-            return 0;
-        }
-        case 0b1100: {
-            struct instruction_load_immediate_high *g = &i->u._1100;
-            printf(" %ch <-  0x%x\n",
-                    'A' + g->z,         // register name for Z
+                    g->d ? ']' : ' ',   // left side dereferenced ?
                     g->imm              // immediate value
                 );
             return 0;
@@ -78,7 +76,8 @@ int main(int argc, char *argv[])
     print_disassembly(&(struct instruction){ 0x12345678 });
     print_disassembly(&(struct instruction){ 0x80f23456 });
     print_disassembly(&(struct instruction){ 0x90f23456 });
-    print_disassembly(&(struct instruction){ 0xc0f23456 });
+    print_disassembly(&(struct instruction){ 0xa0f23456 });
+    print_disassembly(&(struct instruction){ 0xb0f23456 });
 
     return 0;
 }
