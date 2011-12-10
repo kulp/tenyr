@@ -5,7 +5,9 @@
     #include "ops.h"
     int lineno;
     int column; // TODO
-    static void c();
+    static void c(void);
+    static void skip_comment(int style);
+    enum { C89_STYLE, C99_STYLE };
 %}
 
 regname ([A-Pa-p])
@@ -41,6 +43,9 @@ regname ([A-Pa-p])
 
 [\t\f\v\r ]+        { c(); }
 
+"/*"                { skip_comment(C89_STYLE); }
+"//"                { skip_comment(C99_STYLE); }
+
 %%
 
 static void c()
@@ -52,4 +57,30 @@ static void c()
             column++;
 }
 
+
+/*
+ * We use this routine instead a lex pattern because we don't need
+ * to save the matched comment in the `yytext' buffer.
+ */
+static void skip_comment(int style)
+{
+    int c1, c2 = 0;
+
+    c1 = input();
+    if (style == C89_STYLE) {
+        c2 = input();
+
+        while (c2 != EOF && !(c1 == '*' && c2 == '/')) {
+            if (c1 == '\n')
+                ++lineno;
+            c1 = c2;
+            c2 = input();
+        }
+    } else {
+        while (c2 != EOF && !(c1 == '\n'))
+            c1 = input();
+        if (c1 == '\n')
+            ++lineno;
+    }
+}
 
