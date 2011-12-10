@@ -37,30 +37,33 @@ int run_instruction(struct state *s, struct instruction *i)
             uint32_t  Y =  s->regs[g->y];
             int32_t   I = g->imm;
 
-            uint32_t rhs;
+            uint32_t _rhs, *rhs = &_rhs;
             switch (g->op) {
-                case OP_BITWISE_OR          : rhs =  (X  |  Y) + I; break;
-                case OP_BITWISE_AND         : rhs =  (X  &  Y) + I; break;
-                case OP_ADD                 : rhs =  (X  +  Y) + I; break;
-                case OP_MULTIPLY            : rhs =  (X  *  Y) + I; break;
-                case OP_MODULUS             : rhs =  (X  %  Y) + I; break;
-                case OP_SHIFT_LEFT          : rhs =  (X  << Y) + I; break;
-                case OP_COMPARE_LTE         : rhs =  (X  <= Y) + I; break;
-                case OP_COMPARE_EQ          : rhs =  (X  == Y) + I; break;
-                case OP_BITWISE_NOR         : rhs = ~(X  |  Y) + I; break;
-                case OP_BITWISE_NAND        : rhs = ~(X  &  Y) + I; break;
-                case OP_BITWISE_XOR         : rhs =  (X  ^  Y) + I; break;
-                case OP_ADD_NEGATIVE_Y      : rhs =  (X  + -Y) + I; break;
-                case OP_XOR_INVERT_X        : rhs =  (X  ^ ~Y) + I; break;
-                case OP_SHIFT_RIGHT_LOGICAL : rhs =  (X  >> Y) + I; break;
-                case OP_COMPARE_GT          : rhs =  (X  >  Y) + I; break;
-                case OP_COMPARE_NE          : rhs =  (X  != Y) + I; break;
+                case OP_BITWISE_OR          : *rhs =  (X  |  Y) + I; break;
+                case OP_BITWISE_AND         : *rhs =  (X  &  Y) + I; break;
+                case OP_ADD                 : *rhs =  (X  +  Y) + I; break;
+                case OP_MULTIPLY            : *rhs =  (X  *  Y) + I; break;
+                case OP_MODULUS             : *rhs =  (X  %  Y) + I; break;
+                case OP_SHIFT_LEFT          : *rhs =  (X  << Y) + I; break;
+                case OP_COMPARE_LTE         : *rhs =  (X  <= Y) + I; break;
+                case OP_COMPARE_EQ          : *rhs =  (X  == Y) + I; break;
+                case OP_BITWISE_NOR         : *rhs = ~(X  |  Y) + I; break;
+                case OP_BITWISE_NAND        : *rhs = ~(X  &  Y) + I; break;
+                case OP_BITWISE_XOR         : *rhs =  (X  ^  Y) + I; break;
+                case OP_ADD_NEGATIVE_Y      : *rhs =  (X  + -Y) + I; break;
+                case OP_XOR_INVERT_X        : *rhs =  (X  ^ ~Y) + I; break;
+                case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (X  >> Y) + I; break;
+                case OP_COMPARE_GT          : *rhs =  (X  >  Y) + I; break;
+                case OP_COMPARE_NE          : *rhs =  (X  != Y) + I; break;
             }
 
-            if (ld) Z   = &s->mem[*Z  & PTR_MASK];
-            if (rd) rhs =  s->mem[rhs & PTR_MASK];
+            if (ld) Z   = &s->mem[*Z   & PTR_MASK];
+            if (rd) rhs = &s->mem[*rhs & PTR_MASK];
 
-            *Z = rhs;
+            if (g->r)
+                *rhs = *Z;
+            else
+                *Z = *rhs;
 
             break;
         }
@@ -82,6 +85,7 @@ int main(int argc, char *argv[])
     run_instruction(s, &(struct instruction){ 0xa0f23456 });
     run_instruction(s, &(struct instruction){ 0xb0f23456 });
     run_instruction(s, &(struct instruction){ 0x7fedc000 });
+    run_instruction(s, &(struct instruction){ 0xffffffff }); // illegal instruction
 
     return 0;
 }
