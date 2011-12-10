@@ -71,7 +71,6 @@ int run_instruction(struct state *s, struct instruction *i)
                 *w = *r;
             }
 
-
             break;
         }
         default: abort();

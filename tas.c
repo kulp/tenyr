@@ -80,6 +80,8 @@ int main(int argc, char *argv[])
     print_disassembly(&(struct instruction){ 0xb0f23456 });
     print_disassembly(&(struct instruction){ 0x7fedc000 });
 
+    int result = yyparse();
+
     return 0;
 }
 

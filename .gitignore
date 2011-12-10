@@ -4,3 +4,5 @@ tsim
 .*.sw?
 *.o
 *.d
+lexer.[ch]
+parser.[ch]
