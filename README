@@ -8,7 +8,7 @@ may be construed as bugs) :
     * two's complement
         * true = -1, false = 0
     * 32-bit only (no 64-bit support planned)
-        * memory space is 24 bit (but counted in words, so about 67 MiB)
+        * memory space is 24 bit (but counted in words, so about 67 MB)
         * top 8 bits of memory addresses ignored (can be used by runtime)
     * 16 registers named i00 - i15 (synonyms A - P)
         * general-purpose (except where I haven't thought of something)

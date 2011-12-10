@@ -17,7 +17,7 @@
 //      01 :  Z  r [X f Y + I]
 //      10 : [Z] r  X f Y + I
 //      11 : [Z] r [X f Y + I]
-// rDD = 1x0 : invalid but legal
+// rDD = 1x0 : invalid but legal (reads, discards)
 //
 // immediate load (TTTT = 100x)
 // [10DpZZZZJJJJJJJJJJJJJJJJJJJJJJJJ]

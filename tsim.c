@@ -13,7 +13,7 @@ struct state {
 int run_instruction(struct state *s, struct instruction *i)
 {
     int sextend = 0;
-    uint32_t newip = s->regs[15] + 1;
+    uint32_t _ip, *ip = &s->regs[15];
 
     switch (i->u._xxxx.t) {
         case 0b1011:
@@ -36,8 +36,8 @@ int run_instruction(struct state *s, struct instruction *i)
             uint32_t  X =  s->regs[g->x];
             uint32_t  Y =  s->regs[g->y];
             int32_t   I = g->imm;
-
             uint32_t _rhs, *rhs = &_rhs;
+
             switch (g->op) {
                 case OP_BITWISE_OR          : *rhs =  (X  |  Y) + I; break;
                 case OP_BITWISE_AND         : *rhs =  (X  &  Y) + I; break;
@@ -60,17 +60,24 @@ int run_instruction(struct state *s, struct instruction *i)
             if (ld) Z   = &s->mem[*Z   & PTR_MASK];
             if (rd) rhs = &s->mem[*rhs & PTR_MASK];
 
-            if (g->r)
-                *rhs = *Z;
-            else
-                *Z = *rhs;
+            {
+                uint32_t *r, *w;
+                if (g->r)
+                    r = Z, w = rhs;
+                else
+                    w = Z, r = rhs;
+
+                if (w == ip) ip = &_ip; // throw away later update
+                *w = *r;
+            }
+
 
             break;
         }
         default: abort();
     }
 
-    s->regs[15] = newip;
+    ++*ip;
 
     return 0;
 }
