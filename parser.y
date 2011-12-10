@@ -2,33 +2,31 @@
     #include <stdio.h>
     #include <stddef.h>
 
+    #include "parser_global.h"
     #include "lexer.h"
     #include "ops.h"
 
     int yyerror(const char *msg);
-
-    struct instruction_list {
-        struct instruction *insn;
-        struct instruction_list *next;
-    } *top;
+    struct instruction_list *top;
 %}
 
 %token '[' ']'
-%token <op> '|' '&' '+' '*' '%' '^' '>' LSH LTE EQ NOR NAND SUB XORN RSH NEQ
+%token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ
 %token TOL TOR
 %token <str> INTEGER
+%token <i> REGISTER
 
-%type <op> op /*'|' '&' '+' '*' '%' LSH LTE EQ NOR NAND '^' SUB XORN RSH '>' NEQ*/
+%type <op> op
 %type <insn> insn
 %type <program> program
 %type <i> immediate
 %type <arrow> arrow TOL TOR
 %type <expr> expr lhs
-
-%token <i> REGISTER
+%type <s> addsub
 
 %union {
     unsigned long i;
+    signed s;
     struct {
         int deref;
         int x;
@@ -40,7 +38,7 @@
     struct instruction_list *program;
     char *str;
     char chr;
-    int op;     ///< needs to be translated to enum op
+    int op;
     int arrow;
 }
 
@@ -50,11 +48,11 @@
 
 program
     : insn
-        {   $$ = malloc(sizeof *$$);
+        {   top = $$ = malloc(sizeof *$$);
             $$->next = NULL;
             $$->insn = $1; }
     | insn program
-        {   $$ = malloc(sizeof *$$);
+        {   top = $$ = malloc(sizeof *$$);
             $$->next = $2;
             $$->insn = $1; }
 
@@ -66,6 +64,7 @@ insn
             $$->u._0xxx.x   = $3.x;
             $$->u._0xxx.y   = $3.y;
             $$->u._0xxx.r   = $2 == TOR;
+            $$->u._0xxx.op  = $3.op;
             $$->u._0xxx.imm = $3.i; }
     | lhs TOL immediate
         {   $$ = malloc(sizeof *$$);
@@ -82,40 +81,44 @@ lhs
             $$.x     = $2; }
 
 expr
-    : REGISTER op REGISTER '+' immediate
+    : REGISTER op REGISTER addsub immediate
         {   $$.deref = 0;
             $$.x     = $1;
             $$.op    = $2;
             $$.y     = $3;
-            $$.i     = $5; }
-    | '[' REGISTER op REGISTER '+' immediate ']'
+            $$.i     = $4 * $5; }
+    | '[' REGISTER op REGISTER addsub immediate ']'
         {   $$.deref = 1;
             $$.x     = $2;
             $$.op    = $3;
             $$.y     = $4;
-            $$.i     = $6; }
+            $$.i     = $5 * $6; }
 
 immediate
     : INTEGER
         { $$ = strtol($1, NULL, 0); }
 
+addsub
+    : '+' { $$ =  1; }
+    | '-' { $$ = -1; }
+
 op
-    : '|'
-    | '&'
-    | '+'
-    | '*'
-    | '%'
-    | LSH
-    | LTE
-    | EQ
-    | NOR
-    | NAND
-    | '^'
-    | SUB
-    | XORN
-    | RSH
-    | '>'
-    | NEQ
+    : '|'   { $$ = OP_BITWISE_OR         ; }
+    | '&'   { $$ = OP_BITWISE_AND        ; }
+    | '+'   { $$ = OP_ADD                ; }
+    | '*'   { $$ = OP_MULTIPLY           ; }
+    | '%'   { $$ = OP_MODULUS            ; }
+    | LSH   { $$ = OP_SHIFT_LEFT         ; }
+    | LTE   { $$ = OP_COMPARE_LTE        ; }
+    | EQ    { $$ = OP_COMPARE_EQ         ; }
+    | NOR   { $$ = OP_BITWISE_NOR        ; }
+    | NAND  { $$ = OP_BITWISE_NAND       ; }
+    | '^'   { $$ = OP_BITWISE_XOR        ; }
+    | '-'   { $$ = OP_ADD_NEGATIVE_Y     ; }
+    | XORN  { $$ = OP_XOR_INVERT_X       ; }
+    | RSH   { $$ = OP_SHIFT_RIGHT_LOGICAL; }
+    | '>'   { $$ = OP_COMPARE_GT         ; }
+    | NEQ   { $$ = OP_COMPARE_NE         ; }
 
 arrow
     : TOL

@@ -3,6 +3,7 @@
 
 #include "ops.h"
 #include "parser.h"
+#include "parser_global.h"
 
 static const char *op_names[] = {
     [OP_BITWISE_OR         ] = "|",
@@ -81,9 +82,9 @@ int main(int argc, char *argv[])
     print_disassembly(&(struct instruction){ 0xb0f23456 });
     print_disassembly(&(struct instruction){ 0x7fedc000 });
 
-    int result = yyparse();
+    yyparse();
 
-    struct program *p = tenor_get_parser_result();
+    struct instruction_list *p = tenor_get_parser_result();
 
     return 0;
 }
