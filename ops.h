@@ -21,14 +21,15 @@
 // immediate load (TTTT = 100x)
 // [100pZZZZJJJJJJJJJJJJJJJJJJJJJJJJ]
 // J = 24-bit immediate
-// p = 0 : zero-extend J
-//     1 : sign-extend J
-// performs Z = J
+// performs
+// p = 0 : Z <- J (zero-extended)
+//     1 : Z <- J (sign-extended)
 //
 // immediate load high (TTTT = 1010)
-// [1010ZZZZ........JJJJJJJJJJJJJJJJ]
+// [1100ZZZZ........JJJJJJJJJJJJJJJJ]
 // J = 16-bit immediate
-// performs Z = (Z & 0xffff) | (J << 16)
+// performs
+// Zh <- J
 //
 //  a <- [b * c + 4]
 //  [p + 3] -> a
@@ -64,10 +65,28 @@
 struct instruction {
     union {
         uint32_t word;
-        struct {
-            unsigned   : 28;
-            unsigned t :  4;
+        struct instruction_any {
+            unsigned   : 28;    ///< unused
+            unsigned t :  4;    ///< type code
         } _xxxx;
+        struct instruction_load_immediate_unsigned {
+            unsigned imm : 24;  ///< immediate
+            unsigned z   :  4;  ///< destination
+            unsigned p   :  1;  ///< extension mode
+            unsigned     :  3;  ///< unused
+        } _1000;
+        struct instruction_load_immediate_signed {
+            signed   imm : 24;  ///< immediate
+            unsigned z   :  4;  ///< destination
+            unsigned p   :  1;  ///< extension mode
+            unsigned     :  3;  ///< unused
+        } _1001;
+        struct instruction_load_immediate_high {
+            signed   imm : 16;  ///< immediate
+            unsigned     :  8;  ///< unused
+            unsigned z   :  4;  ///< destination
+            unsigned     :  4;  ///< unused
+        } _1100;
         struct instruction_general {
             signed   imm : 12;  ///< immediate
             unsigned op  :  4;  ///< operation

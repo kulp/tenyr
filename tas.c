@@ -25,13 +25,30 @@ static const char *op_names[] = {
 int print_disassembly(struct instruction *i)
 {
     switch (i->u._xxxx.t) {
-        case 0x8:
-        case 0x9:
-            // TODO handle immediate load
-            return -1;
-        case 0xa:
-            // TODO handle immediate load high
-            return -1;
+        case 0b1000: {
+            struct instruction_load_immediate_unsigned *g = &i->u._1000;
+            printf(" %c  <-  0x%x\n",
+                    'A' + g->z,         // register name for Z
+                    g->imm              // immediate value
+                );
+            return 0;
+        }
+        case 0b1001: {
+            struct instruction_load_immediate_signed *g = &i->u._1001;
+            printf(" %c  <-  0x%x\n",
+                    'A' + g->z,         // register name for Z
+                    g->imm              // immediate value
+                );
+            return 0;
+        }
+        case 0b1100: {
+            struct instruction_load_immediate_high *g = &i->u._1100;
+            printf(" %ch <-  0x%x\n",
+                    'A' + g->z,         // register name for Z
+                    g->imm              // immediate value
+                );
+            return 0;
+        }
         case 0b0000 ... 0b0111: {
             struct instruction_general *g = &i->u._0xxx;
             int ld = g->dd & 2;
@@ -49,7 +66,7 @@ int print_disassembly(struct instruction *i)
                     rd ? ']' : ' '      // right side dereferenced ?
                 );
 
-            return -1;
+            return 0;
         }
     }
 
@@ -58,9 +75,10 @@ int print_disassembly(struct instruction *i)
 
 int main(int argc, char *argv[])
 {
-    struct instruction insn = { .u.word = 0x12345678 };
-
-    print_disassembly(&insn);
+    print_disassembly(&(struct instruction){ 0x12345678 });
+    print_disassembly(&(struct instruction){ 0x80f23456 });
+    print_disassembly(&(struct instruction){ 0x90f23456 });
+    print_disassembly(&(struct instruction){ 0xc0f23456 });
 
     return 0;
 }
