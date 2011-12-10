@@ -1,6 +1,7 @@
 %{
     #include <stdio.h>
     #include <stddef.h>
+    #include <ctype.h>
 
     #include "parser_global.h"
     #include "lexer.h"
@@ -23,6 +24,7 @@
 %type <arrow> arrow TOL TOR
 %type <expr> expr lhs
 %type <s> addsub
+%type <i> regname
 
 %union {
     unsigned long i;
@@ -73,26 +75,41 @@ insn
             $$->u._10x0.imm = $3; }
 
 lhs
-    : REGISTER
+    : regname
         {   $$.deref = 0;
             $$.x     = $1; }
-    | '[' REGISTER ']'
+    | '[' regname ']'
         {   $$.deref = 1;
             $$.x     = $2; }
 
 expr
-    : REGISTER op REGISTER addsub immediate
+    : regname op regname
+        {   $$.deref = 0;
+            $$.x     = $1;
+            $$.op    = $2;
+            $$.y     = $3;
+            $$.i     = 0; }
+    | regname addsub immediate
+        {   $$.deref = 0;
+            $$.x     = $1;
+            $$.op    = OP_BITWISE_OR;
+            $$.y     = 0;
+            $$.i     = $2 * $3; }
+    | regname op regname addsub immediate
         {   $$.deref = 0;
             $$.x     = $1;
             $$.op    = $2;
             $$.y     = $3;
             $$.i     = $4 * $5; }
-    | '[' REGISTER op REGISTER addsub immediate ']'
+    | '[' regname op regname addsub immediate ']'
         {   $$.deref = 1;
             $$.x     = $2;
             $$.op    = $3;
             $$.y     = $4;
             $$.i     = $5 * $6; }
+
+regname
+    : REGISTER { $$ = toupper($1) - 'A'; }
 
 immediate
     : INTEGER
