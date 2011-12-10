@@ -6,7 +6,7 @@ The Tenor architecture and its simulator have the following features (which
 may be construed as bugs) :
 
     * two's complement
-        * true = 0, false = -1
+        * true = -1, false = 0
     * 32-bit only (no 64-bit support planned)
         * memory space is 24 bit (but counted in words, so about 67 MiB)
         * top 8 bits of memory addresses ignored (can be used by runtime)
