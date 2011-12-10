@@ -1,0 +1,33 @@
+Tenor aspires to be a complete 32-bit computing environment (simulated
+architecture, operating system, compiler, utilities). So far, it is none of
+those things. First to come is the simulator.
+
+The Tenor architecture and its simulator have the following features (which
+may be construed as bugs) :
+
+    * two's complement
+        * true = 0, false = -1
+    * 32-bit only (no 64-bit support planned)
+        * memory space is 24 bit (but counted in words, so about 67 MiB)
+        * top 8 bits of memory addresses ignored (can be used by runtime)
+    * 16 registers named i00 - i15 (synonyms A - P)
+        * general-purpose (except where I haven't thought of something)
+        * register A (i00) is always zero
+        * register P (i15) is IP (instruction pointer)
+            * can be read and written directly
+            * points to next instruction
+        * registers B-H caller-saved, registers I-O callee-saved
+    * no hardware stack support
+    * no hardware floating-point whatsoever
+    * no integer divide
+    * fixed-width, 32-bit instructions
+    * as few ways to do something as reasonably possible
+    * single-core (no SMP, no NUMA, no hardware threads, no multicore)
+    * word-addressed (no endianness)
+    * all CPU configuration registers are memory-mapped
+
+Darren Kulp
+darren@kulp.ch
+kulp@freenode
+2011-12-09
+
