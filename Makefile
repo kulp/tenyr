@@ -3,10 +3,10 @@ CFLAGS += -std=gnu99
 CFLAGS += -g
 CFLAGS += -Wall -Wextra
 
-all: tas
+all: tas tsim
 
-tas: ops.h
+tsim tas: ops.h
 
 clean:
-	$(RM) tas *.o
+	$(RM) tas tsim *.o
 

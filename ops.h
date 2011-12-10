@@ -30,7 +30,7 @@
 //  a <- [b * c + 4]
 //  [p + 3] -> a
 //  [p + c] -> p (jump from table)
-//  c <- c <> 0 (nonzero)
+//  c <- c <> a (nonzero)
 //  d <- c > d (no status flags, just bool result)
 //  ri <- ri + c
 //  rv <- ri % 2
@@ -53,7 +53,7 @@
 //  1100 = X xor ones' complement Y
 //  1101 = X shift right logical Y
 //  1110 = X compare > Y
-//  1111 = X compare != Y
+//  1111 = X compare <> Y
 
 #include <stdint.h>
 
@@ -71,14 +71,14 @@ struct instruction {
             unsigned p   :  1;  ///< extension mode
             unsigned d   :  1;  ///< dereference
             unsigned     :  2;  ///< unused
-        } _1000;
+        } _10x0;
         struct instruction_load_immediate_signed {
             signed   imm : 24;  ///< immediate
             unsigned z   :  4;  ///< destination
             unsigned p   :  1;  ///< extension mode
             unsigned d   :  1;  ///< dereference
             unsigned     :  2;  ///< unused
-        } _1001;
+        } _10x1;
         struct instruction_general {
             signed   imm : 12;  ///< immediate
             unsigned op  :  4;  ///< operation

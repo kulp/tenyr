@@ -19,7 +19,7 @@ static const char *op_names[] = {
     [OP_XOR_INVERT_X       ] = "^ ~",
     [OP_SHIFT_RIGHT_LOGICAL] = ">>",
     [OP_COMPARE_GT         ] = ">",
-    [OP_COMPARE_NE         ] = "!=",
+    [OP_COMPARE_NE         ] = "<>",
 };
 
 int print_disassembly(struct instruction *i)
@@ -27,8 +27,8 @@ int print_disassembly(struct instruction *i)
     switch (i->u._xxxx.t) {
         case 0b1010:
         case 0b1000: {
-            struct instruction_load_immediate_unsigned *g = &i->u._1000;
-            printf("%c%c%c <-  0x%x\n",
+            struct instruction_load_immediate_unsigned *g = &i->u._10x0;
+            printf("%c%c%c <-  0x%08x\n",
                     g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     g->d ? ']' : ' ',   // left side dereferenced ?
@@ -38,8 +38,8 @@ int print_disassembly(struct instruction *i)
         }
         case 0b1011:
         case 0b1001: {
-            struct instruction_load_immediate_signed *g = &i->u._1001;
-            printf("%c%c%c <-  0x%x\n",
+            struct instruction_load_immediate_signed *g = &i->u._10x1;
+            printf("%c%c%c <-  0x%08x\n",
                     g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     g->d ? ']' : ' ',   // left side dereferenced ?
@@ -51,7 +51,7 @@ int print_disassembly(struct instruction *i)
             struct instruction_general *g = &i->u._0xxx;
             int ld = g->dd & 2;
             int rd = g->dd & 1;
-            printf("%c%c%c %s %c%c %s %c + 0x%x%c\n",
+            printf("%c%c%c %s %c%c %-3s %c + 0x%08x%c\n",
                     ld ? '[' : ' ',     // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     ld ? ']' : ' ',     // left side dereferenced ?
@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
     print_disassembly(&(struct instruction){ 0x90f23456 });
     print_disassembly(&(struct instruction){ 0xa0f23456 });
     print_disassembly(&(struct instruction){ 0xb0f23456 });
+    print_disassembly(&(struct instruction){ 0x7fedc000 });
 
     return 0;
 }

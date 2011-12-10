@@ -1,4 +1,5 @@
 tas
+tsim
 *.dSYM/
 .*.sw?
 *.o
