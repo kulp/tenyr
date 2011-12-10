@@ -56,6 +56,9 @@
 //  1110 = X compare > Y
 //  1111 = X compare <> Y
 
+#ifndef OPS_H_
+#define OPS_H_
+
 #include <stdint.h>
 
 // TODO assumes bits are filled in rightmost-first
@@ -111,4 +114,6 @@ enum op {
     OP_COMPARE_GT          = 0x8 | OP_COMPARE_LTE,
     OP_COMPARE_NE          = 0x8 | OP_COMPARE_EQ,
 };
+
+#endif
 

@@ -7,14 +7,18 @@ all: tas tsim
 
 tsim tas: ops.h
 
-tas: parser.o lexer.o
+tas: parser.o lexer.o parser.h
 
 lexer.h lexer.c: lexer.l
 	flex --header-file=lexer.h -o lexer.c $<
 
-parser.c: parser.y
-	yacc -d -o $@ $<
+parser.h parser.c: parser.y lexer.h
+	yacc -d -o parser.c $<
 
 clean:
 	$(RM) tas tsim *.o
+
+clobber: clean
+	$(RM) {parser,lexer}.[ch]
+	$(RM) -r *.dSYM
 

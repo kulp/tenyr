@@ -2,6 +2,7 @@
 
 %{
     #include "parser.h"
+    #include "ops.h"
     int lineno;
     int column; // TODO
     static void c();
@@ -37,6 +38,8 @@ regname ([A-Pa-p])
 "0"[xX][0-9a-fA-F]+ { c(); yylval.str = yytext; return INTEGER; }
 "0"[0-7]+           { c(); yylval.str = yytext; return INTEGER; }
 [0-9]+              { c(); yylval.str = yytext; return INTEGER; }
+
+[\t\f\v\r ]+        { c(); }
 
 %%
 
