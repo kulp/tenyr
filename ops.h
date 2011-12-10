@@ -1,31 +1,45 @@
 // Instructions
-// [TTT.............................] TTT = instruction type/class
+// [TTTT............................] TTTT = instruction type/class
 // all-zero instruction = no-op
 //  a <- a | a + 0 (and A has sticky value zero and takes no writes)
 // all-one instruction = illegal instruction
-// TTT == 111 : reserved
+// TTTT == 1111 : reserved
 //
 // algebraic assembler
 //
-// load/store/arith/control (TTT = 0xx)
+// load/store/arith/control (TTTT = 0xxx)
 // [0rDDZZZZXXXXYYYYffffIIIIIIIIIIII]
 // I = sign-extended 12-bit immediate
 // r =   0 : <-
 //       1 : ->
+// performs
 // DD = 00 :  Z  r  X f Y + I
 //      01 :  Z  r [X f Y + I]
 //      10 : [Z] r  X f Y + I
 //      11 : [Z] r [X f Y + I]
+//
+// immediate load (TTTT = 100x)
+// [100pZZZZJJJJJJJJJJJJJJJJJJJJJJJJ]
+// J = 24-bit immediate
+// p = 0 : zero-extend J
+//     1 : sign-extend J
+// performs Z = J
+//
+// immediate load high (TTTT = 1010)
+// [1010ZZZZ........JJJJJJJJJJJJJJJJ]
+// J = 16-bit immediate
+// performs Z = (Z & 0xffff) | (J << 16)
+//
 //  a <- [b * c + 4]
-//  [ip + 3] -> a
-//  [ip + c] -> ip (jump from table)
+//  [p + 3] -> a
+//  [p + c] -> p (jump from table)
 //  c <- c <> 0 (nonzero)
 //  d <- c > d (no status flags, just bool result)
 //  ri <- ri + c
 //  rv <- ri % 2
 //  d >> e -> e
 //  e <- d >> e
-//  ip <- ip + -4
+//  p <- p + -4 (jump backward)
 // ops
 //  0000 = X bitwise or Y
 //  0001 = X bitwise and Y
@@ -44,11 +58,17 @@
 //  1110 = X compare > Y
 //  1111 = X compare != Y
 
+#include <stdint.h>
+
+// TODO assumes bits are filled in rightmost-first
 struct instruction {
     union {
         uint32_t word;
         struct {
-            // TODO assumes bits are filled in rightmost-first
+            unsigned   : 28;
+            unsigned t :  4;
+        } _xxxx;
+        struct instruction_general {
             signed   imm : 12;  ///< immediate
             unsigned op  :  4;  ///< operation
             unsigned y   :  4;  ///< operand y
@@ -57,7 +77,26 @@ struct instruction {
             unsigned dd  :  2;  ///< dereference
             unsigned r   :  1;  ///< reverse
             unsigned     :  1;  ///< unused
-        } p;
+        } _0xxx;
     } u;
+};
+
+enum op {
+    OP_BITWISE_OR          = 0x0,
+    OP_BITWISE_AND         = 0x1,
+    OP_ADD                 = 0x2,
+    OP_MULTIPLY            = 0x3,
+    OP_MODULUS             = 0x4,
+    OP_SHIFT_LEFT          = 0x5,
+    OP_COMPARE_LTE         = 0x6,
+    OP_COMPARE_EQ          = 0x7,
+    OP_BITWISE_NOR         = 0x8 | OP_BITWISE_OR,
+    OP_BITWISE_NAND        = 0x8 | OP_BITWISE_AND,
+    OP_BITWISE_XOR         = 0xa,
+    OP_ADD_NEGATIVE_Y      = 0xb,
+    OP_XOR_INVERT_X        = 0xc,
+    OP_SHIFT_RIGHT_LOGICAL = 0xd,
+    OP_COMPARE_GT          = 0x8 | OP_COMPARE_LTE,
+    OP_COMPARE_NE          = 0x8 | OP_COMPARE_EQ,
 };
 
