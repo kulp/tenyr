@@ -36,6 +36,7 @@ regname ([A-Pa-p])
 "<>"                { c(); return NEQ;  }
 "<-"                { c(); return TOL;  }
 "->"                { c(); return TOR;  }
+"$"                 { c(); return '$';  }
 
 "0"[xX][0-9a-fA-F]+ { c(); yylval.str = yytext; return INTEGER; }
 "0"[0-7]+           { c(); yylval.str = yytext; return INTEGER; }
@@ -72,15 +73,15 @@ static void skip_comment(int style)
 
         while (c2 != EOF && !(c1 == '*' && c2 == '/')) {
             if (c1 == '\n')
-                ++lineno;
+                ++lineno, column = 0;
             c1 = c2;
             c2 = input();
         }
     } else {
         while (c2 != EOF && !(c1 == '\n'))
             c1 = input();
-        if (c1 == '\n')
-            ++lineno;
+        if (c1 == '\n') 
+            ++lineno, column = 0;
     }
 }
 

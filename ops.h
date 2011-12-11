@@ -74,14 +74,14 @@ struct instruction {
             unsigned z   :  4;  ///< destination
             unsigned p   :  1;  ///< extension mode
             unsigned d   :  1;  ///< dereference
-            unsigned     :  2;  ///< unused
+            unsigned t   :  2;  ///< type bits
         } _10x0;
         struct instruction_load_immediate_signed {
             signed   imm : 24;  ///< immediate
             unsigned z   :  4;  ///< destination
             unsigned p   :  1;  ///< extension mode
             unsigned d   :  1;  ///< dereference
-            unsigned     :  2;  ///< unused
+            unsigned t   :  2;  ///< type bits
         } _10x1;
         struct instruction_general {
             signed   imm : 12;  ///< immediate
@@ -91,7 +91,7 @@ struct instruction {
             unsigned z   :  4;  ///< operand z
             unsigned dd  :  2;  ///< dereference
             unsigned r   :  1;  ///< reverse
-            unsigned     :  1;  ///< unused
+            unsigned t   :  1;  ///< type bit
         } _0xxx;
     } u;
 };

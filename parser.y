@@ -12,7 +12,7 @@
 %}
 
 %token '[' ']'
-%token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ
+%token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ '$'
 %token TOL TOR
 %token <str> INTEGER
 %token <i> REGISTER
@@ -25,6 +25,7 @@
 %type <expr> expr lhs
 %type <s> addsub
 %type <i> regname
+%type <signimm> sign_immediate
 
 %union {
     unsigned long i;
@@ -36,6 +37,10 @@
         int y;
         unsigned long i;
     } expr;
+    struct {
+        int sextend;
+        unsigned long i;
+    } signimm;
     struct instruction *insn;
     struct instruction_list *program;
     char *str;
@@ -61,6 +66,7 @@ program
 insn
     : lhs arrow expr
         {   $$ = malloc(sizeof *$$);
+            $$->u._0xxx.t   = 0;
             $$->u._0xxx.z   = $1.x;
             $$->u._0xxx.dd  = ($1.deref << 1) | ($3.deref);
             $$->u._0xxx.x   = $3.x;
@@ -68,19 +74,21 @@ insn
             $$->u._0xxx.r   = $2 == TOR;
             $$->u._0xxx.op  = $3.op;
             $$->u._0xxx.imm = $3.i; }
-    | lhs TOL immediate
+    | lhs TOL sign_immediate
         {   $$ = malloc(sizeof *$$);
+            $$->u._10x0.p = $3.sextend;
+            $$->u._10x0.imm = $3.i;
+            $$->u._10x0.t = 2;
             $$->u._10x0.z = $1.x;
-            $$->u._10x0.d = $1.deref;
-            $$->u._10x0.imm = $3; }
+            $$->u._10x0.d = $1.deref; }
 
 lhs
     : regname
         {   $$.deref = 0;
             $$.x     = $1; }
-    | '[' regname ']'
-        {   $$.deref = 1;
-            $$.x     = $2; }
+    | '[' lhs ']'
+        {   $$ = $2;
+            $$.deref = 1; }
 
 expr
     : regname op regname
@@ -101,15 +109,21 @@ expr
             $$.op    = $2;
             $$.y     = $3;
             $$.i     = $4 * $5; }
-    | '[' regname op regname addsub immediate ']'
-        {   $$.deref = 1;
-            $$.x     = $2;
-            $$.op    = $3;
-            $$.y     = $4;
-            $$.i     = $5 * $6; }
+    | '[' expr ']' /* permits arbitrary nesting, but meaningless */
+        {   $$ = $2;
+            $$.deref = 1; }
 
 regname
-    : REGISTER { $$ = toupper($1) - 'A'; }
+    : REGISTER
+        { $$ = toupper($1) - 'A'; }
+
+sign_immediate
+    : immediate
+        {   $$.sextend = 0;
+            $$.i = $1; }
+    | '$' immediate
+        {   $$.sextend = 1;
+            $$.i = $2; }
 
 immediate
     : INTEGER

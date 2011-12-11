@@ -17,8 +17,8 @@ static const char *op_names[] = {
     [OP_BITWISE_NOR        ] = "~|",
     [OP_BITWISE_NAND       ] = "~&",
     [OP_BITWISE_XOR        ] = "^",
-    [OP_ADD_NEGATIVE_Y     ] = "+ -",
-    [OP_XOR_INVERT_X       ] = "^ ~",
+    [OP_ADD_NEGATIVE_Y     ] = "-",
+    [OP_XOR_INVERT_X       ] = "^~",
     [OP_SHIFT_RIGHT_LOGICAL] = ">>",
     [OP_COMPARE_GT         ] = ">",
     [OP_COMPARE_NE         ] = "<>",
@@ -41,7 +41,7 @@ int print_disassembly(struct instruction *i)
         case 0b1011:
         case 0b1001: {
             struct instruction_load_immediate_signed *g = &i->u._10x1;
-            printf("%c%c%c <-  0x%08x\n",
+            printf("%c%c%c <-  $ 0x%08x\n",
                     g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     g->d ? ']' : ' ',   // left side dereferenced ?
@@ -75,16 +75,26 @@ int print_disassembly(struct instruction *i)
 
 int main(int argc, char *argv[])
 {
+    #if 1
     print_disassembly(&(struct instruction){ 0x12345678 });
     print_disassembly(&(struct instruction){ 0x80f23456 });
     print_disassembly(&(struct instruction){ 0x90f23456 });
     print_disassembly(&(struct instruction){ 0xa0f23456 });
     print_disassembly(&(struct instruction){ 0xb0f23456 });
     print_disassembly(&(struct instruction){ 0x7fedc000 });
+    #endif
 
     yyparse();
 
-    struct instruction_list *p = tenor_get_parser_result();
+    struct instruction_list *p = tenor_get_parser_result(), *q = p;
+
+    while (q) {
+        struct instruction_list *t = q;
+        //fwrite(q->insn, 4, 1, stdout);
+        printf("0x%08x\n", q->insn->u.word);
+        q = q->next;
+        free(t);
+    }
 
     return 0;
 }
