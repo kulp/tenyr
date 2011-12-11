@@ -121,9 +121,14 @@ static int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
-int do_assembly(FILE *out, const struct format *f)
+int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
     int yyparse(void);
+    void switch_to_stream(FILE *f);
+
+    if (in)
+        switch_to_stream(in);
+
     int result = yyparse();
     if (!result && f) {
         struct instruction_list *p = tenor_get_parser_result(), *q = p;
@@ -139,10 +144,10 @@ int do_assembly(FILE *out, const struct format *f)
     return 0;
 }
 
-int do_disassembly(FILE *out)
+int do_disassembly(FILE *in, FILE *out)
 {
     char buf[64];
-    while (fread(buf, 4, 1, stdin) == 1) {
+    while (fread(buf, 4, 1, in) == 1) {
         print_disassembly(out, (void*)buf);
     }
 
@@ -159,6 +164,7 @@ int main(int argc, char *argv[])
         { "text"  , text   },
     };
 
+    FILE *in  = stdin;
     FILE *out = stdout;
     const struct format *f = &formats[0];
 
@@ -183,15 +189,34 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (!out) {
-        perror("Failed to open output file");
-        return EXIT_FAILURE;
+    if (optind >= argc) {
+        fprintf(stderr, "No input files specified on the command line");
+        exit(usage(argv[0]));
     }
 
-    if (disassemble)
-        do_disassembly(out);
-    else
-        do_assembly(out, f);
+    for (int i = optind; i < argc; i++) {
+        if (!out) {
+            perror("Failed to open output file");
+            return EXIT_FAILURE;
+        }
+
+        if (!strcmp(argv[i], "-")) {
+            in = stdin;
+        } else {
+            in = fopen(argv[i], "r");
+            if (!in) {
+                char buf[128];
+                snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
+                perror(buf);
+                return EXIT_FAILURE;
+            }
+        }
+
+        if (disassemble)
+            do_disassembly(in, out);
+        else
+            do_assembly(in, out, f);
+    }
 
     return rc;
 }

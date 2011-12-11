@@ -1,6 +1,7 @@
 %option noyywrap
 
 %{
+    #include <stdio.h>
     #include "parser.h"
     #include "ops.h"
     int lineno;
@@ -83,5 +84,12 @@ static void skip_comment(int style)
         if (c1 == '\n') 
             ++lineno, column = 0;
     }
+}
+
+void switch_to_stream(FILE *f)
+{
+    yyin = f;
+    yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
+    BEGIN(INITIAL);
 }
 
