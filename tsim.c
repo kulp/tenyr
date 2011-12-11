@@ -200,13 +200,9 @@ int main(int argc, char *argv[])
     }
 
     struct instruction *i;
-    struct instruction_list *list = malloc(sizeof *list);
     while (f->impl(in, &i) > 0) {
-        struct instruction_list *next = malloc(sizeof *next);
-        next->insn = i;
-        next->next = list;
-        list = next;
         s->mem[load_address++] = i->u.word;
+        free(i);
     }
 
     s->regs[15] = start_address & PTR_MASK;

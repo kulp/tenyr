@@ -1,6 +1,8 @@
 Tenor aspires to be a complete 32-bit computing environment (simulated
-architecture, operating system, compiler, utilities). So far, it is none of
-those things. First to come is the simulator.
+architecture, operating system, compiler, utilities). It is very much a work
+in progress. A preliminary assembler / disassembler (tas) and simulator (tsim)
+exist, and the toycen compiler project from https://github.com/kulp/toycen
+will probably supply the compiler component when it can generate code at all.
 
 The Tenor architecture and its simulator have the following features (which
 may be construed as bugs) :
@@ -10,13 +12,12 @@ may be construed as bugs) :
     * 32-bit only (no 64-bit support planned)
         * memory space is 24 bit (but counted in words, so about 67 MB)
         * top 8 bits of memory addresses ignored (can be used by runtime)
-    * 16 registers named A - P
-        * general-purpose (except where I haven't thought of something)
+    * 16 mostly-general-purpose registers named A - P
         * register A is always zero
         * register P is IP (instruction pointer)
             * can be read and written directly
             * points to next instruction
-        * registers B-H caller-saved, registers I-O callee-saved
+        * registers B-H caller-saved, registers I-O callee-saved by convention
     * no hardware stack support
     * no hardware floating-point whatsoever
     * no integer divide
@@ -29,5 +30,5 @@ may be construed as bugs) :
 Darren Kulp
 darren@kulp.ch
 kulp@freenode
-2011-12-09
+2011-12-10
 
