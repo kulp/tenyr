@@ -1,7 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <getopt.h>
+#include <string.h>
+#include <search.h>
 
 #include "ops.h"
+#include "common.h"
 
 #define PTR_MASK ~(-1 << 24)
 
@@ -81,17 +85,121 @@ int run_instruction(struct state *s, struct instruction *i)
     return 0;
 }
 
+static int binary(FILE *in, struct instruction **insn)
+{
+    struct instruction *i = *insn = malloc(sizeof *i);
+    return fread(i, 4, 1, in) == 1;
+}
+
+static int text(FILE *in, struct instruction **insn)
+{
+    struct instruction *i = *insn = malloc(sizeof *i);
+    return fscanf(in, "%x", &i->u.word) == 1;
+}
+
+static const char shortopts[] = "f:hV";
+
+static const struct option longopts[] = {
+    { "format"     , required_argument, NULL, 'f' },
+
+    { "help"       ,       no_argument, NULL, 'h' },
+    { "version"    ,       no_argument, NULL, 'V' },
+
+    { NULL, 0, NULL, 0 },
+};
+
+static const char *version()
+{
+    return "tsim version " STR(BUILD_NAME);
+}
+
+static int usage(const char *me)
+{
+    printf("Usage:\n"
+           "  %s [ OPTIONS ] imagefile\n"
+           "  -f, --format=F        select input format ('binary' or 'text')\n"
+           "  -h, --help            display this message\n"
+           "  -V, --version         print the string '%s'\n"
+           , me, version());
+
+    return 0;
+}
+
+struct format {
+    const char *name;
+    int (*impl)(FILE *, struct instruction **);
+};
+
+static int find_format_by_name(const void *_a, const void *_b)
+{
+    const struct format *a = _a, *b = _b;
+    return strcmp(a->name, b->name);
+}
+
 int main(int argc, char *argv[])
 {
     struct state *s = calloc(1, sizeof *s);
 
-    run_instruction(s, &(struct instruction){ 0x12345678 });
-    run_instruction(s, &(struct instruction){ 0x80f23456 });
-    run_instruction(s, &(struct instruction){ 0x90f23456 });
-    run_instruction(s, &(struct instruction){ 0xa0f23456 });
-    run_instruction(s, &(struct instruction){ 0xb0f23456 });
-    run_instruction(s, &(struct instruction){ 0x7fedc000 });
-    run_instruction(s, &(struct instruction){ 0xffffffff }); // illegal instruction
+    struct format formats[] = {
+        { "binary", binary },
+        { "text"  , text   },
+    };
+
+    const struct format *f = &formats[0];
+
+    int ch;
+    while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'f': {
+                size_t sz = countof(formats);
+                f = lfind(&(struct format){ .name = optarg }, formats, &sz,
+                        sizeof formats[0], find_format_by_name);
+                if (!f)
+                    exit(usage(argv[0]));
+
+                break;
+            }
+            case 'V': puts(version()); return EXIT_SUCCESS;
+            case 'h':
+                usage(argv[0]);
+                return EXIT_FAILURE;
+            default:
+                usage(argv[0]);
+                return EXIT_FAILURE;
+        }
+    }
+
+    if (optind >= argc) {
+        fprintf(stderr, "No input files specified on the command line\n");
+        exit(usage(argv[0]));
+    } else if (argc - optind > 1) {
+        fprintf(stderr, "More than one input file specified on the command line\n");
+        exit(usage(argv[0]));
+    }
+
+    FILE *in = stdin;
+
+    if (!strcmp(argv[optind], "-")) {
+        in = stdin;
+    } else {
+        in = fopen(argv[optind], "r");
+        if (!in) {
+            char buf[128];
+            snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[optind]);
+            perror(buf);
+            return EXIT_FAILURE;
+        }
+    }
+
+    struct instruction *i;
+    struct instruction_list *list = malloc(sizeof *list);
+    while (f->impl(in, &i) > 0) {
+        struct instruction_list *next = malloc(sizeof *next);
+        next->insn = i;
+        next->next = list;
+        list = next;
+    }
+    //run_instruction(s, i);
 
     return 0;
 }

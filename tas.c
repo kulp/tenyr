@@ -8,7 +8,7 @@
 #include "parser.h"
 #include "parser_global.h"
 
-#define countof(X) (sizeof (X) / sizeof (X)[0])
+#include "common.h"
 
 static const char *op_names[] = {
     [OP_BITWISE_OR         ] = "|",
@@ -58,7 +58,7 @@ int print_disassembly(FILE *out, struct instruction *i)
             struct instruction_general *g = &i->u._0xxx;
             int ld = g->dd & 2;
             int rd = g->dd & 1;
-            fprintf(out, "%c%c%c %s %c%c %-3s %c + 0x%08x%c\n",
+            fprintf(out, "%c%c%c %s %c%c %-2s %c + 0x%08x%c\n",
                     ld ? '[' : ' ',     // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     ld ? ']' : ' ',     // left side dereferenced ?
@@ -88,7 +88,7 @@ static void text(FILE *stream, struct instruction *i)
     fprintf(stream, "0x%08x\n", i->u.word);
 }
 
-static const char shortopts[] = "df:o:h"; //V
+static const char shortopts[] = "df:o:hV";
 
 static const struct option longopts[] = {
     { "disassemble",       no_argument, NULL, 'd' },
@@ -96,16 +96,26 @@ static const struct option longopts[] = {
     { "output"     , required_argument, NULL, 'o' },
 
     { "help"       ,       no_argument, NULL, 'h' },
-    //{ "version"    ,       no_argument, NULL, 'V' },
+    { "version"    ,       no_argument, NULL, 'V' },
 
-    { NULL, 0, NULL, 0 }
+    { NULL, 0, NULL, 0 },
 };
+
+static const char *version()
+{
+    return "tas version " STR(BUILD_NAME);
+}
 
 static int usage(const char *me)
 {
     printf("Usage:\n"
-           "  %s [ OPTIONS ]\n"
-           , me);
+           "  %s [ OPTIONS ] assembly-or-image-file [ assembly-or-image-file ... ] \n"
+           "  -d, --disassemble     disassemble (default is to assemble)\n"
+           "  -f, --format=F        select output format ('binary' or 'text')\n"
+           "  -o, --output=X        write output to filename X\n"
+           "  -h, --help            display this message\n"
+           "  -V, --version         print the string '%s'\n"
+           , me, version());
 
     return 0;
 }
@@ -164,7 +174,6 @@ int main(int argc, char *argv[])
         { "text"  , text   },
     };
 
-    FILE *in  = stdin;
     FILE *out = stdout;
     const struct format *f = &formats[0];
 
@@ -179,7 +188,10 @@ int main(int argc, char *argv[])
                         sizeof formats[0], find_format_by_name);
                 if (!f)
                     exit(usage(argv[0]));
+
+                break;
             }
+            case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
                 usage(argv[0]);
                 return EXIT_FAILURE;
@@ -190,11 +202,12 @@ int main(int argc, char *argv[])
     }
 
     if (optind >= argc) {
-        fprintf(stderr, "No input files specified on the command line");
+        fprintf(stderr, "No input files specified on the command line\n");
         exit(usage(argv[0]));
     }
 
     for (int i = optind; i < argc; i++) {
+        FILE *in = stdin;
         if (!out) {
             perror("Failed to open output file");
             return EXIT_FAILURE;

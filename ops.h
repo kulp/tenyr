@@ -96,6 +96,11 @@ struct instruction {
     } u;
 };
 
+struct instruction_list {
+    struct instruction *insn;
+    struct instruction_list *next;
+};
+
 enum op {
     OP_BITWISE_OR          = 0x0,
     OP_BITWISE_AND         = 0x1,

@@ -88,7 +88,13 @@ lhs
     | '[' lhs ']' { $$ = $2; $$.deref = 1; }
 
 expr
-    : regname op regname
+    : regname
+        {   $$.deref = 0;
+            $$.x     = $1;
+            $$.op    = OP_BITWISE_OR;
+            $$.y     = 0;
+            $$.i     = 0; }
+    | regname op regname
         {   $$.deref = 0;
             $$.x     = $1;
             $$.op    = $2;

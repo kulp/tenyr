@@ -4,6 +4,10 @@ CFLAGS += -g
 LDFLAGS += -g
 CFLAGS += -Wall -Wextra
 
+BUILD_NAME := $(shell git describe --long --always)
+DEFINES += BUILD_NAME='$(BUILD_NAME)'
+CPPFLAGS += $(patsubst %,-D%,$(DEFINES))
+
 all: tas tsim
 tsim.o tas.o: ops.h
 tas.o: parser.h
