@@ -1,9 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <getopt.h>
+#include <search.h>
+#include <string.h>
 
 #include "ops.h"
 #include "parser.h"
 #include "parser_global.h"
+
+#define countof(X) (sizeof (X) / sizeof (X)[0])
 
 static const char *op_names[] = {
     [OP_BITWISE_OR         ] = "|",
@@ -24,13 +29,13 @@ static const char *op_names[] = {
     [OP_COMPARE_NE         ] = "<>",
 };
 
-int print_disassembly(struct instruction *i)
+int print_disassembly(FILE *out, struct instruction *i)
 {
     switch (i->u._xxxx.t) {
         case 0b1010:
         case 0b1000: {
             struct instruction_load_immediate_unsigned *g = &i->u._10x0;
-            printf("%c%c%c <-  0x%08x\n",
+            fprintf(out, "%c%c%c <-  0x%08x\n",
                     g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     g->d ? ']' : ' ',   // left side dereferenced ?
@@ -41,7 +46,7 @@ int print_disassembly(struct instruction *i)
         case 0b1011:
         case 0b1001: {
             struct instruction_load_immediate_signed *g = &i->u._10x1;
-            printf("%c%c%c <-  $ 0x%08x\n",
+            fprintf(out, "%c%c%c <-  $ 0x%08x\n",
                     g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     g->d ? ']' : ' ',   // left side dereferenced ?
@@ -53,7 +58,7 @@ int print_disassembly(struct instruction *i)
             struct instruction_general *g = &i->u._0xxx;
             int ld = g->dd & 2;
             int rd = g->dd & 1;
-            printf("%c%c%c %s %c%c %-3s %c + 0x%08x%c\n",
+            fprintf(out, "%c%c%c %s %c%c %-3s %c + 0x%08x%c\n",
                     ld ? '[' : ' ',     // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     ld ? ']' : ' ',     // left side dereferenced ?
@@ -73,29 +78,121 @@ int print_disassembly(struct instruction *i)
     return -1;
 }
 
-int main(int argc, char *argv[])
+static void binary(FILE *stream, struct instruction *i)
 {
-    #if 0
-    print_disassembly(&(struct instruction){ 0x12345678 });
-    print_disassembly(&(struct instruction){ 0x80f23456 });
-    print_disassembly(&(struct instruction){ 0x90f23456 });
-    print_disassembly(&(struct instruction){ 0xa0f23456 });
-    print_disassembly(&(struct instruction){ 0xb0f23456 });
-    print_disassembly(&(struct instruction){ 0x7fedc000 });
-    #endif
+    fwrite(i, 4, 1, stream);
+}
 
-    yyparse();
+static void text(FILE *stream, struct instruction *i)
+{
+    fprintf(stream, "0x%08x\n", i->u.word);
+}
 
-    struct instruction_list *p = tenor_get_parser_result(), *q = p;
+static const char shortopts[] = "df:o:h"; //V
 
-    while (q) {
-        struct instruction_list *t = q;
-        //fwrite(q->insn, 4, 1, stdout);
-        printf("0x%08x\n", q->insn->u.word);
-        q = q->next;
-        free(t);
+static const struct option longopts[] = {
+    { "disassemble",       no_argument, NULL, 'd' },
+    { "format"     , required_argument, NULL, 'f' },
+    { "output"     , required_argument, NULL, 'o' },
+
+    { "help"       ,       no_argument, NULL, 'h' },
+    //{ "version"    ,       no_argument, NULL, 'V' },
+
+    { NULL, 0, NULL, 0 }
+};
+
+static int usage(const char *me)
+{
+    printf("Usage:\n"
+           "  %s [ OPTIONS ]\n"
+           , me);
+
+    return 0;
+}
+
+struct format {
+    const char *name;
+    void (*impl)(FILE *, struct instruction *);
+};
+
+static int find_format_by_name(const void *_a, const void *_b)
+{
+    const struct format *a = _a, *b = _b;
+    return strcmp(a->name, b->name);
+}
+
+int do_assembly(FILE *out, const struct format *f)
+{
+    int yyparse(void);
+    int result = yyparse();
+    if (!result && f) {
+        struct instruction_list *p = tenor_get_parser_result(), *q = p;
+
+        while (q) {
+            struct instruction_list *t = q;
+            f->impl(out, q->insn);
+            q = q->next;
+            free(t);
+        }
     }
 
     return 0;
+}
+
+int do_disassembly(FILE *out)
+{
+    char buf[64];
+    while (fread(buf, 4, 1, stdin) == 1) {
+        print_disassembly(out, (void*)buf);
+    }
+
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    int rc = 0;
+    int disassemble = 0;
+
+    struct format formats[] = {
+        { "binary", binary },
+        { "text"  , text   },
+    };
+
+    FILE *out = stdout;
+    const struct format *f = &formats[0];
+
+    int ch;
+    while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'o': out = fopen(optarg, "w"); break;
+            case 'd': disassemble = 1; break;
+            case 'f': {
+                size_t sz = countof(formats);
+                f = lfind(&(struct format){ .name = optarg }, formats, &sz,
+                        sizeof formats[0], find_format_by_name);
+                if (!f)
+                    exit(usage(argv[0]));
+            }
+            case 'h':
+                usage(argv[0]);
+                return EXIT_FAILURE;
+            default:
+                usage(argv[0]);
+                return EXIT_FAILURE;
+        }
+    }
+
+    if (!out) {
+        perror("Failed to open output file");
+        return EXIT_FAILURE;
+    }
+
+    if (disassemble)
+        do_disassembly(out);
+    else
+        do_assembly(out, f);
+
+    return rc;
 }
 
