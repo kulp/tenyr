@@ -75,7 +75,7 @@ int print_disassembly(struct instruction *i)
 
 int main(int argc, char *argv[])
 {
-    #if 1
+    #if 0
     print_disassembly(&(struct instruction){ 0x12345678 });
     print_disassembly(&(struct instruction){ 0x80f23456 });
     print_disassembly(&(struct instruction){ 0x90f23456 });

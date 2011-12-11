@@ -13,7 +13,7 @@
 
 %token '[' ']'
 %token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ '$'
-%token TOL TOR
+%token <arrow> TOL TOR
 %token <str> INTEGER
 %token <i> REGISTER
 
@@ -21,7 +21,7 @@
 %type <insn> insn
 %type <program> program
 %type <i> immediate
-%type <arrow> arrow TOL TOR
+%type <i> arrow
 %type <expr> expr lhs
 %type <s> addsub
 %type <i> regname
@@ -71,7 +71,7 @@ insn
             $$->u._0xxx.dd  = ($1.deref << 1) | ($3.deref);
             $$->u._0xxx.x   = $3.x;
             $$->u._0xxx.y   = $3.y;
-            $$->u._0xxx.r   = $2 == TOR;
+            $$->u._0xxx.r   = $2;
             $$->u._0xxx.op  = $3.op;
             $$->u._0xxx.imm = $3.i; }
     | lhs TOL sign_immediate
@@ -83,12 +83,9 @@ insn
             $$->u._10x0.d = $1.deref; }
 
 lhs
-    : regname
-        {   $$.deref = 0;
-            $$.x     = $1; }
-    | '[' lhs ']'
-        {   $$ = $2;
-            $$.deref = 1; }
+    : regname { $$.deref = 0; $$.x = $1; }
+    /* permits arbitrary nesting, but meaningless */
+    | '[' lhs ']' { $$ = $2; $$.deref = 1; }
 
 expr
     : regname op regname
@@ -114,20 +111,14 @@ expr
             $$.deref = 1; }
 
 regname
-    : REGISTER
-        { $$ = toupper($1) - 'A'; }
+    : REGISTER { $$ = toupper($1) - 'A'; }
 
 sign_immediate
-    : immediate
-        {   $$.sextend = 0;
-            $$.i = $1; }
-    | '$' immediate
-        {   $$.sextend = 1;
-            $$.i = $2; }
+    : immediate     { $$.sextend = 0; $$.i = $1; }
+    | '$' immediate { $$.sextend = 1; $$.i = $2; }
 
 immediate
-    : INTEGER
-        { $$ = strtol($1, NULL, 0); }
+    : INTEGER { $$ = strtol($1, NULL, 0); }
 
 addsub
     : '+' { $$ =  1; }
@@ -152,8 +143,8 @@ op
     | NEQ   { $$ = OP_COMPARE_NE         ; }
 
 arrow
-    : TOL
-    | TOR
+    : TOL { $$ = 0; }
+    | TOR { $$ = 1; }
 
 %%
 
