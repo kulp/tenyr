@@ -1,8 +1,8 @@
-CC = gcc
-CFLAGS += -std=gnu99
-CFLAGS += -g
+CC       = gcc
+CFLAGS  += -std=gnu99
+CFLAGS  += -g
 LDFLAGS += -g
-CFLAGS += -Wall -Wextra
+CFLAGS  += -Wall -Wextra
 
 BUILD_NAME := $(shell git describe --long --always)
 DEFINES += BUILD_NAME='$(BUILD_NAME)'
@@ -13,11 +13,14 @@ tsim.o tas.o: ops.h
 tas.o: parser.h
 tas: parser.o lexer.o
 
+# flex-generated code we can't control warnings of as easily
+lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused-function
+
 lexer.h lexer.c: lexer.l
 	flex --header-file=lexer.h -o lexer.c $<
 
 parser.h parser.c: parser.y lexer.h
-	yacc -d -o parser.c $<
+	bison -d -o parser.c $<
 
 clean:
 	$(RM) tas tsim *.o

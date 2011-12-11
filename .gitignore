@@ -6,3 +6,4 @@ tsim
 *.d
 lexer.[ch]
 parser.[ch]
+Session.vim
