@@ -17,7 +17,8 @@ struct state {
 int run_instruction(struct state *s, struct instruction *i)
 {
     int sextend = 0;
-    uint32_t _ip, *ip = &s->regs[15];
+    uint32_t _scratch,
+             *ip = &s->regs[15];
 
     switch (i->u._xxxx.t) {
         case 0b1011:
@@ -71,7 +72,8 @@ int run_instruction(struct state *s, struct instruction *i)
                 else
                     w = Z, r = rhs;
 
-                if (w == ip) ip = &_ip; // throw away later update
+                if (w == ip) ip = &_scratch; // throw away later update
+                if (w == &s->regs[0]) w = _scratch;  // throw away write to reg 0
                 *w = *r;
             }
 
@@ -97,9 +99,10 @@ static int text(FILE *in, struct instruction **insn)
     return fscanf(in, "%x", &i->u.word) == 1;
 }
 
-static const char shortopts[] = "f:hV";
+static const char shortopts[] = "a:f:hV";
 
 static const struct option longopts[] = {
+    { "address"    , required_argument, NULL, 'a' },
     { "format"     , required_argument, NULL, 'f' },
 
     { "help"       ,       no_argument, NULL, 'h' },
@@ -117,6 +120,7 @@ static int usage(const char *me)
 {
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
+           "  -a, --address=N       load instructions into memory at word address N\n"
            "  -f, --format=F        select input format ('binary' or 'text')\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
@@ -139,6 +143,7 @@ static int find_format_by_name(const void *_a, const void *_b)
 int main(int argc, char *argv[])
 {
     struct state *s = calloc(1, sizeof *s);
+    int address = 0;
 
     struct format formats[] = {
         { "binary", binary },
@@ -150,6 +155,7 @@ int main(int argc, char *argv[])
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
+            case 'a': address = strtol(optarg, NULL, 0); break;
             case 'f': {
                 size_t sz = countof(formats);
                 f = lfind(&(struct format){ .name = optarg }, formats, &sz,
@@ -198,7 +204,9 @@ int main(int argc, char *argv[])
         next->insn = i;
         next->next = list;
         list = next;
+        s->mem[address++] = i->u.word;
     }
+
     //run_instruction(s, i);
 
     return 0;
