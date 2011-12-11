@@ -50,16 +50,16 @@ int run_instruction(struct state *s, struct instruction *i)
                 case OP_MULTIPLY            : *rhs =  (X  *  Y) + I; break;
                 case OP_MODULUS             : *rhs =  (X  %  Y) + I; break;
                 case OP_SHIFT_LEFT          : *rhs =  (X  << Y) + I; break;
-                case OP_COMPARE_LTE         : *rhs =  (X  <= Y) + I; break;
-                case OP_COMPARE_EQ          : *rhs =  (X  == Y) + I; break;
+                case OP_COMPARE_LTE         : *rhs = -(X  <= Y) + I; break;
+                case OP_COMPARE_EQ          : *rhs = -(X  == Y) + I; break;
                 case OP_BITWISE_NOR         : *rhs = ~(X  |  Y) + I; break;
                 case OP_BITWISE_NAND        : *rhs = ~(X  &  Y) + I; break;
                 case OP_BITWISE_XOR         : *rhs =  (X  ^  Y) + I; break;
                 case OP_ADD_NEGATIVE_Y      : *rhs =  (X  + -Y) + I; break;
                 case OP_XOR_INVERT_X        : *rhs =  (X  ^ ~Y) + I; break;
                 case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (X  >> Y) + I; break;
-                case OP_COMPARE_GT          : *rhs =  (X  >  Y) + I; break;
-                case OP_COMPARE_NE          : *rhs =  (X  != Y) + I; break;
+                case OP_COMPARE_GT          : *rhs = -(X  >  Y) + I; break;
+                case OP_COMPARE_NE          : *rhs = -(X  != Y) + I; break;
             }
 
             if (ld) Z   = &s->mem[*Z   & PTR_MASK];
@@ -73,7 +73,7 @@ int run_instruction(struct state *s, struct instruction *i)
                     w = Z, r = rhs;
 
                 if (w == ip) ip = &_scratch; // throw away later update
-                if (w == &s->regs[0]) w = _scratch;  // throw away write to reg 0
+                if (w == &s->regs[0]) w = &_scratch;  // throw away write to reg 0
                 *w = *r;
             }
 
@@ -99,7 +99,7 @@ static int text(FILE *in, struct instruction **insn)
     return fscanf(in, "%x", &i->u.word) == 1;
 }
 
-static const char shortopts[] = "a:f:hV";
+static const char shortopts[] = "a:s:f:hV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
@@ -121,6 +121,7 @@ static int usage(const char *me)
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
+           "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format ('binary' or 'text')\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
@@ -143,7 +144,7 @@ static int find_format_by_name(const void *_a, const void *_b)
 int main(int argc, char *argv[])
 {
     struct state *s = calloc(1, sizeof *s);
-    int address = 0;
+    int load_address = 0, start_address = 0;
 
     struct format formats[] = {
         { "binary", binary },
@@ -155,7 +156,8 @@ int main(int argc, char *argv[])
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
-            case 'a': address = strtol(optarg, NULL, 0); break;
+            case 'a': load_address = strtol(optarg, NULL, 0); break;
+            case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
                 size_t sz = countof(formats);
                 f = lfind(&(struct format){ .name = optarg }, formats, &sz,
@@ -204,10 +206,13 @@ int main(int argc, char *argv[])
         next->insn = i;
         next->next = list;
         list = next;
-        s->mem[address++] = i->u.word;
+        s->mem[load_address++] = i->u.word;
     }
 
-    //run_instruction(s, i);
+    s->regs[15] = start_address & PTR_MASK;
+    while (1) {
+        run_instruction(s, (void*)&s->mem[ s->regs[15] ]);
+    }
 
     return 0;
 }

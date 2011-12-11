@@ -7,7 +7,6 @@
 #include "ops.h"
 #include "parser.h"
 #include "parser_global.h"
-
 #include "common.h"
 
 static const char *op_names[] = {

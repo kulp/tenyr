@@ -15,38 +15,39 @@ regname ([A-Pa-p])
 
 %%
 
-"\n"                { c(); lineno++; }
-{regname}           { c(); yylval.chr = yytext[0]; return REGISTER; }
-"["                 { c(); return '[';  }
-"]"                 { c(); return ']';  }
-"|"                 { c(); return '|';  }
-"&"                 { c(); return '&';  }
-"+"                 { c(); return '+';  }
-"*"                 { c(); return '*';  }
-"%"                 { c(); return '%';  }
-"<<"                { c(); return LSH;  }
-"<="                { c(); return LTE;  }
-"=="                { c(); return EQ;   }
-"~|"                { c(); return NOR;  }
-"~&"                { c(); return NAND; }
-"^"                 { c(); return '^';  }
-"-"                 { c(); return '-';  }
-"^~"                { c(); return XORN; }
-">>"                { c(); return RSH;  }
-">"                 { c(); return '>';  }
-"<>"                { c(); return NEQ;  }
-"<-"                { c(); return TOL;  }
-"->"                { c(); return TOR;  }
-"$"                 { c(); return '$';  }
+"\n"                    { c(); lineno++; }
+"illegal"               { c(); return ILLEGAL; }
+{regname}               { c(); yylval.chr = yytext[0]; return REGISTER; }
+"["                     { c(); return '[';  }
+"]"                     { c(); return ']';  }
+"|"                     { c(); return '|';  }
+"&"                     { c(); return '&';  }
+"+"                     { c(); return '+';  }
+"*"                     { c(); return '*';  }
+"%"                     { c(); return '%';  }
+"<<"                    { c(); return LSH;  }
+"<="                    { c(); return LTE;  }
+"=="                    { c(); return EQ;   }
+"~|"                    { c(); return NOR;  }
+"~&"                    { c(); return NAND; }
+"^"                     { c(); return '^';  }
+"-"                     { c(); return '-';  }
+"^~"                    { c(); return XORN; }
+">>"                    { c(); return RSH;  }
+">"                     { c(); return '>';  }
+"<>"                    { c(); return NEQ;  }
+"<-"                    { c(); return TOL;  }
+"->"                    { c(); return TOR;  }
+"$"                     { c(); return '$';  }
 
-"0"[xX][0-9a-fA-F]+ { c(); yylval.str = yytext; return INTEGER; }
-"0"[0-7]+           { c(); yylval.str = yytext; return INTEGER; }
-[0-9]+              { c(); yylval.str = yytext; return INTEGER; }
+-?"0"[xX][0-9a-fA-F]+   { c(); yylval.str = yytext; return INTEGER; }
+-?"0"[0-7]+             { c(); yylval.str = yytext; return INTEGER; }
+-?[0-9]+                { c(); yylval.str = yytext; return INTEGER; }
 
-[\t\f\v\r ]+        { c(); }
+[\t\f\v\r ]+            { c(); }
 
-"/*"                { skip_comment(C89_STYLE); }
-"//"                { skip_comment(C99_STYLE); }
+"/*"                    { skip_comment(C89_STYLE); }
+"//"                    { skip_comment(C99_STYLE); }
 
 %%
 

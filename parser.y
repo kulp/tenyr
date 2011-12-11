@@ -16,6 +16,7 @@
 %token <arrow> TOL TOR
 %token <str> INTEGER
 %token <i> REGISTER
+%token ILLEGAL
 
 %type <op> op
 %type <insn> insn
@@ -64,7 +65,10 @@ program
             $$->insn = $1; }
 
 insn
-    : lhs arrow expr
+    : ILLEGAL
+        {   $$ = malloc(sizeof *$$);
+            $$->u.word = -1; }
+    | lhs arrow expr
         {   $$ = malloc(sizeof *$$);
             $$->u._0xxx.t   = 0;
             $$->u._0xxx.z   = $1.x;
