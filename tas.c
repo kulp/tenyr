@@ -137,13 +137,13 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         .top = NULL,
     };
 
-    yylex_init(&pd.scanner);
-    yyset_extra(&pd, pd.scanner);
+    tenor_lex_init(&pd.scanner);
+    tenor_set_extra(&pd, pd.scanner);
 
     if (in)
-        yyset_in(in, pd.scanner);
+        tenor_set_in(in, pd.scanner);
 
-    int result = yyparse(&pd);
+    int result = tenor_parse(&pd);
     if (!result && f) {
         struct instruction_list *p = pd.top, *q = p;
 
@@ -154,7 +154,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             free(t);
         }
     }
-    yylex_destroy(pd.scanner);
+    tenor_lex_destroy(pd.scanner);
 
     return 0;
 }

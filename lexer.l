@@ -5,7 +5,7 @@
 #include "ops.h"
 
 struct parse_data;
-int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
+int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 static int savestr(yyscan_t yyscanner);
 %}
@@ -14,6 +14,7 @@ static int savestr(yyscan_t yyscanner);
 %option noyywrap never-interactive yylineno batch
 %option case-insensitive
 %option extra-type="struct parse_data *"
+%option prefix="tenor_"
 
 regname ([A-P])
 label   ([A-Z_][A-Z0-9_]{1,30})
@@ -47,7 +48,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 
 "//".*$                 ; // c99-style comments only
 
-.                       { yyerror(yylloc, yyextra, "unexpected character"); }
+.                       { tenor_error(yylloc, yyextra, "unexpected character"); }
 
 %%
 
@@ -60,7 +61,7 @@ static int savestr(yyscan_t yyscanner)
     void *extra      = yyget_extra(yyscanner);
 
     if (len >= (signed)sizeof lval->str) {
-        yyerror(lloc, extra, "token too long");
+        tenor_error(lloc, extra, "token too long");
         return 1;
     } else {
         snprintf(lval->str, len + 1, "%s", text);

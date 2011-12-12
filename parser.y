@@ -8,7 +8,7 @@
 #include "parser_global.h"
 #include "lexer.h"
 
-int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
+int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 #define YYLEX_PARAM (pd->scanner)
 %}
 
@@ -19,6 +19,8 @@ int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
 %lex-param { void *yyscanner }
 %parse-param { struct parse_data *pd }
 %defines "parser.h"
+%output "parser.c"
+%name-prefix "tenor_"
 // %destructor { free ($$); } <*> // TODO
 
 %start program
@@ -234,12 +236,12 @@ labelref
 
 %%
 
-int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s)
+int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
     fflush(stderr);
-    YYLTYPE *loc = yyget_lloc(pd->scanner);
+    YYLTYPE *loc = tenor_get_lloc(pd->scanner);
     fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", loc->last_column, "^",
-            loc->last_column, s, locp->first_line, yyget_text(pd->scanner));
+            loc->last_column, s, locp->first_line, tenor_get_text(pd->scanner));
 
     return 0;
 }

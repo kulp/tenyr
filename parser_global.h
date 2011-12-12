@@ -14,7 +14,7 @@ struct parse_data {
     uint32_t reladdr;
 };
 
-int yyparse(struct parse_data *);
+int tenor_parse(struct parse_data *);
 
 #endif
 
