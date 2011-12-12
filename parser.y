@@ -18,11 +18,18 @@ int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
 %define parse.lac full
 %lex-param { void *yyscanner }
 %parse-param { struct parse_data *pd }
+%defines "parser.h"
+// %destructor { free ($$); } <*> // TODO
 
 %start program
 
-%token '[' ']' '.'
-%token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ '$'
+%left LTE EQ NEQ '>'
+%left '+' '-'
+%left '*' '%'
+%left '|' '&' '^' NOR NAND XORN
+%left LSH RSH
+
+%token '[' ']' '.' '$'
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL
 %token <chr> REGISTER
@@ -62,7 +69,6 @@ int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
         int sextend;
         uint32_t i;
     } signimm;
-    struct label *label;
     struct instruction *insn;
     struct instruction_list *program;
     char str[64]; // TODO document length

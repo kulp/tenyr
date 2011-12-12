@@ -20,7 +20,7 @@ lexer.h lexer.c: lexer.l
 	flex --header-file=lexer.h -o lexer.c $<
 
 parser.h parser.c: parser.y lexer.h
-	bison -d -o parser.c $<
+	bison --defines=parser.h -o parser.c $<
 
 clean:
 	$(RM) tas tsim *.o

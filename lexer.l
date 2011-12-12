@@ -47,7 +47,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 
 "//".*$                 ; // c99-style comments only
 
-.                       { yyerror(yylloc, yyget_extra(yyscanner), "unexpected character"); }
+.                       { yyerror(yylloc, yyextra, "unexpected character"); }
 
 %%
 
