@@ -141,7 +141,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
     yyset_extra(&pd, pd.scanner);
 
     if (in)
-        switch_to_stream(in, pd.scanner);
+        yyset_in(in, pd.scanner);
 
     int result = yyparse(&pd);
     if (!result && f) {

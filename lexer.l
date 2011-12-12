@@ -67,9 +67,3 @@ static int savestr(yyscan_t yyscanner)
     }
 }
 
-void switch_to_stream(FILE *f, yyscan_t yyscanner)
-{
-    yyset_in(f, yyscanner);
-    //BEGIN(INITIAL); // TODO ?
-}
-

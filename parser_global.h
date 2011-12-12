@@ -15,7 +15,6 @@ struct parse_data {
 };
 
 int yyparse(struct parse_data *);
-void switch_to_stream(FILE *f, void *yyscanner);
 
 #endif
 
