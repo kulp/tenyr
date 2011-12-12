@@ -64,10 +64,10 @@
 // TODO assumes bits are filled in rightmost-first
 struct instruction {
     struct label {
-        const char *name;
+        char name[32]; // TODO document restriction
         int column;
         int lineno;
-        uint32_t address;
+        uint32_t reladdr;
         int resolved;
 
         struct label *next;

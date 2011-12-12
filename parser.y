@@ -2,14 +2,18 @@
     #include <stdio.h>
     #include <stddef.h>
     #include <ctype.h>
+    #include <stdint.h>
 
     #include "parser_global.h"
     #include "lexer.h"
     #include "ops.h"
 
     int yyerror(const char *msg);
-    struct instruction_list *top;
+    static struct instruction_list *top;
+    static uint32_t reladdr;
 %}
+
+%error-verbose
 
 %token '[' ']' '.'
 %token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ '$'
@@ -18,22 +22,26 @@
 %token <i> REGISTER
 %token ILLEGAL
 
-%type <op> op
-%type <insn> insn
-%type <program> program
-%type <i> immediate
 %type <ce> const_expr add_expr mult_expr const_atom
-%type <i> arrow
 %type <expr> expr lhs
+%type <i> arrow immediate regname
+%type <insn> insn
+%type <op> op
+%type <program> program
 %type <s> addsub
-%type <i> regname
 %type <signimm> sign_immediate
+%type <str> labelref
 
 %union {
     unsigned long i;
     signed s;
     struct const_expr {
         enum { ADD, MUL, LAB, IMM, ICI } type;
+        unsigned long i;
+        unsigned long reladdr;
+        char labelname[32]; // TODO document length
+        int op;
+        struct const_expr *left, *right;
     } ce;
     struct {
         int deref;
@@ -51,7 +59,7 @@
     struct label *label;
     struct instruction *insn;
     struct instruction_list *program;
-    char *str;
+    char str[64]; // TODO document length
     char chr;
     int op;
     int arrow;
@@ -68,6 +76,7 @@ program
             $$->insn = $1; }
     | insn program
         {   top = $$ = malloc(sizeof *$$);
+            reladdr++; // XXX not safe ? when does this happen ?
             $$->next = $2;
             $$->insn = $1; }
 
@@ -95,6 +104,16 @@ insn
     | LABEL ':' insn
         {   // TODO add label to a chain, and associate it with the
             // instruction
+            $$ = $3;
+            extern int column, lineno;
+            struct label *n = malloc(sizeof *n);
+            n->column = column;
+            n->lineno = lineno;
+            n->resolved = 1;
+            n->reladdr = reladdr;
+            strncpy(n->name, $1, sizeof n->name);
+            n->next = $$->label;
+            $$->label = n;
         }
 
 lhs
@@ -184,11 +203,18 @@ mult_expr
 
 const_atom
     : immediate
+        {   $$.type = IMM;
+            $$.i = $1; }
     | labelref
+        {   $$.type = LAB;
+            strncpy($$.labelname, $1, sizeof $$.labelname);
+        }
     | '.'
+        {   $$.type = ICI;
+            $$.reladdr = reladdr; }
 
 labelref
-    : '@' LABEL
+    : '@' LABEL { strncpy($$, $2, sizeof $$); $$[sizeof $$ - 1] = 0; }
 
 %%
 
