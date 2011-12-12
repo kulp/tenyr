@@ -10,7 +10,7 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES))
 
 all: tas tsim
 tsim.o tas.o: ops.h
-tas.o: parser.h
+tas.o: parser.h parser_global.h
 tas: parser.o lexer.o
 
 # flex-generated code we can't control warnings of as easily

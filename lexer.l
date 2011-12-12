@@ -1,17 +1,18 @@
+%{
+#include <stdio.h>
+#include "parser.h"
+#include "parser.h"
+#include "ops.h"
+
+struct parse_data;
+int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
+
+static int savestr(yyscan_t yyscanner);
+%}
+
 %option reentrant bison-bridge bison-locations
 %option noyywrap never-interactive nounistd
-
-%{
-    #include <stdio.h>
-    #include "parser.h"
-    #include "parser.h"
-    #include "ops.h"
-
-    struct parse_data;
-    int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
-
-    static int savestr(yyscan_t yyscanner);
-%}
+%option extra-type="struct parse_data *"
 
 regname ([A-Pa-p])
 label   ([A-Za-z_][A-Za-z0-9_]{1,30})

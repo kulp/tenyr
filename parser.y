@@ -1,14 +1,15 @@
 %{
-    #include <stdio.h>
-    #include <ctype.h>
-    #include <stdint.h>
-    #include <string.h>
-    #include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 
-    #include "parser_global.h"
+#include "parser_global.h"
+#include "lexer.h"
 
-    int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
-    #define YYLEX_PARAM (pd->scanner)
+int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
+#define YYLEX_PARAM (pd->scanner)
 %}
 
 %error-verbose

@@ -3,10 +3,9 @@
 
 #include "ops.h"
 #include "parser.h"
-#include "lexer.h"
 
 struct parse_data {
-    yyscan_t scanner;
+    void *scanner;
     struct instruction_list *top;
     struct label_list {
         struct label *label;
@@ -16,7 +15,7 @@ struct parse_data {
 };
 
 int yyparse(struct parse_data *);
-void switch_to_stream(FILE *f, yyscan_t yyscanner);
+void switch_to_stream(FILE *f, void *yyscanner);
 
 #endif
 
