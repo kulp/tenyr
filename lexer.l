@@ -18,36 +18,24 @@ label   ([A-Za-z_][A-Za-z0-9_]{1,30})
 
 %%
 
-"\n"                    { c(); lineno++; }
+"\n"                    { c(); column = 0; lineno++; }
 "illegal"               { c(); return ILLEGAL; }
 
 {regname}               { c(); yylval.chr = yytext[0]; return REGISTER; }
 {label}                 { c(); savestr(); return LABEL; }
 
-"["                     { c(); return '[';  }
-"]"                     { c(); return ']';  }
-"|"                     { c(); return '|';  }
-"&"                     { c(); return '&';  }
-"+"                     { c(); return '+';  }
-"*"                     { c(); return '*';  }
-"%"                     { c(); return '%';  }
+[][|&+*%^>$.:@-]        { c(); return yytext[0]; }
+
 "<<"                    { c(); return LSH;  }
 "<="                    { c(); return LTE;  }
 "=="                    { c(); return EQ;   }
 "~|"                    { c(); return NOR;  }
 "~&"                    { c(); return NAND; }
-"^"                     { c(); return '^';  }
-"-"                     { c(); return '-';  }
 "^~"                    { c(); return XORN; }
 ">>"                    { c(); return RSH;  }
-">"                     { c(); return '>';  }
 "<>"                    { c(); return NEQ;  }
 "<-"                    { c(); return TOL;  }
 "->"                    { c(); return TOR;  }
-"$"                     { c(); return '$';  }
-"."                     { c(); return '.';  }
-":"                     { c(); return ':';  }
-"@"                     { c(); return '@';  }
 
 -?"0"[xX][0-9a-fA-F]+   { c(); savestr(); return INTEGER; }
 -?"0"[0-7]+             { c(); savestr(); return INTEGER; }
@@ -64,17 +52,13 @@ label   ([A-Za-z_][A-Za-z0-9_]{1,30})
 
 static void c()
 {
-    for (int i = 0; yytext[i]; i++)
-        if (yytext[i] == '\n')
-            column = 0;
-        else
-            column++;
+    column += yyleng;
 }
 
 static int savestr(void)
 {
     if ((signed)yyleng >= (signed)sizeof yylval.str) {
-        yyerror("label too long");
+        yyerror("token too long");
         return 1;
     } else {
         snprintf(yylval.str, yyleng + 1, "%s", yytext);
