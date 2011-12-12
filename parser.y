@@ -39,12 +39,12 @@ int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
 %type <str> labelref
 
 %union {
-    unsigned long i;
+    uint32_t i;
     signed s;
     struct const_expr {
         enum { ADD, MUL, LAB, IMM, ICI } type;
-        unsigned long i;
-        unsigned long reladdr;
+        uint32_t i;
+        uint32_t reladdr : 24;
         char labelname[32]; // TODO document length
         int op;
         struct const_expr *left, *right;
@@ -54,13 +54,13 @@ int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
         int x;
         int op;
         int y;
-        unsigned long i;
+        uint32_t i;
         int mult;   ///< multiplier from addsub
         struct const_expr ce;
     } expr;
     struct {
         int sextend;
-        unsigned long i;
+        uint32_t i;
     } signimm;
     struct label *label;
     struct instruction *insn;

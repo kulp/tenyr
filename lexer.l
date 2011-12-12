@@ -11,11 +11,12 @@ static int savestr(yyscan_t yyscanner);
 %}
 
 %option reentrant bison-bridge bison-locations
-%option noyywrap never-interactive nounistd
+%option noyywrap never-interactive yylineno batch
+%option case-insensitive
 %option extra-type="struct parse_data *"
 
-regname ([A-Pa-p])
-label   ([A-Za-z_][A-Za-z0-9_]{1,30})
+regname ([A-P])
+label   ([A-Z_][A-Z0-9_]{1,30})
 
 %%
 
