@@ -37,15 +37,15 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 %token <chr> REGISTER
 %token ILLEGAL
 
-%type <ce> const_expr add_expr mult_expr const_atom
+%type <ce> const_expr add_expr mult_expr atom
 %type <expr> expr lhs
 %type <i> arrow immediate regname
 %type <insn> insn
 %type <op> op
 %type <program> program
 %type <s> addsub
-%type <signimm> sign_immediate
-%type <str> labelref
+%type <signimm> sign_imm
+%type <str> lref
 
 %union {
     uint32_t i;
@@ -81,50 +81,50 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 %%
 
-program
+program[left]
     : insn
-        {   pd->top = $$ = malloc(sizeof *$$);
-            $$->next = NULL;
-            $$->insn = $1; }
-    | insn program
-        {   pd->top = $$ = malloc(sizeof *$$);
+        {   pd->top = $left = malloc(sizeof *$left);
+            $left->next = NULL;
+            $left->insn = $insn; }
+    | insn program[right]
+        {   pd->top = $left = malloc(sizeof *$left);
             pd->reladdr++; // XXX not safe ? when does this happen ?
-            $$->next = $2;
-            $$->insn = $1; }
+            $left->next = $right;
+            $left->insn = $insn; }
 
-insn
+insn[left]
     : ILLEGAL
-        {   $$ = malloc(sizeof *$$);
-            $$->u.word = -1; }
+        {   $left = malloc(sizeof *$left);
+            $left->u.word = -1; }
     | lhs arrow expr
-        {   $$ = malloc(sizeof *$$);
-            $$->u._0xxx.t   = 0;
-            $$->u._0xxx.z   = $1.x;
-            $$->u._0xxx.dd  = ($1.deref << 1) | ($3.deref);
-            $$->u._0xxx.x   = $3.x;
-            $$->u._0xxx.y   = $3.y;
-            $$->u._0xxx.r   = $2;
-            $$->u._0xxx.op  = $3.op;
-            $$->u._0xxx.imm = $3.i; }
-    | lhs TOL sign_immediate
-        {   $$ = malloc(sizeof *$$);
-            $$->u._10x0.p   = $3.sextend;
-            $$->u._10x0.imm = $3.i;
-            $$->u._10x0.t   = 2;
-            $$->u._10x0.z   = $1.x;
-            $$->u._10x0.d   = $1.deref; }
-    | LABEL ':' insn
+        {   $left = malloc(sizeof *$left);
+            $left->u._0xxx.t   = 0;
+            $left->u._0xxx.z   = $lhs.x;
+            $left->u._0xxx.dd  = ($lhs.deref << 1) | ($lhs.deref);
+            $left->u._0xxx.x   = $expr.x;
+            $left->u._0xxx.y   = $expr.y;
+            $left->u._0xxx.r   = $arrow;
+            $left->u._0xxx.op  = $expr.op;
+            $left->u._0xxx.imm = $expr.i; }
+    | lhs TOL sign_imm
+        {   $left = malloc(sizeof *$left);
+            $left->u._10x0.p   = $sign_imm.sextend;
+            $left->u._10x0.imm = $sign_imm.i;
+            $left->u._10x0.t   = 2;
+            $left->u._10x0.z   = $lhs.x;
+            $left->u._10x0.d   = $lhs.deref; }
+    | LABEL ':' insn[right]
         {   // TODO add label to a chain, and associate it with the
             // instruction
-            $$ = $3;
+            $left = $right;
             struct label *n = malloc(sizeof *n);
             n->column   = yylloc.first_column;
             n->lineno   = yylloc.first_line;
             n->resolved = 1;
             n->reladdr  = pd->reladdr;
-            n->next     = $$->label;
-            strncpy(n->name, $1, sizeof n->name);
-            $$->label = n;
+            n->next     = $left->label;
+            strncpy(n->name, $LABEL, sizeof n->name);
+            $left->label = n;
 
             struct label_list *l = malloc(sizeof *l);
             l->next  = pd->labels;
@@ -133,79 +133,79 @@ insn
         }
 
 lhs
-    : regname { $$.deref = 0; $$.x = $1; }
+    : regname { $lhs.x = $regname; $lhs.deref = 0; }
     /* permits arbitrary nesting, but meaningless */
-    | '[' lhs ']' { $$ = $2; $$.deref = 1; }
+    | '[' lhs[inner] ']' { $$ = $inner; $$.deref = 1; }
 
-expr
-    : regname
-        {   $$.deref = 0;
-            $$.x     = $1;
-            $$.op    = OP_BITWISE_OR;
-            $$.y     = 0;
-            $$.i     = 0; }
-    | regname op regname
-        {   $$.deref = 0;
-            $$.x     = $1;
-            $$.op    = $2;
-            $$.y     = $3;
-            $$.mult  = 0;
-            $$.i     = 0; }
-    | regname addsub const_expr
-        {   $$.deref = 0;
-            $$.x     = $1;
-            $$.op    = OP_BITWISE_OR;
-            $$.y     = 0;
-            $$.mult  = $2;
-            $$.ce    = $3;
-            $$.i     = 0xbad; }
-    | regname op regname addsub const_expr
-        {   $$.deref = 0;
-            $$.x     = $1;
-            $$.op    = $2;
-            $$.y     = $3;
-            $$.mult  = $4;
-            $$.ce    = $5;
-            $$.i     = 0xbad; }
-    | '[' expr ']' /* permits arbitrary nesting, but meaningless */
-        {   $$ = $2;
-            $$.deref = 1; }
+expr[left]
+    : regname[x]
+        {   $left.deref = 0;
+            $left.x     = $x;
+            $left.op    = OP_BITWISE_OR;
+            $left.y     = 0;
+            $left.i     = 0; }
+    | regname[x] op regname[y]
+        {   $left.deref = 0;
+            $left.x     = $x;
+            $left.op    = $op;
+            $left.y     = $y;
+            $left.mult  = 0;
+            $left.i     = 0; }
+    | regname[x] addsub const_expr
+        {   $left.deref = 0;
+            $left.x     = $x;
+            $left.op    = OP_BITWISE_OR;
+            $left.y     = 0;
+            $left.mult  = $addsub;
+            $left.ce    = $const_expr;
+            $left.i     = 0xbad; /*TODO*/}
+    | regname[x] op regname[y] addsub const_expr
+        {   $left.deref = 0;
+            $left.x     = $x;
+            $left.op    = $op;
+            $left.y     = $y;
+            $left.mult  = $addsub;
+            $left.ce    = $const_expr;
+            $left.i     = 0xbad; /*TODO*/}
+    | '[' expr[inner] ']' /* permits arbitrary nesting, but meaningless */
+        {   $left = $inner;
+            $left.deref = 1; }
 
 regname
-    : REGISTER { $$ = toupper($1) - 'A'; }
+    : REGISTER { $regname = toupper($REGISTER) - 'A'; }
 
-sign_immediate
-    : immediate     { $$.sextend = 0; $$.i = $1; }
-    | '$' immediate { $$.sextend = 1; $$.i = $2; }
+sign_imm
+    : immediate     { $sign_imm.i = $immediate; $sign_imm.sextend = 0; }
+    | '$' immediate { $sign_imm.i = $immediate; $sign_imm.sextend = 1; }
 
 immediate
-    : INTEGER { $$ = strtol($1, NULL, 0); }
+    : INTEGER { $immediate = strtol($INTEGER, NULL, 0); }
 
 addsub
-    : '+' { $$ =  1; }
-    | '-' { $$ = -1; }
+    : '+' { $addsub =  1; }
+    | '-' { $addsub = -1; }
 
 op
-    : '|'   { $$ = OP_BITWISE_OR         ; }
-    | '&'   { $$ = OP_BITWISE_AND        ; }
-    | '+'   { $$ = OP_ADD                ; }
-    | '*'   { $$ = OP_MULTIPLY           ; }
-    | '%'   { $$ = OP_MODULUS            ; }
-    | LSH   { $$ = OP_SHIFT_LEFT         ; }
-    | LTE   { $$ = OP_COMPARE_LTE        ; }
-    | EQ    { $$ = OP_COMPARE_EQ         ; }
-    | NOR   { $$ = OP_BITWISE_NOR        ; }
-    | NAND  { $$ = OP_BITWISE_NAND       ; }
-    | '^'   { $$ = OP_BITWISE_XOR        ; }
-    | '-'   { $$ = OP_ADD_NEGATIVE_Y     ; }
-    | XORN  { $$ = OP_XOR_INVERT_X       ; }
-    | RSH   { $$ = OP_SHIFT_RIGHT_LOGICAL; }
-    | '>'   { $$ = OP_COMPARE_GT         ; }
-    | NEQ   { $$ = OP_COMPARE_NE         ; }
+    : '|'   { $op = OP_BITWISE_OR         ; }
+    | '&'   { $op = OP_BITWISE_AND        ; }
+    | '+'   { $op = OP_ADD                ; }
+    | '*'   { $op = OP_MULTIPLY           ; }
+    | '%'   { $op = OP_MODULUS            ; }
+    | LSH   { $op = OP_SHIFT_LEFT         ; }
+    | LTE   { $op = OP_COMPARE_LTE        ; }
+    | EQ    { $op = OP_COMPARE_EQ         ; }
+    | NOR   { $op = OP_BITWISE_NOR        ; }
+    | NAND  { $op = OP_BITWISE_NAND       ; }
+    | '^'   { $op = OP_BITWISE_XOR        ; }
+    | '-'   { $op = OP_ADD_NEGATIVE_Y     ; }
+    | XORN  { $op = OP_XOR_INVERT_X       ; }
+    | RSH   { $op = OP_SHIFT_RIGHT_LOGICAL; }
+    | '>'   { $op = OP_COMPARE_GT         ; }
+    | NEQ   { $op = OP_COMPARE_NE         ; }
 
 arrow
-    : TOL { $$ = 0; }
-    | TOR { $$ = 1; }
+    : TOL { $arrow = 0; }
+    | TOR { $arrow = 1; }
 
 const_expr
     : add_expr
@@ -216,32 +216,32 @@ add_expr
     | add_expr '-' mult_expr
 
 mult_expr
-    : const_atom
-    | mult_expr '*' const_atom 
+    : atom
+    | mult_expr '*' atom 
 
-const_atom
+atom
     : immediate
-        {   $$.type = IMM;
-            $$.i = $1; }
-    | labelref
-        {   $$.type = LAB;
-            strncpy($$.labelname, $1, sizeof $$.labelname);
+        {   $atom.type = IMM;
+            $atom.i = $immediate; }
+    | lref
+        {   $atom.type = LAB;
+            strncpy($atom.labelname, $lref, sizeof $atom.labelname);
         }
     | '.'
-        {   $$.type = ICI;
-            $$.reladdr = pd->reladdr; }
+        {   $atom.type = ICI;
+            $atom.reladdr = pd->reladdr; }
 
-labelref
-    : '@' LABEL { strncpy($$, $2, sizeof $$); $$[sizeof $$ - 1] = 0; }
+lref
+    : '@' LABEL
+        { strncpy($lref, $LABEL, sizeof $lref); $lref[sizeof $lref - 1] = 0; }
 
 %%
 
 int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
     fflush(stderr);
-    YYLTYPE *loc = tenor_get_lloc(pd->scanner);
-    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", loc->last_column, "^",
-            loc->last_column, s, locp->first_line, tenor_get_text(pd->scanner));
+    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", locp->last_column, "^",
+            locp->last_column, s, locp->first_line, tenor_get_text(pd->scanner));
 
     return 0;
 }
