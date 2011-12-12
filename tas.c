@@ -133,18 +133,17 @@ static int find_format_by_name(const void *_a, const void *_b)
 
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
-    yyscan_t yyscanner;
     struct parse_data pd = {
         .top = NULL,
     };
 
-    yylex_init(&yyscanner);
-    yyset_extra(&pd, yyscanner);
+    yylex_init(&pd.scanner);
+    yyset_extra(&pd, pd.scanner);
 
     if (in)
         switch_to_stream(in, pd.scanner);
 
-    int result = yyparse(yyscanner);
+    int result = yyparse(&pd);
     if (!result && f) {
         struct instruction_list *p = pd.top, *q = p;
 
@@ -155,7 +154,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             free(t);
         }
     }
-    yylex_destroy(yyscanner);
+    yylex_destroy(pd.scanner);
 
     return 0;
 }

@@ -5,7 +5,7 @@ _start:
 top:
 	b <- b - 1      // decrement loop variable
 	c <- b > a      // compare b to 0
-	c <- oc & d
+	c <- c & d
 	p <- p + c + 1  // jump back
 done:
 	illegal

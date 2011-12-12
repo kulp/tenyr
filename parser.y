@@ -229,8 +229,9 @@ labelref
 int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
     fflush(stderr);
-    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", locp->last_column, "^",
-            locp->last_column, s, locp->first_line, yyget_text(pd->scanner));
+    YYLTYPE *loc = yyget_lloc(pd->scanner);
+    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", loc->last_column, "^",
+            loc->last_column, s, locp->first_line, yyget_text(pd->scanner));
 
     return 0;
 }
