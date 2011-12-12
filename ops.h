@@ -63,6 +63,15 @@
 
 // TODO assumes bits are filled in rightmost-first
 struct instruction {
+    struct label {
+        const char *name;
+        int column;
+        int lineno;
+        uint32_t address;
+        int resolved;
+
+        struct label *next;
+    } *label;
     union {
         uint32_t word;
         struct instruction_any {
@@ -106,7 +115,7 @@ enum op {
     OP_BITWISE_AND         = 0x1,
     OP_ADD                 = 0x2,
     OP_MULTIPLY            = 0x3,
-    OP_MODULUS             = 0x4,
+    OP_MODULUS             = 0x4, // XXX modulus is expensive ; might as well provide division then
     OP_SHIFT_LEFT          = 0x5,
     OP_COMPARE_LTE         = 0x6,
     OP_COMPARE_EQ          = 0x7,

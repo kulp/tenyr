@@ -12,12 +12,14 @@
 %}
 
 regname ([A-Pa-p])
+label   ([A-Za-z_]+)
 
 %%
 
 "\n"                    { c(); lineno++; }
 "illegal"               { c(); return ILLEGAL; }
 {regname}               { c(); yylval.chr = yytext[0]; return REGISTER; }
+{label}                 { c(); yylval.chr = yytext[0]; return LABEL; }
 "["                     { c(); return '[';  }
 "]"                     { c(); return ']';  }
 "|"                     { c(); return '|';  }
@@ -39,6 +41,7 @@ regname ([A-Pa-p])
 "<-"                    { c(); return TOL;  }
 "->"                    { c(); return TOR;  }
 "$"                     { c(); return '$';  }
+"."                     { c(); return '.';  }
 
 -?"0"[xX][0-9a-fA-F]+   { c(); yylval.str = yytext; return INTEGER; }
 -?"0"[0-7]+             { c(); yylval.str = yytext; return INTEGER; }

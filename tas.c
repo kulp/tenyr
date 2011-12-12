@@ -79,7 +79,7 @@ int print_disassembly(FILE *out, struct instruction *i)
 
 static void binary(FILE *stream, struct instruction *i)
 {
-    fwrite(i, 4, 1, stream);
+    fwrite(&i->u.word, sizeof i->u.word, 1, stream);
 }
 
 static void text(FILE *stream, struct instruction *i)
@@ -155,9 +155,9 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
 int do_disassembly(FILE *in, FILE *out)
 {
-    char buf[64];
-    while (fread(buf, 4, 1, in) == 1) {
-        print_disassembly(out, (void*)buf);
+    struct instruction i;
+    while (fread(&i.u.word, sizeof i.u.word, 1, in) == 1) {
+        print_disassembly(out, &i);
     }
 
     return 0;
@@ -229,6 +229,8 @@ int main(int argc, char *argv[])
         else
             do_assembly(in, out, f);
     }
+
+    fclose(out);
 
     return rc;
 }

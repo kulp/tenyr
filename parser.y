@@ -11,10 +11,10 @@
     struct instruction_list *top;
 %}
 
-%token '[' ']'
+%token '[' ']' '.'
 %token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ '$'
 %token <arrow> TOL TOR
-%token <str> INTEGER
+%token <str> INTEGER LABEL
 %token <i> REGISTER
 %token ILLEGAL
 
@@ -22,6 +22,7 @@
 %type <insn> insn
 %type <program> program
 %type <i> immediate
+%type <ce> const_expr add_expr mult_expr const_atom
 %type <i> arrow
 %type <expr> expr lhs
 %type <s> addsub
@@ -31,17 +32,23 @@
 %union {
     unsigned long i;
     signed s;
+    struct const_expr {
+        enum { ADD, MUL, LAB, IMM, ICI } type;
+    } ce;
     struct {
         int deref;
         int x;
         int op;
         int y;
         unsigned long i;
+        int mult;   ///< multiplier from addsub
+        struct const_expr ce;
     } expr;
     struct {
         int sextend;
         unsigned long i;
     } signimm;
+    struct label *label;
     struct instruction *insn;
     struct instruction_list *program;
     char *str;
@@ -85,6 +92,10 @@ insn
             $$->u._10x0.t = 2;
             $$->u._10x0.z = $1.x;
             $$->u._10x0.d = $1.deref; }
+    | LABEL ':' insn
+        {   // TODO add label to a chain, and associate it with the
+            // instruction
+        }
 
 lhs
     : regname { $$.deref = 0; $$.x = $1; }
@@ -103,19 +114,22 @@ expr
             $$.x     = $1;
             $$.op    = $2;
             $$.y     = $3;
+            $$.mult  = 0;
             $$.i     = 0; }
-    | regname addsub immediate
+    | regname addsub const_expr
         {   $$.deref = 0;
             $$.x     = $1;
             $$.op    = OP_BITWISE_OR;
             $$.y     = 0;
-            $$.i     = $2 * $3; }
-    | regname op regname addsub immediate
+            $$.mult  = $2;
+            $$.ce    = $3; }
+    | regname op regname addsub const_expr
         {   $$.deref = 0;
             $$.x     = $1;
             $$.op    = $2;
             $$.y     = $3;
-            $$.i     = $4 * $5; }
+            $$.mult  = $4;
+            $$.ce    = $5; }
     | '[' expr ']' /* permits arbitrary nesting, but meaningless */
         {   $$ = $2;
             $$.deref = 1; }
@@ -155,6 +169,26 @@ op
 arrow
     : TOL { $$ = 0; }
     | TOR { $$ = 1; }
+
+const_expr
+    : add_expr
+
+add_expr
+    : mult_expr
+    | add_expr '+' mult_expr
+    | add_expr '-' mult_expr
+
+mult_expr
+    : const_atom
+    | mult_expr '*' const_atom 
+
+const_atom
+    : immediate
+    | labelref
+    | '.'
+
+labelref
+    : '@' LABEL
 
 %%
 
