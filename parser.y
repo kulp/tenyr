@@ -81,50 +81,50 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 %%
 
-program[left]
+program[outer]
     : insn
-        {   pd->top = $left = malloc(sizeof *$left);
-            $left->next = NULL;
-            $left->insn = $insn; }
-    | insn program[right]
-        {   pd->top = $left = malloc(sizeof *$left);
+        {   pd->top = $outer = malloc(sizeof *$outer);
+            $outer->next = NULL;
+            $outer->insn = $insn; }
+    | insn program[inner]
+        {   pd->top = $outer = malloc(sizeof *$outer);
             pd->reladdr++; // XXX not safe ? when does this happen ?
-            $left->next = $right;
-            $left->insn = $insn; }
+            $outer->next = $inner;
+            $outer->insn = $insn; }
 
-insn[left]
+insn[outer]
     : ILLEGAL
-        {   $left = malloc(sizeof *$left);
-            $left->u.word = -1; }
+        {   $outer = malloc(sizeof *$outer);
+            $outer->u.word = -1; }
     | lhs arrow expr
-        {   $left = malloc(sizeof *$left);
-            $left->u._0xxx.t   = 0;
-            $left->u._0xxx.z   = $lhs.x;
-            $left->u._0xxx.dd  = ($lhs.deref << 1) | ($lhs.deref);
-            $left->u._0xxx.x   = $expr.x;
-            $left->u._0xxx.y   = $expr.y;
-            $left->u._0xxx.r   = $arrow;
-            $left->u._0xxx.op  = $expr.op;
-            $left->u._0xxx.imm = $expr.i; }
+        {   $outer = malloc(sizeof *$outer);
+            $outer->u._0xxx.t   = 0;
+            $outer->u._0xxx.z   = $lhs.x;
+            $outer->u._0xxx.dd  = ($lhs.deref << 1) | ($lhs.deref);
+            $outer->u._0xxx.x   = $expr.x;
+            $outer->u._0xxx.y   = $expr.y;
+            $outer->u._0xxx.r   = $arrow;
+            $outer->u._0xxx.op  = $expr.op;
+            $outer->u._0xxx.imm = $expr.i; }
     | lhs TOL sign_imm
-        {   $left = malloc(sizeof *$left);
-            $left->u._10x0.p   = $sign_imm.sextend;
-            $left->u._10x0.imm = $sign_imm.i;
-            $left->u._10x0.t   = 2;
-            $left->u._10x0.z   = $lhs.x;
-            $left->u._10x0.d   = $lhs.deref; }
-    | LABEL ':' insn[right]
+        {   $outer = malloc(sizeof *$outer);
+            $outer->u._10x0.p   = $sign_imm.sextend;
+            $outer->u._10x0.imm = $sign_imm.i;
+            $outer->u._10x0.t   = 2;
+            $outer->u._10x0.z   = $lhs.x;
+            $outer->u._10x0.d   = $lhs.deref; }
+    | LABEL ':' insn[inner]
         {   // TODO add label to a chain, and associate it with the
             // instruction
-            $left = $right;
+            $outer = $inner;
             struct label *n = malloc(sizeof *n);
             n->column   = yylloc.first_column;
             n->lineno   = yylloc.first_line;
             n->resolved = 1;
             n->reladdr  = pd->reladdr;
-            n->next     = $left->label;
+            n->next     = $outer->label;
             strncpy(n->name, $LABEL, sizeof n->name);
-            $left->label = n;
+            $outer->label = n;
 
             struct label_list *l = malloc(sizeof *l);
             l->next  = pd->labels;
