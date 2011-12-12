@@ -1,16 +1,16 @@
-%option noyywrap
+%option reentrant bison-bridge bison-locations
+%option noyywrap never-interactive nounistd
 
 %{
     #include <stdio.h>
     #include "parser.h"
+    #include "parser.h"
     #include "ops.h"
-    int lineno;
-    int column; // TODO
-    int yyerror(const char *msg);
-    static void c(void);
-    static void skip_comment(int style);
-    static int savestr(void);
-    enum { C89_STYLE, C99_STYLE };
+
+    struct parse_data;
+    int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
+
+    static int savestr(yyscan_t yyscanner);
 %}
 
 regname ([A-Pa-p])
@@ -18,84 +18,57 @@ label   ([A-Za-z_][A-Za-z0-9_]{1,30})
 
 %%
 
-"\n"                    { c(); column = 0; lineno++; }
-"illegal"               { c(); return ILLEGAL; }
+[\n;]                   ;
+"illegal"               { return ILLEGAL; }
 
-{regname}               { c(); yylval.chr = yytext[0]; return REGISTER; }
-{label}                 { c(); savestr(); return LABEL; }
+{regname}               { yylval->chr = yytext[0]; return REGISTER; }
+{label}                 { savestr(yyscanner); return LABEL; }
 
-[][|&+*%^>$.:@-]        { c(); return yytext[0]; }
+[][|&+*%^>$.:@-]        { return yytext[0]; }
 
-"<<"                    { c(); return LSH;  }
-"<="                    { c(); return LTE;  }
-"=="                    { c(); return EQ;   }
-"~|"                    { c(); return NOR;  }
-"~&"                    { c(); return NAND; }
-"^~"                    { c(); return XORN; }
-">>"                    { c(); return RSH;  }
-"<>"                    { c(); return NEQ;  }
-"<-"                    { c(); return TOL;  }
-"->"                    { c(); return TOR;  }
+"<<"                    { return LSH;  }
+"<="                    { return LTE;  }
+"=="                    { return EQ;   }
+"~|"                    { return NOR;  }
+"~&"                    { return NAND; }
+"^~"                    { return XORN; }
+">>"                    { return RSH;  }
+"<>"                    { return NEQ;  }
+"<-"                    { return TOL;  }
+"->"                    { return TOR;  }
 
--?"0"[xX][0-9a-fA-F]+   { c(); savestr(); return INTEGER; }
--?"0"[0-7]+             { c(); savestr(); return INTEGER; }
--?[0-9]+                { c(); savestr(); return INTEGER; }
+-?"0"[xX][0-9a-fA-F]+   { savestr(yyscanner); return INTEGER; }
+-?"0"[0-7]+             { savestr(yyscanner); return INTEGER; }
+-?[0-9]+                { savestr(yyscanner); return INTEGER; }
 
-[\t\f\v\r ]+            { c(); }
+[\t\f\v\r ]+            ;
 
-"/*"                    { skip_comment(C89_STYLE); }
-"//"                    { skip_comment(C99_STYLE); }
+"//".*$                 ; // c99-style comments only
 
-.                       { c(); yyerror("unexpected character"); }
+.                       { yyerror(yylloc, yyget_extra(yyscanner), "unexpected character"); }
 
 %%
 
-static void c()
+static int savestr(yyscan_t yyscanner)
 {
-    column += yyleng;
-}
+    int len          = yyget_leng(yyscanner);
+    YYSTYPE *lval    = yyget_lval(yyscanner);
+    YYLTYPE *lloc    = yyget_lloc(yyscanner);
+    const char *text = yyget_text(yyscanner);
+    void *extra      = yyget_extra(yyscanner);
 
-static int savestr(void)
-{
-    if ((signed)yyleng >= (signed)sizeof yylval.str) {
-        yyerror("token too long");
+    if (len >= (signed)sizeof lval->str) {
+        yyerror(lloc, extra, "token too long");
         return 1;
     } else {
-        snprintf(yylval.str, yyleng + 1, "%s", yytext);
+        snprintf(lval->str, len + 1, "%s", text);
         return 0;
     }
 }
 
-/*
- * We use this routine instead a lex pattern because we don't need
- * to save the matched comment in the `yytext' buffer.
- */
-static void skip_comment(int style)
+void switch_to_stream(FILE *f, yyscan_t yyscanner)
 {
-    int c1, c2 = 0;
-
-    c1 = input();
-    if (style == C89_STYLE) {
-        c2 = input();
-
-        while (c2 != EOF && !(c1 == '*' && c2 == '/')) {
-            if (c1 == '\n')
-                ++lineno, column = 0;
-            c1 = c2;
-            c2 = input();
-        }
-    } else {
-        while (c2 != EOF && !(c1 == '\n'))
-            c1 = input();
-        if (c1 == '\n') 
-            ++lineno, column = 0;
-    }
-}
-
-void switch_to_stream(FILE *f)
-{
-    yyin = f;
-    yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
-    BEGIN(INITIAL);
+    yyset_in(f, yyscanner);
+    //BEGIN(INITIAL); // TODO ?
 }
 

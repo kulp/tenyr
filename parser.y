@@ -1,23 +1,24 @@
 %{
     #include <stdio.h>
-    #include <stddef.h>
     #include <ctype.h>
     #include <stdint.h>
+    #include <string.h>
+    #include <stdlib.h>
 
     #include "parser_global.h"
-    #include "lexer.h"
-    #include "ops.h"
 
-    int yyerror(const char *msg);
-    static struct instruction_list *top;
-    static struct label_list {
-        struct label *label;
-        struct label_list *next;
-    } *labels;
-    static uint32_t reladdr;
+    int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
+    #define YYLEX_PARAM (pd->scanner)
 %}
 
 %error-verbose
+%pure-parser
+%locations
+%define parse.lac full
+%lex-param { void *yyscanner }
+%parse-param { struct parse_data *pd }
+
+%start program
 
 %token '[' ']' '.'
 %token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ '$'
@@ -69,18 +70,16 @@
     int arrow;
 }
 
-%start program
-
 %%
 
 program
     : insn
-        {   top = $$ = malloc(sizeof *$$);
+        {   pd->top = $$ = malloc(sizeof *$$);
             $$->next = NULL;
             $$->insn = $1; }
     | insn program
-        {   top = $$ = malloc(sizeof *$$);
-            reladdr++; // XXX not safe ? when does this happen ?
+        {   pd->top = $$ = malloc(sizeof *$$);
+            pd->reladdr++; // XXX not safe ? when does this happen ?
             $$->next = $2;
             $$->insn = $1; }
 
@@ -109,20 +108,19 @@ insn
         {   // TODO add label to a chain, and associate it with the
             // instruction
             $$ = $3;
-            extern int column, lineno;
             struct label *n = malloc(sizeof *n);
-            n->column   = column;
-            n->lineno   = lineno;
+            n->column   = yylloc.first_column;
+            n->lineno   = yylloc.first_line;
             n->resolved = 1;
-            n->reladdr  = reladdr;
+            n->reladdr  = pd->reladdr;
             n->next     = $$->label;
             strncpy(n->name, $1, sizeof n->name);
             $$->label = n;
 
             struct label_list *l = malloc(sizeof *l);
-            l->next  = labels;
+            l->next  = pd->labels;
             l->label = n;
-            labels = l;
+            pd->labels = l;
         }
 
 lhs
@@ -220,27 +218,19 @@ const_atom
         }
     | '.'
         {   $$.type = ICI;
-            $$.reladdr = reladdr; }
+            $$.reladdr = pd->reladdr; }
 
 labelref
     : '@' LABEL { strncpy($$, $2, sizeof $$); $$[sizeof $$ - 1] = 0; }
 
 %%
 
-int yyerror(const char *s)
+int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
-    extern int lineno, column;
-    extern char *yytext;
-
     fflush(stderr);
-    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", column, "^", column, s,
-            lineno + 1, yytext);
+    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", locp->last_column, "^",
+            locp->last_column, s, locp->first_line, yyget_text(pd->scanner));
 
     return 0;
-}
-
-struct instruction_list *tenor_get_parser_result(void)
-{
-    return top;
 }
 

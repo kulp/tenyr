@@ -14,7 +14,7 @@ tas.o: parser.h
 tas: parser.o lexer.o
 
 # flex-generated code we can't control warnings of as easily
-lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused-function
+lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused
 
 lexer.h lexer.c: lexer.l
 	flex --header-file=lexer.h -o lexer.c $<

@@ -7,6 +7,7 @@
 #include "ops.h"
 #include "parser.h"
 #include "parser_global.h"
+#include "lexer.h"
 #include "common.h"
 
 static const char *op_names[] = {
@@ -132,15 +133,20 @@ static int find_format_by_name(const void *_a, const void *_b)
 
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
-    int yyparse(void);
-    void switch_to_stream(FILE *f);
+    yyscan_t yyscanner;
+    struct parse_data pd = {
+        .top = NULL,
+    };
+
+    yylex_init(&yyscanner);
+    yyset_extra(&pd, yyscanner);
 
     if (in)
-        switch_to_stream(in);
+        switch_to_stream(in, pd.scanner);
 
-    int result = yyparse();
+    int result = yyparse(yyscanner);
     if (!result && f) {
-        struct instruction_list *p = tenor_get_parser_result(), *q = p;
+        struct instruction_list *p = pd.top, *q = p;
 
         while (q) {
             struct instruction_list *t = q;
@@ -149,6 +155,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             free(t);
         }
     }
+    yylex_destroy(yyscanner);
 
     return 0;
 }
