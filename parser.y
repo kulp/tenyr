@@ -25,7 +25,7 @@ int yyerror(YYLTYPE *locp, struct parse_data *pd, const char *s);
 %token '|' '&' '+' '-' '*' '%' '^' '>' LSH LTE EQ NOR NAND XORN RSH NEQ '$'
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL
-%token <i> REGISTER
+%token <chr> REGISTER
 %token ILLEGAL
 
 %type <ce> const_expr add_expr mult_expr const_atom
@@ -149,14 +149,16 @@ expr
             $$.op    = OP_BITWISE_OR;
             $$.y     = 0;
             $$.mult  = $2;
-            $$.ce    = $3; }
+            $$.ce    = $3;
+            $$.i     = 0xbad; }
     | regname op regname addsub const_expr
         {   $$.deref = 0;
             $$.x     = $1;
             $$.op    = $2;
             $$.y     = $3;
             $$.mult  = $4;
-            $$.ce    = $5; }
+            $$.ce    = $5;
+            $$.i     = 0xbad; }
     | '[' expr ']' /* permits arbitrary nesting, but meaningless */
         {   $$ = $2;
             $$.deref = 1; }
