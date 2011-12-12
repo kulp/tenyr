@@ -10,6 +10,10 @@
 
     int yyerror(const char *msg);
     static struct instruction_list *top;
+    static struct label_list {
+        struct label *label;
+        struct label_list *next;
+    } *labels;
     static uint32_t reladdr;
 %}
 
@@ -96,24 +100,29 @@ insn
             $$->u._0xxx.imm = $3.i; }
     | lhs TOL sign_immediate
         {   $$ = malloc(sizeof *$$);
-            $$->u._10x0.p = $3.sextend;
+            $$->u._10x0.p   = $3.sextend;
             $$->u._10x0.imm = $3.i;
-            $$->u._10x0.t = 2;
-            $$->u._10x0.z = $1.x;
-            $$->u._10x0.d = $1.deref; }
+            $$->u._10x0.t   = 2;
+            $$->u._10x0.z   = $1.x;
+            $$->u._10x0.d   = $1.deref; }
     | LABEL ':' insn
         {   // TODO add label to a chain, and associate it with the
             // instruction
             $$ = $3;
             extern int column, lineno;
             struct label *n = malloc(sizeof *n);
-            n->column = column;
-            n->lineno = lineno;
+            n->column   = column;
+            n->lineno   = lineno;
             n->resolved = 1;
-            n->reladdr = reladdr;
+            n->reladdr  = reladdr;
+            n->next     = $$->label;
             strncpy(n->name, $1, sizeof n->name);
-            n->next = $$->label;
             $$->label = n;
+
+            struct label_list *l = malloc(sizeof *l);
+            l->next  = labels;
+            l->label = n;
+            labels = l;
         }
 
 lhs
