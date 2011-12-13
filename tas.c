@@ -131,6 +131,58 @@ static int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
+static int eval_ce(struct const_expr *ce, uint32_t *result)
+{
+    uint32_t left, right;
+    int ok = 0;
+
+    switch (ce->type) {
+        case LAB:
+        case ICI:
+        case IMM:
+            ok = 1;
+            break;
+        case ADD:
+        case SUB:
+        case MUL:
+            ok = !eval_ce(ce->left, &left) && !eval_ce(ce->right, &right);
+            break;
+        case PAR:
+            ok = !eval_ce(ce->left, &left);
+            break;
+    }
+
+    if (!ok)
+        return 1;
+
+    switch (ce->type) {
+        case LAB: *result = 0; return 0; // TODO look up label
+        case ICI: *result = ce->reladdr  ; break;
+        case IMM: *result = ce->i.i      ; break;
+        case ADD: *result = left + right ; break;
+        case SUB: *result = left - right ; break;
+        case MUL: *result = left * right ; break;
+        case PAR: *result = left         ; break;
+    }
+
+    return 0;
+}
+
+static int fixup_relocations(struct relocation_list *r)
+{
+    while (r) {
+        struct const_expr *ce = r->ce;
+
+        uint32_t result;
+        if (!eval_ce(ce, &result))
+            printf("%d\n", result);
+
+        r = r->next;
+    }
+
+    return 0;
+}
+
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
     struct parse_data pd = {
@@ -146,6 +198,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
     int result = tenor_parse(&pd);
     if (!result && f) {
         struct instruction_list *p = pd.top, *q = p;
+        fixup_relocations(pd.relocs);
 
         while (q) {
             struct instruction_list *t = q;
