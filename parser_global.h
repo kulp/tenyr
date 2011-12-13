@@ -6,6 +6,10 @@
 
 struct parse_data {
     void *scanner;
+    struct {
+        unsigned savecol;
+        char saveline[512]; // TODO document limit
+    } lexstate;
     struct instruction_list *top;
     struct relocation_list {
         struct const_expr *ce;

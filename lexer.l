@@ -2,14 +2,21 @@
 #include <stdio.h>
 #include "parser.h"
 #include "ops.h"
+#include "common.h"
+#include "parser_global.h"
 
-struct parse_data;
 int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 static int savestr(yyscan_t yyscanner);
 
+#define savecol  yyextra->lexstate.savecol
+#define saveline yyextra->lexstate.saveline
+
 #define YY_USER_ACTION \
     do { \
+        int len = MIN(yyleng, sizeof saveline - savecol); \
+        strncpy(&saveline[savecol], yytext, len); \
+        saveline[savecol += len] = 0; \
         yylloc->first_line = yylloc->last_line = yylineno; \
         yylloc->first_column = yycolumn; \
         yylloc->last_column = yycolumn + yyleng - 1; \
@@ -29,7 +36,8 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 
 %%
 
-[\n;]                   ;
+";"                     ;
+"\n"                    { saveline[savecol = 0] = 0; }
 "illegal"               { return ILLEGAL; }
 
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }

@@ -232,6 +232,7 @@ lref
 int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
     fflush(stderr);
+    fprintf(stderr, "%s\n", pd->lexstate.saveline);
     fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", locp->last_column, "^",
             locp->last_column, s, locp->first_line, tenor_get_text(pd->scanner));
 
