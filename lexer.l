@@ -1,13 +1,21 @@
 %{
 #include <stdio.h>
 #include "parser.h"
-#include "parser.h"
 #include "ops.h"
 
 struct parse_data;
 int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 static int savestr(yyscan_t yyscanner);
+
+#define YY_USER_ACTION \
+    do { \
+        yylloc->first_line = yylloc->last_line = yylineno; \
+        yylloc->first_column = yycolumn; \
+        yylloc->last_column = yycolumn + yyleng - 1; \
+        yycolumn += yyleng; \
+    } while (0);
+
 %}
 
 %option reentrant bison-bridge bison-locations
