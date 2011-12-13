@@ -175,7 +175,7 @@ static int fixup_relocations(struct relocation_list *r)
 
         uint32_t result;
         if (!eval_ce(ce, &result))
-            printf("%d\n", result);
+            fprintf(stderr, "%d\n", result);
 
         r = r->next;
     }

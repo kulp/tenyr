@@ -13,6 +13,8 @@ static struct const_expr *add_relocation(struct parse_data *pd, struct
         const_expr *ce);
 static struct const_expr *make_const_expr(int type, struct const_expr *left,
         struct const_expr *right);
+static int make_expr(struct parse_data *pd, struct expr *e, int x, int op,
+        int y, int mult, struct const_expr *reloc);
 
 #define YYLEX_PARAM (pd->scanner)
 %}
@@ -70,7 +72,7 @@ static struct const_expr *make_const_expr(int type, struct const_expr *left,
         int op;
         struct const_expr *left, *right;
     } *ce;
-    struct {
+    struct expr {
         int deref;
         int x;
         int op;
@@ -150,37 +152,15 @@ lhs[outer]
 
 expr[outer]
     : regname[x]
-        {   $outer.deref = 0;
-            $outer.x     = $x;
-            $outer.op    = OP_BITWISE_OR;
-            $outer.y     = 0;
-            $outer.i     = 0; }
+        { make_expr(pd, &$outer, $x, OP_BITWISE_OR, 0, 0, NULL); }
     | regname[x] op regname[y]
-        {   $outer.deref = 0;
-            $outer.x     = $x;
-            $outer.op    = $op;
-            $outer.y     = $y;
-            $outer.mult  = 0;
-            $outer.i     = 0; }
+        { make_expr(pd, &$outer, $x, $op, $y, 0, NULL); }
     | regname[x] addsub const_expr
-        {   $outer.deref = 0;
-            $outer.x     = $x;
-            $outer.op    = OP_BITWISE_OR;
-            $outer.y     = 0;
-            $outer.mult  = $addsub;
-            $outer.ce    = add_relocation(pd, $const_expr);
-            $outer.i     = 0xbad; /*TODO*/}
+        { make_expr(pd, &$outer, $x, OP_BITWISE_OR, 0, $addsub, $const_expr); }
     | regname[x] op regname[y] addsub const_expr
-        {   $outer.deref = 0;
-            $outer.x     = $x;
-            $outer.op    = $op;
-            $outer.y     = $y;
-            $outer.mult  = $addsub;
-            $outer.ce    = add_relocation(pd, $const_expr);
-            $outer.i     = 0xbad; /*TODO*/}
-    | '[' expr[inner] ']' /* permits arbitrary nesting, but meaningless */
-        {   $outer = $inner;
-            $outer.deref = 1; }
+        { make_expr(pd, &$outer, $x, $op, $y, $addsub, $const_expr); }
+    | '[' expr[inner] ']' /* TODO lookahead to prevent nesting of [ */
+        { $outer = $inner; $outer.deref = 1; }
 
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
@@ -279,3 +259,20 @@ static struct const_expr *make_const_expr(int type, struct const_expr *left,
 
     return n;
 }
+
+static int make_expr(struct parse_data *pd, struct expr *e, int x, int op,
+        int y, int mult, struct const_expr *reloc)
+{
+    e->deref = 0;
+    e->x     = x;
+    e->op    = op;
+    e->y     = y;
+    e->mult  = mult;
+    e->i     = 0xbad; /*TODO*/
+
+    if (reloc)
+        e->ce = add_relocation(pd, reloc);
+
+    return 0;
+}
+
