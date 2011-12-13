@@ -11,8 +11,8 @@
 int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_relocation(struct parse_data *pd, struct
         const_expr *ce);
-static struct const_expr *make_const_expr(int type, struct const_expr *left,
-        struct const_expr *right);
+static struct const_expr *make_const_expr(int type, int op, struct const_expr
+        *left, struct const_expr *right);
 static int make_expr(struct parse_data *pd, struct expr *e, int x, int op,
         int y, int mult, struct const_expr *reloc);
 
@@ -41,7 +41,8 @@ static int make_expr(struct parse_data *pd, struct expr *e, int x, int op,
 %left '&' NAND
 %left LSH RSH
 
-%token '[' ']' '.' '$' '(' ')'
+%token <chr> '[' ']' '.' '$' '(' ')'
+%token <chr> '+' '-' '*'
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL
 %token <chr> REGISTER
@@ -65,7 +66,7 @@ static int make_expr(struct parse_data *pd, struct expr *e, int x, int op,
         uint32_t i;
     } signimm;
     struct const_expr {
-        enum { ADD, SUB, MUL, LAB, IMM, ICI, PAR } type;
+        enum { OP2, LAB, IMM, ICI } type;
         struct sign_imm i;
         uint32_t reladdr : 24;
         char labelname[32]; // TODO document length
@@ -202,24 +203,24 @@ const_expr[outer]
     : atom
         {   $outer = $atom; }
     | const_expr[left] '+' const_expr[right]
-        {   $outer = make_const_expr(ADD, $left, $right); }
+        {   $outer = make_const_expr(OP2, $2, $left, $right); }
     | const_expr[left] '-' const_expr[right]
-        {   $outer = make_const_expr(SUB, $left, $right); }
+        {   $outer = make_const_expr(OP2, $2, $left, $right); }
     | const_expr[left] '*' const_expr[right]
-        {   $outer = make_const_expr(MUL, $left, $right); }
+        {   $outer = make_const_expr(OP2, $2, $left, $right); }
     | '(' const_expr[inner] ')'
-        {   $outer = make_const_expr(PAR, $inner, NULL); }
+        {   $outer = $inner; }
 
 atom
     : sign_imm
-        {   $atom = make_const_expr(IMM, NULL, NULL);
+        {   $atom = make_const_expr(IMM, 0, NULL, NULL);
             $atom->i = $sign_imm; }
     | lref
-        {   $atom = make_const_expr(LAB, NULL, NULL);
+        {   $atom = make_const_expr(LAB, 0, NULL, NULL);
             strncpy($atom->labelname, $lref, sizeof $atom->labelname);
         }
     | '.'
-        {   $atom = make_const_expr(ICI, NULL, NULL);
+        {   $atom = make_const_expr(ICI, 0, NULL, NULL);
             $atom->reladdr = pd->reladdr; }
 
 lref
@@ -248,12 +249,13 @@ static struct const_expr *add_relocation(struct parse_data *pd, struct const_exp
     return ce;
 }
 
-static struct const_expr *make_const_expr(int type, struct const_expr *left,
-        struct const_expr *right)
+static struct const_expr *make_const_expr(int type, int op, struct const_expr
+        *left, struct const_expr *right)
 {
     struct const_expr *n = malloc(sizeof *n);
 
     n->type  = type;
+    n->op    = op;
     n->left  = left;
     n->right = right;
 

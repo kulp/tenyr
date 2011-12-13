@@ -134,38 +134,24 @@ static int find_format_by_name(const void *_a, const void *_b)
 static int eval_ce(struct const_expr *ce, uint32_t *result)
 {
     uint32_t left, right;
-    int ok = 0;
 
     switch (ce->type) {
-        case LAB:
-        case ICI:
-        case IMM:
-            ok = 1;
-            break;
-        case ADD:
-        case SUB:
-        case MUL:
-            ok = !eval_ce(ce->left, &left) && !eval_ce(ce->right, &right);
-            break;
-        case PAR:
-            ok = !eval_ce(ce->left, &left);
-            break;
+        case LAB: *result = 0          ; return 0; // TODO look up label
+        case ICI: *result = ce->reladdr; return 0;
+        case IMM: *result = ce->i.i    ; return 0;
+        case OP2:
+            if (!eval_ce(ce->left, &left) && !eval_ce(ce->right, &right)) {
+                switch (ce->op) {
+                    case '+': *result = left + right; return 0;
+                    case '-': *result = left - right; return 0;
+                    case '*': *result = left * right; return 0;
+                    default: abort(); // TODO handle more gracefully
+                }
+            }
+            return 1;
+        default:
+            abort(); // TODO handle more gracefully
     }
-
-    if (!ok)
-        return 1;
-
-    switch (ce->type) {
-        case LAB: *result = 0; return 0; // TODO look up label
-        case ICI: *result = ce->reladdr  ; break;
-        case IMM: *result = ce->i.i      ; break;
-        case ADD: *result = left + right ; break;
-        case SUB: *result = left - right ; break;
-        case MUL: *result = left * right ; break;
-        case PAR: *result = left         ; break;
-    }
-
-    return 0;
 }
 
 static int fixup_relocations(struct relocation_list *r)
@@ -194,6 +180,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
     if (in)
         tenor_set_in(in, pd.scanner);
+        //tenor_restart(in, pd.scanner); // TODO ?
 
     int result = tenor_parse(&pd);
     if (!result && f) {
