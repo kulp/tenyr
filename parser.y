@@ -9,6 +9,11 @@
 #include "lexer.h"
 
 int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
+static struct const_expr *add_relocation(struct parse_data *pd, struct
+        const_expr *ce);
+static struct const_expr *make_const_expr(int type, struct const_expr *left,
+        struct const_expr *right);
+
 #define YYLEX_PARAM (pd->scanner)
 %}
 
@@ -58,13 +63,13 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
         uint32_t i;
     } signimm;
     struct const_expr {
-        enum { ADD, MUL, LAB, IMM, ICI, PAR } type;
+        enum { ADD, SUB, MUL, LAB, IMM, ICI, PAR } type;
         struct sign_imm i;
         uint32_t reladdr : 24;
         char labelname[32]; // TODO document length
         int op;
         struct const_expr *left, *right;
-    } ce;
+    } *ce;
     struct {
         int deref;
         int x;
@@ -72,7 +77,7 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
         int y;
         uint32_t i;
         int mult;   ///< multiplier from addsub
-        struct const_expr ce;
+        struct const_expr *ce;
     } expr;
     struct instruction *insn;
     struct instruction_list *program;
@@ -115,6 +120,7 @@ insn[outer]
             $outer->u._10x0.p   = $sign_imm.sextend;
             $outer->u._10x0.imm = $sign_imm.i;
             */ // TODO
+            add_relocation(pd, $const_expr);
             $outer->u._10x0.t   = 2;
             $outer->u._10x0.z   = $lhs.x;
             $outer->u._10x0.d   = $lhs.deref; }
@@ -162,7 +168,7 @@ expr[outer]
             $outer.op    = OP_BITWISE_OR;
             $outer.y     = 0;
             $outer.mult  = $addsub;
-            $outer.ce    = $const_expr;
+            $outer.ce    = add_relocation(pd, $const_expr);
             $outer.i     = 0xbad; /*TODO*/}
     | regname[x] op regname[y] addsub const_expr
         {   $outer.deref = 0;
@@ -170,7 +176,7 @@ expr[outer]
             $outer.op    = $op;
             $outer.y     = $y;
             $outer.mult  = $addsub;
-            $outer.ce    = $const_expr;
+            $outer.ce    = add_relocation(pd, $const_expr);
             $outer.i     = 0xbad; /*TODO*/}
     | '[' expr[inner] ']' /* permits arbitrary nesting, but meaningless */
         {   $outer = $inner;
@@ -212,24 +218,29 @@ arrow
     : TOL { $arrow = 0; }
     | TOR { $arrow = 1; }
 
-const_expr
+const_expr[outer]
     : atom
-    | const_expr '+' const_expr
-    | const_expr '-' const_expr
-    | const_expr '*' const_expr
-    | '(' const_expr ')'
+        {   $outer = $atom; }
+    | const_expr[left] '+' const_expr[right]
+        {   $outer = make_const_expr(ADD, $left, $right); }
+    | const_expr[left] '-' const_expr[right]
+        {   $outer = make_const_expr(SUB, $left, $right); }
+    | const_expr[left] '*' const_expr[right]
+        {   $outer = make_const_expr(MUL, $left, $right); }
+    | '(' const_expr[inner] ')'
+        {   $outer = make_const_expr(PAR, $inner, NULL); }
 
 atom
     : sign_imm
-        {   $atom.type = IMM;
-            $atom.i = $sign_imm; }
+        {   $atom = make_const_expr(IMM, NULL, NULL);
+            $atom->i = $sign_imm; }
     | lref
-        {   $atom.type = LAB;
-            strncpy($atom.labelname, $lref, sizeof $atom.labelname);
+        {   $atom = make_const_expr(LAB, NULL, NULL);
+            strncpy($atom->labelname, $lref, sizeof $atom->labelname);
         }
     | '.'
-        {   $atom.type = ICI;
-            $atom.reladdr = pd->reladdr; }
+        {   $atom = make_const_expr(ICI, NULL, NULL);
+            $atom->reladdr = pd->reladdr; }
 
 lref
     : '@' LABEL
@@ -246,3 +257,25 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
     return 0;
 }
 
+static struct const_expr *add_relocation(struct parse_data *pd, struct const_expr *ce)
+{
+    struct relocation_list *n = malloc(sizeof *n);
+
+    n->next = pd->relocs;
+    n->ce = ce;
+    pd->relocs = n;
+
+    return ce;
+}
+
+static struct const_expr *make_const_expr(int type, struct const_expr *left,
+        struct const_expr *right)
+{
+    struct const_expr *n = malloc(sizeof *n);
+
+    n->type  = type;
+    n->left  = left;
+    n->right = right;
+
+    return n;
+}

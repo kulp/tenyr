@@ -7,6 +7,10 @@
 struct parse_data {
     void *scanner;
     struct instruction_list *top;
+    struct relocation_list {
+        struct const_expr *ce;
+        struct relocation_list *next;
+    } *relocs;
     struct label_list {
         struct label *label;
         struct label_list *next;
