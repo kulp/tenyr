@@ -25,19 +25,22 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 %start program
 
-%left LTE EQ NEQ '>'
+%left EQ NEQ
+%left LTE '>'
 %left '+' '-'
 %left '*' '%'
-%left '|' '&' '^' NOR NAND XORN
+%left '^' XORN
+%left '|' NOR
+%left '&' NAND
 %left LSH RSH
 
-%token '[' ']' '.' '$'
+%token '[' ']' '.' '$' '(' ')'
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL
 %token <chr> REGISTER
 %token ILLEGAL
 
-%type <ce> const_expr add_expr mult_expr atom
+%type <ce> const_expr atom
 %type <expr> expr lhs
 %type <i> arrow immediate regname
 %type <insn> insn
@@ -50,9 +53,13 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 %union {
     uint32_t i;
     signed s;
-    struct const_expr {
-        enum { ADD, MUL, LAB, IMM, ICI } type;
+    struct sign_imm {
+        int sextend;
         uint32_t i;
+    } signimm;
+    struct const_expr {
+        enum { ADD, MUL, LAB, IMM, ICI, PAR } type;
+        struct sign_imm i;
         uint32_t reladdr : 24;
         char labelname[32]; // TODO document length
         int op;
@@ -67,10 +74,6 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
         int mult;   ///< multiplier from addsub
         struct const_expr ce;
     } expr;
-    struct {
-        int sextend;
-        uint32_t i;
-    } signimm;
     struct instruction *insn;
     struct instruction_list *program;
     char str[64]; // TODO document length
@@ -106,10 +109,12 @@ insn[outer]
             $outer->u._0xxx.r   = $arrow;
             $outer->u._0xxx.op  = $expr.op;
             $outer->u._0xxx.imm = $expr.i; }
-    | lhs TOL sign_imm
+    | lhs TOL const_expr
         {   $outer = malloc(sizeof *$outer);
+            /*
             $outer->u._10x0.p   = $sign_imm.sextend;
             $outer->u._10x0.imm = $sign_imm.i;
+            */ // TODO
             $outer->u._10x0.t   = 2;
             $outer->u._10x0.z   = $lhs.x;
             $outer->u._10x0.d   = $lhs.deref; }
@@ -132,44 +137,44 @@ insn[outer]
             pd->labels = l;
         }
 
-lhs
-    : regname { $lhs.x = $regname; $lhs.deref = 0; }
+lhs[outer]
+    : regname { $outer.x = $regname; $outer.deref = 0; }
     /* permits arbitrary nesting, but meaningless */
-    | '[' lhs[inner] ']' { $$ = $inner; $$.deref = 1; }
+    | '[' lhs[inner] ']' { $outer = $inner; $outer.deref = 1; }
 
-expr[left]
+expr[outer]
     : regname[x]
-        {   $left.deref = 0;
-            $left.x     = $x;
-            $left.op    = OP_BITWISE_OR;
-            $left.y     = 0;
-            $left.i     = 0; }
+        {   $outer.deref = 0;
+            $outer.x     = $x;
+            $outer.op    = OP_BITWISE_OR;
+            $outer.y     = 0;
+            $outer.i     = 0; }
     | regname[x] op regname[y]
-        {   $left.deref = 0;
-            $left.x     = $x;
-            $left.op    = $op;
-            $left.y     = $y;
-            $left.mult  = 0;
-            $left.i     = 0; }
+        {   $outer.deref = 0;
+            $outer.x     = $x;
+            $outer.op    = $op;
+            $outer.y     = $y;
+            $outer.mult  = 0;
+            $outer.i     = 0; }
     | regname[x] addsub const_expr
-        {   $left.deref = 0;
-            $left.x     = $x;
-            $left.op    = OP_BITWISE_OR;
-            $left.y     = 0;
-            $left.mult  = $addsub;
-            $left.ce    = $const_expr;
-            $left.i     = 0xbad; /*TODO*/}
+        {   $outer.deref = 0;
+            $outer.x     = $x;
+            $outer.op    = OP_BITWISE_OR;
+            $outer.y     = 0;
+            $outer.mult  = $addsub;
+            $outer.ce    = $const_expr;
+            $outer.i     = 0xbad; /*TODO*/}
     | regname[x] op regname[y] addsub const_expr
-        {   $left.deref = 0;
-            $left.x     = $x;
-            $left.op    = $op;
-            $left.y     = $y;
-            $left.mult  = $addsub;
-            $left.ce    = $const_expr;
-            $left.i     = 0xbad; /*TODO*/}
+        {   $outer.deref = 0;
+            $outer.x     = $x;
+            $outer.op    = $op;
+            $outer.y     = $y;
+            $outer.mult  = $addsub;
+            $outer.ce    = $const_expr;
+            $outer.i     = 0xbad; /*TODO*/}
     | '[' expr[inner] ']' /* permits arbitrary nesting, but meaningless */
-        {   $left = $inner;
-            $left.deref = 1; }
+        {   $outer = $inner;
+            $outer.deref = 1; }
 
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
@@ -208,21 +213,16 @@ arrow
     | TOR { $arrow = 1; }
 
 const_expr
-    : add_expr
-
-add_expr
-    : mult_expr
-    | add_expr '+' mult_expr
-    | add_expr '-' mult_expr
-
-mult_expr
     : atom
-    | mult_expr '*' atom 
+    | const_expr '+' const_expr
+    | const_expr '-' const_expr
+    | const_expr '*' const_expr
+    | '(' const_expr ')'
 
 atom
-    : immediate
+    : sign_imm
         {   $atom.type = IMM;
-            $atom.i = $immediate; }
+            $atom.i = $sign_imm; }
     | lref
         {   $atom.type = LAB;
             strncpy($atom.labelname, $lref, sizeof $atom.labelname);

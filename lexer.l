@@ -27,7 +27,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
 {label}                 { savestr(yyscanner); return LABEL; }
 
-[][|&+*%^>$.:@-]        { return yytext[0]; }
+[][|&+*%^>$.:@()-]      { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "<="                    { return LTE;  }
