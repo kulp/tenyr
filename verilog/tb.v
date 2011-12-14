@@ -14,7 +14,8 @@ module test;
     reg[31:0] val;
 
     wire mem_enable = reading ^ writing;
-    mem testmem(clk, mem_enable, writing, mem_addr, _mem_data);
+    mem #(.BASE(0), .SIZE(4)) testmem0(clk, mem_enable, writing, mem_addr, _mem_data);
+    mem #(.BASE(4), .SIZE(4)) testmem1(clk, mem_enable, writing, mem_addr, _mem_data);
 
     always @(negedge clk) begin
         if (reading)
