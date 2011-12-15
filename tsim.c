@@ -35,8 +35,6 @@ int run_instruction(struct state *s, struct instruction *i)
         }
         case 0b0000 ... 0b0111: {
             struct instruction_general *g = &i->u._0xxx;
-            int ld = g->dd & 2;
-            int rd = g->dd & 1;
             uint32_t *Z = &s->regs[g->z];
             uint32_t  X =  s->regs[g->x];
             uint32_t  Y =  s->regs[g->y];
@@ -62,8 +60,8 @@ int run_instruction(struct state *s, struct instruction *i)
                 case OP_COMPARE_NE          : *rhs = -(X  != Y) + I; break;
             }
 
-            if (ld) Z   = &s->mem[*Z   & PTR_MASK];
-            if (rd) rhs = &s->mem[*rhs & PTR_MASK];
+            if (g->dd & 2) Z   = &s->mem[*Z   & PTR_MASK];
+            if (g->dd & 1) rhs = &s->mem[*rhs & PTR_MASK];
 
             {
                 uint32_t *r, *w;
