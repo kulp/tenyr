@@ -58,7 +58,9 @@ int print_disassembly(FILE *out, struct instruction *i)
             struct instruction_general *g = &i->u._0xxx;
             int ld = g->dd & 2;
             int rd = g->dd & 1;
-            fprintf(out, "%c%c%c %s %c%c %-2s %c + 0x%08x%c\n",
+            fprintf(out,
+                    g->imm ? "%c%c%c %s %c%c %-2s %c + 0x%08x%c\n"
+                           : "%c%c%c %s %c%c %-2s %c\n",
                     ld ? '[' : ' ',     // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     ld ? ']' : ' ',     // left side dereferenced ?
@@ -178,9 +180,11 @@ static int fixup_relocations(struct parse_data *pd)
 
         uint32_t result;
         if (!eval_ce(pd, ce, &result)) {
-            fprintf(stderr, "%d\n", result);
             // TODO check for resolvedness first
-            *r->dest |= result & ~(-1 << r->width);
+            uint32_t mask = -1 << r->width;
+            result *= r->mult;
+            *r->dest &= mask;
+            *r->dest |= result & ~mask;
         }
 
         r = r->next;

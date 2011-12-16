@@ -15,6 +15,7 @@ struct parse_data {
         struct const_expr *ce;
         uint32_t *dest;     ///< destination word to be updated
         int width;          ///< width in bits of the right-justified immediate
+        int mult;           ///< multiplier (1 or -1, according to sign)
         struct relocation_list *next;
     } *relocs;
     struct label_list {

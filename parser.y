@@ -10,7 +10,7 @@
 
 int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_relocation(struct parse_data *pd, struct
-        const_expr *ce, uint32_t *dest, int width);
+        const_expr *ce, int mult, uint32_t *dest, int width);
 static struct const_expr *make_const_expr(int type, int op, struct const_expr
         *left, struct const_expr *right);
 static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
@@ -116,6 +116,8 @@ insn[outer]
             $outer->u._0xxx.y   = $expr->y;
             $outer->u._0xxx.r   = $arrow;
             $outer->u._0xxx.op  = $expr->op;
+            if ($expr->ce)
+                add_relocation(pd, $expr->ce, $expr->mult, &$outer->u.word, 12);
             $outer->u._0xxx.imm = $expr->i; }
     | lhs TOL const_expr
         {   $outer = malloc(sizeof *$outer);
@@ -123,7 +125,7 @@ insn[outer]
             $outer->u._10x0.p   = $sign_imm.sextend;
             */ // TODO
             // TODO hoist constant
-            //add_relocation(pd, $const_expr, &$outer->u.word, 24);
+            add_relocation(pd, $const_expr, 1, &$outer->u.word, 24);
             $outer->u._10x0.t   = 2;
             $outer->u._10x0.z   = $lhs->x;
             $outer->u._10x0.d   = $lhs->deref; }
@@ -238,7 +240,7 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
 }
 
 static struct const_expr *add_relocation(struct parse_data *pd, struct
-        const_expr *ce, uint32_t *dest, int width)
+        const_expr *ce, int mult, uint32_t *dest, int width)
 {
     struct relocation_list *n = malloc(sizeof *n);
 
@@ -246,6 +248,7 @@ static struct const_expr *add_relocation(struct parse_data *pd, struct
     n->ce    = ce;
     n->dest  = dest;
     n->width = width;
+    n->mult  = mult;
 
     pd->relocs = n;
 
@@ -266,6 +269,7 @@ static struct const_expr *make_const_expr(int type, int op, struct const_expr
 }
 
 static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
+
         int mult, struct const_expr *reloc)
 {
     struct expr *e = malloc(sizeof *e);
@@ -275,7 +279,11 @@ static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
     e->op    = op;
     e->y     = y;
     e->mult  = mult;
-    e->i     = 0xbad;
+    e->ce    = reloc;
+    if (reloc)
+        e->i = 0xfffffbad; // put in a placeholder that must be overwritten
+    else
+        e->i = 0; // there was no const_expr ; zero defined by language
 
     return e;
 }
