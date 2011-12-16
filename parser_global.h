@@ -13,6 +13,8 @@ struct parse_data {
     struct instruction_list *top;
     struct relocation_list {
         struct const_expr *ce;
+        uint32_t *dest;     ///< destination word to be updated
+        int width;          ///< width in bits of the right-justified immediate
         struct relocation_list *next;
     } *relocs;
     struct label_list {

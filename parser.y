@@ -10,11 +10,11 @@
 
 int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_relocation(struct parse_data *pd, struct
-        const_expr *ce);
+        const_expr *ce, uint32_t *dest, int width);
 static struct const_expr *make_const_expr(int type, int op, struct const_expr
         *left, struct const_expr *right);
-static int make_expr(struct parse_data *pd, struct expr *e, int x, int op,
-        int y, int mult, struct const_expr *reloc);
+static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
+        int mult, struct const_expr *reloc);
 
 #define YYLEX_PARAM (pd->scanner)
 %}
@@ -79,9 +79,10 @@ static int make_expr(struct parse_data *pd, struct expr *e, int x, int op,
         int op;
         int y;
         uint32_t i;
+        int width;  ///< width of relocation XXX cleanup
         int mult;   ///< multiplier from addsub
         struct const_expr *ce;
-    } expr;
+    } *expr;
     struct instruction *insn;
     struct instruction_list *program;
     char str[64]; // TODO document length
@@ -99,7 +100,6 @@ program[outer]
             $outer->insn = $insn; }
     | insn program[inner]
         {   pd->top = $outer = malloc(sizeof *$outer);
-            pd->reladdr++; // XXX not safe ? when does this happen ?
             $outer->next = $inner;
             $outer->insn = $insn; }
 
@@ -110,23 +110,23 @@ insn[outer]
     | lhs arrow expr
         {   $outer = malloc(sizeof *$outer);
             $outer->u._0xxx.t   = 0;
-            $outer->u._0xxx.z   = $lhs.x;
-            $outer->u._0xxx.dd  = ($lhs.deref << 1) | ($lhs.deref);
-            $outer->u._0xxx.x   = $expr.x;
-            $outer->u._0xxx.y   = $expr.y;
+            $outer->u._0xxx.z   = $lhs->x;
+            $outer->u._0xxx.dd  = ($lhs->deref << 1) | ($lhs->deref);
+            $outer->u._0xxx.x   = $expr->x;
+            $outer->u._0xxx.y   = $expr->y;
             $outer->u._0xxx.r   = $arrow;
-            $outer->u._0xxx.op  = $expr.op;
-            $outer->u._0xxx.imm = $expr.i; }
+            $outer->u._0xxx.op  = $expr->op;
+            $outer->u._0xxx.imm = $expr->i; }
     | lhs TOL const_expr
         {   $outer = malloc(sizeof *$outer);
             /*
             $outer->u._10x0.p   = $sign_imm.sextend;
-            $outer->u._10x0.imm = $sign_imm.i;
             */ // TODO
-            add_relocation(pd, $const_expr);
+            // TODO hoist constant
+            //add_relocation(pd, $const_expr, &$outer->u.word, 24);
             $outer->u._10x0.t   = 2;
-            $outer->u._10x0.z   = $lhs.x;
-            $outer->u._10x0.d   = $lhs.deref; }
+            $outer->u._10x0.z   = $lhs->x;
+            $outer->u._10x0.d   = $lhs->deref; }
     | LABEL ':' insn[inner]
         {   // TODO add label to a chain, and associate it with the
             // instruction
@@ -134,8 +134,7 @@ insn[outer]
             struct label *n = malloc(sizeof *n);
             n->column   = yylloc.first_column;
             n->lineno   = yylloc.first_line;
-            n->resolved = 1;
-            n->reladdr  = pd->reladdr;
+            n->resolved = 0;
             n->next     = $outer->label;
             strncpy(n->name, $LABEL, sizeof n->name);
             $outer->label = n;
@@ -147,21 +146,21 @@ insn[outer]
         }
 
 lhs[outer]
-    : regname { $outer.x = $regname; $outer.deref = 0; }
+    : regname { ($outer = malloc(sizeof *$outer))->x = $regname; $outer->deref = 0; }
     /* permits arbitrary nesting, but meaningless */
-    | '[' lhs[inner] ']' { $outer = $inner; $outer.deref = 1; }
+    | '[' lhs[inner] ']' { $outer = $inner; $outer->deref = 1; }
 
 expr[outer]
     : regname[x]
-        { make_expr(pd, &$outer, $x, OP_BITWISE_OR, 0, 0, NULL); }
+        { $outer = make_expr(pd, $x, OP_BITWISE_OR, 0, 0, NULL); }
     | regname[x] op regname[y]
-        { make_expr(pd, &$outer, $x, $op, $y, 0, NULL); }
+        { $outer = make_expr(pd, $x, $op, $y, 0, NULL); }
     | regname[x] addsub const_expr
-        { make_expr(pd, &$outer, $x, OP_BITWISE_OR, 0, $addsub, $const_expr); }
+        { $outer = make_expr(pd, $x, OP_BITWISE_OR, 0, $addsub, $const_expr); }
     | regname[x] op regname[y] addsub const_expr
-        { make_expr(pd, &$outer, $x, $op, $y, $addsub, $const_expr); }
+        { $outer = make_expr(pd, $x, $op, $y, $addsub, $const_expr); }
     | '[' expr[inner] ']' /* TODO lookahead to prevent nesting of [ */
-        { $outer = $inner; $outer.deref = 1; }
+        { $outer = $inner; $outer->deref = 1; }
 
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
@@ -217,8 +216,7 @@ atom
             $atom->i = $sign_imm; }
     | lref
         {   $atom = make_const_expr(LAB, 0, NULL, NULL);
-            strncpy($atom->labelname, $lref, sizeof $atom->labelname);
-        }
+            strncpy($atom->labelname, $lref, sizeof $atom->labelname); }
     | '.'
         {   $atom = make_const_expr(ICI, 0, NULL, NULL);
             $atom->reladdr = pd->reladdr; }
@@ -239,12 +237,16 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
     return 0;
 }
 
-static struct const_expr *add_relocation(struct parse_data *pd, struct const_expr *ce)
+static struct const_expr *add_relocation(struct parse_data *pd, struct
+        const_expr *ce, uint32_t *dest, int width)
 {
     struct relocation_list *n = malloc(sizeof *n);
 
-    n->next = pd->relocs;
-    n->ce = ce;
+    n->next  = pd->relocs;
+    n->ce    = ce;
+    n->dest  = dest;
+    n->width = width;
+
     pd->relocs = n;
 
     return ce;
@@ -263,19 +265,18 @@ static struct const_expr *make_const_expr(int type, int op, struct const_expr
     return n;
 }
 
-static int make_expr(struct parse_data *pd, struct expr *e, int x, int op,
-        int y, int mult, struct const_expr *reloc)
+static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
+        int mult, struct const_expr *reloc)
 {
+    struct expr *e = malloc(sizeof *e);
+
     e->deref = 0;
     e->x     = x;
     e->op    = op;
     e->y     = y;
     e->mult  = mult;
-    e->i     = 0xbad; /*TODO*/
+    e->i     = 0xbad;
 
-    if (reloc)
-        e->ce = add_relocation(pd, reloc);
-
-    return 0;
+    return e;
 }
 
