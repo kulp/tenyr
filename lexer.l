@@ -1,96 +1,87 @@
-%option noyywrap
-
 %{
-    #include <stdio.h>
-    #include "parser.h"
-    #include "ops.h"
-    int lineno;
-    int column; // TODO
-    static void c(void);
-    static void skip_comment(int style);
-    enum { C89_STYLE, C99_STYLE };
+#include <stdio.h>
+#include "parser.h"
+#include "ops.h"
+#include "common.h"
+#include "parser_global.h"
+
+int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
+
+static int savestr(yyscan_t yyscanner);
+
+#define savecol  yyextra->lexstate.savecol
+#define saveline yyextra->lexstate.saveline
+
+#define YY_USER_ACTION \
+    do { \
+        int len = MIN(yyleng, sizeof saveline - savecol); \
+        strncpy(&saveline[savecol], yytext, len); \
+        saveline[savecol += len] = 0; \
+        yylloc->first_line = yylloc->last_line = yylineno; \
+        yylloc->first_column = yycolumn; \
+        yylloc->last_column = yycolumn + yyleng - 1; \
+        yycolumn += yyleng; \
+    } while (0);
+
 %}
 
-regname ([A-Pa-p])
+%option reentrant bison-bridge bison-locations
+%option noyywrap never-interactive yylineno batch
+%option case-insensitive
+%option extra-type="struct parse_data *"
+%option prefix="tenor_"
+
+regname ([A-P])
+label   ([A-Z_][A-Z0-9_]{1,30})
 
 %%
 
-"\n"                    { c(); lineno++; }
-"illegal"               { c(); return ILLEGAL; }
-{regname}               { c(); yylval.chr = yytext[0]; return REGISTER; }
-"["                     { c(); return '[';  }
-"]"                     { c(); return ']';  }
-"|"                     { c(); return '|';  }
-"&"                     { c(); return '&';  }
-"+"                     { c(); return '+';  }
-"*"                     { c(); return '*';  }
-"%"                     { c(); return '%';  }
-"<<"                    { c(); return LSH;  }
-"<="                    { c(); return LTE;  }
-"=="                    { c(); return EQ;   }
-"~|"                    { c(); return NOR;  }
-"~&"                    { c(); return NAND; }
-"^"                     { c(); return '^';  }
-"-"                     { c(); return '-';  }
-"^~"                    { c(); return XORN; }
-">>"                    { c(); return RSH;  }
-">"                     { c(); return '>';  }
-"<>"                    { c(); return NEQ;  }
-"<-"                    { c(); return TOL;  }
-"->"                    { c(); return TOR;  }
-"$"                     { c(); return '$';  }
+";"                     ;
+"\n"                    { saveline[savecol = 0] = 0; }
+"illegal"               { return ILLEGAL; }
 
--?"0"[xX][0-9a-fA-F]+   { c(); yylval.str = yytext; return INTEGER; }
--?"0"[0-7]+             { c(); yylval.str = yytext; return INTEGER; }
--?[0-9]+                { c(); yylval.str = yytext; return INTEGER; }
+{regname}               { yylval->chr = yytext[0]; return REGISTER; }
+{label}                 { savestr(yyscanner); return LABEL; }
 
-[\t\f\v\r ]+            { c(); }
+[][|&+*%^>$.:@()-]      { return yytext[0]; }
 
-"/*"                    { skip_comment(C89_STYLE); }
-"//"                    { skip_comment(C99_STYLE); }
+"<<"                    { return LSH;  }
+"<="                    { return LTE;  }
+"=="                    { return EQ;   }
+"~|"                    { return NOR;  }
+"~&"                    { return NAND; }
+"^~"                    { return XORN; }
+">>"                    { return RSH;  }
+"<>"                    { return NEQ;  }
+"<-"                    { return TOL;  }
+"->"                    { return TOR;  }
+
+-?"0"[xX][0-9a-fA-F]+   { savestr(yyscanner); return INTEGER; }
+-?"0"[0-7]+             { savestr(yyscanner); return INTEGER; }
+-?[0-9]+                { savestr(yyscanner); return INTEGER; }
+
+[\t\f\v\r ]+            ;
+
+"//".*$                 ; // c99-style comments only
+
+.                       { tenor_error(yylloc, yyextra, "unexpected character"); }
 
 %%
 
-static void c()
+static int savestr(yyscan_t yyscanner)
 {
-    for (int i = 0; yytext[i]; i++)
-        if (yytext[i] == '\n')
-            column = 0;
-        else
-            column++;
-}
+    int len          = yyget_leng(yyscanner);
+    YYSTYPE *lval    = yyget_lval(yyscanner);
+    YYLTYPE *lloc    = yyget_lloc(yyscanner);
+    const char *text = yyget_text(yyscanner);
+    void *extra      = yyget_extra(yyscanner);
 
-
-/*
- * We use this routine instead a lex pattern because we don't need
- * to save the matched comment in the `yytext' buffer.
- */
-static void skip_comment(int style)
-{
-    int c1, c2 = 0;
-
-    c1 = input();
-    if (style == C89_STYLE) {
-        c2 = input();
-
-        while (c2 != EOF && !(c1 == '*' && c2 == '/')) {
-            if (c1 == '\n')
-                ++lineno, column = 0;
-            c1 = c2;
-            c2 = input();
-        }
+    if (len >= (signed)sizeof lval->str) {
+        tenor_error(lloc, extra, "token too long");
+        return 1;
     } else {
-        while (c2 != EOF && !(c1 == '\n'))
-            c1 = input();
-        if (c1 == '\n') 
-            ++lineno, column = 0;
+        snprintf(lval->str, len + 1, "%s", text);
+        return 0;
     }
-}
-
-void switch_to_stream(FILE *f)
-{
-    yyin = f;
-    yypush_buffer_state(yy_create_buffer(yyin, YY_BUF_SIZE));
-    BEGIN(INITIAL);
 }
 

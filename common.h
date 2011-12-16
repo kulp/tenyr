@@ -4,6 +4,7 @@
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 #define STR(X) STR_(X)
 #define STR_(X) #X
+#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
 #endif
 

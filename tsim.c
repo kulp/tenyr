@@ -82,7 +82,9 @@ int run_instruction(struct state *s, struct instruction *i)
         default: abort();
     }
 
-    ++*ip;
+    *ip += 1;
+    // TODO trap wrap
+    *ip &= PTR_MASK;
 
     return 0;
 }

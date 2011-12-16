@@ -7,6 +7,7 @@
 #include "ops.h"
 #include "parser.h"
 #include "parser_global.h"
+#include "lexer.h"
 #include "common.h"
 
 static const char *op_names[] = {
@@ -57,7 +58,9 @@ int print_disassembly(FILE *out, struct instruction *i)
             struct instruction_general *g = &i->u._0xxx;
             int ld = g->dd & 2;
             int rd = g->dd & 1;
-            fprintf(out, "%c%c%c %s %c%c %-2s %c + 0x%08x%c\n",
+            fprintf(out,
+                    g->imm ? "%c%c%c %s %c%c %-2s %c + 0x%08x%c\n"
+                           : "%c%c%c %s %c%c %-2s %c\n",
                     ld ? '[' : ' ',     // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     ld ? ']' : ' ',     // left side dereferenced ?
@@ -79,7 +82,7 @@ int print_disassembly(FILE *out, struct instruction *i)
 
 static void binary(FILE *stream, struct instruction *i)
 {
-    fwrite(i, 4, 1, stream);
+    fwrite(&i->u.word, sizeof i->u.word, 1, stream);
 }
 
 static void text(FILE *stream, struct instruction *i)
@@ -130,18 +133,103 @@ static int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
+static int lookup_label(struct label_list *node, const char *name, uint32_t *result)
+{
+    while (node) {
+        // TODO strcasecmp ?
+        if (!strcasecmp(node->label->name, name)) {
+            *result = node->label->reladdr;
+            return 0;
+        }
+
+        node = node->next;
+    }
+
+    return 1;
+}
+
+static int eval_ce(struct parse_data *pd, struct const_expr *ce, uint32_t *result)
+{
+    uint32_t left, right;
+
+    switch (ce->type) {
+        case LAB: return lookup_label(pd->labels, ce->labelname, result);
+        case ICI: *result = ce->reladdr; return 0;
+        case IMM: *result = ce->i.i    ; return 0;
+        case OP2:
+            if (!eval_ce(pd, ce->left, &left) && !eval_ce(pd, ce->right, &right)) {
+                switch (ce->op) {
+                    case '+': *result = left + right; return 0;
+                    case '-': *result = left - right; return 0;
+                    case '*': *result = left * right; return 0;
+                    default: abort(); // TODO handle more gracefully
+                }
+            }
+            return 1;
+        default:
+            abort(); // TODO handle more gracefully
+    }
+}
+
+static int fixup_relocations(struct parse_data *pd)
+{
+    struct relocation_list *r = pd->relocs;
+
+    while (r) {
+        struct const_expr *ce = r->ce;
+
+        uint32_t result;
+        if (!eval_ce(pd, ce, &result)) {
+            // TODO check for resolvedness first
+            uint32_t mask = -1 << r->width;
+            result *= r->mult;
+            *r->dest &= mask;
+            *r->dest |= result & ~mask;
+        }
+
+        r = r->next;
+    }
+
+    return 0;
+}
+
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
-    int yyparse(void);
-    void switch_to_stream(FILE *f);
+    struct parse_data pd = {
+        .top = NULL,
+    };
+
+    tenor_lex_init(&pd.scanner);
+    tenor_set_extra(&pd, pd.scanner);
 
     if (in)
-        switch_to_stream(in);
+        tenor_set_in(in, pd.scanner);
+        //tenor_restart(in, pd.scanner); // TODO ?
 
-    int result = yyparse();
+    int result = tenor_parse(&pd);
     if (!result && f) {
-        struct instruction_list *p = tenor_get_parser_result(), *q = p;
+        struct instruction_list *p = pd.top, *q = p;
 
+        int baseaddr = 0; // TODO
+        int reladdr = 0;
+        // first pass, fix up addresses
+        while (q) {
+            struct label *l = q->insn->label;
+            while (l) {
+                if (!l->resolved) {
+                    l->reladdr = baseaddr + reladdr;
+                    l->resolved = 1;
+                }
+                l = l->next;
+            }
+
+            reladdr++;
+            q = q->next;
+        }
+
+        fixup_relocations(&pd);
+
+        q = p;
         while (q) {
             struct instruction_list *t = q;
             f->impl(out, q->insn);
@@ -149,15 +237,16 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             free(t);
         }
     }
+    tenor_lex_destroy(pd.scanner);
 
     return 0;
 }
 
 int do_disassembly(FILE *in, FILE *out)
 {
-    char buf[64];
-    while (fread(buf, 4, 1, in) == 1) {
-        print_disassembly(out, (void*)buf);
+    struct instruction i;
+    while (fread(&i.u.word, sizeof i.u.word, 1, in) == 1) {
+        print_disassembly(out, &i);
     }
 
     return 0;
@@ -229,6 +318,8 @@ int main(int argc, char *argv[])
         else
             do_assembly(in, out, f);
     }
+
+    fclose(out);
 
     return rc;
 }

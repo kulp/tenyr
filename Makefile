@@ -10,17 +10,17 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES))
 
 all: tas tsim
 tsim.o tas.o: ops.h
-tas.o: parser.h
+tas.o: parser.h parser_global.h
 tas: parser.o lexer.o
 
 # flex-generated code we can't control warnings of as easily
-lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused-function
+lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused
 
 lexer.h lexer.c: lexer.l
 	flex --header-file=lexer.h -o lexer.c $<
 
 parser.h parser.c: parser.y lexer.h
-	bison -d -o parser.c $<
+	bison --defines=parser.h -o parser.c $<
 
 clean:
 	$(RM) tas tsim *.o
