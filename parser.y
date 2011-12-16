@@ -204,11 +204,11 @@ const_expr[outer]
     : atom
         {   $outer = $atom; }
     | const_expr[left] '+' const_expr[right]
-        {   $outer = make_const_expr(OP2, $2, $left, $right); }
+        {   $outer = make_const_expr(OP2, '+', $left, $right); }
     | const_expr[left] '-' const_expr[right]
-        {   $outer = make_const_expr(OP2, $2, $left, $right); }
+        {   $outer = make_const_expr(OP2, '-', $left, $right); }
     | const_expr[left] '*' const_expr[right]
-        {   $outer = make_const_expr(OP2, $2, $left, $right); }
+        {   $outer = make_const_expr(OP2, '*', $left, $right); }
     | '(' const_expr[inner] ')'
         {   $outer = $inner; }
 
