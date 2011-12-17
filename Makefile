@@ -6,9 +6,13 @@ CFLAGS  += -Wall -Wextra
 
 CFILES = $(wildcard *.c)
 
+VPATH += src
+INCLUDES += src
+
 BUILD_NAME := $(shell git describe --long --always)
 DEFINES += BUILD_NAME='$(BUILD_NAME)'
-CPPFLAGS += $(patsubst %,-D%,$(DEFINES))
+CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
+            $(patsubst %,-I%,$(INCLUDES))
 
 all: tas tsim
 tas: parser.o lexer.o

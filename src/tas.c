@@ -13,26 +13,6 @@
 
 int print_disassembly(FILE *out, struct instruction *i);
 
-static int binary_in(FILE *in, struct instruction *i)
-{
-    return fread(&i->u.word, 4, 1, in) == 1;
-}
-
-static int text_in(FILE *in, struct instruction *i)
-{
-    return fscanf(in, "%x", &i->u.word) == 1;
-}
-
-static int binary_out(FILE *stream, struct instruction *i)
-{
-    return fwrite(&i->u.word, sizeof i->u.word, 1, stream) == 1;
-}
-
-static int text_out(FILE *stream, struct instruction *i)
-{
-    return fprintf(stream, "0x%08x\n", i->u.word) > 0;
-}
-
 static const char shortopts[] = "df:o:p::hV";
 
 static const struct option longopts[] = {
