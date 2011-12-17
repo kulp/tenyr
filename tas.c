@@ -78,7 +78,7 @@ static int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
-static int lookup_label(struct label_list *node, const char *name, uint32_t *result)
+static int label_lookup(struct label_list *node, const char *name, uint32_t *result)
 {
     while (node) {
         // TODO strcasecmp ?
@@ -93,18 +93,18 @@ static int lookup_label(struct label_list *node, const char *name, uint32_t *res
     return 1;
 }
 
-static int eval_ce(struct parse_data *pd, struct instruction *top_insn, struct
+static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
         const_expr *ce, uint32_t *result)
 {
     uint32_t left, right;
 
     switch (ce->type) {
-        case LAB: return lookup_label(pd->labels, ce->labelname, result);
+        case LAB: return label_lookup(pd->labels, ce->labelname, result);
         case ICI: *result = top_insn->reladdr; return 0;
         case IMM: *result = ce->i.i; return 0;
         case OP2:
-            if (!eval_ce(pd, top_insn, ce->left, &left) &&
-                !eval_ce(pd, top_insn, ce->right, &right))
+            if (!ce_eval(pd, top_insn, ce->left, &left) &&
+                !ce_eval(pd, top_insn, ce->right, &right))
             {
                 switch (ce->op) {
                     case '+': *result = left + right; return 0;
@@ -119,6 +119,27 @@ static int eval_ce(struct parse_data *pd, struct instruction *top_insn, struct
     }
 }
 
+static void ce_free(struct const_expr *ce, int recurse)
+{
+    if (recurse)
+        switch (ce->type) {
+            case LAB:
+            case ICI:
+                break;
+            case IMM:
+                free(ce->left);
+                break;
+            case OP2:
+                ce_free(ce->left, recurse);
+                ce_free(ce->right, recurse);
+                break;
+            default:
+                abort(); // TODO handle more gracefully
+        }
+
+    free(ce);
+}
+
 static int fixup_relocations(struct parse_data *pd)
 {
     int rc = 0;
@@ -128,19 +149,22 @@ static int fixup_relocations(struct parse_data *pd)
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if ((rc = eval_ce(pd, ce->insn, ce, &result)) == 0) {
+        if ((rc = ce_eval(pd, ce->insn, ce, &result)) == 0) {
             // TODO check for resolvedness first
             uint32_t mask = -1ULL << r->width; // technically UB
             result *= r->mult;
             *r->dest &= mask;
             *r->dest |= result & ~mask;
+            ce_free(ce, 1);
         } else {
             fprintf(stderr, "Error while fixing up relocations\n");
             // TODO print out information about the relocation
             return -1;
         }
 
+        struct relocation_list *last = r;
         r = r->next;
+        free(last);
     }
 
     return 0;
@@ -148,9 +172,7 @@ static int fixup_relocations(struct parse_data *pd)
 
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
-    struct parse_data pd = {
-        .top = NULL,
-    };
+    struct parse_data pd = { .top = NULL };
 
     tenor_lex_init(&pd.scanner);
     tenor_set_extra(&pd, pd.scanner);
@@ -187,8 +209,17 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
                 struct instruction_list *t = q;
                 f->impl_out(out, q->insn);
                 q = q->next;
+                free(t->insn);
                 free(t);
             }
+        }
+
+        struct label_list *l = pd.labels, *last = l;
+        while (l) {
+            l = l->next;
+            free(last->label);
+            free(last);
+            last = l;
         }
     }
     tenor_lex_destroy(pd.scanner);
@@ -284,6 +315,8 @@ int main(int argc, char *argv[])
 
         if (preprocessor)
             pclose(in);
+        else
+            fclose(in);
     }
 
     fclose(out);

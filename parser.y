@@ -32,7 +32,7 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
 %defines "parser.h"
 %output "parser.c"
 %name-prefix "tenor_"
-// %destructor { free ($$); } <*> // TODO
+%destructor { free($$); } <insn> <expr> <ce>
 
 %start program
 
@@ -129,12 +129,13 @@ insn[outer]
                         SMALL_IMMEDIATE_BITWIDTH);
                 $expr->ce->insn = $outer;
             }
-            $outer->u._0xxx.imm = $expr->i; }
+            $outer->u._0xxx.imm = $expr->i;
+            free($expr);
+            free($lhs); }
     | lhs TOL const_expr
         {   $outer = calloc(1, sizeof *$outer);
             $outer->label = NULL;
             $const_expr->insn = $outer;
-            // TODO hoist constant
             add_relocation(pd, $const_expr, 1, &$outer->u.word,
                     LARGE_IMMEDIATE_BITWIDTH);
             if ($const_expr->type == IMM)
@@ -143,7 +144,8 @@ insn[outer]
                 $outer->u._10x0.p = 1;  // document
             $outer->u._10x0.t = 2;
             $outer->u._10x0.z = $lhs->x;
-            $outer->u._10x0.d = $lhs->deref; }
+            $outer->u._10x0.d = $lhs->deref;
+            free($lhs); }
     | LABEL ':' insn[inner]
         {   $outer = $inner;
             struct label *n = calloc(1, sizeof *n);
