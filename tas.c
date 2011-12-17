@@ -76,10 +76,8 @@ int print_disassembly(FILE *out, struct instruction *i)
             return 0;
         }
         case 0b1111:
-            if (i->u.word == (uint32_t)-1)
-                fputs("illegal\n", out);
-            else
-                fputs("invalid instruction\n", out);
+            fprintf(out, ".word 0x%08x\n", i->u.word);
+            return 0;
     }
 
     return -1;
@@ -200,7 +198,7 @@ static int fixup_relocations(struct parse_data *pd)
         uint32_t result;
         if (!eval_ce(pd, ce, &result)) {
             // TODO check for resolvedness first
-            uint32_t mask = -1 << r->width;
+            uint32_t mask = -1ULL << r->width;
             result *= r->mult;
             *r->dest &= mask;
             *r->dest |= result & ~mask;

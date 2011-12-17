@@ -1,0 +1,5 @@
+.word 1
+.word -5
+.word 0x12345678
+.word $0
+.word $-2
