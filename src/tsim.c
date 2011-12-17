@@ -11,43 +11,45 @@
 
 #define PTR_MASK ~(-1 << 24)
 
+#define SEXTEND(Bits,X) (struct { signed i:(Bits); }){ .i = (X) }.i
+
 struct state {
     struct {
         int abort;
     } conf;
 
-    uint32_t regs[16];
-    uint32_t mem[1 << 24];
+    int32_t regs[16];
+    int32_t mem[1 << 24];
 };
 
 int run_instruction(struct state *s, struct instruction *i)
 {
-    int sextend = 0;
-    uint32_t _scratch,
-             *ip = &s->regs[15];
+    int32_t _scratch,
+            *ip = &s->regs[15];
 
     assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
 
     switch (i->u._xxxx.t) {
         case 0b1011:
         case 0b1001:
-            sextend = 1;
         case 0b1010:
         case 0b1000: {
-            struct instruction_load_immediate_signed *g = &i->u._10x1;
-            uint32_t *Z = &s->regs[g->z];
-            if (g->d) Z = &s->mem[*Z & PTR_MASK];
-            uint32_t imm = sextend ? g->imm : (int32_t)(uint32_t)g->imm;
-            *Z = imm;
+            struct instruction_load_immediate *g = &i->u._10xx;
+            int32_t *Z   = &s->regs[g->z];
+            int32_t _imm = SEXTEND(24, g->imm);
+            int32_t *imm = &_imm;
+            if (g->d & 2) Z = &s->mem[*Z   & PTR_MASK];
+            if (g->d & 1) Z = &s->mem[*imm & PTR_MASK];
+            *Z = *imm;
             break;
         }
         case 0b0000 ... 0b0111: {
             struct instruction_general *g = &i->u._0xxx;
-            uint32_t *Z = &s->regs[g->z];
-            uint32_t  X =  s->regs[g->x];
-            uint32_t  Y =  s->regs[g->y];
-            int32_t   I = g->imm;
-            uint32_t _rhs, *rhs = &_rhs;
+            int32_t *Z = &s->regs[g->z];
+            int32_t  X =  s->regs[g->x];
+            int32_t  Y =  s->regs[g->y];
+            int32_t  I = SEXTEND(12, g->imm);
+            int32_t _rhs, *rhs = &_rhs;
 
             switch (g->op) {
                 case OP_BITWISE_OR          : *rhs =  (X  |  Y) + I; break;
@@ -72,7 +74,7 @@ int run_instruction(struct state *s, struct instruction *i)
             if (g->dd & 1) rhs = &s->mem[*rhs & PTR_MASK];
 
             {
-                uint32_t *r, *w;
+                int32_t *r, *w;
                 if (g->r)
                     r = Z, w = rhs;
                 else
@@ -197,8 +199,6 @@ int main(int argc, char *argv[])
         s->mem[load_address++] = i.u.word;
     }
 
-    int print_disassembly(FILE *out, struct instruction *i);
-    int print_registers(FILE *out, uint32_t regs[16]);
     s->regs[15] = start_address & PTR_MASK;
     while (1) {
         if (verbose > 0)

@@ -50,7 +50,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %left '&' NAND
 %left LSH RSH
 
-%token <chr> '[' ']' '.' '$' '(' ')'
+%token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*'
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL
@@ -64,19 +64,14 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <op> op
 %type <program> program
 %type <s> addsub
-%type <signimm> sign_imm
 %type <str> lref
 
 %union {
-    uint32_t i;
+    int32_t i;
     signed s;
-    struct sign_imm {
-        int sextend;
-        uint32_t i;
-    } signimm;
     struct const_expr {
         enum { OP2, LAB, IMM, ICI } type;
-        struct sign_imm i;
+        int32_t i;
         char labelname[32]; // TODO document length
         int op;
         struct instruction *insn; // for '.'-resolving
@@ -87,7 +82,7 @@ void ce_free(struct const_expr *ce, int recurse);
         int x;
         int op;
         int y;
-        uint32_t i;
+        int32_t i;
         int width;  ///< width of relocation XXX cleanup
         int mult;   ///< multiplier from addsub
         struct const_expr *ce;
@@ -143,13 +138,9 @@ insn[outer]
             $const_expr->insn = $outer;
             add_relocation(pd, $const_expr, 1, &$outer->u.word,
                     LARGE_IMMEDIATE_BITWIDTH);
-            if ($const_expr->type == IMM)
-                $outer->u._10x0.p = $const_expr->i.sextend;
-            else
-                $outer->u._10x0.p = 1;  // document
-            $outer->u._10x0.t = 2;
-            $outer->u._10x0.z = $lhs->x;
-            $outer->u._10x0.d = $lhs->deref;
+            $outer->u._10xx.t = 2;
+            $outer->u._10xx.z = $lhs->x;
+            $outer->u._10xx.d = $lhs->deref;
             free($lhs); }
     | LABEL ':' insn[inner]
         {   $outer = $inner;
@@ -191,10 +182,6 @@ expr[outer]
 
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
-
-sign_imm
-    : immediate     { $sign_imm.i = $immediate; $sign_imm.sextend = 0; }
-    | '$' immediate { $sign_imm.i = $immediate; $sign_imm.sextend = 1; }
 
 immediate
     : INTEGER { $immediate = strtol($INTEGER, NULL, 0); }
@@ -238,9 +225,9 @@ const_expr[outer]
         {   $outer = $inner; }
 
 atom
-    : sign_imm
+    : immediate
         {   $atom = make_const_expr(IMM, 0, NULL, NULL);
-            $atom->i = $sign_imm; }
+            $atom->i = $immediate; }
     | lref
         {   $atom = make_const_expr(LAB, 0, NULL, NULL);
             strncpy($atom->labelname, $lref, sizeof $atom->labelname); }

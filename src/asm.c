@@ -34,15 +34,12 @@ int print_disassembly(FILE *out, struct instruction *i)
         case 0b1000:
         case 0b1011:
         case 0b1001: {
-            struct instruction_load_immediate_signed *g = &i->u._10x1;
-            int sig = type & 1;
-            uint32_t imm = sig ? (uint32_t)(int32_t)g->imm : (uint32_t)g->imm;
-            fprintf(out, "%c%c%c <-  %s0x%08x",
+            struct instruction_load_immediate *g = &i->u._10xx;
+            fprintf(out, "%c%c%c <-  0x%08x",
                     g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     g->d ? ']' : ' ',   // left side dereferenced ?
-                    sig ? "$ " : "",    // sign-extended ?
-                    imm                 // immediate value
+                    g->imm              // immediate value
                 );
             return 0;
         }
@@ -75,7 +72,7 @@ int print_disassembly(FILE *out, struct instruction *i)
     return -1;
 }
 
-int print_registers(FILE *out, uint32_t regs[16])
+int print_registers(FILE *out, int32_t regs[16])
 {
     int i = 0;
     for (; i < 6; i++)

@@ -44,7 +44,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 {label}                 { savestr(yyscanner); return LABEL; }
 ".word"                 { return WORD; }
 
-[][|&+*%^>$.:@()-]      { return yytext[0]; }
+[][|&+*%^>.:@()-]       { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "<="                    { return LTE;  }
