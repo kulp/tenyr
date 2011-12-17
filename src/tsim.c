@@ -11,8 +11,6 @@
 
 #define PTR_MASK ~(-1 << 24)
 
-#define SEXTEND(Bits,X) (struct { signed i:(Bits); }){ .i = (X) }.i
-
 struct state {
     struct {
         int abort;
@@ -36,7 +34,7 @@ int run_instruction(struct state *s, struct instruction *i)
         case 0b1000: {
             struct instruction_load_immediate *g = &i->u._10xx;
             int32_t *Z   = &s->regs[g->z];
-            int32_t _imm = SEXTEND(24, g->imm);
+            int32_t _imm = g->imm;
             int32_t *imm = &_imm;
             if (g->d & 2) Z = &s->mem[*Z   & PTR_MASK];
             if (g->d & 1) Z = &s->mem[*imm & PTR_MASK];
@@ -56,7 +54,6 @@ int run_instruction(struct state *s, struct instruction *i)
                 case OP_BITWISE_AND         : *rhs =  (X  &  Y) + I; break;
                 case OP_ADD                 : *rhs =  (X  +  Y) + I; break;
                 case OP_MULTIPLY            : *rhs =  (X  *  Y) + I; break;
-                case OP_MODULUS             : *rhs =  (X  %  Y) + I; break;
                 case OP_SHIFT_LEFT          : *rhs =  (X  << Y) + I; break;
                 case OP_COMPARE_LTE         : *rhs = -(X  <= Y) + I; break;
                 case OP_COMPARE_EQ          : *rhs = -(X  == Y) + I; break;
@@ -68,6 +65,7 @@ int run_instruction(struct state *s, struct instruction *i)
                 case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (X  >> Y) + I; break;
                 case OP_COMPARE_GT          : *rhs = -(X  >  Y) + I; break;
                 case OP_COMPARE_NE          : *rhs = -(X  != Y) + I; break;
+                case OP_RESERVED            : goto bad;
             }
 
             if (g->dd & 2) Z   = &s->mem[*Z   & PTR_MASK];
@@ -88,6 +86,7 @@ int run_instruction(struct state *s, struct instruction *i)
             break;
         }
         default:
+        bad:
             if (s->conf.abort)
                 abort();
             else

@@ -12,7 +12,6 @@ static const char *op_names[] = {
     [OP_BITWISE_AND        ] = "&",
     [OP_ADD                ] = "+",
     [OP_MULTIPLY           ] = "*",
-    [OP_MODULUS            ] = "%",
     [OP_SHIFT_LEFT         ] = "<<",
     [OP_COMPARE_LTE        ] = "<=",
     [OP_COMPARE_EQ         ] = "==",
@@ -24,6 +23,8 @@ static const char *op_names[] = {
     [OP_SHIFT_RIGHT_LOGICAL] = ">>",
     [OP_COMPARE_GT         ] = ">",
     [OP_COMPARE_NE         ] = "<>",
+
+    [OP_RESERVED           ] = "XX",
 };
 
 int print_disassembly(FILE *out, struct instruction *i)

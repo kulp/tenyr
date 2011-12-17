@@ -43,7 +43,7 @@
 //  0001 = X bitwise and Y
 //  0010 = X add Y
 //  0011 = X multiply Y
-//  0100 = X modulus Y
+//  0100 = reserved
 //  0101 = X shift left Y
 //  0110 = X compare <= Y
 //  0111 = X compare == Y
@@ -80,7 +80,7 @@ struct instruction {
             unsigned t :  4;    ///< type code
         } _xxxx;
         struct instruction_load_immediate {
-            unsigned imm : 24;  ///< immediate
+            signed   imm : 24;  ///< immediate
             unsigned z   :  4;  ///< destination
             unsigned d   :  2;  ///< dereference
             unsigned t   :  2;  ///< type bits
@@ -108,7 +108,7 @@ enum op {
     OP_BITWISE_AND         = 0x1,
     OP_ADD                 = 0x2,
     OP_MULTIPLY            = 0x3,
-    OP_MODULUS             = 0x4, // XXX modulus is expensive ; might as well provide division then
+    OP_RESERVED            = 0x4,
     OP_SHIFT_LEFT          = 0x5,
     OP_COMPARE_LTE         = 0x6,
     OP_COMPARE_EQ          = 0x7,

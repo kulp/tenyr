@@ -37,6 +37,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 %%
 
 ";"                     ;
+"\t"                    { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
 "\n"                    { saveline[savecol = 0] = 0; }
 "illegal"               { return ILLEGAL; }
 
@@ -44,7 +45,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 {label}                 { savestr(yyscanner); return LABEL; }
 ".word"                 { return WORD; }
 
-[][|&+*%^>.:@()-]       { return yytext[0]; }
+[][|&+*^>.:@()-]        { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "<="                    { return LTE;  }
