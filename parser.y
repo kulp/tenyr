@@ -102,6 +102,12 @@ program[outer]
         {   pd->top = $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
             $outer->insn = $insn; }
+/*
+    | directive program[inner]
+        {   pd->top = $outer = malloc(sizeof *$outer);
+            $outer->next = $inner;
+            $outer->insn = $insn; }
+*/
 
 insn[outer]
     : ILLEGAL
@@ -109,26 +115,27 @@ insn[outer]
             $outer->u.word = -1; }
     | lhs arrow expr
         {   $outer = malloc(sizeof *$outer);
-            $outer->u._0xxx.t   = 0;
-            $outer->u._0xxx.z   = $lhs->x;
-            $outer->u._0xxx.dd  = ($lhs->deref << 1) | ($lhs->deref);
-            $outer->u._0xxx.x   = $expr->x;
-            $outer->u._0xxx.y   = $expr->y;
-            $outer->u._0xxx.r   = $arrow;
-            $outer->u._0xxx.op  = $expr->op;
+            $outer->u._0xxx.t  = 0;
+            $outer->u._0xxx.z  = $lhs->x;
+            $outer->u._0xxx.dd = ($lhs->deref << 1) | ($lhs->deref);
+            $outer->u._0xxx.x  = $expr->x;
+            $outer->u._0xxx.y  = $expr->y;
+            $outer->u._0xxx.r  = $arrow;
+            $outer->u._0xxx.op = $expr->op;
             if ($expr->ce)
                 add_relocation(pd, $expr->ce, $expr->mult, &$outer->u.word, 12);
             $outer->u._0xxx.imm = $expr->i; }
     | lhs TOL const_expr
         {   $outer = malloc(sizeof *$outer);
-            /*
-            $outer->u._10x0.p   = $sign_imm.sextend;
-            */ // TODO
             // TODO hoist constant
             add_relocation(pd, $const_expr, 1, &$outer->u.word, 24);
-            $outer->u._10x0.t   = 2;
-            $outer->u._10x0.z   = $lhs->x;
-            $outer->u._10x0.d   = $lhs->deref; }
+            if ($const_expr->type == IMM)
+                $outer->u._10x0.p = $const_expr->i.sextend;
+            else
+                $outer->u._10x0.p = 1;  // document
+            $outer->u._10x0.t = 2;
+            $outer->u._10x0.z = $lhs->x;
+            $outer->u._10x0.d = $lhs->deref; }
     | LABEL ':' insn[inner]
         {   // TODO add label to a chain, and associate it with the
             // instruction

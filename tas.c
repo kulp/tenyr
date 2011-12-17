@@ -75,6 +75,11 @@ int print_disassembly(FILE *out, struct instruction *i)
 
             return 0;
         }
+        case 0b1111:
+            if (i->u.word == (uint32_t)-1)
+                fputs("illegal\n", out);
+            else
+                fputs("invalid instruction\n", out);
     }
 
     return -1;

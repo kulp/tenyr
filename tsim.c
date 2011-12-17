@@ -90,7 +90,7 @@ int run_instruction(struct state *s, struct instruction *i)
 static int binary(FILE *in, struct instruction **insn)
 {
     struct instruction *i = *insn = malloc(sizeof *i);
-    return fread(i, 4, 1, in) == 1;
+    return fread(&i->u.word, 4, 1, in) == 1;
 }
 
 static int text(FILE *in, struct instruction **insn)
