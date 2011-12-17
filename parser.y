@@ -21,6 +21,8 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
 #define SMALL_IMMEDIATE_BITWIDTH    12
 #define LARGE_IMMEDIATE_BITWIDTH    24
 #define WORD_BITWIDTH               32
+
+void ce_free(struct const_expr *ce, int recurse);
 %}
 
 %error-verbose
@@ -32,7 +34,10 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
 %defines "parser.h"
 %output "parser.c"
 %name-prefix "tenor_"
-%destructor { free($$); } <insn> <expr> <ce>
+// TODO destructors
+//%destructor { insn_free($$); } <insn>
+//%destructor { expr_free($$); } <expr>
+//%destructor { ce_free($$, 1); } <ce>
 
 %start program
 

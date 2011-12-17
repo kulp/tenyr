@@ -119,7 +119,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
     }
 }
 
-static void ce_free(struct const_expr *ce, int recurse)
+void ce_free(struct const_expr *ce, int recurse)
 {
     if (recurse)
         switch (ce->type) {
