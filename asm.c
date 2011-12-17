@@ -72,4 +72,21 @@ int print_disassembly(FILE *out, struct instruction *i)
     return -1;
 }
 
+int print_registers(FILE *out, uint32_t regs[16])
+{
+    int i = 0;
+    for (; i < 6; i++)
+        fprintf(out, "%c %08x ", 'A' + i, regs[i]);
+    fputs("\n", out);
+
+    for (; i < 12; i++)
+        fprintf(out, "%c %08x ", 'A' + i, regs[i]);
+    fputs("\n", out);
+
+    for (; i < 16; i++)
+        fprintf(out, "%c %08x ", 'A' + i, regs[i]);
+    fputs("\n", out);
+
+    return 0;
+}
 

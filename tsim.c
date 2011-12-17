@@ -209,13 +209,17 @@ int main(int argc, char *argv[])
     }
 
     int print_disassembly(FILE *out, struct instruction *i);
+    int print_registers(FILE *out, uint32_t regs[16]);
     s->regs[15] = start_address & PTR_MASK;
     while (1) {
         printf("IP = 0x%06x\t", s->regs[15]);
         assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
         struct instruction i = { .u.word = s->mem[ s->regs[15] ] };
+        // TODO make printing and verbosity configurable
         print_disassembly(stdout, &i);
+        print_registers(stdout, s->regs);
+        fputs("\n", stdout);
         run_instruction(s, &i);
     }
 
