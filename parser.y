@@ -113,10 +113,10 @@ program[outer]
 
 insn[outer]
     : ILLEGAL
-        {   $outer = malloc(sizeof *$outer);
+        {   $outer = calloc(1, sizeof *$outer);
             $outer->u.word = -1; }
     | lhs arrow expr
-        {   $outer = malloc(sizeof *$outer);
+        {   $outer = calloc(1, sizeof *$outer);
             $outer->u._0xxx.t  = 0;
             $outer->u._0xxx.z  = $lhs->x;
             $outer->u._0xxx.dd = ($lhs->deref << 1) | ($expr->deref);
@@ -131,7 +131,8 @@ insn[outer]
             }
             $outer->u._0xxx.imm = $expr->i; }
     | lhs TOL const_expr
-        {   $outer = malloc(sizeof *$outer);
+        {   $outer = calloc(1, sizeof *$outer);
+            $outer->label = NULL;
             $const_expr->insn = $outer;
             // TODO hoist constant
             add_relocation(pd, $const_expr, 1, &$outer->u.word,
@@ -145,7 +146,7 @@ insn[outer]
             $outer->u._10x0.d = $lhs->deref; }
     | LABEL ':' insn[inner]
         {   $outer = $inner;
-            struct label *n = malloc(sizeof *n);
+            struct label *n = calloc(1, sizeof *n);
             n->column   = yylloc.first_column;
             n->lineno   = yylloc.first_line;
             n->resolved = 0;
@@ -153,14 +154,14 @@ insn[outer]
             strncpy(n->name, $LABEL, sizeof n->name);
             $outer->label = n;
 
-            struct label_list *l = malloc(sizeof *l);
+            struct label_list *l = calloc(1, sizeof *l);
             l->next  = pd->labels;
             l->label = n;
             pd->labels = l; }
 
 data
     : WORD const_expr
-        {   $data = malloc(sizeof *$data);
+        {   $data = calloc(1, sizeof *$data);
             add_relocation(pd, $const_expr, 1, &$data->u.word, WORD_BITWIDTH);
             $const_expr->insn = $data; }
 

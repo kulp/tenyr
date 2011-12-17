@@ -34,7 +34,7 @@ int print_disassembly(FILE *out, struct instruction *i)
             struct instruction_load_immediate_signed *g = &i->u._10x1;
             int sig = type & 1;
             uint32_t imm = sig ? (uint32_t)(int32_t)g->imm : (uint32_t)g->imm;
-            fprintf(out, "%c%c%c <-  %s0x%08x\n",
+            fprintf(out, "%c%c%c <-  %s0x%08x",
                     g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     g->d ? ']' : ' ',   // left side dereferenced ?
@@ -48,8 +48,8 @@ int print_disassembly(FILE *out, struct instruction *i)
             int ld = g->dd & 2;
             int rd = g->dd & 1;
             fprintf(out,
-                    g->imm ? "%c%c%c %s %c%c %-2s %c + 0x%08x%c\n"
-                           : "%c%c%c %s %c%c %-2s %c%10$c\n",
+                    g->imm ? "%c%c%c %s %c%c %-2s %c + 0x%08x%c"
+                           : "%c%c%c %s %c%c %-2s %c%10$c",
                     ld ? '[' : ' ',     // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     ld ? ']' : ' ',     // left side dereferenced ?
@@ -65,7 +65,7 @@ int print_disassembly(FILE *out, struct instruction *i)
             return 0;
         }
         default:
-            fprintf(out, ".word 0x%08x\n", i->u.word);
+            fprintf(out, ".word 0x%08x", i->u.word);
             return 0;
     }
 

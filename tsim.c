@@ -102,11 +102,12 @@ static int text(FILE *in, struct instruction **insn)
     return fscanf(in, "%x", &i->u.word) == 1;
 }
 
-static const char shortopts[] = "a:s:f:hV";
+static const char shortopts[] = "a:s:f:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
     { "format"     , required_argument, NULL, 'f' },
+    { "verbose"    ,       no_argument, NULL, 'v' },
 
     { "help"       ,       no_argument, NULL, 'h' },
     { "version"    ,       no_argument, NULL, 'V' },
@@ -126,6 +127,7 @@ static int usage(const char *me)
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format ('binary' or 'text')\n"
+           "  -v, --verbose         increase verbosity of output\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
            , me, version());
@@ -148,6 +150,7 @@ int main(int argc, char *argv[])
 {
     struct state *s = calloc(1, sizeof *s);
     int load_address = 0, start_address = 0;
+    int verbose = 0;
 
     struct format formats[] = {
         { "binary", binary },
@@ -170,6 +173,8 @@ int main(int argc, char *argv[])
 
                 break;
             }
+            case 'v': verbose++; break;
+
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
                 usage(argv[0]);
@@ -212,14 +217,22 @@ int main(int argc, char *argv[])
     int print_registers(FILE *out, uint32_t regs[16]);
     s->regs[15] = start_address & PTR_MASK;
     while (1) {
-        printf("IP = 0x%06x\t", s->regs[15]);
+        if (verbose > 0)
+            printf("IP = 0x%06x\t", s->regs[15]);
+
         assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
         struct instruction i = { .u.word = s->mem[ s->regs[15] ] };
-        // TODO make printing and verbosity configurable
-        print_disassembly(stdout, &i);
-        print_registers(stdout, s->regs);
-        fputs("\n", stdout);
+
+        if (verbose > 1)
+            print_disassembly(stdout, &i);
+        if (verbose > 2)
+            fputs("\n", stdout);
+        if (verbose > 2)
+            print_registers(stdout, s->regs);
+        if (verbose > 0)
+            fputs("\n", stdout);
+
         run_instruction(s, &i);
     }
 
