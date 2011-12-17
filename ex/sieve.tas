@@ -1,0 +1,44 @@
+    b <- 100            // b = upper limit (N)
+    d <- 1              // d = one
+    c <- b >> d         // c = (N/2)
+    i <- 2              // i = outer loop control
+    o <- 0x1000         // base of array
+    j <- 2              // j = inner index, setup index
+
+    a -> [o + 0]        // 0 is not prime
+    a -> [o + 1]        // 1 is not prime
+init:
+    d -> [o + j]        // write truth to table cell
+    j <- j + 1          // increment table index
+    f <- j > b          // exit loop when i > N
+    p <- [p + f + 2]    // branch :
+    .word @outer        //  if done
+    .word @init         //  if we have work to do
+outer:
+    f <- i > c          // exit loop when i > N/2
+    p <- [p + f + 2]    // branch :
+    .word @done         //  if done
+    .word . + 1         //  if we have work to do
+    g <- [o + i]        // load compositeness
+    f <- g == a         // check recorded compositeness
+    p <- [p + f + 2]    // branch :
+    .word @bottom       //  if composite
+    .word . + 1         //  if prime
+    k <- 2              // set up initial multiplier
+inner:
+    j <- i * k          // compute j
+    k <- k + 1          // increment multiplier
+    f <- j > b          // compare j to N
+    p <- [p + f + 2]    // branch :
+    .word @bottom       //  if j > N
+    .word . + 1         //  if j <= N
+    a -> [o + j]        // mark as composite
+    p <- p + @inner - . // loop (PIC)
+
+bottom:
+    i <- i + 1          // check next candidate
+    p <- p + @outer - . // loop (PIC)
+
+done:
+    illegal
+
