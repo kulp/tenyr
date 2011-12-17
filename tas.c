@@ -10,88 +10,15 @@
 #include "lexer.h"
 #include "common.h"
 
-static const char *op_names[] = {
-    [OP_BITWISE_OR         ] = "|",
-    [OP_BITWISE_AND        ] = "&",
-    [OP_ADD                ] = "+",
-    [OP_MULTIPLY           ] = "*",
-    [OP_MODULUS            ] = "%",
-    [OP_SHIFT_LEFT         ] = "<<",
-    [OP_COMPARE_LTE        ] = "<=",
-    [OP_COMPARE_EQ         ] = "==",
-    [OP_BITWISE_NOR        ] = "~|",
-    [OP_BITWISE_NAND       ] = "~&",
-    [OP_BITWISE_XOR        ] = "^",
-    [OP_ADD_NEGATIVE_Y     ] = "-",
-    [OP_XOR_INVERT_X       ] = "^~",
-    [OP_SHIFT_RIGHT_LOGICAL] = ">>",
-    [OP_COMPARE_GT         ] = ">",
-    [OP_COMPARE_NE         ] = "<>",
-};
+int print_disassembly(FILE *out, struct instruction *i);
 
-int print_disassembly(FILE *out, struct instruction *i)
+static int binary_in(FILE *in, struct instruction *i)
 {
-    switch (i->u._xxxx.t) {
-        case 0b1010:
-        case 0b1000: {
-            struct instruction_load_immediate_unsigned *g = &i->u._10x0;
-            fprintf(out, "%c%c%c <-  0x%08x\n",
-                    g->d ? '[' : ' ',   // left side dereferenced ?
-                    'A' + g->z,         // register name for Z
-                    g->d ? ']' : ' ',   // left side dereferenced ?
-                    g->imm              // immediate value
-                );
-            return 0;
-        }
-        case 0b1011:
-        case 0b1001: {
-            struct instruction_load_immediate_signed *g = &i->u._10x1;
-            fprintf(out, "%c%c%c <-  $ 0x%08x\n",
-                    g->d ? '[' : ' ',   // left side dereferenced ?
-                    'A' + g->z,         // register name for Z
-                    g->d ? ']' : ' ',   // left side dereferenced ?
-                    g->imm              // immediate value
-                );
-            return 0;
-        }
-        case 0b0000 ... 0b0111: {
-            struct instruction_general *g = &i->u._0xxx;
-            int ld = g->dd & 2;
-            int rd = g->dd & 1;
-            fprintf(out,
-                    g->imm ? "%c%c%c %s %c%c %-2s %c + 0x%08x%c\n"
-                           : "%c%c%c %s %c%c %-2s %c\n",
-                    ld ? '[' : ' ',     // left side dereferenced ?
-                    'A' + g->z,         // register name for Z
-                    ld ? ']' : ' ',     // left side dereferenced ?
-                    g->r ? "->" : "<-", // arrow direction
-                    rd ? '[' : ' ',     // right side dereferenced ?
-                    'A' + g->x,         // register name for X
-                    op_names[g->op],    // operator name
-                    'A' + g->y,         // register name for Y
-                    g->imm,             // immediate value
-                    rd ? ']' : ' '      // right side dereferenced ?
-                );
-
-            return 0;
-        }
-        case 0b1111:
-            fprintf(out, ".word 0x%08x\n", i->u.word);
-            return 0;
-    }
-
-    return -1;
-}
-
-static int binary_in(FILE *in, struct instruction **insn)
-{
-    struct instruction *i = *insn = malloc(sizeof *i);
     return fread(&i->u.word, 4, 1, in) == 1;
 }
 
-static int text_in(FILE *in, struct instruction **insn)
+static int text_in(FILE *in, struct instruction *i)
 {
-    struct instruction *i = *insn = malloc(sizeof *i);
     return fscanf(in, "%x", &i->u.word) == 1;
 }
 
@@ -102,8 +29,7 @@ static int binary_out(FILE *stream, struct instruction *i)
 
 static int text_out(FILE *stream, struct instruction *i)
 {
-    fprintf(stream, "0x%08x\n", i->u.word);
-    return 1;
+    return fprintf(stream, "0x%08x\n", i->u.word) > 0;
 }
 
 static const char shortopts[] = "df:o:hV";
@@ -140,7 +66,7 @@ static int usage(const char *me)
 
 struct format {
     const char *name;
-    int (*impl_in )(FILE *, struct instruction **);
+    int (*impl_in )(FILE *, struct instruction *);
     int (*impl_out)(FILE *, struct instruction *);
 };
 
@@ -165,16 +91,19 @@ static int lookup_label(struct label_list *node, const char *name, uint32_t *res
     return 1;
 }
 
-static int eval_ce(struct parse_data *pd, struct const_expr *ce, uint32_t *result)
+static int eval_ce(struct parse_data *pd, struct instruction *top_insn, struct
+        const_expr *ce, uint32_t *result)
 {
     uint32_t left, right;
 
     switch (ce->type) {
         case LAB: return lookup_label(pd->labels, ce->labelname, result);
-        case ICI: *result = ce->reladdr; return 0;
-        case IMM: *result = ce->i.i    ; return 0;
+        case ICI: *result = top_insn->reladdr; return 0;
+        case IMM: *result = ce->i.i; return 0;
         case OP2:
-            if (!eval_ce(pd, ce->left, &left) && !eval_ce(pd, ce->right, &right)) {
+            if (!eval_ce(pd, top_insn, ce->left, &left) &&
+                !eval_ce(pd, top_insn, ce->right, &right))
+            {
                 switch (ce->op) {
                     case '+': *result = left + right; return 0;
                     case '-': *result = left - right; return 0;
@@ -196,7 +125,7 @@ static int fixup_relocations(struct parse_data *pd)
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if (!eval_ce(pd, ce, &result)) {
+        if (!eval_ce(pd, ce->insn, ce, &result)) {
             // TODO check for resolvedness first
             uint32_t mask = -1ULL << r->width;
             result *= r->mult;
@@ -231,6 +160,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         int reladdr = 0;
         // first pass, fix up addresses
         while (q) {
+            q->insn->reladdr = baseaddr + reladdr;
             struct label *l = q->insn->label;
             while (l) {
                 if (!l->resolved) {
@@ -261,10 +191,9 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
 int do_disassembly(FILE *in, FILE *out, const struct format *f)
 {
-    struct instruction *i;
+    struct instruction i;
     while (f->impl_in(in, &i) == 1) {
-        print_disassembly(out, i);
-        free(i);
+        print_disassembly(out, &i);
     }
 
     return 0;

@@ -13,10 +13,14 @@ static struct const_expr *add_relocation(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width);
 static struct const_expr *make_const_expr(int type, int op, struct const_expr
         *left, struct const_expr *right);
-static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
-        int mult, struct const_expr *reloc);
+static struct expr *make_expr(int x, int op, int y, int mult, struct
+        const_expr *reloc);
 
 #define YYLEX_PARAM (pd->scanner)
+
+#define SMALL_IMMEDIATE_BITWIDTH    12
+#define LARGE_IMMEDIATE_BITWIDTH    24
+#define WORD_BITWIDTH               32
 %}
 
 %error-verbose
@@ -68,9 +72,9 @@ static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
     struct const_expr {
         enum { OP2, LAB, IMM, ICI } type;
         struct sign_imm i;
-        uint32_t reladdr : 24;
         char labelname[32]; // TODO document length
         int op;
+        struct instruction *insn; // for '.'-resolving
         struct const_expr *left, *right;
     } *ce;
     struct expr {
@@ -120,13 +124,18 @@ insn[outer]
             $outer->u._0xxx.y  = $expr->y;
             $outer->u._0xxx.r  = $arrow;
             $outer->u._0xxx.op = $expr->op;
-            if ($expr->ce)
-                add_relocation(pd, $expr->ce, $expr->mult, &$outer->u.word, 12);
+            if ($expr->ce) {
+                add_relocation(pd, $expr->ce, $expr->mult, &$outer->u.word,
+                        SMALL_IMMEDIATE_BITWIDTH);
+                $expr->ce->insn = $outer;
+            }
             $outer->u._0xxx.imm = $expr->i; }
     | lhs TOL const_expr
         {   $outer = malloc(sizeof *$outer);
+            $const_expr->insn = $outer;
             // TODO hoist constant
-            add_relocation(pd, $const_expr, 1, &$outer->u.word, 24);
+            add_relocation(pd, $const_expr, 1, &$outer->u.word,
+                    LARGE_IMMEDIATE_BITWIDTH);
             if ($const_expr->type == IMM)
                 $outer->u._10x0.p = $const_expr->i.sextend;
             else
@@ -135,9 +144,7 @@ insn[outer]
             $outer->u._10x0.z = $lhs->x;
             $outer->u._10x0.d = $lhs->deref; }
     | LABEL ':' insn[inner]
-        {   // TODO add label to a chain, and associate it with the
-            // instruction
-            $outer = $inner;
+        {   $outer = $inner;
             struct label *n = malloc(sizeof *n);
             n->column   = yylloc.first_column;
             n->lineno   = yylloc.first_line;
@@ -154,7 +161,8 @@ insn[outer]
 data
     : WORD const_expr
         {   $data = malloc(sizeof *$data);
-            add_relocation(pd, $const_expr, 1, &$data->u.word, 32); }
+            add_relocation(pd, $const_expr, 1, &$data->u.word, WORD_BITWIDTH);
+            $const_expr->insn = $data; }
 
 lhs[outer]
     : regname { ($outer = malloc(sizeof *$outer))->x = $regname; $outer->deref = 0; }
@@ -163,13 +171,13 @@ lhs[outer]
 
 expr[outer]
     : regname[x]
-        { $outer = make_expr(pd, $x, OP_BITWISE_OR, 0, 0, NULL); }
+        { $outer = make_expr($x, OP_BITWISE_OR, 0, 0, NULL); }
     | regname[x] op regname[y]
-        { $outer = make_expr(pd, $x, $op, $y, 0, NULL); }
+        { $outer = make_expr($x, $op, $y, 0, NULL); }
     | regname[x] addsub const_expr
-        { $outer = make_expr(pd, $x, OP_BITWISE_OR, 0, $addsub, $const_expr); }
+        { $outer = make_expr($x, OP_BITWISE_OR, 0, $addsub, $const_expr); }
     | regname[x] op regname[y] addsub const_expr
-        { $outer = make_expr(pd, $x, $op, $y, $addsub, $const_expr); }
+        { $outer = make_expr($x, $op, $y, $addsub, $const_expr); }
     | '[' expr[inner] ']' /* TODO lookahead to prevent nesting of [ */
         { $outer = $inner; $outer->deref = 1; }
 
@@ -229,8 +237,7 @@ atom
         {   $atom = make_const_expr(LAB, 0, NULL, NULL);
             strncpy($atom->labelname, $lref, sizeof $atom->labelname); }
     | '.'
-        {   $atom = make_const_expr(ICI, 0, NULL, NULL);
-            $atom->reladdr = pd->reladdr; }
+        {   $atom = make_const_expr(ICI, 0, NULL, NULL); }
 
 lref
     : '@' LABEL
@@ -273,13 +280,13 @@ static struct const_expr *make_const_expr(int type, int op, struct const_expr
     n->op    = op;
     n->left  = left;
     n->right = right;
+    n->insn  = NULL;    // top const_expr will have its insn filled in
 
     return n;
 }
 
-static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
-
-        int mult, struct const_expr *reloc)
+static struct expr *make_expr(int x, int op, int y, int mult, struct
+        const_expr *reloc)
 {
     struct expr *e = malloc(sizeof *e);
 

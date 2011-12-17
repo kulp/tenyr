@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -19,6 +20,8 @@ int run_instruction(struct state *s, struct instruction *i)
     int sextend = 0;
     uint32_t _scratch,
              *ip = &s->regs[15];
+
+    assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
 
     switch (i->u._xxxx.t) {
         case 0b1011:
@@ -205,11 +208,18 @@ int main(int argc, char *argv[])
         free(i);
     }
 
+    int print_disassembly(FILE *out, struct instruction *i);
+    int print_registers(FILE *out, uint32_t regs[16]);
     s->regs[15] = start_address & PTR_MASK;
     while (1) {
-        printf("IP = %#x\n", s->regs[15]);
+        printf("IP = 0x%06x\t", s->regs[15]);
+        assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
         struct instruction i = { .u.word = s->mem[ s->regs[15] ] };
+        // TODO make printing and verbosity configurable
+        print_disassembly(stdout, &i);
+        print_registers(stdout, s->regs);
+        fputs("\n", stdout);
         run_instruction(s, &i);
     }
 

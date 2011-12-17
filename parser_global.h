@@ -22,7 +22,6 @@ struct parse_data {
         struct label *label;
         struct label_list *next;
     } *labels;
-    uint32_t reladdr;
 };
 
 int tenor_parse(struct parse_data *);
