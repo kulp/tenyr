@@ -83,15 +83,13 @@ int print_disassembly(FILE *out, struct instruction *i)
     return -1;
 }
 
-static int binary_in(FILE *in, struct instruction **insn)
+static int binary_in(FILE *in, struct instruction *i)
 {
-    struct instruction *i = *insn = malloc(sizeof *i);
     return fread(&i->u.word, 4, 1, in) == 1;
 }
 
-static int text_in(FILE *in, struct instruction **insn)
+static int text_in(FILE *in, struct instruction *i)
 {
-    struct instruction *i = *insn = malloc(sizeof *i);
     return fscanf(in, "%x", &i->u.word) == 1;
 }
 
@@ -102,8 +100,7 @@ static int binary_out(FILE *stream, struct instruction *i)
 
 static int text_out(FILE *stream, struct instruction *i)
 {
-    fprintf(stream, "0x%08x\n", i->u.word);
-    return 1;
+    return fprintf(stream, "0x%08x\n", i->u.word) > 0;
 }
 
 static const char shortopts[] = "df:o:hV";
@@ -140,7 +137,7 @@ static int usage(const char *me)
 
 struct format {
     const char *name;
-    int (*impl_in )(FILE *, struct instruction **);
+    int (*impl_in )(FILE *, struct instruction *);
     int (*impl_out)(FILE *, struct instruction *);
 };
 
@@ -261,10 +258,9 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
 int do_disassembly(FILE *in, FILE *out, const struct format *f)
 {
-    struct instruction *i;
+    struct instruction i;
     while (f->impl_in(in, &i) == 1) {
-        print_disassembly(out, i);
-        free(i);
+        print_disassembly(out, &i);
     }
 
     return 0;
