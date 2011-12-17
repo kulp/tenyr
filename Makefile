@@ -10,8 +10,11 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES))
 
 all: tas tsim
 tsim.o tas.o: ops.h
-tas.o: parser.h parser_global.h
+parser.o tas.o: parser.h parser_global.h
 tas: parser.o lexer.o
+
+# we sometimes pass too many arguments to printf
+tas.o: CFLAGS += -Wno-format
 
 # flex-generated code we can't control warnings of as easily
 lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused
