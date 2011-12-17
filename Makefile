@@ -4,13 +4,13 @@ CFLAGS  += -g
 LDFLAGS += -g
 CFLAGS  += -Wall -Wextra
 
+CFILES = $(wildcard *.c)
+
 BUILD_NAME := $(shell git describe --long --always)
 DEFINES += BUILD_NAME='$(BUILD_NAME)'
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES))
 
 all: tas tsim
-tsim.o tas.o: ops.h
-parser.o tas.o: parser.h parser_global.h
 tas: parser.o lexer.o
 tas tsim: asm.o
 
@@ -28,8 +28,18 @@ lexer.h lexer.c: lexer.l
 parser.h parser.c: parser.y lexer.h
 	bison --defines=parser.h -o parser.c $<
 
+ifeq ($(filter clean,$(MAKECMDGOALS)),)
+-include $(CFILES:.c=.d)
+endif
+
+%.d: %.c
+	@set -e; rm -f $@; \
+	$(CC) -M $(CPPFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
 clean:
-	$(RM) tas tsim *.o
+	$(RM) tas tsim *.o *.d
 
 clobber: clean
 	$(RM) {parser,lexer}.[ch]
