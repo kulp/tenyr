@@ -73,9 +73,6 @@ struct instruction {
 
         struct label *next;
     } *label;
-    struct dot {
-        uint32_t reladdr;
-    } *dots;
     union {
         uint32_t word;
         struct instruction_any {
