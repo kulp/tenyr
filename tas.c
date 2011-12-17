@@ -32,15 +32,16 @@ static int text_out(FILE *stream, struct instruction *i)
     return fprintf(stream, "0x%08x\n", i->u.word) > 0;
 }
 
-static const char shortopts[] = "df:o:hV";
+static const char shortopts[] = "df:o:p::hV";
 
 static const struct option longopts[] = {
-    { "disassemble",       no_argument, NULL, 'd' },
-    { "format"     , required_argument, NULL, 'f' },
-    { "output"     , required_argument, NULL, 'o' },
+    { "disassemble" ,       no_argument, NULL, 'd' },
+    { "format"      , required_argument, NULL, 'f' },
+    { "output"      , required_argument, NULL, 'o' },
+    { "preprocessor", optional_argument, NULL, 'p' },
 
-    { "help"       ,       no_argument, NULL, 'h' },
-    { "version"    ,       no_argument, NULL, 'V' },
+    { "help"        ,       no_argument, NULL, 'h' },
+    { "version"     ,       no_argument, NULL, 'V' },
 
     { NULL, 0, NULL, 0 },
 };
@@ -57,6 +58,7 @@ static int usage(const char *me)
            "  -d, --disassemble     disassemble (default is to assemble)\n"
            "  -f, --format=F        select output format ('binary' or 'text')\n"
            "  -o, --output=X        write output to filename X\n"
+           "  -p, --preprocessor=X  pass input through preprocessor first (defaults to `cpp')\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
            , me, version());
@@ -203,6 +205,7 @@ int main(int argc, char *argv[])
 {
     int rc = 0;
     int disassemble = 0;
+    const char *preprocessor = NULL;
 
     struct format formats[] = {
         { "binary", binary_in, binary_out },
@@ -215,6 +218,7 @@ int main(int argc, char *argv[])
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
+            case 'p': preprocessor = optarg ? optarg : "cpp"; break;
             case 'o': out = fopen(optarg, "w"); break;
             case 'd': disassemble = 1; break;
             case 'f': {
@@ -242,21 +246,28 @@ int main(int argc, char *argv[])
     }
 
     for (int i = optind; i < argc; i++) {
-        FILE *in = stdin;
+        FILE *in = NULL;
         if (!out) {
             perror("Failed to open output file");
             return EXIT_FAILURE;
         }
 
-        if (!strcmp(argv[i], "-")) {
-            in = stdin;
-        } else {
-            in = fopen(argv[i], "r");
-            if (!in) {
-                char buf[128];
-                snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
-                perror(buf);
-                return EXIT_FAILURE;
+        if (preprocessor) {
+            char cmd[256];
+            // TODO doesn't handle escaping of argument properly
+            snprintf(cmd, sizeof cmd, "%s '%s'", preprocessor, argv[i]);
+            in = popen(cmd, "r");
+        } else  {
+            if (!strcmp(argv[i], "-")) {
+                in = stdin;
+            } else {
+                in = fopen(argv[i], "r");
+                if (!in) {
+                    char buf[128];
+                    snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
+                    perror(buf);
+                    return EXIT_FAILURE;
+                }
             }
         }
 
@@ -264,6 +275,9 @@ int main(int argc, char *argv[])
             do_disassembly(in, out, f);
         else
             do_assembly(in, out, f);
+
+        if (preprocessor)
+            pclose(in);
     }
 
     fclose(out);
