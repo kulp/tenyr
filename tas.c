@@ -31,26 +31,21 @@ static const char *op_names[] = {
 
 int print_disassembly(FILE *out, struct instruction *i)
 {
-    switch (i->u._xxxx.t) {
+    int type = i->u._xxxx.t;
+    switch (type) {
         case 0b1010:
-        case 0b1000: {
-            struct instruction_load_immediate_unsigned *g = &i->u._10x0;
-            fprintf(out, "%c%c%c <-  0x%08x\n",
-                    g->d ? '[' : ' ',   // left side dereferenced ?
-                    'A' + g->z,         // register name for Z
-                    g->d ? ']' : ' ',   // left side dereferenced ?
-                    g->imm              // immediate value
-                );
-            return 0;
-        }
+        case 0b1000:
         case 0b1011:
         case 0b1001: {
             struct instruction_load_immediate_signed *g = &i->u._10x1;
-            fprintf(out, "%c%c%c <-  $ 0x%08x\n",
+            int sig = type & 1;
+            uint32_t imm = sig ? (uint32_t)(int32_t)g->imm : (uint32_t)g->imm;
+            fprintf(out, "%c%c%c <-  %s0x%08x\n",
                     g->d ? '[' : ' ',   // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     g->d ? ']' : ' ',   // left side dereferenced ?
-                    g->imm              // immediate value
+                    sig ? "$ " : "",    // sign-extended ?
+                    imm                 // immediate value
                 );
             return 0;
         }
@@ -60,7 +55,7 @@ int print_disassembly(FILE *out, struct instruction *i)
             int rd = g->dd & 1;
             fprintf(out,
                     g->imm ? "%c%c%c %s %c%c %-2s %c + 0x%08x%c\n"
-                           : "%c%c%c %s %c%c %-2s %c\n",
+                           : "%c%c%c %s %c%c %-2s %c%10$c\n",
                     ld ? '[' : ' ',     // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     ld ? ']' : ' ',     // left side dereferenced ?
@@ -75,7 +70,7 @@ int print_disassembly(FILE *out, struct instruction *i)
 
             return 0;
         }
-        case 0b1111:
+        default:
             fprintf(out, ".word 0x%08x\n", i->u.word);
             return 0;
     }
