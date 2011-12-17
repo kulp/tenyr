@@ -9,6 +9,9 @@ struct format {
 
 int find_format_by_name(const void *_a, const void *_b);
 
+int print_disassembly(FILE *out, struct instruction *i);
+int print_registers(FILE *out, int32_t regs[16]);
+
 extern const struct format formats[];
 extern const size_t formats_count;
 #endif

@@ -5,6 +5,7 @@
 #define STR(X) STR_(X)
 #define STR_(X) #X
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
+#define SEXTEND(Bits,X) (struct { signed i:(Bits); }){ .i = (X) }.i
 
 #endif
 

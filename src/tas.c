@@ -70,7 +70,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
     switch (ce->type) {
         case LAB: return label_lookup(pd->labels, ce->labelname, result);
         case ICI: *result = top_insn->reladdr; return 0;
-        case IMM: *result = ce->i.i; return 0;
+        case IMM: *result = ce->i; return 0;
         case OP2:
             if (!ce_eval(pd, top_insn, ce->left, &left) &&
                 !ce_eval(pd, top_insn, ce->right, &right))

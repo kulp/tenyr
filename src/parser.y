@@ -15,6 +15,10 @@ static struct const_expr *make_const_expr(int type, int op, struct const_expr
         *left, struct const_expr *right);
 static struct expr *make_expr(int x, int op, int y, int mult, struct
         const_expr *reloc);
+static struct instruction *make_insn_general(struct parse_data *pd, struct
+        expr *lhs, int arrow, struct expr *expr);
+static struct instruction *make_insn_immediate(struct parse_data *pd, struct
+        expr *lhs, struct const_expr *ce);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -50,7 +54,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %left '&' NAND
 %left LSH RSH
 
-%token <chr> '[' ']' '.' '$' '(' ')'
+%token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*'
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL
@@ -64,19 +68,14 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <op> op
 %type <program> program
 %type <s> addsub
-%type <signimm> sign_imm
 %type <str> lref
 
 %union {
-    uint32_t i;
+    int32_t i;
     signed s;
-    struct sign_imm {
-        int sextend;
-        uint32_t i;
-    } signimm;
     struct const_expr {
         enum { OP2, LAB, IMM, ICI } type;
-        struct sign_imm i;
+        int32_t i;
         char labelname[32]; // TODO document length
         int op;
         struct instruction *insn; // for '.'-resolving
@@ -87,7 +86,7 @@ void ce_free(struct const_expr *ce, int recurse);
         int x;
         int op;
         int y;
-        uint32_t i;
+        int32_t i;
         int width;  ///< width of relocation XXX cleanup
         int mult;   ///< multiplier from addsub
         struct const_expr *ce;
@@ -121,37 +120,18 @@ insn[outer]
         {   $outer = calloc(1, sizeof *$outer);
             $outer->u.word = -1; }
     | lhs arrow expr
-        {   $outer = calloc(1, sizeof *$outer);
-            $outer->u._0xxx.t  = 0;
-            $outer->u._0xxx.z  = $lhs->x;
-            $outer->u._0xxx.dd = ($lhs->deref << 1) | ($expr->deref);
-            $outer->u._0xxx.x  = $expr->x;
-            $outer->u._0xxx.y  = $expr->y;
-            $outer->u._0xxx.r  = $arrow;
-            $outer->u._0xxx.op = $expr->op;
-            if ($expr->ce) {
-                add_relocation(pd, $expr->ce, $expr->mult, &$outer->u.word,
-                        SMALL_IMMEDIATE_BITWIDTH);
-                $expr->ce->insn = $outer;
+        {   if ($expr->op == OP_RESERVED) {
+                if ($arrow == 0) {
+                    $outer = make_insn_immediate(pd, $lhs, $expr->ce);
+                } else {
+                    tenor_error(&yylloc, pd, "Arrow pointing wrong way");
+                }
+            } else {
+                $outer = make_insn_general(pd, $lhs, $arrow, $expr);
             }
-            $outer->u._0xxx.imm = $expr->i;
             free($expr);
             free($lhs); }
-    | lhs TOL const_expr
-        {   $outer = calloc(1, sizeof *$outer);
-            $outer->label = NULL;
-            $const_expr->insn = $outer;
-            add_relocation(pd, $const_expr, 1, &$outer->u.word,
-                    LARGE_IMMEDIATE_BITWIDTH);
-            if ($const_expr->type == IMM)
-                $outer->u._10x0.p = $const_expr->i.sextend;
-            else
-                $outer->u._10x0.p = 1;  // document
-            $outer->u._10x0.t = 2;
-            $outer->u._10x0.z = $lhs->x;
-            $outer->u._10x0.d = $lhs->deref;
-            free($lhs); }
-    | LABEL ':' insn[inner]
+    | LABEL ':' insn_or_data[inner]
         {   $outer = $inner;
             struct label *n = calloc(1, sizeof *n);
             n->column   = yylloc.first_column;
@@ -186,15 +166,13 @@ expr[outer]
         { $outer = make_expr($x, OP_BITWISE_OR, 0, $addsub, $const_expr); }
     | regname[x] op regname[y] addsub const_expr
         { $outer = make_expr($x, $op, $y, $addsub, $const_expr); }
+    | const_expr
+        { $outer = make_expr(0, OP_RESERVED, 0, 0, $const_expr); }
     | '[' expr[inner] ']' /* TODO lookahead to prevent nesting of [ */
         { $outer = $inner; $outer->deref = 1; }
 
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
-
-sign_imm
-    : immediate     { $sign_imm.i = $immediate; $sign_imm.sextend = 0; }
-    | '$' immediate { $sign_imm.i = $immediate; $sign_imm.sextend = 1; }
 
 immediate
     : INTEGER { $immediate = strtol($INTEGER, NULL, 0); }
@@ -208,7 +186,6 @@ op
     | '&'   { $op = OP_BITWISE_AND        ; }
     | '+'   { $op = OP_ADD                ; }
     | '*'   { $op = OP_MULTIPLY           ; }
-    | '%'   { $op = OP_MODULUS            ; }
     | LSH   { $op = OP_SHIFT_LEFT         ; }
     | LTE   { $op = OP_COMPARE_LTE        ; }
     | EQ    { $op = OP_COMPARE_EQ         ; }
@@ -238,9 +215,9 @@ const_expr[outer]
         {   $outer = $inner; }
 
 atom
-    : sign_imm
+    : immediate
         {   $atom = make_const_expr(IMM, 0, NULL, NULL);
-            $atom->i = $sign_imm; }
+            $atom->i = $immediate; }
     | lref
         {   $atom = make_const_expr(LAB, 0, NULL, NULL);
             strncpy($atom->labelname, $lref, sizeof $atom->labelname); }
@@ -261,6 +238,43 @@ int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
             locp->last_column, s, locp->first_line, tenor_get_text(pd->scanner));
 
     return 0;
+}
+
+static struct instruction *make_insn_general(struct parse_data *pd, struct
+        expr *lhs, int arrow, struct expr *expr)
+{
+    struct instruction *insn = calloc(1, sizeof *insn);
+
+    insn->u._0xxx.t  = 0;
+    insn->u._0xxx.z  = lhs->x;
+    insn->u._0xxx.dd = (lhs->deref << 1) | (expr->deref);
+    insn->u._0xxx.x  = expr->x;
+    insn->u._0xxx.y  = expr->y;
+    insn->u._0xxx.r  = arrow;
+    insn->u._0xxx.op = expr->op;
+    if (expr->ce) {
+        add_relocation(pd, expr->ce, expr->mult, &insn->u.word,
+                SMALL_IMMEDIATE_BITWIDTH);
+        expr->ce->insn = insn;
+    }
+    insn->u._0xxx.imm = expr->i;
+
+    return insn;
+}
+
+static struct instruction *make_insn_immediate(struct parse_data *pd, struct
+        expr *lhs, struct const_expr *ce)
+{
+    struct instruction *insn = calloc(1, sizeof *insn);
+
+    insn->label = NULL;
+    ce->insn = insn;
+    add_relocation(pd, ce, 1, &insn->u.word, LARGE_IMMEDIATE_BITWIDTH);
+    insn->u._10xx.t = 2;
+    insn->u._10xx.z = lhs->x;
+    insn->u._10xx.d = lhs->deref << 1;
+
+    return insn;
 }
 
 static struct const_expr *add_relocation(struct parse_data *pd, struct

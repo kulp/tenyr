@@ -4,7 +4,7 @@ CFLAGS  += -g
 LDFLAGS += -g
 CFLAGS  += -Wall -Wextra
 
-CFILES = $(wildcard *.c)
+CFILES = $(wildcard src/*.c) parser.c
 
 VPATH += src
 INCLUDES += src

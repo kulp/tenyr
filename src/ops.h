@@ -20,13 +20,13 @@
 // rDD = 1x0 : invalid but legal (reads, discards)
 //
 // immediate load (TTTT = 100x)
-// [10DpZZZZJJJJJJJJJJJJJJJJJJJJJJJJ]
-// J = 24-bit immediate
+// [10DDZZZZJJJJJJJJJJJJJJJJJJJJJJJJ]
+// J = sign-extended 24-bit immediate
 // performs
-// Dp = 00 :  Z  <- J (zero-extended)
-//      01 :  Z  <- J (sign-extended)
-//      10 : [Z] <- J (zero-extended)
-//      11 : [Z] <- J (sign-extended)
+// DD = 00 :  Z  <-  J
+//      01 :  Z  <- [J]
+//      10 : [Z] <-  J
+//      11 : [Z] <- [J]
 //
 //  a <- [b * c + 4]
 //  [p + 3] -> a
@@ -43,7 +43,7 @@
 //  0001 = X bitwise and Y
 //  0010 = X add Y
 //  0011 = X multiply Y
-//  0100 = X modulus Y
+//  0100 = reserved
 //  0101 = X shift left Y
 //  0110 = X compare <= Y
 //  0111 = X compare == Y
@@ -79,20 +79,12 @@ struct instruction {
             unsigned   : 28;    ///< unused
             unsigned t :  4;    ///< type code
         } _xxxx;
-        struct instruction_load_immediate_unsigned {
-            unsigned imm : 24;  ///< immediate
-            unsigned z   :  4;  ///< destination
-            unsigned p   :  1;  ///< extension mode
-            unsigned d   :  1;  ///< dereference
-            unsigned t   :  2;  ///< type bits
-        } _10x0;
-        struct instruction_load_immediate_signed {
+        struct instruction_load_immediate {
             signed   imm : 24;  ///< immediate
             unsigned z   :  4;  ///< destination
-            unsigned p   :  1;  ///< extension mode
-            unsigned d   :  1;  ///< dereference
+            unsigned d   :  2;  ///< dereference
             unsigned t   :  2;  ///< type bits
-        } _10x1;
+        } _10xx;
         struct instruction_general {
             signed   imm : 12;  ///< immediate
             unsigned op  :  4;  ///< operation
@@ -116,7 +108,7 @@ enum op {
     OP_BITWISE_AND         = 0x1,
     OP_ADD                 = 0x2,
     OP_MULTIPLY            = 0x3,
-    OP_MODULUS             = 0x4, // XXX modulus is expensive ; might as well provide division then
+    OP_RESERVED            = 0x4,
     OP_SHIFT_LEFT          = 0x5,
     OP_COMPARE_LTE         = 0x6,
     OP_COMPARE_EQ          = 0x7,
