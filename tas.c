@@ -121,18 +121,23 @@ static int eval_ce(struct parse_data *pd, struct instruction *top_insn, struct
 
 static int fixup_relocations(struct parse_data *pd)
 {
+    int rc = 0;
     struct relocation_list *r = pd->relocs;
 
     while (r) {
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if (!eval_ce(pd, ce->insn, ce, &result)) {
+        if ((rc = eval_ce(pd, ce->insn, ce, &result)) == 0) {
             // TODO check for resolvedness first
-            uint32_t mask = -1ULL << r->width;
+            uint32_t mask = -1ULL << r->width; // technically UB
             result *= r->mult;
             *r->dest &= mask;
             *r->dest |= result & ~mask;
+        } else {
+            fprintf(stderr, "Error while fixing up relocations\n");
+            // TODO print out information about the relocation
+            return -1;
         }
 
         r = r->next;
@@ -176,14 +181,14 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             q = q->next;
         }
 
-        fixup_relocations(&pd);
-
-        q = p;
-        while (q) {
-            struct instruction_list *t = q;
-            f->impl_out(out, q->insn);
-            q = q->next;
-            free(t);
+        if (!fixup_relocations(&pd)) {
+            q = p;
+            while (q) {
+                struct instruction_list *t = q;
+                f->impl_out(out, q->insn);
+                q = q->next;
+                free(t);
+            }
         }
     }
     tenor_lex_destroy(pd.scanner);
