@@ -2,6 +2,7 @@ tas
 tsim
 *.dSYM/
 .*.sw?
+.sw?
 *.o
 *.d
 lexer.[ch]

@@ -7,10 +7,15 @@
 
 #include "ops.h"
 #include "common.h"
+#include "asm.h"
 
 #define PTR_MASK ~(-1 << 24)
 
 struct state {
+    struct {
+        int abort;
+    } conf;
+
     uint32_t regs[16];
     uint32_t mem[1 << 24];
 };
@@ -80,7 +85,11 @@ int run_instruction(struct state *s, struct instruction *i)
 
             break;
         }
-        default: abort();
+        default:
+            if (s->conf.abort)
+                abort();
+            else
+                return 1;
     }
 
     *ip += 1;
@@ -88,18 +97,6 @@ int run_instruction(struct state *s, struct instruction *i)
     *ip &= PTR_MASK;
 
     return 0;
-}
-
-static int binary(FILE *in, struct instruction **insn)
-{
-    struct instruction *i = *insn = malloc(sizeof *i);
-    return fread(&i->u.word, 4, 1, in) == 1;
-}
-
-static int text(FILE *in, struct instruction **insn)
-{
-    struct instruction *i = *insn = malloc(sizeof *i);
-    return fscanf(in, "%x", &i->u.word) == 1;
 }
 
 static const char shortopts[] = "a:s:f:vhV";
@@ -135,27 +132,14 @@ static int usage(const char *me)
     return 0;
 }
 
-struct format {
-    const char *name;
-    int (*impl)(FILE *, struct instruction **);
-};
-
-static int find_format_by_name(const void *_a, const void *_b)
-{
-    const struct format *a = _a, *b = _b;
-    return strcmp(a->name, b->name);
-}
-
 int main(int argc, char *argv[])
 {
+    int rc = EXIT_SUCCESS;
+
     struct state *s = calloc(1, sizeof *s);
+    s->conf.abort = 0;
     int load_address = 0, start_address = 0;
     int verbose = 0;
-
-    struct format formats[] = {
-        { "binary", binary },
-        { "text"  , text   },
-    };
 
     const struct format *f = &formats[0];
 
@@ -165,7 +149,7 @@ int main(int argc, char *argv[])
             case 'a': load_address = strtol(optarg, NULL, 0); break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
-                size_t sz = countof(formats);
+                size_t sz = formats_count;
                 f = lfind(&(struct format){ .name = optarg }, formats, &sz,
                         sizeof formats[0], find_format_by_name);
                 if (!f)
@@ -203,14 +187,14 @@ int main(int argc, char *argv[])
             char buf[128];
             snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[optind]);
             perror(buf);
-            return EXIT_FAILURE;
+            rc = EXIT_FAILURE;
+            goto done;
         }
     }
 
-    struct instruction *i;
-    while (f->impl(in, &i) > 0) {
-        s->mem[load_address++] = i->u.word;
-        free(i);
+    struct instruction i;
+    while (f->impl_in(in, &i) > 0) {
+        s->mem[load_address++] = i.u.word;
     }
 
     int print_disassembly(FILE *out, struct instruction *i);
@@ -233,9 +217,15 @@ int main(int argc, char *argv[])
         if (verbose > 0)
             fputs("\n", stdout);
 
-        run_instruction(s, &i);
+        if (run_instruction(s, &i))
+            break;
     }
 
-    return 0;
+done:
+    if (in)
+        fclose(in);
+    free(s);
+
+    return rc;
 }
 

@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "ops.h"
+#include "asm.h"
+#include "common.h"
 #include "parser_global.h"
 
 static const char *op_names[] = {
@@ -89,4 +92,37 @@ int print_registers(FILE *out, uint32_t regs[16])
 
     return 0;
 }
+
+int find_format_by_name(const void *_a, const void *_b)
+{
+    const struct format *a = _a, *b = _b;
+    return strcmp(a->name, b->name);
+}
+
+static int binary_in(FILE *in, struct instruction *i)
+{
+    return fread(&i->u.word, 4, 1, in) == 1;
+}
+
+static int text_in(FILE *in, struct instruction *i)
+{
+    return fscanf(in, "%x", &i->u.word) == 1;
+}
+
+static int binary_out(FILE *stream, struct instruction *i)
+{
+    return fwrite(&i->u.word, sizeof i->u.word, 1, stream) == 1;
+}
+
+static int text_out(FILE *stream, struct instruction *i)
+{
+    return fprintf(stream, "0x%08x\n", i->u.word) > 0;
+}
+
+const struct format formats[] = {
+    { "binary", binary_in, binary_out },
+    { "text"  , text_in,   text_out   },
+};
+
+const size_t formats_count = countof(formats);
 

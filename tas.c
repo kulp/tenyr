@@ -9,6 +9,7 @@
 #include "parser_global.h"
 #include "lexer.h"
 #include "common.h"
+#include "asm.h"
 
 int print_disassembly(FILE *out, struct instruction *i);
 
@@ -64,18 +65,6 @@ static int usage(const char *me)
            , me, version());
 
     return 0;
-}
-
-struct format {
-    const char *name;
-    int (*impl_in )(FILE *, struct instruction *);
-    int (*impl_out)(FILE *, struct instruction *);
-};
-
-static int find_format_by_name(const void *_a, const void *_b)
-{
-    const struct format *a = _a, *b = _b;
-    return strcmp(a->name, b->name);
 }
 
 static int label_lookup(struct label_list *node, const char *name, uint32_t *result)
@@ -244,11 +233,6 @@ int main(int argc, char *argv[])
     int disassemble = 0;
     const char *preprocessor = NULL;
 
-    struct format formats[] = {
-        { "binary", binary_in, binary_out },
-        { "text"  , text_in,   text_out   },
-    };
-
     FILE *out = stdout;
     const struct format *f = &formats[0];
 
@@ -259,7 +243,7 @@ int main(int argc, char *argv[])
             case 'o': out = fopen(optarg, "w"); break;
             case 'd': disassemble = 1; break;
             case 'f': {
-                size_t sz = countof(formats);
+                size_t sz = formats_count;
                 f = lfind(&(struct format){ .name = optarg }, formats, &sz,
                         sizeof formats[0], find_format_by_name);
                 if (!f)
