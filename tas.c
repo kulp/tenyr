@@ -196,6 +196,7 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
     struct instruction i;
     while (f->impl_in(in, &i) == 1) {
         print_disassembly(out, &i);
+        fputs("\n", out);
     }
 
     return 0;
