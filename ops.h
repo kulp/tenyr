@@ -63,6 +63,7 @@
 
 // TODO assumes bits are filled in rightmost-first
 struct instruction {
+    uint32_t reladdr;    // used for ICI resolving
     struct label {
         char name[32]; // TODO document restriction
         int column;
@@ -72,6 +73,9 @@ struct instruction {
 
         struct label *next;
     } *label;
+    struct dot {
+        uint32_t reladdr;
+    } *dots;
     union {
         uint32_t word;
         struct instruction_any {

@@ -15,6 +15,8 @@ tas: parser.o lexer.o
 
 # we sometimes pass too many arguments to printf
 tas.o: CFLAGS += -Wno-format
+# don't complain about unused values that we might use in asserts
+tsim.o: CFLAGS += -Wno-unused-value
 
 # flex-generated code we can't control warnings of as easily
 lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused

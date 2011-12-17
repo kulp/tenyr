@@ -157,16 +157,19 @@ static int lookup_label(struct label_list *node, const char *name, uint32_t *res
     return 1;
 }
 
-static int eval_ce(struct parse_data *pd, struct const_expr *ce, uint32_t *result)
+static int eval_ce(struct parse_data *pd, struct instruction *top_insn, struct
+        const_expr *ce, uint32_t *result)
 {
     uint32_t left, right;
 
     switch (ce->type) {
         case LAB: return lookup_label(pd->labels, ce->labelname, result);
-        case ICI: *result = ce->reladdr; return 0;
-        case IMM: *result = ce->i.i    ; return 0;
+        case ICI: *result = top_insn->reladdr; return 0;
+        case IMM: *result = ce->i.i; return 0;
         case OP2:
-            if (!eval_ce(pd, ce->left, &left) && !eval_ce(pd, ce->right, &right)) {
+            if (!eval_ce(pd, top_insn, ce->left, &left) &&
+                !eval_ce(pd, top_insn, ce->right, &right))
+            {
                 switch (ce->op) {
                     case '+': *result = left + right; return 0;
                     case '-': *result = left - right; return 0;
@@ -188,7 +191,7 @@ static int fixup_relocations(struct parse_data *pd)
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if (!eval_ce(pd, ce, &result)) {
+        if (!eval_ce(pd, ce->insn, ce, &result)) {
             // TODO check for resolvedness first
             uint32_t mask = -1ULL << r->width;
             result *= r->mult;
@@ -223,6 +226,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         int reladdr = 0;
         // first pass, fix up addresses
         while (q) {
+            q->insn->reladdr = baseaddr + reladdr;
             struct label *l = q->insn->label;
             while (l) {
                 if (!l->resolved) {
