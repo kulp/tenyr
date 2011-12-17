@@ -12,9 +12,10 @@ all: tas tsim
 tsim.o tas.o: ops.h
 parser.o tas.o: parser.h parser_global.h
 tas: parser.o lexer.o
+tas tsim: asm.o
 
 # we sometimes pass too many arguments to printf
-tas.o: CFLAGS += -Wno-format
+asm.o: CFLAGS += -Wno-format
 # don't complain about unused values that we might use in asserts
 tsim.o: CFLAGS += -Wno-unused-value
 
