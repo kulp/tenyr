@@ -115,7 +115,7 @@ insn[outer]
         {   $outer = malloc(sizeof *$outer);
             $outer->u._0xxx.t  = 0;
             $outer->u._0xxx.z  = $lhs->x;
-            $outer->u._0xxx.dd = ($lhs->deref << 1) | ($lhs->deref);
+            $outer->u._0xxx.dd = ($lhs->deref << 1) | ($expr->deref);
             $outer->u._0xxx.x  = $expr->x;
             $outer->u._0xxx.y  = $expr->y;
             $outer->u._0xxx.r  = $arrow;

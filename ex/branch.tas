@@ -1,0 +1,10 @@
+_start:
+	b <- 10         	// set up loop constraint
+top:
+	b <- b - 1      	// decrement loop variable
+	c <- b > a      	// compare b to 0
+	p <- [p + c + 2]	// jump back
+	.word @top
+	.word @done
+done:
+	illegal

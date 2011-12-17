@@ -207,7 +207,10 @@ int main(int argc, char *argv[])
 
     s->regs[15] = start_address & PTR_MASK;
     while (1) {
-        run_instruction(s, (void*)&s->mem[ s->regs[15] ]);
+        printf("IP = %#x\n", s->regs[15]);
+        // TODO make it possible to cast memory location to instruction again
+        struct instruction i = { .u.word = s->mem[ s->regs[15] ] };
+        run_instruction(s, &i);
     }
 
     return 0;
