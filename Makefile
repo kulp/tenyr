@@ -34,7 +34,7 @@ endif
 
 %.d: %.c
 	@set -e; rm -f $@; \
-	$(CC) -M $(CPPFLAGS) $< > $@.$$$$; \
+	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 

@@ -82,7 +82,8 @@ static int savestr(yyscan_t yyscanner)
         tenor_error(lloc, extra, "token too long");
         return 1;
     } else {
-        snprintf(lval->str, len + 1, "%s", text);
+        memset(lval->str, 0, sizeof lval->str);
+        strncpy(lval->str, text, len + 1);
         return 0;
     }
 }
