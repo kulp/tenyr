@@ -1,3 +1,5 @@
+See https://github.com/kulp/Tenor/wiki for documentation.
+
 Tenor aspires to be a complete 32-bit computing environment (simulated
 architecture, operating system, compiler, utilities). It is very much a work
 in progress. A preliminary assembler / disassembler (tas) and simulator (tsim)
