@@ -85,14 +85,27 @@ int print_disassembly(FILE *out, struct instruction *i)
     return -1;
 }
 
-static void binary(FILE *stream, struct instruction *i)
+static int binary_in(FILE *in, struct instruction **insn)
 {
-    fwrite(&i->u.word, sizeof i->u.word, 1, stream);
+    struct instruction *i = *insn = malloc(sizeof *i);
+    return fread(&i->u.word, 4, 1, in) == 1;
 }
 
-static void text(FILE *stream, struct instruction *i)
+static int text_in(FILE *in, struct instruction **insn)
+{
+    struct instruction *i = *insn = malloc(sizeof *i);
+    return fscanf(in, "%x", &i->u.word) == 1;
+}
+
+static int binary_out(FILE *stream, struct instruction *i)
+{
+    return fwrite(&i->u.word, sizeof i->u.word, 1, stream) == 1;
+}
+
+static int text_out(FILE *stream, struct instruction *i)
 {
     fprintf(stream, "0x%08x\n", i->u.word);
+    return 1;
 }
 
 static const char shortopts[] = "df:o:hV";
@@ -129,7 +142,8 @@ static int usage(const char *me)
 
 struct format {
     const char *name;
-    void (*impl)(FILE *, struct instruction *);
+    int (*impl_in )(FILE *, struct instruction **);
+    int (*impl_out)(FILE *, struct instruction *);
 };
 
 static int find_format_by_name(const void *_a, const void *_b)
@@ -237,7 +251,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         q = p;
         while (q) {
             struct instruction_list *t = q;
-            f->impl(out, q->insn);
+            f->impl_out(out, q->insn);
             q = q->next;
             free(t);
         }
@@ -247,11 +261,12 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
     return 0;
 }
 
-int do_disassembly(FILE *in, FILE *out)
+int do_disassembly(FILE *in, FILE *out, const struct format *f)
 {
-    struct instruction i;
-    while (fread(&i.u.word, sizeof i.u.word, 1, in) == 1) {
-        print_disassembly(out, &i);
+    struct instruction *i;
+    while (f->impl_in(in, &i) == 1) {
+        print_disassembly(out, i);
+        free(i);
     }
 
     return 0;
@@ -263,8 +278,8 @@ int main(int argc, char *argv[])
     int disassemble = 0;
 
     struct format formats[] = {
-        { "binary", binary },
-        { "text"  , text   },
+        { "binary", binary_in, binary_out },
+        { "text"  , text_in,   text_out   },
     };
 
     FILE *out = stdout;
@@ -319,7 +334,7 @@ int main(int argc, char *argv[])
         }
 
         if (disassemble)
-            do_disassembly(in, out);
+            do_disassembly(in, out, f);
         else
             do_assembly(in, out, f);
     }
