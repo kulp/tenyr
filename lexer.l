@@ -42,6 +42,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
 {label}                 { savestr(yyscanner); return LABEL; }
+".word"                 { return WORD; }
 
 [][|&+*%^>$.:@()-]      { return yytext[0]; }
 
@@ -63,7 +64,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 [\t\f\v\r ]+            ;
 
 "//".*$                 ; // c99-style comments
-"#".*$                  ; // c99-style comments
+"#".*$                  ; // bash-style comments
 
 .                       { tenor_error(yylloc, yyextra, "unexpected character"); }
 

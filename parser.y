@@ -46,12 +46,12 @@ static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL
 %token <chr> REGISTER
-%token ILLEGAL
+%token ILLEGAL WORD
 
 %type <ce> const_expr atom
 %type <expr> expr lhs
 %type <i> arrow immediate regname
-%type <insn> insn
+%type <insn> insn data insn_or_data
 %type <op> op
 %type <program> program
 %type <s> addsub
@@ -93,21 +93,19 @@ static struct expr *make_expr(struct parse_data *pd, int x, int op, int y,
 
 %%
 
-program[outer]
+insn_or_data
     : insn
+    | data
+
+program[outer]
+    : insn_or_data
         {   pd->top = $outer = malloc(sizeof *$outer);
             $outer->next = NULL;
-            $outer->insn = $insn; }
-    | insn program[inner]
+            $outer->insn = $insn_or_data; }
+    | insn_or_data program[inner]
         {   pd->top = $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
-            $outer->insn = $insn; }
-/*
-    | directive program[inner]
-        {   pd->top = $outer = malloc(sizeof *$outer);
-            $outer->next = $inner;
-            $outer->insn = $insn; }
-*/
+            $outer->insn = $insn_or_data; }
 
 insn[outer]
     : ILLEGAL
@@ -117,7 +115,7 @@ insn[outer]
         {   $outer = malloc(sizeof *$outer);
             $outer->u._0xxx.t  = 0;
             $outer->u._0xxx.z  = $lhs->x;
-            $outer->u._0xxx.dd = ($lhs->deref << 1) | ($lhs->deref);
+            $outer->u._0xxx.dd = ($lhs->deref << 1) | ($expr->deref);
             $outer->u._0xxx.x  = $expr->x;
             $outer->u._0xxx.y  = $expr->y;
             $outer->u._0xxx.r  = $arrow;
@@ -151,8 +149,12 @@ insn[outer]
             struct label_list *l = malloc(sizeof *l);
             l->next  = pd->labels;
             l->label = n;
-            pd->labels = l;
-        }
+            pd->labels = l; }
+
+data
+    : WORD const_expr
+        {   $data = malloc(sizeof *$data);
+            add_relocation(pd, $const_expr, 1, &$data->u.word, 32); }
 
 lhs[outer]
     : regname { ($outer = malloc(sizeof *$outer))->x = $regname; $outer->deref = 0; }
