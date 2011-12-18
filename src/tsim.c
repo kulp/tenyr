@@ -12,10 +12,11 @@
 typedef int map_init(void *cookie, ...);
 typedef int map_op(void *cookie, int op, uint32_t addr, uint32_t *data);
 
-extern map_op ram_init;
-extern map_init ram_op;
+extern map_op   ram_op;
+extern map_init ram_init;
 
 struct device {
+    uint32_t bounds[2]; // lower and upper memory bounds, inclusive
     map_init *init;
     map_op *op;
     void *cookie;
@@ -26,16 +27,33 @@ struct state {
         int abort;
     } conf;
 
-    struct device devices[1]; // XXX
+    size_t devices_count;
+    struct device *devices;
 
     int32_t regs[16];
-    //int32_t mem[1 << 24];
 };
+
+static int find_device_by_addr(const void *_test, const void *_in)
+{
+    const uint32_t *addr = _test;
+    const struct device *in = _in;
+
+    if (*addr <= in->bounds[1]) {
+        if (*addr >= in->bounds[0]) {
+            return 0;
+        } else {
+            return -1;
+        }
+    } else {
+        return 1;
+    }
+}
 
 static inline int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
 {
-    // TODO choose devices
-    struct device *device = &s->devices[0]; // XXX
+    size_t count = s->devices_count;
+    struct device *device = bsearch(&addr, s->devices, count, sizeof *device, find_device_by_addr);
+    assert(("Found device to handle given address", device != NULL));
     return device->op(device->cookie, op, addr, data);
 }
 
@@ -179,8 +197,24 @@ int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
 
-    struct state *s = calloc(1, sizeof *s);
-    s->conf.abort = 0;
+    struct state _s = {
+        .conf.abort = 0,
+    }, *s = &_s;
+
+    s->devices_count = 1;
+    s->devices = calloc(s->devices_count, sizeof *s->devices);
+
+    struct device device = {
+        .bounds[0] = 0,
+        .bounds[1] = (1 << 24) - 1,
+        .op = ram_op,
+        .init = ram_init,
+    };
+    device.init(&device.cookie);
+
+    s->devices[0] = device;
+    // TODO pull out device setup
+
     int load_address = 0, start_address = 0;
     int verbose = 0;
 
@@ -235,17 +269,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    // XXX
-    struct device *device = &s->devices[0];
-    device->op = ram_op;
-    device->init = ram_init;
-
-    device->init(&device->cookie);
-
     struct instruction i;
     while (f->impl_in(in, &i) > 0) {
         dispatch_op(s, 1, load_address++, &i.u.word);
-        //s->mem[load_address++] = i.u.word;
     }
 
     s->regs[15] = start_address & PTR_MASK;
@@ -274,7 +300,7 @@ int main(int argc, char *argv[])
 done:
     if (in)
         fclose(in);
-    free(s);
+    free(s->devices);
 
     return rc;
 }
