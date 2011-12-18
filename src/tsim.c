@@ -141,10 +141,11 @@ bad:
         return 1;
 }
 
-static const char shortopts[] = "a:s:f:vhV";
+static const char shortopts[] = "a:bs:f:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
+    { "break"      , required_argument, NULL, 'b' },
     { "format"     , required_argument, NULL, 'f' },
     { "verbose"    ,       no_argument, NULL, 'v' },
 
@@ -164,6 +165,7 @@ static int usage(const char *me)
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
+           "  -b, --break           call abort() on illegal instructions\n"
            "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format ('binary' or 'text')\n"
            "  -v, --verbose         increase verbosity of output\n"
@@ -190,6 +192,8 @@ static int devices_setup(struct state *s)
 
     int ram_add_device(struct device *device);
     ram_add_device(&s->devices[0]);
+    int sparseram_add_device(struct device *device);
+    //sparseram_add_device(&s->devices[0]);
 
     // Devices must be in address order to allow later bsearch. Assume they do
     // not overlap (overlap is illegal).
@@ -216,7 +220,6 @@ int main(int argc, char *argv[])
     int rc = EXIT_SUCCESS;
 
     struct state _s = {
-        .conf.abort = 0,
         .dispatch_op = dispatch_op,
     }, *s = &_s;
 
@@ -231,6 +234,7 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'a': load_address = strtol(optarg, NULL, 0); break;
+            case 'b': s->conf.abort = 1; break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
                 size_t sz = formats_count;

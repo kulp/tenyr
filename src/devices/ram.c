@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <stdint.h>
-#include <search.h>
 #include <stdlib.h>
 #include <string.h>
 
