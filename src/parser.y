@@ -125,6 +125,7 @@ insn[outer]
                     $outer = make_insn_immediate(pd, $lhs, $expr->ce);
                 } else {
                     tenor_error(&yylloc, pd, "Arrow pointing wrong way");
+                    YYERROR;
                 }
             } else {
                 $outer = make_insn_general(pd, $lhs, $arrow, $expr);
