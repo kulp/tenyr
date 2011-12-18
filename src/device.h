@@ -8,7 +8,7 @@
 
 typedef int map_init(struct state *s, void *cookie, ...);
 typedef int map_op(struct state *s, void *cookie, int op, uint32_t addr, uint32_t *data);
-typedef int map_fini(struct state *s, void *cookie, ...);
+typedef int map_fini(struct state *s, void *cookie);
 
 struct device {
     uint32_t bounds[2]; // lower and upper memory bounds, inclusive

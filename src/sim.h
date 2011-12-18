@@ -4,6 +4,7 @@
 struct state {
     struct {
         int abort;
+        int verbose;
     } conf;
 
     size_t devices_count;

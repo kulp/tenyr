@@ -31,7 +31,7 @@ static int sparseram_init(struct state *s, void *cookie, ...)
     return 0;
 }
 
-static int sparseram_fini(struct state *s, void *cookie, ...)
+static int sparseram_fini(struct state *s, void *cookie)
 {
     struct sparseram_state *sparseram = cookie;
     // tdestroy() is a glibc extension. Here we generate a list of nodes to

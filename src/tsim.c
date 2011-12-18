@@ -186,12 +186,18 @@ static int compare_devices_by_base(const void *_a, const void *_b)
 
 static int devices_setup(struct state *s)
 {
-    // TODO hoist device setup
     s->devices_count = 1;
     s->devices = calloc(s->devices_count, sizeof *s->devices);
 
     int ram_add_device(struct device *device);
-    ram_add_device(&s->devices[0]);
+    if (s->conf.verbose > 2) {
+        struct device *ram = malloc(sizeof *ram);
+        ram_add_device(ram);
+        int debugwrap_add_device(struct device *device, struct device *wrap);
+        debugwrap_add_device(&s->devices[0], ram);
+    } else {
+        ram_add_device(&s->devices[0]);
+    }
     int sparseram_add_device(struct device *device);
     //sparseram_add_device(&s->devices[0]);
 
@@ -220,13 +226,11 @@ int main(int argc, char *argv[])
     int rc = EXIT_SUCCESS;
 
     struct state _s = {
+        .conf.verbose = 0,
         .dispatch_op = dispatch_op,
     }, *s = &_s;
 
-    devices_setup(s);
-
     int load_address = 0, start_address = 0;
-    int verbose = 0;
 
     const struct format *f = &formats[0];
 
@@ -245,7 +249,7 @@ int main(int argc, char *argv[])
 
                 break;
             }
-            case 'v': verbose++; break;
+            case 'v': s->conf.verbose++; break;
 
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
@@ -280,6 +284,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    devices_setup(s);
+
     struct instruction i;
     while (f->impl_in(in, &i) > 0) {
         s->dispatch_op(s, 1, load_address++, &i.u.word);
@@ -287,21 +293,20 @@ int main(int argc, char *argv[])
 
     s->regs[15] = start_address & PTR_MASK;
     while (1) {
-        if (verbose > 0)
-            printf("IP = 0x%06x\t", s->regs[15]);
-
         assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
         struct instruction i;
         s->dispatch_op(s, 0, s->regs[15], &i.u.word);
 
-        if (verbose > 1)
+        if (s->conf.verbose > 0)
+            printf("IP = 0x%06x\t", s->regs[15]);
+        if (s->conf.verbose > 1)
             print_disassembly(stdout, &i);
-        if (verbose > 2)
+        if (s->conf.verbose > 3)
             fputs("\n", stdout);
-        if (verbose > 2)
+        if (s->conf.verbose > 3)
             print_registers(stdout, s->regs);
-        if (verbose > 0)
+        if (s->conf.verbose > 0)
             fputs("\n", stdout);
 
         if (run_instruction(s, &i))
