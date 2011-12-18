@@ -125,6 +125,7 @@ insn[outer]
                     $outer = make_insn_immediate(pd, $lhs, $expr->ce);
                 } else {
                     tenor_error(&yylloc, pd, "Arrow pointing wrong way");
+                    YYERROR;
                 }
             } else {
                 $outer = make_insn_general(pd, $lhs, $arrow, $expr);
@@ -270,9 +271,9 @@ static struct instruction *make_insn_immediate(struct parse_data *pd, struct
     insn->label = NULL;
     ce->insn = insn;
     add_relocation(pd, ce, 1, &insn->u.word, LARGE_IMMEDIATE_BITWIDTH);
-    insn->u._10xx.t = 2;
-    insn->u._10xx.z = lhs->x;
-    insn->u._10xx.d = lhs->deref << 1;
+    insn->u._10xx.t  = 2;
+    insn->u._10xx.z  = lhs->x;
+    insn->u._10xx.dd = lhs->deref << 1;
 
     return insn;
 }
