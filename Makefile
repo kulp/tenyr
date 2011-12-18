@@ -17,11 +17,12 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 all: tas tsim
 tas: parser.o lexer.o
 tas tsim: asm.o
+tsim: ram.o
 
 # we sometimes pass too many arguments to printf
 asm.o: CFLAGS += -Wno-format
 # don't complain about unused values that we might use in asserts
-tsim.o: CFLAGS += -Wno-unused-value
+ram.o tsim.o: CFLAGS += -Wno-unused-value
 
 # flex-generated code we can't control warnings of as easily
 lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused

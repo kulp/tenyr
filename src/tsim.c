@@ -9,23 +9,65 @@
 #include "common.h"
 #include "asm.h"
 
-#define PTR_MASK ~(-1 << 24)
+typedef int map_init(void *cookie, ...);
+typedef int map_op(void *cookie, int op, uint32_t addr, uint32_t *data);
+
+extern map_op   ram_op;
+extern map_init ram_init;
+
+struct device {
+    uint32_t bounds[2]; // lower and upper memory bounds, inclusive
+    map_init *init;
+    map_op *op;
+    void *cookie;
+};
 
 struct state {
     struct {
         int abort;
     } conf;
 
+    size_t devices_count;
+    struct device *devices;
+
     int32_t regs[16];
-    int32_t mem[1 << 24];
 };
+
+static int find_device_by_addr(const void *_test, const void *_in)
+{
+    const uint32_t *addr = _test;
+    const struct device *in = _in;
+
+    if (*addr <= in->bounds[1]) {
+        if (*addr >= in->bounds[0]) {
+            return 0;
+        } else {
+            return -1;
+        }
+    } else {
+        return 1;
+    }
+}
+
+static inline int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
+{
+    size_t count = s->devices_count;
+    struct device *device = bsearch(&addr, s->devices, count, sizeof *device, find_device_by_addr);
+    assert(("Found device to handle given address", device != NULL));
+    return device->op(device->cookie, op, addr, data);
+}
 
 int run_instruction(struct state *s, struct instruction *i)
 {
-    int32_t _scratch,
-            *ip = &s->regs[15];
+    int32_t *ip = &s->regs[15];
 
-    assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
+    assert(("PC within address space", !(*ip & ~PTR_MASK)));
+
+    int32_t *Z;
+    int32_t _rhs, *rhs = &_rhs;
+    uint32_t value;
+    int deref_lhs, deref_rhs;
+    int reversed;
 
     switch (i->u._xxxx.t) {
         case 0b1011:
@@ -33,21 +75,25 @@ int run_instruction(struct state *s, struct instruction *i)
         case 0b1010:
         case 0b1000: {
             struct instruction_load_immediate *g = &i->u._10xx;
-            int32_t *Z   = &s->regs[g->z];
+            Z = &s->regs[g->z];
             int32_t _imm = g->imm;
-            int32_t *imm = &_imm;
-            if (g->d & 2) Z = &s->mem[*Z   & PTR_MASK];
-            if (g->d & 1) Z = &s->mem[*imm & PTR_MASK];
-            *Z = *imm;
+            //int32_t *imm = &_imm;
+            deref_rhs = g->dd & 1;
+            deref_lhs = g->dd & 2;
+            reversed = 0;
+            rhs = &_imm;
+
             break;
         }
         case 0b0000 ... 0b0111: {
             struct instruction_general *g = &i->u._0xxx;
-            int32_t *Z = &s->regs[g->z];
+            Z = &s->regs[g->z];
             int32_t  X =  s->regs[g->x];
             int32_t  Y =  s->regs[g->y];
             int32_t  I = SEXTEND(12, g->imm);
-            int32_t _rhs, *rhs = &_rhs;
+            deref_rhs = g->dd & 1;
+            deref_lhs = g->dd & 2;
+            reversed = !!g->r;
 
             switch (g->op) {
                 case OP_BITWISE_OR          : *rhs =  (X  |  Y) + I; break;
@@ -68,36 +114,50 @@ int run_instruction(struct state *s, struct instruction *i)
                 case OP_RESERVED            : goto bad;
             }
 
-            if (g->dd & 2) Z   = &s->mem[*Z   & PTR_MASK];
-            if (g->dd & 1) rhs = &s->mem[*rhs & PTR_MASK];
-
-            {
-                int32_t *r, *w;
-                if (g->r)
-                    r = Z, w = rhs;
-                else
-                    w = Z, r = rhs;
-
-                if (w == ip) ip = &_scratch; // throw away later update
-                if (w == &s->regs[0]) w = &_scratch;  // throw away write to reg 0
-                *w = *r;
-            }
-
             break;
         }
         default:
-        bad:
-            if (s->conf.abort)
-                abort();
-            else
-                return 1;
+            goto bad;
     }
 
-    *ip += 1;
-    // TODO trap wrap
-    *ip &= PTR_MASK;
+    // common activity block
+    {
+        uint32_t r_addr = (reversed ? *Z   : *rhs) & PTR_MASK;
+        uint32_t w_addr = (reversed ? *rhs : *Z  ) & PTR_MASK;
+
+        int read_mem  = reversed ? deref_lhs : deref_rhs;
+        int write_mem = reversed ? deref_rhs : deref_lhs;
+
+        int32_t *r, *w;
+        if (reversed)
+            r = Z, w = rhs;
+        else
+            w = Z, r = rhs;
+
+        if (read_mem)
+            dispatch_op(s, 0, r_addr, &value);
+        else
+            value = *r;
+
+        if (write_mem)
+            dispatch_op(s, 1, w_addr, &value);
+        else if (w != &s->regs[0])  // throw away write to reg 0
+            *w = value;
+
+        if (w != ip) {
+            *ip += 1;
+            if (*ip & ~PTR_MASK) goto bad; // trap wrap
+            *ip &= PTR_MASK; // TODO right now this will never be reached
+        }
+    }
 
     return 0;
+
+bad:
+    if (s->conf.abort)
+        abort();
+    else
+        return 1;
 }
 
 static const char shortopts[] = "a:s:f:vhV";
@@ -137,8 +197,24 @@ int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
 
-    struct state *s = calloc(1, sizeof *s);
-    s->conf.abort = 0;
+    struct state _s = {
+        .conf.abort = 0,
+    }, *s = &_s;
+
+    s->devices_count = 1;
+    s->devices = calloc(s->devices_count, sizeof *s->devices);
+
+    struct device device = {
+        .bounds[0] = 0,
+        .bounds[1] = (1 << 24) - 1,
+        .op = ram_op,
+        .init = ram_init,
+    };
+    device.init(&device.cookie);
+
+    s->devices[0] = device;
+    // TODO pull out device setup
+
     int load_address = 0, start_address = 0;
     int verbose = 0;
 
@@ -195,7 +271,7 @@ int main(int argc, char *argv[])
 
     struct instruction i;
     while (f->impl_in(in, &i) > 0) {
-        s->mem[load_address++] = i.u.word;
+        dispatch_op(s, 1, load_address++, &i.u.word);
     }
 
     s->regs[15] = start_address & PTR_MASK;
@@ -205,7 +281,8 @@ int main(int argc, char *argv[])
 
         assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
-        struct instruction i = { .u.word = s->mem[ s->regs[15] ] };
+        struct instruction i;
+        dispatch_op(s, 0, s->regs[15], &i.u.word);
 
         if (verbose > 1)
             print_disassembly(stdout, &i);
@@ -223,7 +300,7 @@ int main(int argc, char *argv[])
 done:
     if (in)
         fclose(in);
-    free(s);
+    free(s->devices);
 
     return rc;
 }
