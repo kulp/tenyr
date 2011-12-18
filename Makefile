@@ -6,7 +6,7 @@ CFLAGS  += -Wall -Wextra
 
 CFILES = $(wildcard src/*.c) parser.c
 
-VPATH += src
+VPATH += src src/devices
 INCLUDES += src
 
 BUILD_NAME := $(shell git describe --long --always)
@@ -14,7 +14,7 @@ DEFINES += BUILD_NAME='$(BUILD_NAME)'
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
-DEVICES = ram
+DEVICES = ram sparseram
 DEVOBJS = $(DEVICES:%=%.o)
 
 all: tas tsim

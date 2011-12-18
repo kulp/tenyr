@@ -1,7 +1,11 @@
+#ifndef LIMIT
+#define LIMIT 100
+#endif
+#
 #define jeq(Cond,Label) p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
 #define jmp(Label) p <- p + @Label - .
 
-    b <- 100            // b = upper limit (N)
+    b <- LIMIT          // b = upper limit (N)
     d <- 1              // d = one
     c <- b >> d         // c = (N/2)
     i <- 2              // i = outer loop control
