@@ -8,19 +8,7 @@
 #include "ops.h"
 #include "common.h"
 #include "asm.h"
-
-typedef int map_init(void *cookie, ...);
-typedef int map_op(void *cookie, int op, uint32_t addr, uint32_t *data);
-
-extern map_op   ram_op;
-extern map_init ram_init;
-
-struct device {
-    uint32_t bounds[2]; // lower and upper memory bounds, inclusive
-    map_init *init;
-    map_op *op;
-    void *cookie;
-};
+#include "device.h"
 
 struct state {
     struct {
@@ -193,6 +181,43 @@ static int usage(const char *me)
     return 0;
 }
 
+static int compare_devices_by_base(const void *_a, const void *_b)
+{
+    const struct device *a = _a;
+    const struct device *b = _b;
+
+    return b->bounds[0] - a->bounds[0];
+}
+
+static int devices_setup(struct state *s)
+{
+    // TODO hoist device setup
+    s->devices_count = 1;
+    s->devices = calloc(s->devices_count, sizeof *s->devices);
+
+    int ram_add_device(struct device *device);
+    ram_add_device(&s->devices[0]);
+
+    // Devices must be in address order to allow later bsearch. Assume they do
+    // not overlap (overlap is illegal).
+    qsort(s->devices, s->devices_count, sizeof *s->devices, compare_devices_by_base);
+
+    for (unsigned i = 0; i < s->devices_count; i++)
+        s->devices[i].init(&s->devices[i].cookie);
+
+    return 0;
+}
+
+static int devices_teardown(struct state *s)
+{
+    for (unsigned i = 0; i < s->devices_count; i++)
+        s->devices[i].fini(s->devices[i].cookie);
+
+    free(s->devices);
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -201,19 +226,7 @@ int main(int argc, char *argv[])
         .conf.abort = 0,
     }, *s = &_s;
 
-    s->devices_count = 1;
-    s->devices = calloc(s->devices_count, sizeof *s->devices);
-
-    struct device device = {
-        .bounds[0] = 0,
-        .bounds[1] = (1 << 24) - 1,
-        .op = ram_op,
-        .init = ram_init,
-    };
-    device.init(&device.cookie);
-
-    s->devices[0] = device;
-    // TODO pull out device setup
+    devices_setup(s);
 
     int load_address = 0, start_address = 0;
     int verbose = 0;
@@ -300,7 +313,8 @@ int main(int argc, char *argv[])
 done:
     if (in)
         fclose(in);
-    free(s->devices);
+
+    devices_teardown(s);
 
     return rc;
 }
