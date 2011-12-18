@@ -36,11 +36,15 @@ int print_disassembly(FILE *out, struct instruction *i)
         case 0b1011:
         case 0b1001: {
             struct instruction_load_immediate *g = &i->u._10xx;
-            fprintf(out, "%c%c%c <-  0x%08x",
-                    g->d ? '[' : ' ',   // left side dereferenced ?
-                    'A' + g->z,         // register name for Z
-                    g->d ? ']' : ' ',   // left side dereferenced ?
-                    g->imm              // immediate value
+            int ld = g->dd & 2;
+            int rd = g->dd & 1;
+            fprintf(out, "%c%c%c <- %c0x%08x%c",
+                    ld ? '[' : ' ', // left side dereferenced ?
+                    'A' + g->z,     // register name for Z
+                    ld ? ']' : ' ', // left side dereferenced ?
+                    rd ? '[' : ' ', // right side dereferenced ?
+                    g->imm,         // immediate value
+                    rd ? ']' : ' '  // right side dereferenced ?
                 );
             return 0;
         }

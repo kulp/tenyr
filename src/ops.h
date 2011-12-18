@@ -82,7 +82,7 @@ struct instruction {
         struct instruction_load_immediate {
             signed   imm : 24;  ///< immediate
             unsigned z   :  4;  ///< destination
-            unsigned d   :  2;  ///< dereference
+            unsigned dd  :  2;  ///< dereference
             unsigned t   :  2;  ///< type bits
         } _10xx;
         struct instruction_general {
