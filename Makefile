@@ -14,15 +14,20 @@ DEFINES += BUILD_NAME='$(BUILD_NAME)'
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
+DEVICES = ram
+DEVOBJS = $(DEVICES:%=%.o)
+
 all: tas tsim
 tas: parser.o lexer.o
 tas tsim: asm.o
-tsim: ram.o
+tsim: $(DEVOBJS)
 
 # we sometimes pass too many arguments to printf
 asm.o: CFLAGS += -Wno-format
 # don't complain about unused values that we might use in asserts
-ram.o tsim.o: CFLAGS += -Wno-unused-value
+tsim.o $(DEVOBJS): CFLAGS += -Wno-unused-value
+# don't complain about unused state
+$(DEVOBJS): CFLAGS += -Wno-unused-parameter
 
 # flex-generated code we can't control warnings of as easily
 lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused
