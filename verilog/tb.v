@@ -78,29 +78,44 @@ module Test();
             .pc(pc));
 
     initial begin
-        #1;
 
-        reg_indexZ = 2;
-        reg_dataZ = 3;
-        reg_rw = 1;
-        #10 reg_rw = 0;
+        @(posedge clk);
 
-        #10;
+        #01 reg_indexZ = 2;
+        #00 reg_dataZ  = 3;
+        #00 reg_rw     = 1;
+        #05 reg_rw     = 0;
 
-        reg_indexZ = 5;
-        reg_dataZ = 6;
-        reg_rw = 1;
-        #10 reg_rw = 0;
+        @(posedge clk) #4;
 
-        #10;
+        #00 reg_indexZ = 5;
+        #00 reg_dataZ  = 6;
+        #00 reg_rw     = 1;
+        #05 reg_rw     = 0;
 
-        reg_indexZ = 2;
-        reg_valZ = _reg_dataZ;
+        @(posedge clk) #4;
 
-        #10;
+        #00 reg_indexZ = 2;
+        #05 reg_valZ   = _reg_dataZ;
 
-        reg_indexZ = 5;
-        reg_valZ = _reg_dataZ;
+        @(posedge clk) #4;
+
+        #00 reg_indexZ = 5;
+        #05 reg_valZ   = _reg_dataZ;
+
+        @(posedge clk) #4;
+
+        #00 reg_indexZ = 'bz;
+
+        @(posedge clk) #4;
+
+        #00 reg_indexZ = 5;
+        #05 reg_valZ   = _reg_dataZ;
+
+        @(posedge clk) #4;
+
+        #00 reg_indexZ = 2;
+        #05 reg_valZ   = _reg_dataZ;
 
     end
 

@@ -45,6 +45,8 @@ module Reg(input clk,
               r_valueX = 0,
               r_valueY = 0;
 
+    reg r_rwZ = 0;
+
     initial store[15] = 0; // PC inits to zero
 
     assign pc = store[15];
@@ -53,18 +55,19 @@ module Reg(input clk,
     assign valueY = r_valueY;
 
     always @(negedge clk) begin
+        r_rwZ <= #3 rwZ;
         if (rwZ)
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
-                store[indexZ] <= valueZ;
+                store[indexZ] <= #3 valueZ;
             end
         else begin
-            r_valueZ <= store[indexZ];
+            r_valueZ <= #3 store[indexZ];
         end
 
-        r_valueX <= store[indexX];
-        r_valueY <= store[indexY];
+        r_valueX <= #3 store[indexX];
+        r_valueY <= #3 store[indexY];
     end
 
 endmodule
