@@ -56,36 +56,51 @@ module Test();
     end
 
     reg reg_rw = 0;
-    reg[3:0] reg_index;
-    reg[31:0] reg_data;
-    reg[31:0] reg_val;
-    wire[31:0] _reg_data = reg_rw ? reg_data : 'bz;
+    reg[3:0] reg_indexZ,
+             reg_indexX,
+             reg_indexY;
+    reg[31:0] reg_dataZ,
+              reg_dataX,
+              reg_dataY;
+    reg[31:0] reg_valZ,
+              reg_valX,
+              reg_valY;
+    wire[31:0] _reg_dataZ = reg_rw ? reg_dataZ : 'bz;
+    wire[31:0] _reg_dataX;
+    wire[31:0] _reg_dataY;
     wire[23:0] pc;
-    Reg regs(clk, reg_rw, reg_index, _reg_data, pc);
+
+    //Reg regs(clk, reg_rw, reg_index, _reg_data, pc);
+    Reg regs(.clk(clk),
+            .rwZ(reg_rw), .indexZ(reg_indexZ), .valueZ(_reg_dataZ),
+                          .indexX(reg_indexX), .valueX(_reg_dataX),
+                          .indexY(reg_indexY), .valueY(_reg_dataY),
+            .pc(pc));
+
     initial begin
         #1;
 
-        reg_index = 2;
-        reg_data = 3;
+        reg_indexZ = 2;
+        reg_dataZ = 3;
         reg_rw = 1;
         #10 reg_rw = 0;
 
         #10;
 
-        reg_index = 5;
-        reg_data = 6;
+        reg_indexZ = 5;
+        reg_dataZ = 6;
         reg_rw = 1;
         #10 reg_rw = 0;
 
         #10;
 
-        reg_index = 2;
-        reg_val = _reg_data;
+        reg_indexZ = 2;
+        reg_valZ = _reg_dataZ;
 
         #10;
 
-        reg_index = 5;
-        reg_val = _reg_data;
+        reg_indexZ = 5;
+        reg_valZ = _reg_dataZ;
 
     end
 

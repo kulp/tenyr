@@ -34,24 +34,38 @@ module Mem(input clk, input enable, input rw, input[23:0] _addr, inout[31:0] _da
 
 endmodule
 
-module Reg(input clk, input rw, input[3:0] _index, inout[31:0] _value, output[23:0] pc);
+module Reg(input clk,
+        input rwZ, input[3:0] indexZ, inout [31:0] valueZ, // Z is RW
+                   input[3:0] indexX, output[31:0] valueX, // X is RO
+                   input[3:0] indexY, output[31:0] valueY, // Y is RO
+        output[23:0] pc);
 
     reg[31:0] store[15:0];
-    reg[31:0] value = 0;
+    reg[31:0] r_valueZ = 0,
+              r_valueX = 0,
+              r_valueY = 0;
 
     initial store[15] = 0; // PC inits to zero
 
     assign pc = store[15];
-    assign _value = rw ? 'bz : value;
+    assign valueZ = rwZ ? 'bz : r_valueZ;
+    assign valueX = r_valueX;
+    assign valueY = r_valueY;
 
-    always @(negedge clk)
-        if (rw)
-            if (_index == 0)
+    always @(negedge clk) begin
+        if (rwZ)
+            if (indexZ == 0)
                 $display("wrote to zero register");
-            else
-                store[_index] = _value;
-        else
-            value = store[_index];
+            else begin
+                store[indexZ] <= valueZ;
+            end
+        else begin
+            r_valueZ <= store[indexZ];
+        end
+
+        r_valueX <= store[indexX];
+        r_valueY <= store[indexY];
+    end
 
 endmodule
 
@@ -59,8 +73,14 @@ module Core(input clk, output mem_rw, output[23:0] _addr, inout[31:0] _data);
 
     reg[31:0] insn = 0;
     wire[3:0] _type = insn[31:28];
-    wire[31:0] _reg_value;
-    reg[3:0] reg_index = 0;
+    wire[31:0] _reg_valueZ,
+               _reg_valueX,
+               _reg_valueY;
+    reg[31:0] reg_valueX,
+              reg_valueY;
+    reg[3:0] reg_indexZ = 0,
+             reg_indexX = 0,
+             reg_indexY = 0;
     wire[23:0] pc;
     reg reg_rw = 0;
     reg[23:0] addr = 0;
@@ -73,7 +93,11 @@ module Core(input clk, output mem_rw, output[23:0] _addr, inout[31:0] _data);
 
     wire mem_rw = writing;
 
-    Reg regs(clk, reg_rw, reg_index, _reg_value, pc);
+    Reg regs(.clk(clk),
+            .rwZ(reg_rw), .indexZ(reg_indexZ), .valueZ(_reg_valueZ),
+                          .indexX(reg_indexX), .valueX(_reg_valueX),
+                          .indexY(reg_indexY), .valueY(_reg_valueY),
+            .pc(pc));
 
     always @(negedge clk) begin
         if (reading)
