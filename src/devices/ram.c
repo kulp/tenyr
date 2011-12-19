@@ -18,7 +18,7 @@ static int ram_init(struct state *s, void *cookie, ...)
     return 0;
 }
 
-static int ram_fini(struct state *s, void *cookie, ...)
+static int ram_fini(struct state *s, void *cookie)
 {
     struct ram_state *ram = cookie;
     free(ram);

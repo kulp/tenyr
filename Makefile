@@ -14,7 +14,7 @@ DEFINES += BUILD_NAME='$(BUILD_NAME)'
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
-DEVICES = ram sparseram
+DEVICES = ram sparseram debugwrap
 DEVOBJS = $(DEVICES:%=%.o)
 
 all: tas tsim
