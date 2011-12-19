@@ -8,30 +8,8 @@
 #include "ops.h"
 #include "common.h"
 #include "asm.h"
-
-typedef int map_init(void *cookie, ...);
-typedef int map_op(void *cookie, int op, uint32_t addr, uint32_t *data);
-
-extern map_op   ram_op;
-extern map_init ram_init;
-
-struct device {
-    uint32_t bounds[2]; // lower and upper memory bounds, inclusive
-    map_init *init;
-    map_op *op;
-    void *cookie;
-};
-
-struct state {
-    struct {
-        int abort;
-    } conf;
-
-    size_t devices_count;
-    struct device *devices;
-
-    int32_t regs[16];
-};
+#include "device.h"
+#include "sim.h"
 
 static int find_device_by_addr(const void *_test, const void *_in)
 {
@@ -49,12 +27,15 @@ static int find_device_by_addr(const void *_test, const void *_in)
     }
 }
 
-static inline int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
+static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
 {
     size_t count = s->devices_count;
     struct device *device = bsearch(&addr, s->devices, count, sizeof *device, find_device_by_addr);
     assert(("Found device to handle given address", device != NULL));
-    return device->op(device->cookie, op, addr, data);
+    // TODO don't send in the whole simulator state ? the op should have
+    // access to some state, in order to redispatch and potentially use other
+    // devices, but it shouldn't see the whole state
+    return device->op(s, device->cookie, op, addr, data);
 }
 
 int run_instruction(struct state *s, struct instruction *i)
@@ -135,12 +116,12 @@ int run_instruction(struct state *s, struct instruction *i)
             w = Z, r = rhs;
 
         if (read_mem)
-            dispatch_op(s, 0, r_addr, &value);
+            s->dispatch_op(s, 0, r_addr, &value);
         else
             value = *r;
 
         if (write_mem)
-            dispatch_op(s, 1, w_addr, &value);
+            s->dispatch_op(s, 1, w_addr, &value);
         else if (w != &s->regs[0])  // throw away write to reg 0
             *w = value;
 
@@ -160,10 +141,11 @@ bad:
         return 1;
 }
 
-static const char shortopts[] = "a:s:f:vhV";
+static const char shortopts[] = "a:bs:f:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
+    { "break"      , required_argument, NULL, 'b' },
     { "format"     , required_argument, NULL, 'f' },
     { "verbose"    ,       no_argument, NULL, 'v' },
 
@@ -183,6 +165,7 @@ static int usage(const char *me)
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
+           "  -b, --break           call abort() on illegal instructions\n"
            "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format ('binary' or 'text')\n"
            "  -v, --verbose         increase verbosity of output\n"
@@ -193,30 +176,61 @@ static int usage(const char *me)
     return 0;
 }
 
+static int compare_devices_by_base(const void *_a, const void *_b)
+{
+    const struct device *a = _a;
+    const struct device *b = _b;
+
+    return b->bounds[0] - a->bounds[0];
+}
+
+static int devices_setup(struct state *s)
+{
+    s->devices_count = 1;
+    s->devices = calloc(s->devices_count, sizeof *s->devices);
+
+    int ram_add_device(struct device *device);
+    if (s->conf.verbose > 2) {
+        struct device *ram = malloc(sizeof *ram);
+        ram_add_device(ram);
+        int debugwrap_add_device(struct device *device, struct device *wrap);
+        debugwrap_add_device(&s->devices[0], ram);
+    } else {
+        ram_add_device(&s->devices[0]);
+    }
+    int sparseram_add_device(struct device *device);
+    //sparseram_add_device(&s->devices[0]);
+
+    // Devices must be in address order to allow later bsearch. Assume they do
+    // not overlap (overlap is illegal).
+    qsort(s->devices, s->devices_count, sizeof *s->devices, compare_devices_by_base);
+
+    for (unsigned i = 0; i < s->devices_count; i++)
+        s->devices[i].init(s, &s->devices[i].cookie);
+
+    return 0;
+}
+
+static int devices_teardown(struct state *s)
+{
+    for (unsigned i = 0; i < s->devices_count; i++)
+        s->devices[i].fini(s, s->devices[i].cookie);
+
+    free(s->devices);
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
 
     struct state _s = {
-        .conf.abort = 0,
+        .conf.verbose = 0,
+        .dispatch_op = dispatch_op,
     }, *s = &_s;
 
-    s->devices_count = 1;
-    s->devices = calloc(s->devices_count, sizeof *s->devices);
-
-    struct device device = {
-        .bounds[0] = 0,
-        .bounds[1] = (1 << 24) - 1,
-        .op = ram_op,
-        .init = ram_init,
-    };
-    device.init(&device.cookie);
-
-    s->devices[0] = device;
-    // TODO pull out device setup
-
     int load_address = 0, start_address = 0;
-    int verbose = 0;
 
     const struct format *f = &formats[0];
 
@@ -224,6 +238,7 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'a': load_address = strtol(optarg, NULL, 0); break;
+            case 'b': s->conf.abort = 1; break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
                 size_t sz = formats_count;
@@ -234,7 +249,7 @@ int main(int argc, char *argv[])
 
                 break;
             }
-            case 'v': verbose++; break;
+            case 'v': s->conf.verbose++; break;
 
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
@@ -269,28 +284,29 @@ int main(int argc, char *argv[])
         }
     }
 
+    devices_setup(s);
+
     struct instruction i;
     while (f->impl_in(in, &i) > 0) {
-        dispatch_op(s, 1, load_address++, &i.u.word);
+        s->dispatch_op(s, 1, load_address++, &i.u.word);
     }
 
     s->regs[15] = start_address & PTR_MASK;
     while (1) {
-        if (verbose > 0)
-            printf("IP = 0x%06x\t", s->regs[15]);
-
         assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
         struct instruction i;
-        dispatch_op(s, 0, s->regs[15], &i.u.word);
+        s->dispatch_op(s, 0, s->regs[15], &i.u.word);
 
-        if (verbose > 1)
+        if (s->conf.verbose > 0)
+            printf("IP = 0x%06x\t", s->regs[15]);
+        if (s->conf.verbose > 1)
             print_disassembly(stdout, &i);
-        if (verbose > 2)
+        if (s->conf.verbose > 3)
             fputs("\n", stdout);
-        if (verbose > 2)
+        if (s->conf.verbose > 3)
             print_registers(stdout, s->regs);
-        if (verbose > 0)
+        if (s->conf.verbose > 0)
             fputs("\n", stdout);
 
         if (run_instruction(s, &i))
@@ -300,7 +316,8 @@ int main(int argc, char *argv[])
 done:
     if (in)
         fclose(in);
-    free(s->devices);
+
+    devices_teardown(s);
 
     return rc;
 }
