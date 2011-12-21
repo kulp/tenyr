@@ -7,9 +7,9 @@
 #define ARGUMENT 10
 #endif
 
-#define call(Target)    [o] <- p + 3 ; o <- o - 1 ; p <- @Target
-#define jnz(Cond,Label) p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
 #define goto(Label)     p <- p + @Label - .
+#define call(Target)    [o] <- p + 3 ; o <- o - 1 ; goto(Target)
+#define jnz(Cond,Label) p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
 #define push(Reg)       Reg -> [o] ; o <- o - 1
 #define pop(Reg)        o <- o + 1 ; Reg <- [o]
 #define ret             pop(p)
