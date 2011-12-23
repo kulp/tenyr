@@ -52,9 +52,14 @@ int print_disassembly(FILE *out, struct instruction *i)
             struct instruction_general *g = &i->u._0xxx;
             int ld = g->dd & 2;
             int rd = g->dd & 1;
+            int noop = g->y == 0 && g->op == OP_BITWISE_OR;
+            static const char imm_op[]   = "%c%c%c %s %c%c %-2s %c + 0x%08x%c";
+            static const char imm_nop[]  = "%c%c%c %s %c%c + 0x%9$08x%10$c";
+            static const char nimm_op[]  = "%c%c%c %s %c%c %-2s %c%10$c";
+            static const char nimm_nop[] = "%c%c%c %s %c%c%10$c";
             fprintf(out,
-                    g->imm ? "%c%c%c %s %c%c %-2s %c + 0x%08x%c"
-                           : "%c%c%c %s %c%c %-2s %c%10$c",
+                    g->imm ? noop ? imm_nop  : imm_op :
+                             noop ? nimm_nop : nimm_op,
                     ld ? '[' : ' ',     // left side dereferenced ?
                     'A' + g->z,         // register name for Z
                     ld ? ']' : ' ',     // left side dereferenced ?

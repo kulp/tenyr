@@ -1,0 +1,43 @@
+// Conventions:
+//  O is the stack pointer (post-decrement)
+//  B is the (so far only) return register
+//  C is the (so far only) argument register
+
+#ifndef ARGUMENT
+#define ARGUMENT 10
+#endif
+
+#define goto(Label)     p <- p + @Label - .
+#define call(Target)    [o] <- p + 3 ; o <- o - 1 ; goto(Target)
+#define jnz(Cond,Label) p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
+#define push(Reg)       Reg -> [o] ; o <- o - 1
+#define pop(Reg)        o <- o + 1 ; Reg <- [o]
+#define ret             pop(p)
+
+_start:
+    c <- ARGUMENT       // argument
+    o <- -1             // stack pointer
+    call(fib)
+    illegal
+
+fib:
+    d <- 1
+    d <- c > d          // zero or one ?
+    jnz(d,_recurse)     // not-zero is true (c >= 2)
+    b <- 1
+    ret
+
+_recurse:
+    push(c)
+    c <- c - 1
+    call(fib)
+    pop(c)
+    push(b)
+    c <- c - 2
+    call(fib)
+    d <- b
+    pop(b)
+    b <- d + b
+
+    ret
+

@@ -5,7 +5,7 @@
 #include "common.h"
 #include "parser_global.h"
 
-int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
+int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 static int savestr(yyscan_t yyscanner);
 
@@ -29,7 +29,7 @@ static int savestr(yyscan_t yyscanner);
 %option noyywrap never-interactive yylineno batch
 %option case-insensitive
 %option extra-type="struct parse_data *"
-%option prefix="tenor_"
+%option prefix="tenyr_"
 
 regname ([A-P])
 label   ([A-Z_][A-Z0-9_]{1,30})
@@ -67,7 +67,7 @@ label   ([A-Z_][A-Z0-9_]{1,30})
 "//".*$                 ; // c99-style comments
 "#".*$                  ; // bash-style comments
 
-.                       { tenor_error(yylloc, yyextra, "unexpected character"); }
+.                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 
 %%
 
@@ -80,7 +80,7 @@ static int savestr(yyscan_t yyscanner)
     void *extra      = yyget_extra(yyscanner);
 
     if (len >= (signed)sizeof lval->str) {
-        tenor_error(lloc, extra, "token too long");
+        tenyr_error(lloc, extra, "token too long");
         return 1;
     } else {
         memset(lval->str, 0, sizeof lval->str);

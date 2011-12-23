@@ -143,14 +143,14 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
     struct parse_data pd = { .top = NULL };
 
-    tenor_lex_init(&pd.scanner);
-    tenor_set_extra(&pd, pd.scanner);
+    tenyr_lex_init(&pd.scanner);
+    tenyr_set_extra(&pd, pd.scanner);
 
     if (in)
-        tenor_set_in(in, pd.scanner);
-        //tenor_restart(in, pd.scanner); // TODO ?
+        tenyr_set_in(in, pd.scanner);
+        //tenyr_restart(in, pd.scanner); // TODO ?
 
-    int result = tenor_parse(&pd);
+    int result = tenyr_parse(&pd);
     if (!result && f) {
         struct instruction_list *p = pd.top, *q = p;
 
@@ -191,7 +191,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             last = l;
         }
     }
-    tenor_lex_destroy(pd.scanner);
+    tenyr_lex_destroy(pd.scanner);
 
     return 0;
 }

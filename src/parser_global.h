@@ -24,7 +24,7 @@ struct parse_data {
     } *labels;
 };
 
-int tenor_parse(struct parse_data *);
+int tenyr_parse(struct parse_data *);
 
 #endif
 
