@@ -8,7 +8,7 @@
 #include "parser_global.h"
 #include "lexer.h"
 
-int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
+int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_relocation(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width);
 static struct const_expr *make_const_expr(int type, int op, struct const_expr
@@ -37,7 +37,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %parse-param { struct parse_data *pd }
 %defines "parser.h"
 %output "parser.c"
-%name-prefix "tenor_"
+%name-prefix "tenyr_"
 // TODO destructors
 //%destructor { insn_free($$); } <insn>
 //%destructor { expr_free($$); } <expr>
@@ -124,7 +124,7 @@ insn[outer]
                 if ($arrow == 0) {
                     $outer = make_insn_immediate(pd, $lhs, $expr->ce);
                 } else {
-                    tenor_error(&yylloc, pd, "Arrow pointing wrong way");
+                    tenyr_error(&yylloc, pd, "Arrow pointing wrong way");
                     YYERROR;
                 }
             } else {
@@ -231,12 +231,12 @@ lref
 
 %%
 
-int tenor_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
+int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
     fflush(stderr);
     fprintf(stderr, "%s\n", pd->lexstate.saveline);
     fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", locp->last_column, "^",
-            locp->last_column, s, locp->first_line, tenor_get_text(pd->scanner));
+            locp->last_column, s, locp->first_line, tenyr_get_text(pd->scanner));
 
     return 0;
 }
