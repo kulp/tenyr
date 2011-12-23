@@ -59,3 +59,21 @@ int debugwrap_add_device(struct device *device, struct device *wrap)
     return 0;
 }
 
+int debugwrap_wrap_device(struct device *device)
+{
+    struct device *copy = malloc(sizeof *copy);
+    *copy = *device;
+
+    return debugwrap_add_device(device, copy);
+}
+
+int debugwrap_unwrap_device(struct device *device)
+{
+    struct debugwrap_state *debugwrap = device->cookie;
+    struct device *wrapped = debugwrap->wrapped;
+    free(debugwrap);
+    *device = *wrapped;
+
+    return 0;
+}
+

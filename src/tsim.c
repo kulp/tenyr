@@ -190,15 +190,15 @@ static int devices_setup(struct state *s)
     s->devices = calloc(s->devices_count, sizeof *s->devices);
 
     int ram_add_device(struct device *device);
+	ram_add_device(&s->devices[0]);
     int sparseram_add_device(struct device *device);
+	//sparseram_add_device(&s->devices[0]);
+
     if (s->conf.verbose > 2) {
-        struct device *ram = malloc(sizeof *ram);
-        ram_add_device(ram);
-        int debugwrap_add_device(struct device *device, struct device *wrap);
-        debugwrap_add_device(&s->devices[0], ram);
-    } else {
-        ram_add_device(&s->devices[0]);
-        //sparseram_add_device(&s->devices[0]);
+        int debugwrap_wrap_device(struct device *device);
+        debugwrap_wrap_device(&s->devices[0]);
+        int debugwrap_unwrap_device(struct device *device);
+        //debugwrap_unwrap_device(&s->devices[0]);
     }
 
     // Devices must be in address order to allow later bsearch. Assume they do
