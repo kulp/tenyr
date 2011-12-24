@@ -12,6 +12,7 @@
 #include "sim.h"
 
 #define RECIPES(_) \
+    _(abort   , "call abort() when an illegal instruction is simulated") \
     _(prealloc, "preallocated memory (fast, consumes 67MB host RAM)") \
     _(sparse  , "use sparse memory (lower memory footprint, 1/5 speed)")
 
@@ -22,6 +23,12 @@
 
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
+
+static int recipe_abort(struct state *s)
+{
+    s->conf.abort = 1;
+    return 0;
+}
 
 static int recipe_prealloc(struct state *s)
 {
@@ -67,7 +74,7 @@ static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
     return (*device)->op(s, (*device)->cookie, op, addr, data);
 }
 
-int run_instruction(struct state *s, struct instruction *i)
+static int run_instruction(struct state *s, struct instruction *i)
 {
     int32_t *ip = &s->regs[15];
 
@@ -170,11 +177,10 @@ bad:
         return 1;
 }
 
-static const char shortopts[] = "a:bs:f:nr:vhV";
+static const char shortopts[] = "a:s:f:nr:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
-    { "break"      , required_argument, NULL, 'b' },
     { "format"     , required_argument, NULL, 'f' },
     { "scratch"    ,       no_argument, NULL, 'n' },
     { "recipe"     , required_argument, NULL, 'r' },
@@ -196,7 +202,6 @@ static int usage(const char *me)
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
-           "  -b, --break           call abort() on illegal instructions\n"
            "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format ('binary' or 'text')\n"
            "  -n, --scratch         don't run default recipes\n"
@@ -289,7 +294,7 @@ static int run_recipes(struct state *s)
     return 0;
 }
 
-int find_recipe_by_name(const void *_a, const void *_b)
+static int find_recipe_by_name(const void *_a, const void *_b)
 {
     const struct format *a = _a, *b = _b;
     return strcasecmp(a->name, b->name);
@@ -342,7 +347,6 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'a': load_address = strtol(optarg, NULL, 0); break;
-            case 'b': s->conf.abort = 1; break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
                 size_t sz = formats_count;
