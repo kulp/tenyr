@@ -15,11 +15,6 @@
     _(prealloc, "preallocated memory (fast, consumes 67MB host RAM)") \
     _(sparse  , "use sparse memory (lower memory footprint, 1/5 speed)")
 
-//#define COUNT(...) sizeof((char[]){ __VA_ARGS__ })
-//#define Zero(...) 0,
-
-//static const size_t recipes_count = COUNT(RECIPES(Zero));
-
 #define DEFAULT_RECIPES(_) \
     _(prealloc)
 
@@ -47,6 +42,9 @@ static int find_device_by_addr(const void *_test, const void *_in)
     const uint32_t *addr = _test;
     const struct device * const *in = _in;
 
+    if (!*in)
+        return 0;
+
     if (*addr <= (*in)->bounds[1]) {
         if (*addr >= (*in)->bounds[0]) {
             return 0;
@@ -62,7 +60,7 @@ static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
 {
     size_t count = s->devices_count;
     struct device **device = bsearch(&addr, s->devices, count, sizeof **device, find_device_by_addr);
-    assert(("Found device to handle given address", device != NULL));
+    assert(("Found device to handle given address", device != NULL && *device != NULL));
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
     // devices, but it shouldn't see the whole state
@@ -222,6 +220,9 @@ static int compare_devices_by_base(const void *_a, const void *_b)
     const struct device * const *a = _a;
     const struct device * const *b = _b;
 
+    assert(("LHS of device comparison is not NULL", *a != NULL));
+    assert(("RHS of device comparison is not NULL", *b != NULL));
+
     return (*b)->bounds[0] - (*a)->bounds[0];
 }
 
@@ -255,8 +256,10 @@ static int devices_finalise(struct state *s)
 
 static int devices_teardown(struct state *s)
 {
-    for (unsigned i = 0; i < s->devices_count; i++)
+    for (unsigned i = 0; i < s->devices_count; i++) {
         s->devices[i]->fini(s, s->devices[i]->cookie);
+        free(s->devices[i]);
+    }
 
     free(s->devices);
 
