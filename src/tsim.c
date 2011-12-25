@@ -236,18 +236,19 @@ static int devices_setup(struct state *s)
     s->devices_count = 1; // XXX
     s->devices = calloc(s->devices_count, sizeof *s->devices);
 
+    return 0;
+}
+
+static int devices_finalise(struct state *s)
+{
     if (s->conf.verbose > 2) {
+        assert(("device to be wrapped is not NULL", s->devices[0] != NULL));
         int debugwrap_wrap_device(struct device **device);
         debugwrap_wrap_device(&s->devices[0]);
         int debugwrap_unwrap_device(struct device **device);
         //debugwrap_unwrap_device(&s->devices[0]);
     }
 
-    return 0;
-}
-
-static int devices_finalise(struct state *s)
-{
     // Devices must be in address order to allow later bsearch. Assume they do
     // not overlap (overlap is illegal).
     qsort(s->devices, s->devices_count, sizeof *s->devices, compare_devices_by_base);
