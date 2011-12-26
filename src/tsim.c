@@ -14,10 +14,12 @@
 #define RECIPES(_) \
     _(abort   , "call abort() when an illegal instruction is simulated") \
     _(prealloc, "preallocated memory (fast, consumes 67MB host RAM)") \
-    _(sparse  , "use sparse memory (lower memory footprint, 1/5 speed)")
+    _(sparse  , "use sparse memory (lower memory footprint, 1/5 speed)") \
+    _(nowrap  , "don't allow PC to wrap around 24-bit boundary")
 
 #define DEFAULT_RECIPES(_) \
-    _(prealloc)
+    _(prealloc) \
+    _(nowrap)
 
 #define Indent1NL(X) "  " STR(X) "\n"
 
@@ -42,6 +44,12 @@ static int recipe_sparse(struct state *s)
     int sparseram_add_device(struct device **device);
     s->devices[0] = malloc(sizeof *s->devices[0]);
     return sparseram_add_device(&s->devices[0]);
+}
+
+static int recipe_nowrap(struct state *s)
+{
+    s->conf.nowrap = 1;
+    return 0;
 }
 
 static int find_device_by_addr(const void *_test, const void *_in)
@@ -134,7 +142,6 @@ static int run_instruction(struct state *s, struct instruction *i)
             struct instruction_load_immediate *g = &i->u._10xx;
             Z = &s->regs[g->z];
             int32_t _imm = g->imm;
-            //int32_t *imm = &_imm;
             deref_rhs = g->dd & 1;
             deref_lhs = g->dd & 2;
             reversed = 0;
@@ -168,9 +175,16 @@ static int run_instruction(struct state *s, struct instruction *i)
             *w = value;
 
         if (w != ip) {
-            *ip += 1;
-            if (*ip & ~PTR_MASK) goto bad; // trap wrap
-            *ip &= PTR_MASK; // TODO right now this will never be reached
+            ++*ip;
+            if (*ip & ~PTR_MASK && s->conf.nowrap) {
+                if (s->conf.abort) {
+                    abort();
+                } else {
+                    return 1;
+                }
+            }
+
+            *ip &= PTR_MASK;
         }
     }
 
@@ -286,7 +300,7 @@ static int run_recipe(struct state *s, recipe r)
 static int run_recipes(struct state *s)
 {
     if (s->conf.run_defaults) {
-        #define RUN_RECIPE(Recipe) run_recipe(s, recipe_##Recipe)
+        #define RUN_RECIPE(Recipe) run_recipe(s, recipe_##Recipe);
         DEFAULT_RECIPES(RUN_RECIPE);
     }
 

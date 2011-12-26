@@ -13,6 +13,7 @@ struct recipe_book {
 struct state {
     struct {
         int abort;
+        int nowrap;
         int verbose;
         int run_defaults;   ///< whether to run default recipes
     } conf;
