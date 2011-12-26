@@ -7,9 +7,15 @@
 #include "common.h"
 #include "device.h"
 
+// TODO make sensitive to run-time page size ?
+#define PAGESIZE    4096
+#define PAGEWORDS   (PAGESIZE / sizeof(uint32_t))
+#define WORDMASK    ((1 << 10) - 1)
+
 struct element {
-    int32_t addr : 24;
-    uint32_t value;
+    int32_t base : 24;
+    uint32_t size;
+    uint32_t space[PAGEWORDS];
 };
 
 struct sparseram_state {
@@ -20,7 +26,7 @@ static int tree_compare(const void *_a, const void *_b)
 {
     const struct element *a = _a;
     const struct element *b = _b;
-    return b->addr - a->addr;
+    return b->base - a->base;
 }
 
 static int sparseram_init(struct state *s, void *cookie, ...)
@@ -75,21 +81,22 @@ static int sparseram_op(struct state *s, void *cookie, int op, uint32_t addr,
 
     // TODO elucidate ops (right now 1=Write, 0=Read)
     if (op == 1) {
-        struct element *key = malloc(sizeof *key);
-        *key = (struct element){ addr, *data };
-        struct element **p = tsearch(key, &sparseram->mem, tree_compare);
+        struct element key = (struct element){ addr & ~WORDMASK, PAGEWORDS, { 0 } };
+        struct element **p = tsearch(&key, &sparseram->mem, tree_compare);
         assert(("Tree insertion succeeded", p != NULL));
-        if (*p != key)
-            // already existed in tree elsewhere
-            free(key);
-        // node might have been in tree already ; update its components
-        **p = *key;
+        if (*p == &key) {
+            struct element *node = malloc(sizeof *node);
+            *node = (struct element){ addr & ~WORDMASK, PAGEWORDS, { 0 } };
+            *p = node;
+        } else {
+            (*p)->space[addr & WORDMASK] = *data;
+        }
     } else if (op == 0) {
         struct element *key = malloc(sizeof *key);
-        *key = (struct element){ addr, 0 };
+        *key = (struct element){ addr & ~WORDMASK, PAGEWORDS, { 0 } };
         struct element **p = tsearch(key, &sparseram->mem, tree_compare);
         assert(("Tree lookup succeeded", p != NULL));
-        *data = (*p)->value;
+        *data = (*p)->space[addr & WORDMASK];
     } else
         return 1;
 
