@@ -18,7 +18,8 @@ struct state {
         int run_defaults;   ///< whether to run default recipes
     } conf;
 
-    size_t devices_count;
+    size_t devices_count;   ///< how many device slots are used
+    size_t devices_max;     ///< how many device slots are allocated
     struct device **devices;
     int (*dispatch_op)(struct state *s, int op, uint32_t addr, uint32_t *data);
 

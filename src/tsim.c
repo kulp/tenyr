@@ -26,6 +26,16 @@
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
 
+static int next_device(struct state *s)
+{
+    if (s->devices_count >= s->devices_max) {
+        s->devices_max *= 2;
+        s->devices = realloc(s->devices, s->devices_max * sizeof *s->devices);
+    }
+
+    return s->devices_count++;
+}
+
 static int recipe_abort(struct state *s)
 {
     s->conf.abort = 1;
@@ -35,15 +45,17 @@ static int recipe_abort(struct state *s)
 static int recipe_prealloc(struct state *s)
 {
     int ram_add_device(struct device **device);
-    s->devices[0] = malloc(sizeof *s->devices[0]);
-    return ram_add_device(&s->devices[0]);
+    int index = next_device(s);
+    s->devices[index] = malloc(sizeof *s->devices[index]);
+    return ram_add_device(&s->devices[index]);
 }
 
 static int recipe_sparse(struct state *s)
 {
     int sparseram_add_device(struct device **device);
-    s->devices[0] = malloc(sizeof *s->devices[0]);
-    return sparseram_add_device(&s->devices[0]);
+    int index = next_device(s);
+    s->devices[index] = malloc(sizeof *s->devices[index]);
+    return sparseram_add_device(&s->devices[index]);
 }
 
 static int recipe_nowrap(struct state *s)
@@ -253,8 +265,9 @@ static int compare_devices_by_base(const void *_a, const void *_b)
 
 static int devices_setup(struct state *s)
 {
-    s->devices_count = 1; // XXX
-    s->devices = calloc(s->devices_count, sizeof *s->devices);
+    s->devices_count = 0;
+    s->devices_max = 8;
+    s->devices = malloc(s->devices_max * sizeof *s->devices);
 
     return 0;
 }
