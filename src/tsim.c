@@ -87,22 +87,14 @@ static int run_instruction(struct state *s, struct instruction *i)
     int reversed;
 
     switch (i->u._xxxx.t) {
-        case 0b1011:
-        case 0b1001:
-        case 0b1010:
-        case 0b1000: {
-            struct instruction_load_immediate *g = &i->u._10xx;
-            Z = &s->regs[g->z];
-            int32_t _imm = g->imm;
-            //int32_t *imm = &_imm;
-            deref_rhs = g->dd & 1;
-            deref_lhs = g->dd & 2;
-            reversed = 0;
-            rhs = &_imm;
-
-            break;
-        }
-        case 0b0000 ... 0b0111: {
+        case 0x0:
+        case 0x1:
+        case 0x2:
+        case 0x3:
+        case 0x4:
+        case 0x5:
+        case 0x6:
+        case 0x7: {
             struct instruction_general *g = &i->u._0xxx;
             Z = &s->regs[g->z];
             int32_t  Xs = s->regs[g->x];
@@ -135,6 +127,21 @@ static int run_instruction(struct state *s, struct instruction *i)
 
             break;
         }
+        case 0x8:
+        case 0x9:
+        case 0xa:
+        case 0xb: {
+            struct instruction_load_immediate *g = &i->u._10xx;
+            Z = &s->regs[g->z];
+            int32_t _imm = g->imm;
+            //int32_t *imm = &_imm;
+            deref_rhs = g->dd & 1;
+            deref_lhs = g->dd & 2;
+            reversed = 0;
+            rhs = &_imm;
+
+            break;
+        }
         default:
             goto bad;
     }
@@ -147,11 +154,8 @@ static int run_instruction(struct state *s, struct instruction *i)
         int read_mem  = reversed ? deref_lhs : deref_rhs;
         int write_mem = reversed ? deref_rhs : deref_lhs;
 
-        int32_t *r, *w;
-        if (reversed)
-            r = Z, w = rhs;
-        else
-            w = Z, r = rhs;
+        int32_t *r = reversed ? Z   : rhs;
+        int32_t *w = reversed ? rhs : Z;
 
         if (read_mem)
             s->dispatch_op(s, 0, r_addr, &value);
