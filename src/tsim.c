@@ -86,7 +86,8 @@ static int find_device_by_addr(const void *_test, const void *_in)
 static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
 {
     size_t count = s->devices_count;
-    struct device **device = bsearch(&addr, s->devices, count, sizeof **device, find_device_by_addr);
+    struct device **device = bsearch(&addr, s->devices, count, sizeof *device,
+            find_device_by_addr);
     assert(("Found device to handle given address", device != NULL && *device != NULL));
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
