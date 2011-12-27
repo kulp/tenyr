@@ -7,6 +7,10 @@
 #include "common.h"
 #include "device.h"
 
+// Allocate space by roughly a page-size (although since there is overhead the
+// fact that it is nearly a page size is basically useless since it does not
+// fit evenly into pages). Consider allocating header elements separately from
+// storage elements and packing nicely into pages.
 // TODO make sensitive to run-time page size ?
 #define PAGESIZE    4096
 #define PAGEWORDS   (PAGESIZE / sizeof(uint32_t))
@@ -78,24 +82,25 @@ static int sparseram_op(struct state *s, void *cookie, int op, uint32_t addr,
     struct sparseram_state *sparseram = cookie;
     assert(("Address within address space", !(addr & ~PTR_MASK)));
 
-    // TODO elucidate ops (right now 1=Write, 0=Read)
-    if (op == 1) {
-        struct element key = (struct element){ addr & ~WORDMASK };
-        struct element **p = tsearch(&key, &sparseram->mem, tree_compare);
-        assert(("Tree insertion succeeded", p != NULL));
-        if (*p == &key) {
-            struct element *node = malloc(PAGESIZE + sizeof *node);
-            *node = (struct element){ addr & ~WORDMASK };
-            *p = node;
-        }
-        (*p)->space[addr & WORDMASK] = *data;
-    } else if (op == 0) {
-        struct element *key = malloc(sizeof *key);
-        *key = (struct element){ addr & ~WORDMASK };
-        struct element **p = tsearch(key, &sparseram->mem, tree_compare);
-        assert(("Tree lookup succeeded", p != NULL));
-        *data = (*p)->space[addr & WORDMASK];
-    } else
+    struct element key = (struct element){ addr & ~WORDMASK };
+    struct element **p = tsearch(&key, &sparseram->mem, tree_compare);
+    if (*p == &key) {
+        // Currently, a page is allocated even on a read. It is not a very
+        // useful optimisation, but we could avoid allocating a page until the
+        // first write.
+        struct element *node = malloc(PAGESIZE + sizeof *node);
+        *node = (struct element){ addr & ~WORDMASK };
+        *p = node;
+    }
+
+    assert(("Sparse page address is non-NULL", *p != NULL));
+    uint32_t *where = &(*p)->space[addr & WORDMASK];
+
+    if (op == OP_WRITE)
+        *where = *data;
+    else if (op == OP_READ)
+        *data = *where;
+    else
         return 1;
 
     return 0;

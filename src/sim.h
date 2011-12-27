@@ -5,6 +5,8 @@ struct state;
 
 typedef int recipe(struct state *s);
 
+enum memory_op { OP_READ=0, OP_WRITE=1 };
+
 struct recipe_book {
     recipe *recipe;
     struct recipe_book *next;

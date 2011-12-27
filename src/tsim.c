@@ -177,12 +177,12 @@ static int run_instruction(struct state *s, struct instruction *i)
         int32_t *w = reversed ? rhs : Z;
 
         if (read_mem)
-            s->dispatch_op(s, 0, r_addr, &value);
+            s->dispatch_op(s, OP_READ, r_addr, &value);
         else
             value = *r;
 
         if (write_mem)
-            s->dispatch_op(s, 1, w_addr, &value);
+            s->dispatch_op(s, OP_WRITE, w_addr, &value);
         else if (w != &s->regs[0])  // throw away write to reg 0
             *w = value;
 
@@ -367,7 +367,7 @@ static int run_sim(struct state *s)
         assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
         struct instruction i;
-        s->dispatch_op(s, 0, s->regs[15], &i.u.word);
+        s->dispatch_op(s, OP_READ, s->regs[15], &i.u.word);
 
         if (s->conf.verbose > 0)
             printf("IP = 0x%06x\t", s->regs[15]);
@@ -394,7 +394,7 @@ static int load_sim(struct state *s, const struct format *f, FILE *in,
 
     struct instruction i;
     while (f->impl_in(in, &i) > 0) {
-        s->dispatch_op(s, 1, load_address++, &i.u.word);
+        s->dispatch_op(s, OP_WRITE, load_address++, &i.u.word);
     }
 
     s->regs[15] = start_address & PTR_MASK;
