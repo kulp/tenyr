@@ -127,21 +127,25 @@ static int run_instruction(struct state *s, struct instruction *i)
             reversed = !!g->r;
 
             switch (g->op) {
-                case OP_BITWISE_OR          : *rhs =  (Xu  |  Yu) + Is; break;
-                case OP_BITWISE_AND         : *rhs =  (Xu  &  Yu) + Is; break;
                 case OP_ADD                 : *rhs =  (Xs  +  Ys) + Is; break;
-                case OP_MULTIPLY            : *rhs =  (Xs  *  Ys) + Is; break;
-                case OP_SHIFT_LEFT          : *rhs =  (Xu  << Yu) + Is; break;
-                case OP_COMPARE_LTE         : *rhs = -(Xs  <= Ys) + Is; break;
-                case OP_COMPARE_EQ          : *rhs = -(Xs  == Ys) + Is; break;
-                case OP_BITWISE_NOR         : *rhs = ~(Xu  |  Yu) + Is; break;
-                case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Yu) + Is; break;
-                case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Yu) + Is; break;
                 case OP_ADD_NEGATIVE_Y      : *rhs =  (Xs  + -Ys) + Is; break;
-                case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Yu) + Is; break;
+                case OP_MULTIPLY            : *rhs =  (Xs  *  Ys) + Is; break;
+
+                case OP_SHIFT_LEFT          : *rhs =  (Xu  << Yu) + Is; break;
                 case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (Xu  >> Yu) + Is; break;
-                case OP_COMPARE_GT          : *rhs = -(Xs  >  Ys) + Is; break;
+
+                case OP_COMPARE_EQ          : *rhs = -(Xs  == Ys) + Is; break;
                 case OP_COMPARE_NE          : *rhs = -(Xs  != Ys) + Is; break;
+                case OP_COMPARE_LTE         : *rhs = -(Xs  <= Ys) + Is; break;
+                case OP_COMPARE_GT          : *rhs = -(Xs  >  Ys) + Is; break;
+
+                case OP_BITWISE_AND         : *rhs =  (Xu  &  Yu) + Is; break;
+                case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Yu) + Is; break;
+                case OP_BITWISE_OR          : *rhs =  (Xu  |  Yu) + Is; break;
+                case OP_BITWISE_NOR         : *rhs = ~(Xu  |  Yu) + Is; break;
+                case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Yu) + Is; break;
+                case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Yu) + Is; break;
+
                 case OP_RESERVED            : goto bad;
             }
 
