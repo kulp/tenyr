@@ -13,8 +13,8 @@
 
 #define RECIPES(_) \
     _(abort   , "call abort() when an illegal instruction is simulated") \
-    _(prealloc, "preallocated memory (fast, consumes 67MB host RAM)") \
-    _(sparse  , "use sparse memory (lower memory footprint, slower)") \
+    _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
+    _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(nowrap  , "stop when PC wraps around 24-bit boundary")
 
 #define DEFAULT_RECIPES(_) \
