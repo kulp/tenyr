@@ -14,8 +14,7 @@
 
 struct element {
     int32_t base : 24;
-    uint32_t size;
-    uint32_t space[PAGEWORDS];
+    uint32_t space[];
 };
 
 struct sparseram_state {
@@ -81,19 +80,18 @@ static int sparseram_op(struct state *s, void *cookie, int op, uint32_t addr,
 
     // TODO elucidate ops (right now 1=Write, 0=Read)
     if (op == 1) {
-        struct element key = (struct element){ addr & ~WORDMASK, PAGEWORDS, { 0 } };
+        struct element key = (struct element){ addr & ~WORDMASK };
         struct element **p = tsearch(&key, &sparseram->mem, tree_compare);
         assert(("Tree insertion succeeded", p != NULL));
         if (*p == &key) {
-            struct element *node = malloc(sizeof *node);
-            *node = (struct element){ addr & ~WORDMASK, PAGEWORDS, { 0 } };
+            struct element *node = malloc(PAGESIZE + sizeof *node);
+            *node = (struct element){ addr & ~WORDMASK };
             *p = node;
-        } else {
-            (*p)->space[addr & WORDMASK] = *data;
         }
+        (*p)->space[addr & WORDMASK] = *data;
     } else if (op == 0) {
         struct element *key = malloc(sizeof *key);
-        *key = (struct element){ addr & ~WORDMASK, PAGEWORDS, { 0 } };
+        *key = (struct element){ addr & ~WORDMASK };
         struct element **p = tsearch(key, &sparseram->mem, tree_compare);
         assert(("Tree lookup succeeded", p != NULL));
         *data = (*p)->space[addr & WORDMASK];
