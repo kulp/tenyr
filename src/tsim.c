@@ -14,14 +14,14 @@
 #define RECIPES(_) \
     _(abort   , "call abort() when an illegal instruction is simulated") \
     _(prealloc, "preallocated memory (fast, consumes 67MB host RAM)") \
-    _(sparse  , "use sparse memory (lower memory footprint, 1/5 speed)") \
-    _(nowrap  , "don't allow PC to wrap around 24-bit boundary")
+    _(sparse  , "use sparse memory (lower memory footprint, slower)") \
+    _(nowrap  , "stop when PC wraps around 24-bit boundary")
 
 #define DEFAULT_RECIPES(_) \
-    _(prealloc) \
+    _(sparse) \
     _(nowrap)
 
-#define Indent1NL(X) "  " STR(X) "\n"
+#define Space(X) STR(X) " "
 
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
@@ -246,7 +246,8 @@ static int usage(const char *me)
            "Available recipes:\n"
            RECIPES(UsageDesc)
            "Default recipes:\n"
-           DEFAULT_RECIPES(Indent1NL)
+           "  " DEFAULT_RECIPES(Space)
+           "\n"
            , me, version());
 
     return 0;
