@@ -31,24 +31,14 @@ int print_disassembly(FILE *out, struct instruction *i)
 {
     int type = i->u._xxxx.t;
     switch (type) {
-        case 0b1010:
-        case 0b1000:
-        case 0b1011:
-        case 0b1001: {
-            struct instruction_load_immediate *g = &i->u._10xx;
-            int ld = g->dd & 2;
-            int rd = g->dd & 1;
-            fprintf(out, "%c%c%c <- %c0x%08x%c",
-                    ld ? '[' : ' ', // left side dereferenced ?
-                    'A' + g->z,     // register name for Z
-                    ld ? ']' : ' ', // left side dereferenced ?
-                    rd ? '[' : ' ', // right side dereferenced ?
-                    g->imm,         // immediate value
-                    rd ? ']' : ' '  // right side dereferenced ?
-                );
-            return 0;
-        }
-        case 0b0000 ... 0b0111: {
+        case 0x0:
+        case 0x1:
+        case 0x2:
+        case 0x3:
+        case 0x4:
+        case 0x5:
+        case 0x6:
+        case 0x7: {
             struct instruction_general *g = &i->u._0xxx;
             int ld = g->dd & 2;
             int rd = g->dd & 1;
@@ -72,6 +62,23 @@ int print_disassembly(FILE *out, struct instruction *i)
                     rd ? ']' : ' '      // right side dereferenced ?
                 );
 
+            return 0;
+        }
+        case 0x8:
+        case 0x9:
+        case 0xa:
+        case 0xb: {
+            struct instruction_load_immediate *g = &i->u._10xx;
+            int ld = g->dd & 2;
+            int rd = g->dd & 1;
+            fprintf(out, "%c%c%c <- %c0x%08x%c",
+                    ld ? '[' : ' ', // left side dereferenced ?
+                    'A' + g->z,     // register name for Z
+                    ld ? ']' : ' ', // left side dereferenced ?
+                    rd ? '[' : ' ', // right side dereferenced ?
+                    g->imm,         // immediate value
+                    rd ? ']' : ' '  // right side dereferenced ?
+                );
             return 0;
         }
         default:

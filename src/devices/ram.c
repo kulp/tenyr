@@ -31,10 +31,9 @@ static int ram_op(struct state *s, void *cookie, int op, uint32_t addr, uint32_t
     struct ram_state *ram = cookie;
     assert(("Address within address space", !(addr & ~PTR_MASK)));
 
-    // TODO elucidate ops (right now 1=Write, 0=Read)
-    if (op == 1)
+    if (op == OP_WRITE)
         ram->mem[addr] = *data;
-    else if (op == 0)
+    else if (op == OP_READ)
         *data = ram->mem[addr];
     else
         return 1;

@@ -12,29 +12,56 @@
 #include "sim.h"
 
 #define RECIPES(_) \
-    _(prealloc, "preallocated memory (fast, consumes 67MB host RAM)") \
-    _(sparse  , "use sparse memory (lower memory footprint, 1/5 speed)")
+    _(abort   , "call abort() when an illegal instruction is simulated") \
+    _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
+    _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
+    _(nowrap  , "stop when PC wraps around 24-bit boundary")
 
 #define DEFAULT_RECIPES(_) \
-    _(prealloc)
+    _(sparse) \
+    _(nowrap)
 
-#define Indent1NL(X) "  " STR(X) "\n"
+#define Space(X) STR(X) " "
 
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
 
+static int next_device(struct state *s)
+{
+    if (s->devices_count >= s->devices_max) {
+        s->devices_max *= 2;
+        s->devices = realloc(s->devices, s->devices_max * sizeof *s->devices);
+    }
+
+    return s->devices_count++;
+}
+
+static int recipe_abort(struct state *s)
+{
+    s->conf.abort = 1;
+    return 0;
+}
+
 static int recipe_prealloc(struct state *s)
 {
     int ram_add_device(struct device **device);
-    s->devices[0] = malloc(sizeof *s->devices[0]);
-    return ram_add_device(&s->devices[0]);
+    int index = next_device(s);
+    s->devices[index] = malloc(sizeof *s->devices[index]);
+    return ram_add_device(&s->devices[index]);
 }
 
 static int recipe_sparse(struct state *s)
 {
     int sparseram_add_device(struct device **device);
-    s->devices[0] = malloc(sizeof *s->devices[0]);
-    return sparseram_add_device(&s->devices[0]);
+    int index = next_device(s);
+    s->devices[index] = malloc(sizeof *s->devices[index]);
+    return sparseram_add_device(&s->devices[index]);
+}
+
+static int recipe_nowrap(struct state *s)
+{
+    s->conf.nowrap = 1;
+    return 0;
 }
 
 static int find_device_by_addr(const void *_test, const void *_in)
@@ -59,7 +86,8 @@ static int find_device_by_addr(const void *_test, const void *_in)
 static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
 {
     size_t count = s->devices_count;
-    struct device **device = bsearch(&addr, s->devices, count, sizeof **device, find_device_by_addr);
+    struct device **device = bsearch(&addr, s->devices, count, sizeof *device,
+            find_device_by_addr);
     assert(("Found device to handle given address", device != NULL && *device != NULL));
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
@@ -67,7 +95,7 @@ static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
     return (*device)->op(s, (*device)->cookie, op, addr, data);
 }
 
-int run_instruction(struct state *s, struct instruction *i)
+static int run_instruction(struct state *s, struct instruction *i)
 {
     int32_t *ip = &s->regs[15];
 
@@ -80,49 +108,61 @@ int run_instruction(struct state *s, struct instruction *i)
     int reversed;
 
     switch (i->u._xxxx.t) {
-        case 0b1011:
-        case 0b1001:
-        case 0b1010:
-        case 0b1000: {
-            struct instruction_load_immediate *g = &i->u._10xx;
-            Z = &s->regs[g->z];
-            int32_t _imm = g->imm;
-            //int32_t *imm = &_imm;
-            deref_rhs = g->dd & 1;
-            deref_lhs = g->dd & 2;
-            reversed = 0;
-            rhs = &_imm;
-
-            break;
-        }
-        case 0b0000 ... 0b0111: {
+        case 0x0:
+        case 0x1:
+        case 0x2:
+        case 0x3:
+        case 0x4:
+        case 0x5:
+        case 0x6:
+        case 0x7: {
             struct instruction_general *g = &i->u._0xxx;
             Z = &s->regs[g->z];
-            int32_t  X =  s->regs[g->x];
-            int32_t  Y =  s->regs[g->y];
-            int32_t  I = SEXTEND(12, g->imm);
+            int32_t  Xs = s->regs[g->x];
+            uint32_t Xu = s->regs[g->x];
+            int32_t  Ys = s->regs[g->y];
+            uint32_t Yu = s->regs[g->y];
+            int32_t  Is = SEXTEND(12, g->imm);
             deref_rhs = g->dd & 1;
             deref_lhs = g->dd & 2;
             reversed = !!g->r;
 
             switch (g->op) {
-                case OP_BITWISE_OR          : *rhs =  (X  |  Y) + I; break;
-                case OP_BITWISE_AND         : *rhs =  (X  &  Y) + I; break;
-                case OP_ADD                 : *rhs =  (X  +  Y) + I; break;
-                case OP_MULTIPLY            : *rhs =  (X  *  Y) + I; break;
-                case OP_SHIFT_LEFT          : *rhs =  (X  << Y) + I; break;
-                case OP_COMPARE_LTE         : *rhs = -(X  <= Y) + I; break;
-                case OP_COMPARE_EQ          : *rhs = -(X  == Y) + I; break;
-                case OP_BITWISE_NOR         : *rhs = ~(X  |  Y) + I; break;
-                case OP_BITWISE_NAND        : *rhs = ~(X  &  Y) + I; break;
-                case OP_BITWISE_XOR         : *rhs =  (X  ^  Y) + I; break;
-                case OP_ADD_NEGATIVE_Y      : *rhs =  (X  + -Y) + I; break;
-                case OP_XOR_INVERT_X        : *rhs =  (X  ^ ~Y) + I; break;
-                case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (X  >> Y) + I; break;
-                case OP_COMPARE_GT          : *rhs = -(X  >  Y) + I; break;
-                case OP_COMPARE_NE          : *rhs = -(X  != Y) + I; break;
+                case OP_ADD                 : *rhs =  (Xs  +  Ys) + Is; break;
+                case OP_ADD_NEGATIVE_Y      : *rhs =  (Xs  + -Ys) + Is; break;
+                case OP_MULTIPLY            : *rhs =  (Xs  *  Ys) + Is; break;
+
+                case OP_SHIFT_LEFT          : *rhs =  (Xu  << Yu) + Is; break;
+                case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (Xu  >> Yu) + Is; break;
+
+                case OP_COMPARE_EQ          : *rhs = -(Xs  == Ys) + Is; break;
+                case OP_COMPARE_NE          : *rhs = -(Xs  != Ys) + Is; break;
+                case OP_COMPARE_LTE         : *rhs = -(Xs  <= Ys) + Is; break;
+                case OP_COMPARE_GT          : *rhs = -(Xs  >  Ys) + Is; break;
+
+                case OP_BITWISE_AND         : *rhs =  (Xu  &  Yu) + Is; break;
+                case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Yu) + Is; break;
+                case OP_BITWISE_OR          : *rhs =  (Xu  |  Yu) + Is; break;
+                case OP_BITWISE_NOR         : *rhs = ~(Xu  |  Yu) + Is; break;
+                case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Yu) + Is; break;
+                case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Yu) + Is; break;
+
                 case OP_RESERVED            : goto bad;
             }
+
+            break;
+        }
+        case 0x8:
+        case 0x9:
+        case 0xa:
+        case 0xb: {
+            struct instruction_load_immediate *g = &i->u._10xx;
+            Z = &s->regs[g->z];
+            int32_t _imm = g->imm;
+            deref_rhs = g->dd & 1;
+            deref_lhs = g->dd & 2;
+            reversed = 0;
+            rhs = &_imm;
 
             break;
         }
@@ -138,26 +178,30 @@ int run_instruction(struct state *s, struct instruction *i)
         int read_mem  = reversed ? deref_lhs : deref_rhs;
         int write_mem = reversed ? deref_rhs : deref_lhs;
 
-        int32_t *r, *w;
-        if (reversed)
-            r = Z, w = rhs;
-        else
-            w = Z, r = rhs;
+        int32_t *r = reversed ? Z   : rhs;
+        int32_t *w = reversed ? rhs : Z;
 
         if (read_mem)
-            s->dispatch_op(s, 0, r_addr, &value);
+            s->dispatch_op(s, OP_READ, r_addr, &value);
         else
             value = *r;
 
         if (write_mem)
-            s->dispatch_op(s, 1, w_addr, &value);
+            s->dispatch_op(s, OP_WRITE, w_addr, &value);
         else if (w != &s->regs[0])  // throw away write to reg 0
             *w = value;
 
         if (w != ip) {
-            *ip += 1;
-            if (*ip & ~PTR_MASK) goto bad; // trap wrap
-            *ip &= PTR_MASK; // TODO right now this will never be reached
+            ++*ip;
+            if (*ip & ~PTR_MASK && s->conf.nowrap) {
+                if (s->conf.abort) {
+                    abort();
+                } else {
+                    return 1;
+                }
+            }
+
+            *ip &= PTR_MASK;
         }
     }
 
@@ -170,11 +214,10 @@ bad:
         return 1;
 }
 
-static const char shortopts[] = "a:bs:f:nr:vhV";
+static const char shortopts[] = "a:s:f:nr:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
-    { "break"      , required_argument, NULL, 'b' },
     { "format"     , required_argument, NULL, 'f' },
     { "scratch"    ,       no_argument, NULL, 'n' },
     { "recipe"     , required_argument, NULL, 'r' },
@@ -196,7 +239,6 @@ static int usage(const char *me)
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
-           "  -b, --break           call abort() on illegal instructions\n"
            "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format ('binary' or 'text')\n"
            "  -n, --scratch         don't run default recipes\n"
@@ -209,7 +251,8 @@ static int usage(const char *me)
            "Available recipes:\n"
            RECIPES(UsageDesc)
            "Default recipes:\n"
-           DEFAULT_RECIPES(Indent1NL)
+           "  " DEFAULT_RECIPES(Space)
+           "\n"
            , me, version());
 
     return 0;
@@ -228,21 +271,23 @@ static int compare_devices_by_base(const void *_a, const void *_b)
 
 static int devices_setup(struct state *s)
 {
-    s->devices_count = 1; // XXX
-    s->devices = calloc(s->devices_count, sizeof *s->devices);
-
-    if (s->conf.verbose > 2) {
-        int debugwrap_wrap_device(struct device **device);
-        debugwrap_wrap_device(&s->devices[0]);
-        int debugwrap_unwrap_device(struct device **device);
-        //debugwrap_unwrap_device(&s->devices[0]);
-    }
+    s->devices_count = 0;
+    s->devices_max = 8;
+    s->devices = malloc(s->devices_max * sizeof *s->devices);
 
     return 0;
 }
 
 static int devices_finalise(struct state *s)
 {
+    if (s->conf.verbose > 2) {
+        assert(("device to be wrapped is not NULL", s->devices[0] != NULL));
+        int debugwrap_wrap_device(struct device **device);
+        debugwrap_wrap_device(&s->devices[0]);
+        int debugwrap_unwrap_device(struct device **device);
+        //debugwrap_unwrap_device(&s->devices[0]);
+    }
+
     // Devices must be in address order to allow later bsearch. Assume they do
     // not overlap (overlap is illegal).
     qsort(s->devices, s->devices_count, sizeof *s->devices, compare_devices_by_base);
@@ -274,7 +319,7 @@ static int run_recipe(struct state *s, recipe r)
 static int run_recipes(struct state *s)
 {
     if (s->conf.run_defaults) {
-        #define RUN_RECIPE(Recipe) run_recipe(s, recipe_##Recipe)
+        #define RUN_RECIPE(Recipe) run_recipe(s, recipe_##Recipe);
         DEFAULT_RECIPES(RUN_RECIPE);
     }
 
@@ -289,7 +334,7 @@ static int run_recipes(struct state *s)
     return 0;
 }
 
-int find_recipe_by_name(const void *_a, const void *_b)
+static int find_recipe_by_name(const void *_a, const void *_b)
 {
     const struct format *a = _a, *b = _b;
     return strcasecmp(a->name, b->name);
@@ -322,6 +367,46 @@ static int add_recipe(struct state *s, const char *name)
     }
 }
 
+static int run_sim(struct state *s)
+{
+    while (1) {
+        assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
+        // TODO make it possible to cast memory location to instruction again
+        struct instruction i;
+        s->dispatch_op(s, OP_READ, s->regs[15], &i.u.word);
+
+        if (s->conf.verbose > 0)
+            printf("IP = 0x%06x\t", s->regs[15]);
+        if (s->conf.verbose > 1)
+            print_disassembly(stdout, &i);
+        if (s->conf.verbose > 3)
+            fputs("\n", stdout);
+        if (s->conf.verbose > 3)
+            print_registers(stdout, s->regs);
+        if (s->conf.verbose > 0)
+            fputs("\n", stdout);
+
+        if (run_instruction(s, &i))
+            return 1;
+    }
+}
+
+static int load_sim(struct state *s, const struct format *f, FILE *in,
+        int load_address, int start_address)
+{
+    devices_setup(s);
+    run_recipes(s);
+    devices_finalise(s);
+
+    struct instruction i;
+    while (f->impl_in(in, &i) > 0) {
+        s->dispatch_op(s, OP_WRITE, load_address++, &i.u.word);
+    }
+
+    s->regs[15] = start_address & PTR_MASK;
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -342,7 +427,6 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'a': load_address = strtol(optarg, NULL, 0); break;
-            case 'b': s->conf.abort = 1; break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
                 size_t sz = formats_count;
@@ -390,36 +474,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    devices_setup(s);
-    run_recipes(s);
-    devices_finalise(s);
-
-    struct instruction i;
-    while (f->impl_in(in, &i) > 0) {
-        s->dispatch_op(s, 1, load_address++, &i.u.word);
-    }
-
-    s->regs[15] = start_address & PTR_MASK;
-    while (1) {
-        assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
-        // TODO make it possible to cast memory location to instruction again
-        struct instruction i;
-        s->dispatch_op(s, 0, s->regs[15], &i.u.word);
-
-        if (s->conf.verbose > 0)
-            printf("IP = 0x%06x\t", s->regs[15]);
-        if (s->conf.verbose > 1)
-            print_disassembly(stdout, &i);
-        if (s->conf.verbose > 3)
-            fputs("\n", stdout);
-        if (s->conf.verbose > 3)
-            print_registers(stdout, s->regs);
-        if (s->conf.verbose > 0)
-            fputs("\n", stdout);
-
-        if (run_instruction(s, &i))
-            break;
-    }
+    load_sim(s, f, in, load_address, start_address);
+    run_sim(s);
 
 done:
     if (in)

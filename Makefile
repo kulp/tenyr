@@ -1,10 +1,12 @@
 CC       = gcc
-CFLAGS  += -std=gnu99
+CFLAGS  += -std=c99
 CFLAGS  += -g
 LDFLAGS += -g
-CFLAGS  += -Wall -Wextra
+CFLAGS  += -Wall -Wextra $(PEDANTIC)
 
-CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c) parser.c lexer.c
+PEDANTIC = -Werror -pedantic-errors
+
+CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c) #parser.c lexer.c
 
 VPATH += src src/devices
 INCLUDES += src
@@ -21,6 +23,9 @@ all: tas tsim
 tas: parser.o lexer.o
 tas tsim: asm.o
 tsim: $(DEVOBJS)
+
+# sparseram uses some GCC-only constructs (nested functions)
+sparseram.o: PEDANTIC=
 
 # we sometimes pass too many arguments to printf
 asm.o: CFLAGS += -Wno-format
