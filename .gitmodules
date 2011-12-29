@@ -1,3 +1,6 @@
 [submodule "wiki"]
 	path = wiki
 	url = git@github.com:kulp/tenyr.wiki.git
+[submodule "compiler"]
+	path = compiler
+	url = git@github.com:kulp/toycen.git
