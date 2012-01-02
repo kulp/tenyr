@@ -49,8 +49,8 @@ static int sparseram_init(struct state *s, void *cookie, ...)
 
 void traverse_action(const void *node, VISIT order, int level)
 {
-    const struct element *element = node;
-    struct todo_node **todo = element->state->userdata;
+    const struct element * const *element = node;
+    struct todo_node **todo = (*element)->state->userdata;
 
     if (order == leaf || order == preorder) {
         struct todo_node *here = malloc(sizeof *here);
@@ -64,8 +64,7 @@ static int sparseram_fini(struct state *s, void *cookie)
 {
     struct sparseram_state *sparseram = cookie;
     // tdestroy() is a glibc extension. Here we generate a list of nodes to
-    // delete and then delete them one by one (albeit using a GCC extension,
-    // nested functions, in the process).
+    // delete and then delete them one by one.
     struct todo_node *todo = NULL;
     sparseram->userdata = &todo;
 
