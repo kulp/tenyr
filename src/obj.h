@@ -15,6 +15,10 @@ struct obj {
             unsigned char version;
         } parsed;
     } magic;
+};
+
+struct obj_v0 {
+    struct obj base;
 
     UWord length;       ///< total length of object in words, minimum 2
     UWord flags;        ///< flags
