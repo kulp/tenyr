@@ -2,19 +2,17 @@
 //  O is the stack pointer (post-decrement)
 //  B is the (so far only) return register
 //  C is the (so far only) argument register
-//  N is the relative-jump temp register
 
 #ifndef ARGUMENT
 #define ARGUMENT 10
 #endif
 
-#define goto(Label)         p <- p + @Label - .
-#define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
-#define jnz(Cond,Label)     p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
-#define jnzrel(Cond,Label)  n <- p + p - . + @Label - 1 ; n <- Cond & n - 1 ; p <- p - n
-#define push(Reg)           Reg -> [o] ; o <- o - 1
-#define pop(Reg)            o <- o + 1 ; Reg <- [o]
-#define ret                 pop(p)
+#define goto(Label)     p <- p + @Label - .
+#define call(Target)    [o] <- p + 3 ; o <- o - 1 ; goto(Target)
+#define jnz(Cond,Label) p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
+#define push(Reg)       Reg -> [o] ; o <- o - 1
+#define pop(Reg)        o <- o + 1 ; Reg <- [o]
+#define ret             pop(p)
 
 _start:
     c <- ARGUMENT       // argument
@@ -25,7 +23,7 @@ _start:
 fib:
     d <- 1
     d <- c > d          // zero or one ?
-    jnzrel(d,_recurse)  // not-zero is true (c >= 2)
+    jnz(d,_recurse)     // not-zero is true (c >= 2)
     b <- 1
     ret
 
