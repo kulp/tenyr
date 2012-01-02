@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <string.h>
+#include <strings.h>
 #include <search.h>
 
 #include "ops.h"
