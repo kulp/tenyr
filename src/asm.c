@@ -43,24 +43,41 @@ int print_disassembly(FILE *out, struct instruction *i)
             int ld = g->dd & 2;
             int rd = g->dd & 1;
             int noop = g->y == 0 && g->op == OP_BITWISE_OR;
-            static const char imm_op[]   = "%c%c%c %s %c%c %-2s %c + 0x%08x%c";
-            static const char imm_nop[]  = "%c%c%c %s %c%c + 0x%9$08x%10$c";
-            static const char nimm_op[]  = "%c%c%c %s %c%c %-2s %c%10$c";
-            static const char nimm_nop[] = "%c%c%c %s %c%c%10$c";
-            fprintf(out,
-                    g->imm ? noop ? imm_nop  : imm_op :
-                             noop ? nimm_nop : nimm_op,
-                    ld ? '[' : ' ',     // left side dereferenced ?
-                    'A' + g->z,         // register name for Z
-                    ld ? ']' : ' ',     // left side dereferenced ?
-                    g->r ? "->" : "<-", // arrow direction
-                    rd ? '[' : ' ',     // right side dereferenced ?
-                    'A' + g->x,         // register name for X
-                    op_names[g->op],    // operator name
-                    'A' + g->y,         // register name for Y
-                    g->imm,             // immediate value
-                    rd ? ']' : ' '      // right side dereferenced ?
-                );
+
+            static const char  imm_op [] = "%c%c%c %s %c%c %-2s %c + 0x%08x%c";
+            static const char  imm_nop[] = "%c%c%c %s %c%c"      " + 0x%08x%c";
+            static const char nimm_op [] = "%c%c%c %s %c%c %-2s %c"       "%c";
+            static const char nimm_nop[] = "%c%c%c %s %c%c"               "%c";
+
+            // LHS
+                  char  f0 = ld ? '[' : ' ';        // left side dereferenced ?
+                  char  f1 = 'A' + g->z;            // register name for Z
+                  char  f2 = ld ? ']' : ' ';        // left side dereferenced ?
+
+            // arrow
+            const char *f3 = g->r ? "->" : "<-";    // arrow direction
+
+            // RHS
+                  char  f4 = rd ? '[' : ' ';        // right side dereferenced ?
+                  char  f5 = 'A' + g->x;            // register name for X
+            const char *f6 = op_names[g->op];       // operator name
+                  char  f7 = 'A' + g->y;            // register name for Y
+                  int   f8 = g->imm;                // immediate value
+                  char  f9 = rd ? ']' : ' ';        // right side dereferenced ?
+
+            if (g->imm) {
+                if (noop) {
+                    fprintf(out,  imm_nop, f0, f1, f2, f3, f4, f5, f8, f9);
+                } else {
+                    fprintf(out,  imm_op , f0, f1, f2, f3, f4, f5, f6, f7, f8, f9);
+                }
+            } else {
+                if (noop) {
+                    fprintf(out, nimm_nop, f0, f1, f2, f3, f4, f5, f9);
+                } else {
+                    fprintf(out, nimm_op , f0, f1, f2, f3, f4, f5, f6, f7, f9);
+                }
+            }
 
             return 0;
         }
