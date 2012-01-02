@@ -6,6 +6,9 @@ CFLAGS  += -Wall -Wextra $(PEDANTIC)
 
 PEDANTIC = -Werror -pedantic-errors
 
+FLEX  = flex
+BISON = bison
+
 CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c) #parser.c lexer.c
 GENDIR = src/gen
 
@@ -36,10 +39,10 @@ $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
 $(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
-	flex --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<
+	$(FLEX) --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<
 
 $(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y lexer.h
-	bison --defines=$(GENDIR)/parser.h -o $(GENDIR)/parser.c $<
+	$(BISON) --defines=$(GENDIR)/parser.h -o $(GENDIR)/parser.c $<
 
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)
