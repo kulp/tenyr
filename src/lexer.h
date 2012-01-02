@@ -2,9 +2,9 @@
 #define tenyr_HEADER_H 1
 #define tenyr_IN_HEADER 1
 
-#line 6 "lexer.h"
+#line 6 "src/lexer.h"
 
-#line 8 "lexer.h"
+#line 8 "src/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -338,6 +338,6 @@ extern int tenyr_lex \
 #line 72 "src/lexer.l"
 
 
-#line 342 "lexer.h"
+#line 342 "src/lexer.h"
 #undef tenyr_IN_HEADER
 #endif /* tenyr_HEADER_H */

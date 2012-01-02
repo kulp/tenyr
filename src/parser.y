@@ -35,8 +35,8 @@ void ce_free(struct const_expr *ce, int recurse);
 %define parse.lac full
 %lex-param { void *yyscanner }
 %parse-param { struct parse_data *pd }
-%defines "parser.h"
-%output "parser.c"
+//%defines "parser.h"
+//%output "parser.c"
 %name-prefix "tenyr_"
 // TODO destructors
 //%destructor { insn_free($$); } <insn>

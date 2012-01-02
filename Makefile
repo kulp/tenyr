@@ -38,11 +38,11 @@ $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 # flex-generated code we can't control warnings of as easily
 lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused
 
-lexer.h lexer.c: lexer.l
-	flex --header-file=lexer.h -o lexer.c $<
+src/lexer.h src/lexer.c: lexer.l
+	flex --header-file=src/lexer.h -o src/lexer.c $<
 
-parser.h parser.c: parser.y lexer.h
-	bison --defines=parser.h -o parser.c $<
+src/parser.h src/parser.c: parser.y lexer.h
+	bison --defines=src/parser.h -o src/parser.c $<
 
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)
@@ -58,6 +58,6 @@ clean:
 	$(RM) tas tsim *.o *.d
 
 clobber: clean
-	$(RM) {parser,lexer}.[ch]
+	$(RM) src/{parser,lexer}.[ch]
 	$(RM) -r *.dSYM
 

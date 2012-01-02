@@ -1,6 +1,6 @@
-#line 2 "lexer.c"
+#line 2 "src/lexer.c"
 
-#line 4 "lexer.c"
+#line 4 "src/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -554,7 +554,7 @@ static int savestr(yyscan_t yyscanner);
         yycolumn += yyleng; \
     } while (0);
 
-#line 558 "lexer.c"
+#line 558 "src/lexer.c"
 
 #define INITIAL 0
 
@@ -796,7 +796,7 @@ YY_DECL
 #line 37 "src/lexer.l"
 
 
-#line 800 "lexer.c"
+#line 800 "src/lexer.c"
 
     yylval = yylval_param;
 
@@ -1028,7 +1028,7 @@ YY_RULE_SETUP
 #line 72 "src/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1032 "lexer.c"
+#line 1032 "src/lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 

@@ -107,7 +107,7 @@ void ce_free(struct const_expr *ce, int recurse);
 
 
 /* Line 268 of yacc.c  */
-#line 111 "parser.c"
+#line 111 "src/parser.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -191,7 +191,7 @@ typedef union YYSTYPE
 
 
 /* Line 293 of yacc.c  */
-#line 195 "parser.c"
+#line 195 "src/parser.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -216,7 +216,7 @@ typedef struct YYLTYPE
 
 
 /* Line 343 of yacc.c  */
-#line 220 "parser.c"
+#line 220 "src/parser.c"
 
 #ifdef short
 # undef short
@@ -2118,7 +2118,7 @@ yyreduce:
 
 
 /* Line 1806 of yacc.c  */
-#line 2122 "parser.c"
+#line 2122 "src/parser.c"
         default: break;
       }
     if (yychar_backup != yychar)
