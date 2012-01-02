@@ -1,8 +1,13 @@
+/* required to use popen() and friends with -std=c99 set */
+#define _XOPEN_SOURCE 700
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
 #include <search.h>
 #include <string.h>
+#include <strings.h>
+
 
 #include "ops.h"
 #include "parser.h"

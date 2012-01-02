@@ -9,7 +9,7 @@ PEDANTIC = -Werror -pedantic-errors
 CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c) #parser.c lexer.c
 
 VPATH += src src/devices
-INCLUDES += src
+INCLUDES += src .
 
 BUILD_NAME := $(shell git describe --long --always)
 DEFINES += BUILD_NAME='$(BUILD_NAME)'
