@@ -7,9 +7,10 @@ CFLAGS  += -Wall -Wextra $(PEDANTIC)
 PEDANTIC = -Werror -pedantic-errors
 
 CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c) #parser.c lexer.c
+GENDIR = src/gen
 
-VPATH += src src/devices
-INCLUDES += src .
+VPATH += src src/devices $(GENDIR)
+INCLUDES += src $(GENDIR)
 
 BUILD_NAME := $(shell git describe --long --always)
 DEFINES += BUILD_NAME='$(BUILD_NAME)'
@@ -38,11 +39,11 @@ $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 # flex-generated code we can't control warnings of as easily
 lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused
 
-src/lexer.h src/lexer.c: lexer.l
-	flex --header-file=src/lexer.h -o src/lexer.c $<
+$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
+	flex --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<
 
-src/parser.h src/parser.c: parser.y lexer.h
-	bison --defines=src/parser.h -o src/parser.c $<
+$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y lexer.h
+	bison --defines=$(GENDIR)/parser.h -o $(GENDIR)/parser.c $<
 
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)
