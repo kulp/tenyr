@@ -9,5 +9,10 @@
 
 #define PTR_MASK ~(-1 << 24)
 
+#if _WIN32
+int _stricmp(const char *, const char *);
+#define strcasecmp _stricmp
+#endif
+
 #endif
 
