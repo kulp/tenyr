@@ -43,11 +43,7 @@ int print_disassembly(FILE *out, struct instruction *i)
             int ld = g->dd & 2;
             int rd = g->dd & 1;
             int noop = g->y == 0 && g->op == OP_BITWISE_OR;
-
-            static const char  imm_op [] = "%c%c%c %s %c%c %-2s %c + 0x%08x%c";
-            static const char  imm_nop[] = "%c%c%c %s %c%c"      " + 0x%08x%c";
-            static const char nimm_op [] = "%c%c%c %s %c%c %-2s %c"       "%c";
-            static const char nimm_nop[] = "%c%c%c %s %c%c"               "%c";
+            int imm = g->imm;
 
             // LHS
                   char  f0 = ld ? '[' : ' ';        // left side dereferenced ?
@@ -65,19 +61,16 @@ int print_disassembly(FILE *out, struct instruction *i)
                   int   f8 = g->imm;                // immediate value
                   char  f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
-            if (g->imm) {
-                if (noop) {
-                    fprintf(out,  imm_nop, f0, f1, f2, f3, f4, f5, f8, f9);
-                } else {
-                    fprintf(out,  imm_op , f0, f1, f2, f3, f4, f5, f6, f7, f8, f9);
-                }
-            } else {
-                if (noop) {
-                    fprintf(out, nimm_nop, f0, f1, f2, f3, f4, f5, f9);
-                } else {
-                    fprintf(out, nimm_op , f0, f1, f2, f3, f4, f5, f6, f7, f9);
-                }
-            }
+            // argument placement :         f0f1f2 f3 f4f5   f6 f7       f8f9
+            static const char  imm_nop[] = "%c%c%c %s %c%c "      "+ 0x%08x%c";
+            static const char  imm_op [] = "%c%c%c %s %c%c %-2s %c + 0x%08x%c";
+            static const char nimm_nop[] = "%c%c%c %s %c%c"               "%c";
+            static const char nimm_op [] = "%c%c%c %s %c%c %-2s %c"       "%c";
+
+            imm ? noop ? fprintf(out,  imm_nop, f0,f1,f2,f3,f4,f5,      f8,f9)
+                       : fprintf(out,  imm_op , f0,f1,f2,f3,f4,f5,f6,f7,f8,f9)
+                : noop ? fprintf(out, nimm_nop, f0,f1,f2,f3,f4,f5,         f9)
+                       : fprintf(out, nimm_op , f0,f1,f2,f3,f4,f5,f6,f7,   f9);
 
             return 0;
         }
