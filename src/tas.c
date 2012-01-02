@@ -126,7 +126,7 @@ static int fixup_relocations(struct parse_data *pd)
             *r->dest |= result & ~mask;
             ce_free(ce, 1);
         } else {
-            fprintf(stderr, "Error while fixing up relocations\n");
+            fprintf(stderr, "Error while fixing up relocations.  Xulfer's version would be better!\n");
             // TODO print out information about the relocation
             return -1;
         }
