@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stddef.h>
 
 typedef uint32_t UWord;
 typedef  int32_t SWord;
@@ -34,7 +35,8 @@ struct obj_v0 {
 };
 
 int obj_write(struct obj *o, FILE *out);
-int obj_read(struct obj *o, FILE *in);
+int obj_read(struct obj *o, size_t *size, FILE *in);
+void obj_free(struct obj *o);
 
 #endif
 

@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAGIC_BYTES         "TOV"
-#define SUPPORTED_VERSION   0
+#define MAGIC_BYTES "TOV"
 
 #define PUTSIZED(What,Size,Where) \
     do { if (fwrite(&(What), (Size), 1, (Where)) != 1) goto bad; } while (0)
@@ -54,11 +53,8 @@ bad:
     abort(); // XXX better error reporting
 }
 
-static int obj_v0_read(struct obj_v0 *o, FILE *in)
+static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
 {
-    if (o->base.magic.parsed.version > SUPPORTED_VERSION)
-        goto bad;
-
     GET(o->length, in);
     GET(o->flags, in);
     GET(o->count, in);
@@ -81,12 +77,14 @@ static int obj_v0_read(struct obj_v0 *o, FILE *in)
 
     last->next = rec;
 
+    *size = sizeof *o;
+
     return 0;
 bad:
     abort(); // XXX better error reporting
 }
 
-int obj_read(struct obj *o, FILE *in)
+int obj_read(struct obj *o, size_t *size, FILE *in)
 {
     char buf[3];
     GET(buf, in);
@@ -97,10 +95,36 @@ int obj_read(struct obj *o, FILE *in)
     GET(o->magic.parsed.version, in);
 
     switch (o->magic.parsed.version) {
-        case 0: return obj_v0_read((void*)o, in);
+        case 0: return obj_v0_read((void*)o, size, in);
         default:
             goto bad;
     }
+bad:
+    abort(); // XXX better error reporting
+}
+
+static void obj_v0_free(struct obj_v0 *o)
+{
+    UWord remaining = o->count;
+    struct objrec *rec = o->records;
+    while (rec && remaining-- > 0) {
+        struct objrec *temp = rec->next;
+        free(rec->data);
+        free(rec);
+        rec = temp;
+    }
+
+    free(o);
+}
+
+void obj_free(struct obj *o)
+{
+    switch (o->magic.parsed.version) {
+        case 0: obj_v0_free((void*)o);
+        default:
+            goto bad;
+    }
+
 bad:
     abort(); // XXX better error reporting
 }
