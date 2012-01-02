@@ -25,9 +25,6 @@ tas: parser.o lexer.o
 tas tsim: asm.o
 tsim: $(DEVOBJS)
 
-# sparseram uses some GCC-only constructs (nested functions)
-sparseram.o: PEDANTIC=
-
 # we sometimes pass too many arguments to printf
 asm.o: CFLAGS += -Wno-format
 # don't complain about unused values that we might use in asserts
@@ -36,7 +33,7 @@ tsim.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 
 # flex-generated code we can't control warnings of as easily
-lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused
+lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
 $(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
 	flex --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<

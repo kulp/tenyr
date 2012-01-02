@@ -16,13 +16,20 @@
 #define PAGEWORDS   (PAGESIZE / sizeof(uint32_t))
 #define WORDMASK    ((1 << 10) - 1)
 
+struct sparseram_state {
+    void *mem;
+    void *userdata; ///< transient userdata, used for twalk() support
+};
+
 struct element {
     int32_t base : 24;
+    struct sparseram_state *state;  ///< twalk() support
     uint32_t space[];
 };
 
-struct sparseram_state {
-    void *mem;
+struct todo_node  {
+    void *what;
+    struct todo_node *next;
 };
 
 static int tree_compare(const void *_a, const void *_b)
@@ -40,31 +47,32 @@ static int sparseram_init(struct state *s, void *cookie, ...)
     return 0;
 }
 
+void traverse_action(const void *node, VISIT order, int level)
+{
+    const struct element *element = node;
+    struct todo_node **todo = element->state->userdata;
+
+    if (order == leaf || order == preorder) {
+        struct todo_node *here = malloc(sizeof *here);
+        here->what = *(void**)node;
+        here->next = *todo;
+        *todo = here;
+    }
+}
+
 static int sparseram_fini(struct state *s, void *cookie)
 {
     struct sparseram_state *sparseram = cookie;
     // tdestroy() is a glibc extension. Here we generate a list of nodes to
     // delete and then delete them one by one (albeit using a GCC extension,
     // nested functions, in the process).
-    struct node {
-        void *what;
-        struct node *next;
-    } *todo = NULL;
-
-    void traverse_action(const void *node, VISIT order, int level)
-    {
-        if (order == leaf || order == preorder) {
-            struct node *here = malloc(sizeof *here);
-            here->what = *(void**)node;
-            here->next = todo;
-            todo = here;
-        }
-    }
+    struct todo_node *todo = NULL;
+    sparseram->userdata = &todo;
 
     twalk(sparseram->mem, traverse_action);
 
     while (todo) {
-        struct node *temp = todo;
+        struct todo_node *temp = todo;
         todo = todo->next;
         tdelete(temp->what, &sparseram->mem, tree_compare);
         free(temp->what);
@@ -82,14 +90,14 @@ static int sparseram_op(struct state *s, void *cookie, int op, uint32_t addr,
     struct sparseram_state *sparseram = cookie;
     assert(("Address within address space", !(addr & ~PTR_MASK)));
 
-    struct element key = (struct element){ addr & ~WORDMASK };
+    struct element key = (struct element){ addr & ~WORDMASK, NULL };
     struct element **p = tsearch(&key, &sparseram->mem, tree_compare);
     if (*p == &key) {
         // Currently, a page is allocated even on a read. It is not a very
         // useful optimisation, but we could avoid allocating a page until the
         // first write.
         struct element *node = malloc(PAGESIZE + sizeof *node);
-        *node = (struct element){ addr & ~WORDMASK };
+        *node = (struct element){ addr & ~WORDMASK, cookie };
         *p = node;
     }
 
