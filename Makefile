@@ -4,6 +4,10 @@ CFLAGS  += -g
 LDFLAGS += -g
 CFLAGS  += -Wall -Wextra $(PEDANTIC)
 
+# 32-bit compilation
+#CFLAGS  += -m32
+#LDFLAGS += -m32
+
 PEDANTIC = -Werror -pedantic-errors
 
 FLEX  = flex
@@ -28,8 +32,6 @@ tas: parser.o lexer.o
 tas tsim: asm.o
 tsim: $(DEVOBJS)
 
-# we sometimes pass too many arguments to printf
-asm.o: CFLAGS += -Wno-format
 # don't complain about unused values that we might use in asserts
 tsim.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state

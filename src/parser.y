@@ -176,7 +176,7 @@ regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
 
 immediate
-    : INTEGER { $immediate = strtol($INTEGER, NULL, 0); }
+    : INTEGER { $immediate = strtoll($INTEGER, NULL, 0); }
 
 addsub
     : '+' { $addsub =  1; }

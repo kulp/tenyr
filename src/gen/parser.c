@@ -1914,7 +1914,7 @@ yyreduce:
 
 /* Line 1806 of yacc.c  */
 #line 179 "src/parser.y"
-    { (yyval.i) = strtol((yyvsp[(1) - (1)].str), NULL, 0); }
+    { (yyval.i) = strtoll((yyvsp[(1) - (1)].str), NULL, 0); }
     break;
 
   case 20:
