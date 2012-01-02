@@ -27,7 +27,6 @@ tsim: $(DEVOBJS)
 
 # sparseram uses some GCC-only constructs (nested functions)
 sparseram.o: PEDANTIC=
-sparseram.o: CFLAGS += -fnested-functions
 
 # we sometimes pass too many arguments to printf
 asm.o: CFLAGS += -Wno-format
@@ -59,6 +58,6 @@ clean:
 	$(RM) tas tsim *.o *.d
 
 clobber: clean
-	$(RM) src/{parser,lexer}.[ch]
+	$(RM) $(GENDIR)/{parser,lexer}.[ch]
 	$(RM) -r *.dSYM
 
