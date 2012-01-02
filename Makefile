@@ -4,6 +4,10 @@ CFLAGS  += -g
 LDFLAGS += -g
 CFLAGS  += -Wall -Wextra $(PEDANTIC)
 
+# 32-bit compilation
+#CFLAGS  += -m32
+#LDFLAGS += -m32
+
 PEDANTIC = -Werror -pedantic-errors
 
 FLEX  = flex

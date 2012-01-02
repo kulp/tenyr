@@ -120,7 +120,7 @@ static int fixup_relocations(struct parse_data *pd)
         uint32_t result;
         if ((rc = ce_eval(pd, ce->insn, ce, &result)) == 0) {
             // TODO check for resolvedness first
-            uint32_t mask = -1ULL << r->width; // technically UB
+            uint32_t mask = ~((1ULL << r->width) - 1);
             result *= r->mult;
             *r->dest &= mask;
             *r->dest |= result & ~mask;
