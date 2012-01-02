@@ -44,8 +44,7 @@ static int ram_op(struct state *s, void *cookie, int op, uint32_t addr, uint32_t
 int ram_add_device(struct device **device)
 {
     **device = (struct device){
-        .bounds[0] = 0,
-        .bounds[1] = (1 << 24) - 1,
+        .bounds = { 0, (1 << 24) - 1 },
         .op = ram_op,
         .init = ram_init,
         .fini = ram_fini,

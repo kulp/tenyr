@@ -48,8 +48,7 @@ int debugwrap_add_device(struct device **device, struct device *wrap)
     *debugwrap = (struct debugwrap_state){ .wrapped = wrap };
 
     **device = (struct device){
-        .bounds[0] = wrap->bounds[0],
-        .bounds[1] = wrap->bounds[1],
+        .bounds = { wrap->bounds[0], wrap->bounds[1] },
         .op = debugwrap_op,
         .init = debugwrap_init,
         .fini = debugwrap_fini,
