@@ -23,17 +23,31 @@ static int obj_v0_write(struct obj_v0 *o, FILE *out)
     PUT(o->base.magic.parsed.version, out);
     PUT(o->length, out);
     PUT(o->flags, out);
-    PUT(o->count, out);
+    PUT(o->rec_count, out);
 
-    UWord remaining = o->count;
-    struct objrec *rec = o->records;
-    while (rec && remaining-- > 0) {
-        PUT(rec->addr, out);
-        PUT(rec->size, out);
-        if (fwrite(rec->data, rec->size, 1, out) != 1)
-            goto bad;
+    {
+        UWord remaining = o->rec_count;
+        struct objrec *rec = o->records;
+        while (rec && remaining-- > 0) {
+            PUT(rec->addr, out);
+            PUT(rec->size, out);
+            if (fwrite(rec->data, rec->size, 1, out) != 1)
+                goto bad;
 
-        rec = rec->next;
+            rec = rec->next;
+        }
+    }
+
+    {
+        UWord remaining = o->sym_count;
+        struct objsym *sym = o->symbols;
+        while (sym && remaining-- > 0) {
+            PUT(sym->flags, out);
+            PUT(sym->name, out);
+            PUT(sym->value, out);
+
+            sym = sym->next;
+        }
     }
 
     return 0;
@@ -57,25 +71,45 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
 {
     GET(o->length, in);
     GET(o->flags, in);
-    GET(o->count, in);
+    GET(o->rec_count, in);
 
-    UWord remaining = o->count;
-    struct objrec *last = NULL,
-                  *rec  = o->records = calloc(remaining, sizeof *rec);
-    while (remaining-- > 0) {
-        GET(rec->addr, in);
-        GET(rec->size, in);
-        rec->data = calloc(rec->size, 1);
-        if (fread(rec->data, rec->size, 1, in) != 1)
-            goto bad;
+    {
+        UWord remaining = o->rec_count;
+        struct objrec *last = NULL,
+                      *rec  = o->records = calloc(remaining, sizeof *rec);
+        while (remaining-- > 0) {
+            GET(rec->addr, in);
+            GET(rec->size, in);
+            rec->data = calloc(rec->size, 1);
+            if (fread(rec->data, rec->size, 1, in) != 1)
+                goto bad;
 
-        rec->prev = last;
-        if (last) last->next = rec;
-        last = rec;
-        rec++;
+            rec->prev = last;
+            if (last) last->next = rec;
+            last = rec;
+            rec++;
+        }
+
+        last->next = rec;
     }
 
-    last->next = rec;
+    {
+        UWord remaining = o->sym_count;
+        struct objsym *last = NULL,
+                      *sym  = o->symbols = calloc(remaining, sizeof *sym);
+        while (remaining-- > 0) {
+            GET(sym->flags, in);
+            GET(sym->name, in);
+            GET(sym->value, in);
+
+            sym->prev = last;
+            if (last) last->next = sym;
+            last = sym;
+            sym++;
+        }
+
+        last->next = sym;
+    }
 
     *size = sizeof *o;
 
@@ -105,7 +139,7 @@ bad:
 
 static void obj_v0_free(struct obj_v0 *o)
 {
-    UWord remaining = o->count;
+    UWord remaining = o->rec_count;
     struct objrec *rec = o->records;
     while (rec && remaining-- > 0) {
         struct objrec *temp = rec->next;

@@ -6,24 +6,17 @@
 #ifndef FFI_H_
 #define FFI_H_
 
-#include "sim.h"
-
 #include <stdint.h>
 #include <stddef.h>
+
+struct state;
+struct mstate;
+struct obj;
 
 // continue? predicate : returns nonzero to stop execution
 typedef int cont_pred(struct mstate *m, void *cud);
 
-// TODO integrate with real objects from obj branch
-struct obj {
-    uint32_t base;
-    size_t allocated;
-    size_t used;
-    char *data;
-};
-
-// tf prefix = tenyr "ffi"
-int tf_read_file(struct obj *o, const char *filename);
+// tf prefix = tenyr `ffi' -> TODO change to just `sim' ?
 int tf_load_obj(struct state *s, const struct obj *o);
 int tf_run_until(struct state *s, uint32_t start_address, int flags,
         cont_pred stop, void *cud);

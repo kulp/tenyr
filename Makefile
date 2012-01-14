@@ -31,11 +31,12 @@ all: tas tsim
 tas: parser.o lexer.o
 tas tsim: asm.o
 tsim: $(DEVOBJS) sim.o
+testffi: ffi.o sim.o obj.o
 
 # don't complain about unused values that we might use in asserts
-tsim.o sim.o $(DEVOBJS): CFLAGS += -Wno-unused-value
+tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
-$(DEVOBJS): CFLAGS += -Wno-unused-parameter
+ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 
 # flex-generated code we can't control warnings of as easily
 lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
