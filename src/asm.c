@@ -128,9 +128,14 @@ int find_format_by_name(const void *_a, const void *_b)
  * Object format : simple section-based objects
  */
 struct obj_fdata {
+    int flags;
     struct obj *o;
     long words;
     long insns;
+    size_t size;    ///< bytes size of `o'
+
+    struct objrec *curr;
+    uint32_t pos;   ///< position in objrec
 };
 
 static int obj_init(FILE *stream, int flags, void **ud)
@@ -140,12 +145,19 @@ static int obj_init(FILE *stream, int flags, void **ud)
     struct obj_fdata *u = *ud = calloc(1, sizeof *u);
     struct obj_v0 *o = (void*)(u->o = calloc(1, sizeof *o));
 
-    o->rec_count = 1;
+    u->flags = flags;
 
-    o->records = calloc(o->rec_count, sizeof *o->records);
-    o->records->addr = 0;
-    o->records->size = 1024;
-    o->records->data = calloc(o->records->size, sizeof *o->records->data);
+    if (flags & ASM_ASSEMBLE) {
+        o->rec_count = 1;
+
+        o->records = calloc(o->rec_count, sizeof *o->records);
+        o->records->addr = 0;
+        o->records->size = 1024;
+        o->records->data = calloc(o->records->size, sizeof *o->records->data);
+    } else if (flags & ASM_DISASSEMBLE) {
+        obj_read(u->o, &u->size, stream);
+        u->curr = o->records;
+    }
 
     return rc;
 }
@@ -154,9 +166,26 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
 {
     int rc = 0;
     struct obj_fdata *u = ud;
-    // TODO implement
 
-    return rc;
+    struct objrec *rec = u->curr;
+    if (!rec)
+        return -1;
+
+    if (u->pos >= rec->size) {
+        rec = rec->next;
+        u->pos = 0;
+
+        if (!rec)
+            return -1;
+    }
+
+    i->u.word = rec->data[u->pos++];
+    // TODO adjust addr where ?
+    i->reladdr = rec->addr;
+    // TODO set up syms ?
+    i->label = NULL;
+
+    return 1;
 }
 
 static int obj_out(FILE *stream, struct instruction *i, void *ud)
@@ -175,10 +204,11 @@ static int obj_out(FILE *stream, struct instruction *i, void *ud)
 
     o->records->data[u->insns] = i->u.word;
 
+    // TODO can these be folded into one
     u->words++;
     u->insns++;
 
-    return rc;
+    return 1;
 }
 
 static int obj_fini(FILE *stream, void **ud)
@@ -188,11 +218,13 @@ static int obj_fini(FILE *stream, void **ud)
     struct obj_fdata *u = *ud;
     struct obj_v0 *o = (void*)u->o;
 
-    //o->length = u->words + offsetof(struct obj_v0, records);
-    o->records->size = u->insns;
-    o->length = (sizeof *o / sizeof *o->records->data) + u->words;
+    if (u->flags & ASM_ASSEMBLE) {
+        o->records->size = u->insns;
+        o->length = (sizeof *o / sizeof *o->records->data) + u->words;
 
-    obj_write(u->o, stream);
+        obj_write(u->o, stream);
+    }
+
     obj_free(u->o);
 
     free(*ud);

@@ -1,7 +1,7 @@
 #ifndef ASM_H_
 #define ASM_H_
 
-enum { ASM_ASSEMBLE, ASM_DISASSEMBLE };
+enum { ASM_ASSEMBLE = 1, ASM_DISASSEMBLE = 2 };
 
 struct format {
     const char *name;

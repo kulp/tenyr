@@ -89,8 +89,6 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
             last = rec;
             rec++;
         }
-
-        last->next = rec;
     }
 
     {
@@ -107,8 +105,6 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
             last = sym;
             sym++;
         }
-
-        last->next = sym;
     }
 
     *size = sizeof *o;
