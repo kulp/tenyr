@@ -75,35 +75,39 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
 
     {
         UWord remaining = o->rec_count;
-        struct objrec *last = NULL,
-                      *rec  = o->records = calloc(remaining, sizeof *rec);
-        while (remaining-- > 0) {
-            GET(rec->addr, in);
-            GET(rec->size, in);
-            rec->data = calloc(rec->size, 1);
-            if (fread(rec->data, sizeof *rec->data, rec->size, in) != rec->size)
-                goto bad;
+        if (remaining) {
+            struct objrec *last = NULL,
+                          *rec  = o->records = calloc(remaining, sizeof *rec);
+            while (remaining-- > 0) {
+                GET(rec->addr, in);
+                GET(rec->size, in);
+                rec->data = calloc(rec->size, sizeof *rec->data);
+                if (fread(rec->data, sizeof *rec->data, rec->size, in) != rec->size)
+                    goto bad;
 
-            rec->prev = last;
-            if (last) last->next = rec;
-            last = rec;
-            rec++;
+                rec->prev = last;
+                if (last) last->next = rec;
+                last = rec;
+                rec++;
+            }
         }
     }
 
     {
         UWord remaining = o->sym_count;
-        struct objsym *last = NULL,
-                      *sym  = o->symbols = calloc(remaining, sizeof *sym);
-        while (remaining-- > 0) {
-            GET(sym->flags, in);
-            GET(sym->name, in);
-            GET(sym->value, in);
+        if (remaining) {
+            struct objsym *last = NULL,
+                          *sym  = o->symbols = calloc(remaining, sizeof *sym);
+            while (remaining-- > 0) {
+                GET(sym->flags, in);
+                GET(sym->name, in);
+                GET(sym->value, in);
 
-            sym->prev = last;
-            if (last) last->next = sym;
-            last = sym;
-            sym++;
+                sym->prev = last;
+                if (last) last->next = sym;
+                last = sym;
+                sym++;
+            }
         }
     }
 
