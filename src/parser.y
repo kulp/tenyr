@@ -58,12 +58,14 @@ void ce_free(struct const_expr *ce, int recurse);
 
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*'
+%token <chr> ','
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL CSTRING
 %token <chr> REGISTER
 %token ILLEGAL WORD ASCII ASCIZ
 
 %type <ce> const_expr atom
+%type <cl> const_expr_list
 %type <expr> expr lhs
 %type <i> arrow immediate regname
 %type <insn> insn data insn_or_data
@@ -84,6 +86,10 @@ void ce_free(struct const_expr *ce, int recurse);
         struct instruction *insn; // for '.'-resolving
         struct const_expr *left, *right;
     } *ce;
+    struct const_expr_list {
+        struct const_expr *ce;
+        struct const_expr_list *right;
+    } *cl;
     struct expr {
         int deref;
         int x;
@@ -167,7 +173,7 @@ insn[outer]
             pd->labels = l; }
 
 data
-    : WORD const_expr
+    : WORD const_expr_list
         {   $data = calloc(1, sizeof *$data);
             add_relocation(pd, $const_expr, 1, &$data->u.word, WORD_BITWIDTH);
             $const_expr->insn = $data; }
@@ -186,6 +192,16 @@ ascii
         {   $ascii = make_cstring(pd, $cstring, 0); }
     | ASCIZ cstring
         {   $ascii = make_cstring(pd, $cstring, 1); }
+
+const_expr_list[outer]
+    : const_expr[expr]
+        {   $outer = calloc(1, sizeof $outer);
+            $outer->right = NULL;
+            $outer->ce = $expr; }
+    | const_expr[expr] ',' const_expr_list[inner]
+        {   $outer = calloc(1, sizeof $outer);
+            $outer->right = $inner;
+            $outer->ce = $expr; }
 
 lhs[outer]
     : regname { ($outer = malloc(sizeof *$outer))->x = $regname; $outer->deref = 0; }

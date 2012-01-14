@@ -49,7 +49,7 @@ cstring ("([^"]|\\")+")
 ".ascii"                { return ASCII; }
 ".asciz"                { return ASCIZ; }
 
-[][|&+*^>.:@()-]        { return yytext[0]; }
+[][|&+*^>.,:@()-]       { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "<="                    { return LTE;  }
