@@ -29,12 +29,13 @@
 
 static int next_device(struct state *s)
 {
-    if (s->devices_count >= s->devices_max) {
-        s->devices_max *= 2;
-        s->devices = realloc(s->devices, s->devices_max * sizeof *s->devices);
+    if (s->machine.devices_count >= s->machine.devices_max) {
+        s->machine.devices_max *= 2;
+        s->machine.devices = realloc(s->machine.devices,
+                s->machine.devices_max * sizeof *s->machine.devices);
     }
 
-    return s->devices_count++;
+    return s->machine.devices_count++;
 }
 
 static int recipe_abort(struct state *s)
@@ -47,16 +48,16 @@ static int recipe_prealloc(struct state *s)
 {
     int ram_add_device(struct device **device);
     int index = next_device(s);
-    s->devices[index] = malloc(sizeof *s->devices[index]);
-    return ram_add_device(&s->devices[index]);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    return ram_add_device(&s->machine.devices[index]);
 }
 
 static int recipe_sparse(struct state *s)
 {
     int sparseram_add_device(struct device **device);
     int index = next_device(s);
-    s->devices[index] = malloc(sizeof *s->devices[index]);
-    return sparseram_add_device(&s->devices[index]);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    return sparseram_add_device(&s->machine.devices[index]);
 }
 
 static int recipe_nowrap(struct state *s)
@@ -86,133 +87,14 @@ static int find_device_by_addr(const void *_test, const void *_in)
 
 static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
 {
-    size_t count = s->devices_count;
-    struct device **device = bsearch(&addr, s->devices, count, sizeof *device,
+    size_t count = s->machine.devices_count;
+    struct device **device = bsearch(&addr, s->machine.devices, count, sizeof *device,
             find_device_by_addr);
     assert(("Found device to handle given address", device != NULL && *device != NULL));
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
-    // devices, but it shouldn't see the whole state
+    // machine.devices, but it shouldn't see the whole state
     return (*device)->op(s, (*device)->cookie, op, addr, data);
-}
-
-static int run_instruction(struct state *s, struct instruction *i)
-{
-    int32_t *ip = &s->regs[15];
-
-    assert(("PC within address space", !(*ip & ~PTR_MASK)));
-
-    int32_t *Z;
-    int32_t _rhs, *rhs = &_rhs;
-    uint32_t value;
-    int deref_lhs, deref_rhs;
-    int reversed;
-
-    switch (i->u._xxxx.t) {
-        case 0x0:
-        case 0x1:
-        case 0x2:
-        case 0x3:
-        case 0x4:
-        case 0x5:
-        case 0x6:
-        case 0x7: {
-            struct instruction_general *g = &i->u._0xxx;
-            Z = &s->regs[g->z];
-            int32_t  Xs = s->regs[g->x];
-            uint32_t Xu = s->regs[g->x];
-            int32_t  Ys = s->regs[g->y];
-            uint32_t Yu = s->regs[g->y];
-            int32_t  Is = SEXTEND(12, g->imm);
-            deref_rhs = g->dd & 1;
-            deref_lhs = g->dd & 2;
-            reversed = !!g->r;
-
-            switch (g->op) {
-                case OP_ADD                 : *rhs =  (Xs  +  Ys) + Is; break;
-                case OP_ADD_NEGATIVE_Y      : *rhs =  (Xs  + -Ys) + Is; break;
-                case OP_MULTIPLY            : *rhs =  (Xs  *  Ys) + Is; break;
-
-                case OP_SHIFT_LEFT          : *rhs =  (Xu  << Yu) + Is; break;
-                case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (Xu  >> Yu) + Is; break;
-
-                case OP_COMPARE_EQ          : *rhs = -(Xs  == Ys) + Is; break;
-                case OP_COMPARE_NE          : *rhs = -(Xs  != Ys) + Is; break;
-                case OP_COMPARE_LTE         : *rhs = -(Xs  <= Ys) + Is; break;
-                case OP_COMPARE_GT          : *rhs = -(Xs  >  Ys) + Is; break;
-
-                case OP_BITWISE_AND         : *rhs =  (Xu  &  Yu) + Is; break;
-                case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Yu) + Is; break;
-                case OP_BITWISE_OR          : *rhs =  (Xu  |  Yu) + Is; break;
-                case OP_BITWISE_NOR         : *rhs = ~(Xu  |  Yu) + Is; break;
-                case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Yu) + Is; break;
-                case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Yu) + Is; break;
-
-                case OP_RESERVED            : goto bad;
-            }
-
-            break;
-        }
-        case 0x8:
-        case 0x9:
-        case 0xa:
-        case 0xb: {
-            struct instruction_load_immediate *g = &i->u._10xx;
-            Z = &s->regs[g->z];
-            int32_t _imm = g->imm;
-            deref_rhs = g->dd & 1;
-            deref_lhs = g->dd & 2;
-            reversed = 0;
-            rhs = &_imm;
-
-            break;
-        }
-        default:
-            goto bad;
-    }
-
-    // common activity block
-    {
-        uint32_t r_addr = (reversed ? *Z   : *rhs) & PTR_MASK;
-        uint32_t w_addr = (reversed ? *rhs : *Z  ) & PTR_MASK;
-
-        int read_mem  = reversed ? deref_lhs : deref_rhs;
-        int write_mem = reversed ? deref_rhs : deref_lhs;
-
-        int32_t *r = reversed ? Z   : rhs;
-        int32_t *w = reversed ? rhs : Z;
-
-        if (read_mem)
-            s->dispatch_op(s, OP_READ, r_addr, &value);
-        else
-            value = *r;
-
-        if (write_mem)
-            s->dispatch_op(s, OP_WRITE, w_addr, &value);
-        else if (w != &s->regs[0])  // throw away write to reg 0
-            *w = value;
-
-        if (w != ip) {
-            ++*ip;
-            if (*ip & ~PTR_MASK && s->conf.nowrap) {
-                if (s->conf.abort) {
-                    abort();
-                } else {
-                    return 1;
-                }
-            }
-
-            *ip &= PTR_MASK;
-        }
-    }
-
-    return 0;
-
-bad:
-    if (s->conf.abort)
-        abort();
-    else
-        return 1;
 }
 
 static const char shortopts[] = "a:s:f:nr:vhV";
@@ -272,9 +154,9 @@ static int compare_devices_by_base(const void *_a, const void *_b)
 
 static int devices_setup(struct state *s)
 {
-    s->devices_count = 0;
-    s->devices_max = 8;
-    s->devices = malloc(s->devices_max * sizeof *s->devices);
+    s->machine.devices_count = 0;
+    s->machine.devices_max = 8;
+    s->machine.devices = malloc(s->machine.devices_max * sizeof *s->machine.devices);
 
     return 0;
 }
@@ -282,32 +164,33 @@ static int devices_setup(struct state *s)
 static int devices_finalise(struct state *s)
 {
     if (s->conf.verbose > 2) {
-        assert(("device to be wrapped is not NULL", s->devices[0] != NULL));
+        assert(("device to be wrapped is not NULL", s->machine.devices[0] != NULL));
         int debugwrap_wrap_device(struct device **device);
-        debugwrap_wrap_device(&s->devices[0]);
+        debugwrap_wrap_device(&s->machine.devices[0]);
         int debugwrap_unwrap_device(struct device **device);
-        //debugwrap_unwrap_device(&s->devices[0]);
+        //debugwrap_unwrap_device(&s->machine.devices[0]);
     }
 
     // Devices must be in address order to allow later bsearch. Assume they do
     // not overlap (overlap is illegal).
-    qsort(s->devices, s->devices_count, sizeof *s->devices, compare_devices_by_base);
+    qsort(s->machine.devices, s->machine.devices_count,
+            sizeof *s->machine.devices, compare_devices_by_base);
 
-    for (unsigned i = 0; i < s->devices_count; i++)
-        if (s->devices[i])
-            s->devices[i]->init(s, &s->devices[i]->cookie);
+    for (unsigned i = 0; i < s->machine.devices_count; i++)
+        if (s->machine.devices[i])
+            s->machine.devices[i]->init(s, &s->machine.devices[i]->cookie);
 
     return 0;
 }
 
 static int devices_teardown(struct state *s)
 {
-    for (unsigned i = 0; i < s->devices_count; i++) {
-        s->devices[i]->fini(s, s->devices[i]->cookie);
-        free(s->devices[i]);
+    for (unsigned i = 0; i < s->machine.devices_count; i++) {
+        s->machine.devices[i]->fini(s, s->machine.devices[i]->cookie);
+        free(s->machine.devices[i]);
     }
 
-    free(s->devices);
+    free(s->machine.devices);
 
     return 0;
 }
@@ -371,19 +254,19 @@ static int add_recipe(struct state *s, const char *name)
 static int run_sim(struct state *s)
 {
     while (1) {
-        assert(("PC within address space", !(s->regs[15] & ~PTR_MASK)));
+        assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
         struct instruction i;
-        s->dispatch_op(s, OP_READ, s->regs[15], &i.u.word);
+        s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
 
         if (s->conf.verbose > 0)
-            printf("IP = 0x%06x\t", s->regs[15]);
+            printf("IP = 0x%06x\t", s->machine.regs[15]);
         if (s->conf.verbose > 1)
             print_disassembly(stdout, &i);
         if (s->conf.verbose > 3)
             fputs("\n", stdout);
         if (s->conf.verbose > 3)
-            print_registers(stdout, s->regs);
+            print_registers(stdout, s->machine.regs);
         if (s->conf.verbose > 0)
             fputs("\n", stdout);
 
@@ -399,12 +282,19 @@ static int load_sim(struct state *s, const struct format *f, FILE *in,
     run_recipes(s);
     devices_finalise(s);
 
+    void *ud;
+    if (f->init)
+        f->init(in, ASM_DISASSEMBLE, &ud);
+
     struct instruction i;
-    while (f->impl_in(in, &i) > 0) {
+    while (f->in(in, &i, ud) > 0) {
         s->dispatch_op(s, OP_WRITE, load_address++, &i.u.word);
     }
 
-    s->regs[15] = start_address & PTR_MASK;
+    if (f->fini)
+        f->fini(in, &ud);
+
+    s->machine.regs[15] = start_address & PTR_MASK;
     return 0;
 }
 

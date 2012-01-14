@@ -148,7 +148,6 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
     if (in)
         tenyr_set_in(in, pd.scanner);
-        //tenyr_restart(in, pd.scanner); // TODO ?
 
     int result = tenyr_parse(&pd);
     if (!result && f) {
@@ -174,13 +173,20 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
         if (!fixup_relocations(&pd)) {
             q = p;
+            void *ud;
+            if (f->init)
+                f->init(out, ASM_ASSEMBLE, &ud);
+
             while (q) {
                 struct instruction_list *t = q;
-                f->impl_out(out, q->insn);
+                f->out(out, q->insn, ud);
                 q = q->next;
                 free(t->insn);
                 free(t);
             }
+
+            if (f->fini)
+                f->fini(out, &ud);
         }
 
         struct label_list *l = pd.labels, *last = l;
@@ -199,10 +205,17 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 int do_disassembly(FILE *in, FILE *out, const struct format *f)
 {
     struct instruction i;
-    while (f->impl_in(in, &i) == 1) {
+    void *ud;
+    if (f->init)
+        f->init(in, ASM_DISASSEMBLE, &ud);
+
+    while (f->in(in, &i, ud) == 1) {
         print_disassembly(out, &i);
         fputs("\n", out);
     }
+
+    if (f->fini)
+        f->fini(in, &ud);
 
     return 0;
 }

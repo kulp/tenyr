@@ -1,10 +1,15 @@
 #ifndef ASM_H_
 #define ASM_H_
 
+enum { ASM_ASSEMBLE = 1, ASM_DISASSEMBLE = 2 };
+
 struct format {
     const char *name;
-    int (*impl_in )(FILE *, struct instruction *);
-    int (*impl_out)(FILE *, struct instruction *);
+    int (*init)(FILE *, int flags, void **ud);
+    // TODO combine `in' and `out' functions
+    int (*in  )(FILE *, struct instruction *, void *ud);
+    int (*out )(FILE *, struct instruction *, void *ud);
+    int (*fini)(FILE *, void **ud);
 };
 
 int find_format_by_name(const void *_a, const void *_b);

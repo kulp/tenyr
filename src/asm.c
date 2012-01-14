@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "obj.h"
 #include "ops.h"
 #include "asm.h"
 #include "common.h"
@@ -123,29 +124,145 @@ int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
-static int binary_in(FILE *in, struct instruction *i)
+/*
+ * Object format : simple section-based objects
+ */
+struct obj_fdata {
+    int flags;
+    struct obj *o;
+    long words;
+    long insns;
+    size_t size;    ///< bytes size of `o'
+
+    struct objrec *curr;
+    uint32_t pos;   ///< position in objrec
+};
+
+static int obj_init(FILE *stream, int flags, void **ud)
 {
-    return fread(&i->u.word, 4, 1, in) == 1;
+    int rc = 0;
+
+    struct obj_fdata *u = *ud = calloc(1, sizeof *u);
+    struct obj_v0 *o = (void*)(u->o = calloc(1, sizeof *o));
+
+    u->flags = flags;
+
+    if (flags & ASM_ASSEMBLE) {
+        o->rec_count = 1;
+
+        o->records = calloc(o->rec_count, sizeof *o->records);
+        o->records->addr = 0;
+        o->records->size = 1024;
+        o->records->data = calloc(o->records->size, sizeof *o->records->data);
+    } else if (flags & ASM_DISASSEMBLE) {
+        obj_read(u->o, &u->size, stream);
+        u->curr = o->records;
+    }
+
+    return rc;
 }
 
-static int text_in(FILE *in, struct instruction *i)
+static int obj_in(FILE *stream, struct instruction *i, void *ud)
 {
-    return fscanf(in, "%x", &i->u.word) == 1;
+    int rc = 0;
+    struct obj_fdata *u = ud;
+
+    struct objrec *rec = u->curr;
+    if (!rec)
+        return -1;
+
+    if (u->pos >= rec->size) {
+        rec = rec->next;
+        u->pos = 0;
+
+        if (!rec)
+            return -1;
+    }
+
+    i->u.word = rec->data[u->pos++];
+    // TODO adjust addr where ?
+    i->reladdr = rec->addr;
+    // TODO set up syms ?
+    i->label = NULL;
+
+    return 1;
 }
 
-static int binary_out(FILE *stream, struct instruction *i)
+static int obj_out(FILE *stream, struct instruction *i, void *ud)
+{
+    int rc = 0;
+    struct obj_fdata *u = ud;
+    struct obj_v0 *o = (void*)u->o;
+
+    if (u->insns >= o->records->size) {
+        while (u->insns >= o->records->size)
+            o->records->size *= 2;
+
+        o->records->data = realloc(o->records->data,
+                o->records->size * sizeof *o->records->data);
+    }
+
+    o->records->data[u->insns] = i->u.word;
+
+    // TODO can these be folded into one
+    u->words++;
+    u->insns++;
+
+    return 1;
+}
+
+static int obj_fini(FILE *stream, void **ud)
+{
+    int rc = 0;
+
+    struct obj_fdata *u = *ud;
+    struct obj_v0 *o = (void*)u->o;
+
+    if (u->flags & ASM_ASSEMBLE) {
+        o->records->size = u->insns;
+        o->length = (sizeof *o / sizeof *o->records->data) + u->words;
+
+        obj_write(u->o, stream);
+    }
+
+    obj_free(u->o);
+
+    free(*ud);
+    *ud = NULL;
+
+    return rc;
+}
+
+/*
+ * Raw format : raw binary data (host endian)
+ */
+static int raw_in(FILE *stream, struct instruction *i, void *ud)
+{
+    return fread(&i->u.word, 4, 1, stream) == 1;
+}
+
+static int raw_out(FILE *stream, struct instruction *i, void *ud)
 {
     return fwrite(&i->u.word, sizeof i->u.word, 1, stream) == 1;
 }
 
-static int text_out(FILE *stream, struct instruction *i)
+/*
+ * Text format : hexadecimal numbers
+ */
+static int text_in(FILE *stream, struct instruction *i, void *ud)
+{
+    return fscanf(stream, "%x", &i->u.word) == 1;
+}
+
+static int text_out(FILE *stream, struct instruction *i, void *ud)
 {
     return fprintf(stream, "0x%08x\n", i->u.word) > 0;
 }
 
 const struct format formats[] = {
-    { "binary", binary_in, binary_out },
-    { "text"  , text_in,   text_out   },
+    { "raw"   , NULL    , raw_in , raw_out , NULL     },
+    { "text"  , NULL    , text_in, text_out, NULL     },
+    { "obj"   , obj_init, obj_in , obj_out , obj_fini },
 };
 
 const size_t formats_count = countof(formats);
