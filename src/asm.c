@@ -123,29 +123,29 @@ int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
-static int binary_in(FILE *in, struct instruction *i)
+static int binary_in(FILE *in, struct instruction *i, void *ud)
 {
     return fread(&i->u.word, 4, 1, in) == 1;
 }
 
-static int text_in(FILE *in, struct instruction *i)
+static int text_in(FILE *in, struct instruction *i, void *ud)
 {
     return fscanf(in, "%x", &i->u.word) == 1;
 }
 
-static int binary_out(FILE *stream, struct instruction *i)
+static int binary_out(FILE *stream, struct instruction *i, void *ud)
 {
     return fwrite(&i->u.word, sizeof i->u.word, 1, stream) == 1;
 }
 
-static int text_out(FILE *stream, struct instruction *i)
+static int text_out(FILE *stream, struct instruction *i, void *ud)
 {
     return fprintf(stream, "0x%08x\n", i->u.word) > 0;
 }
 
 const struct format formats[] = {
-    { "binary", binary_in, binary_out },
-    { "text"  , text_in,   text_out   },
+    { "binary", NULL, binary_in, binary_out, NULL },
+    { "text"  , NULL, text_in,   text_out  , NULL },
 };
 
 const size_t formats_count = countof(formats);

@@ -282,10 +282,17 @@ static int load_sim(struct state *s, const struct format *f, FILE *in,
     run_recipes(s);
     devices_finalise(s);
 
+    void *ud;
+    if (f->init)
+        f->init(in, ASM_DISASSEMBLE, &ud);
+
     struct instruction i;
-    while (f->impl_in(in, &i) > 0) {
+    while (f->in(in, &i, ud) > 0) {
         s->dispatch_op(s, OP_WRITE, load_address++, &i.u.word);
     }
+
+    if (f->fini)
+        f->fini(in, &ud);
 
     s->machine.regs[15] = start_address & PTR_MASK;
     return 0;

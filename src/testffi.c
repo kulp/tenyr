@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     fclose(f);
 
     tf_load_obj(s, o);
+    // TODO should state take ownership of obj ?
     obj_free(o);
 
     return 0;
