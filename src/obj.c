@@ -19,7 +19,7 @@
 
 static int obj_v0_write(struct obj_v0 *o, FILE *out)
 {
-    PUT(MAGIC_BYTES, out);
+    PUTSIZED(MAGIC_BYTES, 3, out);
     PUT(o->base.magic.parsed.version, out);
     PUT(o->length, out);
     PUT(o->flags, out);
@@ -31,7 +31,7 @@ static int obj_v0_write(struct obj_v0 *o, FILE *out)
         while (rec && remaining-- > 0) {
             PUT(rec->addr, out);
             PUT(rec->size, out);
-            if (fwrite(rec->data, rec->size, 1, out) != 1)
+            if (fwrite(rec->data, sizeof *rec->data, rec->size, out) != rec->size)
                 goto bad;
 
             rec = rec->next;
@@ -81,7 +81,7 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
             GET(rec->addr, in);
             GET(rec->size, in);
             rec->data = calloc(rec->size, 1);
-            if (fread(rec->data, rec->size, 1, in) != 1)
+            if (fread(rec->data, sizeof *rec->data, rec->size, in) != rec->size)
                 goto bad;
 
             rec->prev = last;
@@ -154,11 +154,12 @@ static void obj_v0_free(struct obj_v0 *o)
 void obj_free(struct obj *o)
 {
     switch (o->magic.parsed.version) {
-        case 0: obj_v0_free((void*)o);
+        case 0: obj_v0_free((void*)o); break;
         default:
             goto bad;
     }
 
+    return;
 bad:
     abort(); // XXX better error reporting
 }

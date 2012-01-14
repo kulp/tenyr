@@ -29,7 +29,7 @@ DEVOBJS = $(DEVICES:%=%.o)
 
 all: tas tsim
 tas: parser.o lexer.o
-tas tsim: asm.o
+tas tsim: asm.o obj.o
 tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
 

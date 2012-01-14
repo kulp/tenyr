@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "obj.h"
 #include "ops.h"
 #include "asm.h"
 #include "common.h"
@@ -126,24 +127,78 @@ int find_format_by_name(const void *_a, const void *_b)
 /*
  * Object format : simple section-based objects
  */
+struct obj_fdata {
+    struct obj *o;
+    long words;
+    long insns;
+};
+
 static int obj_init(FILE *stream, int flags, void **ud)
 {
-    return -1;
+    int rc = 0;
+
+    struct obj_fdata *u = *ud = calloc(1, sizeof *u);
+    struct obj_v0 *o = (void*)(u->o = calloc(1, sizeof *o));
+
+    o->rec_count = 1;
+
+    o->records = calloc(o->rec_count, sizeof *o->records);
+    o->records->addr = 0;
+    o->records->size = 1024;
+    o->records->data = calloc(o->records->size, sizeof *o->records->data);
+
+    return rc;
 }
 
 static int obj_in(FILE *stream, struct instruction *i, void *ud)
 {
-    return -1;
+    int rc = 0;
+    struct obj_fdata *u = ud;
+    // TODO implement
+
+    return rc;
 }
 
 static int obj_out(FILE *stream, struct instruction *i, void *ud)
 {
-    return -1;
+    int rc = 0;
+    struct obj_fdata *u = ud;
+    struct obj_v0 *o = (void*)u->o;
+
+    if (u->insns >= o->records->size) {
+        while (u->insns >= o->records->size)
+            o->records->size *= 2;
+
+        o->records->data = realloc(o->records->data,
+                o->records->size * sizeof *o->records->data);
+    }
+
+    o->records->data[u->insns] = i->u.word;
+
+    u->words++;
+    u->insns++;
+
+    return rc;
 }
 
 static int obj_fini(FILE *stream, void **ud)
 {
-    return -1;
+    int rc = 0;
+
+    struct obj_fdata *u = *ud;
+    struct obj_v0 *o = (void*)u->o;
+
+    //o->length = u->words + offsetof(struct obj_v0, records);
+    o->records->size = u->insns;
+    o->length = (sizeof *o / sizeof *o->records->data) + u->words;
+
+    obj_write(u->o, stream);
+    obj_free(u->o);
+
+    free(*ud);
+    *ud = NULL;
+
+    return rc;
 }
 
 /*
