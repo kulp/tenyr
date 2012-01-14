@@ -123,19 +123,48 @@ int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
-static int binary_in(FILE *in, struct instruction *i, void *ud)
+/*
+ * Object format : simple section-based objects
+ */
+static int obj_init(FILE *stream, int flags, void **ud)
 {
-    return fread(&i->u.word, 4, 1, in) == 1;
+    return -1;
 }
 
-static int text_in(FILE *in, struct instruction *i, void *ud)
+static int obj_in(FILE *stream, struct instruction *i, void *ud)
 {
-    return fscanf(in, "%x", &i->u.word) == 1;
+    return -1;
 }
 
-static int binary_out(FILE *stream, struct instruction *i, void *ud)
+static int obj_out(FILE *stream, struct instruction *i, void *ud)
+{
+    return -1;
+}
+
+static int obj_fini(FILE *stream, void **ud)
+{
+    return -1;
+}
+
+/*
+ * Raw format : raw binary data (host endian)
+ */
+static int raw_in(FILE *stream, struct instruction *i, void *ud)
+{
+    return fread(&i->u.word, 4, 1, stream) == 1;
+}
+
+static int raw_out(FILE *stream, struct instruction *i, void *ud)
 {
     return fwrite(&i->u.word, sizeof i->u.word, 1, stream) == 1;
+}
+
+/*
+ * Text format : hexadecimal numbers
+ */
+static int text_in(FILE *stream, struct instruction *i, void *ud)
+{
+    return fscanf(stream, "%x", &i->u.word) == 1;
 }
 
 static int text_out(FILE *stream, struct instruction *i, void *ud)
@@ -144,8 +173,9 @@ static int text_out(FILE *stream, struct instruction *i, void *ud)
 }
 
 const struct format formats[] = {
-    { "binary", NULL, binary_in, binary_out, NULL },
-    { "text"  , NULL, text_in,   text_out  , NULL },
+    { "raw"   , NULL    , raw_in , raw_out , NULL     },
+    { "text"  , NULL    , text_in, text_out, NULL     },
+    { "obj"   , obj_init, obj_in , obj_out , obj_fini },
 };
 
 const size_t formats_count = countof(formats);
