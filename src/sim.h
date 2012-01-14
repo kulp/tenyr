@@ -1,6 +1,11 @@
 #ifndef SIM_H_
 #define SIM_H_
 
+#include "ops.h"
+
+#include <stdint.h>
+#include <stddef.h>
+
 struct state;
 
 typedef int recipe(struct state *s);
@@ -12,6 +17,7 @@ struct recipe_book {
     struct recipe_book *next;
 };
 
+// TODO rename to sim_state or some such
 struct state {
     struct {
         int abort;
@@ -20,15 +26,20 @@ struct state {
         int run_defaults;   ///< whether to run default recipes
     } conf;
 
-    size_t devices_count;   ///< how many device slots are used
-    size_t devices_max;     ///< how many device slots are allocated
-    struct device **devices;
     int (*dispatch_op)(struct state *s, int op, uint32_t addr, uint32_t *data);
 
     struct recipe_book *recipes;
 
-    int32_t regs[16];
+    // TODO move struct mstate into a separate header from struct state
+    struct mstate {
+        size_t devices_count;   ///< how many device slots are used
+        size_t devices_max;     ///< how many device slots are allocated
+        struct device **devices;
+        int32_t regs[16];
+    } machine;
 };
+
+int run_instruction(struct state *s, struct instruction *i);
 
 #endif
 
