@@ -30,10 +30,10 @@ DEVOBJS = $(DEVICES:%=%.o)
 all: tas tsim
 tas: parser.o lexer.o
 tas tsim: asm.o
-tsim: $(DEVOBJS)
+tsim: $(DEVOBJS) sim.o
 
 # don't complain about unused values that we might use in asserts
-tsim.o $(DEVOBJS): CFLAGS += -Wno-unused-value
+tsim.o sim.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
 $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 

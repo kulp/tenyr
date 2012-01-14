@@ -1,6 +1,8 @@
 #ifndef SIM_H_
 #define SIM_H_
 
+#include "ops.h"
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -36,6 +38,8 @@ struct state {
         int32_t regs[16];
     } machine;
 };
+
+int run_instruction(struct state *s, struct instruction *i);
 
 #endif
 
