@@ -1,6 +1,9 @@
 #ifndef SIM_H_
 #define SIM_H_
 
+#include <stdint.h>
+#include <stddef.h>
+
 struct state;
 
 typedef int recipe(struct state *s);

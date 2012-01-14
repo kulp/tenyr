@@ -9,6 +9,7 @@
 #include "sim.h"
 
 #include <stdint.h>
+#include <stddef.h>
 
 // continue? predicate : returns nonzero to stop execution
 typedef int cont_pred(struct mstate *m);
