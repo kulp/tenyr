@@ -12,6 +12,7 @@ struct recipe_book {
     struct recipe_book *next;
 };
 
+// TODO rename to sim_state or some such
 struct state {
     struct {
         int abort;
@@ -24,6 +25,7 @@ struct state {
 
     struct recipe_book *recipes;
 
+    // TODO move struct mstate into a separate header from struct state
     struct mstate {
         size_t devices_count;   ///< how many device slots are used
         size_t devices_max;     ///< how many device slots are allocated
