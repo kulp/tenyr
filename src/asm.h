@@ -5,10 +5,11 @@ enum { ASM_ASSEMBLE, ASM_DISASSEMBLE };
 
 struct format {
     const char *name;
-    int (*init)(FILE *, int flags, void *ud);
+    int (*init)(FILE *, int flags, void **ud);
+    // TODO combine `in' and `out' functions
     int (*in  )(FILE *, struct instruction *, void *ud);
     int (*out )(FILE *, struct instruction *, void *ud);
-    int (*fini)(FILE *, void *ud);
+    int (*fini)(FILE *, void **ud);
 };
 
 int find_format_by_name(const void *_a, const void *_b);
