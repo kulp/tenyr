@@ -34,7 +34,7 @@ tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
 
 # don't complain about unused values that we might use in asserts
-tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
+asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
 ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 

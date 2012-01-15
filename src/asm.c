@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -132,8 +133,10 @@ struct obj_fdata {
     struct obj *o;
     long words;
     long insns;
+    long syms;
     size_t size;    ///< bytes size of `o'
 
+    struct objsym *last;
     struct objrec *curr;
     uint32_t pos;   ///< position in objrec
 };
@@ -149,13 +152,15 @@ static int obj_init(FILE *stream, int flags, void **ud)
 
     if (flags & ASM_ASSEMBLE) {
         o->rec_count = 1;
-
         o->records = calloc(o->rec_count, sizeof *o->records);
         o->records->addr = 0;
         o->records->size = 1024;
         o->records->data = calloc(o->records->size, sizeof *o->records->data);
+
+        o->sym_count = 32;
+        o->symbols = calloc(o->sym_count, sizeof *o->records);
     } else if (flags & ASM_DISASSEMBLE) {
-        obj_read(u->o, &u->size, stream);
+        rc = obj_read(u->o, &u->size, stream);
         u->curr = o->records;
     }
 
@@ -164,7 +169,7 @@ static int obj_init(FILE *stream, int flags, void **ud)
 
 static int obj_in(FILE *stream, struct instruction *i, void *ud)
 {
-    int rc = 0;
+    int rc = 1;
     struct obj_fdata *u = ud;
 
     struct objrec *rec = u->curr;
@@ -185,30 +190,56 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     // TODO set up syms ?
     i->label = NULL;
 
-    return 1;
+    return rc;
 }
 
 static int obj_out(FILE *stream, struct instruction *i, void *ud)
 {
-    int rc = 0;
+    int rc = 1;
     struct obj_fdata *u = ud;
     struct obj_v0 *o = (void*)u->o;
 
-    if (u->insns >= o->records->size) {
-        while (u->insns >= o->records->size)
-            o->records->size *= 2;
+    {
+        if (u->insns >= o->records->size) {
+            while (u->insns >= o->records->size)
+                o->records->size *= 2;
 
-        o->records->data = realloc(o->records->data,
-                o->records->size * sizeof *o->records->data);
+            o->records->data = realloc(o->records->data,
+                    o->records->size * sizeof *o->records->data);
+        }
+
+        o->records->data[u->insns] = i->u.word;
+
+        u->words++;
+        u->insns++;
     }
 
-    o->records->data[u->insns] = i->u.word;
+    {
+        struct label *l = i->label;
+        while (l) {
+            if (u->syms >= o->sym_count) {
+                while (u->syms >= o->sym_count)
+                    o->sym_count *= 2;
 
-    // TODO can these be folded into one
-    u->words++;
-    u->insns++;
+                o->symbols = realloc(o->symbols,
+                                        o->sym_count * sizeof *o->symbols);
+            }
 
-    return 1;
+            struct objsym *sym = &o->symbols[u->syms++];
+            strncpy(sym->name, l->name, sizeof sym->name);
+            assert(("Symbol address resolved", l->resolved != 0));
+            sym->value = l->reladdr;
+            if (u->last) u->last->next = sym;
+            sym->prev = u->last;
+            u->last = sym;
+
+            u->words++;
+
+            l = l->next;
+        }
+    }
+
+    return rc;
 }
 
 static int obj_fini(FILE *stream, void **ud)
@@ -220,7 +251,8 @@ static int obj_fini(FILE *stream, void **ud)
 
     if (u->flags & ASM_ASSEMBLE) {
         o->records->size = u->insns;
-        o->length = (sizeof *o / sizeof *o->records->data) + u->words;
+        o->sym_count = u->syms;
+        o->length = 5 + u->words; // XXX explain
 
         obj_write(u->o, stream);
     }
@@ -260,9 +292,10 @@ static int text_out(FILE *stream, struct instruction *i, void *ud)
 }
 
 const struct format formats[] = {
+    // first format is default
+    { "obj"   , obj_init, obj_in , obj_out , obj_fini },
     { "raw"   , NULL    , raw_in , raw_out , NULL     },
     { "text"  , NULL    , text_in, text_out, NULL     },
-    { "obj"   , obj_init, obj_in , obj_out , obj_fini },
 };
 
 const size_t formats_count = countof(formats);
