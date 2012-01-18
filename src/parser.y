@@ -19,6 +19,8 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct instruction *make_insn_immediate(struct parse_data *pd, struct
         expr *lhs, struct const_expr *ce);
+static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
+        *cs, int nul_term);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -43,7 +45,7 @@ void ce_free(struct const_expr *ce, int recurse);
 //%destructor { expr_free($$); } <expr>
 //%destructor { ce_free($$, 1); } <ce>
 
-%start program
+%start top
 
 %left EQ NEQ
 %left LTE '>'
@@ -57,18 +59,19 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*'
 %token <arrow> TOL TOR
-%token <str> INTEGER LABEL
+%token <str> INTEGER LABEL CSTRING
 %token <chr> REGISTER
-%token ILLEGAL WORD
+%token ILLEGAL WORD ASCII ASCIZ
 
 %type <ce> const_expr atom
 %type <expr> expr lhs
 %type <i> arrow immediate regname
 %type <insn> insn data insn_or_data
 %type <op> op
-%type <program> program
+%type <program> program ascii
 %type <s> addsub
 %type <str> lref
+%type <cstr> cstring
 
 %union {
     int32_t i;
@@ -91,6 +94,11 @@ void ce_free(struct const_expr *ce, int recurse);
         int mult;   ///< multiplier from addsub
         struct const_expr *ce;
     } *expr;
+    struct cstr {
+        int len;
+        char *str;
+        struct cstr *right;
+    } *cstr;
     struct instruction *insn;
     struct instruction_list *program;
     char str[64]; // TODO document length
@@ -101,17 +109,28 @@ void ce_free(struct const_expr *ce, int recurse);
 
 %%
 
+top
+    : program
+        {   pd->top = $program; }
+
 insn_or_data
     : insn
     | data
 
 program[outer]
-    : insn_or_data
-        {   pd->top = $outer = malloc(sizeof *$outer);
-            $outer->next = NULL;
-            $outer->insn = $insn_or_data; }
+    :   /* empty */
+        {   $outer = NULL; }
+    | ascii program[inner]
+        {   struct instruction_list *p = $ascii;
+            while (p->next) p = p->next;
+            p->next = $inner;
+
+            $outer = malloc(sizeof *$outer);
+            $outer->next = $ascii->next;
+            $outer->insn = $ascii->insn;
+            free($ascii); }
     | insn_or_data program[inner]
-        {   pd->top = $outer = malloc(sizeof *$outer);
+        {   $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
             $outer->insn = $insn_or_data; }
 
@@ -152,6 +171,21 @@ data
         {   $data = calloc(1, sizeof *$data);
             add_relocation(pd, $const_expr, 1, &$data->u.word, WORD_BITWIDTH);
             $const_expr->insn = $data; }
+
+cstring[outer]
+    :   /* empty */
+        {   $outer = NULL; }
+    | CSTRING cstring[inner]
+        {   $outer = malloc(sizeof *$outer);
+            $outer->len = strlen($CSTRING);
+            $outer->str = $CSTRING;
+            $outer->right = $inner; }
+
+ascii
+    : ASCII cstring
+        {   $ascii = make_cstring(pd, $cstring, 0); }
+    | ASCIZ cstring
+        {   $ascii = make_cstring(pd, $cstring, 1); }
 
 lhs[outer]
     : regname { ($outer = malloc(sizeof *$outer))->x = $regname; $outer->deref = 0; }
@@ -325,5 +359,11 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
         e->i = 0; // there was no const_expr ; zero defined by language
 
     return e;
+}
+
+static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
+        *cs, int nul_term)
+{
+    return NULL;
 }
 

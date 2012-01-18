@@ -34,6 +34,7 @@ static int savestr(yyscan_t yyscanner);
 regname ([A-P])
 /* don't permit collision with regname */
 label   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
+cstring ("([^"]|\\")+")
 
 %%
 
@@ -45,6 +46,8 @@ label   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
 {label}                 { savestr(yyscanner); return LABEL; }
 ".word"                 { return WORD; }
+".ascii"                { return ASCII; }
+".asciz"                { return ASCIZ; }
 
 [][|&+*^>.:@()-]        { return yytext[0]; }
 
