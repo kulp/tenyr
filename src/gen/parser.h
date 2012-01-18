@@ -49,7 +49,7 @@
      TOR = 267,
      INTEGER = 268,
      LABEL = 269,
-     CSTRING = 270,
+     STRING = 270,
      REGISTER = 271,
      ILLEGAL = 272,
      WORD = 273,
@@ -65,7 +65,7 @@ typedef union YYSTYPE
 {
 
 /* Line 2068 of yacc.c  */
-#line 82 "src/parser.y"
+#line 83 "src/parser.y"
 
     int32_t i;
     signed s;
@@ -93,7 +93,7 @@ typedef union YYSTYPE
     } *expr;
     struct cstr {
         int len;
-        char *str;
+        char str[32];
         struct cstr *right;
     } *cstr;
     struct instruction *insn;

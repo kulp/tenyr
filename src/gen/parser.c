@@ -76,6 +76,7 @@
 /* Line 268 of yacc.c  */
 #line 1 "src/parser.y"
 
+#include <assert.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -113,7 +114,7 @@ void ce_free(struct const_expr *ce, int recurse);
 
 
 /* Line 268 of yacc.c  */
-#line 117 "src/gen/parser.c"
+#line 118 "src/gen/parser.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -152,7 +153,7 @@ void ce_free(struct const_expr *ce, int recurse);
      TOR = 267,
      INTEGER = 268,
      LABEL = 269,
-     CSTRING = 270,
+     STRING = 270,
      REGISTER = 271,
      ILLEGAL = 272,
      WORD = 273,
@@ -168,7 +169,7 @@ typedef union YYSTYPE
 {
 
 /* Line 293 of yacc.c  */
-#line 82 "src/parser.y"
+#line 83 "src/parser.y"
 
     int32_t i;
     signed s;
@@ -196,7 +197,7 @@ typedef union YYSTYPE
     } *expr;
     struct cstr {
         int len;
-        char *str;
+        char str[32];
         struct cstr *right;
     } *cstr;
     struct instruction *insn;
@@ -209,7 +210,7 @@ typedef union YYSTYPE
 
 
 /* Line 293 of yacc.c  */
-#line 213 "src/gen/parser.c"
+#line 214 "src/gen/parser.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -234,7 +235,7 @@ typedef struct YYLTYPE
 
 
 /* Line 343 of yacc.c  */
-#line 238 "src/gen/parser.c"
+#line 239 "src/gen/parser.c"
 
 #ifdef short
 # undef short
@@ -519,12 +520,12 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   123,   123,   127,   128,   129,   139,   140,   149,   155,
-     158,   171,   181,   182,   189,   191,   195,   199,   203,   209,
-     211,   214,   216,   218,   220,   222,   224,   228,   231,   234,
-     235,   238,   239,   240,   241,   242,   243,   244,   245,   246,
-     247,   248,   249,   250,   251,   252,   255,   256,   259,   261,
-     263,   265,   267,   271,   274,   277,   281
+       0,   124,   124,   128,   129,   130,   140,   141,   150,   156,
+     159,   172,   182,   183,   193,   195,   199,   203,   207,   213,
+     215,   218,   220,   222,   224,   226,   228,   232,   235,   238,
+     239,   242,   243,   244,   245,   246,   247,   248,   249,   250,
+     251,   252,   253,   254,   255,   256,   259,   260,   263,   265,
+     267,   269,   271,   275,   278,   281,   285
 };
 #endif
 
@@ -536,9 +537,9 @@ static const char *const yytname[] =
   "$end", "error", "$undefined", "NEQ", "EQ", "'>'", "LTE", "'+'", "'-'",
   "'*'", "'%'", "'^'", "XORN", "'|'", "NOR", "'&'", "NAND", "RSH", "LSH",
   "'['", "']'", "'.'", "'('", "')'", "','", "TOL", "TOR", "INTEGER",
-  "LABEL", "CSTRING", "REGISTER", "ILLEGAL", "WORD", "ASCII", "ASCIZ",
+  "LABEL", "STRING", "REGISTER", "ILLEGAL", "WORD", "ASCII", "ASCIZ",
   "':'", "'@'", "$accept", "top", "ascii_or_data", "program", "insn",
-  "cstring", "ascii", "data", "const_expr_list", "lhs", "expr", "regname",
+  "string", "ascii", "data", "const_expr_list", "lhs", "expr", "regname",
   "immediate", "addsub", "op", "arrow", "const_expr", "atom", "lref", 0
 };
 #endif
@@ -1812,14 +1813,14 @@ yyreduce:
           case 2:
 
 /* Line 1806 of yacc.c  */
-#line 124 "src/parser.y"
+#line 125 "src/parser.y"
     {   pd->top = (yyvsp[(1) - (1)].program); }
     break;
 
   case 5:
 
 /* Line 1806 of yacc.c  */
-#line 130 "src/parser.y"
+#line 131 "src/parser.y"
     {   (yyval.program) = (yyvsp[(3) - (3)].program);
             struct label *n = add_label_to_insn(&yyloc, (yyvsp[(3) - (3)].program)->insn, (yyvsp[(1) - (3)].str));
             struct label_list *l = calloc(1, sizeof *l);
@@ -1831,14 +1832,14 @@ yyreduce:
   case 6:
 
 /* Line 1806 of yacc.c  */
-#line 139 "src/parser.y"
+#line 140 "src/parser.y"
     {   (yyval.program) = NULL; }
     break;
 
   case 7:
 
 /* Line 1806 of yacc.c  */
-#line 141 "src/parser.y"
+#line 142 "src/parser.y"
     {   struct instruction_list *p = (yyvsp[(1) - (2)].program);
             while (p->next) p = p->next;
             p->next = (yyvsp[(2) - (2)].program);
@@ -1852,7 +1853,7 @@ yyreduce:
   case 8:
 
 /* Line 1806 of yacc.c  */
-#line 150 "src/parser.y"
+#line 151 "src/parser.y"
     {   (yyval.program) = malloc(sizeof *(yyval.program));
             (yyval.program)->next = (yyvsp[(2) - (2)].program);
             (yyval.program)->insn = (yyvsp[(1) - (2)].insn); }
@@ -1861,7 +1862,7 @@ yyreduce:
   case 9:
 
 /* Line 1806 of yacc.c  */
-#line 156 "src/parser.y"
+#line 157 "src/parser.y"
     {   (yyval.insn) = calloc(1, sizeof *(yyval.insn));
             (yyval.insn)->u.word = -1; }
     break;
@@ -1869,7 +1870,7 @@ yyreduce:
   case 10:
 
 /* Line 1806 of yacc.c  */
-#line 159 "src/parser.y"
+#line 160 "src/parser.y"
     {   if ((yyvsp[(3) - (3)].expr)->op == OP_RESERVED) {
                 if ((yyvsp[(2) - (3)].i) == 0) {
                     (yyval.insn) = make_insn_immediate(pd, (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)->ce);
@@ -1887,7 +1888,7 @@ yyreduce:
   case 11:
 
 /* Line 1806 of yacc.c  */
-#line 172 "src/parser.y"
+#line 173 "src/parser.y"
     {   (yyval.insn) = (yyvsp[(3) - (3)].insn);
             struct label *n = add_label_to_insn(&yyloc, (yyvsp[(3) - (3)].insn), (yyvsp[(1) - (3)].str));
             struct label_list *l = calloc(1, sizeof *l);
@@ -1899,45 +1900,48 @@ yyreduce:
   case 12:
 
 /* Line 1806 of yacc.c  */
-#line 181 "src/parser.y"
+#line 182 "src/parser.y"
     {   (yyval.cstr) = NULL; }
     break;
 
   case 13:
 
 /* Line 1806 of yacc.c  */
-#line 183 "src/parser.y"
-    {   (yyval.cstr) = malloc(sizeof *(yyval.cstr));
-            (yyval.cstr)->len = strlen((yyvsp[(1) - (2)].str));
-            (yyval.cstr)->str = (yyvsp[(1) - (2)].str);
+#line 184 "src/parser.y"
+    {   (yyval.cstr) = calloc(1, sizeof *(yyval.cstr));
+            (yyval.cstr)->len = strlen((yyvsp[(1) - (2)].str)) - 2; // drop quotes
+            // XXX support arbitrarily long strings
+            assert(("String within limits", (yyval.cstr)->len < sizeof (yyval.cstr)->str));
+            // skip quotes
+            strncpy((yyval.cstr)->str, (yyvsp[(1) - (2)].str) + 1, (yyval.cstr)->len);
             (yyval.cstr)->right = (yyvsp[(2) - (2)].cstr); }
     break;
 
   case 14:
 
 /* Line 1806 of yacc.c  */
-#line 190 "src/parser.y"
+#line 194 "src/parser.y"
     {   (yyval.program) = make_cstring(pd, (yyvsp[(2) - (2)].cstr), 0); }
     break;
 
   case 15:
 
 /* Line 1806 of yacc.c  */
-#line 192 "src/parser.y"
+#line 196 "src/parser.y"
     {   (yyval.program) = make_cstring(pd, (yyvsp[(2) - (2)].cstr), 1); }
     break;
 
   case 16:
 
 /* Line 1806 of yacc.c  */
-#line 196 "src/parser.y"
+#line 200 "src/parser.y"
     {   (yyval.program) = make_data(pd, (yyvsp[(2) - (2)].cl)); }
     break;
 
   case 17:
 
 /* Line 1806 of yacc.c  */
-#line 200 "src/parser.y"
+#line 204 "src/parser.y"
     {   (yyval.cl) = calloc(1, sizeof (yyval.cl));
             (yyval.cl)->right = NULL;
             (yyval.cl)->ce = (yyvsp[(1) - (1)].ce); }
@@ -1946,7 +1950,7 @@ yyreduce:
   case 18:
 
 /* Line 1806 of yacc.c  */
-#line 204 "src/parser.y"
+#line 208 "src/parser.y"
     {   (yyval.cl) = calloc(1, sizeof (yyval.cl));
             (yyval.cl)->right = (yyvsp[(3) - (3)].cl);
             (yyval.cl)->ce = (yyvsp[(1) - (3)].ce); }
@@ -1955,245 +1959,245 @@ yyreduce:
   case 19:
 
 /* Line 1806 of yacc.c  */
-#line 209 "src/parser.y"
+#line 213 "src/parser.y"
     { ((yyval.expr) = malloc(sizeof *(yyval.expr)))->x = (yyvsp[(1) - (1)].i); (yyval.expr)->deref = 0; }
     break;
 
   case 20:
 
 /* Line 1806 of yacc.c  */
-#line 211 "src/parser.y"
+#line 215 "src/parser.y"
     { (yyval.expr) = (yyvsp[(2) - (3)].expr); (yyval.expr)->deref = 1; }
     break;
 
   case 21:
 
 /* Line 1806 of yacc.c  */
-#line 215 "src/parser.y"
+#line 219 "src/parser.y"
     { (yyval.expr) = make_expr((yyvsp[(1) - (1)].i), OP_BITWISE_OR, 0, 0, NULL); }
     break;
 
   case 22:
 
 /* Line 1806 of yacc.c  */
-#line 217 "src/parser.y"
+#line 221 "src/parser.y"
     { (yyval.expr) = make_expr((yyvsp[(1) - (3)].i), (yyvsp[(2) - (3)].op), (yyvsp[(3) - (3)].i), 0, NULL); }
     break;
 
   case 23:
 
 /* Line 1806 of yacc.c  */
-#line 219 "src/parser.y"
+#line 223 "src/parser.y"
     { (yyval.expr) = make_expr((yyvsp[(1) - (3)].i), OP_BITWISE_OR, 0, (yyvsp[(2) - (3)].s), (yyvsp[(3) - (3)].ce)); }
     break;
 
   case 24:
 
 /* Line 1806 of yacc.c  */
-#line 221 "src/parser.y"
+#line 225 "src/parser.y"
     { (yyval.expr) = make_expr((yyvsp[(1) - (5)].i), (yyvsp[(2) - (5)].op), (yyvsp[(3) - (5)].i), (yyvsp[(4) - (5)].s), (yyvsp[(5) - (5)].ce)); }
     break;
 
   case 25:
 
 /* Line 1806 of yacc.c  */
-#line 223 "src/parser.y"
+#line 227 "src/parser.y"
     { (yyval.expr) = make_expr(0, OP_RESERVED, 0, 0, (yyvsp[(1) - (1)].ce)); }
     break;
 
   case 26:
 
 /* Line 1806 of yacc.c  */
-#line 225 "src/parser.y"
+#line 229 "src/parser.y"
     { (yyval.expr) = (yyvsp[(2) - (3)].expr); (yyval.expr)->deref = 1; }
     break;
 
   case 27:
 
 /* Line 1806 of yacc.c  */
-#line 228 "src/parser.y"
+#line 232 "src/parser.y"
     { (yyval.i) = toupper((yyvsp[(1) - (1)].chr)) - 'A'; }
     break;
 
   case 28:
 
 /* Line 1806 of yacc.c  */
-#line 231 "src/parser.y"
+#line 235 "src/parser.y"
     { (yyval.i) = strtoll((yyvsp[(1) - (1)].str), NULL, 0); }
     break;
 
   case 29:
 
 /* Line 1806 of yacc.c  */
-#line 234 "src/parser.y"
+#line 238 "src/parser.y"
     { (yyval.s) =  1; }
     break;
 
   case 30:
 
 /* Line 1806 of yacc.c  */
-#line 235 "src/parser.y"
+#line 239 "src/parser.y"
     { (yyval.s) = -1; }
     break;
 
   case 31:
 
 /* Line 1806 of yacc.c  */
-#line 238 "src/parser.y"
+#line 242 "src/parser.y"
     { (yyval.op) = OP_BITWISE_OR         ; }
     break;
 
   case 32:
 
 /* Line 1806 of yacc.c  */
-#line 239 "src/parser.y"
+#line 243 "src/parser.y"
     { (yyval.op) = OP_BITWISE_AND        ; }
     break;
 
   case 33:
 
 /* Line 1806 of yacc.c  */
-#line 240 "src/parser.y"
+#line 244 "src/parser.y"
     { (yyval.op) = OP_ADD                ; }
     break;
 
   case 34:
 
 /* Line 1806 of yacc.c  */
-#line 241 "src/parser.y"
+#line 245 "src/parser.y"
     { (yyval.op) = OP_MULTIPLY           ; }
     break;
 
   case 35:
 
 /* Line 1806 of yacc.c  */
-#line 242 "src/parser.y"
+#line 246 "src/parser.y"
     { (yyval.op) = OP_SHIFT_LEFT         ; }
     break;
 
   case 36:
 
 /* Line 1806 of yacc.c  */
-#line 243 "src/parser.y"
+#line 247 "src/parser.y"
     { (yyval.op) = OP_COMPARE_LTE        ; }
     break;
 
   case 37:
 
 /* Line 1806 of yacc.c  */
-#line 244 "src/parser.y"
+#line 248 "src/parser.y"
     { (yyval.op) = OP_COMPARE_EQ         ; }
     break;
 
   case 38:
 
 /* Line 1806 of yacc.c  */
-#line 245 "src/parser.y"
+#line 249 "src/parser.y"
     { (yyval.op) = OP_BITWISE_NOR        ; }
     break;
 
   case 39:
 
 /* Line 1806 of yacc.c  */
-#line 246 "src/parser.y"
+#line 250 "src/parser.y"
     { (yyval.op) = OP_BITWISE_NAND       ; }
     break;
 
   case 40:
 
 /* Line 1806 of yacc.c  */
-#line 247 "src/parser.y"
+#line 251 "src/parser.y"
     { (yyval.op) = OP_BITWISE_XOR        ; }
     break;
 
   case 41:
 
 /* Line 1806 of yacc.c  */
-#line 248 "src/parser.y"
+#line 252 "src/parser.y"
     { (yyval.op) = OP_ADD_NEGATIVE_Y     ; }
     break;
 
   case 42:
 
 /* Line 1806 of yacc.c  */
-#line 249 "src/parser.y"
+#line 253 "src/parser.y"
     { (yyval.op) = OP_XOR_INVERT_X       ; }
     break;
 
   case 43:
 
 /* Line 1806 of yacc.c  */
-#line 250 "src/parser.y"
+#line 254 "src/parser.y"
     { (yyval.op) = OP_SHIFT_RIGHT_LOGICAL; }
     break;
 
   case 44:
 
 /* Line 1806 of yacc.c  */
-#line 251 "src/parser.y"
+#line 255 "src/parser.y"
     { (yyval.op) = OP_COMPARE_GT         ; }
     break;
 
   case 45:
 
 /* Line 1806 of yacc.c  */
-#line 252 "src/parser.y"
+#line 256 "src/parser.y"
     { (yyval.op) = OP_COMPARE_NE         ; }
     break;
 
   case 46:
 
 /* Line 1806 of yacc.c  */
-#line 255 "src/parser.y"
+#line 259 "src/parser.y"
     { (yyval.i) = 0; }
     break;
 
   case 47:
 
 /* Line 1806 of yacc.c  */
-#line 256 "src/parser.y"
+#line 260 "src/parser.y"
     { (yyval.i) = 1; }
     break;
 
   case 48:
 
 /* Line 1806 of yacc.c  */
-#line 260 "src/parser.y"
+#line 264 "src/parser.y"
     {   (yyval.ce) = (yyvsp[(1) - (1)].ce); }
     break;
 
   case 49:
 
 /* Line 1806 of yacc.c  */
-#line 262 "src/parser.y"
+#line 266 "src/parser.y"
     {   (yyval.ce) = make_const_expr(OP2, '+', (yyvsp[(1) - (3)].ce), (yyvsp[(3) - (3)].ce)); }
     break;
 
   case 50:
 
 /* Line 1806 of yacc.c  */
-#line 264 "src/parser.y"
+#line 268 "src/parser.y"
     {   (yyval.ce) = make_const_expr(OP2, '-', (yyvsp[(1) - (3)].ce), (yyvsp[(3) - (3)].ce)); }
     break;
 
   case 51:
 
 /* Line 1806 of yacc.c  */
-#line 266 "src/parser.y"
+#line 270 "src/parser.y"
     {   (yyval.ce) = make_const_expr(OP2, '*', (yyvsp[(1) - (3)].ce), (yyvsp[(3) - (3)].ce)); }
     break;
 
   case 52:
 
 /* Line 1806 of yacc.c  */
-#line 268 "src/parser.y"
+#line 272 "src/parser.y"
     {   (yyval.ce) = (yyvsp[(2) - (3)].ce); }
     break;
 
   case 53:
 
 /* Line 1806 of yacc.c  */
-#line 272 "src/parser.y"
+#line 276 "src/parser.y"
     {   (yyval.ce) = make_const_expr(IMM, 0, NULL, NULL);
             (yyval.ce)->i = (yyvsp[(1) - (1)].i); }
     break;
@@ -2201,7 +2205,7 @@ yyreduce:
   case 54:
 
 /* Line 1806 of yacc.c  */
-#line 275 "src/parser.y"
+#line 279 "src/parser.y"
     {   (yyval.ce) = make_const_expr(LAB, 0, NULL, NULL);
             strncpy((yyval.ce)->labelname, (yyvsp[(1) - (1)].str), sizeof (yyval.ce)->labelname); }
     break;
@@ -2209,21 +2213,21 @@ yyreduce:
   case 55:
 
 /* Line 1806 of yacc.c  */
-#line 278 "src/parser.y"
+#line 282 "src/parser.y"
     {   (yyval.ce) = make_const_expr(ICI, 0, NULL, NULL); }
     break;
 
   case 56:
 
 /* Line 1806 of yacc.c  */
-#line 282 "src/parser.y"
+#line 286 "src/parser.y"
     { strncpy((yyval.str), (yyvsp[(2) - (2)].str), sizeof (yyval.str)); (yyval.str)[sizeof (yyval.str) - 1] = 0; }
     break;
 
 
 
 /* Line 1806 of yacc.c  */
-#line 2227 "src/gen/parser.c"
+#line 2231 "src/gen/parser.c"
         default: break;
       }
     if (yychar_backup != yychar)
@@ -2473,15 +2477,17 @@ yyreturn:
 
 
 /* Line 2067 of yacc.c  */
-#line 284 "src/parser.y"
+#line 288 "src/parser.y"
 
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
     fflush(stderr);
     fprintf(stderr, "%s\n", pd->lexstate.saveline);
-    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", locp->last_column, "^",
-            locp->last_column, s, locp->first_line, tenyr_get_text(pd->scanner));
+    fprintf(stderr, "%*s\n%*s at line %d column %d at `%s'\n",
+            locp->first_column + 1, "^", locp->first_column + 1, s,
+            locp->first_line, locp->first_column + 1,
+            tenyr_get_text(pd->scanner));
 
     return 0;
 }
@@ -2575,7 +2581,39 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
 static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
         *cs, int nul_term)
 {
-    return NULL;
+    struct instruction_list *result = NULL, **rp = &result;
+
+    (void)pd; // unused XXX
+
+    struct cstr *p = cs; //, q = p;
+    unsigned wpos = 0; // position in the word
+    while (p) {
+        unsigned spos = 0; // position in the string
+        int len = p->len;
+        while (len > 0) {
+            struct instruction_list *t = *rp;
+            for (; len > 0; wpos++, spos++, len--) {
+                if (wpos % 4 == 0) {
+                    struct instruction_list *temp = *rp;
+                    if (!*rp) *rp = calloc(1, sizeof **rp);
+                    t = *rp;
+                    t->next = temp; // backward ? TODO
+                    rp = &t->next;
+                    if (!t->insn) t->insn = calloc(1, sizeof *t->insn);
+                }
+
+                //struct instruction_list *t = *rp;
+                t->insn->u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
+            }
+            //len -= 4; // 4 bytes per word
+        }
+        //pos += q->len;
+        p = p->right;
+    }
+
+    (void)nul_term; // TODO NUL-terminate
+
+    return result;
 }
 
 static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn, const char *label)

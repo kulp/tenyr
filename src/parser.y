@@ -1,4 +1,5 @@
 %{
+#include <assert.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -64,7 +65,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <chr> '+' '-' '*'
 %token <chr> ','
 %token <arrow> TOL TOR
-%token <str> INTEGER LABEL CSTRING
+%token <str> INTEGER LABEL STRING
 %token <chr> REGISTER
 %token ILLEGAL WORD ASCII ASCIZ
 
@@ -77,7 +78,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <program> program ascii data ascii_or_data
 %type <s> addsub
 %type <str> lref
-%type <cstr> cstring
+%type <cstr> string
 
 %union {
     int32_t i;
@@ -106,7 +107,7 @@ void ce_free(struct const_expr *ce, int recurse);
     } *expr;
     struct cstr {
         int len;
-        char *str;
+        char str[32];
         struct cstr *right;
     } *cstr;
     struct instruction *insn;
@@ -176,20 +177,23 @@ insn[outer]
             l->label = n;
             pd->labels = l; }
 
-cstring[outer]
+string[outer]
     :   /* empty */
         {   $outer = NULL; }
-    | CSTRING cstring[inner]
-        {   $outer = malloc(sizeof *$outer);
-            $outer->len = strlen($CSTRING);
-            $outer->str = $CSTRING;
+    | STRING string[inner]
+        {   $outer = calloc(1, sizeof *$outer);
+            $outer->len = strlen($STRING) - 2; // drop quotes
+            // XXX support arbitrarily long strings
+            assert(("String within limits", $outer->len < sizeof $outer->str));
+            // skip quotes
+            strncpy($outer->str, $STRING + 1, $outer->len);
             $outer->right = $inner; }
 
 ascii
-    : ASCII cstring
-        {   $ascii = make_cstring(pd, $cstring, 0); }
-    | ASCIZ cstring
-        {   $ascii = make_cstring(pd, $cstring, 1); }
+    : ASCII string
+        {   $ascii = make_cstring(pd, $string, 0); }
+    | ASCIZ string
+        {   $ascii = make_cstring(pd, $string, 1); }
 
 data
     : WORD const_expr_list
@@ -287,8 +291,10 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
     fflush(stderr);
     fprintf(stderr, "%s\n", pd->lexstate.saveline);
-    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", locp->last_column, "^",
-            locp->last_column, s, locp->first_line, tenyr_get_text(pd->scanner));
+    fprintf(stderr, "%*s\n%*s at line %d column %d at `%s'\n",
+            locp->first_column + 1, "^", locp->first_column + 1, s,
+            locp->first_line, locp->first_column + 1,
+            tenyr_get_text(pd->scanner));
 
     return 0;
 }
@@ -382,7 +388,39 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
 static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
         *cs, int nul_term)
 {
-    return NULL;
+    struct instruction_list *result = NULL, **rp = &result;
+
+    (void)pd; // unused XXX
+
+    struct cstr *p = cs; //, q = p;
+    unsigned wpos = 0; // position in the word
+    while (p) {
+        unsigned spos = 0; // position in the string
+        int len = p->len;
+        while (len > 0) {
+            struct instruction_list *t = *rp;
+            for (; len > 0; wpos++, spos++, len--) {
+                if (wpos % 4 == 0) {
+                    struct instruction_list *temp = *rp;
+                    if (!*rp) *rp = calloc(1, sizeof **rp);
+                    t = *rp;
+                    t->next = temp; // backward ? TODO
+                    rp = &t->next;
+                    if (!t->insn) t->insn = calloc(1, sizeof *t->insn);
+                }
+
+                //struct instruction_list *t = *rp;
+                t->insn->u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
+            }
+            //len -= 4; // 4 bytes per word
+        }
+        //pos += q->len;
+        p = p->right;
+    }
+
+    (void)nul_term; // TODO NUL-terminate
+
+    return result;
 }
 
 static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn, const char *label)
