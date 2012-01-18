@@ -21,7 +21,7 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
 static struct instruction *make_insn_immediate(struct parse_data *pd, struct
         expr *lhs, struct const_expr *ce);
 static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
-        *cs, int nul_term);
+        *cs, int nul_sep);
 static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
 static struct instruction_list *make_data(struct parse_data *pd, struct
@@ -386,7 +386,7 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
 }
 
 static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
-        *cs, int nul_term)
+        *cs, int nul_sep)
 {
     struct instruction_list *result = NULL, **rp = &result;
 
@@ -397,28 +397,23 @@ static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
     while (p) {
         unsigned spos = 0; // position in the string
         int len = p->len;
-        while (len > 0) {
-            struct instruction_list *t = *rp;
-            for (; len > 0; wpos++, spos++, len--) {
-                if (wpos % 4 == 0) {
-                    struct instruction_list *temp = *rp;
-                    if (!*rp) *rp = calloc(1, sizeof **rp);
-                    t = *rp;
-                    t->next = temp; // backward ? TODO
-                    rp = &t->next;
-                    if (!t->insn) t->insn = calloc(1, sizeof *t->insn);
-                }
-
-                //struct instruction_list *t = *rp;
-                t->insn->u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
+        struct instruction_list *t = *rp;
+        for (; len > 0; wpos++, spos++, len--) {
+            if (wpos % 4 == 0) {
+                struct instruction_list *temp = *rp;
+                if (!*rp) *rp = calloc(1, sizeof **rp);
+                t = *rp;
+                t->next = temp;
+                rp = &t->next;
+                if (!t->insn) t->insn = calloc(1, sizeof *t->insn);
             }
-            //len -= 4; // 4 bytes per word
+
+            t->insn->u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
         }
-        //pos += q->len;
         p = p->right;
     }
 
-    (void)nul_term; // TODO NUL-terminate
+    (void)nul_sep; // TODO NUL-separate
 
     return result;
 }
