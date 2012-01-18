@@ -39,7 +39,7 @@ asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 
 # flex-generated code we can't control warnings of as easily
-lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
+parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
 $(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
 	$(FLEX) --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<

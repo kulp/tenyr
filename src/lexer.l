@@ -34,6 +34,10 @@ static int savestr(yyscan_t yyscanner);
 regname ([A-P])
 /* don't permit collision with regname */
 label   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
+string  (([^"]|\\\")+)
+hexnum  (-?"0"[xX][0-9a-fA-F]+)
+octnum  (-?"0"[0-7]+)
+decnum  (-?[0-9]+)
 
 %%
 
@@ -44,9 +48,11 @@ label   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
 
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
 {label}                 { savestr(yyscanner); return LABEL; }
+"\""{string}"\""        { savestr(yyscanner); return STRING; }
 ".word"                 { return WORD; }
+".ascii"                { return ASCII; }
 
-[][|&+*^>.:@()-]        { return yytext[0]; }
+[][|&+*^>.,:@()-]       { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "<="                    { return LTE;  }
@@ -59,9 +65,9 @@ label   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
 "<-"                    { return TOL;  }
 "->"                    { return TOR;  }
 
--?"0"[xX][0-9a-fA-F]+   { savestr(yyscanner); return INTEGER; }
--?"0"[0-7]+             { savestr(yyscanner); return INTEGER; }
--?[0-9]+                { savestr(yyscanner); return INTEGER; }
+{hexnum}                { savestr(yyscanner); return INTEGER; }
+{octnum}                { savestr(yyscanner); return INTEGER; }
+{decnum}                { savestr(yyscanner); return INTEGER; }
 
 [\t\f\v\r ]+            ;
 

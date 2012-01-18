@@ -49,9 +49,11 @@
      TOR = 267,
      INTEGER = 268,
      LABEL = 269,
-     REGISTER = 270,
-     ILLEGAL = 271,
-     WORD = 272
+     STRING = 270,
+     REGISTER = 271,
+     ILLEGAL = 272,
+     WORD = 273,
+     ASCII = 274
    };
 #endif
 
@@ -62,7 +64,7 @@ typedef union YYSTYPE
 {
 
 /* Line 2068 of yacc.c  */
-#line 73 "src/parser.y"
+#line 82 "src/parser.y"
 
     int32_t i;
     signed s;
@@ -74,6 +76,10 @@ typedef union YYSTYPE
         struct instruction *insn; // for '.'-resolving
         struct const_expr *left, *right;
     } *ce;
+    struct const_expr_list {
+        struct const_expr *ce;
+        struct const_expr_list *right;
+    } *cl;
     struct expr {
         int deref;
         int x;
@@ -84,6 +90,11 @@ typedef union YYSTYPE
         int mult;   ///< multiplier from addsub
         struct const_expr *ce;
     } *expr;
+    struct cstr {
+        int len;
+        char str[32];
+        struct cstr *right;
+    } *cstr;
     struct instruction *insn;
     struct instruction_list *program;
     char str[64]; // TODO document length
@@ -94,7 +105,7 @@ typedef union YYSTYPE
 
 
 /* Line 2068 of yacc.c  */
-#line 98 "src/gen/parser.h"
+#line 109 "src/gen/parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
