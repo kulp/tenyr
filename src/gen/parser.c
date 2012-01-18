@@ -2596,7 +2596,7 @@ static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
                 struct instruction_list *temp = *rp;
                 if (!*rp) *rp = calloc(1, sizeof **rp);
                 t = *rp;
-                t->next = temp; // backward ? TODO
+                t->next = temp;
                 rp = &t->next;
                 if (!t->insn) t->insn = calloc(1, sizeof *t->insn);
             }
@@ -2626,16 +2626,17 @@ static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn, 
 
 static struct instruction_list *make_data(struct parse_data *pd, struct const_expr_list *list)
 {
-    struct instruction_list *result = NULL;
+    struct instruction_list *result = NULL, **rp = &result;
 
     struct const_expr_list *p = list;
     while (p) {
-        struct instruction_list *q = calloc(1, sizeof *q);
+        if (!*rp) *rp = calloc(1, sizeof **rp);
+        struct instruction_list *q = *rp;
+        rp = &q->next;
+
         q->insn = calloc(1, sizeof *q->insn);
         add_relocation(pd, p->ce, 1, &q->insn->u.word, WORD_BITWIDTH);
         p->ce->insn = q->insn;
-        q->next = result;
-        result = q;
         p = p->right;
     }
 
