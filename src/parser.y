@@ -68,9 +68,9 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <cl> const_expr_list
 %type <expr> expr lhs
 %type <i> arrow immediate regname
-%type <insn> insn data insn_or_data
+%type <insn> insn
 %type <op> op
-%type <program> program ascii
+%type <program> program ascii data ascii_or_data
 %type <s> addsub
 %type <str> lref
 %type <cstr> cstring
@@ -119,26 +119,26 @@ top
     : program
         {   pd->top = $program; }
 
-insn_or_data
-    : insn
+ascii_or_data
+    : ascii
     | data
 
 program[outer]
     :   /* empty */
         {   $outer = NULL; }
-    | ascii program[inner]
-        {   struct instruction_list *p = $ascii;
+    | ascii_or_data program[inner]
+        {   struct instruction_list *p = $ascii_or_data;
             while (p->next) p = p->next;
             p->next = $inner;
 
             $outer = malloc(sizeof *$outer);
-            $outer->next = $ascii->next;
-            $outer->insn = $ascii->insn;
-            free($ascii); }
-    | insn_or_data program[inner]
-        {   $outer = malloc(sizeof *$outer);
+            $outer->next = $ascii_or_data->next;
+            $outer->insn = $ascii_or_data->insn;
+            free($ascii_or_data); }
+    | insn program[inner]
+        {   pd->top = $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
-            $outer->insn = $insn_or_data; }
+            $outer->insn = $insn; }
 
 insn[outer]
     : ILLEGAL
@@ -175,8 +175,7 @@ insn[outer]
 data
     : WORD const_expr_list
         {   $data = calloc(1, sizeof *$data);
-            add_relocation(pd, $const_expr, 1, &$data->u.word, WORD_BITWIDTH);
-            $const_expr->insn = $data; }
+            $data->program = $const_expr_list; }
 
 cstring[outer]
     :   /* empty */
@@ -196,10 +195,12 @@ ascii
 const_expr_list[outer]
     : const_expr[expr]
         {   $outer = calloc(1, sizeof $outer);
+            add_relocation(pd, $expr, 1, &$expr->u.word, WORD_BITWIDTH);
             $outer->right = NULL;
             $outer->ce = $expr; }
     | const_expr[expr] ',' const_expr_list[inner]
         {   $outer = calloc(1, sizeof $outer);
+            add_relocation(pd, $expr, 1, &$expr->u.word, WORD_BITWIDTH);
             $outer->right = $inner;
             $outer->ce = $expr; }
 
