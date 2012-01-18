@@ -21,6 +21,10 @@ static struct instruction *make_insn_immediate(struct parse_data *pd, struct
         expr *lhs, struct const_expr *ce);
 static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
         *cs, int nul_term);
+static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
+        const char *label);
+static struct instruction_list *make_data(struct parse_data *pd, struct
+        const_expr_list *list);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -119,9 +123,16 @@ top
     : program
         {   pd->top = $program; }
 
-ascii_or_data
+ascii_or_data[outer]
     : ascii
     | data
+    | LABEL ':' ascii_or_data[inner]
+        {   $outer = $inner;
+            struct label *n = add_label_to_insn(&yyloc, $inner->insn, $LABEL);
+            struct label_list *l = calloc(1, sizeof *l);
+            l->next  = pd->labels;
+            l->label = n;
+            pd->labels = l; }
 
 program[outer]
     :   /* empty */
@@ -136,7 +147,7 @@ program[outer]
             $outer->insn = $ascii_or_data->insn;
             free($ascii_or_data); }
     | insn program[inner]
-        {   pd->top = $outer = malloc(sizeof *$outer);
+        {   $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
             $outer->insn = $insn; }
 
@@ -157,25 +168,13 @@ insn[outer]
             }
             free($expr);
             free($lhs); }
-    | LABEL ':' insn_or_data[inner]
+    | LABEL ':' insn[inner]
         {   $outer = $inner;
-            struct label *n = calloc(1, sizeof *n);
-            n->column   = yylloc.first_column;
-            n->lineno   = yylloc.first_line;
-            n->resolved = 0;
-            n->next     = $outer->label;
-            strncpy(n->name, $LABEL, sizeof n->name);
-            $outer->label = n;
-
+            struct label *n = add_label_to_insn(&yyloc, $inner, $LABEL);
             struct label_list *l = calloc(1, sizeof *l);
             l->next  = pd->labels;
             l->label = n;
             pd->labels = l; }
-
-data
-    : WORD const_expr_list
-        {   $data = calloc(1, sizeof *$data);
-            $data->program = $const_expr_list; }
 
 cstring[outer]
     :   /* empty */
@@ -192,15 +191,17 @@ ascii
     | ASCIZ cstring
         {   $ascii = make_cstring(pd, $cstring, 1); }
 
+data
+    : WORD const_expr_list
+        {   $data = make_data(pd, $const_expr_list); }
+
 const_expr_list[outer]
     : const_expr[expr]
         {   $outer = calloc(1, sizeof $outer);
-            add_relocation(pd, $expr, 1, &$expr->u.word, WORD_BITWIDTH);
             $outer->right = NULL;
             $outer->ce = $expr; }
     | const_expr[expr] ',' const_expr_list[inner]
         {   $outer = calloc(1, sizeof $outer);
-            add_relocation(pd, $expr, 1, &$expr->u.word, WORD_BITWIDTH);
             $outer->right = $inner;
             $outer->ce = $expr; }
 
@@ -382,5 +383,36 @@ static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
         *cs, int nul_term)
 {
     return NULL;
+}
+
+static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn, const char *label)
+{
+    struct label *n = calloc(1, sizeof *n);
+    n->column   = locp->first_column;
+    n->lineno   = locp->first_line;
+    n->resolved = 0;
+    n->next     = insn->label;
+    strncpy(n->name, label, sizeof n->name);
+    insn->label = n;
+
+    return n;
+}
+
+static struct instruction_list *make_data(struct parse_data *pd, struct const_expr_list *list)
+{
+    struct instruction_list *result = NULL;
+
+    struct const_expr_list *p = list;
+    while (p) {
+        struct instruction_list *q = calloc(1, sizeof *q);
+        q->insn = calloc(1, sizeof *q->insn);
+        add_relocation(pd, p->ce, 1, &q->insn->u.word, WORD_BITWIDTH);
+        p->ce->insn = q->insn;
+        q->next = result;
+        result = q;
+        p = p->right;
+    }
+
+    return result;
 }
 
