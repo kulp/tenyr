@@ -51,7 +51,6 @@ decnum  (-?[0-9]+)
 "\""{string}"\""        { savestr(yyscanner); return STRING; }
 ".word"                 { return WORD; }
 ".ascii"                { return ASCII; }
-".asciz"                { return ASCIZ; }
 
 [][|&+*^>.,:@()-]       { return yytext[0]; }
 

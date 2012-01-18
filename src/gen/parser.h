@@ -53,8 +53,7 @@
      REGISTER = 271,
      ILLEGAL = 272,
      WORD = 273,
-     ASCII = 274,
-     ASCIZ = 275
+     ASCII = 274
    };
 #endif
 
@@ -65,7 +64,7 @@ typedef union YYSTYPE
 {
 
 /* Line 2068 of yacc.c  */
-#line 83 "src/parser.y"
+#line 82 "src/parser.y"
 
     int32_t i;
     signed s;
@@ -106,7 +105,7 @@ typedef union YYSTYPE
 
 
 /* Line 2068 of yacc.c  */
-#line 110 "src/gen/parser.h"
+#line 109 "src/gen/parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

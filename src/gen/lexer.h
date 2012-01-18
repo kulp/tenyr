@@ -335,7 +335,7 @@ extern int tenyr_lex \
 #undef YY_DECL
 #endif
 
-#line 80 "src/lexer.l"
+#line 79 "src/lexer.l"
 
 
 #line 342 "src/gen/lexer.h"

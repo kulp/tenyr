@@ -20,8 +20,7 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct instruction *make_insn_immediate(struct parse_data *pd, struct
         expr *lhs, struct const_expr *ce);
-static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
-        *cs, int nul_sep);
+static struct instruction_list *make_cstring(struct cstr *cs);
 static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
 static struct instruction_list *make_data(struct parse_data *pd, struct
@@ -67,7 +66,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL STRING
 %token <chr> REGISTER
-%token ILLEGAL WORD ASCII ASCIZ
+%token ILLEGAL WORD ASCII
 
 %type <ce> const_expr atom
 %type <cl> const_expr_list
@@ -191,9 +190,7 @@ string[outer]
 
 ascii
     : ASCII string
-        {   $ascii = make_cstring(pd, $string, 0); }
-    | ASCIZ string
-        {   $ascii = make_cstring(pd, $string, 1); }
+        {   $ascii = make_cstring($string); }
 
 data
     : WORD const_expr_list
@@ -385,12 +382,9 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
     return e;
 }
 
-static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
-        *cs, int nul_sep)
+static struct instruction_list *make_cstring(struct cstr *cs)
 {
     struct instruction_list *result = NULL, **rp = &result;
-
-    (void)pd; // unused XXX
 
     struct cstr *p = cs; //, q = p;
     unsigned wpos = 0; // position in the word
@@ -401,7 +395,7 @@ static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
         for (; len > 0; wpos++, spos++, len--) {
             if (wpos % 4 == 0) {
                 struct instruction_list *temp = *rp;
-                if (!*rp) *rp = calloc(1, sizeof **rp);
+                *rp = calloc(1, sizeof **rp);
                 t = *rp;
                 t->next = temp;
                 rp = &t->next;
@@ -412,8 +406,6 @@ static struct instruction_list *make_cstring(struct parse_data *pd, struct cstr
         }
         p = p->right;
     }
-
-    (void)nul_sep; // TODO NUL-separate
 
     return result;
 }
@@ -437,7 +429,7 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
 
     struct const_expr_list *p = list;
     while (p) {
-        if (!*rp) *rp = calloc(1, sizeof **rp);
+        *rp = calloc(1, sizeof **rp);
         struct instruction_list *q = *rp;
         rp = &q->next;
 
