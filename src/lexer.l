@@ -32,7 +32,8 @@ static int savestr(yyscan_t yyscanner);
 %option prefix="tenyr_"
 
 regname ([A-P])
-label   ([A-Z_][A-Z0-9_]{1,30})
+/* don't permit collision with regname */
+label   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
 
 %%
 
