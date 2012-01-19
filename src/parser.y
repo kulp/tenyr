@@ -1,4 +1,5 @@
 %{
+#include <assert.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -19,6 +20,11 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct instruction *make_insn_immediate(struct parse_data *pd, struct
         expr *lhs, struct const_expr *ce);
+static struct instruction_list *make_cstring(struct cstr *cs);
+static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
+        const char *label);
+static struct instruction_list *make_data(struct parse_data *pd, struct
+        const_expr_list *list);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -43,7 +49,7 @@ void ce_free(struct const_expr *ce, int recurse);
 //%destructor { expr_free($$); } <expr>
 //%destructor { ce_free($$, 1); } <ce>
 
-%start program
+%start top
 
 %left EQ NEQ
 %left LTE '>'
@@ -56,19 +62,22 @@ void ce_free(struct const_expr *ce, int recurse);
 
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*'
+%token <chr> ','
 %token <arrow> TOL TOR
-%token <str> INTEGER LABEL
+%token <str> INTEGER LABEL STRING
 %token <chr> REGISTER
-%token ILLEGAL WORD
+%token ILLEGAL WORD ASCII
 
 %type <ce> const_expr atom
+%type <cl> const_expr_list
 %type <expr> expr lhs
 %type <i> arrow immediate regname
-%type <insn> insn data insn_or_data
+%type <insn> insn
 %type <op> op
-%type <program> program
+%type <program> program ascii data ascii_or_data
 %type <s> addsub
 %type <str> lref
+%type <cstr> string
 
 %union {
     int32_t i;
@@ -81,6 +90,10 @@ void ce_free(struct const_expr *ce, int recurse);
         struct instruction *insn; // for '.'-resolving
         struct const_expr *left, *right;
     } *ce;
+    struct const_expr_list {
+        struct const_expr *ce;
+        struct const_expr_list *right;
+    } *cl;
     struct expr {
         int deref;
         int x;
@@ -91,9 +104,14 @@ void ce_free(struct const_expr *ce, int recurse);
         int mult;   ///< multiplier from addsub
         struct const_expr *ce;
     } *expr;
+    struct cstr {
+        int len;
+        char *str;
+        struct cstr *right;
+    } *cstr;
     struct instruction *insn;
     struct instruction_list *program;
-    char str[64]; // TODO document length
+    char str[256]; // TODO document length
     char chr;
     int op;
     int arrow;
@@ -101,19 +119,37 @@ void ce_free(struct const_expr *ce, int recurse);
 
 %%
 
-insn_or_data
-    : insn
+top
+    : program
+        {   pd->top = $program; }
+
+ascii_or_data[outer]
+    : ascii
     | data
+    | LABEL ':' ascii_or_data[inner]
+        {   $outer = $inner;
+            struct label *n = add_label_to_insn(&yyloc, $inner->insn, $LABEL);
+            struct label_list *l = calloc(1, sizeof *l);
+            l->next  = pd->labels;
+            l->label = n;
+            pd->labels = l; }
 
 program[outer]
-    : insn_or_data
-        {   pd->top = $outer = malloc(sizeof *$outer);
-            $outer->next = NULL;
-            $outer->insn = $insn_or_data; }
-    | insn_or_data program[inner]
-        {   pd->top = $outer = malloc(sizeof *$outer);
+    :   /* empty */
+        {   $outer = NULL; }
+    | ascii_or_data program[inner]
+        {   struct instruction_list *p = $ascii_or_data;
+            while (p->next) p = p->next;
+            p->next = $inner;
+
+            $outer = malloc(sizeof *$outer);
+            $outer->next = $ascii_or_data->next;
+            $outer->insn = $ascii_or_data->insn;
+            free($ascii_or_data); }
+    | insn program[inner]
+        {   $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
-            $outer->insn = $insn_or_data; }
+            $outer->insn = $insn; }
 
 insn[outer]
     : ILLEGAL
@@ -132,26 +168,42 @@ insn[outer]
             }
             free($expr);
             free($lhs); }
-    | LABEL ':' insn_or_data[inner]
+    | LABEL ':' insn[inner]
         {   $outer = $inner;
-            struct label *n = calloc(1, sizeof *n);
-            n->column   = yylloc.first_column;
-            n->lineno   = yylloc.first_line;
-            n->resolved = 0;
-            n->next     = $outer->label;
-            strncpy(n->name, $LABEL, sizeof n->name);
-            $outer->label = n;
-
+            struct label *n = add_label_to_insn(&yyloc, $inner, $LABEL);
             struct label_list *l = calloc(1, sizeof *l);
             l->next  = pd->labels;
             l->label = n;
             pd->labels = l; }
 
+string[outer]
+    :   /* empty */
+        {   $outer = NULL; }
+    | STRING string[inner]
+        {   $outer = calloc(1, sizeof *$outer);
+            $outer->len = strlen($STRING) - 2; // drop quotes
+            $outer->str = malloc($outer->len + 1);
+            // skip quotes
+            strncpy($outer->str, $STRING + 1, $outer->len);
+            $outer->right = $inner; }
+
+ascii
+    : ASCII string
+        {   $ascii = make_cstring($string); }
+
 data
-    : WORD const_expr
-        {   $data = calloc(1, sizeof *$data);
-            add_relocation(pd, $const_expr, 1, &$data->u.word, WORD_BITWIDTH);
-            $const_expr->insn = $data; }
+    : WORD const_expr_list
+        {   $data = make_data(pd, $const_expr_list); }
+
+const_expr_list[outer]
+    : const_expr[expr]
+        {   $outer = calloc(1, sizeof $outer);
+            $outer->right = NULL;
+            $outer->ce = $expr; }
+    | const_expr[expr] ',' const_expr_list[inner]
+        {   $outer = calloc(1, sizeof $outer);
+            $outer->right = $inner;
+            $outer->ce = $expr; }
 
 lhs[outer]
     : regname { ($outer = malloc(sizeof *$outer))->x = $regname; $outer->deref = 0; }
@@ -235,8 +287,10 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
 {
     fflush(stderr);
     fprintf(stderr, "%s\n", pd->lexstate.saveline);
-    fprintf(stderr, "%*s\n%*s on line %d at `%s'\n", locp->last_column, "^",
-            locp->last_column, s, locp->first_line, tenyr_get_text(pd->scanner));
+    fprintf(stderr, "%*s\n%*s at line %d column %d at `%s'\n",
+            locp->first_column + 1, "^", locp->first_column + 1, s,
+            locp->first_line, locp->first_column + 1,
+            tenyr_get_text(pd->scanner));
 
     return 0;
 }
@@ -325,5 +379,65 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
         e->i = 0; // there was no const_expr ; zero defined by language
 
     return e;
+}
+
+static struct instruction_list *make_cstring(struct cstr *cs)
+{
+    struct instruction_list *result = NULL, **rp = &result;
+
+    struct cstr *p = cs; //, q = p;
+    unsigned wpos = 0; // position in the word
+    struct instruction_list *t = *rp;
+    while (p) {
+        unsigned spos = 0; // position in the string
+        int len = p->len;
+        for (; len > 0; wpos++, spos++, len--) {
+            if (wpos % 4 == 0) {
+                struct instruction_list *temp = *rp;
+                *rp = calloc(1, sizeof **rp);
+                t = *rp;
+                t->next = temp;
+                rp = &t->next;
+                t->insn = calloc(1, sizeof *t->insn);
+            }
+
+            t->insn->u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
+        }
+        p = p->right;
+    }
+
+    return result;
+}
+
+static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn, const char *label)
+{
+    struct label *n = calloc(1, sizeof *n);
+    n->column   = locp->first_column;
+    n->lineno   = locp->first_line;
+    n->resolved = 0;
+    n->next     = insn->label;
+    strncpy(n->name, label, sizeof n->name);
+    insn->label = n;
+
+    return n;
+}
+
+static struct instruction_list *make_data(struct parse_data *pd, struct const_expr_list *list)
+{
+    struct instruction_list *result = NULL, **rp = &result;
+
+    struct const_expr_list *p = list;
+    while (p) {
+        *rp = calloc(1, sizeof **rp);
+        struct instruction_list *q = *rp;
+        rp = &q->next;
+
+        q->insn = calloc(1, sizeof *q->insn);
+        add_relocation(pd, p->ce, 1, &q->insn->u.word, WORD_BITWIDTH);
+        p->ce->insn = q->insn;
+        p = p->right;
+    }
+
+    return result;
 }
 

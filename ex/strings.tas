@@ -1,0 +1,7 @@
+.ascii "foo" " " "concatenated " "with " "bar"
+.ascii "foo" "AAAAA" "bar" "AAAAA"
+.word 0
+.ascii "hi"
+.ascii "hello, world!"
+.ascii "hello, world!plus al this stuff"
+.ascii "this is a longish string, which is definitely longer than 32 characters"
