@@ -33,6 +33,9 @@ tas tsim: asm.o obj.o
 tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
 
+.PHONY: parser.h lexer.h
+lexer.o: parser.h
+
 # don't complain about unused values that we might use in asserts
 asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
@@ -41,11 +44,14 @@ ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
-$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
+$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l $(GENDIR)
 	$(FLEX) --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<
 
-$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y lexer.h
+$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y lexer.h $(GENDIR)
 	$(BISON) --defines=$(GENDIR)/parser.h -o $(GENDIR)/parser.c $<
+
+$(GENDIR):
+	mkdir -p $@
 
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)

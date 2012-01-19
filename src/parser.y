@@ -106,12 +106,12 @@ void ce_free(struct const_expr *ce, int recurse);
     } *expr;
     struct cstr {
         int len;
-        char str[32];
+        char *str;
         struct cstr *right;
     } *cstr;
     struct instruction *insn;
     struct instruction_list *program;
-    char str[64]; // TODO document length
+    char str[256]; // TODO document length
     char chr;
     int op;
     int arrow;
@@ -182,8 +182,7 @@ string[outer]
     | STRING string[inner]
         {   $outer = calloc(1, sizeof *$outer);
             $outer->len = strlen($STRING) - 2; // drop quotes
-            // XXX support arbitrarily long strings
-            assert(("String within limits", $outer->len < sizeof $outer->str));
+            $outer->str = malloc($outer->len + 1);
             // skip quotes
             strncpy($outer->str, $STRING + 1, $outer->len);
             $outer->right = $inner; }
@@ -388,10 +387,10 @@ static struct instruction_list *make_cstring(struct cstr *cs)
 
     struct cstr *p = cs; //, q = p;
     unsigned wpos = 0; // position in the word
+    struct instruction_list *t = *rp;
     while (p) {
         unsigned spos = 0; // position in the string
         int len = p->len;
-        struct instruction_list *t = *rp;
         for (; len > 0; wpos++, spos++, len--) {
             if (wpos % 4 == 0) {
                 struct instruction_list *temp = *rp;
@@ -399,7 +398,7 @@ static struct instruction_list *make_cstring(struct cstr *cs)
                 t = *rp;
                 t->next = temp;
                 rp = &t->next;
-                if (!t->insn) t->insn = calloc(1, sizeof *t->insn);
+                t->insn = calloc(1, sizeof *t->insn);
             }
 
             t->insn->u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
