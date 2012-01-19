@@ -33,7 +33,6 @@ tas tsim: asm.o obj.o
 tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
 
-.PHONY: parser.h lexer.h
 lexer.o: parser.h
 
 # don't complain about unused values that we might use in asserts
