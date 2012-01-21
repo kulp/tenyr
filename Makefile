@@ -28,7 +28,7 @@ DEVICES = ram sparseram debugwrap
 DEVOBJS = $(DEVICES:%=%.o)
 
 all: tas tsim
-tas: parser.o lexer.o
+tas: $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas tsim: asm.o obj.o
 tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
@@ -41,12 +41,15 @@ asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 
 # flex-generated code we can't control warnings of as easily
-parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
+$(GENDIR)/parser.o $(GENDIR)/lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
-$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l $(GENDIR)
+lexer.h parser.h: $(GENDIR)
+tas.o: $(GENDIR)/parser.h
+
+$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
 	$(FLEX) --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<
 
-$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y lexer.h $(GENDIR)
+$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y lexer.h
 	$(BISON) --defines=$(GENDIR)/parser.h -o $(GENDIR)/parser.c $<
 
 $(GENDIR):
@@ -63,7 +66,7 @@ endif
 	rm -f $@.$$$$
 
 clean:
-	$(RM) tas tsim *.o *.d
+	$(RM) tas tsim *.o *.d $(GENDIR)/*.o
 
 clobber: clean
 	$(RM) $(GENDIR)/{parser,lexer}.[ch]
