@@ -1,15 +1,20 @@
-#ifndef LIMIT
-#define LIMIT 100
+#ifndef ARGUMENT
+#define ARGUMENT 100
 #endif
-#
-#define jeq(Cond,Label) p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
-#define jmp(Label) p <- p + @Label - .
 
-    b <- LIMIT          // b = upper limit (N)
+#define goto(Label)         p <- p + @Label - .
+#define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
+#define jnz(Cond,Label)     p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
+#define jnzrel(Cond,Label)  n <- @Label - . - 3 ; n <- Cond & n ; p <- p + n + 1
+#define push(Reg)           Reg -> [o] ; o <- o - 1
+#define pop(Reg)            o <- o + 1 ; Reg <- [o]
+#define ret                 pop(p)
+
+    b <- ARGUMENT       // b = upper limit (N)
     d <- 1              // d = one
     c <- b >> d         // c = (N/2)
     i <- 2              // i = outer loop control
-    o <- 0x1000         // base of array
+    o <- p + @array - . // base of array
     j <- 2              // j = inner index, setup index
 
     a -> [o + 0]        // 0 is not prime
@@ -18,26 +23,31 @@ init:
     d -> [o + j]        // write truth to table cell
     j <- j + 1          // increment table index
     f <- j <= b         // exit loop when i > N
-    jeq(f,init)
+    jnzrel(f,init)
 outer:
     f <- i > c          // exit loop when i > N/2
-    jeq(f,done)
+    jnzrel(f,done)
     g <- [o + i]        // load compositeness
     f <- g == a         // check recorded compositeness
-    jeq(f,bottom)
+    jnzrel(f,bottom)    // branch if composite
     k <- 2              // set up initial multiplier
 inner:
     j <- i * k          // compute j
     k <- k + 1          // increment multiplier
     f <- j > b          // compare j to N
-    jeq(f,bottom)
+    jnzrel(f,bottom)    // branch if j > N
     a -> [o + j]        // mark as composite
-    jmp(inner)
+    goto(inner)         // loop
 
 bottom:
     i <- i + 1          // check next candidate
-    jmp(outer)
+    goto(outer)         // loop
 
 done:
     illegal
+
+    .word 0,0,0,0,0,0,0
+    .word 0,0,0,0,0,0   // align array to 0x1030
+array:
+    .word 0
 

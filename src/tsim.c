@@ -11,6 +11,8 @@
 #include "asm.h"
 #include "device.h"
 #include "sim.h"
+// for RAM_BASE
+#include "devices/ram.h"
 
 #define RECIPES(_) \
     _(abort   , "call abort() when an illegal instruction is simulated") \
@@ -123,7 +125,7 @@ static int usage(const char *me)
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -s, --start=N         start execution at word address N\n"
-           "  -f, --format=F        select input format ('binary' or 'text')\n"
+           "  -f, --format=F        select input format (binary, text, obj)\n"
            "  -n, --scratch         don't run default recipes\n"
            "  -r, --recipe=R        run recipe R (see list below)\n"
            "  -v, --verbose         increase verbosity of output\n"
@@ -310,7 +312,7 @@ int main(int argc, char *argv[])
         .dispatch_op = dispatch_op,
     }, *s = &_s;
 
-    int load_address = 0, start_address = 0;
+    int load_address = RAM_BASE, start_address = RAM_BASE;
 
     const struct format *f = &formats[0];
 
