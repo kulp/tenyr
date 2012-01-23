@@ -1,0 +1,8 @@
+_start:
+	b <- 1 << 5
+	c <- p + @_word - .
+	[b] -> [c]
+	[b] <- [c]
+	illegal
+_word:
+	.ascii "A"
