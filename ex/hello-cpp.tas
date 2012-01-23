@@ -7,12 +7,12 @@
 #define ret                 pop(p)
 
 _start:
-	b <- 1 << 5         // serial device is at 0x20
+    b <- 1 << 5         // serial device is at 0x20
     i <- p + @hi - .    // string starts at @hi
     g <- 0xff           // mask
     h <- 8              // shift amount
 outer:
-	c <- [i]            // load word from string
+    c <- [i]            // load word from string
     i <- i + 1          // increment index for next time
     d <- c == a         // if it is zero, we are done
     jnzrel(d,done)
@@ -21,11 +21,11 @@ inner:
     c <- c >> h         // shift down next character
     d <- e == a         // compare 
     jnzrel(d,outer)     // skip to next word if zero
-	[b] <- e            // otherwise, output character
+    [b] <- e            // otherwise, output character
     goto(inner)         // and continue with same word
 done:
-	illegal
+    illegal
 hi:
-	.ascii "hello, world"
+    .ascii "hello, world"
     .word 0             // mark end of string with a zero
 
