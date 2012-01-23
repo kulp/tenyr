@@ -4,6 +4,9 @@ CFLAGS  += -g
 LDFLAGS += -g
 CFLAGS  += -Wall -Wextra $(PEDANTIC)
 
+# Optimised build
+#CFLAGS  += -DNDEBUG -O3
+
 # 32-bit compilation
 #CFLAGS  += -m32
 #LDFLAGS += -m32
@@ -24,7 +27,7 @@ DEFINES += BUILD_NAME='$(BUILD_NAME)'
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
-DEVICES = ram sparseram debugwrap
+DEVICES = ram sparseram debugwrap serial
 DEVOBJS = $(DEVICES:%=%.o)
 
 all: tas tsim
