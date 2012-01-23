@@ -1,10 +1,5 @@
 #define goto(Label)         p <- p + @Label - .
-#define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
-#define jnz(Cond,Label)     p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
 #define jnzrel(Cond,Label)  n <- @Label - . - 3 ; n <- Cond & n ; p <- p + n + 1
-#define push(Reg)           Reg -> [o] ; o <- o - 1
-#define pop(Reg)            o <- o + 1 ; Reg <- [o]
-#define ret                 pop(p)
 
 _start:
     b <- 1 << 5         // serial device is at 0x20
