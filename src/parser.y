@@ -264,6 +264,8 @@ const_expr[outer]
         {   $outer = make_const_expr(OP2, '-', $left, $right); }
     | const_expr[left] '*' const_expr[right]
         {   $outer = make_const_expr(OP2, '*', $left, $right); }
+    | const_expr[left] LSH const_expr[right]
+        {   $outer = make_const_expr(OP2, LSH, $left, $right); }
     | '(' const_expr[inner] ')'
         {   $outer = $inner; }
 
