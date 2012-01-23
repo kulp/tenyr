@@ -38,7 +38,7 @@ static int usage(const char *me)
     printf("Usage:\n"
            "  %s [ OPTIONS ] assembly-or-image-file [ assembly-or-image-file ... ] \n"
            "  -d, --disassemble     disassemble (default is to assemble)\n"
-           "  -f, --format=F        select output format ('binary' or 'text')\n"
+           "  -f, --format=F        select output format (binary, text, obj)\n"
            "  -o, --output=X        write output to filename X\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"

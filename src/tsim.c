@@ -123,7 +123,7 @@ static int usage(const char *me)
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -s, --start=N         start execution at word address N\n"
-           "  -f, --format=F        select input format ('binary' or 'text')\n"
+           "  -f, --format=F        select input format (binary, text, obj)\n"
            "  -n, --scratch         don't run default recipes\n"
            "  -r, --recipe=R        run recipe R (see list below)\n"
            "  -v, --verbose         increase verbosity of output\n"
