@@ -18,10 +18,12 @@
     _(abort   , "call abort() when an illegal instruction is simulated") \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
+    _(serial  , "enable simple serial device and connect to stdio") \
     _(nowrap  , "stop when PC wraps around 24-bit boundary")
 
 #define DEFAULT_RECIPES(_) \
     _(sparse) \
+    _(serial) \
     _(nowrap)
 
 #define Space(X) STR(X) " "
@@ -60,6 +62,14 @@ static int recipe_sparse(struct state *s)
     int index = next_device(s);
     s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
     return sparseram_add_device(&s->machine.devices[index]);
+}
+
+static int recipe_serial(struct state *s)
+{
+    int serial_add_device(struct device **device);
+    int index = next_device(s);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    return serial_add_device(&s->machine.devices[index]);
 }
 
 static int recipe_nowrap(struct state *s)
@@ -151,7 +161,7 @@ static int compare_devices_by_base(const void *_a, const void *_b)
     assert(("LHS of device comparison is not NULL", *a != NULL));
     assert(("RHS of device comparison is not NULL", *b != NULL));
 
-    return (*b)->bounds[0] - (*a)->bounds[0];
+    return (*a)->bounds[0] - (*b)->bounds[0];
 }
 
 static int devices_setup(struct state *s)
