@@ -76,9 +76,10 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
                 !ce_eval(pd, top_insn, ce->right, &right))
             {
                 switch (ce->op) {
-                    case '+': *result = left + right; return 0;
-                    case '-': *result = left - right; return 0;
-                    case '*': *result = left * right; return 0;
+                    case '+': *result = left +  right; return 0;
+                    case '-': *result = left -  right; return 0;
+                    case '*': *result = left *  right; return 0;
+                    case LSH: *result = left << right; return 0;
                     default: abort(); // TODO handle more gracefully
                 }
             }
