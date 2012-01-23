@@ -1,5 +1,6 @@
 tas
 tsim
+testffi
 *.dSYM/
 .*.sw?
 .sw?
