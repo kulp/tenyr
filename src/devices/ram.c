@@ -5,9 +5,12 @@
 
 #include "common.h"
 #include "device.h"
+#include "ram.h"
 
 struct ram_state {
-    int32_t mem[1 << 24];
+    // for now, allocate the whole memory space even if we don't use all of it,
+    // to simplify indexing
+    int32_t mem[RAM_END + 1];
 };
 
 static int ram_init(struct state *s, void *cookie, ...)
@@ -44,7 +47,7 @@ static int ram_op(struct state *s, void *cookie, int op, uint32_t addr, uint32_t
 int ram_add_device(struct device **device)
 {
     **device = (struct device){
-        .bounds = { 0, (1 << 24) - 1 },
+        .bounds = { RAM_BASE, RAM_END },
         .op = ram_op,
         .init = ram_init,
         .fini = ram_fini,

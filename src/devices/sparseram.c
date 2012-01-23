@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "device.h"
+#include "ram.h"
 
 // Allocate space by roughly a page-size (although since there is overhead the
 // fact that it is nearly a page size is basically useless since it does not
@@ -116,7 +117,7 @@ static int sparseram_op(struct state *s, void *cookie, int op, uint32_t addr,
 int sparseram_add_device(struct device **device)
 {
     **device = (struct device){
-        .bounds = { 0, (1 << 24) - 1 },
+        .bounds = { RAM_BASE, RAM_END },
         .op = sparseram_op,
         .init = sparseram_init,
         .fini = sparseram_fini,

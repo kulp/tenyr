@@ -11,6 +11,8 @@
 #include "asm.h"
 #include "device.h"
 #include "sim.h"
+// for RAM_BASE
+#include "devices/ram.h"
 
 #define RECIPES(_) \
     _(abort   , "call abort() when an illegal instruction is simulated") \
@@ -310,7 +312,7 @@ int main(int argc, char *argv[])
         .dispatch_op = dispatch_op,
     }, *s = &_s;
 
-    int load_address = 0, start_address = 0;
+    int load_address = RAM_BASE, start_address = RAM_BASE;
 
     const struct format *f = &formats[0];
 
