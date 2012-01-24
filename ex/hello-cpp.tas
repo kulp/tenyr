@@ -1,24 +1,31 @@
 #include "common-tas.h"
+#define SERIAL [a + (1 << 5)] // `a +' works around parser flaw
 
 _start:
-    i <- p + @hi - .    // string starts at @hi
-    g <- 0xff           // mask
-    h <- 8              // shift amount
-outer:
-    c <- [i]            // load word from string
-    d <- c == a         // if it is zero, we are done
-    jnzrel(d,done)
-    i <- i + 1          // increment index for next time
-inner:
-    e <- c & g          // mask off top bits
-    d <- e == a         // compare 
-    jnzrel(d,outer)     // skip to next word if zero
-    c <- c >> h         // shift down next character
-    e -> [a + 1 << 5]   // output character to serial device
-    goto(inner)         // and continue with same word
-done:
+    o <- -1             // set up stack pointer
+    c <- rel(hi)        // string starts at @hi
+    call(puts)
     illegal
+
 hi:
     .ascii "hello, world"
     .word 0             // mark end of string with a zero
+
+puts:
+    g <- 0xff           // mask
+    h <- 8              // shift amount
+_outer:
+    b <- [c]            // load word from string
+    d <- b == a         // if it is zero, we are done
+    jnzrel(d,_done)
+    c <- c + 1          // increment index for next time
+_inner:
+    e <- b & g          // mask off top bits
+    d <- e == a         // compare 
+    jnzrel(d,_outer)    // skip to next word if zero
+    b <- b >> h         // shift down next character
+    e -> SERIAL         // output character to serial device
+    goto(_inner)        // and continue with same word
+_done:
+    ret
 

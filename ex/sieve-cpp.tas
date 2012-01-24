@@ -8,7 +8,7 @@
     d <- 1              // d = one
     c <- b >> d         // c = (N/2)
     i <- 2              // i = outer loop control
-    o <- p + @array - . // base of array
+    o <- rel(array)     // base of array
     j <- 2              // j = inner index, setup index
 
     a -> [o + 0]        // 0 is not prime
