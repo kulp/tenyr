@@ -29,13 +29,10 @@
 //      11 : [Z] <- [J]
 //
 //  a <- [b * c + 4]
-//  [p + 3] -> a
-//  [p + c] -> p (jump from table)
+//  a <- [p + 3]
+//  p <- [p + c] (jump from table)
 //  c <- c <> a (nonzero)
 //  d <- c > d (no status flags, just bool result)
-//  ri <- ri + c
-//  rv <- ri % 2
-//  d >> e -> e
 //  e <- d >> e
 //  p <- p + -4 (jump backward)
 // ops
