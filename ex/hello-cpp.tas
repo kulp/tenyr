@@ -1,5 +1,4 @@
 #include "common-tas.h"
-#define SERIAL [a + (1 << 5)] // `a +' works around parser flaw
 
 _start:
     o <- -1             // set up stack pointer
@@ -11,21 +10,4 @@ hi:
     .ascii "hello, world"
     .word 0             // mark end of string with a zero
 
-puts:
-    g <- 0xff           // mask
-    h <- 8              // shift amount
-_outer:
-    b <- [c]            // load word from string
-    d <- b == a         // if it is zero, we are done
-    jnzrel(d,_done)
-    c <- c + 1          // increment index for next time
-_inner:
-    e <- b & g          // mask off top bits
-    d <- e == a         // compare 
-    jnzrel(d,_outer)    // skip to next word if zero
-    b <- b >> h         // shift down next character
-    e -> SERIAL         // output character to serial device
-    goto(_inner)        // and continue with same word
-_done:
-    ret
-
+#include "puts-cpp.tas"

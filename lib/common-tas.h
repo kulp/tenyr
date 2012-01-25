@@ -1,0 +1,14 @@
+#ifndef COMMON_TAS_
+#define COMMON_TAS_
+
+#define rel(Label)          p + @Label - .
+#define goto(Label)         p <- rel(Label)
+#define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
+#define jnz(Cond,Label)     p <- [p + Cond + 2] ; .word @Label ; .word . + 1 ;
+#define jnzrel(Cond,Label)  n <- @Label - . - 3 ; n <- Cond & n ; p <- p + n + 1
+#define push(Reg)           Reg -> [o] ; o <- o - 1
+#define pop(Reg)            o <- o + 1 ; Reg <- [o]
+#define ret                 pop(p)
+
+#endif
+
