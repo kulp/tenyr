@@ -2,7 +2,7 @@
 #define ARGUMENT 100
 #endif
 
-#include "common-tas.h"
+#include "common.th"
 
     b <- ARGUMENT       // b = upper limit (N)
     d <- 1              // d = one

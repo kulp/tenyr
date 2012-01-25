@@ -1,5 +1,7 @@
-#include "common-tas.h"
-#include "serial.h"
+#include "common.th"
+#include "serial.th"
+
+// argument in C
 
 puts:
     g <- 0xff           // mask

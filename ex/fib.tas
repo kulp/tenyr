@@ -8,7 +8,7 @@
 #define ARGUMENT 10
 #endif
 
-#include "common-tas.h"
+#include "common.th"
 
 _start:
     c <- ARGUMENT       // argument

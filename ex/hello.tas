@@ -1,4 +1,4 @@
-#include "common-tas.h"
+#include "common.th"
 
 _start:
     o <- -1             // set up stack pointer
@@ -10,4 +10,4 @@ hi:
     .ascii "hello, world"
     .word 0             // mark end of string with a zero
 
-#include "puts-cpp.tas"
+#include "puts.tas"
