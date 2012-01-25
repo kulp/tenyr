@@ -265,24 +265,24 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-		if (!strcmp(argv[i], "-")) {
-			in = stdin;
-		} else {
-			in = fopen(argv[i], "r");
-			if (!in) {
-				char buf[128];
-				snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
-				perror(buf);
-				return EXIT_FAILURE;
-			}
-		}
+        if (!strcmp(argv[i], "-")) {
+            in = stdin;
+        } else {
+            in = fopen(argv[i], "r");
+            if (!in) {
+                char buf[128];
+                snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
+                perror(buf);
+                return EXIT_FAILURE;
+            }
+        }
 
         if (disassemble)
             do_disassembly(in, out, f);
         else
             do_assembly(in, out, f);
 
-		fclose(in);
+        fclose(in);
     }
 
     fclose(out);
