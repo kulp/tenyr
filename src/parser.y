@@ -160,8 +160,7 @@ insn[outer]
                 if ($arrow == 0) {
                     $outer = make_insn_immediate(pd, $lhs, $expr->ce);
                 } else {
-                    tenyr_error(&yylloc, pd, "Arrow pointing wrong way");
-                    YYERROR;
+                    $outer = make_insn_general(pd, $lhs, $arrow, $expr);
                 }
             } else {
                 $outer = make_insn_general(pd, $lhs, $arrow, $expr);
@@ -220,7 +219,7 @@ expr[outer]
     | regname[x] op regname[y] addsub const_expr
         { $outer = make_expr($x, $op, $y, $addsub, $const_expr); }
     | const_expr
-        { $outer = make_expr(0, OP_RESERVED, 0, 0, $const_expr); }
+        { $outer = make_expr(0, OP_RESERVED, 0, 1, $const_expr); }
     | '[' expr[inner] ']' /* TODO lookahead to prevent nesting of [ */
         { $outer = $inner; $outer->deref = 1; }
 
@@ -302,19 +301,26 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
 {
     struct instruction *insn = calloc(1, sizeof *insn);
 
-    insn->u._0xxx.t  = 0;
-    insn->u._0xxx.z  = lhs->x;
-    insn->u._0xxx.dd = (lhs->deref << 1) | (expr->deref);
-    insn->u._0xxx.x  = expr->x;
-    insn->u._0xxx.y  = expr->y;
-    insn->u._0xxx.r  = arrow;
-    insn->u._0xxx.op = expr->op;
+    insn->u._0xxx.t   = 0;
+    insn->u._0xxx.z   = lhs->x;
+    insn->u._0xxx.dd  = (lhs->deref << 1) | (expr->deref);
+    insn->u._0xxx.x   = expr->x;
+    insn->u._0xxx.y   = expr->y;
+    insn->u._0xxx.r   = arrow;
+    insn->u._0xxx.op  = expr->op;
+    insn->u._0xxx.imm = expr->i;
+
+    // b -> [0x333]
+    if (expr->op == OP_RESERVED) {
+        insn->u._0xxx.op = OP_BITWISE_OR;
+        insn->u._0xxx.x  = 0;
+    }
+
     if (expr->ce) {
         add_relocation(pd, expr->ce, expr->mult, &insn->u.word,
                 SMALL_IMMEDIATE_BITWIDTH);
         expr->ce->insn = insn;
     }
-    insn->u._0xxx.imm = expr->i;
 
     return insn;
 }
