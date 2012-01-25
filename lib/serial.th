@@ -1,2 +1,2 @@
-#define SERIAL [a + (1 << 5)] // `a +' works around parser flaw
+#define SERIAL [(1 << 5)]
 #define emit(Var) Var -> SERIAL
