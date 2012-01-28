@@ -358,9 +358,9 @@ int main(int argc, char *argv[])
     }
 
     if (optind >= argc) {
-        fatal("No input files specified on the command line", DISPLAY_USAGE);
+        fatal(DISPLAY_USAGE, "No input files specified on the command line");
     } else if (argc - optind > 1) {
-        fatal("More than one input file specified on the command line", DISPLAY_USAGE);
+        fatal(DISPLAY_USAGE, "More than one input file specified on the command line");
     }
 
     FILE *in = stdin;

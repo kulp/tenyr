@@ -34,7 +34,7 @@ struct parse_data {
 int tenyr_parse(struct parse_data *);
 
 struct const_expr {
-    enum { OP2, LAB, IMM, ICI } type; // TODO namespace
+    enum const_expr_type { OP2, LAB, IMM, ICI } type; // TODO namespace
     int32_t i;
     char labelname[LABEL_LEN];
     int op;

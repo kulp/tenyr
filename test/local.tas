@@ -1,0 +1,7 @@
+	.word 2,2,3,4,5,6,6,6
+.Lfoo:
+foo:
+	a <- b + c - @foo + 1
+	a <- b * c - (@foo + 1)
+bar:
+	a <- b + c - (2 * @.Lfoo + 4)

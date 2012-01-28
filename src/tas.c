@@ -87,12 +87,12 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
                     case '-': *result = left -  right; return 0;
                     case '*': *result = left *  right; return 0;
                     case LSH: *result = left << right; return 0;
-                    default: fatal("Unrecognised const_expr op", 0);
+                    default: fatal(0, "Unrecognised const_expr op '%c'", ce->op);
                 }
             }
             return 1;
         default:
-            fatal("Unrecognised const_expr type", 0);
+            fatal(0, "Unrecognised const_expr type");
             return 1;
     }
 }
@@ -112,7 +112,7 @@ static void ce_free(struct const_expr *ce, int recurse)
                 ce_free(ce->right, recurse);
                 break;
             default:
-                fatal("Unrecognised const_expr type", 0);
+                fatal(0, "Unrecognised const_expr type %d", ce->type);
         }
 
     free(ce);
@@ -134,7 +134,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
             *r->dest |= result & ~mask;
             ce_free(ce, 1);
         } else {
-            fatal("Error while fixing up deferred expressions", 0);
+            fatal(0, "Error while fixing up deferred expressions");
             // TODO print out information about the deferred expression
         }
 
@@ -213,7 +213,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         mark_globals(pd.labels, pd.globals);
         // TODO make check_labels() more user-friendly
         if (check_labels(pd.labels))
-            fatal("Error while processing labels : check for duplicate labels", 0);
+            fatal(0, "Error while processing labels : check for duplicate labels");
 
         if (!fixup_deferred_exprs(&pd)) {
             void *ud;
@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
     }
 
     if (optind >= argc) {
-        fatal("No input files specified on the command line", DISPLAY_USAGE);
+        fatal(DISPLAY_USAGE, "No input files specified on the command line");
     }
 
     for (int i = optind; i < argc; i++) {

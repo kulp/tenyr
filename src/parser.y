@@ -13,8 +13,8 @@
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width);
-static struct const_expr *make_const_expr(int type, int op, struct const_expr
-        *left, struct const_expr *right);
+static struct const_expr *make_const_expr(enum const_expr_type type, int op,
+        struct const_expr *left, struct const_expr *right);
 static struct expr *make_expr(int x, int op, int y, int mult, struct
         const_expr *defexpr);
 static struct instruction *make_insn_general(struct parse_data *pd, struct
@@ -65,20 +65,21 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <chr> '+' '-' '*'
 %token <chr> ','
 %token <arrow> TOL TOR
-%token <str> INTEGER LABEL STRING
+%token <str> INTEGER LABEL LOCAL STRING
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII GLOBAL
 
-%type <ce> const_expr atom
-%type <cl> const_expr_list
+%type <ce> const_expr reloc_expr atom eref
+%type <chr> reloc_op
+%type <cl> reloc_expr_list
 %type <expr> expr lhs
 %type <i> arrow immediate regname
 %type <insn> insn
 %type <op> op
 %type <program> program ascii data ascii_or_data
 %type <s> addsub
-%type <str> lref
+%type <str> lref label
 %type <cstr> string
 %type <dctv> directive
 
@@ -107,9 +108,9 @@ top
 ascii_or_data[outer]
     : ascii
     | data
-    | LABEL ':' ascii_or_data[inner]
+    | label ':' ascii_or_data[inner]
         {   $outer = $inner;
-            struct label *n = add_label_to_insn(&yyloc, $inner->insn, $LABEL);
+            struct label *n = add_label_to_insn(&yyloc, $inner->insn, $label);
             struct label_list *l = calloc(1, sizeof *l);
             l->next  = pd->labels;
             l->label = n;
@@ -151,9 +152,9 @@ insn[outer]
             }
             free($expr);
             free($lhs); }
-    | LABEL ':' insn[inner]
+    | label ':' insn[inner]
         {   $outer = $inner;
-            struct label *n = add_label_to_insn(&yyloc, $inner, $LABEL);
+            struct label *n = add_label_to_insn(&yyloc, $inner, $label);
             struct label_list *l = calloc(1, sizeof *l);
             l->next  = pd->labels;
             l->label = n;
@@ -175,19 +176,19 @@ ascii
         {   $ascii = make_string($string); }
 
 data
-    : WORD const_expr_list
-        {   $data = make_data(pd, $const_expr_list); }
+    : WORD reloc_expr_list
+        {   $data = make_data(pd, $reloc_expr_list); }
 
 directive
     : GLOBAL LABEL
         {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $LABEL); }
 
-const_expr_list[outer]
-    : const_expr[expr]
+reloc_expr_list[outer]
+    : reloc_expr[expr]
         {   $outer = calloc(1, sizeof $outer);
             $outer->right = NULL;
             $outer->ce = $expr; }
-    | const_expr[expr] ',' const_expr_list[inner]
+    | reloc_expr[expr] ',' reloc_expr_list[inner]
         {   $outer = calloc(1, sizeof $outer);
             $outer->right = $inner;
             $outer->ce = $expr; }
@@ -202,12 +203,12 @@ expr[outer]
         { $outer = make_expr($x, OP_BITWISE_OR, 0, 0, NULL); }
     | regname[x] op regname[y]
         { $outer = make_expr($x, $op, $y, 0, NULL); }
-    | regname[x] addsub const_expr
-        { $outer = make_expr($x, OP_BITWISE_OR, 0, $addsub, $const_expr); }
-    | regname[x] op regname[y] addsub const_expr
-        { $outer = make_expr($x, $op, $y, $addsub, $const_expr); }
-    | const_expr
-        { $outer = make_expr(0, OP_RESERVED, 0, 1, $const_expr); }
+    | regname[x] addsub reloc_expr
+        { $outer = make_expr($x, OP_BITWISE_OR, 0, $addsub, $reloc_expr); }
+    | regname[x] op regname[y] addsub reloc_expr
+        { $outer = make_expr($x, $op, $y, $addsub, $reloc_expr); }
+    | reloc_expr
+        { $outer = make_expr(0, OP_RESERVED, 0, 1, $reloc_expr); }
     | '[' expr[inner] ']' /* TODO lookahead to prevent nesting of [ */
         { $outer = $inner; $outer->deref = 1; }
 
@@ -242,9 +243,22 @@ arrow
     : TOL { $arrow = 0; }
     | TOR { $arrow = 1; }
 
+reloc_op
+    : '+' { $reloc_op = '+'; }
+    | '-' { $reloc_op = '-'; }
+
+reloc_expr[outer]
+    : const_expr
+    | eref
+    | eref reloc_op const_expr
+        {   $outer = make_const_expr(OP2, $reloc_op, $eref, $const_expr); }
+    | const_expr reloc_op eref
+        {   $outer = make_const_expr(OP2, $reloc_op, $const_expr, $eref); }
+    | '(' reloc_expr[inner] ')'
+        {   $outer = $inner; }
+
 const_expr[outer]
     : atom
-        {   $outer = $atom; }
     | const_expr[left] '+' const_expr[right]
         {   $outer = make_const_expr(OP2, '+', $left, $right); }
     | const_expr[left] '-' const_expr[right]
@@ -266,9 +280,19 @@ atom
     | '.'
         {   $atom = make_const_expr(ICI, 0, NULL, NULL); }
 
-lref
+eref
     : '@' LABEL
-        { strncpy($lref, $LABEL, sizeof $lref); $lref[sizeof $lref - 1] = 0; }
+        {   $eref = make_const_expr(LAB, 0, NULL, NULL);
+            strncpy($eref->labelname, $LABEL, sizeof $eref->labelname);
+            $eref->labelname[sizeof $eref->labelname - 1] = 0; }
+
+lref
+    : '@' LOCAL
+        { strncpy($lref, $LOCAL, sizeof $lref); $lref[sizeof $lref - 1] = 0; }
+
+label
+    : LABEL
+    | LOCAL
 
 %%
 
@@ -344,8 +368,8 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
     return ce;
 }
 
-static struct const_expr *make_const_expr(int type, int op, struct const_expr
-        *left, struct const_expr *right)
+static struct const_expr *make_const_expr(enum const_expr_type type, int op,
+        struct const_expr *left, struct const_expr *right)
 {
     struct const_expr *n = malloc(sizeof *n);
 

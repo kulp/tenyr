@@ -22,7 +22,10 @@
 
 enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
 extern jmp_buf errbuf;
-void fatal(const char *message, enum errcode code);
+#define fatal(Code,...) \
+    fatal_(Code,__FILE__,__LINE__,__VA_ARGS__)
+
+void fatal_(enum errcode code, const char *file, int line, const char *fmt, ...);
 
 #endif
 

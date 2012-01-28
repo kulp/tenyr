@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     }
 
     if (optind >= argc) {
-        fatal("No input files specified on the command line", DISPLAY_USAGE);
+        fatal(DISPLAY_USAGE, "No input files specified on the command line");
     }
 
     for (int i = optind; i < argc; i++) {
