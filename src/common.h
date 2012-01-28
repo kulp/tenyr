@@ -9,6 +9,10 @@
 
 #define PTR_MASK ~(-1 << 24)
 
+// TODO document fixed lengths or remove the limitations
+#define LABEL_LEN    32
+#define LINE_LEN    512
+
 #if _WIN32
 int _stricmp(const char *, const char *);
 #define strcasecmp _stricmp

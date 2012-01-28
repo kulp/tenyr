@@ -7,3 +7,5 @@ testffi
 *.o
 *.d
 Session.vim
+src/gen
+tags

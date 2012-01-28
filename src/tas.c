@@ -5,7 +5,6 @@
 #include <string.h>
 #include <strings.h>
 
-
 #include "ops.h"
 #include "parser.h"
 #include "parser_global.h"
@@ -47,16 +46,27 @@ static int usage(const char *me)
     return 0;
 }
 
-static int label_lookup(struct label_list *node, const char *name, uint32_t *result)
+static int label_find(struct label_list *list, const char *name, struct label **label)
 {
-    while (node) {
+    while (list) {
         // TODO strcasecmp ?
-        if (!strcasecmp(node->label->name, name)) {
-            *result = node->label->reladdr;
+        if (!strcasecmp(list->label->name, name)) {
+            *label = list->label;
             return 0;
         }
 
-        node = node->next;
+        list = list->next;
+    }
+
+    return 1;
+}
+
+static int label_lookup(struct label_list *list, const char *name, uint32_t *result)
+{
+    struct label *label = NULL;
+    if (!label_find(list, name, &label)) {
+        *result = label->reladdr;
+        return 0;
     }
 
     return 1;
@@ -140,6 +150,18 @@ static int fixup_relocations(struct parse_data *pd)
     return 0;
 }
 
+static int mark_globals(struct label_list *labels, struct global_list *globals)
+{
+    struct label *which;
+    while (globals) {
+        if (!label_find(labels, globals->name, &which))
+            which->global = 1;
+        globals = globals->next;
+    }
+
+    return 0;
+}
+
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
     struct parse_data pd = { .top = NULL };
@@ -172,6 +194,8 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             q = q->next;
         }
 
+        mark_globals(pd.labels, pd.globals);
+
         if (!fixup_relocations(&pd)) {
             q = p;
             void *ud;
@@ -190,12 +214,23 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
                 f->fini(out, &ud);
         }
 
-        struct label_list *l = pd.labels, *last = l;
-        while (l) {
-            l = l->next;
-            free(last->label);
-            free(last);
-            last = l;
+        {
+            struct label_list *l = pd.labels, *last = l;
+            while (l) {
+                l = l->next;
+                free(last->label);
+                free(last);
+                last = l;
+            }
+        }
+
+        {
+            struct global_list *g = pd.globals, *last = g;
+            while (g) {
+                g = g->next;
+                free(last);
+                last = g;
+            }
         }
     }
     tenyr_lex_destroy(pd.scanner);
