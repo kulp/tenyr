@@ -11,12 +11,12 @@
 #include "lexer.h"
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
-static struct const_expr *add_relocation(struct parse_data *pd, struct
+static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width);
 static struct const_expr *make_const_expr(int type, int op, struct const_expr
         *left, struct const_expr *right);
 static struct expr *make_expr(int x, int op, int y, int mult, struct
-        const_expr *reloc);
+        const_expr *defexpr);
 static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct instruction *make_insn_immediate(struct parse_data *pd, struct
@@ -305,7 +305,7 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
     }
 
     if (expr->ce) {
-        add_relocation(pd, expr->ce, expr->mult, &insn->u.word,
+        add_deferred_expr(pd, expr->ce, expr->mult, &insn->u.word,
                 SMALL_IMMEDIATE_BITWIDTH);
         expr->ce->insn = insn;
     }
@@ -320,7 +320,7 @@ static struct instruction *make_insn_immediate(struct parse_data *pd, struct
 
     insn->label = NULL;
     ce->insn = insn;
-    add_relocation(pd, ce, 1, &insn->u.word, LARGE_IMMEDIATE_BITWIDTH);
+    add_deferred_expr(pd, ce, 1, &insn->u.word, LARGE_IMMEDIATE_BITWIDTH);
     insn->u._10xx.t  = 2;
     insn->u._10xx.z  = lhs->x;
     insn->u._10xx.dd = lhs->deref << 1;
@@ -328,18 +328,18 @@ static struct instruction *make_insn_immediate(struct parse_data *pd, struct
     return insn;
 }
 
-static struct const_expr *add_relocation(struct parse_data *pd, struct
+static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width)
 {
-    struct relocation_list *n = malloc(sizeof *n);
+    struct deferred_expr *n = malloc(sizeof *n);
 
-    n->next  = pd->relocs;
+    n->next  = pd->defexprs;
     n->ce    = ce;
     n->dest  = dest;
     n->width = width;
     n->mult  = mult;
 
-    pd->relocs = n;
+    pd->defexprs = n;
 
     return ce;
 }
@@ -359,7 +359,7 @@ static struct const_expr *make_const_expr(int type, int op, struct const_expr
 }
 
 static struct expr *make_expr(int x, int op, int y, int mult, struct
-        const_expr *reloc)
+        const_expr *defexpr)
 {
     struct expr *e = malloc(sizeof *e);
 
@@ -368,8 +368,8 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
     e->op    = op;
     e->y     = y;
     e->mult  = mult;
-    e->ce    = reloc;
-    if (reloc)
+    e->ce    = defexpr;
+    if (defexpr)
         e->i = 0xfffffbad; // put in a placeholder that must be overwritten
     else
         e->i = 0; // there was no const_expr ; zero defined by language
@@ -429,7 +429,7 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
         rp = &q->next;
 
         q->insn = calloc(1, sizeof *q->insn);
-        add_relocation(pd, p->ce, 1, &q->insn->u.word, WORD_BITWIDTH);
+        add_deferred_expr(pd, p->ce, 1, &q->insn->u.word, WORD_BITWIDTH);
         p->ce->insn = q->insn;
         p = p->right;
     }

@@ -14,13 +14,13 @@ struct parse_data {
         char saveline[LINE_LEN];
     } lexstate;
     struct instruction_list *top;
-    struct relocation_list {
+    struct deferred_expr {
         struct const_expr *ce;
         uint32_t *dest;     ///< destination word to be updated
         int width;          ///< width in bits of the right-justified immediate
         int mult;           ///< multiplier (1 or -1, according to sign)
-        struct relocation_list *next;
-    } *relocs;
+        struct deferred_expr *next;
+    } *defexprs;
     struct label_list {
         struct label *label;
         struct label_list *next;
@@ -53,7 +53,7 @@ struct expr {
     int op;
     int y;
     int32_t i;
-    int width;  ///< width of relocation XXX cleanup
+    int width;  ///< width of deferred expression XXX cleanup
     int mult;   ///< multiplier from addsub
     struct const_expr *ce;
 };

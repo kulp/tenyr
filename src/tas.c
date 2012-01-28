@@ -119,10 +119,10 @@ void ce_free(struct const_expr *ce, int recurse)
     free(ce);
 }
 
-static int fixup_relocations(struct parse_data *pd)
+static int fixup_deferred_exprs(struct parse_data *pd)
 {
     int rc = 0;
-    struct relocation_list *r = pd->relocs;
+    struct deferred_expr *r = pd->defexprs;
 
     while (r) {
         struct const_expr *ce = r->ce;
@@ -136,11 +136,11 @@ static int fixup_relocations(struct parse_data *pd)
             *r->dest |= result & ~mask;
             ce_free(ce, 1);
         } else {
-            fatal("Error while fixing up relocations", 0);
-            // TODO print out information about the relocation
+            fatal("Error while fixing up deferred expressions", 0);
+            // TODO print out information about the deferred expression
         }
 
-        struct relocation_list *last = r;
+        struct deferred_expr *last = r;
         r = r->next;
         free(last);
     }
@@ -224,7 +224,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         if (check_labels(pd.labels))
             fatal("Error while processing labels : check for duplicate labels", 0);
 
-        if (!fixup_relocations(&pd)) {
+        if (!fixup_deferred_exprs(&pd)) {
             q = p;
             void *ud;
             if (f->init)
