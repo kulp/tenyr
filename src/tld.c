@@ -59,8 +59,6 @@ int main(int argc, char *argv[])
 {
     int rc = 0;
 
-    FILE *out = stdout;
-
     struct link_state _s = {
         .addr = RAM_BASE,
     }, *s = &_s;
@@ -70,6 +68,8 @@ int main(int argc, char *argv[])
             usage(argv[0]);
         return EXIT_FAILURE;
     }
+
+    FILE *out = stdout;
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {

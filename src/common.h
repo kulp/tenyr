@@ -11,6 +11,16 @@
 
 #define PTR_MASK ~(-1 << 24)
 
+#define list_do(Tag,Object,...) \
+    do { \
+        struct Tag *Next = (Object), *Node = Next; \
+        while (Node) { \
+            Next = Next->next; \
+            __VA_ARGS__; \
+            Node = Next; \
+        } \
+    } while (0)
+
 // TODO document fixed lengths or remove the limitations
 #define LABEL_LEN    32
 #define LINE_LEN    512

@@ -5,7 +5,9 @@ LDFLAGS += -g
 CFLAGS  += -Wall -Wextra $(PEDANTIC)
 
 # Optimised build
-#CFLAGS  += -DNDEBUG -O3
+ifeq ($(DEBUG),)
+CFLAGS  += -DNDEBUG -O3
+endif
 
 # 32-bit compilation
 #CFLAGS  += -m32
@@ -72,7 +74,7 @@ endif
 	rm -f $@.$$$$
 
 clean:
-	$(RM) tas tsim *.o *.d $(GENDIR)/*.o
+	$(RM) tas tsim *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
 
 clobber: clean
 	$(RM) $(GENDIR)/{parser,lexer}.[ch]

@@ -98,7 +98,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
     }
 }
 
-void ce_free(struct const_expr *ce, int recurse)
+static void ce_free(struct const_expr *ce, int recurse)
 {
     if (recurse)
         switch (ce->type) {
@@ -167,23 +167,24 @@ static int check_labels(struct label_list *labels)
     typedef int cmp(const void *, const void*);
 
     // check for and reject duplicates
-    void *tree;
-    while (labels) {
-        const char **name = tsearch(labels->label->name, &tree, (cmp*)strcmp);
+    void *tree = NULL;
+    list_do(label_list, labels,
+        const char **name = tsearch(Node->label->name, &tree, (cmp*)strcmp);
 
-        if (*name != labels->label->name) {
+        if (*name != Node->label->name) {
             rc = 1;
-            break; // take that, district !
+            goto cleanup; // take that, district !
         }
+    );
 
-        labels = labels->next;
-    }
-
+cleanup:
     // delete from tree what we added to it
-    while (top && tree) {
-        tdelete(top->label, &tree, (cmp*)strcmp);
-        top = top->next;
-    }
+    list_do(label_list, top,
+        if (!tree) break;
+        tdelete(Node->label, &tree, (cmp*)strcmp);
+        Node = Node->next;
+    );
+
     return rc;
 }
 
@@ -199,25 +200,21 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
     int result = tenyr_parse(&pd);
     if (!result && f) {
-        struct instruction_list *p = pd.top, *q = p;
-
         int baseaddr = 0; // TODO
         int reladdr = 0;
         // first pass, fix up addresses
-        while (q) {
-            q->insn->reladdr = baseaddr + reladdr;
-            struct label *l = q->insn->label;
-            while (l) {
-                if (!l->resolved) {
-                    l->reladdr = baseaddr + reladdr;
-                    l->resolved = 1;
+        list_do(instruction_list, pd.top,
+            Node->insn->reladdr = baseaddr + reladdr;
+
+            list_do(label, Node->insn->label,
+                if (!Node->resolved) {
+                    Node->reladdr = baseaddr + reladdr;
+                    Node->resolved = 1;
                 }
-                l = l->next;
-            }
+            );
 
             reladdr++;
-            q = q->next;
-        }
+        );
 
         mark_globals(pd.labels, pd.globals);
         // TODO make check_labels() more user-friendly
@@ -225,41 +222,22 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             fatal("Error while processing labels : check for duplicate labels", 0);
 
         if (!fixup_deferred_exprs(&pd)) {
-            q = p;
             void *ud;
             if (f->init)
                 f->init(out, ASM_ASSEMBLE, &ud);
 
-            while (q) {
-                struct instruction_list *t = q;
-                f->out(out, q->insn, ud);
-                q = q->next;
-                free(t->insn);
-                free(t);
-            }
+            list_do(instruction_list, pd.top, 
+                f->out(out, Node->insn, ud),
+                free(Node->insn),
+                free(Node)
+            );
 
             if (f->fini)
                 f->fini(out, &ud);
         }
 
-        {
-            struct label_list *l = pd.labels, *last = l;
-            while (l) {
-                l = l->next;
-                free(last->label);
-                free(last);
-                last = l;
-            }
-        }
-
-        {
-            struct global_list *g = pd.globals, *last = g;
-            while (g) {
-                g = g->next;
-                free(last);
-                last = g;
-            }
-        }
+        list_do(label_list , pd.labels,  free(Node->label), free(Node));
+        list_do(global_list, pd.globals, free(Node));
     }
     tenyr_lex_destroy(pd.scanner);
 
@@ -289,7 +267,6 @@ int main(int argc, char *argv[])
     int rc = 0;
     int disassemble = 0;
 
-    FILE *out = stdout;
     const struct format *f = &formats[0];
 
     if ((rc = setjmp(errbuf))) {
@@ -297,6 +274,8 @@ int main(int argc, char *argv[])
             usage(argv[0]);
         return EXIT_FAILURE;
     }
+
+    FILE *out = stdout;
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
