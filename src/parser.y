@@ -28,7 +28,8 @@ static struct instruction_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
 static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
         enum directive_type type, const char *label);
-static void handle_directive(struct directive *d, struct instruction_list *p);
+static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
+        directive *d, struct instruction_list *p);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -128,7 +129,7 @@ program[outer]
             free($ascii_or_data); }
     | directive program[inner]
         {   $outer = $inner;
-            handle_directive($directive, $inner); }
+            handle_directive(pd, &yylloc, $directive, $inner); }
     | insn program[inner]
         {   $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
@@ -450,7 +451,7 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
             break;
         default: {
             char buf[128];
-            snprintf(buf, sizeof buf, "Unknown directive type %d", type);
+            snprintf(buf, sizeof buf, "Unknown directive type %d in %s", type, __func__);
             tenyr_error(lloc, pd, buf);
         }
     }
@@ -458,9 +459,23 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
     return result;
 }
 
-static void handle_directive(struct directive *d, struct instruction_list *p)
+static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
+        directive *d, struct instruction_list *p)
 {
-    // TODO
-    return;
+    switch (d->type) {
+        case D_GLOBAL: {
+            struct global_list *g = malloc(sizeof *g);
+            strncpy(g->name, d->data, sizeof g->name);
+            free(d->data);
+            g->next = pd->globals;
+            pd->globals = g;
+            break;
+        }
+        default: {
+            char buf[128];
+            snprintf(buf, sizeof buf, "Unknown directive type %d in %s", d->type, __func__);
+            tenyr_error(lloc, pd, buf);
+        }
+    }
 }
 

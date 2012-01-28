@@ -25,6 +25,10 @@ struct parse_data {
         struct label *label;
         struct label_list *next;
     } *labels;
+    struct global_list {
+        char name[LABEL_LEN];
+        struct global_list *next;
+    } *globals;
 };
 
 int tenyr_parse(struct parse_data *);
