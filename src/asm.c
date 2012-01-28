@@ -180,14 +180,15 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
         rec = rec->next;
         u->pos = 0;
 
-        if (!rec)
+        if (!rec) {
+            // TODO get symbols
             return -1;
+        }
     }
 
     i->u.word = rec->data[u->pos++];
     // TODO adjust addr where ?
     i->reladdr = rec->addr;
-    // TODO set up syms ?
     i->label = NULL;
 
     return rc;
@@ -217,23 +218,25 @@ static int obj_out(FILE *stream, struct instruction *i, void *ud)
     {
         struct label *l = i->label;
         while (l) {
-            if (u->syms >= o->sym_count) {
-                while (u->syms >= o->sym_count)
-                    o->sym_count *= 2;
+            if (l->global) {
+                if (u->syms >= o->sym_count) {
+                    while (u->syms >= o->sym_count)
+                        o->sym_count *= 2;
 
-                o->symbols = realloc(o->symbols,
-                                        o->sym_count * sizeof *o->symbols);
+                    o->symbols = realloc(o->symbols,
+                                            o->sym_count * sizeof *o->symbols);
+                }
+
+                struct objsym *sym = &o->symbols[u->syms++];
+                strncpy(sym->name, l->name, sizeof sym->name);
+                assert(("Symbol address resolved", l->resolved != 0));
+                sym->value = l->reladdr;
+                if (u->last) u->last->next = sym;
+                sym->prev = u->last;
+                u->last = sym;
+
+                u->words++;
             }
-
-            struct objsym *sym = &o->symbols[u->syms++];
-            strncpy(sym->name, l->name, sizeof sym->name);
-            assert(("Symbol address resolved", l->resolved != 0));
-            sym->value = l->reladdr;
-            if (u->last) u->last->next = sym;
-            sym->prev = u->last;
-            u->last = sym;
-
-            u->words++;
 
             l = l->next;
         }

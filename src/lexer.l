@@ -1,8 +1,9 @@
 %{
 #include <stdio.h>
+
+#include "common.h"
 #include "parser.h"
 #include "ops.h"
-#include "common.h"
 #include "parser_global.h"
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
@@ -49,8 +50,10 @@ decnum  (-?[0-9]+)
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
 {label}                 { savestr(yyscanner); return LABEL; }
 "\""{string}"\""        { savestr(yyscanner); return STRING; }
+
 ".word"                 { return WORD; }
 ".ascii"                { return ASCII; }
+".global"               { return GLOBAL; }
 
 [][|&+*^>.,:@()-]       { return yytext[0]; }
 

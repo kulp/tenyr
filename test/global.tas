@@ -1,0 +1,4 @@
+foo: .word 1
+.global foo
+bar: .word 2
+

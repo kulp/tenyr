@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "parser_global.h"
+#include "parser.h"
 #include "lexer.h"
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
@@ -25,12 +26,12 @@ static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
 static struct instruction_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
+static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
+        enum directive_type type, const char *label);
+static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
+        directive *d, struct instruction_list *p);
 
 #define YYLEX_PARAM (pd->scanner)
-
-#define SMALL_IMMEDIATE_BITWIDTH    12
-#define LARGE_IMMEDIATE_BITWIDTH    24
-#define WORD_BITWIDTH               32
 
 void ce_free(struct const_expr *ce, int recurse);
 %}
@@ -66,7 +67,8 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL STRING
 %token <chr> REGISTER
-%token ILLEGAL WORD ASCII
+%token ILLEGAL
+%token WORD ASCII GLOBAL
 
 %type <ce> const_expr atom
 %type <cl> const_expr_list
@@ -78,40 +80,19 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <s> addsub
 %type <str> lref
 %type <cstr> string
+%type <dctv> directive
 
 %union {
     int32_t i;
     signed s;
-    struct const_expr {
-        enum { OP2, LAB, IMM, ICI } type;
-        int32_t i;
-        char labelname[32]; // TODO document length
-        int op;
-        struct instruction *insn; // for '.'-resolving
-        struct const_expr *left, *right;
-    } *ce;
-    struct const_expr_list {
-        struct const_expr *ce;
-        struct const_expr_list *right;
-    } *cl;
-    struct expr {
-        int deref;
-        int x;
-        int op;
-        int y;
-        int32_t i;
-        int width;  ///< width of relocation XXX cleanup
-        int mult;   ///< multiplier from addsub
-        struct const_expr *ce;
-    } *expr;
-    struct cstr {
-        int len;
-        char *str;
-        struct cstr *right;
-    } *cstr;
+    struct const_expr *ce;
+    struct const_expr_list *cl;
+    struct expr *expr;
+    struct cstr *cstr;
+    struct directive *dctv;
     struct instruction *insn;
     struct instruction_list *program;
-    char str[256]; // TODO document length
+    char str[LINE_LEN];
     char chr;
     int op;
     int arrow;
@@ -146,6 +127,9 @@ program[outer]
             $outer->next = $ascii_or_data->next;
             $outer->insn = $ascii_or_data->insn;
             free($ascii_or_data); }
+    | directive program[inner]
+        {   $outer = $inner;
+            handle_directive(pd, &yylloc, $directive, $inner); }
     | insn program[inner]
         {   $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
@@ -193,6 +177,10 @@ ascii
 data
     : WORD const_expr_list
         {   $data = make_data(pd, $const_expr_list); }
+
+directive
+    : GLOBAL LABEL
+        {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $LABEL); }
 
 const_expr_list[outer]
     : const_expr[expr]
@@ -289,8 +277,8 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
     fflush(stderr);
     fprintf(stderr, "%s\n", pd->lexstate.saveline);
     fprintf(stderr, "%*s\n%*s at line %d column %d at `%s'\n",
-            locp->first_column + 1, "^", locp->first_column + 1, s,
-            locp->first_line, locp->first_column + 1,
+            locp->first_column, "^", locp->first_column, s,
+            locp->first_line, locp->first_column,
             tenyr_get_text(pd->scanner));
 
     return 0;
@@ -447,5 +435,47 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
     }
 
     return result;
+}
+
+static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
+        enum directive_type type, const char *label)
+{
+    struct directive *result = NULL;
+
+    switch (type) {
+        case D_GLOBAL:
+            result = malloc(sizeof *result);
+            result->type = type;
+            result->data = malloc(LABEL_LEN);
+            snprintf(result->data, LABEL_LEN, label);
+            break;
+        default: {
+            char buf[128];
+            snprintf(buf, sizeof buf, "Unknown directive type %d in %s", type, __func__);
+            tenyr_error(lloc, pd, buf);
+        }
+    }
+
+    return result;
+}
+
+static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
+        directive *d, struct instruction_list *p)
+{
+    switch (d->type) {
+        case D_GLOBAL: {
+            struct global_list *g = malloc(sizeof *g);
+            strncpy(g->name, d->data, sizeof g->name);
+            free(d->data);
+            g->next = pd->globals;
+            pd->globals = g;
+            break;
+        }
+        default: {
+            char buf[128];
+            snprintf(buf, sizeof buf, "Unknown directive type %d in %s", d->type, __func__);
+            tenyr_error(lloc, pd, buf);
+        }
+    }
 }
 
