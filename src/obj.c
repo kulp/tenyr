@@ -52,7 +52,8 @@ static int obj_v0_write(struct obj_v0 *o, FILE *out)
 
     return 0;
 bad:
-    abort(); // XXX better error reporting
+    fatal("Unknown error occurred while emitting object", 0);
+    return -1; // never reached, but keeps compiler happy
 }
 
 int obj_write(struct obj *o, FILE *out)
@@ -64,7 +65,8 @@ int obj_write(struct obj *o, FILE *out)
     }
 
 bad:
-    abort(); // XXX better error reporting
+    fatal("Unhandled version while emitting object", 0);
+    return -1; // never reached, but keeps compiler happy
 }
 
 static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
@@ -115,7 +117,8 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
 
     return 0;
 bad:
-    abort(); // XXX better error reporting
+    fatal("Unknown error occurred while parsing object", 0);
+    return -1; // never reached, but keeps compiler happy
 }
 
 int obj_read(struct obj *o, size_t *size, FILE *in)
@@ -131,10 +134,11 @@ int obj_read(struct obj *o, size_t *size, FILE *in)
     switch (o->magic.parsed.version) {
         case 0: return obj_v0_read((void*)o, size, in);
         default:
-            goto bad;
+            fatal("Unhandled version number when loading object", 0);
     }
 bad:
-    abort(); // XXX better error reporting
+    fatal("Bad magic when loading object", 0);
+    return -1; // never reached, but keeps compiler happy
 }
 
 static void obj_v0_free(struct obj_v0 *o)
@@ -161,6 +165,7 @@ void obj_free(struct obj *o)
 
     return;
 bad:
-    abort(); // XXX better error reporting
+    fatal("Unknown error occurred while freeing object", 0);
+    return; // never reached, but keeps compiler happy
 }
 

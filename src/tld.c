@@ -1,4 +1,6 @@
 #include "obj.h"
+// for RAM_BASE
+#include "devices/ram.h"
 #include "common.h"
 
 #include <stdlib.h>
@@ -7,6 +9,10 @@
 #include <search.h>
 #include <string.h>
 #include <strings.h>
+
+struct link_state {
+    UWord addr;     ///< current address
+};
 
 static const char shortopts[] = "o::hV";
 
@@ -36,8 +42,9 @@ static int usage(const char *me)
     return 0;
 }
 
-int do_link(FILE *in, FILE *out)
+int do_link(struct link_state *s, FILE *in, FILE *out)
 {
+    (void)s;
     (void)out;
 
     int rc = 0;
@@ -53,6 +60,10 @@ int main(int argc, char *argv[])
     int rc = 0;
 
     FILE *out = stdout;
+
+    struct link_state _s = {
+        .addr = RAM_BASE,
+    }, *s = &_s;
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
@@ -97,7 +108,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        do_link(in, out);
+        do_link(s, in, out);
 
         fclose(in);
     }
