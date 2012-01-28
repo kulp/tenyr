@@ -48,13 +48,11 @@ static int usage(const char *me)
 
 static int label_find(struct label_list *list, const char *name, struct label **label)
 {
-    while (list) {
-        if (!strncmp(list->label->name, name, LABEL_LEN)) {
-            *label = list->label;
+    list_foreach(label_list, elt, list) {
+        if (!strncmp(elt->label->name, name, LABEL_LEN)) {
+            *label = elt->label;
             return 0;
         }
-
-        list = list->next;
     }
 
     return 1;
@@ -123,9 +121,8 @@ static void ce_free(struct const_expr *ce, int recurse)
 static int fixup_deferred_exprs(struct parse_data *pd)
 {
     int rc = 0;
-    struct deferred_expr *r = pd->defexprs;
 
-    while (r) {
+    list_foreach(deferred_expr, r, pd->defexprs) {
         struct const_expr *ce = r->ce;
 
         uint32_t result;
@@ -141,9 +138,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
             // TODO print out information about the deferred expression
         }
 
-        struct deferred_expr *last = r;
-        r = r->next;
-        free(last);
+        free(r);
     }
 
     return 0;
@@ -152,11 +147,9 @@ static int fixup_deferred_exprs(struct parse_data *pd)
 static int mark_globals(struct label_list *labels, struct global_list *globals)
 {
     struct label *which;
-    while (globals) {
-        if (!label_find(labels, globals->name, &which))
+    list_foreach(global_list, g, globals)
+        if (!label_find(labels, g->name, &which))
             which->global = 1;
-        globals = globals->next;
-    }
 
     return 0;
 }

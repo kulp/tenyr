@@ -21,7 +21,7 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct instruction *make_insn_immediate(struct parse_data *pd, struct
         expr *lhs, struct const_expr *ce);
-static struct instruction_list *make_cstring(struct cstr *cs);
+static struct instruction_list *make_string(struct cstr *cs);
 static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
 static struct instruction_list *make_data(struct parse_data *pd, struct
@@ -172,7 +172,7 @@ string[outer]
 
 ascii
     : ASCII string
-        {   $ascii = make_cstring($string); }
+        {   $ascii = make_string($string); }
 
 data
     : WORD const_expr_list
@@ -377,7 +377,7 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
     return e;
 }
 
-static struct instruction_list *make_cstring(struct cstr *cs)
+static struct instruction_list *make_string(struct cstr *cs)
 {
     struct instruction_list *result = NULL, **rp = &result;
 

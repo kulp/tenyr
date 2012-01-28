@@ -219,12 +219,9 @@ static int run_recipes(struct state *s)
         DEFAULT_RECIPES(RUN_RECIPE);
     }
 
-    struct recipe_book *b = s->recipes;
-    while (b) {
-        struct recipe_book *temp = b;
+    list_foreach(recipe_book, b, s->recipes) {
         run_recipe(s, b->recipe);
-        b = b->next;
-        free(temp);
+        free(b);
     }
 
     return 0;

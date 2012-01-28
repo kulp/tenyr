@@ -27,26 +27,22 @@ static int obj_v0_write(struct obj_v0 *o, FILE *out)
 
     {
         UWord remaining = o->rec_count;
-        struct objrec *rec = o->records;
-        while (rec && remaining-- > 0) {
+        list_foreach(objrec, rec, o->records) {
+            if (remaining-- <= 0) break;
             PUT(rec->addr, out);
             PUT(rec->size, out);
             if (fwrite(rec->data, sizeof *rec->data, rec->size, out) != rec->size)
                 goto bad;
-
-            rec = rec->next;
         }
     }
 
     {
         UWord remaining = o->sym_count;
-        struct objsym *sym = o->symbols;
-        while (sym && remaining-- > 0) {
+        list_foreach(objsym, sym, o->symbols) {
+            if (remaining-- <= 0) break;
             PUT(sym->flags, out);
             PUT(sym->name, out);
             PUT(sym->value, out);
-
-            sym = sym->next;
         }
     }
 
@@ -164,12 +160,10 @@ bad:
 static void obj_v0_free(struct obj_v0 *o)
 {
     UWord remaining = o->rec_count;
-    struct objrec *rec = o->records;
-    while (rec && remaining-- > 0) {
-        struct objrec *temp = rec->next;
+    list_foreach(objrec, rec, o->records) {
+        if (remaining-- <= 0) break;
         free(rec->data);
         free(rec);
-        rec = temp;
     }
 
     free(o);

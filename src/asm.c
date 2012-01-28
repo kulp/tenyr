@@ -194,50 +194,55 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     return rc;
 }
 
+static void obj_out_labels(struct label *label, struct obj_fdata *u, struct obj_v0 *o)
+{
+    list_foreach(label, Node, label) {
+        if (Node->global) {
+            if (u->syms >= o->sym_count) {
+                while (u->syms >= o->sym_count)
+                    o->sym_count *= 2;
+
+                o->symbols = realloc(o->symbols,
+                                        o->sym_count * sizeof *o->symbols);
+            }
+
+            struct objsym *sym = &o->symbols[u->syms++];
+            strncpy(sym->name, Node->name, sizeof sym->name);
+            assert(("Symbol address resolved", Node->resolved != 0));
+            sym->value = Node->reladdr;
+            if (u->last) u->last->next = sym;
+            sym->prev = u->last;
+            u->last = sym;
+
+            u->words++;
+        }
+    }
+}
+
+static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj_v0 *o)
+{
+    if (u->insns >= o->records->size) {
+        while (u->insns >= o->records->size)
+            o->records->size *= 2;
+
+        o->records->data = realloc(o->records->data,
+                o->records->size * sizeof *o->records->data);
+    }
+
+    o->records->data[u->insns] = i->u.word;
+
+    u->words++;
+    u->insns++;
+
+    obj_out_labels(i->label, u, o);
+}
+
 static int obj_out(FILE *stream, struct instruction *i, void *ud)
 {
     int rc = 1;
     struct obj_fdata *u = ud;
-    struct obj_v0 *o = (void*)u->o;
 
-    {
-        if (u->insns >= o->records->size) {
-            while (u->insns >= o->records->size)
-                o->records->size *= 2;
-
-            o->records->data = realloc(o->records->data,
-                    o->records->size * sizeof *o->records->data);
-        }
-
-        o->records->data[u->insns] = i->u.word;
-
-        u->words++;
-        u->insns++;
-    }
-
-    {
-        list_foreach(label, Node, i->label) {
-            if (Node->global) {
-                if (u->syms >= o->sym_count) {
-                    while (u->syms >= o->sym_count)
-                        o->sym_count *= 2;
-
-                    o->symbols = realloc(o->symbols,
-                                            o->sym_count * sizeof *o->symbols);
-                }
-
-                struct objsym *sym = &o->symbols[u->syms++];
-                strncpy(sym->name, Node->name, sizeof sym->name);
-                assert(("Symbol address resolved", Node->resolved != 0));
-                sym->value = Node->reladdr;
-                if (u->last) u->last->next = sym;
-                sym->prev = u->last;
-                u->last = sym;
-
-                u->words++;
-            }
-        }
-    }
+    obj_out_insn(i, u, (struct obj_v0*)u->o);
 
     return rc;
 }
