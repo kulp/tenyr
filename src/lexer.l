@@ -1,8 +1,9 @@
 %{
 #include <stdio.h>
+
+#include "common.h"
 #include "parser.h"
 #include "ops.h"
-#include "common.h"
 #include "parser_global.h"
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);

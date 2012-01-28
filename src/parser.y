@@ -7,9 +7,8 @@
 #include <stdlib.h>
 
 #include "parser_global.h"
+#include "parser.h"
 #include "lexer.h"
-
-enum directive_type { D_GLOBAL };
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_relocation(struct parse_data *pd, struct
@@ -68,7 +67,6 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <str> INTEGER LABEL STRING
 %token <chr> REGISTER
 %token ILLEGAL
-/* directives */
 %token WORD ASCII GLOBAL
 
 %type <ce> const_expr atom
@@ -93,7 +91,7 @@ void ce_free(struct const_expr *ce, int recurse);
     struct directive *dctv;
     struct instruction *insn;
     struct instruction_list *program;
-    char str[256]; // TODO document length
+    char str[LINE_LEN];
     char chr;
     int op;
     int arrow;

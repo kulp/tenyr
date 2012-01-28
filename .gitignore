@@ -8,3 +8,4 @@ testffi
 *.d
 Session.vim
 src/gen
+tags

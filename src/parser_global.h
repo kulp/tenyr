@@ -2,19 +2,16 @@
 #define PARSER_GLOBAL_H_
 
 #include "ops.h"
-#include "parser.h"
 
 #define SMALL_IMMEDIATE_BITWIDTH    12
 #define LARGE_IMMEDIATE_BITWIDTH    24
 #define WORD_BITWIDTH               32
 
-#define LABEL_LEN 32 // TODO document length
-
 struct parse_data {
     void *scanner;
     struct {
         unsigned savecol;
-        char saveline[512]; // TODO document limit
+        char saveline[LINE_LEN];
     } lexstate;
     struct instruction_list *top;
     struct relocation_list {
@@ -35,7 +32,7 @@ int tenyr_parse(struct parse_data *);
 struct const_expr {
     enum { OP2, LAB, IMM, ICI } type; // TODO namespace
     int32_t i;
-    char labelname[LABEL_LEN]; // TODO make arbitrarily long
+    char labelname[LABEL_LEN];
     int op;
     struct instruction *insn; // for '.'-resolving
     struct const_expr *left, *right;
@@ -64,7 +61,7 @@ struct cstr {
 };
 
 struct directive {
-    /* enum directive_type */int type;
+    enum directive_type { D_GLOBAL } type;
     void *data;
 };
 

@@ -56,17 +56,21 @@
 #ifndef OPS_H_
 #define OPS_H_
 
+#include "common.h"
+
 #include <stdint.h>
 
 // TODO assumes bits are filled in rightmost-first
 struct instruction {
     uint32_t reladdr;    // used for ICI resolving
     struct label {
-        char name[32]; // TODO document restriction
+        char name[LABEL_LEN];
         int column;
         int lineno;
         uint32_t reladdr;
-        int resolved;
+
+        unsigned resolved:1;
+        unsigned global:1;
 
         struct label *next;
     } *label;
