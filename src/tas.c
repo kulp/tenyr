@@ -89,12 +89,13 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
                     case '-': *result = left -  right; return 0;
                     case '*': *result = left *  right; return 0;
                     case LSH: *result = left << right; return 0;
-                    default: abort(); // TODO handle more gracefully
+                    default: fatal("Unrecognised const_expr op", 0);
                 }
             }
             return 1;
         default:
-            abort(); // TODO handle more gracefully
+            fatal("Unrecognised const_expr type", 0);
+            return 1;
     }
 }
 
@@ -113,7 +114,7 @@ static void ce_free(struct const_expr *ce, int recurse)
                 ce_free(ce->right, recurse);
                 break;
             default:
-                abort(); // TODO handle more gracefully
+                fatal("Unrecognised const_expr type", 0);
         }
 
     free(ce);
@@ -168,22 +169,22 @@ static int check_labels(struct label_list *labels)
 
     // check for and reject duplicates
     void *tree = NULL;
-    list_do(label_list, labels,
+    list_foreach(label_list, Node, labels) {
         const char **name = tsearch(Node->label->name, &tree, (cmp*)strcmp);
 
         if (*name != Node->label->name) {
             rc = 1;
             goto cleanup; // take that, district !
         }
-    );
+    }
 
 cleanup:
     // delete from tree what we added to it
-    list_do(label_list, top,
+    list_foreach(label_list, Node, top) {
         if (!tree) break;
         tdelete(Node->label, &tree, (cmp*)strcmp);
         Node = Node->next;
-    );
+    }
 
     return rc;
 }
@@ -203,18 +204,18 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         int baseaddr = 0; // TODO
         int reladdr = 0;
         // first pass, fix up addresses
-        list_do(instruction_list, pd.top,
-            Node->insn->reladdr = baseaddr + reladdr;
+        list_foreach(instruction_list, il, pd.top) {
+            il->insn->reladdr = baseaddr + reladdr;
 
-            list_do(label, Node->insn->label,
-                if (!Node->resolved) {
-                    Node->reladdr = baseaddr + reladdr;
-                    Node->resolved = 1;
+            list_foreach(label, l, il->insn->label) {
+                if (!l->resolved) {
+                    l->reladdr = baseaddr + reladdr;
+                    l->resolved = 1;
                 }
-            );
+            }
 
             reladdr++;
-        );
+        }
 
         mark_globals(pd.labels, pd.globals);
         // TODO make check_labels() more user-friendly
@@ -226,18 +227,23 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             if (f->init)
                 f->init(out, ASM_ASSEMBLE, &ud);
 
-            list_do(instruction_list, pd.top, 
+            list_foreach(instruction_list, Node, pd.top) {
                 f->out(out, Node->insn, ud),
                 free(Node->insn),
-                free(Node)
-            );
+                free(Node);
+            }
 
             if (f->fini)
                 f->fini(out, &ud);
         }
 
-        list_do(label_list , pd.labels,  free(Node->label), free(Node));
-        list_do(global_list, pd.globals, free(Node));
+        list_foreach(label_list, Node, pd.labels) {
+            free(Node->label);
+            free(Node);
+        }
+
+        list_foreach(global_list, Node, pd.globals)
+            free(Node);
     }
     tenyr_lex_destroy(pd.scanner);
 
