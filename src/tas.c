@@ -11,7 +11,6 @@
 #include <search.h>
 #include <string.h>
 #include <strings.h>
-#include <setjmp.h>
 
 int print_disassembly(FILE *out, struct instruction *i);
 
@@ -27,17 +26,6 @@ static const struct option longopts[] = {
 
     { NULL, 0, NULL, 0 },
 };
-
-enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
-
-static jmp_buf errbuf;
-
-static void fatal(const char *message, enum errcode code)
-{
-    fputs(message, stderr);
-    fputc('\n', stderr);
-    longjmp(errbuf, code);
-}
 
 static const char *version()
 {

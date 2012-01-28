@@ -7,7 +7,6 @@
 #include <search.h>
 #include <string.h>
 #include <strings.h>
-#include <setjmp.h>
 
 static const char shortopts[] = "o::hV";
 
@@ -19,17 +18,6 @@ static const struct option longopts[] = {
 
     { NULL, 0, NULL, 0 },
 };
-
-enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
-
-static jmp_buf errbuf;
-
-static void fatal(const char *message, enum errcode code)
-{
-    fputs(message, stderr);
-    fputc('\n', stderr);
-    longjmp(errbuf, code);
-}
 
 static const char *version()
 {
@@ -50,9 +38,14 @@ static int usage(const char *me)
 
 int do_link(FILE *in, FILE *out)
 {
-    (void)in;
     (void)out;
-    return -1;
+
+    int rc = 0;
+    struct obj *o = calloc(1, sizeof *o);
+    size_t size;
+    rc = obj_read(o, &size, in);
+
+    return rc;
 }
 
 int main(int argc, char *argv[])

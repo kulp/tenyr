@@ -31,10 +31,12 @@ DEVICES = ram sparseram debugwrap serial
 DEVOBJS = $(DEVICES:%=%.o)
 
 all: tas tsim tld
+tas tsim tld: common.o
 tas: $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas tsim: asm.o obj.o
 tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
+tld: obj.o
 
 lexer.o: parser.h
 

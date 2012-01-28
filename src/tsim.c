@@ -13,7 +13,6 @@
 #include <string.h>
 #include <strings.h>
 #include <search.h>
-#include <setjmp.h>
 
 #define RECIPES(_) \
     _(abort   , "call abort() when an illegal instruction is simulated") \
@@ -31,17 +30,6 @@
 
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
-
-static jmp_buf errbuf;
-
-enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
-
-static void fatal(const char *message, enum errcode code)
-{
-    fputs(message, stderr);
-    fputc('\n', stderr);
-    longjmp(errbuf, code);
-}
 
 static int next_device(struct state *s)
 {

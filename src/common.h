@@ -1,6 +1,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#include <setjmp.h>
+
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 #define STR(X) STR_(X)
 #define STR_(X) #X
@@ -17,6 +19,10 @@
 int _stricmp(const char *, const char *);
 #define strcasecmp _stricmp
 #endif
+
+enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
+extern jmp_buf errbuf;
+void fatal(const char *message, enum errcode code);
 
 #endif
 
