@@ -180,14 +180,15 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
         rec = rec->next;
         u->pos = 0;
 
-        if (!rec)
+        if (!rec) {
+            // TODO get symbols
             return -1;
+        }
     }
 
     i->u.word = rec->data[u->pos++];
     // TODO adjust addr where ?
     i->reladdr = rec->addr;
-    // TODO set up syms ?
     i->label = NULL;
 
     return rc;

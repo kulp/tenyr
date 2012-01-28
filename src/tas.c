@@ -17,8 +17,6 @@ int print_disassembly(FILE *out, struct instruction *i);
 
 static const char shortopts[] = "df:o::hV";
 
-static jmp_buf errbuf;
-
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
     { "format"      , required_argument, NULL, 'f' },
@@ -30,11 +28,15 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
-static void fatal(const char *message)
+enum errcode { DISPLAY_USAGE=1 };
+
+static jmp_buf errbuf;
+
+static void fatal(const char *message, enum errcode code)
 {
     fputs(message, stderr);
     fputc('\n', stderr);
-    longjmp(errbuf, 1);
+    longjmp(errbuf, code);
 }
 
 static const char *version()
@@ -59,8 +61,7 @@ static int usage(const char *me)
 static int label_find(struct label_list *list, const char *name, struct label **label)
 {
     while (list) {
-        // TODO strcasecmp ?
-        if (!strcasecmp(list->label->name, name)) {
+        if (!strcmp(list->label->name, name)) {
             *label = list->label;
             return 0;
         }
@@ -147,9 +148,8 @@ static int fixup_relocations(struct parse_data *pd)
             *r->dest |= result & ~mask;
             ce_free(ce, 1);
         } else {
-            fprintf(stderr, "Error while fixing up relocations\n");
+            fatal("Error while fixing up relocations", 0);
             // TODO print out information about the relocation
-            return -1;
         }
 
         struct relocation_list *last = r;
@@ -234,7 +234,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         mark_globals(pd.labels, pd.globals);
         // TODO make check_labels() more user-friendly
         if (check_labels(pd.labels))
-            fatal("Error while processing labels : check for duplicate labels");
+            fatal("Error while processing labels : check for duplicate labels", 0);
 
         if (!fixup_relocations(&pd)) {
             q = p;
@@ -304,8 +304,11 @@ int main(int argc, char *argv[])
     FILE *out = stdout;
     const struct format *f = &formats[0];
 
-    if (setjmp(errbuf))
+    if ((rc = setjmp(errbuf))) {
+        if (rc == DISPLAY_USAGE)
+            usage(argv[0]);
         return EXIT_FAILURE;
+    }
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
@@ -332,8 +335,7 @@ int main(int argc, char *argv[])
     }
 
     if (optind >= argc) {
-        fprintf(stderr, "No input files specified on the command line\n");
-        exit(usage(argv[0]));
+        fatal("No input files specified on the command line", DISPLAY_USAGE);
     }
 
     for (int i = optind; i < argc; i++) {

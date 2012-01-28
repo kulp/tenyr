@@ -1,6 +1,8 @@
 #ifndef ASM_H_
 #define ASM_H_
 
+#include <stdio.h>
+
 enum { ASM_ASSEMBLE = 1, ASM_DISASSEMBLE = 2 };
 
 struct format {

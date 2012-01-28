@@ -1,11 +1,3 @@
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <getopt.h>
-#include <string.h>
-#include <strings.h>
-#include <search.h>
-
 #include "ops.h"
 #include "common.h"
 #include "asm.h"
@@ -13,6 +5,15 @@
 #include "sim.h"
 // for RAM_BASE
 #include "devices/ram.h"
+
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <getopt.h>
+#include <string.h>
+#include <strings.h>
+#include <search.h>
+#include <setjmp.h>
 
 #define RECIPES(_) \
     _(abort   , "call abort() when an illegal instruction is simulated") \
@@ -30,6 +31,17 @@
 
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
+
+static jmp_buf errbuf;
+
+enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
+
+static void fatal(const char *message, enum errcode code)
+{
+    fputs(message, stderr);
+    fputc('\n', stderr);
+    longjmp(errbuf, code);
+}
 
 static int next_device(struct state *s)
 {
@@ -322,6 +334,12 @@ int main(int argc, char *argv[])
         .dispatch_op = dispatch_op,
     }, *s = &_s;
 
+    if ((rc = setjmp(errbuf))) {
+        if (rc == DISPLAY_USAGE)
+            usage(argv[0]);
+        return EXIT_FAILURE;
+    }
+
     int load_address = RAM_BASE, start_address = RAM_BASE;
 
     const struct format *f = &formats[0];
@@ -355,11 +373,9 @@ int main(int argc, char *argv[])
     }
 
     if (optind >= argc) {
-        fprintf(stderr, "No input files specified on the command line\n");
-        exit(usage(argv[0]));
+        fatal("No input files specified on the command line", DISPLAY_USAGE);
     } else if (argc - optind > 1) {
-        fprintf(stderr, "More than one input file specified on the command line\n");
-        exit(usage(argv[0]));
+        fatal("More than one input file specified on the command line", DISPLAY_USAGE);
     }
 
     FILE *in = stdin;
