@@ -1,10 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <getopt.h>
-#include <search.h>
-#include <string.h>
-#include <strings.h>
-
 #include "ops.h"
 #include "parser.h"
 #include "parser_global.h"
@@ -12,9 +5,19 @@
 #include "common.h"
 #include "asm.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <getopt.h>
+#include <search.h>
+#include <string.h>
+#include <strings.h>
+#include <setjmp.h>
+
 int print_disassembly(FILE *out, struct instruction *i);
 
 static const char shortopts[] = "df:o::hV";
+
+static jmp_buf errbuf;
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
@@ -26,6 +29,13 @@ static const struct option longopts[] = {
 
     { NULL, 0, NULL, 0 },
 };
+
+static void fatal(const char *message)
+{
+    fputs(message, stderr);
+    fputc('\n', stderr);
+    longjmp(errbuf, 1);
+}
 
 static const char *version()
 {
@@ -162,6 +172,33 @@ static int mark_globals(struct label_list *labels, struct global_list *globals)
     return 0;
 }
 
+static int check_labels(struct label_list *labels)
+{
+    int rc = 0;
+    struct label_list *top = labels;
+    typedef int cmp(const void *, const void*);
+
+    // check for and reject duplicates
+    void *tree;
+    while (labels) {
+        const char **name = tsearch(labels->label->name, &tree, (cmp*)strcmp);
+
+        if (*name != labels->label->name) {
+            rc = 1;
+            break; // take that, district !
+        }
+
+        labels = labels->next;
+    }
+
+    // delete from tree what we added to it
+    while (top && tree) {
+        tdelete(top->label, &tree, (cmp*)strcmp);
+        top = top->next;
+    }
+    return rc;
+}
+
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
     struct parse_data pd = { .top = NULL };
@@ -195,6 +232,9 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         }
 
         mark_globals(pd.labels, pd.globals);
+        // TODO make check_labels() more user-friendly
+        if (check_labels(pd.labels))
+            fatal("Error while processing labels : check for duplicate labels");
 
         if (!fixup_relocations(&pd)) {
             q = p;
@@ -263,6 +303,9 @@ int main(int argc, char *argv[])
 
     FILE *out = stdout;
     const struct format *f = &formats[0];
+
+    if (setjmp(errbuf))
+        return EXIT_FAILURE;
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
