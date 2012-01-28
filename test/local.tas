@@ -1,7 +1,11 @@
 	.word 2,2,3,4,5,6,6,6
 .Lfoo:
 foo:
-	a <- b + c - @foo + 1
-	a <- b * c - (@foo + 1)
+	//a <- (6 - 5) + @foo
+	a <- @foo - 6
+	a <- @foo - (6 - 5)
+	a <- ((@foo - 2)) - (6 - 5)
+	//a <- 6 - (5 + @foo)
+	//a <- (@foo - 1) + @bar + 1
 bar:
 	a <- b + c - (2 * @.Lfoo + 4)

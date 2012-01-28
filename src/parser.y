@@ -70,7 +70,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %token ILLEGAL
 %token WORD ASCII GLOBAL
 
-%type <ce> const_expr reloc_expr atom eref
+%type <ce> const_expr pconst_expr reloc_expr atom eref
 %type <cl> reloc_expr_list
 %type <expr> expr lhs
 %type <i> arrow immediate regname const_op reloc_op
@@ -254,10 +254,8 @@ const_op
 reloc_expr[outer]
     : const_expr
     | eref
-    | const_expr reloc_op reloc_expr[inner]
-        {   $outer = make_const_expr(OP2, $reloc_op, $const_expr, $inner); }
-    | reloc_expr[inner] reloc_op const_expr
-        {   $outer = make_const_expr(OP2, $reloc_op, $inner, $const_expr); }
+    | reloc_expr[inner] reloc_op atom
+        {   $outer = make_const_expr(OP2, $reloc_op, $inner, $atom); }
     | '(' reloc_expr[inner] ')'
         {   $outer = $inner; }
 
@@ -265,11 +263,10 @@ const_expr[outer]
     : atom
     | const_expr[left] const_op const_expr[right]
         {   $outer = make_const_expr(OP2, $const_op, $left, $right); }
-    | '(' const_expr[inner] ')'
-        {   $outer = $inner; }
 
 atom
-    : immediate
+    : pconst_expr
+    | immediate
         {   $atom = make_const_expr(IMM, 0, NULL, NULL);
             $atom->i = $immediate; }
     | lref
@@ -277,6 +274,10 @@ atom
             strncpy($atom->labelname, $lref, sizeof $atom->labelname); }
     | '.'
         {   $atom = make_const_expr(ICI, 0, NULL, NULL); }
+
+pconst_expr
+    : '(' const_expr ')'
+        {   $pconst_expr = $const_expr; }
 
 eref
     : '@' LABEL
