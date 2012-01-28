@@ -30,7 +30,7 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 DEVICES = ram sparseram debugwrap serial
 DEVOBJS = $(DEVICES:%=%.o)
 
-all: tas tsim
+all: tas tsim tld
 tas: $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas tsim: asm.o obj.o
 tsim: $(DEVOBJS) sim.o

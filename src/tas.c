@@ -28,7 +28,7 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
-enum errcode { DISPLAY_USAGE=1 };
+enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
 
 static jmp_buf errbuf;
 
@@ -61,7 +61,7 @@ static int usage(const char *me)
 static int label_find(struct label_list *list, const char *name, struct label **label)
 {
     while (list) {
-        if (!strcmp(list->label->name, name)) {
+        if (!strncmp(list->label->name, name, LABEL_LEN)) {
             *label = list->label;
             return 0;
         }

@@ -1,6 +1,8 @@
 #ifndef OBJ_H_
 #define OBJ_H_
 
+#include "common.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -38,7 +40,7 @@ struct obj_v0 {
         struct objsym *next, *prev;
 
         int flags;      ///< unused so far (eventually indicate relocations ?)
-        char name[32];
+        char name[LABEL_LEN];
         UWord value;
     } *symbols;
 };
