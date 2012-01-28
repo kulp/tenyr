@@ -49,8 +49,10 @@ decnum  (-?[0-9]+)
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
 {label}                 { savestr(yyscanner); return LABEL; }
 "\""{string}"\""        { savestr(yyscanner); return STRING; }
+
 ".word"                 { return WORD; }
 ".ascii"                { return ASCII; }
+".global"               { return GLOBAL; }
 
 [][|&+*^>.,:@()-]       { return yytext[0]; }
 

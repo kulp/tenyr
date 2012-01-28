@@ -9,6 +9,8 @@
 #include "parser_global.h"
 #include "lexer.h"
 
+enum directive_type { D_GLOBAL };
+
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_relocation(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width);
@@ -25,6 +27,9 @@ static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
 static struct instruction_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
+static struct directive *make_directive(enum directive_type type,
+        const char *label);
+static void handle_directive(struct directive *d, struct instruction_list *p);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -66,7 +71,9 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <arrow> TOL TOR
 %token <str> INTEGER LABEL STRING
 %token <chr> REGISTER
-%token ILLEGAL WORD ASCII
+%token ILLEGAL
+/* directives */
+%token WORD ASCII GLOBAL
 
 %type <ce> const_expr atom
 %type <cl> const_expr_list
@@ -78,6 +85,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <s> addsub
 %type <str> lref
 %type <cstr> string
+%type <dctv> directive
 
 %union {
     int32_t i;
@@ -109,6 +117,10 @@ void ce_free(struct const_expr *ce, int recurse);
         char *str;
         struct cstr *right;
     } *cstr;
+    struct directive {
+        /* enum directive_type */int type;
+        void *data;
+    } *dctv;
     struct instruction *insn;
     struct instruction_list *program;
     char str[256]; // TODO document length
@@ -146,6 +158,9 @@ program[outer]
             $outer->next = $ascii_or_data->next;
             $outer->insn = $ascii_or_data->insn;
             free($ascii_or_data); }
+    | directive program[inner]
+        {   $outer = $inner;
+            handle_directive($directive, $inner); }
     | insn program[inner]
         {   $outer = malloc(sizeof *$outer);
             $outer->next = $inner;
@@ -193,6 +208,10 @@ ascii
 data
     : WORD const_expr_list
         {   $data = make_data(pd, $const_expr_list); }
+
+directive
+    : GLOBAL LABEL
+        {   $directive = make_directive(D_GLOBAL, $LABEL); }
 
 const_expr_list[outer]
     : const_expr[expr]
@@ -447,5 +466,16 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
     }
 
     return result;
+}
+
+static struct directive *make_directive(enum directive_type type,
+        const char *label)
+{
+    return NULL;
+}
+
+static void handle_directive(struct directive *d, struct instruction_list *p)
+{
+    return;
 }
 
