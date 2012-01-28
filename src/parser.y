@@ -71,10 +71,9 @@ void ce_free(struct const_expr *ce, int recurse);
 %token WORD ASCII GLOBAL
 
 %type <ce> const_expr reloc_expr atom eref
-%type <chr> reloc_op
 %type <cl> reloc_expr_list
 %type <expr> expr lhs
-%type <i> arrow immediate regname
+%type <i> arrow immediate regname const_op reloc_op
 %type <insn> insn
 %type <op> op
 %type <program> program ascii data ascii_or_data
@@ -244,29 +243,28 @@ arrow
     | TOR { $arrow = 1; }
 
 reloc_op
-    : '+' { $reloc_op = '+'; }
-    | '-' { $reloc_op = '-'; }
+    : '+' { $$ = '+'; }
+    | '-' { $$ = '-'; }
+
+const_op
+    : reloc_op
+    | '*' { $$ = '*'; }
+    | LSH { $$ = LSH; }
 
 reloc_expr[outer]
     : const_expr
     | eref
-    | eref reloc_op const_expr
-        {   $outer = make_const_expr(OP2, $reloc_op, $eref, $const_expr); }
-    | const_expr reloc_op eref
-        {   $outer = make_const_expr(OP2, $reloc_op, $const_expr, $eref); }
+    | const_expr reloc_op reloc_expr[inner]
+        {   $outer = make_const_expr(OP2, $reloc_op, $const_expr, $inner); }
+    | reloc_expr[inner] reloc_op const_expr
+        {   $outer = make_const_expr(OP2, $reloc_op, $inner, $const_expr); }
     | '(' reloc_expr[inner] ')'
         {   $outer = $inner; }
 
 const_expr[outer]
     : atom
-    | const_expr[left] '+' const_expr[right]
-        {   $outer = make_const_expr(OP2, '+', $left, $right); }
-    | const_expr[left] '-' const_expr[right]
-        {   $outer = make_const_expr(OP2, '-', $left, $right); }
-    | const_expr[left] '*' const_expr[right]
-        {   $outer = make_const_expr(OP2, '*', $left, $right); }
-    | const_expr[left] LSH const_expr[right]
-        {   $outer = make_const_expr(OP2, LSH, $left, $right); }
+    | const_expr[left] const_op const_expr[right]
+        {   $outer = make_const_expr(OP2, $const_op, $left, $right); }
     | '(' const_expr[inner] ')'
         {   $outer = $inner; }
 
