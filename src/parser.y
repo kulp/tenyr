@@ -27,15 +27,11 @@ static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
 static struct instruction_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
-static struct directive *make_directive(enum directive_type type,
-        const char *label);
+static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
+        enum directive_type type, const char *label);
 static void handle_directive(struct directive *d, struct instruction_list *p);
 
 #define YYLEX_PARAM (pd->scanner)
-
-#define SMALL_IMMEDIATE_BITWIDTH    12
-#define LARGE_IMMEDIATE_BITWIDTH    24
-#define WORD_BITWIDTH               32
 
 void ce_free(struct const_expr *ce, int recurse);
 %}
@@ -90,37 +86,11 @@ void ce_free(struct const_expr *ce, int recurse);
 %union {
     int32_t i;
     signed s;
-    struct const_expr {
-        enum { OP2, LAB, IMM, ICI } type;
-        int32_t i;
-        char labelname[32]; // TODO document length
-        int op;
-        struct instruction *insn; // for '.'-resolving
-        struct const_expr *left, *right;
-    } *ce;
-    struct const_expr_list {
-        struct const_expr *ce;
-        struct const_expr_list *right;
-    } *cl;
-    struct expr {
-        int deref;
-        int x;
-        int op;
-        int y;
-        int32_t i;
-        int width;  ///< width of relocation XXX cleanup
-        int mult;   ///< multiplier from addsub
-        struct const_expr *ce;
-    } *expr;
-    struct cstr {
-        int len;
-        char *str;
-        struct cstr *right;
-    } *cstr;
-    struct directive {
-        /* enum directive_type */int type;
-        void *data;
-    } *dctv;
+    struct const_expr *ce;
+    struct const_expr_list *cl;
+    struct expr *expr;
+    struct cstr *cstr;
+    struct directive *dctv;
     struct instruction *insn;
     struct instruction_list *program;
     char str[256]; // TODO document length
@@ -211,7 +181,7 @@ data
 
 directive
     : GLOBAL LABEL
-        {   $directive = make_directive(D_GLOBAL, $LABEL); }
+        {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $LABEL); }
 
 const_expr_list[outer]
     : const_expr[expr]
@@ -308,8 +278,8 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
     fflush(stderr);
     fprintf(stderr, "%s\n", pd->lexstate.saveline);
     fprintf(stderr, "%*s\n%*s at line %d column %d at `%s'\n",
-            locp->first_column + 1, "^", locp->first_column + 1, s,
-            locp->first_line, locp->first_column + 1,
+            locp->first_column, "^", locp->first_column, s,
+            locp->first_line, locp->first_column,
             tenyr_get_text(pd->scanner));
 
     return 0;
@@ -468,14 +438,31 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
     return result;
 }
 
-static struct directive *make_directive(enum directive_type type,
-        const char *label)
+static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
+        enum directive_type type, const char *label)
 {
-    return NULL;
+    struct directive *result = NULL;
+
+    switch (type) {
+        case D_GLOBAL:
+            result = malloc(sizeof *result);
+            result->type = type;
+            result->data = malloc(LABEL_LEN);
+            snprintf(result->data, LABEL_LEN, label);
+            break;
+        default: {
+            char buf[128];
+            snprintf(buf, sizeof buf, "Unknown directive type %d", type);
+            tenyr_error(lloc, pd, buf);
+        }
+    }
+
+    return result;
 }
 
 static void handle_directive(struct directive *d, struct instruction_list *p)
 {
+    // TODO
     return;
 }
 

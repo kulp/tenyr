@@ -4,6 +4,12 @@
 #include "ops.h"
 #include "parser.h"
 
+#define SMALL_IMMEDIATE_BITWIDTH    12
+#define LARGE_IMMEDIATE_BITWIDTH    24
+#define WORD_BITWIDTH               32
+
+#define LABEL_LEN 32 // TODO document length
+
 struct parse_data {
     void *scanner;
     struct {
@@ -25,6 +31,42 @@ struct parse_data {
 };
 
 int tenyr_parse(struct parse_data *);
+
+struct const_expr {
+    enum { OP2, LAB, IMM, ICI } type; // TODO namespace
+    int32_t i;
+    char labelname[LABEL_LEN]; // TODO make arbitrarily long
+    int op;
+    struct instruction *insn; // for '.'-resolving
+    struct const_expr *left, *right;
+};
+
+struct const_expr_list {
+    struct const_expr *ce;
+    struct const_expr_list *right;
+};
+
+struct expr {
+    int deref;
+    int x;
+    int op;
+    int y;
+    int32_t i;
+    int width;  ///< width of relocation XXX cleanup
+    int mult;   ///< multiplier from addsub
+    struct const_expr *ce;
+};
+
+struct cstr {
+    int len;
+    char *str;
+    struct cstr *right;
+};
+
+struct directive {
+    /* enum directive_type */int type;
+    void *data;
+};
 
 #endif
 
