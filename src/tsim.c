@@ -233,7 +233,7 @@ static int run_recipes(struct state *s)
 static int find_recipe_by_name(const void *_a, const void *_b)
 {
     const struct format *a = _a, *b = _b;
-    return strcasecmp(a->name, b->name);
+    return strcmp(a->name, b->name);
 }
 
 static int add_recipe(struct state *s, const char *name)

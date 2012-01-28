@@ -15,11 +15,6 @@
 #define LABEL_LEN    32
 #define LINE_LEN    512
 
-#if _WIN32
-int _stricmp(const char *, const char *);
-#define strcasecmp _stricmp
-#endif
-
 enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
 extern jmp_buf errbuf;
 void fatal(const char *message, enum errcode code);
