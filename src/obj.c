@@ -113,6 +113,26 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
         }
     }
 
+    {
+        UWord remaining = o->rlc_count;
+        if (remaining) {
+            struct objrlc *last = NULL,
+                          *rlc  = o->relocs = calloc(remaining, sizeof *rlc);
+            while (remaining-- > 0) {
+                GET(rlc->flags, in);
+                GET(rlc->name, in);
+                GET(rlc->addr, in);
+                GET(rlc->width, in);
+
+                rlc->prev = last;
+                if (last) last->next = rlc;
+                last = rlc;
+                rlc++;
+            }
+        }
+    }
+
+    // TODO this isn't actually useful ; change its semantics or remove it
     *size = sizeof *o;
 
     return 0;
