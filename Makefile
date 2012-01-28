@@ -22,8 +22,7 @@ GENDIR = src/gen
 VPATH += src src/devices $(GENDIR)
 INCLUDES += src $(GENDIR)
 
-BUILD_NAME := $(shell git describe --long --always)
-DEFINES += BUILD_NAME='$(BUILD_NAME)'
+BUILD_NAME := $(shell git describe --tags --long --always)
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
@@ -37,6 +36,8 @@ tas tsim: asm.o obj.o
 tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
 tld: obj.o
+
+tas.o tsim.o tld.o: DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
 lexer.o: parser.h
 
