@@ -256,11 +256,11 @@ reloc_expr[outer]
 
 const_expr[outer]
     : atom
-    | const_expr[left] reloc_op const_expr[right]
+    | const_expr[left] reloc_op atom[right]
         {   $outer = make_const_expr(OP2, $reloc_op, $left, $right); }
-    | const_expr[left] '*' const_expr[right]
+    | const_expr[left] '*' atom[right]
         {   $outer = make_const_expr(OP2, '*', $left, $right); }
-    | const_expr[left] LSH const_expr[right]
+    | const_expr[left] LSH atom[right]
         {   $outer = make_const_expr(OP2, LSH, $left, $right); }
 
 atom
