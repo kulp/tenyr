@@ -372,16 +372,13 @@ int main(int argc, char *argv[])
         if (!in) {
             char buf[128];
             snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[optind]);
-            perror(buf);
-            rc = EXIT_FAILURE;
-            goto done;
+            fatal(PRINT_ERRNO, buf);
         }
     }
 
     load_sim(s, f, in, load_address, start_address);
     run_sim(s);
 
-done:
     if (in)
         fclose(in);
 

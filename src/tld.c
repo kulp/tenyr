@@ -91,10 +91,8 @@ int main(int argc, char *argv[])
 
     for (int i = optind; i < argc; i++) {
         FILE *in = NULL;
-        if (!out) {
-            perror("Failed to open output file");
-            return EXIT_FAILURE;
-        }
+        if (!out)
+            fatal(PRINT_ERRNO, "Failed to open output file");
 
         if (!strcmp(argv[i], "-")) {
             in = stdin;
@@ -103,8 +101,7 @@ int main(int argc, char *argv[])
             if (!in) {
                 char buf[128];
                 snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
-                perror(buf);
-                return EXIT_FAILURE;
+                fatal(PRINT_ERRNO, buf);
             }
         }
 

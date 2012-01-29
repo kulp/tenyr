@@ -1,8 +1,13 @@
 CC       = gcc
-CFLAGS  += -std=c99
 CFLAGS  += -g
 LDFLAGS += -g
-CFLAGS  += -Wall -Wextra $(PEDANTIC)
+
+GCC_CFLAGS += -std=c99
+GCC_CFLAGS += -Wall -Wextra $(PEDANTIC)
+
+ifeq ($(CC),gcc)
+CFLAGS += $(GCC_CFLAGS)
+endif
 
 # Optimised build
 ifeq ($(DEBUG),)
@@ -18,7 +23,7 @@ PEDANTIC = -Werror -pedantic-errors
 FLEX  = flex
 BISON = bison
 
-CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c) #parser.c lexer.c
+CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
 GENDIR = src/gen
 
 VPATH += src src/devices $(GENDIR)

@@ -27,10 +27,7 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
-static const char *version()
-{
-    return "tas version " STR(BUILD_NAME);
-}
+#define version() "tas version " STR(BUILD_NAME)
 
 static int usage(const char *me)
 {
@@ -75,6 +72,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
     uint32_t left, right;
 
     switch (ce->type) {
+        case EXT:
         case LAB: return label_lookup(pd->labels, ce->labelname, result);
         case ICI: *result = top_insn->reladdr; return 0;
         case IMM: *result = ce->i; return 0;
@@ -92,7 +90,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
             }
             return 1;
         default:
-            fatal(0, "Unrecognised const_expr type");
+            fatal(0, "Unrecognised const_expr type %d", ce->type);
             return 1;
     }
 }
@@ -101,6 +99,7 @@ static void ce_free(struct const_expr *ce, int recurse)
 {
     if (recurse)
         switch (ce->type) {
+            case EXT:
             case LAB:
             case ICI:
                 break;
@@ -300,16 +299,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (optind >= argc) {
+    if (optind >= argc)
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
-    }
 
     for (int i = optind; i < argc; i++) {
         FILE *in = NULL;
-        if (!out) {
-            perror("Failed to open output file");
-            return EXIT_FAILURE;
-        }
+        if (!out)
+            fatal(PRINT_ERRNO, "Failed to open output file");
 
         if (!strcmp(argv[i], "-")) {
             in = stdin;
@@ -318,8 +314,7 @@ int main(int argc, char *argv[])
             if (!in) {
                 char buf[128];
                 snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
-                perror(buf);
-                return EXIT_FAILURE;
+                fatal(PRINT_ERRNO, buf);
             }
         }
 

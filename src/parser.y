@@ -72,7 +72,7 @@ void ce_free(struct const_expr *ce, int recurse);
 
 %type <ce> const_expr pconst_expr reloc_expr atom eref
 %type <cl> reloc_expr_list
-%type <expr> expr lhs
+%type <expr> rhs rhs_plain rhs_deref lhs lhs_plain lhs_deref
 %type <i> arrow immediate regname reloc_op
 %type <insn> insn
 %type <op> op
@@ -81,6 +81,8 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <str> lref label
 %type <cstr> string
 %type <dctv> directive
+
+%expect 5
 
 %union {
     int32_t i;
@@ -139,17 +141,17 @@ insn[outer]
     : ILLEGAL
         {   $outer = calloc(1, sizeof *$outer);
             $outer->u.word = -1; }
-    | lhs arrow expr
-        {   if ($expr->op == OP_RESERVED) {
+    | lhs arrow rhs
+        {   if ($rhs->op == OP_RESERVED) {
                 if ($arrow == 0) {
-                    $outer = make_insn_immediate(pd, $lhs, $expr->ce);
+                    $outer = make_insn_immediate(pd, $lhs, $rhs->ce);
                 } else {
-                    $outer = make_insn_general(pd, $lhs, $arrow, $expr);
+                    $outer = make_insn_general(pd, $lhs, $arrow, $rhs);
                 }
             } else {
-                $outer = make_insn_general(pd, $lhs, $arrow, $expr);
+                $outer = make_insn_general(pd, $lhs, $arrow, $rhs);
             }
-            free($expr);
+            free($rhs);
             free($lhs); }
     | label ':' insn[inner]
         {   $outer = $inner;
@@ -192,24 +194,40 @@ reloc_expr_list[outer]
             $outer->right = $inner;
             $outer->ce = $expr; }
 
-lhs[outer]
-    : regname { ($outer = malloc(sizeof *$outer))->x = $regname; $outer->deref = 0; }
-    /* permits arbitrary nesting, but meaningless */
-    | '[' lhs[inner] ']' { $outer = $inner; $outer->deref = 1; }
+lhs
+    : lhs_plain
+    | lhs_deref
 
-expr[outer]
+lhs_plain
+    : regname
+        {   ($lhs_plain = malloc(sizeof *$lhs_plain))->x = $regname;
+            $lhs_plain->deref = 0; }
+
+lhs_deref
+    : '[' lhs_plain ']'
+        {   $lhs_deref = $lhs_plain;
+            $lhs_deref->deref = 1; }
+
+rhs
+    : rhs_plain
+    | rhs_deref
+
+rhs_plain
     : regname[x]
-        { $outer = make_expr($x, OP_BITWISE_OR, 0, 0, NULL); }
+        { $rhs_plain = make_expr($x, OP_BITWISE_OR, 0, 0, NULL); }
     | regname[x] op regname[y]
-        { $outer = make_expr($x, $op, $y, 0, NULL); }
+        { $rhs_plain = make_expr($x, $op, $y, 0, NULL); }
     | regname[x] addsub reloc_expr
-        { $outer = make_expr($x, OP_BITWISE_OR, 0, $addsub, $reloc_expr); }
+        { $rhs_plain = make_expr($x, OP_BITWISE_OR, 0, $addsub, $reloc_expr); }
     | regname[x] op regname[y] addsub reloc_expr
-        { $outer = make_expr($x, $op, $y, $addsub, $reloc_expr); }
+        { $rhs_plain = make_expr($x, $op, $y, $addsub, $reloc_expr); }
     | reloc_expr
-        { $outer = make_expr(0, OP_RESERVED, 0, 1, $reloc_expr); }
-    | '[' expr[inner] ']' /* TODO lookahead to prevent nesting of [ */
-        { $outer = $inner; $outer->deref = 1; }
+        { $rhs_plain = make_expr(0, OP_RESERVED, 0, 1, $reloc_expr); }
+
+rhs_deref
+    : '[' rhs_plain ']'
+        {   $rhs_deref = $rhs_plain;
+            $rhs_deref->deref = 1; }
 
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
@@ -280,7 +298,7 @@ pconst_expr
 
 eref
     : '@' LABEL
-        {   $eref = make_const_expr(LAB, 0, NULL, NULL);
+        {   $eref = make_const_expr(EXT, 0, NULL, NULL);
             strncpy($eref->labelname, $LABEL, sizeof $eref->labelname);
             $eref->labelname[sizeof $eref->labelname - 1] = 0; }
 
