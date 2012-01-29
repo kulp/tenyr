@@ -73,7 +73,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <ce> const_expr pconst_expr reloc_expr atom eref
 %type <cl> reloc_expr_list
 %type <expr> expr lhs
-%type <i> arrow immediate regname const_op reloc_op
+%type <i> arrow immediate regname reloc_op
 %type <insn> insn
 %type <op> op
 %type <program> program ascii data ascii_or_data
@@ -246,11 +246,6 @@ reloc_op
     : '+' { $$ = '+'; }
     | '-' { $$ = '-'; }
 
-const_op
-    : reloc_op
-    | '*' { $$ = '*'; }
-    | LSH { $$ = LSH; }
-
 reloc_expr[outer]
     : const_expr
     | eref
@@ -261,8 +256,12 @@ reloc_expr[outer]
 
 const_expr[outer]
     : atom
-    | const_expr[left] const_op const_expr[right]
-        {   $outer = make_const_expr(OP2, $const_op, $left, $right); }
+    | const_expr[left] reloc_op const_expr[right]
+        {   $outer = make_const_expr(OP2, $reloc_op, $left, $right); }
+    | const_expr[left] '*' const_expr[right]
+        {   $outer = make_const_expr(OP2, '*', $left, $right); }
+    | const_expr[left] LSH const_expr[right]
+        {   $outer = make_const_expr(OP2, LSH, $left, $right); }
 
 atom
     : pconst_expr
