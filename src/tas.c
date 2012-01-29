@@ -166,11 +166,10 @@ static int check_labels(struct label_list *labels)
 
         if (*name != Node->label->name) {
             rc = 1;
-            goto cleanup; // take that, district !
+            break;
         }
     }
 
-cleanup:
     // delete from tree what we added to it
     list_foreach(label_list, Node, top) {
         if (!tree) break;

@@ -56,7 +56,8 @@ int run_instruction(struct state *s, struct instruction *i)
                 case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Yu) + Is; break;
                 case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Yu) + Is; break;
 
-                case OP_RESERVED            : goto bad;
+                case OP_RESERVED:
+                    fatal(0, "Encountered reserved opcode");
             }
 
             break;
@@ -76,7 +77,10 @@ int run_instruction(struct state *s, struct instruction *i)
             break;
         }
         default:
-            goto bad;
+            if (s->conf.abort)
+                abort();
+            else
+                return 1;
     }
 
     // common activity block
@@ -115,12 +119,6 @@ int run_instruction(struct state *s, struct instruction *i)
     }
 
     return 0;
-
-bad:
-    if (s->conf.abort)
-        abort();
-    else
-        return 1;
 }
 
 

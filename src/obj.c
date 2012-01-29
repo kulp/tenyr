@@ -38,7 +38,7 @@ static int obj_v0_write(struct obj_v0 *o, FILE *out)
         PUT(rec->addr, out);
         PUT(rec->size, out);
         if (fwrite(rec->data, sizeof *rec->data, rec->size, out) != rec->size)
-            goto bad;
+            fatal(PRINT_ERRNO, "Unknown error in %s while emitting object", __func__);
     }
 
     PUT(o->sym_count, out);
@@ -57,9 +57,6 @@ static int obj_v0_write(struct obj_v0 *o, FILE *out)
     }
 
     return 0;
-bad:
-    fatal(0, "Unknown error occurred while emitting object");
-    return -1; // never reached, but keeps compiler happy
 }
 
 int obj_write(struct obj *o, FILE *out)
@@ -87,7 +84,7 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
         GET(rec->size, in);
         rec->data = calloc(rec->size, sizeof *rec->data);
         if (fread(rec->data, sizeof *rec->data, rec->size, in) != rec->size)
-            goto bad;
+            fatal(PRINT_ERRNO, "Unknown error occurred while parsing object");
     }
 
     for_counted_get(objsym, sym, o->symbols, o->sym_count) {
@@ -107,9 +104,6 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
     *size = sizeof *o;
 
     return 0;
-bad:
-    fatal(0, "Unknown error occurred while parsing object");
-    return -1; // never reached, but keeps compiler happy
 }
 
 int obj_read(struct obj *o, size_t *size, FILE *in)
@@ -118,7 +112,7 @@ int obj_read(struct obj *o, size_t *size, FILE *in)
     GET(buf, in);
 
     if (memcmp(buf, MAGIC_BYTES, sizeof buf))
-        goto bad;
+        fatal(0, "Bad magic when loading object");
 
     GET(o->magic.parsed.version, in);
 
@@ -127,8 +121,7 @@ int obj_read(struct obj *o, size_t *size, FILE *in)
         default:
             fatal(0, "Unhandled version number when loading object");
     }
-bad:
-    fatal(0, "Bad magic when loading object");
+
     return -1; // never reached, but keeps compiler happy
 }
 
