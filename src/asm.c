@@ -61,10 +61,10 @@ int print_disassembly(FILE *out, struct instruction *i)
                   int   f8 = g->imm;                // immediate value
                   char  f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
-            // indices : [type][op1][op2][op3]
-            static const char fmts[2][2][2][2][40] = {
+            // indices : [g->p][op1][op2][op3]
+            static const char fmts[2][2][2][2][34] = {
                 // args :       f0f1f2 f3 f4f5   f6 f7       f8f9
-                [0][0][0][0] = "%c%c%c %s %cA"                "%c", // [Z] <- [A          ]
+              //[0][0][0][0] = "%c%c%c %s %c"                 "%c", // [Z] <- [           ]
                 [0][0][0][1] = "%c%c%c %s %c"           "0x%08x%c", // [Z] <- [        0x0]
                 [0][0][1][0] = "%c%c%c %s %c"      "%c"       "%c", // [Z] <- [    Y      ]
                 [0][0][1][1] = "%c%c%c %s %c"      "%c + 0x%08x%c", // [Z] <- [    Y + 0x0]
@@ -72,10 +72,8 @@ int print_disassembly(FILE *out, struct instruction *i)
                 [0][1][0][1] = "%c%c%c %s %c%c"      " + 0x%08x%c", // [Z] <- [X     + 0x0]
                 [0][1][1][0] = "%c%c%c %s %c%c %-2s %c"       "%c", // [Z] <- [X - Y      ]
                 [0][1][1][1] = "%c%c%c %s %c%c %-2s %c + 0x%08x%c", // [Z] <- [X - Y + 0x0]
-
-
                 // args :       f0f1f2 f3 f4f5   f6 f8       f7f9
-                [1][0][0][0] = "%c%c%c %s %cA"                "%c", // [Z] <- [A          ]
+              //[1][0][0][0] = "%c%c%c %s %c"                 "%c", // [Z] <- [           ]
                 [1][0][0][1] = "%c%c%c %s %c"               "%c%c", // [Z] <- [          Y]
                 [1][0][1][0] = "%c%c%c %s %c"      "0x%08x"   "%c", // [Z] <- [    0x0    ]
                 [1][0][1][1] = "%c%c%c %s %c"      "0x%08x + %c%c", // [Z] <- [    0x0 + Y]
@@ -85,16 +83,15 @@ int print_disassembly(FILE *out, struct instruction *i)
                 [1][1][1][1] = "%c%c%c %s %c%c %-2s 0x%08x + %c%c", // [Z] <- [X - 0x0 + Y]
             };
 
-            int type = g->p; // XXX fold in
-            int op1 = !(g->x == 0 && g->op == OP_BITWISE_OR);
-            int op2 = (type == 1) ? (!!g->imm) : !(g->y == 0 && g->op == OP_BITWISE_OR);
-            int op3 = (type == 0) ? (!!g->imm) : !(g->y == 0);
+            int op3 = (g->p == 0) ? (!!g->imm) : !(g->y == 0);
+            int op2 = (g->p == 1) ? (!!g->imm) : !(g->y == 0 && g->op == OP_BITWISE_OR);
+            int op1 = !(g->x == 0 && g->op == OP_BITWISE_OR) || (!op2 && !op3);
 
             #define C_(A,B,C,D) (((A) << 12) | ((B) << 8) | ((C) << 4) | ((D) << 0))
-            #define PUT(...) fprintf(out, fmts[type][op1][op2][op3], __VA_ARGS__)
+            #define PUT(...) fprintf(out, fmts[g->p][op1][op2][op3], __VA_ARGS__)
 
-            switch (C_(type,op1,op2,op3)) {
-                case C_(0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+            switch (C_(g->p,op1,op2,op3)) {
+              //case C_(0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
                 case C_(0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
                 case C_(0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
                 case C_(0,0,1,1): PUT(f0,f1,f2,f3,f4,      f7,f8,f9); break;
@@ -103,7 +100,7 @@ int print_disassembly(FILE *out, struct instruction *i)
                 case C_(0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
                 case C_(0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,f8,f9); break;
 
-                case C_(1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+              //case C_(1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
                 case C_(1,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
                 case C_(1,0,1,0): PUT(f0,f1,f2,f3,f4,      f8,   f9); break;
                 case C_(1,0,1,1): PUT(f0,f1,f2,f3,f4,      f8,f7,f9); break;
@@ -113,8 +110,8 @@ int print_disassembly(FILE *out, struct instruction *i)
                 case C_(1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f8,f7,f9); break;
 
                 default:
-                    fatal(0, "Unsupported type/op1/op2/op3 %04x", C_(type,op1,op2,op3));
-                    //fprintf(out, ".word 0x%08x", i->u.word);
+                    fatal(0, "Unsupported type/op1/op2/op3 %04x",
+                            C_(g->p,op1,op2,op3));
             }
 
             return 0;
