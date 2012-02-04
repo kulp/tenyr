@@ -22,7 +22,7 @@ struct link_state {
     struct obj_list {
         struct obj *obj;
         struct obj_list *next;
-    } *objs;
+    } *objs, **next_obj;
     struct obj *relocated;
     void *defns;    ///< tsearch tree of struct defns
 
@@ -62,12 +62,12 @@ static int do_load(struct link_state *s, FILE *in)
     struct obj *o = calloc(1, sizeof *o);
     size_t size;
     rc = obj_read(o, &size, in);
-
-    // TODO this pushes the objects onto a stack, essentially ; should object
-    // processing order matter, revisit this
     node->obj = o;
-    node->next = s->objs;
-    s->objs = node;
+    // put the objects on the list in order
+    node->next = NULL;
+    *s->next_obj = node;
+    s->next_obj = &node->next;
+
     s->obj_count++;
 
     return rc;
@@ -97,19 +97,26 @@ static int do_link(struct link_state *s)
 
     typedef int cmp(const void *, const void*);
 
+    // running offset, tracking where to pack objects tightly one after another
+    UWord offset = 0;
+
     // read in all symbols
     list_foreach(obj_list, Node, s->objs) {
-        if (Node->obj->sym_count) list_foreach(objsym, sym, Node->obj->symbols) {
+        struct obj *i = Node->obj;
+
+        if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
             struct defn *def = calloc(1, sizeof *def);
             strncpy(def->name, sym->name, sizeof def->name);
             def->name[sizeof def->name - 1] = 0;
-            def->obj = Node->obj;
-            def->reladdr = sym->value;
+            def->obj = i;
+            def->reladdr = sym->value + offset;
 
             struct defn **look = tsearch(def, &s->defns, (cmp*)strcmp);
             if (*look != def)
                 fatal(0, "Duplicate definition for symbol `%s'", def->name);
         }
+
+        offset += i->records->size;
     }
 
     // iterate over relocs
@@ -137,6 +144,7 @@ static int do_link(struct link_state *s)
 
     long rec_count = 0;
     // copy records
+    struct objrec **ptr_objrec = &o->records, *front = NULL;
     list_foreach(obj_list, Node, s->objs) {
         struct obj *i = Node->obj;
 
@@ -146,22 +154,27 @@ static int do_link(struct link_state *s)
             n->addr = rec->addr;
             n->size = rec->size;
             n->data = malloc(rec->size * sizeof *n->data);
+            n->next = NULL;
+            n->prev = *ptr_objrec;
             memcpy(n->data, rec->data, rec->size * sizeof *n->data);
 
-            if (o->records) o->records->prev = n;
-            n->next = o->records;
-            o->records = n;
+            if (*ptr_objrec) (*ptr_objrec)->next = n;
+            if (!front) front = n;
+            *ptr_objrec = n;
+            ptr_objrec = &n->next;
 
             rec_count++;
         }
     }
+
+    o->records = front; /// XXX hack
 
     // TODO
     o->rec_count = rec_count;
     o->sym_count = s->syms;
     o->rlc_count = s->rlcs;
     o->length = 5 + s->words; // XXX explain
-    o->records->size = s->addr;
+    //o->records->size = s->addr;
 
     o->symbols = realloc(o->symbols, o->sym_count * sizeof *o->symbols);
     o->relocs  = realloc(o->relocs , o->rlc_count * sizeof *o->relocs);
@@ -185,6 +198,7 @@ int main(int argc, char *argv[])
 
     struct link_state _s = {
         .addr = 0,
+        .next_obj = &_s.objs,
     }, *s = &_s;
 
     if ((rc = setjmp(errbuf))) {

@@ -205,7 +205,7 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
         return -1;
 
     if (u->pos >= rec->size) {
-        rec = rec->next;
+        u->curr_rec = rec = rec->next;
         u->pos = 0;
 
         if (!rec) {

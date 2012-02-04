@@ -11,7 +11,7 @@
 #define GET(What,Where) get_sized(&(What), sizeof (What), Where)
 
 #define for_counted_put(Tag,Name,List,Count) \
-    for (UWord remaining = (Count); remaining > 0; remaining--) \
+    for (int _dummy = 0; !_dummy && (Count) > 0; _dummy++) \
         list_foreach(Tag, Name, List)
 
 static inline void get_sized(void *what, size_t size, FILE *where)
@@ -132,8 +132,9 @@ static void obj_v0_free(struct obj *o)
     list_foreach(objrec, rec, o->records) {
         if (remaining-- <= 0) break;
         free(rec->data);
-        free(rec);
     }
+
+    free(o->records);
 
     free(o);
 }
