@@ -15,12 +15,12 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width);
 static struct const_expr *make_const_expr(enum const_expr_type type, int op,
         struct const_expr *left, struct const_expr *right);
-static struct expr *make_expr(int x, int op, int y, int mult, struct
+static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
         const_expr *defexpr);
+static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
+        int y);
 static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
-static struct instruction *make_insn_immediate(struct parse_data *pd, struct
-        expr *lhs, struct const_expr *ce);
 static struct instruction_list *make_string(struct cstr *cs);
 static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
@@ -72,9 +72,9 @@ void ce_free(struct const_expr *ce, int recurse);
 
 %type <ce> const_expr pconst_expr reloc_expr atom eref
 %type <cl> reloc_expr_list
-%type <expr> rhs rhs_plain rhs_deref lhs lhs_plain lhs_deref
+%type <expr> rhs rhs_plain rhs_plain_type0 rhs_plain_type1 rhs_deref lhs_plain lhs_deref
 %type <i> arrow immediate regname reloc_op
-%type <insn> insn
+%type <insn> insn insn_inner
 %type <op> op
 %type <program> program ascii data ascii_or_data
 %type <s> addsub
@@ -141,18 +141,7 @@ insn[outer]
     : ILLEGAL
         {   $outer = calloc(1, sizeof *$outer);
             $outer->u.word = -1; }
-    | lhs arrow rhs
-        {   if ($rhs->op == OP_RESERVED) {
-                if ($arrow == 0) {
-                    $outer = make_insn_immediate(pd, $lhs, $rhs->ce);
-                } else {
-                    $outer = make_insn_general(pd, $lhs, $arrow, $rhs);
-                }
-            } else {
-                $outer = make_insn_general(pd, $lhs, $arrow, $rhs);
-            }
-            free($rhs);
-            free($lhs); }
+    | insn_inner
     | label ':' insn[inner]
         {   $outer = $inner;
             struct label *n = add_label_to_insn(&yyloc, $inner, $label);
@@ -160,6 +149,16 @@ insn[outer]
             l->next  = pd->labels;
             l->label = n;
             pd->labels = l; }
+
+insn_inner
+    : lhs_plain arrow rhs
+        {   $insn_inner = make_insn_general(pd, $lhs_plain, $arrow, $rhs);
+            free($rhs);
+            free($lhs_plain); }
+    | lhs_deref arrow rhs_plain
+        {   $insn_inner = make_insn_general(pd, $lhs_deref, $arrow, $rhs_plain);
+            free($rhs_plain);
+            free($lhs_deref); }
 
 string[outer]
     :   /* empty */
@@ -194,10 +193,6 @@ reloc_expr_list[outer]
             $outer->right = $inner;
             $outer->ce = $expr; }
 
-lhs
-    : lhs_plain
-    | lhs_deref
-
 lhs_plain
     : regname
         {   ($lhs_plain = malloc(sizeof *$lhs_plain))->x = $regname;
@@ -213,16 +208,24 @@ rhs
     | rhs_deref
 
 rhs_plain
+    : rhs_plain_type0
+    | rhs_plain_type1
+
+rhs_plain_type0
     : regname[x]
-        { $rhs_plain = make_expr($x, OP_BITWISE_OR, 0, 0, NULL); }
+        { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
     | regname[x] op regname[y]
-        { $rhs_plain = make_expr($x, $op, $y, 0, NULL); }
-    | regname[x] addsub reloc_expr
-        { $rhs_plain = make_expr($x, OP_BITWISE_OR, 0, $addsub, $reloc_expr); }
+        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, 0, NULL); }
     | regname[x] op regname[y] addsub reloc_expr
-        { $rhs_plain = make_expr($x, $op, $y, $addsub, $reloc_expr); }
+        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $reloc_expr); }
+
+rhs_plain_type1
+    : regname[x] op reloc_expr
+        { $rhs_plain_type1 = make_expr_type1($x, $op, $reloc_expr, 0); }
+    | regname[x] op reloc_expr addsub regname[y]
+        { $rhs_plain_type1 = make_expr_type1($x, $op, $reloc_expr, $y); }
     | reloc_expr
-        { $rhs_plain = make_expr(0, OP_RESERVED, 0, 1, $reloc_expr); }
+        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $reloc_expr, 0); }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -329,41 +332,22 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
 {
     struct instruction *insn = calloc(1, sizeof *insn);
 
-    insn->u._0xxx.t   = 0;
-    insn->u._0xxx.z   = lhs->x;
-    insn->u._0xxx.dd  = (lhs->deref << 1) | (expr->deref);
-    insn->u._0xxx.x   = expr->x;
-    insn->u._0xxx.y   = expr->y;
-    insn->u._0xxx.r   = arrow;
-    insn->u._0xxx.op  = expr->op;
-    insn->u._0xxx.imm = expr->i;
+    int dd = ((lhs->deref | !!arrow) << 1) | expr->deref;
 
-    // b -> [0x333]
-    if (expr->op == OP_RESERVED) {
-        insn->u._0xxx.op = OP_BITWISE_OR;
-        insn->u._0xxx.x  = 0;
-    }
+    insn->u._0xxx.t   = 0;
+    insn->u._0xxx.p   = expr->type;
+    insn->u._0xxx.dd  = dd;
+    insn->u._0xxx.z   = lhs->x;
+    insn->u._0xxx.x   = expr->x;
+    insn->u._0xxx.op  = expr->op;
+    insn->u._0xxx.y   = expr->y;
+    insn->u._0xxx.imm = expr->i;
 
     if (expr->ce) {
         add_deferred_expr(pd, expr->ce, expr->mult, &insn->u.word,
                 SMALL_IMMEDIATE_BITWIDTH);
         expr->ce->insn = insn;
     }
-
-    return insn;
-}
-
-static struct instruction *make_insn_immediate(struct parse_data *pd, struct
-        expr *lhs, struct const_expr *ce)
-{
-    struct instruction *insn = calloc(1, sizeof *insn);
-
-    insn->label = NULL;
-    ce->insn = insn;
-    add_deferred_expr(pd, ce, 1, &insn->u.word, LARGE_IMMEDIATE_BITWIDTH);
-    insn->u._10xx.t  = 2;
-    insn->u._10xx.z  = lhs->x;
-    insn->u._10xx.dd = lhs->deref << 1;
 
     return insn;
 }
@@ -398,11 +382,12 @@ static struct const_expr *make_const_expr(enum const_expr_type type, int op,
     return n;
 }
 
-static struct expr *make_expr(int x, int op, int y, int mult, struct
+static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
         const_expr *defexpr)
 {
     struct expr *e = malloc(sizeof *e);
 
+    e->type  = 0;
     e->deref = 0;
     e->x     = x;
     e->op    = op;
@@ -417,6 +402,25 @@ static struct expr *make_expr(int x, int op, int y, int mult, struct
     return e;
 }
 
+static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
+        int y)
+{
+    struct expr *e = malloc(sizeof *e);
+
+    e->type  = 1;
+    e->deref = 0;
+    e->x     = x;
+    e->op    = op;
+    e->ce    = defexpr;
+    e->mult  = 1;
+    e->y     = y;
+    if (defexpr)
+        e->i = 0xfffffbad; // put in a placeholder that must be overwritten
+    else
+        e->i = 0; // there was no const_expr ; zero defined by language
+
+    return e;
+}
 static struct instruction_list *make_string(struct cstr *cs)
 {
     struct instruction_list *result = NULL, **rp = &result;

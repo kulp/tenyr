@@ -34,7 +34,7 @@ int run_instruction(struct state *s, struct instruction *i)
             int32_t  Is = SEXTEND(12, g->imm);
             deref_rhs = g->dd & 1;
             deref_lhs = g->dd & 2;
-            reversed = !!g->r;
+            reversed = g->dd == 3;
 
             switch (g->op) {
                 case OP_ADD                 : *rhs =  (Xs  +  Ys) + Is; break;
@@ -59,20 +59,6 @@ int run_instruction(struct state *s, struct instruction *i)
                 case OP_RESERVED:
                     fatal(0, "Encountered reserved opcode");
             }
-
-            break;
-        }
-        case 0x8:
-        case 0x9:
-        case 0xa:
-        case 0xb: {
-            struct instruction_load_immediate *g = &i->u._10xx;
-            Z = &s->machine.regs[g->z];
-            int32_t _imm = g->imm;
-            deref_rhs = g->dd & 1;
-            deref_lhs = g->dd & 2;
-            reversed = 0;
-            rhs = &_imm;
 
             break;
         }

@@ -42,10 +42,8 @@ int print_disassembly(FILE *out, struct instruction *i)
         case 0x6:
         case 0x7: {
             struct instruction_general *g = &i->u._0xxx;
-            int ld = g->dd & 2;
-            int rd = g->dd & 1;
-            int noop = g->y == 0 && g->op == OP_BITWISE_OR;
-            int imm = g->imm;
+            int rd = g->dd &  1;
+            int ld = g->dd == 2;
 
             // LHS
                   char  f0 = ld ? '[' : ' ';        // left side dereferenced ?
@@ -53,7 +51,7 @@ int print_disassembly(FILE *out, struct instruction *i)
                   char  f2 = ld ? ']' : ' ';        // left side dereferenced ?
 
             // arrow
-            const char *f3 = g->r ? "->" : "<-";    // arrow direction
+            const char *f3 = (g->dd == 3) ? "->" : "<-";    // arrow direction
 
             // RHS
                   char  f4 = rd ? '[' : ' ';        // right side dereferenced ?
@@ -63,34 +61,62 @@ int print_disassembly(FILE *out, struct instruction *i)
                   int   f8 = g->imm;                // immediate value
                   char  f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
-            // argument placement :         f0f1f2 f3 f4f5   f6 f7       f8f9
-            static const char  imm_nop[] = "%c%c%c %s %c%c "      "+ 0x%08x%c";
-            static const char  imm_op [] = "%c%c%c %s %c%c %-2s %c + 0x%08x%c";
-            static const char nimm_nop[] = "%c%c%c %s %c%c"               "%c";
-            static const char nimm_op [] = "%c%c%c %s %c%c %-2s %c"       "%c";
+            // indices : [type][op1][op2][op3]
+            static const char fmts[2][2][2][2][40] = {
+                // args :       f0f1f2 f3 f4f5   f6 f7       f8f9
+                [0][0][0][0] = "%c%c%c %s %cA"                "%c", // [Z] <- [A          ]
+                [0][0][0][1] = "%c%c%c %s %c"           "0x%08x%c", // [Z] <- [        0x0]
+                [0][0][1][0] = "%c%c%c %s %c"      "%c"       "%c", // [Z] <- [    Y      ]
+                [0][0][1][1] = "%c%c%c %s %c"      "%c + 0x%08x%c", // [Z] <- [    Y + 0x0]
+                [0][1][0][0] = "%c%c%c %s %c%c"               "%c", // [Z] <- [X          ]
+                [0][1][0][1] = "%c%c%c %s %c%c"      " + 0x%08x%c", // [Z] <- [X     + 0x0]
+                [0][1][1][0] = "%c%c%c %s %c%c %-2s %c"       "%c", // [Z] <- [X - Y      ]
+                [0][1][1][1] = "%c%c%c %s %c%c %-2s %c + 0x%08x%c", // [Z] <- [X - Y + 0x0]
 
-            imm ? noop ? fprintf(out,  imm_nop, f0,f1,f2,f3,f4,f5,      f8,f9)
-                       : fprintf(out,  imm_op , f0,f1,f2,f3,f4,f5,f6,f7,f8,f9)
-                : noop ? fprintf(out, nimm_nop, f0,f1,f2,f3,f4,f5,         f9)
-                       : fprintf(out, nimm_op , f0,f1,f2,f3,f4,f5,f6,f7,   f9);
 
-            return 0;
-        }
-        case 0x8:
-        case 0x9:
-        case 0xa:
-        case 0xb: {
-            struct instruction_load_immediate *g = &i->u._10xx;
-            int ld = g->dd & 2;
-            int rd = g->dd & 1;
-            fprintf(out, "%c%c%c <- %c0x%08x%c",
-                    ld ? '[' : ' ', // left side dereferenced ?
-                    'A' + g->z,     // register name for Z
-                    ld ? ']' : ' ', // left side dereferenced ?
-                    rd ? '[' : ' ', // right side dereferenced ?
-                    g->imm,         // immediate value
-                    rd ? ']' : ' '  // right side dereferenced ?
-                );
+                // args :       f0f1f2 f3 f4f5   f6 f8       f7f9
+                [1][0][0][0] = "%c%c%c %s %cA"                "%c", // [Z] <- [A          ]
+                [1][0][0][1] = "%c%c%c %s %c"               "%c%c", // [Z] <- [          Y]
+                [1][0][1][0] = "%c%c%c %s %c"      "0x%08x"   "%c", // [Z] <- [    0x0    ]
+                [1][0][1][1] = "%c%c%c %s %c"      "0x%08x + %c%c", // [Z] <- [    0x0 + Y]
+                [1][1][0][0] = "%c%c%c %s %c%c"               "%c", // [Z] <- [X          ]
+                [1][1][0][1] = "%c%c%c %s %c%c"          " + %c%c", // [Z] <- [X       + Y]
+                [1][1][1][0] = "%c%c%c %s %c%c %-2s 0x%08x"   "%c", // [Z] <- [X - 0x0    ]
+                [1][1][1][1] = "%c%c%c %s %c%c %-2s 0x%08x + %c%c", // [Z] <- [X - 0x0 + Y]
+            };
+
+            int type = g->p; // XXX fold in
+            int op1 = !(g->x == 0 && g->op == OP_BITWISE_OR);
+            int op2 = (type == 1) ? (!!g->imm) : !(g->y == 0 && g->op == OP_BITWISE_OR);
+            int op3 = (type == 0) ? (!!g->imm) : !(g->y == 0);
+
+            #define C_(A,B,C,D) (((A) << 12) | ((B) << 8) | ((C) << 4) | ((D) << 0))
+            #define PUT(...) fprintf(out, fmts[type][op1][op2][op3], __VA_ARGS__)
+
+            switch (C_(type,op1,op2,op3)) {
+                case C_(0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+                case C_(0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
+                case C_(0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
+                case C_(0,0,1,1): PUT(f0,f1,f2,f3,f4,      f7,f8,f9); break;
+                case C_(0,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
+                case C_(0,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f8,f9); break;
+                case C_(0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
+                case C_(0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,f8,f9); break;
+
+                case C_(1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+                case C_(1,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
+                case C_(1,0,1,0): PUT(f0,f1,f2,f3,f4,      f8,   f9); break;
+                case C_(1,0,1,1): PUT(f0,f1,f2,f3,f4,      f8,f7,f9); break;
+                case C_(1,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
+                case C_(1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f7,f9); break;
+                case C_(1,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f8,   f9); break;
+                case C_(1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f8,f7,f9); break;
+
+                default:
+                    fatal(0, "Unsupported type/op1/op2/op3 %04x", C_(type,op1,op2,op3));
+                    //fprintf(out, ".word 0x%08x", i->u.word);
+            }
+
             return 0;
         }
         default:

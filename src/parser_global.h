@@ -4,7 +4,6 @@
 #include "ops.h"
 
 #define SMALL_IMMEDIATE_BITWIDTH    12
-#define LARGE_IMMEDIATE_BITWIDTH    24
 #define WORD_BITWIDTH               32
 
 struct parse_data {
@@ -48,6 +47,7 @@ struct const_expr_list {
 };
 
 struct expr {
+    int type;   ///< 0=> X op Y + (mult * I) ; 1=> X op I + Y
     int deref;
     int x;
     int op;
