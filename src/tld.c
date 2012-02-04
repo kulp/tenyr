@@ -75,13 +75,7 @@ static int do_load(struct link_state *s, FILE *in)
 
 static int do_make_relocated(struct link_state *s, struct obj **_o)
 {
-    struct obj *o = calloc(1, sizeof *o);
-
-    o->rec_count = s->obj_count;
-    o->records = calloc(o->rec_count, sizeof *o->records);
-    o->records->addr = RAM_BASE;
-    o->records->size = s->addr;
-    o->records->data = calloc(o->records->size, sizeof *o->records->data);
+    struct obj *o = *_o = calloc(1, sizeof *o);
 
     o->sym_count = 32;
     o->symbols = calloc(o->sym_count, sizeof *o->records);
@@ -89,7 +83,7 @@ static int do_make_relocated(struct link_state *s, struct obj **_o)
     o->rlc_count = 32;
     o->relocs = calloc(o->rlc_count, sizeof *o->relocs);
 
-    *_o = o;
+    s->relocated = o;
 
     return 0;
 }
@@ -101,32 +95,76 @@ static int do_link(struct link_state *s)
     struct obj *o;
     do_make_relocated(s, &o);
 
+    typedef int cmp(const void *, const void*);
+
+    // read in all symbols
     list_foreach(obj_list, Node, s->objs) {
-        struct obj *i = Node->obj;
-        (void)i;
+        if (Node->obj->sym_count) list_foreach(objsym, sym, Node->obj->symbols) {
+            struct defn *def = calloc(1, sizeof *def);
+            strncpy(def->name, sym->name, sizeof def->name);
+            def->name[sizeof def->name - 1] = 0;
+            def->obj = Node->obj;
+            def->reladdr = sym->value;
 
-        #if 0
-        list_foreach(objrec, rec, i->records) {
-            // TODO
+            struct defn **look = tsearch(def, &s->defns, (cmp*)strcmp);
+            if (*look != def)
+                fatal(0, "Duplicate definition for symbol `%s'", def->name);
         }
-
-        list_foreach(objsym, sym, i->symbols) {
-            // TODO
-        }
-
-        list_foreach(objrlc, rlc, i->relocs) {
-            // TODO
-        }
-        #endif
-
     }
 
-    #if 0
-    o->records->size = s->insns;
+    // iterate over relocs
+    list_foreach(obj_list, Node, s->objs) {
+        struct obj *i = Node->obj;
+
+        if (i->rlc_count) list_foreach(objrlc, rlc, i->relocs) {
+            struct defn def;
+            strncpy(def.name, rlc->name, sizeof def.name);
+            def.name[sizeof def.name - 1] = 0;
+            struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
+            if (!look)
+                fatal(0, "Missing definition for symbol `%s'", rlc->name);
+            // here we actually add the found-symbol's value to the relocation
+            // slot, being careful to trim to the right width
+            // XXX stop assuming there is only one record per object
+            UWord *dest = &i->records->data[rlc->addr - i->records->addr] ;
+            UWord mask = ((1 << rlc->width) - 1);
+            UWord updated = (*dest + (*look)->reladdr) & mask;
+            *dest = (*dest & ~mask) | updated;
+        }
+    }
+
+    // TODO clean up symbols tree
+
+    long rec_count = 0;
+    // copy records
+    list_foreach(obj_list, Node, s->objs) {
+        struct obj *i = Node->obj;
+
+        list_foreach(objrec, rec, i->records) {
+            struct objrec *n = calloc(1, sizeof *n);
+
+            n->addr = rec->addr;
+            n->size = rec->size;
+            n->data = malloc(rec->size * sizeof *n->data);
+            memcpy(n->data, rec->data, rec->size * sizeof *n->data);
+
+            if (o->records) o->records->prev = n;
+            n->next = o->records;
+            o->records = n;
+
+            rec_count++;
+        }
+    }
+
+    // TODO
+    o->rec_count = rec_count;
     o->sym_count = s->syms;
     o->rlc_count = s->rlcs;
     o->length = 5 + s->words; // XXX explain
-    #endif
+    o->records->size = s->addr;
+
+    o->symbols = realloc(o->symbols, o->sym_count * sizeof *o->symbols);
+    o->relocs  = realloc(o->relocs , o->rlc_count * sizeof *o->relocs);
 
     return rc;
 }
@@ -135,7 +173,8 @@ static int do_emit(struct link_state *s, FILE *out)
 {
     int rc = -1;
 
-    obj_write(s->relocated, out);
+    if (s->relocated)
+        rc = obj_write(s->relocated, out);
 
     return rc;
 }
