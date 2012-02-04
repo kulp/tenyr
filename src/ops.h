@@ -70,6 +70,7 @@ struct instruction {
 
         struct label *next;
     } *label;
+    struct reloc_node *reloc;
     union {
         uint32_t word;
         struct instruction_any {

@@ -157,10 +157,12 @@ struct obj_fdata {
     long words;
     long insns;
     long syms;
+    long rlcs;
     size_t size;    ///< bytes size of `o'
 
-    struct objsym *last;
-    struct objrec *curr;
+    struct objsym *last_sym;
+    struct objrec *curr_rec;
+    struct objrlc *last_rlc;
     uint32_t pos;   ///< position in objrec
 };
 
@@ -182,9 +184,12 @@ static int obj_init(FILE *stream, int flags, void **ud)
 
         o->sym_count = 32;
         o->symbols = calloc(o->sym_count, sizeof *o->records);
+
+        o->rlc_count = 32;
+        o->relocs = calloc(o->rlc_count, sizeof *o->relocs);
     } else if (flags & ASM_DISASSEMBLE) {
         rc = obj_read(u->o, &u->size, stream);
-        u->curr = o->records;
+        u->curr_rec = o->records;
     }
 
     return rc;
@@ -195,7 +200,7 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     int rc = 1;
     struct obj_fdata *u = ud;
 
-    struct objrec *rec = u->curr;
+    struct objrec *rec = u->curr_rec;
     if (!rec)
         return -1;
 
@@ -233,13 +238,39 @@ static void obj_out_labels(struct label *label, struct obj_fdata *u, struct obj_
             strncpy(sym->name, Node->name, sizeof sym->name);
             assert(("Symbol address resolved", Node->resolved != 0));
             sym->value = Node->reladdr;
-            if (u->last) u->last->next = sym;
-            sym->prev = u->last;
-            u->last = sym;
+            if (u->last_sym) u->last_sym->next = sym;
+            sym->prev = u->last_sym;
+            u->last_sym = sym;
 
-            u->words++;
+            u->words++; // TODO check
         }
     }
+}
+
+static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct obj_v0 *o)
+{
+    if (!reloc) return;
+
+    if (u->rlcs >= o->rlc_count) {
+        while (u->rlcs >= o->rlc_count)
+            o->rlc_count *= 2;
+
+        o->relocs = realloc(o->relocs, o->rlc_count * sizeof *o->relocs);
+    }
+
+    struct objrlc *rlc = &o->relocs[u->rlcs++];
+
+    rlc->flags = 0; // TODO
+    strncpy(rlc->name, reloc->name, sizeof rlc->name);
+    rlc->name[sizeof rlc->name - 1] = 0;
+    rlc->addr = reloc->insn->reladdr;
+    rlc->width = reloc->width;
+
+    if (u->last_rlc) u->last_rlc->next = rlc;
+    rlc->prev = u->last_rlc;
+    u->last_rlc = rlc;
+
+    u->words++; // XXX wrong
 }
 
 static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj_v0 *o)
@@ -258,6 +289,7 @@ static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj_
     u->insns++;
 
     obj_out_labels(i->label, u, o);
+    obj_out_reloc(i->reloc, u, o);
 }
 
 static int obj_out(FILE *stream, struct instruction *i, void *ud)
@@ -280,6 +312,7 @@ static int obj_fini(FILE *stream, void **ud)
     if (u->flags & ASM_ASSEMBLE) {
         o->records->size = u->insns;
         o->sym_count = u->syms;
+        o->rlc_count = u->rlcs;
         o->length = 5 + u->words; // XXX explain
 
         obj_write(u->o, stream);
