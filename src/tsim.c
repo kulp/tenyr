@@ -365,7 +365,7 @@ int main(int argc, char *argv[])
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
                 usage(argv[0]);
-                return EXIT_FAILURE;
+                return EXIT_SUCCESS;
             default:
                 usage(argv[0]);
                 return EXIT_FAILURE;
