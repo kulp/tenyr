@@ -77,8 +77,8 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
 {
     GET(o->length, in);
     GET(o->flags, in);
-    GET(o->rec_count, in);
 
+    GET(o->rec_count, in);
     for_counted_get(objrec, rec, o->records, o->rec_count) {
         GET(rec->addr, in);
         GET(rec->size, in);
@@ -87,12 +87,14 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
             fatal(PRINT_ERRNO, "Unknown error occurred while parsing object");
     }
 
+    GET(o->sym_count, in);
     for_counted_get(objsym, sym, o->symbols, o->sym_count) {
         GET(sym->flags, in);
         GET(sym->name, in);
         GET(sym->value, in);
     }
 
+    GET(o->rlc_count, in);
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
         GET(rlc->name, in);
