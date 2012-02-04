@@ -1,11 +1,18 @@
 CC       = gcc
-CFLAGS  += -std=c99
 CFLAGS  += -g
 LDFLAGS += -g
-CFLAGS  += -Wall -Wextra $(PEDANTIC)
+
+GCC_CFLAGS += -std=c99
+GCC_CFLAGS += -Wall -Wextra $(PEDANTIC)
+
+ifeq ($(CC),gcc)
+CFLAGS += $(GCC_CFLAGS)
+endif
 
 # Optimised build
-#CFLAGS  += -DNDEBUG -O3
+ifeq ($(DEBUG),)
+CFLAGS  += -DNDEBUG -O3
+endif
 
 # 32-bit compilation
 #CFLAGS  += -m32
@@ -16,25 +23,28 @@ PEDANTIC = -Werror -pedantic-errors
 FLEX  = flex
 BISON = bison
 
-CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c) #parser.c lexer.c
+CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
 GENDIR = src/gen
 
 VPATH += src src/devices $(GENDIR)
 INCLUDES += src $(GENDIR)
 
-BUILD_NAME := $(shell git describe --long --always)
-DEFINES += BUILD_NAME='$(BUILD_NAME)'
+BUILD_NAME := $(shell git describe --tags --long --always)
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
 DEVICES = ram sparseram debugwrap serial
 DEVOBJS = $(DEVICES:%=%.o)
 
-all: tas tsim
+all: tas tsim tld
+tas tsim tld: common.o
 tas: $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas tsim: asm.o obj.o
 tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
+tld: obj.o
+
+tas.o tsim.o tld.o: DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
 lexer.o: parser.h
 
@@ -69,7 +79,7 @@ endif
 	rm -f $@.$$$$
 
 clean:
-	$(RM) tas tsim *.o *.d $(GENDIR)/*.o
+	$(RM) tas tsim *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
 
 clobber: clean
 	$(RM) $(GENDIR)/{parser,lexer}.[ch]

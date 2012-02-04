@@ -1,6 +1,8 @@
 #ifndef OBJ_H_
 #define OBJ_H_
 
+#include "common.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -37,10 +39,20 @@ struct obj_v0 {
     struct objsym {
         struct objsym *next, *prev;
 
-        int flags;      ///< unused so far (eventually indicate relocations ?)
-        char name[32];
+        UWord flags;    ///< unused so far (eventually indicate relocations ?)
+        char name[LABEL_LEN];
         UWord value;
     } *symbols;
+
+    UWord rlc_count;    ///< count of relocations
+    struct objrlc {
+        struct objrlc *next, *prev;
+
+        UWord flags;
+        char name[LABEL_LEN];
+        UWord addr;     ///< relative location in the object to update
+        UWord width;    ///< width in bits of the right-justified immediate
+    } *relocs;
 };
 
 int obj_write(struct obj *o, FILE *out);

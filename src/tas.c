@@ -11,7 +11,6 @@
 #include <search.h>
 #include <string.h>
 #include <strings.h>
-#include <setjmp.h>
 
 int print_disassembly(FILE *out, struct instruction *i);
 
@@ -28,21 +27,7 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
-enum errcode { DISPLAY_USAGE=1 };
-
-static jmp_buf errbuf;
-
-static void fatal(const char *message, enum errcode code)
-{
-    fputs(message, stderr);
-    fputc('\n', stderr);
-    longjmp(errbuf, code);
-}
-
-static const char *version()
-{
-    return "tas version " STR(BUILD_NAME);
-}
+#define version() "tas version " STR(BUILD_NAME)
 
 static int usage(const char *me)
 {
@@ -60,13 +45,11 @@ static int usage(const char *me)
 
 static int label_find(struct label_list *list, const char *name, struct label **label)
 {
-    while (list) {
-        if (!strcmp(list->label->name, name)) {
-            *label = list->label;
+    list_foreach(label_list, elt, list) {
+        if (!strncmp(elt->label->name, name, LABEL_LEN)) {
+            *label = elt->label;
             return 0;
         }
-
-        list = list->next;
     }
 
     return 1;
@@ -89,6 +72,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
     uint32_t left, right;
 
     switch (ce->type) {
+        case EXT:
         case LAB: return label_lookup(pd->labels, ce->labelname, result);
         case ICI: *result = top_insn->reladdr; return 0;
         case IMM: *result = ce->i; return 0;
@@ -101,19 +85,21 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
                     case '-': *result = left -  right; return 0;
                     case '*': *result = left *  right; return 0;
                     case LSH: *result = left << right; return 0;
-                    default: abort(); // TODO handle more gracefully
+                    default: fatal(0, "Unrecognised const_expr op '%c'", ce->op);
                 }
             }
             return 1;
         default:
-            abort(); // TODO handle more gracefully
+            fatal(0, "Unrecognised const_expr type %d", ce->type);
+            return 1;
     }
 }
 
-void ce_free(struct const_expr *ce, int recurse)
+static void ce_free(struct const_expr *ce, int recurse)
 {
     if (recurse)
         switch (ce->type) {
+            case EXT:
             case LAB:
             case ICI:
                 break;
@@ -125,18 +111,17 @@ void ce_free(struct const_expr *ce, int recurse)
                 ce_free(ce->right, recurse);
                 break;
             default:
-                abort(); // TODO handle more gracefully
+                fatal(0, "Unrecognised const_expr type %d", ce->type);
         }
 
     free(ce);
 }
 
-static int fixup_relocations(struct parse_data *pd)
+static int fixup_deferred_exprs(struct parse_data *pd)
 {
     int rc = 0;
-    struct relocation_list *r = pd->relocs;
 
-    while (r) {
+    list_foreach(deferred_expr, r, pd->defexprs) {
         struct const_expr *ce = r->ce;
 
         uint32_t result;
@@ -148,13 +133,11 @@ static int fixup_relocations(struct parse_data *pd)
             *r->dest |= result & ~mask;
             ce_free(ce, 1);
         } else {
-            fatal("Error while fixing up relocations", 0);
-            // TODO print out information about the relocation
+            fatal(0, "Error while fixing up deferred expressions");
+            // TODO print out information about the deferred expression
         }
 
-        struct relocation_list *last = r;
-        r = r->next;
-        free(last);
+        free(r);
     }
 
     return 0;
@@ -163,11 +146,9 @@ static int fixup_relocations(struct parse_data *pd)
 static int mark_globals(struct label_list *labels, struct global_list *globals)
 {
     struct label *which;
-    while (globals) {
-        if (!label_find(labels, globals->name, &which))
+    list_foreach(global_list, g, globals)
+        if (!label_find(labels, g->name, &which))
             which->global = 1;
-        globals = globals->next;
-    }
 
     return 0;
 }
@@ -179,23 +160,23 @@ static int check_labels(struct label_list *labels)
     typedef int cmp(const void *, const void*);
 
     // check for and reject duplicates
-    void *tree;
-    while (labels) {
-        const char **name = tsearch(labels->label->name, &tree, (cmp*)strcmp);
+    void *tree = NULL;
+    list_foreach(label_list, Node, labels) {
+        const char **name = tsearch(Node->label->name, &tree, (cmp*)strcmp);
 
-        if (*name != labels->label->name) {
+        if (*name != Node->label->name) {
             rc = 1;
-            break; // take that, district !
+            break;
         }
-
-        labels = labels->next;
     }
 
     // delete from tree what we added to it
-    while (top && tree) {
-        tdelete(top->label, &tree, (cmp*)strcmp);
-        top = top->next;
+    list_foreach(label_list, Node, top) {
+        if (!tree) break;
+        tdelete(Node->label, &tree, (cmp*)strcmp);
+        Node = Node->next;
     }
+
     return rc;
 }
 
@@ -211,67 +192,49 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
     int result = tenyr_parse(&pd);
     if (!result && f) {
-        struct instruction_list *p = pd.top, *q = p;
-
         int baseaddr = 0; // TODO
         int reladdr = 0;
         // first pass, fix up addresses
-        while (q) {
-            q->insn->reladdr = baseaddr + reladdr;
-            struct label *l = q->insn->label;
-            while (l) {
+        list_foreach(instruction_list, il, pd.top) {
+            il->insn->reladdr = baseaddr + reladdr;
+
+            list_foreach(label, l, il->insn->label) {
                 if (!l->resolved) {
                     l->reladdr = baseaddr + reladdr;
                     l->resolved = 1;
                 }
-                l = l->next;
             }
 
             reladdr++;
-            q = q->next;
         }
 
         mark_globals(pd.labels, pd.globals);
         // TODO make check_labels() more user-friendly
         if (check_labels(pd.labels))
-            fatal("Error while processing labels : check for duplicate labels", 0);
+            fatal(0, "Error while processing labels : check for duplicate labels");
 
-        if (!fixup_relocations(&pd)) {
-            q = p;
+        if (!fixup_deferred_exprs(&pd)) {
             void *ud;
             if (f->init)
                 f->init(out, ASM_ASSEMBLE, &ud);
 
-            while (q) {
-                struct instruction_list *t = q;
-                f->out(out, q->insn, ud);
-                q = q->next;
-                free(t->insn);
-                free(t);
+            list_foreach(instruction_list, Node, pd.top) {
+                f->out(out, Node->insn, ud),
+                free(Node->insn),
+                free(Node);
             }
 
             if (f->fini)
                 f->fini(out, &ud);
         }
 
-        {
-            struct label_list *l = pd.labels, *last = l;
-            while (l) {
-                l = l->next;
-                free(last->label);
-                free(last);
-                last = l;
-            }
+        list_foreach(label_list, Node, pd.labels) {
+            free(Node->label);
+            free(Node);
         }
 
-        {
-            struct global_list *g = pd.globals, *last = g;
-            while (g) {
-                g = g->next;
-                free(last);
-                last = g;
-            }
-        }
+        list_foreach(global_list, Node, pd.globals)
+            free(Node);
     }
     tenyr_lex_destroy(pd.scanner);
 
@@ -301,7 +264,6 @@ int main(int argc, char *argv[])
     int rc = 0;
     int disassemble = 0;
 
-    FILE *out = stdout;
     const struct format *f = &formats[0];
 
     if ((rc = setjmp(errbuf))) {
@@ -309,6 +271,8 @@ int main(int argc, char *argv[])
             usage(argv[0]);
         return EXIT_FAILURE;
     }
+
+    FILE *out = stdout;
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
@@ -334,16 +298,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (optind >= argc) {
-        fatal("No input files specified on the command line", DISPLAY_USAGE);
-    }
+    if (optind >= argc)
+        fatal(DISPLAY_USAGE, "No input files specified on the command line");
 
     for (int i = optind; i < argc; i++) {
         FILE *in = NULL;
-        if (!out) {
-            perror("Failed to open output file");
-            return EXIT_FAILURE;
-        }
+        if (!out)
+            fatal(PRINT_ERRNO, "Failed to open output file");
 
         if (!strcmp(argv[i], "-")) {
             in = stdin;
@@ -352,8 +313,7 @@ int main(int argc, char *argv[])
             if (!in) {
                 char buf[128];
                 snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
-                perror(buf);
-                return EXIT_FAILURE;
+                fatal(PRINT_ERRNO, buf);
             }
         }
 

@@ -71,12 +71,10 @@ static int sparseram_fini(struct state *s, void *cookie)
 
     twalk(sparseram->mem, traverse_action);
 
-    while (todo) {
-        struct todo_node *temp = todo;
-        todo = todo->next;
-        tdelete(temp->what, &sparseram->mem, tree_compare);
-        free(temp->what);
-        free(temp);
+    list_foreach(todo_node, t, todo) {
+        tdelete(t->what, &sparseram->mem, tree_compare);
+        free(t->what);
+        free(t);
     }
 
     free(sparseram);

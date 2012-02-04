@@ -42,10 +42,8 @@ int print_disassembly(FILE *out, struct instruction *i)
         case 0x6:
         case 0x7: {
             struct instruction_general *g = &i->u._0xxx;
-            int ld = g->dd & 2;
-            int rd = g->dd & 1;
-            int noop = g->y == 0 && g->op == OP_BITWISE_OR;
-            int imm = g->imm;
+            int rd = g->dd &  1;
+            int ld = g->dd == 2;
 
             // LHS
                   char  f0 = ld ? '[' : ' ';        // left side dereferenced ?
@@ -53,7 +51,7 @@ int print_disassembly(FILE *out, struct instruction *i)
                   char  f2 = ld ? ']' : ' ';        // left side dereferenced ?
 
             // arrow
-            const char *f3 = g->r ? "->" : "<-";    // arrow direction
+            const char *f3 = (g->dd == 3) ? "->" : "<-";    // arrow direction
 
             // RHS
                   char  f4 = rd ? '[' : ' ';        // right side dereferenced ?
@@ -63,34 +61,59 @@ int print_disassembly(FILE *out, struct instruction *i)
                   int   f8 = g->imm;                // immediate value
                   char  f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
-            // argument placement :         f0f1f2 f3 f4f5   f6 f7       f8f9
-            static const char  imm_nop[] = "%c%c%c %s %c%c "      "+ 0x%08x%c";
-            static const char  imm_op [] = "%c%c%c %s %c%c %-2s %c + 0x%08x%c";
-            static const char nimm_nop[] = "%c%c%c %s %c%c"               "%c";
-            static const char nimm_op [] = "%c%c%c %s %c%c %-2s %c"       "%c";
+            // indices : [g->p][op1][op2][op3]
+            static const char fmts[2][2][2][2][34] = {
+                // args :       f0f1f2 f3 f4f5   f6 f7       f8f9
+              //[0][0][0][0] = "%c%c%c %s %c"                 "%c", // [Z] <- [           ]
+                [0][0][0][1] = "%c%c%c %s %c"           "0x%08x%c", // [Z] <- [        0x0]
+                [0][0][1][0] = "%c%c%c %s %c"      "%c"       "%c", // [Z] <- [    Y      ]
+                [0][0][1][1] = "%c%c%c %s %c"      "%c + 0x%08x%c", // [Z] <- [    Y + 0x0]
+                [0][1][0][0] = "%c%c%c %s %c%c"               "%c", // [Z] <- [X          ]
+                [0][1][0][1] = "%c%c%c %s %c%c"      " + 0x%08x%c", // [Z] <- [X     + 0x0]
+                [0][1][1][0] = "%c%c%c %s %c%c %-2s %c"       "%c", // [Z] <- [X - Y      ]
+                [0][1][1][1] = "%c%c%c %s %c%c %-2s %c + 0x%08x%c", // [Z] <- [X - Y + 0x0]
+                // args :       f0f1f2 f3 f4f5   f6 f8       f7f9
+              //[1][0][0][0] = "%c%c%c %s %c"                 "%c", // [Z] <- [           ]
+                [1][0][0][1] = "%c%c%c %s %c"               "%c%c", // [Z] <- [          Y]
+                [1][0][1][0] = "%c%c%c %s %c"      "0x%08x"   "%c", // [Z] <- [    0x0    ]
+                [1][0][1][1] = "%c%c%c %s %c"      "0x%08x + %c%c", // [Z] <- [    0x0 + Y]
+                [1][1][0][0] = "%c%c%c %s %c%c"               "%c", // [Z] <- [X          ]
+                [1][1][0][1] = "%c%c%c %s %c%c"          " + %c%c", // [Z] <- [X       + Y]
+                [1][1][1][0] = "%c%c%c %s %c%c %-2s 0x%08x"   "%c", // [Z] <- [X - 0x0    ]
+                [1][1][1][1] = "%c%c%c %s %c%c %-2s 0x%08x + %c%c", // [Z] <- [X - 0x0 + Y]
+            };
 
-            imm ? noop ? fprintf(out,  imm_nop, f0,f1,f2,f3,f4,f5,      f8,f9)
-                       : fprintf(out,  imm_op , f0,f1,f2,f3,f4,f5,f6,f7,f8,f9)
-                : noop ? fprintf(out, nimm_nop, f0,f1,f2,f3,f4,f5,         f9)
-                       : fprintf(out, nimm_op , f0,f1,f2,f3,f4,f5,f6,f7,   f9);
+            int op3 = (g->p == 0) ? (!!g->imm) : !(g->y == 0);
+            int op2 = (g->p == 1) ? (!!g->imm) : !(g->y == 0 && g->op == OP_BITWISE_OR);
+            int op1 = !(g->x == 0 && g->op == OP_BITWISE_OR) || (!op2 && !op3);
 
-            return 0;
-        }
-        case 0x8:
-        case 0x9:
-        case 0xa:
-        case 0xb: {
-            struct instruction_load_immediate *g = &i->u._10xx;
-            int ld = g->dd & 2;
-            int rd = g->dd & 1;
-            fprintf(out, "%c%c%c <- %c0x%08x%c",
-                    ld ? '[' : ' ', // left side dereferenced ?
-                    'A' + g->z,     // register name for Z
-                    ld ? ']' : ' ', // left side dereferenced ?
-                    rd ? '[' : ' ', // right side dereferenced ?
-                    g->imm,         // immediate value
-                    rd ? ']' : ' '  // right side dereferenced ?
-                );
+            #define C_(A,B,C,D) (((A) << 12) | ((B) << 8) | ((C) << 4) | ((D) << 0))
+            #define PUT(...) fprintf(out, fmts[g->p][op1][op2][op3], __VA_ARGS__)
+
+            switch (C_(g->p,op1,op2,op3)) {
+              //case C_(0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+                case C_(0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
+                case C_(0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
+                case C_(0,0,1,1): PUT(f0,f1,f2,f3,f4,      f7,f8,f9); break;
+                case C_(0,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
+                case C_(0,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f8,f9); break;
+                case C_(0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
+                case C_(0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,f8,f9); break;
+
+              //case C_(1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+                case C_(1,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
+                case C_(1,0,1,0): PUT(f0,f1,f2,f3,f4,      f8,   f9); break;
+                case C_(1,0,1,1): PUT(f0,f1,f2,f3,f4,      f8,f7,f9); break;
+                case C_(1,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
+                case C_(1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f7,f9); break;
+                case C_(1,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f8,   f9); break;
+                case C_(1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f8,f7,f9); break;
+
+                default:
+                    fatal(0, "Unsupported type/op1/op2/op3 %04x",
+                            C_(g->p,op1,op2,op3));
+            }
+
             return 0;
         }
         default:
@@ -194,53 +217,55 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     return rc;
 }
 
+static void obj_out_labels(struct label *label, struct obj_fdata *u, struct obj_v0 *o)
+{
+    list_foreach(label, Node, label) {
+        if (Node->global) {
+            if (u->syms >= o->sym_count) {
+                while (u->syms >= o->sym_count)
+                    o->sym_count *= 2;
+
+                o->symbols = realloc(o->symbols,
+                                        o->sym_count * sizeof *o->symbols);
+            }
+
+            struct objsym *sym = &o->symbols[u->syms++];
+            strncpy(sym->name, Node->name, sizeof sym->name);
+            assert(("Symbol address resolved", Node->resolved != 0));
+            sym->value = Node->reladdr;
+            if (u->last) u->last->next = sym;
+            sym->prev = u->last;
+            u->last = sym;
+
+            u->words++;
+        }
+    }
+}
+
+static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj_v0 *o)
+{
+    if (u->insns >= o->records->size) {
+        while (u->insns >= o->records->size)
+            o->records->size *= 2;
+
+        o->records->data = realloc(o->records->data,
+                o->records->size * sizeof *o->records->data);
+    }
+
+    o->records->data[u->insns] = i->u.word;
+
+    u->words++;
+    u->insns++;
+
+    obj_out_labels(i->label, u, o);
+}
+
 static int obj_out(FILE *stream, struct instruction *i, void *ud)
 {
     int rc = 1;
     struct obj_fdata *u = ud;
-    struct obj_v0 *o = (void*)u->o;
 
-    {
-        if (u->insns >= o->records->size) {
-            while (u->insns >= o->records->size)
-                o->records->size *= 2;
-
-            o->records->data = realloc(o->records->data,
-                    o->records->size * sizeof *o->records->data);
-        }
-
-        o->records->data[u->insns] = i->u.word;
-
-        u->words++;
-        u->insns++;
-    }
-
-    {
-        struct label *l = i->label;
-        while (l) {
-            if (l->global) {
-                if (u->syms >= o->sym_count) {
-                    while (u->syms >= o->sym_count)
-                        o->sym_count *= 2;
-
-                    o->symbols = realloc(o->symbols,
-                                            o->sym_count * sizeof *o->symbols);
-                }
-
-                struct objsym *sym = &o->symbols[u->syms++];
-                strncpy(sym->name, l->name, sizeof sym->name);
-                assert(("Symbol address resolved", l->resolved != 0));
-                sym->value = l->reladdr;
-                if (u->last) u->last->next = sym;
-                sym->prev = u->last;
-                u->last = sym;
-
-                u->words++;
-            }
-
-            l = l->next;
-        }
-    }
+    obj_out_insn(i, u, (struct obj_v0*)u->o);
 
     return rc;
 }

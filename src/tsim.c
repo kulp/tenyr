@@ -13,7 +13,6 @@
 #include <string.h>
 #include <strings.h>
 #include <search.h>
-#include <setjmp.h>
 
 #define RECIPES(_) \
     _(abort   , "call abort() when an illegal instruction is simulated") \
@@ -31,17 +30,6 @@
 
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
-
-static jmp_buf errbuf;
-
-enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
-
-static void fatal(const char *message, enum errcode code)
-{
-    fputs(message, stderr);
-    fputc('\n', stderr);
-    longjmp(errbuf, code);
-}
 
 static int next_device(struct state *s)
 {
@@ -231,12 +219,9 @@ static int run_recipes(struct state *s)
         DEFAULT_RECIPES(RUN_RECIPE);
     }
 
-    struct recipe_book *b = s->recipes;
-    while (b) {
-        struct recipe_book *temp = b;
+    list_foreach(recipe_book, b, s->recipes) {
         run_recipe(s, b->recipe);
-        b = b->next;
-        free(temp);
+        free(b);
     }
 
     return 0;
@@ -245,7 +230,7 @@ static int run_recipes(struct state *s)
 static int find_recipe_by_name(const void *_a, const void *_b)
 {
     const struct format *a = _a, *b = _b;
-    return strcasecmp(a->name, b->name);
+    return strcmp(a->name, b->name);
 }
 
 static int add_recipe(struct state *s, const char *name)
@@ -365,7 +350,7 @@ int main(int argc, char *argv[])
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
                 usage(argv[0]);
-                return EXIT_FAILURE;
+                return EXIT_SUCCESS;
             default:
                 usage(argv[0]);
                 return EXIT_FAILURE;
@@ -373,9 +358,9 @@ int main(int argc, char *argv[])
     }
 
     if (optind >= argc) {
-        fatal("No input files specified on the command line", DISPLAY_USAGE);
+        fatal(DISPLAY_USAGE, "No input files specified on the command line");
     } else if (argc - optind > 1) {
-        fatal("More than one input file specified on the command line", DISPLAY_USAGE);
+        fatal(DISPLAY_USAGE, "More than one input file specified on the command line");
     }
 
     FILE *in = stdin;
@@ -387,16 +372,13 @@ int main(int argc, char *argv[])
         if (!in) {
             char buf[128];
             snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[optind]);
-            perror(buf);
-            rc = EXIT_FAILURE;
-            goto done;
+            fatal(PRINT_ERRNO, buf);
         }
     }
 
     load_sim(s, f, in, load_address, start_address);
     run_sim(s);
 
-done:
     if (in)
         fclose(in);
 
