@@ -10,4 +10,3 @@ hi:
     .ascii "hello, world"
     .word 0             // mark end of string with a zero
 
-#include "puts.tas"

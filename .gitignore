@@ -10,3 +10,5 @@ testffi
 Session.vim
 src/gen
 tags
+*.to
+*.texe

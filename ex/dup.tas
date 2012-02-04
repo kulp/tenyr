@@ -1,4 +1,0 @@
-# this file should be rejected by the assembler due to its double declaration
-# of a label
-foo: .word 1
-foo: .word 2

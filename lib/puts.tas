@@ -3,6 +3,7 @@
 
 // argument in C
 
+    .global puts
 puts:
     g <- 0xff           // mask
     h <- 8              // shift amount

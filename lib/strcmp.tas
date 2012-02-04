@@ -5,21 +5,22 @@
 
 // TODO permit compared strings to differ after the terminating \0
 
+	.global strcmp
 strcmp:
     b <- 0              // start with matching
-_strcmp_loop:
+.L_loop:
     f <- [c]            // load word from string
     g <- [d]            // load word from string
     h <- f == a         // if it is zero, we are done
     i <- g == a         // if it is zero, we are done
-    jnzrel(h,_strcmp_done)
-    jnzrel(i,_strcmp_done)
+    jnzrel(h,.L_done)
+    jnzrel(i,.L_done)
     c <- c + 1          // increment index for next time
     d <- d + 1          // increment index for next time
     e <- f <> g         // check for mismatch
     b <- b | e          // accumulate mismatches
-    goto(_strcmp_loop)
-_strcmp_done:
+    goto(.L_loop)
+.L_done:
     e <- f <> g         // check for mismatch
     b <- b | e          // accumulate mismatches
     e <- h <> i         // check for length mismatch
