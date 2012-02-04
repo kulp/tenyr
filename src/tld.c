@@ -10,8 +10,19 @@
 #include <string.h>
 #include <strings.h>
 
+struct defn {
+    char name[LABEL_LEN];
+    struct obj *obj;
+    UWord reladdr;
+};
+
 struct link_state {
     UWord addr;     ///< current address
+    struct obj_list {
+        struct obj *obj;
+        struct obj_list *next;
+    } *objs;
+    void *defns;    ///< tsearch tree of struct defns
 };
 
 static const char shortopts[] = "o::hV";
@@ -25,10 +36,7 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
-static const char *version()
-{
-    return "tld version " STR(BUILD_NAME);
-}
+#define version() "tld version " STR(BUILD_NAME)
 
 static int usage(const char *me)
 {
@@ -42,17 +50,35 @@ static int usage(const char *me)
     return 0;
 }
 
-int do_link(struct link_state *s, FILE *in, FILE *out)
+int do_load(struct link_state *s, FILE *in)
 {
-    (void)s;
-    (void)out;
-
     int rc = 0;
+    struct obj_list *node = calloc(1, sizeof *node);
+
     struct obj *o = calloc(1, sizeof *o);
     size_t size;
     rc = obj_read(o, &size, in);
 
+    // TODO this pushes the objects onto a stack, essentially ; should object
+    // processing order matter, revisit this
+    node->obj = o;
+    node->next = s->objs;
+    s->objs = node;
+
     return rc;
+}
+
+int do_link(struct link_state *s)
+{
+    (void)s;
+    return -1;
+}
+
+int do_emit(struct link_state *s, FILE *out)
+{
+    (void)s;
+    (void)out;
+    return -1;
 }
 
 int main(int argc, char *argv[])
@@ -105,10 +131,13 @@ int main(int argc, char *argv[])
             }
         }
 
-        do_link(s, in, out);
+        do_load(s, in);
 
         fclose(in);
     }
+
+    do_link(s);
+    do_emit(s, out);
 
     fclose(out);
 
