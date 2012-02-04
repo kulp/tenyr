@@ -11,7 +11,7 @@
 #define GET(What,Where) get_sized(&(What), sizeof (What), Where)
 
 #define for_counted_put(Tag,Name,List,Count) \
-    for (UWord remaining = (Count); remaining > 0; remaining--) \
+    for (int _dummy = 0; !_dummy && (Count) > 0; _dummy++) \
         list_foreach(Tag, Name, List)
 
 static inline void get_sized(void *what, size_t size, FILE *where)
@@ -26,10 +26,10 @@ static inline void put_sized(void *what, size_t size, FILE *where)
         fatal(PRINT_ERRNO, "Unknown error in %s while emitting object", __func__);
 }
 
-static int obj_v0_write(struct obj_v0 *o, FILE *out)
+static int obj_v0_write(struct obj *o, FILE *out)
 {
     put_sized(&MAGIC_BYTES, 3, out);
-    PUT(o->base.magic.parsed.version, out);
+    PUT(o->magic.parsed.version, out);
     PUT(o->length, out);
     PUT(o->flags, out);
 
@@ -62,7 +62,7 @@ static int obj_v0_write(struct obj_v0 *o, FILE *out)
 int obj_write(struct obj *o, FILE *out)
 {
     switch (o->magic.parsed.version) {
-        case 0: return obj_v0_write((void*)o, out);
+        case 0: return obj_v0_write(o, out);
         default:
             fatal(0, "Unhandled version while emitting object");
             return -1; // never reached, but keeps compiler happy
@@ -73,12 +73,12 @@ int obj_write(struct obj *o, FILE *out)
     for (struct Tag *_f = NULL, *_l = NULL, *Name = List = calloc(Count, sizeof *Name); (Count) && !_f; _f++) \
         for (UWord _i = (Count); _i > 0; Name->prev = _l, _l ? (void)(_l->next = Name) : (void)0, _l = Name++, _i--)
 
-static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
+static int obj_v0_read(struct obj *o, size_t *size, FILE *in)
 {
     GET(o->length, in);
     GET(o->flags, in);
-    GET(o->rec_count, in);
 
+    GET(o->rec_count, in);
     for_counted_get(objrec, rec, o->records, o->rec_count) {
         GET(rec->addr, in);
         GET(rec->size, in);
@@ -87,12 +87,14 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
             fatal(PRINT_ERRNO, "Unknown error occurred while parsing object");
     }
 
+    GET(o->sym_count, in);
     for_counted_get(objsym, sym, o->symbols, o->sym_count) {
         GET(sym->flags, in);
         GET(sym->name, in);
         GET(sym->value, in);
     }
 
+    GET(o->rlc_count, in);
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
         GET(rlc->name, in);
@@ -108,16 +110,15 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
 
 int obj_read(struct obj *o, size_t *size, FILE *in)
 {
-    char buf[3];
-    GET(buf, in);
+    GET(o->magic.parsed.TOV, in);
 
-    if (memcmp(buf, MAGIC_BYTES, sizeof buf))
+    if (memcmp(o->magic.parsed.TOV, MAGIC_BYTES, sizeof o->magic.parsed.TOV))
         fatal(0, "Bad magic when loading object");
 
     GET(o->magic.parsed.version, in);
 
     switch (o->magic.parsed.version) {
-        case 0: return obj_v0_read((void*)o, size, in);
+        case 0: return obj_v0_read(o, size, in);
         default:
             fatal(0, "Unhandled version number when loading object");
     }
@@ -125,14 +126,15 @@ int obj_read(struct obj *o, size_t *size, FILE *in)
     return -1; // never reached, but keeps compiler happy
 }
 
-static void obj_v0_free(struct obj_v0 *o)
+static void obj_v0_free(struct obj *o)
 {
     UWord remaining = o->rec_count;
     list_foreach(objrec, rec, o->records) {
         if (remaining-- <= 0) break;
         free(rec->data);
-        free(rec);
     }
+
+    free(o->records);
 
     free(o);
 }
@@ -140,7 +142,7 @@ static void obj_v0_free(struct obj_v0 *o)
 void obj_free(struct obj *o)
 {
     switch (o->magic.parsed.version) {
-        case 0: obj_v0_free((void*)o); break;
+        case 0: obj_v0_free(o); break;
         default:
             fatal(0, "Unknown error occurred while freeing object");
             return; // never reached, but keeps compiler happy

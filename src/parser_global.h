@@ -28,6 +28,14 @@ struct parse_data {
         char name[LABEL_LEN];
         struct global_list *next;
     } *globals;
+    struct reloc_list {
+        struct reloc_node {
+            char name[LABEL_LEN];
+            struct instruction *insn;
+            int width;
+        } reloc;
+        struct reloc_list *next;
+    } *relocs;
 };
 
 int tenyr_parse(struct parse_data *);

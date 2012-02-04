@@ -77,14 +77,14 @@ int run_instruction(struct state *s, struct instruction *i)
 
     // common activity block
     {
-        uint32_t r_addr = (reversed ? *Z   : *rhs) & PTR_MASK;
-        uint32_t w_addr = (reversed ? *rhs : *Z  ) & PTR_MASK;
+        uint32_t r_addr = (reversed ? *Z        : *rhs     ) & PTR_MASK;
+        uint32_t w_addr = (reversed ? *rhs      : *Z       ) & PTR_MASK;
 
-        int read_mem  = reversed ? deref_lhs : deref_rhs;
-        int write_mem = reversed ? deref_rhs : deref_lhs;
+        int read_mem    =  reversed ? deref_lhs : deref_rhs;
+        int write_mem   =  reversed ? deref_rhs : deref_lhs;
 
-        int32_t *r = reversed ? Z   : rhs;
-        int32_t *w = reversed ? rhs : Z;
+        int32_t *r      =  reversed ? Z         : rhs;
+        int32_t *w      =  reversed ? rhs       : Z;
 
         if (read_mem)
             s->dispatch_op(s, OP_READ, r_addr, &value);
