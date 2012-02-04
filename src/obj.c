@@ -110,10 +110,9 @@ static int obj_v0_read(struct obj_v0 *o, size_t *size, FILE *in)
 
 int obj_read(struct obj *o, size_t *size, FILE *in)
 {
-    char buf[3];
-    GET(buf, in);
+    GET(o->magic.parsed.TOV, in);
 
-    if (memcmp(buf, MAGIC_BYTES, sizeof buf))
+    if (memcmp(o->magic.parsed.TOV, MAGIC_BYTES, sizeof o->magic.parsed.TOV))
         fatal(0, "Bad magic when loading object");
 
     GET(o->magic.parsed.version, in);

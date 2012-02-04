@@ -18,11 +18,15 @@ struct defn {
 
 struct link_state {
     UWord addr;     ///< current address
+    int obj_count;
     struct obj_list {
         struct obj *obj;
         struct obj_list *next;
     } *objs;
+    struct obj *relocated;
     void *defns;    ///< tsearch tree of struct defns
+
+    long insns, syms, rlcs, words;
 };
 
 static const char shortopts[] = "o::hV";
@@ -50,7 +54,7 @@ static int usage(const char *me)
     return 0;
 }
 
-int do_load(struct link_state *s, FILE *in)
+static int do_load(struct link_state *s, FILE *in)
 {
     int rc = 0;
     struct obj_list *node = calloc(1, sizeof *node);
@@ -64,21 +68,76 @@ int do_load(struct link_state *s, FILE *in)
     node->obj = o;
     node->next = s->objs;
     s->objs = node;
+    s->obj_count++;
 
     return rc;
 }
 
-int do_link(struct link_state *s)
+static int do_make_relocated(struct link_state *s, struct obj **_o)
 {
-    (void)s;
-    return -1;
+    struct obj_v0 *o = calloc(1, sizeof *o);
+
+    o->rec_count = s->obj_count;
+    o->records = calloc(o->rec_count, sizeof *o->records);
+    o->records->addr = RAM_BASE;
+    o->records->size = s->addr;
+    o->records->data = calloc(o->records->size, sizeof *o->records->data);
+
+    o->sym_count = 32;
+    o->symbols = calloc(o->sym_count, sizeof *o->records);
+
+    o->rlc_count = 32;
+    o->relocs = calloc(o->rlc_count, sizeof *o->relocs);
+
+    *_o = (struct obj*)o;
+
+    return 0;
 }
 
-int do_emit(struct link_state *s, FILE *out)
+static int do_link(struct link_state *s)
 {
-    (void)s;
-    (void)out;
-    return -1;
+    int rc = -1;
+
+    struct obj *o;
+    do_make_relocated(s, &o);
+
+    list_foreach(obj_list, Node, s->objs) {
+        struct obj *i = Node->obj;
+        (void)i;
+
+        #if 0
+        list_foreach(objrec, rec, i->records) {
+            // TODO
+        }
+
+        list_foreach(objsym, sym, i->symbols) {
+            // TODO
+        }
+
+        list_foreach(objrlc, rlc, i->relocs) {
+            // TODO
+        }
+        #endif
+
+    }
+
+    #if 0
+    o->records->size = s->insns;
+    o->sym_count = s->syms;
+    o->rlc_count = s->rlcs;
+    o->length = 5 + s->words; // XXX explain
+    #endif
+
+    return rc;
+}
+
+static int do_emit(struct link_state *s, FILE *out)
+{
+    int rc = -1;
+
+    obj_write(s->relocated, out);
+
+    return rc;
 }
 
 int main(int argc, char *argv[])
@@ -86,7 +145,7 @@ int main(int argc, char *argv[])
     int rc = 0;
 
     struct link_state _s = {
-        .addr = RAM_BASE,
+        .addr = 0,
     }, *s = &_s;
 
     if ((rc = setjmp(errbuf))) {
