@@ -171,7 +171,7 @@ static int obj_init(FILE *stream, int flags, void **ud)
     int rc = 0;
 
     struct obj_fdata *u = *ud = calloc(1, sizeof *u);
-    struct obj_v0 *o = (void*)(u->o = calloc(1, sizeof *o));
+    struct obj *o = u->o = calloc(1, sizeof *o);
 
     u->flags = flags;
 
@@ -222,7 +222,7 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     return rc;
 }
 
-static void obj_out_labels(struct label *label, struct obj_fdata *u, struct obj_v0 *o)
+static void obj_out_labels(struct label *label, struct obj_fdata *u, struct obj *o)
 {
     list_foreach(label, Node, label) {
         if (Node->global) {
@@ -247,7 +247,7 @@ static void obj_out_labels(struct label *label, struct obj_fdata *u, struct obj_
     }
 }
 
-static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct obj_v0 *o)
+static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct obj *o)
 {
     if (!reloc) return;
 
@@ -273,7 +273,7 @@ static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct 
     u->words++; // XXX wrong
 }
 
-static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj_v0 *o)
+static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj *o)
 {
     if (u->insns >= o->records->size) {
         while (u->insns >= o->records->size)
@@ -297,7 +297,7 @@ static int obj_out(FILE *stream, struct instruction *i, void *ud)
     int rc = 1;
     struct obj_fdata *u = ud;
 
-    obj_out_insn(i, u, (struct obj_v0*)u->o);
+    obj_out_insn(i, u, (struct obj*)u->o);
 
     return rc;
 }
@@ -307,7 +307,7 @@ static int obj_fini(FILE *stream, void **ud)
     int rc = 0;
 
     struct obj_fdata *u = *ud;
-    struct obj_v0 *o = (void*)u->o;
+    struct obj *o = u->o;
 
     if (u->flags & ASM_ASSEMBLE) {
         o->records->size = u->insns;

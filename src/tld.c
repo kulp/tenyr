@@ -75,7 +75,7 @@ static int do_load(struct link_state *s, FILE *in)
 
 static int do_make_relocated(struct link_state *s, struct obj **_o)
 {
-    struct obj_v0 *o = calloc(1, sizeof *o);
+    struct obj *o = calloc(1, sizeof *o);
 
     o->rec_count = s->obj_count;
     o->records = calloc(o->rec_count, sizeof *o->records);
@@ -89,7 +89,7 @@ static int do_make_relocated(struct link_state *s, struct obj **_o)
     o->rlc_count = 32;
     o->relocs = calloc(o->rlc_count, sizeof *o->relocs);
 
-    *_o = (struct obj*)o;
+    *_o = o;
 
     return 0;
 }
