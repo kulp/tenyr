@@ -83,8 +83,8 @@ int print_disassembly(FILE *out, struct instruction *i)
                 [1][1][1][1] = "%c%c%c %s %c%c %-2s 0x%08x + %c%c", // [Z] <- [X - 0x0 + Y]
             };
 
-            int op3 = (g->p == 0) ? (!!g->imm) : !(g->y == 0);
-            int op2 = (g->p == 1) ? (!!g->imm) : !(g->y == 0 && g->op == OP_BITWISE_OR);
+            int op3 = g->p ? !(g->y == 0) : (!!g->imm);
+            int op2 = g->op != OP_BITWISE_OR || (g->p ? g->imm : g->y != 0);
             int op1 = !(g->x == 0 && g->op == OP_BITWISE_OR) || (!op2 && !op3);
 
             #define C_(A,B,C,D) (((A) << 12) | ((B) << 8) | ((C) << 4) | ((D) << 0))

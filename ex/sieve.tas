@@ -5,11 +5,11 @@
 #include "common.th"
 
     b <- ARGUMENT       // b = upper limit (N)
-    d <- 1              // d = one
-    c <- b >> d         // c = (N/2)
+    c <- b >> 1         // c = (N/2)
     i <- 2              // i = outer loop control
     o <- rel(array)     // base of array
     j <- 2              // j = inner index, setup index
+    d <- -1             // d = truth
 
     a -> [o + 0]        // 0 is not prime
     a -> [o + 1]        // 1 is not prime
@@ -22,7 +22,7 @@ outer:
     f <- i > c          // exit loop when i > N/2
     jnzrel(f,done)
     g <- [o + i]        // load compositeness
-    f <- g == a         // check recorded compositeness
+    f <- g == 0         // check recorded compositeness
     jnzrel(f,bottom)    // branch if composite
     k <- 2              // set up initial multiplier
 inner:
