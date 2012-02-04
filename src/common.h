@@ -1,6 +1,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#include <setjmp.h>
+
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 #define STR(X) STR_(X)
 #define STR_(X) #X
@@ -9,14 +11,23 @@
 
 #define PTR_MASK ~(-1 << 24)
 
+#define list_foreach(Tag,Node,Object) \
+    for (struct Tag *Next = (Object), *Node = Next; \
+            (void)(Node && (Next = Next->next)), Node; \
+            Node = Next)
+
 // TODO document fixed lengths or remove the limitations
 #define LABEL_LEN    32
 #define LINE_LEN    512
 
-#if _WIN32
-int _stricmp(const char *, const char *);
-#define strcasecmp _stricmp
-#endif
+#define PRINT_ERRNO 0x80
+
+enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
+extern jmp_buf errbuf;
+#define fatal(Code,...) \
+    fatal_(Code,__FILE__,__LINE__,__VA_ARGS__)
+
+void fatal_(int code, const char *file, int line, const char *fmt, ...);
 
 #endif
 

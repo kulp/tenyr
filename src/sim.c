@@ -32,51 +32,47 @@ int run_instruction(struct state *s, struct instruction *i)
             int32_t  Ys = s->machine.regs[g->y];
             uint32_t Yu = s->machine.regs[g->y];
             int32_t  Is = SEXTEND(12, g->imm);
+
+            // note Is, not Iu, since immediate is always sign-extended
+            int32_t  Os = (g->p == 0) ? Ys : Is;
+            uint32_t Ou = (g->p == 0) ? Yu : (uint32_t)Is;
+            int32_t  As = (g->p == 0) ? Is : Ys;
+
             deref_rhs = g->dd & 1;
-            deref_lhs = g->dd & 2;
-            reversed = !!g->r;
+            deref_lhs = g->dd == 2;
+            reversed  = g->dd == 3;
 
             switch (g->op) {
-                case OP_ADD                 : *rhs =  (Xs  +  Ys) + Is; break;
-                case OP_ADD_NEGATIVE_Y      : *rhs =  (Xs  + -Ys) + Is; break;
-                case OP_MULTIPLY            : *rhs =  (Xs  *  Ys) + Is; break;
+                case OP_ADD                 : *rhs =  (Xs  +  Os) + As; break;
+                case OP_ADD_NEGATIVE_Y      : *rhs =  (Xs  + -Os) + As; break;
+                case OP_MULTIPLY            : *rhs =  (Xs  *  Os) + As; break;
 
-                case OP_SHIFT_LEFT          : *rhs =  (Xu  << Yu) + Is; break;
-                case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (Xu  >> Yu) + Is; break;
+                case OP_SHIFT_LEFT          : *rhs =  (Xu  << Ou) + As; break;
+                case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (Xu  >> Ou) + As; break;
 
-                case OP_COMPARE_EQ          : *rhs = -(Xs  == Ys) + Is; break;
-                case OP_COMPARE_NE          : *rhs = -(Xs  != Ys) + Is; break;
-                case OP_COMPARE_LTE         : *rhs = -(Xs  <= Ys) + Is; break;
-                case OP_COMPARE_GT          : *rhs = -(Xs  >  Ys) + Is; break;
+                case OP_COMPARE_EQ          : *rhs = -(Xs  == Os) + As; break;
+                case OP_COMPARE_NE          : *rhs = -(Xs  != Os) + As; break;
+                case OP_COMPARE_LTE         : *rhs = -(Xs  <= Os) + As; break;
+                case OP_COMPARE_GT          : *rhs = -(Xs  >  Os) + As; break;
 
-                case OP_BITWISE_AND         : *rhs =  (Xu  &  Yu) + Is; break;
-                case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Yu) + Is; break;
-                case OP_BITWISE_OR          : *rhs =  (Xu  |  Yu) + Is; break;
-                case OP_BITWISE_NOR         : *rhs = ~(Xu  |  Yu) + Is; break;
-                case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Yu) + Is; break;
-                case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Yu) + Is; break;
+                case OP_BITWISE_AND         : *rhs =  (Xu  &  Ou) + As; break;
+                case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Ou) + As; break;
+                case OP_BITWISE_OR          : *rhs =  (Xu  |  Ou) + As; break;
+                case OP_BITWISE_NOR         : *rhs = ~(Xu  |  Ou) + As; break;
+                case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Ou) + As; break;
+                case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Ou) + As; break;
 
-                case OP_RESERVED            : goto bad;
+                case OP_RESERVED:
+                    fatal(0, "Encountered reserved opcode");
             }
 
             break;
         }
-        case 0x8:
-        case 0x9:
-        case 0xa:
-        case 0xb: {
-            struct instruction_load_immediate *g = &i->u._10xx;
-            Z = &s->machine.regs[g->z];
-            int32_t _imm = g->imm;
-            deref_rhs = g->dd & 1;
-            deref_lhs = g->dd & 2;
-            reversed = 0;
-            rhs = &_imm;
-
-            break;
-        }
         default:
-            goto bad;
+            if (s->conf.abort)
+                abort();
+            else
+                return 1;
     }
 
     // common activity block
@@ -115,12 +111,6 @@ int run_instruction(struct state *s, struct instruction *i)
     }
 
     return 0;
-
-bad:
-    if (s->conf.abort)
-        abort();
-    else
-        return 1;
 }
 
 

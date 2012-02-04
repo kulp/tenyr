@@ -4,7 +4,6 @@
 #include "ops.h"
 
 #define SMALL_IMMEDIATE_BITWIDTH    12
-#define LARGE_IMMEDIATE_BITWIDTH    24
 #define WORD_BITWIDTH               32
 
 struct parse_data {
@@ -14,13 +13,13 @@ struct parse_data {
         char saveline[LINE_LEN];
     } lexstate;
     struct instruction_list *top;
-    struct relocation_list {
+    struct deferred_expr {
         struct const_expr *ce;
         uint32_t *dest;     ///< destination word to be updated
         int width;          ///< width in bits of the right-justified immediate
         int mult;           ///< multiplier (1 or -1, according to sign)
-        struct relocation_list *next;
-    } *relocs;
+        struct deferred_expr *next;
+    } *defexprs;
     struct label_list {
         struct label *label;
         struct label_list *next;
@@ -34,7 +33,7 @@ struct parse_data {
 int tenyr_parse(struct parse_data *);
 
 struct const_expr {
-    enum { OP2, LAB, IMM, ICI } type; // TODO namespace
+    enum const_expr_type { OP2, LAB, EXT, IMM, ICI } type; // TODO namespace
     int32_t i;
     char labelname[LABEL_LEN];
     int op;
@@ -48,12 +47,13 @@ struct const_expr_list {
 };
 
 struct expr {
+    int type;   ///< 0=> X op Y + (mult * I) ; 1=> X op I + Y
     int deref;
     int x;
     int op;
     int y;
     int32_t i;
-    int width;  ///< width of relocation XXX cleanup
+    int width;  ///< width of deferred expression XXX cleanup
     int mult;   ///< multiplier from addsub
     struct const_expr *ce;
 };

@@ -8,25 +8,21 @@
 // algebraic assembler
 //
 // load/store/arith/control (TTTT = 0xxx)
-// [0rDDZZZZXXXXYYYYffffIIIIIIIIIIII]
+// [00DDZZZZXXXXYYYYffffIIIIIIIIIIII]
 // I = sign-extended 12-bit immediate
-// r =   0 : <-
-//       1 : ->
 // performs
-// DD = 00 :  Z  r  X f Y + I
-//      01 :  Z  r [X f Y + I]
-//      10 : [Z] r  X f Y + I
-//      11 : [Z] r [X f Y + I]
-// rDD = 1x0 : invalid but legal (reads, discards)
+// DD = 00 :  Z  <-  X f Y + I
+//      10 : [Z] <-  X f Y + I
+//      01 :  Z  <- [X f Y + I]
+//      11 :  Z  -> [X f Y + I]
 //
-// immediate load (TTTT = 100x)
-// [10DDZZZZJJJJJJJJJJJJJJJJJJJJJJJJ]
-// J = sign-extended 24-bit immediate
+// [01DDZZZZXXXXYYYYffffIIIIIIIIIIII]
+// I = sign-extended 12-bit immediate
 // performs
-// DD = 00 :  Z  <-  J
-//      01 :  Z  <- [J]
-//      10 : [Z] <-  J
-//      11 : [Z] <- [J]
+// DD = 00 :  Z  <-  X f I + Y
+//      10 : [Z] <-  X f I + Y
+//      01 :  Z  <- [X f I + Y]
+//      11 :  Z  -> [X f I + Y]
 //
 //  a <- [b * c + 4]
 //  a <- [p + 3]
@@ -80,12 +76,6 @@ struct instruction {
             unsigned   : 28;    ///< unused
             unsigned t :  4;    ///< type code
         } _xxxx;
-        struct instruction_load_immediate {
-            signed   imm : 24;  ///< immediate
-            unsigned z   :  4;  ///< destination
-            unsigned dd  :  2;  ///< dereference
-            unsigned t   :  2;  ///< type bits
-        } _10xx;
         struct instruction_general {
             signed   imm : 12;  ///< immediate
             unsigned op  :  4;  ///< operation
@@ -93,7 +83,7 @@ struct instruction {
             unsigned x   :  4;  ///< operand x
             unsigned z   :  4;  ///< operand z
             unsigned dd  :  2;  ///< dereference
-            unsigned r   :  1;  ///< reverse
+            unsigned p   :  1;  ///< expr type0 or type1
             unsigned t   :  1;  ///< type bit
         } _0xxx;
     } u;

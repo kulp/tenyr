@@ -35,6 +35,8 @@ static int savestr(yyscan_t yyscanner);
 regname ([A-P])
 /* don't permit collision with regname */
 label   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
+/* local labels start with ".L" */
+local   (\.L[A-Z_][A-Z0-9_]{1,30})
 string  (([^"]|\\\")+)
 hexnum  (-?"0"[xX][0-9a-fA-F]+)
 octnum  (-?"0"[0-7]+)
@@ -49,6 +51,7 @@ decnum  (-?[0-9]+)
 
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
 {label}                 { savestr(yyscanner); return LABEL; }
+{local}                 { savestr(yyscanner); return LOCAL; }
 "\""{string}"\""        { savestr(yyscanner); return STRING; }
 
 ".word"                 { return WORD; }
