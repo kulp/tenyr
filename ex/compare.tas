@@ -69,6 +69,3 @@ nl:
     .word 0x0a   // newline
     .word 0
 
-#include "strcmp.tas"
-#include "puts.tas"
-
