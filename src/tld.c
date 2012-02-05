@@ -21,6 +21,7 @@ struct link_state {
     int obj_count;
     struct obj_list {
         struct obj *obj;
+        int i;
         struct obj_list *next;
     } *objs, **next_obj;
     struct obj *relocated;
@@ -63,12 +64,11 @@ static int do_load(struct link_state *s, FILE *in)
     size_t size;
     rc = obj_read(o, &size, in);
     node->obj = o;
+    node->i = s->obj_count++;
     // put the objects on the list in order
     node->next = NULL;
     *s->next_obj = node;
     s->next_obj = &node->next;
-
-    s->obj_count++;
 
     return rc;
 }
@@ -97,23 +97,31 @@ static int do_link(struct link_state *s)
 
     typedef int cmp(const void *, const void*);
 
-    // running offset, tracking where to pack objects tightly one after another
-    UWord offset = 0;
+    // TODO save these offsets ?
+    int offsets[s->obj_count + 1];
+    memset(offsets, 0, sizeof offsets);
 
-    // read in all symbols
-    list_foreach(obj_list, Node, s->objs) {
-        struct obj *i = Node->obj;
+    {
+        // running offset, tracking where to pack objects tightly one after another
+        UWord running = 0;
 
-        if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
-            struct defn *def = calloc(1, sizeof *def);
-            strncpy(def->name, sym->name, sizeof def->name);
-            def->name[sizeof def->name - 1] = 0;
-            def->obj = i;
-            def->reladdr = sym->value + offset;
+        // read in all symbols
+        list_foreach(obj_list, Node, s->objs) {
+            struct obj *i = Node->obj;
 
-            struct defn **look = tsearch(def, &s->defns, (cmp*)strcmp);
-            if (*look != def)
-                fatal(0, "Duplicate definition for symbol `%s'", def->name);
+            if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
+                struct defn *def = calloc(1, sizeof *def);
+                strncpy(def->name, sym->name, sizeof def->name);
+                def->name[sizeof def->name - 1] = 0;
+                def->obj = i;
+                def->reladdr = sym->value + running;
+
+                struct defn **look = tsearch(def, &s->defns, (cmp*)strcmp);
+                if (*look != def)
+                    fatal(0, "Duplicate definition for symbol `%s'", def->name);
+            }
+
+            offsets[Node->i + 1] = running += i->records->size;
         }
     }
 
@@ -122,7 +130,8 @@ static int do_link(struct link_state *s)
         struct obj *i = Node->obj;
 
         if (i->rlc_count) list_foreach(objrlc, rlc, i->relocs) {
-            UWord reladdr = 0;
+            UWord reladdr = offsets[Node->i];
+
             if (rlc->name[0]) {
                 struct defn def;
                 strncpy(def.name, rlc->name, sizeof def.name);
@@ -130,11 +139,11 @@ static int do_link(struct link_state *s)
                 struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
                 if (!look)
                     fatal(0, "Missing definition for symbol `%s'", rlc->name);
-                reladdr = (*look)->reladdr + offset;
+                reladdr += (*look)->reladdr;
             } else {
                 // this is a null relocation ; it just wants us to update the
                 // offset
-                reladdr = offset;
+                reladdr = 0; // XXX
             }
             // here we actually add the found-symbol's value to the relocation
             // slot, being careful to trim to the right width
@@ -144,8 +153,6 @@ static int do_link(struct link_state *s)
             UWord updated = (*dest + reladdr) & mask;
             *dest = (*dest & ~mask) | updated;
         }
-
-        offset += i->records->size;
     }
 
     // TODO clean up symbols tree
