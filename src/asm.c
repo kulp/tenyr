@@ -29,8 +29,11 @@ static const char *op_names[] = {
     [OP_RESERVED           ] = "XX",
 };
 
-int print_disassembly(FILE *out, struct instruction *i)
+int print_disassembly(FILE *out, struct instruction *i, int flags)
 {
+    if (flags & ASM_AS_DATA)
+        return fprintf(out, ".word 0x%08x", i->u.word);
+
     int type = i->u._xxxx.t;
     switch (type) {
         case 0x0:
@@ -88,7 +91,7 @@ int print_disassembly(FILE *out, struct instruction *i)
             int op1 = !(g->x == 0 && g->op == OP_BITWISE_OR) || (!op2 && !op3);
 
             #define C_(A,B,C,D) (((A) << 12) | ((B) << 8) | ((C) << 4) | ((D) << 0))
-            #define PUT(...) fprintf(out, fmts[g->p][op1][op2][op3], __VA_ARGS__)
+            #define PUT(...) return fprintf(out, fmts[g->p][op1][op2][op3], __VA_ARGS__)
 
             switch (C_(g->p,op1,op2,op3)) {
               //case C_(0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
@@ -117,8 +120,10 @@ int print_disassembly(FILE *out, struct instruction *i)
             return 0;
         }
         default:
-            fprintf(out, ".word 0x%08x", i->u.word);
-            return 0;
+            if (i->u.word == 0xffffffff)
+                return fprintf(out, "illegal");
+            else
+                return fprintf(out, ".word 0x%08x", i->u.word);
     }
 
     return -1;

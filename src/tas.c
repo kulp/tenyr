@@ -12,8 +12,6 @@
 #include <string.h>
 #include <strings.h>
 
-int print_disassembly(FILE *out, struct instruction *i);
-
 static const char shortopts[] = "df:o::hV";
 
 static const struct option longopts[] = {
@@ -277,7 +275,9 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
         f->init(in, ASM_DISASSEMBLE, &ud);
 
     while (f->in(in, &i, ud) == 1) {
-        print_disassembly(out, &i);
+        int len = print_disassembly(out, &i, ASM_AS_INSN);
+        fprintf(out, "%*s# ", 30 - len, "");
+        print_disassembly(out, &i, ASM_AS_DATA);
         fputs("\n", out);
     }
 
