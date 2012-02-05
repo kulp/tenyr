@@ -101,9 +101,8 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
                 return add_relocation(pd, NULL, top_insn, SMALL_IMMEDIATE_BITWIDTH);
             return 0;
         case LAB:
-            //if (label_lookup(pd->labels, ce->labelname, result))
-                return add_relocation(pd, NULL, top_insn, SMALL_IMMEDIATE_BITWIDTH);
-            return 0;
+            label_lookup(pd->labels, ce->labelname, result);
+            return add_relocation(pd, NULL, top_insn, SMALL_IMMEDIATE_BITWIDTH);
         case ICI: *result = top_insn->reladdr; return 0;
         case IMM: *result = ce->i; return 0;
         case OP2:
