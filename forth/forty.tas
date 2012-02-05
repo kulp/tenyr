@@ -1,0 +1,43 @@
+#include "forth_common.th"
+
+boot:
+    PSP <- [iprel(.L_PSPdefault)]
+    RSP <- [iprel(.L_RSPdefault)]
+    f   <- p - .
+    IP  <- iprel(start)
+    goto(NEXT)
+
+    .global ENTER
+ENTER:
+    .word . + 1
+    push(RSP,IP)
+    IP <- W + 1
+    goto(NEXT)
+
+    .global EXIT
+EXIT:
+    .word . + 1
+    pop(RSP,IP)
+    goto(NEXT)
+
+    .global NEXT
+NEXT:
+    W  <- [IP]
+    W  <- W + f     // correct for relocation
+    IP <- IP + 1
+    X  <- [W]
+    jmp(X)
+
+    .global NOOP
+NOOP:
+    .word @ENTER
+    .word @EXIT
+
+    .global CRASH
+CRASH:
+    .word . + 1
+    illegal
+
+.L_PSPdefault:  .word   0x00ffffff
+.L_RSPdefault:  .word   0x007fffff
+
