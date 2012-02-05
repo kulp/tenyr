@@ -1,0 +1,88 @@
+// Baby ITC Forth
+// Forth's  W   is in M
+//          X   is in K
+//          IP  is in I
+//          PSP is in D
+//          RSP is in J
+// relocation offset is in F
+
+#include "forth_common.th"
+#include "serial.th"
+
+#define W   M
+#define X   K
+#define IP  I
+#define PSP D
+#define RSP J
+
+#define jmp(Reg)    p <- Reg + f
+#define ccall(Loc)  o <- RSP - 1 ; call(Loc)
+
+// don't put any code or data before _top
+_top: a <- a
+
+boot:
+    PSP <- [iprel(.L_PSPdefault)]
+    RSP <- [iprel(.L_RSPdefault)]
+    f   <- p - .
+    IP  <- iprel(start)
+    goto(NEXT)
+
+crash:
+    illegal
+
+start:
+    .word @NOOP
+    .word @HI
+    .word @NOOP
+    .word @NOOP
+    .word @NOOP
+    .word @HI
+    .word @NOOP
+    .word @CRASH
+
+    .word @CRASH
+
+#define head(Label,Name) \
+    .word @.L##Label##_end - @.L##Label##_start \
+.L##Label##_start: \
+    .ascii #Name \
+.L##Label##_end: \
+Label:
+
+head(HI,HI)
+    .word . + 1
+    c <- iprel(.L_hi_string)
+    ccall(puts)
+    goto(NEXT)
+
+NOOP:
+    .word @ENTER
+    .word @EXIT
+
+CRASH:
+    .word . + 1
+    goto(crash)
+
+ENTER:
+    .word . + 1
+    push(RSP,IP)
+    IP <- W + 1
+    goto(NEXT)
+
+EXIT:
+    .word . + 1
+    pop(RSP,IP)
+    goto(NEXT)
+
+NEXT:
+    W  <- [IP]
+    W  <- W + f     // correct for relocation
+    IP <- IP + 1
+    X  <- [W]
+    jmp(X)
+
+.L_PSPdefault:  .word   0x00ffffff
+.L_RSPdefault:  .word   0x007fffff
+.L_hi_string:   .ascii  "hello, world" ; .word 0
+
