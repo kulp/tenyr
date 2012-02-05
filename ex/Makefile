@@ -25,3 +25,6 @@ compare.texe: strcmp.to puts.to
 clean:
 	$(RM) $(CLEANFILES)
 
+clobber: clean
+	$(RM) *.to
+
