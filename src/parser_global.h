@@ -30,7 +30,7 @@ struct parse_data {
     } *globals;
     struct reloc_list {
         struct reloc_node {
-            char name[LABEL_LEN];
+            char name[LABEL_LEN];   ///< can be empty string for non-globals
             struct instruction *insn;
             int width;
         } reloc;

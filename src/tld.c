@@ -115,8 +115,6 @@ static int do_link(struct link_state *s)
             if (*look != def)
                 fatal(0, "Duplicate definition for symbol `%s'", def->name);
         }
-
-        offset += i->records->size;
     }
 
     // iterate over relocs
@@ -124,20 +122,30 @@ static int do_link(struct link_state *s)
         struct obj *i = Node->obj;
 
         if (i->rlc_count) list_foreach(objrlc, rlc, i->relocs) {
-            struct defn def;
-            strncpy(def.name, rlc->name, sizeof def.name);
-            def.name[sizeof def.name - 1] = 0;
-            struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
-            if (!look)
-                fatal(0, "Missing definition for symbol `%s'", rlc->name);
+            UWord reladdr = 0;
+            if (rlc->name[0]) {
+                struct defn def;
+                strncpy(def.name, rlc->name, sizeof def.name);
+                def.name[sizeof def.name - 1] = 0;
+                struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
+                if (!look)
+                    fatal(0, "Missing definition for symbol `%s'", rlc->name);
+                reladdr = (*look)->reladdr + offset;
+            } else {
+                // this is a null relocation ; it just wants us to update the
+                // offset
+                reladdr = offset;
+            }
             // here we actually add the found-symbol's value to the relocation
             // slot, being careful to trim to the right width
             // XXX stop assuming there is only one record per object
             UWord *dest = &i->records->data[rlc->addr - i->records->addr] ;
             UWord mask = ((1 << rlc->width) - 1);
-            UWord updated = (*dest + (*look)->reladdr) & mask;
+            UWord updated = (*dest + reladdr) & mask;
             *dest = (*dest & ~mask) | updated;
         }
+
+        offset += i->records->size;
     }
 
     // TODO clean up symbols tree

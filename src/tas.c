@@ -73,8 +73,10 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
-    strncpy(node->reloc.name, name, sizeof node->reloc.name);
-    node->reloc.name[sizeof node->reloc.name - 1] = 0;
+    if (name) {
+        strncpy(node->reloc.name, name, sizeof node->reloc.name);
+        node->reloc.name[sizeof node->reloc.name - 1] = 0;
+    }
     node->reloc.insn  = insn;
     node->reloc.width = width;
 
@@ -92,12 +94,16 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
     uint32_t left, right;
 
     switch (ce->type) {
-        case EXT: {
+        case EXT:
             if (label_lookup(pd->labels, ce->labelname, result))
                 return add_relocation(pd, ce->labelname, top_insn, SMALL_IMMEDIATE_BITWIDTH);
+            else
+                return add_relocation(pd, NULL, top_insn, SMALL_IMMEDIATE_BITWIDTH);
             return 0;
-        }
-        case LAB: return label_lookup(pd->labels, ce->labelname, result);
+        case LAB:
+            //if (label_lookup(pd->labels, ce->labelname, result))
+                return add_relocation(pd, NULL, top_insn, SMALL_IMMEDIATE_BITWIDTH);
+            return 0;
         case ICI: *result = top_insn->reladdr; return 0;
         case IMM: *result = ce->i; return 0;
         case OP2:
