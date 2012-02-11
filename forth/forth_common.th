@@ -15,14 +15,26 @@
 #define PSP D
 #define RSP J
 
-#define pushregs    push(o,W)   ; push(o,X)   ; push(o,IP) ; push(o,PSP) ; push(o,RSP)
-#define  popregs     pop(o,RSP) ;  pop(o,PSP) ;  pop(o,IP) ;  pop(o,X)   ;  pop(o, W)
+#define BAS F
 
-#define jmp(Reg)    p <- Reg + f
-#define ccall(Loc)  o <- RSP - 1 ; pushregs ; push(o,p + 3); goto(Loc) ; popregs
+// save and restore Forth registers on a stack, for calling other ABIs
+#define pushregs(o) push(o,W)   \
+                    push(o,X)   \
+                    push(o,IP)  \
+                    push(o,PSP) \
+                    push(o,RSP)
 
-#define iprel(Label)        f + @Label
-#define goto(Label)         p <- iprel(Label)
+#define  popregs(o)  pop(o,RSP) \
+                     pop(o,PSP) \
+                     pop(o,IP)  \
+                     pop(o,X)   \
+                     pop(o, W)
+
+#define jmp(Reg)    p <- Reg + BAS
+#define ccall(Loc)  o <- RSP - 1 ; pushregs(o) ; push(o,p + 3); goto(Loc) ; popregs(o)
+
+#define reloc(Label)        BAS + @Label
+#define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
@@ -35,4 +47,6 @@
 Label
 
 #endif
+
+/* vi:set syntax=cpp et ts=4 sw=4: */
 

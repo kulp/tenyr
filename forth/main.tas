@@ -6,33 +6,12 @@ head(start,start):
     .word @NL
     .word @NL
     .word @NL
-    //.word @CRASH
     .word @FLOOP
-    .word @CRASH
-    .word @HI
-    .word @NOOP
-    .word @BYE
-    .word @HI
-    .word @HI
-    .word @NOOP
-    .word @HI
-    .word @NOOP
-    .word @NOOP
-    .word @HI
-    .word @CRASH
-    .word @NOOP
-    .word @NOOP
-    .word @NOOP
-    .word @NOOP
-    .word @HI
-    .word @NOOP
-    .word @CRASH
-
-    .word @CRASH
+    .word @EXIT
 
 head(HI,HI):
     .word . + 1
-    c <- iprel(_hi_string)
+    c <- reloc(_hi_string)
     ccall(puts)
     goto(NEXT)
 
@@ -40,7 +19,7 @@ _hi_string: .ascii  "hello, world" ; .word 0
 
 head(BYE,BYE):
     .word . + 1
-    c <- iprel(_goodbye_string)
+    c <- reloc(_goodbye_string)
     ccall(puts)
     goto(NEXT)
 
@@ -48,7 +27,7 @@ _goodbye_string: .ascii  "goodbye, world" ; .word 0
 
 head(NL,NL):
     .word . + 1
-    c <- iprel(_nl_string)
+    c <- reloc(_nl_string)
     ccall(puts)
     goto(NEXT)
 

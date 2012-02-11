@@ -1,17 +1,25 @@
 #include "forth_common.th"
 
-boot:
-    f   <- p - .
-    PSP <- [f + .L_PSPdefault]
-    RSP <- [f + .L_RSPdefault]
-    IP  <- iprel(start)
-    //goto(NEXT)
+// A little Forth kernel.
+// Expects a global symbol called `start' to be defined in another object, which
+// should be a list of addresses of code to run, ending with EXIT.
+
+__boot:
+    BAS <- p - .
+    PSP <- [BAS + @_PSPdefault]
+    RSP <- [BAS + @_RSPdefault]
+    push(RSP,reloc(_done))
+    IP  <- reloc(start)
+    goto(NEXT)
+
+_PSPdefault:  .word   0x00ffffff
+_RSPdefault:  .word   0x007fffff
 
     .global NEXT
 NEXT:
     W  <- [IP]
-    W  <- W + f     // correct for relocation
-    IP <- IP + 1
+    W  <-  W + BAS
+    IP <-  IP + 1
     X  <- [W]
     jmp(X)
 
@@ -26,14 +34,9 @@ head(EXIT,ENTER):
     pop(RSP,IP)
     goto(NEXT)
 
-head(NOOP,NOOP):
-    .word @ENTER
-    .word @EXIT
-
-head(CRASH,CRASH):
+_done:
+    .word @__done
+__done:
     .word . + 1
     illegal
-
-.L_PSPdefault:  .word   0x00ffffff
-.L_RSPdefault:  .word   0x007fffff
 

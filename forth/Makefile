@@ -13,7 +13,7 @@ CLEANFILES += $(TARGETS)
 
 all: $(TARGETS)
 
-forty.texe: main.to puts.to
+forty.texe: main.to puts.to aux.to
 
 %.to: %.tas
 	cpp $(CPPFLAGS) $^ | $(TAS) -o$@ -

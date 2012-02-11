@@ -1,0 +1,6 @@
+#include "forth_common.th"
+
+head(NOOP,NOOP):
+    .word @ENTER
+    .word @EXIT
+
