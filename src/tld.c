@@ -88,6 +88,11 @@ static int do_make_relocated(struct link_state *s, struct obj **_o)
     return 0;
 }
 
+static int ptrcmp(const void *a, const void *b)
+{
+    return *(const char**)a - *(const char**)b;
+}
+
 static int do_link(struct link_state *s)
 {
     int rc = -1;
@@ -97,9 +102,14 @@ static int do_link(struct link_state *s)
 
     typedef int cmp(const void *, const void*);
 
-    // TODO save these offsets ?
-    int offsets[s->obj_count + 1];
-    memset(offsets, 0, sizeof offsets);
+    struct objmeta {
+        struct obj *obj;
+        int size;
+        int offset;
+    };
+    // tsearch-tree of `struct objmeta`
+    void *objtree = NULL;
+    // TODO destroy objtree
 
     {
         // running offset, tracking where to pack objects tightly one after another
@@ -109,19 +119,28 @@ static int do_link(struct link_state *s)
         list_foreach(obj_list, Node, s->objs) {
             struct obj *i = Node->obj;
 
+            struct objmeta *meta = calloc(1, sizeof *meta);
+            meta->obj = i;
+            meta->size = i->records->size;
+            meta->offset = running;
+            running += i->records->size;
+            {
+                struct objmeta **look = tsearch(meta, &objtree, ptrcmp);
+                if (*look != meta)
+                    fatal(0, "Duplicate object `%p'", (*look)->obj);
+            }
+
             if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
                 struct defn *def = calloc(1, sizeof *def);
                 strncpy(def->name, sym->name, sizeof def->name);
                 def->name[sizeof def->name - 1] = 0;
                 def->obj = i;
-                def->reladdr = sym->value + running;
+                def->reladdr = sym->value;
 
                 struct defn **look = tsearch(def, &s->defns, (cmp*)strcmp);
                 if (*look != def)
                     fatal(0, "Duplicate definition for symbol `%s'", def->name);
             }
-
-            offsets[Node->i + 1] = running += i->records->size;
         }
     }
 
@@ -130,7 +149,7 @@ static int do_link(struct link_state *s)
         struct obj *i = Node->obj;
 
         if (i->rlc_count) list_foreach(objrlc, rlc, i->relocs) {
-            UWord reladdr = offsets[Node->i];
+            UWord reladdr = 0;
 
             if (rlc->name[0]) {
                 struct defn def;
@@ -139,10 +158,14 @@ static int do_link(struct link_state *s)
                 struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
                 if (!look)
                     fatal(0, "Missing definition for symbol `%s'", rlc->name);
-                reladdr += (*look)->reladdr;
+                struct objmeta **me = tfind(&i, &objtree, ptrcmp),
+                               **it = tfind(&(*look)->obj, &objtree, ptrcmp);
+
+                reladdr = (*it)->offset - (*me)->offset + (*look)->reladdr;
             } else {
                 // this is a null relocation ; it just wants us to update the
                 // offset
+                // XXX remove null relocations
                 reladdr = 0; // XXX
             }
             // here we actually add the found-symbol's value to the relocation
