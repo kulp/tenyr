@@ -4,6 +4,7 @@
 
 #include "common.th"
 
+    f <- p - .          // load base
     b <- ARGUMENT       // b = upper limit (N)
     c <- b >> 1         // c = (N/2)
     i <- 2              // i = outer loop control
@@ -16,20 +17,20 @@
 init:
     d -> [o + j]        // write truth to table cell
     j <- j + 1          // increment table index
-    f <- j <= b         // exit loop when i > N
-    jnzrel(f,init)
+    m <- j <= b         // exit loop when i > N
+    jnzrel(m,init)
 outer:
-    f <- i > c          // exit loop when i > N/2
-    jnzrel(f,done)
+    m <- i > c          // exit loop when i > N/2
+    jnzrel(m,done)
     g <- [o + i]        // load compositeness
-    f <- g == 0         // check recorded compositeness
-    jnzrel(f,bottom)    // branch if composite
+    m <- g == 0         // check recorded compositeness
+    jnzrel(m,bottom)    // branch if composite
     k <- 2              // set up initial multiplier
 inner:
     j <- i * k          // compute j
     k <- k + 1          // increment multiplier
-    f <- j > b          // compare j to N
-    jnzrel(f,bottom)    // branch if j > N
+    m <- j > b          // compare j to N
+    jnzrel(m,bottom)    // branch if j > N
     a -> [o + j]        // mark as composite
     goto(inner)         // loop
 

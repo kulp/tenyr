@@ -266,12 +266,17 @@ static int run_sim(struct state *s)
         assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
         // TODO make it possible to cast memory location to instruction again
         struct instruction i;
+        int len = 0;
         s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
 
         if (s->conf.verbose > 0)
             printf("IP = 0x%06x\t", s->machine.regs[15]);
         if (s->conf.verbose > 1)
-            print_disassembly(stdout, &i);
+            len = print_disassembly(stdout, &i, ASM_AS_INSN);
+        if (s->conf.verbose > 1)
+            fprintf(stdout, "%*s# ", 30 - len, "");
+        if (s->conf.verbose > 1)
+            print_disassembly(stdout, &i, ASM_AS_DATA);
         if (s->conf.verbose > 3)
             fputs("\n", stdout);
         if (s->conf.verbose > 3)

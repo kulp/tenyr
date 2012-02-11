@@ -12,8 +12,6 @@
 #include <string.h>
 #include <strings.h>
 
-int print_disassembly(FILE *out, struct instruction *i);
-
 static const char shortopts[] = "df:o::hV";
 
 static const struct option longopts[] = {
@@ -73,8 +71,12 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
-    strncpy(node->reloc.name, name, sizeof node->reloc.name);
-    node->reloc.name[sizeof node->reloc.name - 1] = 0;
+    if (name) {
+        strncpy(node->reloc.name, name, sizeof node->reloc.name);
+        node->reloc.name[sizeof node->reloc.name - 1] = 0;
+    } else {
+        node->reloc.name[0] = 0;
+    }
     node->reloc.insn  = insn;
     node->reloc.width = width;
 
@@ -87,22 +89,25 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
 }
 
 static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
-        const_expr *ce, uint32_t *result)
+        const_expr *ce, int width, uint32_t *result)
 {
     uint32_t left, right;
 
     switch (ce->type) {
-        case EXT: {
+        case EXT:
             if (label_lookup(pd->labels, ce->labelname, result))
-                return add_relocation(pd, ce->labelname, top_insn, SMALL_IMMEDIATE_BITWIDTH);
+                return add_relocation(pd, ce->labelname, top_insn, width);
+            else
+                return add_relocation(pd, NULL, top_insn, width);
             return 0;
-        }
         case LAB: return label_lookup(pd->labels, ce->labelname, result);
-        case ICI: *result = top_insn->reladdr; return 0;
+        case ICI:
+            *result = top_insn->reladdr;
+            return add_relocation(pd, NULL, top_insn, width);
         case IMM: *result = ce->i; return 0;
         case OP2:
-            if (!ce_eval(pd, top_insn, ce->left, &left) &&
-                !ce_eval(pd, top_insn, ce->right, &right))
+            if (!ce_eval(pd, top_insn, ce->left , width, &left) &&
+                !ce_eval(pd, top_insn, ce->right, width, &right))
             {
                 switch (ce->op) {
                     case '+': *result = left +  right; return 0;
@@ -149,8 +154,8 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if ((rc = ce_eval(pd, ce->insn, ce, &result)) == 0) {
-            uint32_t mask = ~((1ULL << r->width) - 1);
+        if ((rc = ce_eval(pd, ce->insn, ce, r->width, &result)) == 0) {
+            uint32_t mask = ~(((1ULL << (r->width - 1)) << 1) - 1);
             result *= r->mult;
             *r->dest &= mask;
             *r->dest |= result & ~mask;
@@ -272,7 +277,9 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
         f->init(in, ASM_DISASSEMBLE, &ud);
 
     while (f->in(in, &i, ud) == 1) {
-        print_disassembly(out, &i);
+        int len = print_disassembly(out, &i, ASM_AS_INSN);
+        fprintf(out, "%*s# ", 30 - len, "");
+        print_disassembly(out, &i, ASM_AS_DATA);
         fputs("\n", out);
     }
 

@@ -78,7 +78,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <op> op
 %type <program> program ascii data ascii_or_data
 %type <s> addsub
-%type <str> lref label
+%type <str> label
 %type <cstr> string
 %type <dctv> directive
 
@@ -289,9 +289,9 @@ atom
     | immediate
         {   $atom = make_const_expr(IMM, 0, NULL, NULL);
             $atom->i = $immediate; }
-    | lref
+    | LOCAL
         {   $atom = make_const_expr(LAB, 0, NULL, NULL);
-            strncpy($atom->labelname, $lref, sizeof $atom->labelname); }
+            strncpy($atom->labelname, $LOCAL, sizeof $atom->labelname); }
     | '.'
         {   $atom = make_const_expr(ICI, 0, NULL, NULL); }
 
@@ -304,10 +304,6 @@ eref
         {   $eref = make_const_expr(EXT, 0, NULL, NULL);
             strncpy($eref->labelname, $LABEL, sizeof $eref->labelname);
             $eref->labelname[sizeof $eref->labelname - 1] = 0; }
-
-lref
-    : '@' LOCAL
-        { strncpy($lref, $LOCAL, sizeof $lref); $lref[sizeof $lref - 1] = 0; }
 
 label
     : LABEL

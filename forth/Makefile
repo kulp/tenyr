@@ -8,13 +8,12 @@ CPPFLAGS += -I../lib
 
 vpath %.tas ../lib
 
-TARGETS = hello.texe fib.texe compare.texe sieve.texe
+TARGETS = forty.texe
 CLEANFILES += $(TARGETS)
 
 all: $(TARGETS)
 
-hello.texe: puts.to
-compare.texe: strcmp.to puts.to
+forty.texe: main.to puts.to
 
 %.to: %.tas
 	cpp $(CPPFLAGS) $^ | $(TAS) -o$@ -

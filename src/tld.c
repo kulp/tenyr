@@ -21,6 +21,7 @@ struct link_state {
     int obj_count;
     struct obj_list {
         struct obj *obj;
+        int i;
         struct obj_list *next;
     } *objs, **next_obj;
     struct obj *relocated;
@@ -63,12 +64,11 @@ static int do_load(struct link_state *s, FILE *in)
     size_t size;
     rc = obj_read(o, &size, in);
     node->obj = o;
+    node->i = s->obj_count++;
     // put the objects on the list in order
     node->next = NULL;
     *s->next_obj = node;
     s->next_obj = &node->next;
-
-    s->obj_count++;
 
     return rc;
 }
@@ -88,6 +88,11 @@ static int do_make_relocated(struct link_state *s, struct obj **_o)
     return 0;
 }
 
+static int ptrcmp(const void *a, const void *b)
+{
+    return *(const char**)a - *(const char**)b;
+}
+
 static int do_link(struct link_state *s)
 {
     int rc = -1;
@@ -97,26 +102,46 @@ static int do_link(struct link_state *s)
 
     typedef int cmp(const void *, const void*);
 
-    // running offset, tracking where to pack objects tightly one after another
-    UWord offset = 0;
+    struct objmeta {
+        struct obj *obj;
+        int size;
+        int offset;
+    };
+    // tsearch-tree of `struct objmeta`
+    void *objtree = NULL;
+    // TODO destroy objtree
 
-    // read in all symbols
-    list_foreach(obj_list, Node, s->objs) {
-        struct obj *i = Node->obj;
+    {
+        // running offset, tracking where to pack objects tightly one after another
+        UWord running = 0;
 
-        if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
-            struct defn *def = calloc(1, sizeof *def);
-            strncpy(def->name, sym->name, sizeof def->name);
-            def->name[sizeof def->name - 1] = 0;
-            def->obj = i;
-            def->reladdr = sym->value + offset;
+        // read in all symbols
+        list_foreach(obj_list, Node, s->objs) {
+            struct obj *i = Node->obj;
 
-            struct defn **look = tsearch(def, &s->defns, (cmp*)strcmp);
-            if (*look != def)
-                fatal(0, "Duplicate definition for symbol `%s'", def->name);
+            struct objmeta *meta = calloc(1, sizeof *meta);
+            meta->obj = i;
+            meta->size = i->records->size;
+            meta->offset = running;
+            running += i->records->size;
+            {
+                struct objmeta **look = tsearch(meta, &objtree, ptrcmp);
+                if (*look != meta)
+                    fatal(0, "Duplicate object `%p'", (*look)->obj);
+            }
+
+            if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
+                struct defn *def = calloc(1, sizeof *def);
+                strncpy(def->name, sym->name, sizeof def->name);
+                def->name[sizeof def->name - 1] = 0;
+                def->obj = i;
+                def->reladdr = sym->value;
+
+                struct defn **look = tsearch(def, &s->defns, (cmp*)strcmp);
+                if (*look != def)
+                    fatal(0, "Duplicate definition for symbol `%s'", def->name);
+            }
         }
-
-        offset += i->records->size;
     }
 
     // iterate over relocs
@@ -124,18 +149,32 @@ static int do_link(struct link_state *s)
         struct obj *i = Node->obj;
 
         if (i->rlc_count) list_foreach(objrlc, rlc, i->relocs) {
-            struct defn def;
-            strncpy(def.name, rlc->name, sizeof def.name);
-            def.name[sizeof def.name - 1] = 0;
-            struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
-            if (!look)
-                fatal(0, "Missing definition for symbol `%s'", rlc->name);
+            UWord reladdr = 0;
+
+            struct objmeta **me = tfind(&i, &objtree, ptrcmp);
+            if (rlc->name[0]) {
+                struct defn def;
+                strncpy(def.name, rlc->name, sizeof def.name);
+                def.name[sizeof def.name - 1] = 0;
+                struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
+                if (!look)
+                    fatal(0, "Missing definition for symbol `%s'", rlc->name);
+                struct objmeta //**me = tfind(&i, &objtree, ptrcmp),
+                               **it = tfind(&(*look)->obj, &objtree, ptrcmp);
+
+                reladdr = (*it)->offset /*- (*me)->offset */+ (*look)->reladdr;
+            } else {
+                // this is a null relocation ; it just wants us to update the
+                // offset
+                // XXX remove null relocations
+                reladdr = (*me)->offset; // XXX
+            }
             // here we actually add the found-symbol's value to the relocation
             // slot, being careful to trim to the right width
             // XXX stop assuming there is only one record per object
             UWord *dest = &i->records->data[rlc->addr - i->records->addr] ;
-            UWord mask = ((1 << rlc->width) - 1);
-            UWord updated = (*dest + (*look)->reladdr) & mask;
+            UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
+            UWord updated = (*dest + reladdr) & mask;
             *dest = (*dest & ~mask) | updated;
         }
     }
