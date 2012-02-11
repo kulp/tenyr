@@ -27,7 +27,7 @@
 #define ret                 pop(RSP,p)
 
 #define head(Label,Name) \
-    .word @.L##Label##_end - @.L##Label##_start \
+    .word .L##Label##_end - .L##Label##_start \
 .L##Label##_start: \
     .ascii #Name \
 .L##Label##_end: \

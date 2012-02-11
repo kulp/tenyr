@@ -17,8 +17,8 @@ start:
     //.global HI
 head(HI,HI)
     .word . + 1
-    c <- iprel(.L_hi_string)
+    c <- iprel(_hi_string)
     ccall(puts)
     goto(NEXT)
 
-.L_hi_string:   .ascii  "hello, world" ; .word 0
+_hi_string: .ascii  "hello, world" ; .word 0

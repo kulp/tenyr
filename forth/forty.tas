@@ -1,9 +1,9 @@
 #include "forth_common.th"
 
 boot:
-    PSP <- [iprel(.L_PSPdefault)]
-    RSP <- [iprel(.L_RSPdefault)]
     f   <- p - .
+    PSP <- [f + .L_PSPdefault]
+    RSP <- [f + .L_RSPdefault]
     IP  <- iprel(start)
     goto(NEXT)
 
