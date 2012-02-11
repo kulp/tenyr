@@ -5,20 +5,7 @@ boot:
     PSP <- [f + .L_PSPdefault]
     RSP <- [f + .L_RSPdefault]
     IP  <- iprel(start)
-    goto(NEXT)
-
-    .global ENTER
-ENTER:
-    .word . + 1
-    push(RSP,IP)
-    IP <- W + 1
-    goto(NEXT)
-
-    .global EXIT
-EXIT:
-    .word . + 1
-    pop(RSP,IP)
-    goto(NEXT)
+    //goto(NEXT)
 
     .global NEXT
 NEXT:
@@ -28,13 +15,22 @@ NEXT:
     X  <- [W]
     jmp(X)
 
-    .global NOOP
-NOOP:
+head(ENTER,ENTER):
+    .word . + 1
+    push(RSP,IP)
+    IP <- W + 1
+    goto(NEXT)
+
+head(EXIT,ENTER):
+    .word . + 1
+    pop(RSP,IP)
+    goto(NEXT)
+
+head(NOOP,NOOP):
     .word @ENTER
     .word @EXIT
 
-    .global CRASH
-CRASH:
+head(CRASH,CRASH):
     .word . + 1
     illegal
 

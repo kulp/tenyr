@@ -1,7 +1,6 @@
 #include "forth_common.th"
 
-    .global start
-start:
+head(start,start):
     .word @HI
     .word @NL
     .word @NL
@@ -31,8 +30,7 @@ start:
 
     .word @CRASH
 
-    //.global HI
-head(HI,HI)
+head(HI,HI):
     .word . + 1
     c <- iprel(_hi_string)
     ccall(puts)
@@ -40,7 +38,7 @@ head(HI,HI)
 
 _hi_string: .ascii  "hello, world" ; .word 0
 
-head(BYE,BYE)
+head(BYE,BYE):
     .word . + 1
     c <- iprel(_goodbye_string)
     ccall(puts)
@@ -48,7 +46,7 @@ head(BYE,BYE)
 
 _goodbye_string: .ascii  "goodbye, world" ; .word 0
 
-NL:
+head(NL,NL):
     .word . + 1
     c <- iprel(_nl_string)
     ccall(puts)
@@ -58,8 +56,7 @@ _nl_string:
     .word 0x0a   // newline
     .word 0
 
-    //.global FLOOP
-FLOOP:
+head(FLOOP,FLOOP):
     .word @ENTER
     .word @BLOOP
     .word @NL
@@ -70,8 +67,7 @@ FLOOP:
     .word @EXIT
     illegal
 
-    //.global BLOOP
-BLOOP:
+head(BLOOP,BLOOP):
     .word @ENTER
     .word @NOOP
     .word @NOOP

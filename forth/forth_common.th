@@ -23,17 +23,16 @@
 
 #define iprel(Label)        f + @Label
 #define goto(Label)         p <- iprel(Label)
-#define jnzrel(Cond,Label)  n <- @Label - . - 3 ; n <- n & Cond ; p <- p + n + 1
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
-#define ret                 pop(RSP,p)
 
 #define head(Label,Name) \
     .word .L##Label##_end - .L##Label##_start \
 .L##Label##_start: \
     .ascii #Name \
+    .global Label \
 .L##Label##_end: \
-Label:
+Label
 
 #endif
 
