@@ -151,6 +151,7 @@ static int do_link(struct link_state *s)
         if (i->rlc_count) list_foreach(objrlc, rlc, i->relocs) {
             UWord reladdr = 0;
 
+            struct objmeta **me = tfind(&i, &objtree, ptrcmp);
             if (rlc->name[0]) {
                 struct defn def;
                 strncpy(def.name, rlc->name, sizeof def.name);
@@ -158,21 +159,21 @@ static int do_link(struct link_state *s)
                 struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
                 if (!look)
                     fatal(0, "Missing definition for symbol `%s'", rlc->name);
-                struct objmeta **me = tfind(&i, &objtree, ptrcmp),
+                struct objmeta //**me = tfind(&i, &objtree, ptrcmp),
                                **it = tfind(&(*look)->obj, &objtree, ptrcmp);
 
-                reladdr = (*it)->offset - (*me)->offset + (*look)->reladdr;
+                reladdr = (*it)->offset /*- (*me)->offset */+ (*look)->reladdr;
             } else {
                 // this is a null relocation ; it just wants us to update the
                 // offset
                 // XXX remove null relocations
-                reladdr = 0; // XXX
+                reladdr = (*me)->offset; // XXX
             }
             // here we actually add the found-symbol's value to the relocation
             // slot, being careful to trim to the right width
             // XXX stop assuming there is only one record per object
             UWord *dest = &i->records->data[rlc->addr - i->records->addr] ;
-            UWord mask = ((1 << rlc->width) - 1);
+            UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
             UWord updated = (*dest + reladdr) & mask;
             *dest = (*dest & ~mask) | updated;
         }
