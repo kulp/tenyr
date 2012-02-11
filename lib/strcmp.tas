@@ -8,19 +8,19 @@
 	.global strcmp
 strcmp:
     b <- 0              // start with matching
-.L_loop:
+_loop:
     f <- [c]            // load word from string
     g <- [d]            // load word from string
     h <- f == a         // if it is zero, we are done
     i <- g == a         // if it is zero, we are done
-    jnzrel(h,.L_done)
-    jnzrel(i,.L_done)
+    jnzrel(h,_done)
+    jnzrel(i,_done)
     c <- c + 1          // increment index for next time
     d <- d + 1          // increment index for next time
     e <- f <> g         // check for mismatch
     b <- b | e          // accumulate mismatches
-    goto(.L_loop)
-.L_done:
+    goto(_loop)
+_done:
     e <- f <> g         // check for mismatch
     b <- b | e          // accumulate mismatches
     e <- h <> i         // check for length mismatch
