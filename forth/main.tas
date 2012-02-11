@@ -2,9 +2,26 @@
 
     .global start
 start:
+    .word @HI
+    .word @NL
+    .word @NL
+    .word @NL
+    .word @NL
+    //.word @CRASH
+    .word @FLOOP
+    .word @CRASH
+    .word @HI
+    .word @NOOP
+    .word @BYE
+    .word @HI
+    .word @HI
+    .word @NOOP
+    .word @HI
+    .word @NOOP
     .word @NOOP
     .word @HI
     .word @CRASH
+    .word @NOOP
     .word @NOOP
     .word @NOOP
     .word @NOOP
@@ -22,3 +39,54 @@ head(HI,HI)
     goto(NEXT)
 
 _hi_string: .ascii  "hello, world" ; .word 0
+
+head(BYE,BYE)
+    .word . + 1
+    c <- iprel(_goodbye_string)
+    ccall(puts)
+    goto(NEXT)
+
+_goodbye_string: .ascii  "goodbye, world" ; .word 0
+
+NL:
+    .word . + 1
+    c <- iprel(_nl_string)
+    ccall(puts)
+    goto(NEXT)
+
+_nl_string:
+    .word 0x0a   // newline
+    .word 0
+
+    //.global FLOOP
+FLOOP:
+    .word @ENTER
+    .word @BLOOP
+    .word @NL
+    .word @BLOOP
+    .word @NL
+    .word @BLOOP
+    .word @NL
+    .word @EXIT
+    illegal
+
+    //.global BLOOP
+BLOOP:
+    .word @ENTER
+    .word @NOOP
+    .word @NOOP
+    .word @NOOP
+    .word @NOOP
+    .word @HI
+    .word @NL
+    .word @HI
+    .word @NL
+    .word @HI
+    .word @NL
+    .word @NOOP
+    .word @NOOP
+    .word @NOOP
+    .word @NOOP
+    .word @EXIT
+    illegal
+

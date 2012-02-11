@@ -15,12 +15,14 @@
 #define PSP D
 #define RSP J
 
-#define jmp(Reg)    p <- Reg + f
-#define ccall(Loc)  o <- RSP - 1 ; call(Loc)
+#define pushregs    push(o,W)   ; push(o,X)   ; push(o,IP) ; push(o,PSP) ; push(o,RSP)
+#define  popregs     pop(o,RSP) ;  pop(o,PSP) ;  pop(o,IP) ;  pop(o,X)   ;  pop(o, W)
 
-#define iprel(Label)        p + @Label - .
+#define jmp(Reg)    p <- Reg + f
+#define ccall(Loc)  o <- RSP - 1 ; pushregs ; push(o,p + 3); goto(Loc) ; popregs
+
+#define iprel(Label)        f + @Label
 #define goto(Label)         p <- iprel(Label)
-#define call(Target)        push(RSP,p + 3) ; goto(Target)
 #define jnzrel(Cond,Label)  n <- @Label - . - 3 ; n <- n & Cond ; p <- p + n + 1
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
