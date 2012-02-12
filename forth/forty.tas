@@ -1,0 +1,42 @@
+#include "forth_common.th"
+
+// A little Forth kernel.
+// Expects a global symbol called `start' to be defined in another object, which
+// should be a list of addresses of code to run, ending with EXIT.
+
+__boot:
+    BAS <- p - .
+    PSP <- [BAS + @_PSPinit]
+    RSP <- [BAS + @_RSPinit]
+    push(RSP,reloc(_done))
+    IP  <- reloc(start)
+    goto(NEXT)
+
+_PSPinit:   .word   0x00ffffff
+_RSPinit:   .word   0x007fffff
+
+    .global NEXT
+NEXT:
+    W  <- [IP]
+    W  <-  W + BAS
+    IP <-  IP + 1
+    X  <- [W]
+    jmp(X)
+
+head(ENTER,ENTER):
+    .word . + 1
+    push(RSP,IP)
+    IP <- W + 1
+    goto(NEXT)
+
+head(EXIT,EXIT):
+    .word . + 1
+    pop(RSP,IP)
+    goto(NEXT)
+
+_done:
+    .word @__done
+__done:
+    .word . + 1
+    illegal
+
