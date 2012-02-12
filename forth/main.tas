@@ -50,15 +50,13 @@ head(BLOOP,BLOOP):
     .word @ENTER
     .word @NOOP
     .word @NOOP
-    .word @NOOP
-    .word @NOOP
-    .word @HI
-    .word @NL
     .word @HI
     .word @NL
     .word @HI
     .word @NL
     .word @NOOP
+    .word @HI
+    .word @NL
     .word @NOOP
     .word @NOOP
     .word @NOOP

@@ -6,14 +6,14 @@
 
 __boot:
     BAS <- p - .
-    PSP <- [BAS + @_PSPdefault]
-    RSP <- [BAS + @_RSPdefault]
+    PSP <- [BAS + @_PSPinit]
+    RSP <- [BAS + @_RSPinit]
     push(RSP,reloc(_done))
     IP  <- reloc(start)
     goto(NEXT)
 
-_PSPdefault:  .word   0x00ffffff
-_RSPdefault:  .word   0x007fffff
+_PSPinit:   .word   0x00ffffff
+_RSPinit:   .word   0x007fffff
 
     .global NEXT
 NEXT:
@@ -29,7 +29,7 @@ head(ENTER,ENTER):
     IP <- W + 1
     goto(NEXT)
 
-head(EXIT,ENTER):
+head(EXIT,EXIT):
     .word . + 1
     pop(RSP,IP)
     goto(NEXT)
