@@ -8,6 +8,8 @@
 //          PSP is in D
 //          RSP is in J
 // relocation offset is in F
+// alternate (C) stack is in O
+// temporaries : B C E G H L N
 
 #define W   M
 #define X   K
