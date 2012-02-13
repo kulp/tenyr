@@ -79,7 +79,7 @@ endif
 	rm -f $@.$$$$
 
 clean:
-	$(RM) tas tsim *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
+	$(RM) tas tsim tld testffi *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
 
 clobber: clean
 	$(RM) $(GENDIR)/{parser,lexer}.[ch]
