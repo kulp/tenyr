@@ -1,5 +1,14 @@
 #include "forth_common.th"
 
+#define BINOP(Op)    \
+    .word . + 1      \
+    B   <- [PSP + 2] \
+    C   <- [PSP + 1] \
+    W   <-  B Op C   \
+    PSP <-  PSP + 1  \
+    W   -> [PSP + 1] \
+    goto(NEXT)
+
 // These comments were adapted from CamelForth
 // http://www.bradrodriguez.com/papers/glosslo.txt
 //
@@ -23,14 +32,7 @@
 // +      n1/u1 n2/u2 -- n3/u3             add n1+n2
 // +!     n/u a-addr --           add cell to memory
 // -      n1/u1 n2/u2 -- n3/u3        subtract n1-n2
-head(SUB,-):
-    .word . + 1
-    B   <- [PSP + 2]
-    C   <- [PSP + 1]
-    W   <-  B - C
-    PSP <-  PSP + 1
-    W   -> [PSP + 1]
-    goto(NEXT)
+head(SUB,-): BINOP(-)
 
 // <      n1 n2 -- flag           test n1<n2, signed
 head(CMP_LT,<):
@@ -45,24 +47,10 @@ head(CMP_LT,<):
     goto(NEXT)
 
 // =      x1 x2 -- flag                   test x1=x2
-head(CMP_EQ,=):
-    .word . + 1
-    B   <- [PSP + 2]
-    C   <- [PSP + 1]
-    PSP <- PSP + 1
-    E   <- B == C
-    E   -> [PSP + 1]
-    goto(NEXT)
+head(CMP_EQ,=): BINOP(==)
 
 // >      n1 n2 -- flag           test n1>n2, signed
-head(CMP_GT,>):
-    .word . + 1
-    B   <- [PSP + 2]
-    C   <- [PSP + 1]
-    PSP <- PSP + 1
-    E   <- B > C
-    E   -> [PSP + 1]
-    goto(NEXT)
+head(CMP_GT,>): BINOP(>)
 
 // >R     x --   R: -- x        push to return stack
 head(PUSH_R,>R):
@@ -117,6 +105,8 @@ head(DIV_2,2/):
     goto(NEXT)
 
 // AND    x1 x2 -- x3                    logical AND
+head(AND,AND): BINOP(&)
+
 // CONSTANT   n --           define a Forth constant
 // C!     c c-addr --           store char in memory
 // C@     c-addr -- c         fetch char from memory
@@ -152,6 +142,8 @@ head(EXIT,EXIT):
 // LSHIFT x1 u -- x2        logical L shift u places
 // NEGATE x1 -- x2                  two's complement
 // OR     x1 x2 -- x3                     logical OR
+head(OR,OR): BINOP(|)
+
 // OVER   x1 x2 -- x1 x2 x1        per stack diagram
 // ROT    x1 x2 x3 -- x2 x3 x1     per stack diagram
 // RSHIFT x1 u -- x2        logical R shift u places
@@ -172,15 +164,21 @@ head(POP_R,R>):
 // U<     u1 u2 -- flag         test u1<n2, unsigned
 // VARIABLE   --             define a Forth variable
 // XOR    x1 x2 -- x3                    logical XOR
+head(XOR,XOR): BINOP(^)
+
 //
 //                ANS Forth Extensions
 // These are optional words whose definitions are
 // specified by the ANS Forth document.
 //
 // <>     x1 x2 -- flag               test not equal
+head(CMP_NE,<>): BINOP(<>)
+
 // BYE    i*x --                      return to CP/M
 head(BYE,BYE):
     .word . + 1
+    PSP <- [reloc(_PSPinit)]
+    RSP <- [reloc(_RSPinit)]
     illegal
 
 // CMOVE  c-addr1 c-addr2 u --      move from bottom
@@ -190,7 +188,6 @@ head(BYE,BYE):
 // NIP    x1 x2 -- x2              per stack diagram
 // TUCK   x1 x2 -- x2 x1 x2        per stack diagram
 // U>     u1 u2 -- flag         test u1>u2, unsigned
-
 
 head(NOOP,NOOP):
     .word @ENTER

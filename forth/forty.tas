@@ -12,6 +12,8 @@ __boot:
     IP  <- reloc(start)
     goto(NEXT)
 
+    .global _PSPinit
+    .global _RSPinit
 _PSPinit:   .word   0x007fffff
 _RSPinit:   .word   0x00ffffff
 
