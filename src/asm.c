@@ -231,8 +231,8 @@ static void obj_out_labels(struct label *label, struct obj_fdata *u, struct obj 
 {
     list_foreach(label, Node, label) {
         if (Node->global) {
-            if (u->syms >= o->sym_count) {
-                while (u->syms >= o->sym_count)
+            if (u->syms >= (long)o->sym_count) {
+                while (u->syms >= (long)o->sym_count)
                     o->sym_count *= 2;
 
                 o->symbols = realloc(o->symbols,
@@ -256,8 +256,8 @@ static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct 
 {
     if (!reloc) return;
 
-    if (u->rlcs >= o->rlc_count) {
-        while (u->rlcs >= o->rlc_count)
+    if (u->rlcs >= (long)o->rlc_count) {
+        while (u->rlcs >= (long)o->rlc_count)
             o->rlc_count *= 2;
 
         o->relocs = realloc(o->relocs, o->rlc_count * sizeof *o->relocs);
@@ -280,8 +280,8 @@ static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct 
 
 static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj *o)
 {
-    if (u->insns >= o->records->size) {
-        while (u->insns >= o->records->size)
+    if (u->insns >= (long)o->records->size) {
+        while (u->insns >= (long)o->records->size)
             o->records->size *= 2;
 
         o->records->data = realloc(o->records->data,

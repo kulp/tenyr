@@ -68,6 +68,7 @@ $(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y lexer.h
 $(GENDIR):
 	mkdir -p $@
 
+ifndef INHIBIT_DEPS
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)
 endif
@@ -77,6 +78,7 @@ endif
 	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
+endif
 
 clean:
 	$(RM) tas tsim tld testffi *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
