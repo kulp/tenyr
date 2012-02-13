@@ -1,11 +1,11 @@
-CC       = gcc
+CC       = $(CROSS_COMPILE)gcc
 CFLAGS  += -g
 LDFLAGS += -g
 
 GCC_CFLAGS += -std=c99
 GCC_CFLAGS += -Wall -Wextra $(PEDANTIC)
 
-ifeq ($(CC),gcc)
+ifneq ($(findstring -gcc, $(CC)),0)
 CFLAGS += $(GCC_CFLAGS)
 endif
 
@@ -44,7 +44,10 @@ tsim: $(DEVOBJS) sim.o
 testffi: ffi.o sim.o obj.o
 tld: obj.o
 
-tas.o tsim.o tld.o: DEFINES += BUILD_NAME='$(BUILD_NAME)'
+asm.o: GCC_CFLAGS += -Wno-override-init
+
+# used to apply to .o only but some make versions built directly from .c
+tas tsim tld: DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
 lexer.o: parser.h
 
