@@ -188,7 +188,7 @@ static int obj_init(FILE *stream, int flags, void **ud)
         o->records->data = calloc(o->records->size, sizeof *o->records->data);
 
         o->sym_count = 32;
-        o->symbols = calloc(o->sym_count, sizeof *o->records);
+        o->symbols = calloc(o->sym_count, sizeof *o->symbols);
 
         o->rlc_count = 32;
         o->relocs = calloc(o->rlc_count, sizeof *o->relocs);
