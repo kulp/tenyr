@@ -2,6 +2,8 @@ CC       = $(CROSS_COMPILE)gcc
 CFLAGS  += -g
 LDFLAGS += -g
 
+EXE_SUFFIX =
+
 GCC_CFLAGS += -std=c99
 GCC_CFLAGS += -Wall -Wextra $(PEDANTIC)
 
@@ -36,18 +38,21 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 DEVICES = ram sparseram debugwrap serial
 DEVOBJS = $(DEVICES:%=%.o)
 
-all: tas tsim tld
-tas tsim tld: common.o
-tas: $(GENDIR)/parser.o $(GENDIR)/lexer.o
-tas tsim: asm.o obj.o
-tsim: $(DEVOBJS) sim.o
-testffi: ffi.o sim.o obj.o
-tld: obj.o
+all: tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) testffi$(EXE_SUFFIX): common.o
+tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
+tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
+tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o
+testffi$(EXE_SUFFIX): ffi.o sim.o obj.o
+tld$(EXE_SUFFIX): obj.o
 
 asm.o: GCC_CFLAGS += -Wno-override-init
 
+%$(EXE_SUFFIX): %.o
+	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
 # used to apply to .o only but some make versions built directly from .c
-tas tsim tld: DEFINES += BUILD_NAME='$(BUILD_NAME)'
+tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
 lexer.o: parser.h
 
@@ -84,7 +89,8 @@ endif
 endif
 
 clean:
-	$(RM) tas tsim tld testffi *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
+	$(RM) tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) \
+	testffi$(EXE_SUFFIX) *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
 
 clobber: clean
 	$(RM) $(GENDIR)/{parser,lexer}.[ch]
