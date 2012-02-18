@@ -6,6 +6,10 @@
 // for RAM_BASE
 #include "devices/ram.h"
 
+#include "debugger_global.h"
+#include "debugger_parser.h"
+#include "debugger_lexer.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -109,10 +113,11 @@ static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
     return (*device)->op(s, (*device)->cookie, op, addr, data);
 }
 
-static const char shortopts[] = "a:s:f:nr:vhV";
+static const char shortopts[] = "a:ds:f:nr:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
+    { "debug"      ,       no_argument, NULL, 'd' },
     { "format"     , required_argument, NULL, 'f' },
     { "scratch"    ,       no_argument, NULL, 'n' },
     { "recipe"     , required_argument, NULL, 'r' },
@@ -320,6 +325,7 @@ int main(int argc, char *argv[])
         .conf = {
             .verbose = 0,
             .run_defaults = 1,
+            .debugging = 0,
         },
         .dispatch_op = dispatch_op,
     }, *s = &_s;
@@ -338,6 +344,7 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'a': load_address = strtol(optarg, NULL, 0); break;
+            case 'd': s->conf.debugging = 1; break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
                 size_t sz = formats_count;
@@ -382,7 +389,16 @@ int main(int argc, char *argv[])
     }
 
     load_sim(s, f, in, load_address, start_address);
-    run_sim(s);
+    if (s->conf.debugging) {
+        struct debugger_data dd = { NULL, { 0, { 0 } } };
+        tdbg_lex_init(&dd.scanner);
+        tdbg_set_extra(&dd, dd.scanner);
+        int result = tdbg_parse(&dd);
+        (void)result;
+        tdbg_lex_destroy(dd.scanner);
+    } else {
+        run_sim(s);
+    }
 
     if (in)
         fclose(in);
