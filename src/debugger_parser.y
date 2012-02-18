@@ -11,6 +11,7 @@
 #include "debugger_lexer.h"
 
 int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
+
 #define YYLEX_PARAM (dd->scanner)
 
 %}
@@ -25,7 +26,10 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 
 %start top
 
-%token BREAK CONTINUE PRINT STEPI INTEGER NL
+%token BREAK CONTINUE PRINT STEPI INTEGER
+%token QUIT
+%token UNKNOWN
+%token NL
 %token REGISTER
 %token '*'
 
@@ -37,20 +41,34 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 %%
 
 top
-    : command NL
-        {   abort(); }
+    : command-list
+    | NL { YYACCEPT; }
+
+command-list
+    : /* empty */
+    | command NL { YYACCEPT; } command-list
+    | error NL
+        {   yyerrok;
+            fputs("Invalid command\n", stdout);
+            YYABORT; }
 
 command
     : PRINT expr
-    | BREAK addr_expr
+        { puts("print"); }
+    | BREAK addr-expr
+        { puts("break"); }
     | CONTINUE
+        { puts("continue"); }
     | STEPI
+        { puts("stepi"); }
+    | QUIT
+        { dd->done = 1; YYABORT; }
 
 expr
-    : addr_expr
+    : addr-expr
     | INTEGER
 
-addr_expr
+addr-expr
     : '*' INTEGER
 
 %%
@@ -58,13 +76,18 @@ addr_expr
 static char prompt[] = "(tdbg) ";
 static size_t prompt_length = sizeof prompt;
 
+int tdbg_prompt(struct debugger_data *dd, FILE *where)
+{
+    fputs(prompt, where);
+    return 0;
+}
+
 int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s)
 {
     fflush(stderr);
-    fprintf(stderr, "%*s\n%*s at line %d column %d at `%s'\n",
-            locp->first_column + (int)prompt_length, "^", locp->first_column +
-            (int)prompt_length, s, locp->first_line, locp->first_column +
-            (int)prompt_length, tdbg_get_text(dd->scanner));
+    fprintf(stderr, "%*s\n%*s at `%s'\n",
+            locp->first_column + (int)prompt_length, "^", locp->first_column,
+            s, tdbg_get_text(dd->scanner));
 
     return 0;
 }

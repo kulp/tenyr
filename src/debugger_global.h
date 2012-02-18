@@ -9,9 +9,11 @@ struct debugger_data {
         unsigned savecol;
         char saveline[LINE_LEN];
     } lexstate;
+    int done;
 };
 
 int tdbg_parse(struct debugger_data *);
+int tdbg_prompt(struct debugger_data *dd, FILE *where);
 
 #endif
 

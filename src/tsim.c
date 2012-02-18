@@ -390,10 +390,14 @@ int main(int argc, char *argv[])
 
     load_sim(s, f, in, load_address, start_address);
     if (s->conf.debugging) {
-        struct debugger_data dd = { NULL, { 0, { 0 } } };
+        struct debugger_data dd = { NULL, { 0, { 0 } }, 0 };
         tdbg_lex_init(&dd.scanner);
         tdbg_set_extra(&dd, dd.scanner);
-        int result = tdbg_parse(&dd);
+        int result;
+        while (!dd.done && !feof(stdin)) {
+            tdbg_prompt(&dd, stdout);
+            result = tdbg_parse(&dd);
+        }
         (void)result;
         tdbg_lex_destroy(dd.scanner);
     } else {

@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <ctype.h>
 
 #include "common.h"
 #include "debugger_parser.h"
@@ -30,32 +31,36 @@ static int savestr(yyscan_t yyscanner);
 %option extra-type="struct debugger_data *"
 %option prefix="tdbg_"
 
-regname ($[A-P])
+regname ($[A-Pa-p])
 hexnum  (-?"0"[xX][0-9a-fA-F]+)
 octnum  (-?"0"[0-7]+)
 decnum  (-?[0-9]+)
+word    ([A-Za-z)
+inspace ([ \t])
 
 %%
 
 "\t"                    { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
 "\n"                    { saveline[savecol = 0] = 0; return NL; }
 
-'*'                     { return '*'; }
+\*                     { return '*'; }
 
-{regname}               { yylval->chr = yytext[1]; return REGISTER; }
+{regname}               { yylval->chr = toupper(yytext[1]); return REGISTER; }
 
 {hexnum}                { savestr(yyscanner); return INTEGER; }
 {octnum}                { savestr(yyscanner); return INTEGER; }
 {decnum}                { savestr(yyscanner); return INTEGER; }
 
-"b"                     { return BREAK; }
-"c"                     { return CONTINUE; }
-"p"                     { return PRINT; }
-"si"                    { return STEPI; }
+b/{inspace}             { return BREAK; }
+c$                      { return CONTINUE; }
+p/{inspace}             { return PRINT; }
+si$                     { return STEPI; }
+q$                      { return QUIT; }
+quit$                   { return QUIT; }
 
 [\t\f\v\r ]+            ;
 
-.                       { tdbg_error(yylloc, yyextra, "unexpected character"); }
+.                       { return UNKNOWN; }
 
 %%
 
