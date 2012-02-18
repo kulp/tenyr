@@ -29,7 +29,7 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 %token BREAK CONTINUE PRINT STEPI INTEGER
 %token QUIT
 %token UNKNOWN
-%token NL
+%token NL WHITESPACE
 %token REGISTER
 %token '*'
 
@@ -46,23 +46,32 @@ top
 
 command-list
     : /* empty */
-    | command NL { YYACCEPT; } command-list
+    | command maybe-whitespace NL { YYACCEPT; }
     | error NL
         {   yyerrok;
             fputs("Invalid command\n", stdout);
+            dd->done = 0;
             YYABORT; }
 
 command
-    : PRINT expr
+    : PRINT whitespace expr
         { puts("print"); }
-    | BREAK addr-expr
+    | BREAK whitespace addr-expr
         { puts("break"); }
     | CONTINUE
         { puts("continue"); }
     | STEPI
         { puts("stepi"); }
     | QUIT
-        { dd->done = 1; YYABORT; }
+        { dd->done = 1; }
+
+maybe-whitespace
+    : /* empty */
+    | whitespace
+
+whitespace
+    : WHITESPACE
+    | WHITESPACE whitespace
 
 expr
     : addr-expr

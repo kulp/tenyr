@@ -36,14 +36,15 @@ hexnum  (-?"0"[xX][0-9a-fA-F]+)
 octnum  (-?"0"[0-7]+)
 decnum  (-?[0-9]+)
 word    ([A-Za-z)
-inspace ([ \t])
+inspace ([ \t]+)
+trailsp ([ \t]*$)
 
 %%
 
 "\t"                    { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
 "\n"                    { saveline[savecol = 0] = 0; return NL; }
 
-\*                     { return '*'; }
+\*                      { return '*'; }
 
 {regname}               { yylval->chr = toupper(yytext[1]); return REGISTER; }
 
@@ -51,14 +52,14 @@ inspace ([ \t])
 {octnum}                { savestr(yyscanner); return INTEGER; }
 {decnum}                { savestr(yyscanner); return INTEGER; }
 
-b/{inspace}             { return BREAK; }
-c$                      { return CONTINUE; }
-p/{inspace}             { return PRINT; }
-si$                     { return STEPI; }
-q$                      { return QUIT; }
-quit$                   { return QUIT; }
+b                       { return BREAK; }
+c                       { return CONTINUE; }
+p                       { return PRINT; }
+si                      { return STEPI; }
+q                       { return QUIT; }
+quit                    { return QUIT; }
 
-[\t\f\v\r ]+            ;
+[\t\f\v\r ]+            { return WHITESPACE; }
 
 .                       { return UNKNOWN; }
 
