@@ -374,7 +374,7 @@ static int matches_breakpoint(struct mstate *m, void *cud)
     return c && c->enabled && c->addr == pc;
 }
 
-static int print_expr(struct state *s, struct debug_cmd *c)
+static int print_expr(struct state *s, struct debug_expr *expr, int fmt)
 {
     static const char *fmts[DISP_max] ={
         [DISP_NULL] = "%d",     // this is used by default
@@ -382,36 +382,38 @@ static int print_expr(struct state *s, struct debug_cmd *c)
         [DISP_HEX ] = "0x%08x",
     };
 
-    switch (c->arg.expr.type) {
+    uint32_t val = 0x0badcafe;
+
+    switch (expr->type) {
         case EXPR_MEM: {
-            uint32_t val;
-            if (!s->dispatch_op(s, OP_READ, c->arg.expr.val, &val)) {
-                switch (c->arg.fmt) {
-                    case DISP_INST: {
-                        struct instruction i = { .u.word = val };
-                        print_disassembly(stdout, &i, 0);
-                        fputc('\n', stdout);
-                        return 0;
-                    }
-                    case DISP_NULL:
-                    case DISP_HEX:
-                    case DISP_DEC:
-                        printf(fmts[c->arg.fmt], val);
-                        fputc('\n', stdout);
-                        return 0;
-                    default:
-                        fatal(0, "Invalid format code %d", c->arg.fmt);
-                }
-            } else
+            if (s->dispatch_op(s, OP_READ, expr->val, &val))
                 return -1;
+            break;
         }
         case EXPR_REG:
             assert(("Register name in range",
-                    c->arg.expr.val >= 0 && c->arg.expr.val < 16));
-            printf("0x%08x\n", s->machine.regs[c->arg.expr.val]);
+                    expr->val >= 0 && expr->val < 16));
+            val = s->machine.regs[expr->val];
+            break;
+        default:
+            fatal(0, "Invalid print type code %d\n", expr->type);
+    }
+
+    switch (fmt) {
+        case DISP_INST: {
+            struct instruction i = { .u.word = val };
+            print_disassembly(stdout, &i, 0);
+            fputc('\n', stdout);
+            return 0;
+        }
+        case DISP_NULL:
+        case DISP_HEX:
+        case DISP_DEC:
+            printf(fmts[fmt], val);
+            fputc('\n', stdout);
             return 0;
         default:
-            fatal(0, "Invalid print type code %d\n", c->arg.expr.type);
+            fatal(0, "Invalid format code %d", fmt);
     }
 
     return -1;
@@ -430,71 +432,102 @@ static int get_info(struct state *s, struct debug_cmd *c)
     return -1;
 }
 
-static int run_debugger(struct state *s)
+static int add_display(struct debugger_data *dd, struct debug_expr expr, int fmt)
 {
-    struct debugger_data dd;
-    memset(&dd, 0, sizeof dd);
+    struct debug_display *disp = calloc(1, sizeof *disp);
+    disp->expr = expr;
+    disp->fmt = fmt;
+    disp->next = dd->displays;
+    dd->displays = disp;
 
-    tdbg_lex_init(&dd.scanner);
-    tdbg_set_extra(&dd, dd.scanner);
+    return 0;
+}
 
-    void *breakpoints = NULL;
-    kv_int_init(&breakpoints);
-
-    int result = 0;
-    int done = 0;
-    while (!done && !feof(stdin)) {
-        struct debug_cmd *c = &dd.cmd;
-        tdbg_prompt(&dd, stdout);
-        result = tdbg_parse(&dd);
-
-        switch (c->code) {
-            case CMD_NULL:
-                break;
-
-            case CMD_GET_INFO:
-                get_info(s, c);
-                break;
-            case CMD_DELETE_BREAKPOINT:
-                delete_breakpoint(&breakpoints, c->arg.l);
-                break;
-            case CMD_SET_BREAKPOINT:
-                set_breakpoint(&breakpoints, c->arg.l);
-                break;
-            case CMD_PRINT:
-                print_expr(s, c);
-                break;
-            case CMD_CONTINUE: {
-                int32_t *ip = &s->machine.regs[15];
-                printf("Continuing @ %#x ... ", *ip);
-                tf_run_until(s, *ip, TF_IGNORE_FIRST_PREDICATE,
-                        matches_breakpoint, breakpoints);
-                printf("stopped @ %#x\n", *ip);
-                break;
-            }
-            case CMD_STEP_INSTRUCTION: {
-                struct instruction i;
-                int32_t *ip = &s->machine.regs[15];
-                s->dispatch_op(s, OP_READ, *ip, &i.u.word);
-                printf("Stepping @ %#x ... ", *ip);
-                if (run_instruction(s, &i)) {
-                    printf("failed (P = %#x)\n", *ip);
-                    return 1;
-                }
-                printf("stopped @ %#x\n", *ip);
-                break;
-            }
-            case CMD_QUIT:
-                done = 1;
-                break;
-            default:
-                fatal(0, "Invalid debugger command code %d", c->code);
-        }
+static int show_displays(struct debugger_data *dd)
+{
+    int i = 0;
+    list_foreach(debug_display,disp,dd->displays) {
+        printf("display %d : ", i++);
+        print_expr(dd->s, &disp->expr, disp->fmt);
     }
 
-    tdbg_lex_destroy(dd.scanner);
+    return 0;
+}
 
-    return result;
+static int debugger_step(struct debugger_data *dd)
+{
+    int done = 0;
+
+    struct debug_cmd *c = &dd->cmd;
+    tdbg_prompt(dd, stdout);
+    tdbg_parse(dd); // TODO handle errors
+
+    switch (c->code) {
+        case CMD_NULL:
+            break;
+        case CMD_GET_INFO:
+            get_info(dd->s, c);
+            break;
+        case CMD_DELETE_BREAKPOINT:
+            delete_breakpoint(&dd->breakpoints, c->arg.expr.val);
+            break;
+        case CMD_SET_BREAKPOINT:
+            set_breakpoint(&dd->breakpoints, c->arg.expr.val);
+            break;
+        case CMD_DISPLAY:
+            add_display(dd, c->arg.expr, c->arg.fmt);
+            break;
+        case CMD_PRINT:
+            print_expr(dd->s, &c->arg.expr, c->arg.fmt);
+            break;
+        case CMD_CONTINUE: {
+            int32_t *ip = &dd->s->machine.regs[15];
+            printf("Continuing @ %#x ... ", *ip);
+            tf_run_until(dd->s, *ip, TF_IGNORE_FIRST_PREDICATE,
+                    matches_breakpoint, dd->breakpoints);
+            printf("stopped @ %#x\n", *ip);
+            show_displays(dd);
+            break;
+        }
+        case CMD_STEP_INSTRUCTION: {
+            struct instruction i;
+            int32_t *ip = &dd->s->machine.regs[15];
+            dd->s->dispatch_op(dd->s, OP_READ, *ip, &i.u.word);
+            printf("Stepping @ %#x ... ", *ip);
+            if (run_instruction(dd->s, &i)) {
+                printf("failed (P = %#x)\n", *ip);
+                return 1;
+            }
+            printf("stopped @ %#x\n", *ip);
+            show_displays(dd);
+            break;
+        }
+        case CMD_QUIT:
+            done = 1;
+            break;
+        default:
+            fatal(0, "Invalid debugger command code %d", c->code);
+    }
+
+    return done;
+}
+
+static int run_debugger(struct state *s, FILE *stream)
+{
+    struct debugger_data _dd = { .s = s }, *dd = &_dd;
+    kv_int_init(&dd->breakpoints);
+
+    tdbg_lex_init(&dd->scanner);
+    tdbg_set_extra(dd, dd->scanner);
+    tdbg_set_in(stream, dd->scanner);
+
+    int done = 0;
+    while (!done && !feof(stream))
+        done = debugger_step(dd);
+
+    tdbg_lex_destroy(dd->scanner);
+
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -571,7 +604,7 @@ int main(int argc, char *argv[])
     load_sim(s, f, in, load_address, start_address);
 
     if (s->conf.debugging)
-        run_debugger(s);
+        run_debugger(s, stdin);
     else
         run_sim(s);
 

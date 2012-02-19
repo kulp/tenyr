@@ -19,11 +19,23 @@ enum display_type {
 };
 
 struct debugger_data {
+    struct state *s;    ///< simulator state to which we belong
+
     void *scanner;
+    void *breakpoints;
+
     struct {
         unsigned savecol;
         char saveline[LINE_LEN];
     } lexstate;
+
+    struct debug_display {
+        struct debug_display *next;
+
+        struct debug_expr expr;
+        int fmt;
+    } *displays;
+
     struct debug_cmd {
         enum {
             CMD_NULL,
@@ -43,7 +55,6 @@ struct debugger_data {
             struct debug_expr expr;
             int fmt;   ///< print / display format character
             char str[LINE_LEN];
-            long l;
         } arg;
     } cmd;
 };
