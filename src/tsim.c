@@ -374,6 +374,62 @@ static int matches_breakpoint(struct mstate *m, void *cud)
     return c && c->enabled && c->addr == pc;
 }
 
+static int print_expr(struct state *s, struct debug_cmd *c)
+{
+    static const char *fmts[DISP_max] ={
+        [DISP_NULL] = "%d",     // this is used by default
+        [DISP_DEC ] = "%d",
+        [DISP_HEX ] = "0x%08x",
+    };
+
+    switch (c->arg.expr.type) {
+        case EXPR_MEM: {
+            uint32_t val;
+            if (!s->dispatch_op(s, OP_READ, c->arg.expr.val, &val)) {
+                switch (c->arg.fmt) {
+                    case DISP_INST: {
+                        struct instruction i = { .u.word = val };
+                        print_disassembly(stdout, &i, 0);
+                        fputc('\n', stdout);
+                        return 0;
+                    }
+                    case DISP_NULL:
+                    case DISP_HEX:
+                    case DISP_DEC:
+                        printf(fmts[c->arg.fmt], val);
+                        fputc('\n', stdout);
+                        return 0;
+                    default:
+                        fatal(0, "Invalid format code %d", c->arg.fmt);
+                }
+            } else
+                return -1;
+        }
+        case EXPR_REG:
+            assert(("Register name in range",
+                    c->arg.expr.val >= 0 && c->arg.expr.val < 16));
+            printf("0x%08x\n", s->machine.regs[c->arg.expr.val]);
+            return 0;
+        default:
+            fatal(0, "Invalid print type code %d\n", c->arg.expr.type);
+    }
+
+    return -1;
+}
+
+static int get_info(struct state *s, struct debug_cmd *c)
+{
+    if (!strncmp(c->arg.str, "registers", sizeof c->arg.str)) {
+        print_registers(stdout, s->machine.regs);
+        return 0;
+    } else {
+        fprintf(stderr, "Invalid argument `%s' to info", c->arg.str);
+        return -1;
+    }
+
+    return -1;
+}
+
 static int run_debugger(struct state *s)
 {
     struct debugger_data dd;
@@ -395,6 +451,10 @@ static int run_debugger(struct state *s)
         switch (c->code) {
             case CMD_NULL:
                 break;
+
+            case CMD_GET_INFO:
+                get_info(s, c);
+                break;
             case CMD_DELETE_BREAKPOINT:
                 delete_breakpoint(&breakpoints, c->arg.l);
                 break;
@@ -402,31 +462,26 @@ static int run_debugger(struct state *s)
                 set_breakpoint(&breakpoints, c->arg.l);
                 break;
             case CMD_PRINT:
-                switch (c->arg.expr.type) {
-                    case EXPR_MEM: {
-                        uint32_t val;
-                        if (!s->dispatch_op(s, OP_READ, c->arg.expr.val, &val))
-                            printf("0x%08x\n", val);
-                        break;
-                    }
-                    case EXPR_REG:
-                        assert(("Register name in range",
-                                c->arg.expr.val >= 0 && c->arg.expr.val < 16));
-                        printf("0x%08x\n", s->machine.regs[c->arg.expr.val]);
-                        break;
-                    default:
-                        fatal(0, "Invalid print type code %d\n", c->arg.expr.type);
-                }
+                print_expr(s, c);
                 break;
-            case CMD_CONTINUE:
-                tf_run_until(s, s->machine.regs[15], TF_IGNORE_FIRST_PREDICATE,
+            case CMD_CONTINUE: {
+                int32_t *ip = &s->machine.regs[15];
+                printf("Continuing @ %#x ... ", *ip);
+                tf_run_until(s, *ip, TF_IGNORE_FIRST_PREDICATE,
                         matches_breakpoint, breakpoints);
+                printf("stopped @ %#x\n", *ip);
                 break;
+            }
             case CMD_STEP_INSTRUCTION: {
                 struct instruction i;
-                s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
-                if (run_instruction(s, &i))
+                int32_t *ip = &s->machine.regs[15];
+                s->dispatch_op(s, OP_READ, *ip, &i.u.word);
+                printf("Stepping @ %#x ... ", *ip);
+                if (run_instruction(s, &i)) {
+                    printf("failed (P = %#x)\n", *ip);
                     return 1;
+                }
+                printf("stopped @ %#x\n", *ip);
                 break;
             }
             case CMD_QUIT:

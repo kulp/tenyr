@@ -28,20 +28,23 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 
 %type <expr> expr addr_expr
 %type <i32> integer regname
+%type <cmd> command display_command info_command print_command
+%type <chr> format
 
-%token BREAK DELETE CONTINUE PRINT STEPI
-%token <str> INTEGER
-%token QUIT
+%token STEPI DISPLAY INFO PRINT
+%token <str> INTEGER IDENT
 %token UNKNOWN
 %token NL WHITESPACE
 %token <chr> REGISTER
-%token '*'
+%token '*' '/'
+%token <chr> 'i' 'd' 'x'
 
 %union {
     char chr;
     char str[LINE_LEN];
     int32_t i32;
     struct debug_expr expr; // TODO support proper constant expression trees
+    struct debug_cmd cmd;
 }
 
 %%
@@ -52,29 +55,65 @@ top
 
 maybe_command
     : NL { YYACCEPT; }
-    | command maybe_whitespace NL { YYACCEPT; }
+    | maybe_whitespace command maybe_whitespace NL { dd->cmd = $command; YYACCEPT; }
     | error NL
         {   yyerrok;
-            fputs("Invalid command\n", stdout);
+            fputs("Invalid command\n", stderr);
             dd->cmd.code = CMD_NULL;
             YYABORT; }
 
 command
-    : PRINT whitespace expr
-        {   dd->cmd.code = CMD_PRINT;
-            dd->cmd.arg.expr = $expr; }
-    | BREAK whitespace addr_expr
-        {   dd->cmd.code = CMD_SET_BREAKPOINT;
-            dd->cmd.arg.expr = $addr_expr; }
-    | DELETE whitespace addr_expr
-        {   dd->cmd.code = CMD_DELETE_BREAKPOINT;
-            dd->cmd.arg.expr = $addr_expr; }
-    | CONTINUE
-        {   dd->cmd.code = CMD_CONTINUE; }
+    : 'b' whitespace addr_expr
+        {   $command.code = CMD_SET_BREAKPOINT;
+            $command.arg.expr = $addr_expr; }
+    | 'd' whitespace addr_expr
+        {   $command.code = CMD_DELETE_BREAKPOINT;
+            $command.arg.expr = $addr_expr; }
+    | 'c'
+        {   $command.code = CMD_CONTINUE; }
     | STEPI
-        {   dd->cmd.code = CMD_STEP_INSTRUCTION; }
-    | QUIT
-        {   dd->cmd.code = CMD_QUIT; }
+        {   $command.code = CMD_STEP_INSTRUCTION; }
+    | 'q'
+        {   $command.code = CMD_QUIT; }
+    | print_command
+    | display_command
+    | info_command
+
+display_command
+    : DISPLAY whitespace expr
+        {   $display_command.code = CMD_DISPLAY;
+            $display_command.arg.expr = $expr; }
+    | DISPLAY '/' format whitespace expr
+        {   $display_command.code = CMD_DISPLAY;
+            $display_command.arg.fmt = $format;
+            $display_command.arg.expr = $expr; }
+
+print_command
+    : print whitespace expr
+        {   $print_command.code = CMD_PRINT;
+            $print_command.arg.fmt = DISP_NULL;
+            $print_command.arg.expr = $expr; }
+    | print '/' format whitespace expr
+        {   $print_command.code = CMD_PRINT;
+            $print_command.arg.fmt = $format;
+            $print_command.arg.expr = $expr; }
+
+print
+    : 'p'
+    | PRINT
+
+info_command
+    : INFO whitespace IDENT
+        {   $info_command.code = CMD_GET_INFO;
+            strncpy($info_command.arg.str,
+                    $IDENT,
+                    sizeof $info_command.arg.str - 1);
+            $info_command.arg.str[sizeof $info_command.arg.str - 1] = 0; }
+
+format
+    : 'i' { $format = DISP_INST; }
+    | 'd' { $format = DISP_DEC; }
+    | 'x' { $format = DISP_HEX; }
 
 maybe_whitespace
     : /* empty */
