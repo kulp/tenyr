@@ -505,7 +505,7 @@ int main(int argc, char *argv[])
     if (!strcmp(argv[optind], "-")) {
         in = stdin;
     } else {
-        in = fopen(argv[optind], "r");
+        in = fopen(argv[optind], "rb");
         if (!in) {
             char buf[128];
             snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[optind]);
