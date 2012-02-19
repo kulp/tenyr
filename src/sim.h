@@ -24,6 +24,7 @@ struct state {
         int nowrap;
         int verbose;
         int run_defaults;   ///< whether to run default recipes
+        int debugging;
     } conf;
 
     int (*dispatch_op)(struct state *s, int op, uint32_t addr, uint32_t *data);

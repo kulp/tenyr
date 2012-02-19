@@ -42,6 +42,9 @@ all: tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) testffi$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
+tsim$(EXE_SUFFIX): asm.o obj.o ffi.o \
+                   $(GENDIR)/debugger_parser.o \
+                   $(GENDIR)/debugger_lexer.o
 tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o
 testffi$(EXE_SUFFIX): ffi.o sim.o obj.o
 tld$(EXE_SUFFIX): obj.o
@@ -62,10 +65,17 @@ asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 
 # flex-generated code we can't control warnings of as easily
+$(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
 $(GENDIR)/parser.o $(GENDIR)/lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
 lexer.h parser.h: $(GENDIR)
 tas.o: $(GENDIR)/parser.h
+
+$(GENDIR)/debugger_lexer.h $(GENDIR)/debugger_lexer.c: debugger_lexer.l
+	$(FLEX) --header-file=$(GENDIR)/debugger_lexer.h -o $(GENDIR)/debugger_lexer.c $<
+
+$(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y debugger_lexer.h
+	$(BISON) --defines=$(GENDIR)/debugger_parser.h -o $(GENDIR)/debugger_parser.c $<
 
 $(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
 	$(FLEX) --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<

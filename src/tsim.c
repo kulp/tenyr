@@ -5,6 +5,21 @@
 #include "sim.h"
 // for RAM_BASE
 #include "devices/ram.h"
+#include "ffi.h"
+
+struct breakpoint {
+    uint32_t addr;
+    unsigned enabled:1;
+};
+
+#define KV_KEY_TYPE  uint32_t
+#define KV_VAL_TYPE  struct breakpoint
+#define KV_VAL_EMPTY NULL
+#include "kv_int.h"
+
+#include "debugger_global.h"
+#include "debugger_parser.h"
+#include "debugger_lexer.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -109,10 +124,11 @@ static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
     return (*device)->op(s, (*device)->cookie, op, addr, data);
 }
 
-static const char shortopts[] = "a:s:f:nr:vhV";
+static const char shortopts[] = "a:ds:f:nr:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
+    { "debug"      ,       no_argument, NULL, 'd' },
     { "format"     , required_argument, NULL, 'f' },
     { "scratch"    ,       no_argument, NULL, 'n' },
     { "recipe"     , required_argument, NULL, 'r' },
@@ -134,6 +150,7 @@ static int usage(const char *me)
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
+           "  -d, --debug           start the simulator in debugger mode\n"
            "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format (binary, text, obj)\n"
            "  -n, --scratch         don't run default recipes\n"
@@ -312,6 +329,102 @@ static int load_sim(struct state *s, const struct format *f, FILE *in,
     return 0;
 }
 
+static int set_breakpoint(void **breakpoints, int32_t addr)
+{
+    struct breakpoint *old = kv_int_get(breakpoints, addr);
+    if (old) {
+        if (!old->enabled) {
+            printf("Enabled previous breakpoint at %#lx\n", (long unsigned)old->addr);
+            old->enabled = 1;
+        } else {
+            printf("Breakpoint already exists at %#lx\n", (long unsigned)old->addr);
+        }
+    } else {
+        struct breakpoint bp = {
+            .enabled = 1,
+            .addr    = addr,
+        };
+        kv_int_put(breakpoints, addr, &bp);
+        printf("Added breakpoint at %#lx\n", (long unsigned)addr);
+    }
+
+    return 0;
+}
+
+static int delete_breakpoint(void **breakpoints, int32_t addr)
+{
+    struct breakpoint *old = kv_int_remove(breakpoints, addr);
+    if (old) {
+        printf("Removed breakpoint at %#lx\n", (long unsigned)addr);
+    } else {
+        printf("No breakpoint at %#lx\n", (long unsigned)addr);
+    }
+
+    return 0;
+}
+
+static int matches_breakpoint(struct mstate *m, void *cud)
+{
+    uint32_t pc = m->regs[15];
+    void *breakpoints = cud;
+    struct breakpoint *c = kv_int_get(&breakpoints, pc);
+    return c && c->enabled && c->addr == pc;
+}
+
+static int run_debugger(struct state *s)
+{
+    struct debugger_data dd = { NULL, { 0, { 0 } }, { 0, 0 } };
+
+    tdbg_lex_init(&dd.scanner);
+    tdbg_set_extra(&dd, dd.scanner);
+
+    void *breakpoints = NULL;
+    kv_int_init(&breakpoints);
+
+    int result = 0;
+    int done = 0;
+    while (!done && !feof(stdin)) {
+        struct debug_cmd *c = &dd.cmd;
+        tdbg_prompt(&dd, stdout);
+        result = tdbg_parse(&dd);
+
+        switch (c->code) {
+            case CMD_NULL:
+                break;
+            case CMD_DELETE_BREAKPOINT:
+                delete_breakpoint(&breakpoints, c->arg);
+                break;
+            case CMD_SET_BREAKPOINT:
+                set_breakpoint(&breakpoints, c->arg);
+                break;
+            case CMD_PRINT:
+                assert(("Register name in range", c->arg >= 0 && c->arg < 16));
+                printf("0x%08x\n", s->machine.regs[c->arg]);
+                break;
+            case CMD_CONTINUE:
+                tf_run_until(s, s->machine.regs[15], TF_IGNORE_FIRST_PREDICATE,
+                        matches_breakpoint, breakpoints);
+                break;
+            case CMD_STEP_INSTRUCTION: {
+                struct instruction i;
+                s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
+                if (run_instruction(s, &i))
+                    return 1;
+                break;
+            }
+            case CMD_QUIT:
+                done = 1;
+                break;
+            default:
+                fatal(0, "Invalid debugger command code %d", c->code);
+        }
+    }
+
+    tdbg_lex_destroy(dd.scanner);
+
+    return result;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -320,6 +433,7 @@ int main(int argc, char *argv[])
         .conf = {
             .verbose = 0,
             .run_defaults = 1,
+            .debugging = 0,
         },
         .dispatch_op = dispatch_op,
     }, *s = &_s;
@@ -338,6 +452,7 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'a': load_address = strtol(optarg, NULL, 0); break;
+            case 'd': s->conf.debugging = 1; break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
                 size_t sz = formats_count;
@@ -382,7 +497,11 @@ int main(int argc, char *argv[])
     }
 
     load_sim(s, f, in, load_address, start_address);
-    run_sim(s);
+
+    if (s->conf.debugging)
+        run_debugger(s);
+    else
+        run_sim(s);
 
     if (in)
         fclose(in);
