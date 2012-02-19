@@ -23,14 +23,17 @@ int tf_run_until(struct state *s, uint32_t start_address, int flags, cont_pred
 {
     int rc = 0;
 
-    while (!(rc = stop(&s->machine, cud))) {
+    if (!(flags & TF_IGNORE_FIRST_PREDICATE) && (rc = stop(&s->machine, cud)))
+        return rc;
+
+    do {
         assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
         struct instruction i;
         s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
 
         if (run_instruction(s, &i))
             return -1;
-    }
+    } while (!(rc = stop(&s->machine, cud)));
 
     return rc;
 }

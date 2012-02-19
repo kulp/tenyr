@@ -9,6 +9,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/// run first instruction unconditionally ?
+#define TF_IGNORE_FIRST_PREDICATE 1
+
 struct state;
 struct mstate;
 struct obj;

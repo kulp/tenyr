@@ -41,9 +41,10 @@ DEVOBJS = $(DEVICES:%=%.o)
 all: tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) testffi$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
-tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o \
-                                    $(GENDIR)/debugger_parser.o \
-                                    $(GENDIR)/debugger_lexer.o
+tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
+tsim$(EXE_SUFFIX): asm.o obj.o ffi.o \
+                   $(GENDIR)/debugger_parser.o \
+                   $(GENDIR)/debugger_lexer.o
 tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o
 testffi$(EXE_SUFFIX): ffi.o sim.o obj.o
 tld$(EXE_SUFFIX): obj.o

@@ -27,14 +27,14 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 %start top
 
 %type <expr> expr
-%type <i32> addr_expr integer
+%type <i32> addr_expr integer regname
 
 %token BREAK DELETE CONTINUE PRINT STEPI
 %token <str> INTEGER
 %token QUIT
 %token UNKNOWN
 %token NL WHITESPACE
-%token REGISTER
+%token <chr> REGISTER
 %token '*'
 
 %union {
@@ -85,10 +85,12 @@ whitespace
     | WHITESPACE whitespace
 
 expr
-    : addr_expr
-        { $expr = $addr_expr; /* TODO */ }
-    | integer
-        { $expr = $integer; /* TODO */ }
+    : regname
+        { $expr = $regname; /* TODO */ }
+
+regname
+    : REGISTER
+        { $regname = $REGISTER - 'A'; }
 
 addr_expr
     : '*' integer

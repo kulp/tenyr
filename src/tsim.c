@@ -5,6 +5,7 @@
 #include "sim.h"
 // for RAM_BASE
 #include "devices/ram.h"
+#include "ffi.h"
 
 struct breakpoint {
     uint32_t addr;
@@ -149,6 +150,7 @@ static int usage(const char *me)
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
+           "  -d, --debug           start the simulator in debugger mode\n"
            "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format (binary, text, obj)\n"
            "  -n, --scratch         don't run default recipes\n"
@@ -361,11 +363,17 @@ static int delete_breakpoint(void **breakpoints, int32_t addr)
     return 0;
 }
 
+static int matches_breakpoint(struct mstate *m, void *cud)
+{
+    uint32_t pc = m->regs[15];
+    void *breakpoints = cud;
+    struct breakpoint *c = kv_int_get(&breakpoints, pc);
+    return c && c->enabled && c->addr == pc;
+}
+
 static int run_debugger(struct state *s)
 {
     struct debugger_data dd = { NULL, { 0, { 0 } }, { 0, 0 } };
-
-    (void)s;
 
     tdbg_lex_init(&dd.scanner);
     tdbg_set_extra(&dd, dd.scanner);
@@ -390,8 +398,12 @@ static int run_debugger(struct state *s)
                 set_breakpoint(&breakpoints, c->arg);
                 break;
             case CMD_PRINT:
+                assert(("Register name in range", c->arg >= 0 && c->arg < 16));
+                printf("0x%08x\n", s->machine.regs[c->arg]);
+                break;
             case CMD_CONTINUE:
-                puts("no impl");
+                tf_run_until(s, s->machine.regs[15], TF_IGNORE_FIRST_PREDICATE,
+                        matches_breakpoint, breakpoints);
                 break;
             case CMD_STEP_INSTRUCTION: {
                 struct instruction i;
