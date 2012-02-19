@@ -26,8 +26,8 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 
 %start top
 
-%type <expr> expr
-%type <i32> addr_expr integer regname
+%type <expr> expr addr_expr
+%type <i32> integer regname
 
 %token BREAK DELETE CONTINUE PRINT STEPI
 %token <str> INTEGER
@@ -65,10 +65,10 @@ command
             dd->cmd.arg.expr = $expr; }
     | BREAK whitespace addr_expr
         {   dd->cmd.code = CMD_SET_BREAKPOINT;
-            dd->cmd.arg.l = $addr_expr; }
+            dd->cmd.arg.expr = $addr_expr; }
     | DELETE whitespace addr_expr
         {   dd->cmd.code = CMD_DELETE_BREAKPOINT;
-            dd->cmd.arg.l = $addr_expr; }
+            dd->cmd.arg.expr = $addr_expr; }
     | CONTINUE
         {   dd->cmd.code = CMD_CONTINUE; }
     | STEPI
@@ -88,6 +88,7 @@ expr
     : regname
         {   $expr.val = $regname;
             $expr.type = EXPR_REG; }
+    | addr_expr
 
 regname
     : REGISTER
@@ -95,7 +96,8 @@ regname
 
 addr_expr
     : '*' integer
-        { $addr_expr = $integer; }
+        {   $addr_expr.val = $integer;
+            $addr_expr.type = EXPR_MEM; }
 
 integer
     : INTEGER

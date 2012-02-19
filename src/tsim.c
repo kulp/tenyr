@@ -399,12 +399,17 @@ static int run_debugger(struct state *s)
                 set_breakpoint(&breakpoints, c->arg.l);
                 break;
             case CMD_PRINT:
-                assert(("Register name in range",
-                            c->arg.expr.val >= 0 && c->arg.expr.val < 16));
                 switch (c->arg.expr.type) {
-                    case EXPR_MEM:
-                        abort();
+                    case EXPR_MEM: {
+                        uint32_t val;
+                        // TODO error checking
+                        s->dispatch_op(s, OP_READ, c->arg.expr.val, &val);
+                        printf("0x%08x\n", val);
+                        break;
+                    }
                     case EXPR_REG:
+                        assert(("Register name in range",
+                                c->arg.expr.val >= 0 && c->arg.expr.val < 16));
                         printf("0x%08x\n", s->machine.regs[c->arg.expr.val]);
                         break;
                     default:
