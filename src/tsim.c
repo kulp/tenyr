@@ -6,6 +6,16 @@
 // for RAM_BASE
 #include "devices/ram.h"
 
+struct breakpoint {
+    uint32_t addr;
+    unsigned enabled:1;
+};
+
+#define KV_KEY_TYPE  uint32_t
+#define KV_VAL_TYPE  struct breakpoint
+#define KV_VAL_EMPTY NULL
+#include "kv_int.h"
+
 #include "debugger_global.h"
 #include "debugger_parser.h"
 #include "debugger_lexer.h"
@@ -317,6 +327,92 @@ static int load_sim(struct state *s, const struct format *f, FILE *in,
     return 0;
 }
 
+static int set_breakpoint(void **breakpoints, int32_t addr)
+{
+    struct breakpoint *old = kv_int_get(breakpoints, addr);
+    if (old) {
+        if (!old->enabled) {
+            printf("Enabled previous breakpoint at %#lx\n", (long unsigned)old->addr);
+            old->enabled = 1;
+        } else {
+            printf("Breakpoint already exists at %#lx\n", (long unsigned)old->addr);
+        }
+    } else {
+        struct breakpoint bp = {
+            .enabled = 1,
+            .addr    = addr,
+        };
+        kv_int_put(breakpoints, addr, &bp);
+        printf("Added breakpoint at %#lx\n", (long unsigned)addr);
+    }
+
+    return 0;
+}
+
+static int delete_breakpoint(void **breakpoints, int32_t addr)
+{
+    struct breakpoint *old = kv_int_remove(breakpoints, addr);
+    if (old) {
+        printf("Removed breakpoint at %#lx\n", (long unsigned)addr);
+    } else {
+        printf("No breakpoint at %#lx\n", (long unsigned)addr);
+    }
+
+    return 0;
+}
+
+static int run_debugger(struct state *s)
+{
+    struct debugger_data dd = { NULL, { 0, { 0 } }, { 0, 0 } };
+
+    (void)s;
+
+    tdbg_lex_init(&dd.scanner);
+    tdbg_set_extra(&dd, dd.scanner);
+
+    void *breakpoints = NULL;
+    kv_int_init(&breakpoints);
+
+    int result = 0;
+    int done = 0;
+    while (!done && !feof(stdin)) {
+        struct debug_cmd *c = &dd.cmd;
+        tdbg_prompt(&dd, stdout);
+        result = tdbg_parse(&dd);
+
+        switch (c->code) {
+            case CMD_NULL:
+                break;
+            case CMD_DELETE_BREAKPOINT:
+                delete_breakpoint(&breakpoints, c->arg);
+                break;
+            case CMD_SET_BREAKPOINT:
+                set_breakpoint(&breakpoints, c->arg);
+                break;
+            case CMD_PRINT:
+            case CMD_CONTINUE:
+                puts("no impl");
+                break;
+            case CMD_STEP_INSTRUCTION: {
+                struct instruction i;
+                s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
+                if (run_instruction(s, &i))
+                    return 1;
+                break;
+            }
+            case CMD_QUIT:
+                done = 1;
+                break;
+            default:
+                fatal(0, "Invalid debugger command code %d", c->code);
+        }
+    }
+
+    tdbg_lex_destroy(dd.scanner);
+
+    return result;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -389,20 +485,11 @@ int main(int argc, char *argv[])
     }
 
     load_sim(s, f, in, load_address, start_address);
-    if (s->conf.debugging) {
-        struct debugger_data dd = { NULL, { 0, { 0 } }, 0 };
-        tdbg_lex_init(&dd.scanner);
-        tdbg_set_extra(&dd, dd.scanner);
-        int result;
-        while (!dd.done && !feof(stdin)) {
-            tdbg_prompt(&dd, stdout);
-            result = tdbg_parse(&dd);
-        }
-        (void)result;
-        tdbg_lex_destroy(dd.scanner);
-    } else {
+
+    if (s->conf.debugging)
+        run_debugger(s);
+    else
         run_sim(s);
-    }
 
     if (in)
         fclose(in);

@@ -9,7 +9,18 @@ struct debugger_data {
         unsigned savecol;
         char saveline[LINE_LEN];
     } lexstate;
-    int done;
+    struct debug_cmd {
+        enum {
+            CMD_NULL,
+            CMD_PRINT,
+            CMD_SET_BREAKPOINT,
+            CMD_DELETE_BREAKPOINT,
+            CMD_CONTINUE,
+            CMD_STEP_INSTRUCTION,
+            CMD_QUIT,
+        } code;
+        long arg;
+    } cmd;
 };
 
 int tdbg_parse(struct debugger_data *);

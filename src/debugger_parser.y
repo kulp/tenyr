@@ -26,7 +26,11 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 
 %start top
 
-%token BREAK CONTINUE PRINT STEPI INTEGER
+%type <expr> expr
+%type <i32> addr_expr integer
+
+%token BREAK DELETE CONTINUE PRINT STEPI
+%token <str> INTEGER
 %token QUIT
 %token UNKNOWN
 %token NL WHITESPACE
@@ -36,36 +40,43 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 %union {
     char chr;
     char str[LINE_LEN];
+    int32_t i32;
+    int32_t expr; // TODO support proper constant expression trees
 }
 
 %%
 
 top
-    : command-list
-    | NL { YYACCEPT; }
-
-command-list
     : /* empty */
-    | command maybe-whitespace NL { YYACCEPT; }
+    | maybe_command
+
+maybe_command
+    : NL { YYACCEPT; }
+    | command maybe_whitespace NL { YYACCEPT; }
     | error NL
         {   yyerrok;
             fputs("Invalid command\n", stdout);
-            dd->done = 0;
+            dd->cmd.code = CMD_NULL;
             YYABORT; }
 
 command
     : PRINT whitespace expr
-        { puts("print"); }
-    | BREAK whitespace addr-expr
-        { puts("break"); }
+        {   dd->cmd.code = CMD_PRINT;
+            dd->cmd.arg = $expr; }
+    | BREAK whitespace addr_expr
+        {   dd->cmd.code = CMD_SET_BREAKPOINT;
+            dd->cmd.arg = $addr_expr; }
+    | DELETE whitespace addr_expr
+        {   dd->cmd.code = CMD_DELETE_BREAKPOINT;
+            dd->cmd.arg = $addr_expr; }
     | CONTINUE
-        { puts("continue"); }
+        {   dd->cmd.code = CMD_CONTINUE; }
     | STEPI
-        { puts("stepi"); }
+        {   dd->cmd.code = CMD_STEP_INSTRUCTION; }
     | QUIT
-        { dd->done = 1; }
+        {   dd->cmd.code = CMD_QUIT; }
 
-maybe-whitespace
+maybe_whitespace
     : /* empty */
     | whitespace
 
@@ -74,11 +85,18 @@ whitespace
     | WHITESPACE whitespace
 
 expr
-    : addr-expr
-    | INTEGER
+    : addr_expr
+        { $expr = $addr_expr; /* TODO */ }
+    | integer
+        { $expr = $integer; /* TODO */ }
 
-addr-expr
-    : '*' INTEGER
+addr_expr
+    : '*' integer
+        { $addr_expr = $integer; }
+
+integer
+    : INTEGER
+        { $integer = strtol($INTEGER, NULL, 0); }
 
 %%
 

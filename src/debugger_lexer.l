@@ -53,6 +53,7 @@ trailsp ([ \t]*$)
 {decnum}                { savestr(yyscanner); return INTEGER; }
 
 b                       { return BREAK; }
+d                       { return DELETE; }
 c                       { return CONTINUE; }
 p                       { return PRINT; }
 si                      { return STEPI; }
