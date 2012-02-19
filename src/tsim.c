@@ -117,7 +117,10 @@ static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
     size_t count = s->machine.devices_count;
     struct device **device = bsearch(&addr, s->machine.devices, count, sizeof *device,
             find_device_by_addr);
-    assert(("Found device to handle given address", device != NULL && *device != NULL));
+    if (device == NULL || *device == NULL) {
+        fprintf(stderr, "No device handles address %#x\n", addr);
+        return -1;
+    }
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
     // machine.devices, but it shouldn't see the whole state
@@ -402,9 +405,8 @@ static int run_debugger(struct state *s)
                 switch (c->arg.expr.type) {
                     case EXPR_MEM: {
                         uint32_t val;
-                        // TODO error checking
-                        s->dispatch_op(s, OP_READ, c->arg.expr.val, &val);
-                        printf("0x%08x\n", val);
+                        if (!s->dispatch_op(s, OP_READ, c->arg.expr.val, &val))
+                            printf("0x%08x\n", val);
                         break;
                     }
                     case EXPR_REG:
