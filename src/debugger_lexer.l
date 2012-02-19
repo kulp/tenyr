@@ -2,6 +2,15 @@
 #include <stdio.h>
 #include <ctype.h>
 
+// TODO hack
+#ifndef DEBUG_EXPR
+#define DEBUG_EXPR
+struct debug_expr {
+    enum expr_type { EXPR_NULL, EXPR_MEM, EXPR_REG } type;
+    int32_t val;
+};
+#endif
+
 #include "common.h"
 #include "debugger_parser.h"
 #include "debugger_global.h"
@@ -9,6 +18,15 @@
 int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 
 static int savestr(yyscan_t yyscanner);
+
+// hack
+#ifndef DEBUG_EXPR
+#define DEBUG_EXPR
+struct debug_expr {
+    enum expr_type { EXPR_NULL, EXPR_MEM, EXPR_REG } type;
+    int32_t val;
+};
+#endif
 
 #define savecol  yyextra->lexstate.savecol
 #define saveline yyextra->lexstate.saveline
@@ -27,7 +45,7 @@ static int savestr(yyscan_t yyscanner);
 %}
 
 %option reentrant bison-bridge bison-locations
-%option noyywrap interactive yylineno
+%option noyywrap always-interactive yylineno
 %option extra-type="struct debugger_data *"
 %option prefix="tdbg_"
 

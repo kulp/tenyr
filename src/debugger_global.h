@@ -3,10 +3,14 @@
 
 #include "common.h"
 
+// hack
+#ifndef DEBUG_EXPR
+#define DEBUG_EXPR
 struct debug_expr {
     enum expr_type { EXPR_NULL, EXPR_MEM, EXPR_REG } type;
     int32_t val;
 };
+#endif
 
 struct debugger_data {
     void *scanner;
