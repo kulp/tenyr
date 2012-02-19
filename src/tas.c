@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
-            case 'o': out = fopen(optarg, "w"); break;
+            case 'o': out = fopen(optarg, "wb"); break;
             case 'd': disassemble = 1; break;
             case 'f': {
                 size_t sz = formats_count;
@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
         if (!strcmp(argv[i], "-")) {
             in = stdin;
         } else {
-            in = fopen(argv[i], "r");
+            in = fopen(argv[i], "rb");
             if (!in) {
                 char buf[128];
                 snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
