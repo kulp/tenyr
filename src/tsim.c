@@ -373,7 +373,8 @@ static int matches_breakpoint(struct mstate *m, void *cud)
 
 static int run_debugger(struct state *s)
 {
-    struct debugger_data dd = { NULL, { 0, { 0 } }, { 0, 0 } };
+    struct debugger_data dd;
+    memset(&dd, 0, sizeof dd);
 
     tdbg_lex_init(&dd.scanner);
     tdbg_set_extra(&dd, dd.scanner);
@@ -392,14 +393,23 @@ static int run_debugger(struct state *s)
             case CMD_NULL:
                 break;
             case CMD_DELETE_BREAKPOINT:
-                delete_breakpoint(&breakpoints, c->arg);
+                delete_breakpoint(&breakpoints, c->arg.l);
                 break;
             case CMD_SET_BREAKPOINT:
-                set_breakpoint(&breakpoints, c->arg);
+                set_breakpoint(&breakpoints, c->arg.l);
                 break;
             case CMD_PRINT:
-                assert(("Register name in range", c->arg >= 0 && c->arg < 16));
-                printf("0x%08x\n", s->machine.regs[c->arg]);
+                assert(("Register name in range",
+                            c->arg.expr.val >= 0 && c->arg.expr.val < 16));
+                switch (c->arg.expr.type) {
+                    case EXPR_MEM:
+                        abort();
+                    case EXPR_REG:
+                        printf("0x%08x\n", s->machine.regs[c->arg.expr.val]);
+                        break;
+                    default:
+                        fatal(0, "Invalid print type code %d\n", c->arg.expr.type);
+                }
                 break;
             case CMD_CONTINUE:
                 tf_run_until(s, s->machine.regs[15], TF_IGNORE_FIRST_PREDICATE,

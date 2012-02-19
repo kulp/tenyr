@@ -41,7 +41,7 @@ int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
     char chr;
     char str[LINE_LEN];
     int32_t i32;
-    int32_t expr; // TODO support proper constant expression trees
+    struct debug_expr expr; // TODO support proper constant expression trees
 }
 
 %%
@@ -62,13 +62,13 @@ maybe_command
 command
     : PRINT whitespace expr
         {   dd->cmd.code = CMD_PRINT;
-            dd->cmd.arg = $expr; }
+            dd->cmd.arg.expr = $expr; }
     | BREAK whitespace addr_expr
         {   dd->cmd.code = CMD_SET_BREAKPOINT;
-            dd->cmd.arg = $addr_expr; }
+            dd->cmd.arg.l = $addr_expr; }
     | DELETE whitespace addr_expr
         {   dd->cmd.code = CMD_DELETE_BREAKPOINT;
-            dd->cmd.arg = $addr_expr; }
+            dd->cmd.arg.l = $addr_expr; }
     | CONTINUE
         {   dd->cmd.code = CMD_CONTINUE; }
     | STEPI
@@ -86,7 +86,8 @@ whitespace
 
 expr
     : regname
-        { $expr = $regname; /* TODO */ }
+        {   $expr.val = $regname;
+            $expr.type = EXPR_REG; }
 
 regname
     : REGISTER

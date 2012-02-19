@@ -3,6 +3,11 @@
 
 #include "common.h"
 
+struct debug_expr {
+    enum expr_type { EXPR_NULL, EXPR_MEM, EXPR_REG } type;
+    int32_t val;
+};
+
 struct debugger_data {
     void *scanner;
     struct {
@@ -19,7 +24,10 @@ struct debugger_data {
             CMD_STEP_INSTRUCTION,
             CMD_QUIT,
         } code;
-        long arg;
+        union {
+            struct debug_expr expr;
+            long l;
+        } arg;
     } cmd;
 };
 
