@@ -28,11 +28,6 @@ struct element {
     uint32_t space[];
 };
 
-struct todo_node  {
-    void *what;
-    struct todo_node *next;
-};
-
 static int tree_compare(const void *_a, const void *_b)
 {
     const struct element *a = _a;
@@ -48,18 +43,7 @@ static int sparseram_init(struct state *s, void *cookie, ...)
     return 0;
 }
 
-void traverse_action(const void *node, VISIT order, int level)
-{
-    const struct element * const *element = node;
-    struct todo_node **todo = (*element)->state->userdata;
-
-    if (order == leaf || order == preorder) {
-        struct todo_node *here = malloc(sizeof *here);
-        here->what = *(void**)node;
-        here->next = *todo;
-        *todo = here;
-    }
-}
+TODO_TRAVERSE_(element)
 
 static int sparseram_fini(struct state *s, void *cookie)
 {
@@ -69,14 +53,7 @@ static int sparseram_fini(struct state *s, void *cookie)
     struct todo_node *todo = NULL;
     sparseram->userdata = &todo;
 
-    twalk(sparseram->mem, traverse_action);
-
-    list_foreach(todo_node, t, todo) {
-        tdelete(t->what, &sparseram->mem, tree_compare);
-        free(t->what);
-        free(t);
-    }
-
+    tree_destroy(&todo, &sparseram->mem, traverse_element, tree_compare);
     free(sparseram);
 
     return 0;

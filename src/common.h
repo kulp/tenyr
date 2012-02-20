@@ -2,6 +2,8 @@
 #define COMMON_H_
 
 #include <setjmp.h>
+#include <search.h>
+#include <stdlib.h>
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 #define STR(X) STR_(X)
@@ -11,9 +13,9 @@
 
 #define PTR_MASK ((1 << 24) - 1)
 
-#define list_foreach(Tag,Node,Object) \
-    for (struct Tag *Next = (Object), *Node = Next; \
-            (void)(Node && (Next = Next->next)), Node; \
+#define list_foreach(Tag,Node,Object)                                          \
+    for (struct Tag *Next = (Object), *Node = Next;                            \
+            (void)(Node && (Next = Next->next)), Node;                         \
             Node = Next)
 
 // TODO document fixed lengths or remove the limitations
@@ -29,6 +31,36 @@ extern jmp_buf errbuf;
 
 void fatal_(int code, const char *file, int line, const char *func,
             const char *fmt, ...);
+
+// represents a most basic linked list, used for collecting nodes with twalk
+struct todo_node  {
+    void *what;
+    struct todo_node *next;
+};
+
+typedef int cmp(const void *, const void*);
+typedef void traverse(const void *node, VISIT order, int level);
+
+int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp);
+
+// defines a function that traverses a tsearch tree, adding todo nodes
+// assumes struct Tag has a reference to an aggregate named `state' that has a
+// pointer named `userdata' that contains our todo-list. See `struct
+// link_state' and `struct defn' in tld.c for an example.
+#define TODO_TRAVERSE_(Tag)                                                    \
+static void traverse_##Tag(const void *node, VISIT order, int level)           \
+{                                                                              \
+    const struct Tag * const *element = node;                                  \
+    struct todo_node **todo = (*element)->state->userdata;                     \
+    (void)level;                                                               \
+                                                                               \
+    if (order == leaf || order == preorder) {                                  \
+        struct todo_node *here = malloc(sizeof *here);                         \
+        here->what = *(void**)node;                                            \
+        here->next = *todo;                                                    \
+        *todo = here;                                                          \
+    }                                                                          \
+}
 
 #endif
 

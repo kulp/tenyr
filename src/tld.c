@@ -10,12 +10,6 @@
 #include <string.h>
 #include <strings.h>
 
-struct defn {
-    char name[LABEL_LEN];
-    struct obj *obj;
-    UWord reladdr;
-};
-
 struct link_state {
     UWord addr;     ///< current address
     int obj_count;
@@ -25,9 +19,26 @@ struct link_state {
         struct obj_list *next;
     } *objs, **next_obj;
     struct obj *relocated;
-    void *defns;    ///< tsearch tree of struct defns
 
     long insns, syms, rlcs, words;
+
+    void *userdata; ///< transient userdata, used for twalk() support
+};
+
+struct defn {
+    char name[LABEL_LEN];
+    struct obj *obj;
+    UWord reladdr;
+
+    struct link_state *state;   ///< state reference used for twalk() support
+};
+
+struct objmeta {
+    struct obj *obj;
+    int size;
+    int offset;
+
+    struct link_state *state;   ///< state reference used for twalk() support
 };
 
 static const char shortopts[] = "o::hV";
@@ -73,6 +84,16 @@ static int do_load(struct link_state *s, FILE *in)
     return rc;
 }
 
+static int do_unload(struct link_state *s)
+{
+    list_foreach(obj_list,ol,s->objs) {
+        obj_free(ol->obj);
+        free(ol);
+    }
+
+    return 0;
+}
+
 static int do_make_relocated(struct link_state *s, struct obj **_o)
 {
     struct obj *o = *_o = calloc(1, sizeof *o);
@@ -93,6 +114,9 @@ static int ptrcmp(const void *a, const void *b)
     return *(const char**)a - *(const char**)b;
 }
 
+TODO_TRAVERSE_(defn)
+TODO_TRAVERSE_(objmeta)
+
 static int do_link(struct link_state *s)
 {
     int rc = -1;
@@ -100,15 +124,8 @@ static int do_link(struct link_state *s)
     struct obj *o;
     do_make_relocated(s, &o);
 
-    typedef int cmp(const void *, const void*);
-
-    struct objmeta {
-        struct obj *obj;
-        int size;
-        int offset;
-    };
-    // tsearch-tree of `struct objmeta`
-    void *objtree = NULL;
+    void *objtree = NULL;   ///< tsearch-tree of `struct objmeta'
+    void *defns   = NULL;   ///< tsearch tree of `struct defns'
     // TODO destroy objtree
 
     {
@@ -120,6 +137,7 @@ static int do_link(struct link_state *s)
             struct obj *i = Node->obj;
 
             struct objmeta *meta = calloc(1, sizeof *meta);
+            meta->state = s;
             meta->obj = i;
             meta->size = i->records->size;
             meta->offset = running;
@@ -132,12 +150,13 @@ static int do_link(struct link_state *s)
 
             if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
                 struct defn *def = calloc(1, sizeof *def);
+                def->state = s;
                 strncpy(def->name, sym->name, sizeof def->name);
                 def->name[sizeof def->name - 1] = 0;
                 def->obj = i;
                 def->reladdr = sym->value;
 
-                struct defn **look = tsearch(def, &s->defns, (cmp*)strcmp);
+                struct defn **look = tsearch(def, &defns, (cmp*)strcmp);
                 if (*look != def)
                     fatal(0, "Duplicate definition for symbol `%s'", def->name);
             }
@@ -156,13 +175,12 @@ static int do_link(struct link_state *s)
                 struct defn def;
                 strncpy(def.name, rlc->name, sizeof def.name);
                 def.name[sizeof def.name - 1] = 0;
-                struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
+                struct defn **look = tfind(&def, &defns, (cmp*)strcmp);
                 if (!look)
                     fatal(0, "Missing definition for symbol `%s'", rlc->name);
-                struct objmeta //**me = tfind(&i, &objtree, ptrcmp),
-                               **it = tfind(&(*look)->obj, &objtree, ptrcmp);
+                struct objmeta **it = tfind(&(*look)->obj, &objtree, ptrcmp);
 
-                reladdr = (*it)->offset /*- (*me)->offset */+ (*look)->reladdr;
+                reladdr = (*it)->offset + (*look)->reladdr;
             } else {
                 // this is a null relocation ; it just wants us to update the
                 // offset
@@ -179,7 +197,10 @@ static int do_link(struct link_state *s)
         }
     }
 
-    // TODO clean up symbols tree
+    struct todo_node *todo;
+    s->userdata = &todo;
+    tree_destroy(&todo, &objtree, traverse_objmeta, ptrcmp);
+    tree_destroy(&todo, &defns  , traverse_defn   , (cmp*)strcmp);
 
     long rec_count = 0;
     // copy records
@@ -213,7 +234,6 @@ static int do_link(struct link_state *s)
     o->sym_count = s->syms;
     o->rlc_count = s->rlcs;
     o->length = 5 + s->words; // XXX explain
-    //o->records->size = s->addr;
 
     o->symbols = realloc(o->symbols, o->sym_count * sizeof *o->symbols);
     o->relocs  = realloc(o->relocs , o->rlc_count * sizeof *o->relocs);
@@ -289,6 +309,12 @@ int main(int argc, char *argv[])
 
     do_link(s);
     do_emit(s, out);
+    do_unload(s);
+    list_foreach(objrec, rec, s->relocated->records) {
+        free(rec->data);
+        free(rec);
+    }
+    free(s->relocated);
 
     fclose(out);
 
