@@ -191,6 +191,17 @@ head(OVER,OVER):
     goto(NEXT)
 
 // ROT    x1 x2 x3 -- x2 x3 x1     per stack diagram
+head(ROT,ROT):
+    .word . + 1
+    B   <- [PSP + 3]
+    C   <- [PSP + 2]
+    D   <- [PSP + 1]
+
+    C   -> [PSP + 3]
+    D   -> [PSP + 2]
+    B   -> [PSP + 1]
+    goto(NEXT)
+
 // RSHIFT x1 u -- x2        logical R shift u places
 // R>     -- x    R: x --      pop from return stack
 head(POP_R,R>):
@@ -210,6 +221,15 @@ head(FETCH_R,R@):
     goto(NEXT)
 
 // SWAP   x1 x2 -- x2 x1          swap top two items
+head(SWAP,SWAP):
+    .word . + 1
+    B   <- [PSP + 2]
+    C   <- [PSP + 1]
+
+    C   -> [PSP + 2]
+    B   -> [PSP + 1]
+    goto(NEXT)
+
 // UM*    u1 u2 -- ud       unsigned 32x32->64 mult.
 // UM/MOD ud u1 -- u2 u3     unsigned 64/32->32 div.
 // UNLOOP --   R: sys1 sys2 --       drop loop parms
@@ -238,7 +258,26 @@ head(BYE,BYE):
 // KEY?   -- flag        return true if char waiting
 // M+     d1 n -- d2            add single to double
 // NIP    x1 x2 -- x2              per stack diagram
+head(NIP,NIP):
+    .word . + 1
+    W   <- [PSP + 1]
+    W   -> [PSP + 2]
+    PSP <-  PSP + 1
+    goto(NEXT)
+
 // TUCK   x1 x2 -- x2 x1 x2        per stack diagram
+head(TUCK,TUCK):
+    .word . + 1
+    B   <- [PSP + 2]
+    C   <- [PSP + 1]
+
+    PSP <- PSP - 1
+
+    C   -> [PSP + 3]
+    B   -> [PSP + 2]
+    C   -> [PSP + 1]
+    goto(NEXT)
+
 // U>     u1 u2 -- flag         test u1>u2, unsigned
 
 head(NOOP,NOOP):

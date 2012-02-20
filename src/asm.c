@@ -190,7 +190,7 @@ static int obj_init(FILE *stream, int flags, void **ud)
         o->sym_count = 32;
         o->symbols = calloc(o->sym_count, sizeof *o->symbols);
 
-        o->rlc_count = 32;
+        o->rlc_count = 128;
         o->relocs = calloc(o->rlc_count, sizeof *o->relocs);
     } else if (flags & ASM_DISASSEMBLE) {
         rc = obj_read(u->o, &u->size, stream);
