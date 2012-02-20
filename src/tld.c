@@ -114,30 +114,8 @@ static int ptrcmp(const void *a, const void *b)
     return *(const char**)a - *(const char**)b;
 }
 
-typedef int cmp(const void *, const void*);
-typedef void traverse(const void *node, VISIT order, int level);
-
 TODO_TRAVERSE_(defn)
 TODO_TRAVERSE_(objmeta)
-
-// tdestroy() is a glibc extension. Here we generate a list of nodes to delete
-// and then delete them one by one.
-static int tree_destroy(struct link_state *state, void **tree, traverse *trav, cmp *comp)
-{
-    struct todo_node *todo = NULL;
-    state->userdata = &todo;
-
-    twalk(*tree, trav);
-
-    list_foreach(todo_node, t, todo) {
-        tdelete(t->what, tree, comp);
-        free(t->what);
-        free(t);
-        t = NULL;
-    }
-
-    return 0;
-}
 
 static int do_link(struct link_state *s)
 {
@@ -219,9 +197,10 @@ static int do_link(struct link_state *s)
         }
     }
 
-    tree_destroy(s, &objtree, traverse_objmeta, ptrcmp);
-    tree_destroy(s, &defns  , traverse_defn   , (cmp*)strcmp);
-    // TODO clean up symbols tree
+    struct todo_node *todo;
+    s->userdata = &todo;
+    tree_destroy(&todo, &objtree, traverse_objmeta, ptrcmp);
+    tree_destroy(&todo, &defns  , traverse_defn   , (cmp*)strcmp);
 
     long rec_count = 0;
     // copy records

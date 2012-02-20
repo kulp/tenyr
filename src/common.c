@@ -24,21 +24,23 @@ void fatal_(int code, const char *file, int line, const char *func,
     longjmp(errbuf, code);
 }
 
-#if 0
 // tdestroy() is a glibc extension. Here we generate a list of nodes to delete
 // and then delete them one by one.
-int tree_destroy(struct todo_node *todo, void **tree, traverse *trav, cmp *comp)
+int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp)
 {
+    *todo = NULL;
+
     twalk(*tree, trav);
 
-    list_foreach(todo_node, t, todo) {
+    list_foreach(todo_node, t, *todo) {
         tdelete(t->what, tree, comp);
         free(t->what);
         free(t);
         t = NULL;
     }
 
+    *todo = NULL;
+
     return 0;
 }
-#endif
 

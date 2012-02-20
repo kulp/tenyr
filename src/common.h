@@ -38,14 +38,15 @@ struct todo_node  {
     struct todo_node *next;
 };
 
-#if 0
 typedef int cmp(const void *, const void*);
 typedef void traverse(const void *node, VISIT order, int level);
 
-int tree_destroy(struct todo_node *todo, void **tree, traverse *trav, cmp *comp);
-#endif
+int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp);
 
 // defines a function that traverses a tsearch tree, adding todo nodes
+// assumes struct Tag has a reference to an aggregate named `state' that has a
+// pointer named `userdata' that contains our todo-list. See `struct
+// link_state' and `struct defn' in tld.c for an example.
 #define TODO_TRAVERSE_(Tag)                                                    \
 static void traverse_##Tag(const void *node, VISIT order, int level)           \
 {                                                                              \
