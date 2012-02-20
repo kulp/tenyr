@@ -73,6 +73,16 @@ static int do_load(struct link_state *s, FILE *in)
     return rc;
 }
 
+static int do_unload(struct link_state *s)
+{
+    list_foreach(obj_list,ol,s->objs) {
+        obj_free(ol->obj);
+        free(ol);
+    }
+
+    return 0;
+}
+
 static int do_make_relocated(struct link_state *s, struct obj **_o)
 {
     struct obj *o = *_o = calloc(1, sizeof *o);
@@ -159,8 +169,7 @@ static int do_link(struct link_state *s)
                 struct defn **look = tfind(&def, &s->defns, (cmp*)strcmp);
                 if (!look)
                     fatal(0, "Missing definition for symbol `%s'", rlc->name);
-                struct objmeta //**me = tfind(&i, &objtree, ptrcmp),
-                               **it = tfind(&(*look)->obj, &objtree, ptrcmp);
+                struct objmeta **it = tfind(&(*look)->obj, &objtree, ptrcmp);
 
                 reladdr = (*it)->offset /*- (*me)->offset */+ (*look)->reladdr;
             } else {
@@ -213,7 +222,6 @@ static int do_link(struct link_state *s)
     o->sym_count = s->syms;
     o->rlc_count = s->rlcs;
     o->length = 5 + s->words; // XXX explain
-    //o->records->size = s->addr;
 
     o->symbols = realloc(o->symbols, o->sym_count * sizeof *o->symbols);
     o->relocs  = realloc(o->relocs , o->rlc_count * sizeof *o->relocs);
@@ -289,6 +297,12 @@ int main(int argc, char *argv[])
 
     do_link(s);
     do_emit(s, out);
+    do_unload(s);
+    list_foreach(objrec, rec, s->relocated->records) {
+        free(rec->data);
+        free(rec);
+    }
+    free(s->relocated);
 
     fclose(out);
 

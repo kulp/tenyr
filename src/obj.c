@@ -70,7 +70,9 @@ int obj_write(struct obj *o, FILE *out)
 }
 
 #define for_counted_get(Tag,Name,List,Count) \
-    for (struct Tag *_f = NULL, *_l = NULL, *Name = List = calloc(Count, sizeof *Name); (Count) && !_f; _f++) \
+    for (struct Tag *_f = NULL, *_l = NULL, *Name = NULL; \
+            ((Count) ? Name ? !!(Count) : !!(Name = List = calloc(Count, sizeof *Name)) : 0) && !_f; \
+            _f++) \
         for (UWord _i = (Count); _i > 0; Name->prev = _l, _l ? (void)(_l->next = Name) : (void)0, _l = Name++, _i--)
 
 static int obj_v0_read(struct obj *o, size_t *size, FILE *in)
@@ -135,6 +137,8 @@ static void obj_v0_free(struct obj *o)
     }
 
     free(o->records);
+    free(o->symbols);
+    free(o->relocs);
 
     free(o);
 }
