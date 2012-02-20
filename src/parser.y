@@ -509,6 +509,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
             free(d->data);
             g->next = pd->globals;
             pd->globals = g;
+            free(d);
             break;
         }
         default: {

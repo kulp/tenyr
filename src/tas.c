@@ -263,6 +263,9 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
         list_foreach(global_list, Node, pd.globals)
             free(Node);
+
+        list_foreach(reloc_list, Node, pd.relocs)
+            free(Node);
     }
     tenyr_lex_destroy(pd.scanner);
 
