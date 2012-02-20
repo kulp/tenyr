@@ -82,6 +82,7 @@ command
 display_command
     : DISPLAY whitespace expr
         {   $display_command.code = CMD_DISPLAY;
+            $display_command.arg.fmt = DISP_NULL;
             $display_command.arg.expr = $expr; }
     | DISPLAY '/' format whitespace expr
         {   $display_command.code = CMD_DISPLAY;

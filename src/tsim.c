@@ -525,6 +525,9 @@ static int run_debugger(struct state *s, FILE *stream)
     while (!done && !feof(stream))
         done = debugger_step(dd);
 
+    list_foreach(debug_display,disp,dd->displays)
+        free(disp);
+
     tdbg_lex_destroy(dd->scanner);
 
     return 0;
