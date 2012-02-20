@@ -144,7 +144,7 @@ void obj_free(struct obj *o)
     switch (o->magic.parsed.version) {
         case 0: obj_v0_free(o); break;
         default:
-            fatal(0, "Unknown error occurred while freeing object");
+            fatal(0, "Unknown version number or corrupt memory while freeing object");
             return; // never reached, but keeps compiler happy
     }
 }

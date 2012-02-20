@@ -1,7 +1,6 @@
 tas
 tsim
 tld
-testffi
 *.dSYM/
 .*.sw?
 .sw?

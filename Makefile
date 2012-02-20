@@ -39,14 +39,13 @@ DEVICES = ram sparseram debugwrap serial
 DEVOBJS = $(DEVICES:%=%.o)
 
 all: tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
-tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) testffi$(EXE_SUFFIX): common.o
+tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
 tsim$(EXE_SUFFIX): asm.o obj.o ffi.o \
                    $(GENDIR)/debugger_parser.o \
                    $(GENDIR)/debugger_lexer.o
 tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o
-testffi$(EXE_SUFFIX): ffi.o sim.o obj.o
 tld$(EXE_SUFFIX): obj.o
 
 asm.o: GCC_CFLAGS += -Wno-override-init
@@ -100,7 +99,7 @@ endif
 
 clean:
 	$(RM) tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) \
-	testffi$(EXE_SUFFIX) *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
+	*.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
 
 clobber: clean
 	$(RM) $(GENDIR)/{parser,lexer}.[ch]

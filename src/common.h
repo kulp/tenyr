@@ -25,9 +25,10 @@
 enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
 extern jmp_buf errbuf;
 #define fatal(Code,...) \
-    fatal_(Code,__FILE__,__LINE__,__VA_ARGS__)
+    fatal_(Code,__FILE__,__LINE__,__func__,__VA_ARGS__)
 
-void fatal_(int code, const char *file, int line, const char *fmt, ...);
+void fatal_(int code, const char *file, int line, const char *func,
+            const char *fmt, ...);
 
 #endif
 

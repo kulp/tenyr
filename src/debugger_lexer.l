@@ -2,31 +2,13 @@
 #include <stdio.h>
 #include <ctype.h>
 
-// TODO hack
-#ifndef DEBUG_EXPR
-#define DEBUG_EXPR
-struct debug_expr {
-    enum expr_type { EXPR_NULL, EXPR_MEM, EXPR_REG } type;
-    int32_t val;
-};
-#endif
-
 #include "common.h"
-#include "debugger_parser.h"
 #include "debugger_global.h"
+#include "debugger_parser.h"
 
 int tdbg_error(YYLTYPE *locp, struct debugger_data *dd, const char *s);
 
 static int savestr(yyscan_t yyscanner);
-
-// hack
-#ifndef DEBUG_EXPR
-#define DEBUG_EXPR
-struct debug_expr {
-    enum expr_type { EXPR_NULL, EXPR_MEM, EXPR_REG } type;
-    int32_t val;
-};
-#endif
 
 #define savecol  yyextra->lexstate.savecol
 #define saveline yyextra->lexstate.saveline
@@ -53,7 +35,7 @@ regname ($[A-Pa-p])
 hexnum  (-?"0"[xX][0-9a-fA-F]+)
 octnum  (-?"0"[0-7]+)
 decnum  (-?[0-9]+)
-word    ([A-Za-z)
+ident   ([A-Za-z0-9_]+)
 inspace ([ \t]+)
 trailsp ([ \t]*$)
 
@@ -62,21 +44,21 @@ trailsp ([ \t]*$)
 "\t"                    { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
 "\n"                    { saveline[savecol = 0] = 0; return NL; }
 
-\*                      { return '*'; }
-
 {regname}               { yylval->chr = toupper(yytext[1]); return REGISTER; }
 
 {hexnum}                { savestr(yyscanner); return INTEGER; }
 {octnum}                { savestr(yyscanner); return INTEGER; }
 {decnum}                { savestr(yyscanner); return INTEGER; }
 
-b                       { return BREAK; }
-d                       { return DELETE; }
-c                       { return CONTINUE; }
-p                       { return PRINT; }
+[*bcdipqx/]             { return yytext[0]; }
+
 si                      { return STEPI; }
-q                       { return QUIT; }
-quit                    { return QUIT; }
+print                   { return PRINT; }
+quit                    { return 'q'; }
+display                 { return DISPLAY; }
+info                    { return INFO; }
+
+{ident}                 { savestr(yyscanner); return IDENT; }
 
 [\t\f\v\r ]+            { return WHITESPACE; }
 

@@ -38,15 +38,6 @@ int tf_run_until(struct state *s, uint32_t start_address, int flags, cont_pred
     return rc;
 }
 
-int tf_load_obj(struct state *s, const struct obj *o)
-{
-    int rc = 0;
-
-    // TODO
-
-    return rc;
-}
-
 int tf_get_addr(const struct state *s, const char *symbol, uint32_t *addr)
 {
     int rc = 0;
