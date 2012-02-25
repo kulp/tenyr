@@ -64,7 +64,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %token ILLEGAL
 %token WORD ASCII GLOBAL
 
-%type <ce> const_expr pconst_expr reloc_expr atom eref
+%type <ce> const_expr pconst_expr preloc_expr greloc_expr reloc_expr atom eref
 %type <cl> reloc_expr_list
 %type <expr> rhs rhs_plain rhs_plain_type0 rhs_plain_type1 rhs_deref lhs_plain lhs_deref
 %type <i> arrow immediate regname reloc_op
@@ -204,20 +204,20 @@ rhs_plain
     | rhs_plain_type1
 
 rhs_plain_type0
-    : regname[x] op regname[y] addsub reloc_expr
-        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $reloc_expr); }
+    : regname[x] op regname[y] addsub greloc_expr
+        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $greloc_expr); }
     | regname[x] op regname[y]
         { $rhs_plain_type0 = make_expr_type0($x, $op, $y, 0, NULL); }
     | regname[x]
         { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
 
 rhs_plain_type1
-    : regname[x] op reloc_expr addsub regname[y]
-        { $rhs_plain_type1 = make_expr_type1($x, $op, $reloc_expr, $y); }
-    | regname[x] op reloc_expr
-        { $rhs_plain_type1 = make_expr_type1($x, $op, $reloc_expr, 0); }
-    | reloc_expr
-        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $reloc_expr, 0); }
+    : regname[x] op greloc_expr addsub regname[y]
+        { $rhs_plain_type1 = make_expr_type1($x, $op, $greloc_expr, $y); }
+    | regname[x] op greloc_expr
+        { $rhs_plain_type1 = make_expr_type1($x, $op, $greloc_expr, 0); }
+    | greloc_expr
+        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $greloc_expr, 0); }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -259,13 +259,18 @@ reloc_op
     : '+' { $$ = '+'; }
     | '-' { $$ = '-'; }
 
+/* guarded reloc_expr : either a single term, or a parenthesised reloc_expr */
+greloc_expr
+    : eref
+    | atom
+    | preloc_expr
+
 reloc_expr[outer]
     : const_expr
     | eref
+    | preloc_expr
     | reloc_expr[inner] reloc_op atom
         {   $outer = make_const_expr(OP2, $reloc_op, $inner, $atom); }
-    | '(' reloc_expr[inner] ')'
-        {   $outer = $inner; }
 
 const_expr[outer]
     : atom
@@ -286,6 +291,10 @@ atom
             strncpy($atom->labelname, $LOCAL, sizeof $atom->labelname); }
     | '.'
         {   $atom = make_const_expr(ICI, 0, NULL, NULL); }
+
+preloc_expr
+    : '(' reloc_expr ')'
+        {   $preloc_expr = $reloc_expr; }
 
 pconst_expr
     : '(' const_expr ')'
