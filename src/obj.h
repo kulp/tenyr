@@ -22,6 +22,14 @@ struct obj {
     UWord length;       ///< total length of object in words, minimum 2
     UWord flags;        ///< flags
 
+    /// each flag is set if the corresponding structure was allocated (and
+    /// therefore should be freed) in a single operation
+    struct {
+        unsigned records:1;
+        unsigned symbols:1;
+        unsigned relocs:1;
+    } bloc;
+
     UWord rec_count;    ///< count of records, minimum 0
     struct objrec {
         struct objrec *next;

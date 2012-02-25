@@ -81,6 +81,7 @@ static int obj_v0_read(struct obj *o, size_t *size, FILE *in)
     GET(o->flags, in);
 
     GET(o->rec_count, in);
+    o->bloc.records = 1;
     for_counted_get(objrec, rec, o->records, o->rec_count) {
         GET(rec->addr, in);
         GET(rec->size, in);
@@ -90,6 +91,7 @@ static int obj_v0_read(struct obj *o, size_t *size, FILE *in)
     }
 
     GET(o->sym_count, in);
+    o->bloc.symbols = 1;
     for_counted_get(objsym, sym, o->symbols, o->sym_count) {
         GET(sym->flags, in);
         GET(sym->name, in);
@@ -97,6 +99,7 @@ static int obj_v0_read(struct obj *o, size_t *size, FILE *in)
     }
 
     GET(o->rlc_count, in);
+    o->bloc.relocs = 1;
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
         GET(rlc->name, in);
@@ -136,9 +139,14 @@ static void obj_v0_free(struct obj *o)
         free(rec->data);
     }
 
-    free(o->records);
-    free(o->symbols);
-    free(o->relocs);
+    if (o->bloc.relocs) free(o->relocs);
+    else list_foreach(objrlc,rlc,o->relocs) free(rlc);
+
+    if (o->bloc.symbols) free(o->symbols);
+    else list_foreach(objsym,sym,o->symbols) free(sym);
+
+    if (o->bloc.records) free(o->records);
+    else list_foreach(objrec,rec,o->records) free(rec);
 
     free(o);
 }
