@@ -64,7 +64,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %token ILLEGAL
 %token WORD ASCII GLOBAL
 
-%type <ce> const_expr pconst_expr preloc_expr greloc_expr reloc_expr atom eref
+%type <ce> const_expr pconst_expr preloc_expr greloc_expr reloc_expr const_atom eref
 %type <cl> reloc_expr_list
 %type <expr> rhs rhs_plain rhs_plain_type0 rhs_plain_type1 rhs_deref lhs_plain lhs_deref
 %type <i> arrow immediate regname reloc_op
@@ -262,35 +262,35 @@ reloc_op
 /* guarded reloc_expr : either a single term, or a parenthesised reloc_expr */
 greloc_expr
     : eref
-    | atom
+    | const_atom
     | preloc_expr
 
 reloc_expr[outer]
     : const_expr
     | eref
     | preloc_expr
-    | reloc_expr[inner] reloc_op atom
-        {   $outer = make_const_expr(OP2, $reloc_op, $inner, $atom); }
+    | eref reloc_op const_atom
+        {   $outer = make_const_expr(OP2, $reloc_op, $eref, $const_atom); }
 
 const_expr[outer]
-    : atom
-    | const_expr[left] reloc_op atom[right]
+    : const_atom
+    | const_expr[left] reloc_op const_atom[right]
         {   $outer = make_const_expr(OP2, $reloc_op, $left, $right); }
-    | const_expr[left] '*' atom[right]
+    | const_expr[left] '*' const_atom[right]
         {   $outer = make_const_expr(OP2, '*', $left, $right); }
-    | const_expr[left] LSH atom[right]
+    | const_expr[left] LSH const_atom[right]
         {   $outer = make_const_expr(OP2, LSH, $left, $right); }
 
-atom
+const_atom
     : pconst_expr
     | immediate
-        {   $atom = make_const_expr(IMM, 0, NULL, NULL);
-            $atom->i = $immediate; }
+        {   $const_atom = make_const_expr(IMM, 0, NULL, NULL);
+            $const_atom->i = $immediate; }
     | LOCAL
-        {   $atom = make_const_expr(LAB, 0, NULL, NULL);
-            strncpy($atom->labelname, $LOCAL, sizeof $atom->labelname); }
+        {   $const_atom = make_const_expr(LAB, 0, NULL, NULL);
+            strncpy($const_atom->labelname, $LOCAL, sizeof $const_atom->labelname); }
     | '.'
-        {   $atom = make_const_expr(ICI, 0, NULL, NULL); }
+        {   $const_atom = make_const_expr(ICI, 0, NULL, NULL); }
 
 preloc_expr
     : '(' reloc_expr ')'
