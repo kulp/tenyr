@@ -73,7 +73,7 @@ int obj_write(struct obj *o, FILE *out)
     for (struct Tag *_f = NULL, *_l = NULL, *Name = NULL; \
             ((Count) ? Name ? !!(Count) : !!(Name = List = calloc(Count, sizeof *Name)) : 0) && !_f; \
             _f++) \
-        for (UWord _i = (Count); _i > 0; Name->prev = _l, _l ? (void)(_l->next = Name) : (void)0, _l = Name++, _i--)
+        for (UWord _i = (Count); _i > 0; _l ? (void)(_l->next = Name) : (void)0, _l = Name++, _i--)
 
 static int obj_v0_read(struct obj *o, size_t *size, FILE *in)
 {
