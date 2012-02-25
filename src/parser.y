@@ -42,20 +42,14 @@ void ce_free(struct const_expr *ce, int recurse);
 %define parse.lac full
 %lex-param { void *yyscanner }
 %parse-param { struct parse_data *pd }
-//%defines "parser.h"
-//%output "parser.c"
 %name-prefix "tenyr_"
-// TODO destructors
-//%destructor { insn_free($$); } <insn>
-//%destructor { expr_free($$); } <expr>
-//%destructor { ce_free($$, 1); } <ce>
 
 %start top
 
 %left EQ NEQ
 %left LTE '>'
 %left '+' '-'
-%left '*' '%'
+%left '*'
 %left '^' XORN
 %left '|' NOR
 %left '&' NAND
@@ -81,8 +75,6 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <str> label
 %type <cstr> string
 %type <dctv> directive
-
-%expect 5
 
 %union {
     int32_t i;
