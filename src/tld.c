@@ -215,7 +215,6 @@ static int do_link(struct link_state *s)
             n->size = rec->size;
             n->data = malloc(rec->size * sizeof *n->data);
             n->next = NULL;
-            n->prev = *ptr_objrec;
             memcpy(n->data, rec->data, rec->size * sizeof *n->data);
 
             if (*ptr_objrec) (*ptr_objrec)->next = n;
@@ -234,9 +233,6 @@ static int do_link(struct link_state *s)
     o->sym_count = s->syms;
     o->rlc_count = s->rlcs;
     o->length = 5 + s->words; // XXX explain
-
-    o->symbols = realloc(o->symbols, o->sym_count * sizeof *o->symbols);
-    o->relocs  = realloc(o->relocs , o->rlc_count * sizeof *o->relocs);
 
     return rc;
 }

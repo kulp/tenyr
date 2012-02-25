@@ -22,9 +22,17 @@ struct obj {
     UWord length;       ///< total length of object in words, minimum 2
     UWord flags;        ///< flags
 
+    /// each flag is set if the corresponding structure was allocated (and
+    /// therefore should be freed) in a single operation
+    struct {
+        unsigned records:1;
+        unsigned symbols:1;
+        unsigned relocs:1;
+    } bloc;
+
     UWord rec_count;    ///< count of records, minimum 0
     struct objrec {
-        struct objrec *next, *prev;
+        struct objrec *next;
 
         UWord addr;     ///< base address
         UWord size;     ///< length of record in words, mininum 0
@@ -33,7 +41,7 @@ struct obj {
 
     UWord sym_count;    ///< count of symbols, minimum 0
     struct objsym {
-        struct objsym *next, *prev;
+        struct objsym *next;
 
         UWord flags;    ///< unused so far (eventually indicate relocations ?)
         char name[LABEL_LEN];
@@ -42,7 +50,7 @@ struct obj {
 
     UWord rlc_count;    ///< count of relocations
     struct objrlc {
-        struct objrlc *next, *prev;
+        struct objrlc *next;
 
         UWord flags;
         char name[LABEL_LEN];

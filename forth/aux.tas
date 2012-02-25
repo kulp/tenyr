@@ -1,4 +1,5 @@
 #include "forth_common.th"
+#include "serial.th"
 
 #define BINOP(Op)    \
     .word . + 1      \
@@ -16,8 +17,8 @@
 //
 //   Guide to stack diagrams:  R: = return stack,
 //   c = 8-bit character, flag = boolean (0 or -1),
-//   n = signed 16-bit, u = unsigned 16-bit,
-//   d = signed 32-bit, ud = unsigned 32-bit,
+//   n = signed 32-bit, u = unsigned 32-bit,
+//   d = signed 64-bit, ud = unsigned 64-bit,
 //   +n = unsigned 15-bit, x = any cell value,
 //   i*x j*x = any number of cell values,
 //   a-addr = aligned adrs, c-addr = character adrs
@@ -72,6 +73,13 @@ head(AROBASE,@):
 
 // 0<     n -- flag             true if TOS negative
 // 0=     n/u -- flag           return true if TOS=0
+head(EQZ,0=):
+    .word . + 1
+    W <- [PSP + 1]
+    W <- W == 0
+    W -> [PSP + 1]
+    goto(NEXT)
+
 // 1+     n1/u1 -- n2/u2                add 1 to TOS
 head(ADD_1,1+):
     .word . + 1
@@ -120,11 +128,18 @@ head(DROP,DROP):
 head(DUP,DUP):
     .word . + 1
     W   <- [PSP + 1]
-    W   -> [PSP]
     PSP <- PSP - 1
+    W   -> [PSP + 1]
     goto(NEXT)
 
 // EMIT   c --           output character to console
+head(EMIT,EMIT):
+    .word . + 1
+    W   <- [PSP + 1]
+    PSP <- PSP + 1
+    W   -> SERIAL
+    goto(NEXT)
+
 // EXECUTE   i*x xt -- j*x   execute Forth word 'xt'
 // EXIT   --                 exit a colon definition
 head(EXIT,EXIT):
@@ -136,30 +151,87 @@ head(EXIT,EXIT):
 // I      -- n   R: sys1 sys2 -- sys1 sys2
 //                      get the innermost loop index
 // INVERT x1 -- x2                 bitwise inversion
+head(INVERT,INVERT):
+    .word . + 1
+    W <- [PSP + 1]
+    W <- W ^ -1
+    W -> [PSP + 1]
+    goto(NEXT)
+
 // J      -- n   R: 4*sys -- 4*sys
 //                         get the second loop index
 // KEY    -- c           get character from keyboard
+head(KEY,KEY):
+    .word . + 1
+    W   <- SERIAL
+    PSP <- PSP - 1
+    W   -> [PSP + 1]
+    goto(NEXT)
+
 // LSHIFT x1 u -- x2        logical L shift u places
+head(LSHIFT,LSHIFT): BINOP(<<)
+
 // NEGATE x1 -- x2                  two's complement
+head(NEGATE,NEGATE):
+    .word . + 1
+    W <- [PSP + 1]
+    W <- A - W
+    W -> [PSP + 1]
+    goto(NEXT)
+
 // OR     x1 x2 -- x3                     logical OR
 head(OR,OR): BINOP(|)
 
 // OVER   x1 x2 -- x1 x2 x1        per stack diagram
+head(OVER,OVER):
+    .word . + 1
+    PSP <-  PSP - 1
+    W   <- [PSP + 3]
+    W   -> [PSP + 1]
+    goto(NEXT)
+
 // ROT    x1 x2 x3 -- x2 x3 x1     per stack diagram
+head(ROT,ROT):
+    .word . + 1
+    B   <- [PSP + 3]
+    C   <- [PSP + 2]
+    D   <- [PSP + 1]
+
+    C   -> [PSP + 3]
+    D   -> [PSP + 2]
+    B   -> [PSP + 1]
+    goto(NEXT)
+
 // RSHIFT x1 u -- x2        logical R shift u places
 // R>     -- x    R: x --      pop from return stack
 head(POP_R,R>):
     .word . + 1
-     W    <- [RSP + 1]
-    [PSP] <-  W
-     RSP  <-  RSP + 1
-     PSP  <-  PSP - 1
+    W   <- [RSP + 1]
+    RSP <-  RSP + 1
+    PSP <-  PSP - 1
+    W   -> [PSP + 1]
     goto(NEXT)
 
 // R@     -- x    R: x -- x       fetch from rtn stk
+head(FETCH_R,R@):
+    .word . + 1
+    W   <- [RSP + 1]
+    PSP <-  PSP - 1
+    W   -> [PSP + 1]
+    goto(NEXT)
+
 // SWAP   x1 x2 -- x2 x1          swap top two items
-// UM*    u1 u2 -- ud       unsigned 16x16->32 mult.
-// UM/MOD ud u1 -- u2 u3     unsigned 32/16->16 div.
+head(SWAP,SWAP):
+    .word . + 1
+    B   <- [PSP + 2]
+    C   <- [PSP + 1]
+
+    C   -> [PSP + 2]
+    B   -> [PSP + 1]
+    goto(NEXT)
+
+// UM*    u1 u2 -- ud       unsigned 32x32->64 mult.
+// UM/MOD ud u1 -- u2 u3     unsigned 64/32->32 div.
 // UNLOOP --   R: sys1 sys2 --       drop loop parms
 // U<     u1 u2 -- flag         test u1<n2, unsigned
 // VARIABLE   --             define a Forth variable
@@ -186,7 +258,26 @@ head(BYE,BYE):
 // KEY?   -- flag        return true if char waiting
 // M+     d1 n -- d2            add single to double
 // NIP    x1 x2 -- x2              per stack diagram
+head(NIP,NIP):
+    .word . + 1
+    W   <- [PSP + 1]
+    W   -> [PSP + 2]
+    PSP <-  PSP + 1
+    goto(NEXT)
+
 // TUCK   x1 x2 -- x2 x1 x2        per stack diagram
+head(TUCK,TUCK):
+    .word . + 1
+    B   <- [PSP + 2]
+    C   <- [PSP + 1]
+
+    PSP <- PSP - 1
+
+    C   -> [PSP + 3]
+    B   -> [PSP + 2]
+    C   -> [PSP + 1]
+    goto(NEXT)
+
 // U>     u1 u2 -- flag         test u1>u2, unsigned
 
 head(NOOP,NOOP):

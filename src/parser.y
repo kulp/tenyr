@@ -212,18 +212,18 @@ rhs_plain
     | rhs_plain_type1
 
 rhs_plain_type0
-    : regname[x]
-        { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
+    : regname[x] op regname[y] addsub reloc_expr
+        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $reloc_expr); }
     | regname[x] op regname[y]
         { $rhs_plain_type0 = make_expr_type0($x, $op, $y, 0, NULL); }
-    | regname[x] op regname[y] addsub reloc_expr
-        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $reloc_expr); }
+    | regname[x]
+        { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
 
 rhs_plain_type1
-    : regname[x] op reloc_expr
-        { $rhs_plain_type1 = make_expr_type1($x, $op, $reloc_expr, 0); }
-    | regname[x] op reloc_expr addsub regname[y]
+    : regname[x] op reloc_expr addsub regname[y]
         { $rhs_plain_type1 = make_expr_type1($x, $op, $reloc_expr, $y); }
+    | regname[x] op reloc_expr
+        { $rhs_plain_type1 = make_expr_type1($x, $op, $reloc_expr, 0); }
     | reloc_expr
         { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $reloc_expr, 0); }
 
