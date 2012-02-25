@@ -4,6 +4,11 @@ LDFLAGS += -g
 
 EXE_SUFFIX =
 
+ifeq ($(WIN32),1)
+EXE_SUFFIX = .exe
+CROSS_COMPILE ?= i386-mingw32-
+endif
+
 GCC_CFLAGS += -std=c99
 GCC_CFLAGS += -Wall -Wextra $(PEDANTIC)
 
@@ -16,9 +21,10 @@ ifeq ($(DEBUG),)
 CFLAGS  += -DNDEBUG -O3
 endif
 
-# 32-bit compilation
-#CFLAGS  += -m32
-#LDFLAGS += -m32
+ifeq ($(_32BIT),1)
+CFLAGS  += -m32
+LDFLAGS += -m32
+endif
 
 PEDANTIC = -Werror -pedantic-errors
 
@@ -79,7 +85,7 @@ $(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y debug
 $(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
 	$(FLEX) --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<
 
-$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y lexer.h
+$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y | lexer.h
 	$(BISON) --defines=$(GENDIR)/parser.h -o $(GENDIR)/parser.c $<
 
 $(GENDIR):
