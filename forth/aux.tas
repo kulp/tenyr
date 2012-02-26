@@ -31,6 +31,8 @@
 //
 // !      x a-addr --           store cell in memory
 // +      n1/u1 n2/u2 -- n3/u3             add n1+n2
+head(ADD,+): BINOP(+)
+
 // +!     n/u a-addr --           add cell to memory
 // -      n1/u1 n2/u2 -- n3/u3        subtract n1-n2
 head(SUB,-): BINOP(-)
@@ -279,6 +281,16 @@ head(TUCK,TUCK):
     goto(NEXT)
 
 // U>     u1 u2 -- flag         test u1>u2, unsigned
+
+// extensions (possibly borrowed from CamelForth)
+// LIT    -- x         fetch inline literal to stack
+head(LIT,LIT):
+    .word . + 1
+    W   <- [IP]
+    IP  <- IP + 1
+    W   -> [PSP]
+    PSP <- PSP - 1
+    goto(NEXT)
 
 head(NOOP,NOOP):
     .word @ENTER

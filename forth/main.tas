@@ -54,6 +54,17 @@ head(BLOOP,BLOOP):
     .word @NL
     .word @HI
     .word @NL
+    .word @LIT
+    .word 65
+    .word @DUP
+    .word @EMIT
+    .word @LIT
+    .word 32
+    .word @ADD
+    .word @EMIT
+    .word @LIT
+    .word 10
+    .word @EMIT
     .word @NOOP
     .word @HI
     .word @NL
