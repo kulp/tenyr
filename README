@@ -1,36 +1,15 @@
-See https://github.com/kulp/tenyr/wiki for documentation.
+Documentation : https://github.com/kulp/tenyr/wiki
+Downloads : http://kulp.ch/tenyr/bin/
 
 tenyr aspires to be a complete 32-bit computing environment (simulated
-architecture, operating system, compiler, utilities). It is very much a work
-in progress. A preliminary assembler / disassembler (tas) and simulator (tsim)
-exist, and the toycen compiler project from https://github.com/kulp/toycen
-will probably supply the compiler component when it can generate code at all.
-
-The tenyr architecture and its simulator have the following features (which
-may be construed as bugs) :
-
-    * two's complement
-        * true = -1, false = 0
-    * 32-bit only (no 64-bit support planned)
-        * memory space is 24 bit (but counted in words, so about 67 MB)
-        * top 8 bits of memory addresses ignored (can be used by runtime)
-    * 16 mostly-general-purpose registers named A - P
-        * register A is always zero
-        * register P is IP (instruction pointer)
-            * can be read and written directly
-            * points to next instruction
-        * registers B-H caller-saved, registers I-O callee-saved by convention
-    * no hardware stack support
-    * no hardware floating-point whatsoever
-    * no integer divide
-    * fixed-width, 32-bit instructions
-    * as few ways to do something as reasonably possible
-    * single-core (no SMP, no NUMA, no hardware threads, no multicore)
-    * word-addressed (no endianness)
-    * all CPU configuration registers are memory-mapped
+architecture, operating system, compiler, utilities). It is very much a work in
+progress. An assembler / disassembler (tas) and simulator / debugger (tsim)
+exist, a Forth implementation is in its infancy, and the toycen compiler
+project from https://github.com/kulp/toycen will probably supply the C compiler
+component when it can generate code at all.
 
 Darren Kulp
 darren@kulp.ch
 kulp@freenode
-2011-12-10
+2012-02-25
 
