@@ -56,6 +56,7 @@ decnum  (-?[0-9]+)
 
 ".word"                 { return WORD; }
 ".ascii"                { return ASCII; }
+".utf32"                { return UTF32; }
 ".global"               { return GLOBAL; }
 
 [][|&+*^>.,:@()-]       { return yytext[0]; }

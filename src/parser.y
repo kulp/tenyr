@@ -21,7 +21,8 @@ static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
         int y);
 static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
-static struct instruction_list *make_string(struct cstr *cs);
+static struct instruction_list *make_ascii(struct cstr *cs);
+static struct instruction_list *make_utf32(struct cstr *cs);
 static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
 static struct instruction_list *make_data(struct parse_data *pd, struct
@@ -62,7 +63,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <str> INTEGER LABEL LOCAL STRING
 %token <chr> REGISTER
 %token ILLEGAL
-%token WORD ASCII GLOBAL
+%token WORD ASCII UTF32 GLOBAL
 
 %type <ce> const_expr pconst_expr preloc_expr greloc_expr reloc_expr const_atom eref
 %type <cl> reloc_expr_list
@@ -70,7 +71,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <i> arrow immediate regname reloc_op
 %type <insn> insn insn_inner
 %type <op> op
-%type <program> program ascii data ascii_or_data
+%type <program> program ascii utf32 data string_or_data
 %type <s> addsub
 %type <str> label
 %type <cstr> string
@@ -98,10 +99,11 @@ top
     : program
         {   pd->top = $program; }
 
-ascii_or_data[outer]
+string_or_data[outer]
     : ascii
+    | utf32
     | data
-    | label ':' ascii_or_data[inner]
+    | label ':' string_or_data[inner]
         {   $outer = $inner;
             struct label *n = add_label_to_insn(&yyloc, $inner->insn, $label);
             struct label_list *l = calloc(1, sizeof *l);
@@ -112,15 +114,15 @@ ascii_or_data[outer]
 program[outer]
     :   /* empty */
         {   $outer = NULL; }
-    | ascii_or_data program[inner]
-        {   struct instruction_list *p = $ascii_or_data;
+    | string_or_data program[inner]
+        {   struct instruction_list *p = $string_or_data;
             while (p->next) p = p->next;
             p->next = $inner;
 
             $outer = malloc(sizeof *$outer);
-            $outer->next = $ascii_or_data->next;
-            $outer->insn = $ascii_or_data->insn;
-            free($ascii_or_data); }
+            $outer->next = $string_or_data->next;
+            $outer->insn = $string_or_data->insn;
+            free($string_or_data); }
     | directive program[inner]
         {   $outer = $inner;
             handle_directive(pd, &yylloc, $directive, $inner); }
@@ -163,9 +165,13 @@ string[outer]
             strncpy($outer->str, $STRING + 1, $outer->len);
             $outer->right = $inner; }
 
+utf32
+    : UTF32 string
+        {   $utf32 = make_utf32($string); }
+
 ascii
     : ASCII string
-        {   $ascii = make_string($string); }
+        {   $ascii = make_ascii($string); }
 
 data
     : WORD reloc_expr_list
@@ -418,11 +424,40 @@ static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
 
     return e;
 }
-static struct instruction_list *make_string(struct cstr *cs)
+
+static struct instruction_list *make_utf32(struct cstr *cs)
 {
     struct instruction_list *result = NULL, **rp = &result;
 
-    struct cstr *p = cs; //, q = p;
+    struct cstr *p = cs;
+    unsigned wpos = 0; // position in the word
+    struct instruction_list *t = *rp;
+
+    while (p) {
+        unsigned spos = 0; // position in the string
+        int len = p->len;
+        for (; len > 0; wpos++, spos++, len--) {
+            struct instruction_list *temp = *rp;
+            *rp = calloc(1, sizeof **rp);
+            t = *rp;
+            t->next = temp;
+            rp = &t->next;
+            t->insn = calloc(1, sizeof *t->insn);
+
+            t->insn->u.word = p->str[spos];
+        }
+
+        p = p->right;
+    }
+
+    return result;
+}
+
+static struct instruction_list *make_ascii(struct cstr *cs)
+{
+    struct instruction_list *result = NULL, **rp = &result;
+
+    struct cstr *p = cs;
     unsigned wpos = 0; // position in the word
     struct instruction_list *t = *rp;
     while (p) {
@@ -440,6 +475,7 @@ static struct instruction_list *make_string(struct cstr *cs)
 
             t->insn->u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
         }
+
         p = p->right;
     }
 

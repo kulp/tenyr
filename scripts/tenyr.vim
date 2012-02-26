@@ -16,7 +16,8 @@ syn keyword tenyrDelim '[[]' '[]]'
 syn match tenyrOp '[->^.+\&|*]\|<<\|>>\|<=\|<>\|==\|^\~'
 syn match tenyrArrow '<-\|->'
 
-syn match tenyrDirective '\.\(ascii\|global\|word\)'
+syn match tenyrDirective '\.\(global\|word\)'
+syn match tenyrStrDir '\.\(ascii\|utf32\)'
 
 syn keyword tenyrTodo illegal
 syn keyword tenyrTodo contained TODO FIXME XXX NOTE
@@ -33,6 +34,7 @@ syn match   cInclude    display "^\s*\(%:\|#\)\s*include\>\s*["<]" contains=cInc
 syn region  cDefine     start="^\s*\(%:\|#\)\s*\(define\|undef\)\>" skip="\\$" end="$" keepend contains=tenyrTodo
 
 syn region tenyrString start='"' end='"' contained
+syn region tenyrStrRegion start="\.\(ascii\|utf32\)\>" end="$" keepend contains=tenyrString,tenyrStrDir
 
 syn match tenyrNumber '-\?\d\+'
 syn match tenyrNumber '0x[0-9a-fA-F]{1,8}'
@@ -49,6 +51,7 @@ hi def link cInclude         Include
 hi def link cIncluded        String
 hi def link tenyrNumber      Number
 hi def link tenyrDirective   Statement
+hi def link tenyrStrDir      Statement
 hi def link tenyrDelim       Delimiter
 hi def link tenyrLabel       Label
 hi def link tenyrLocal       Label
