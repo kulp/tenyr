@@ -1,12 +1,24 @@
 CC       = $(CROSS_COMPILE)gcc
+
+ifndef NDEBUG
 CFLAGS  += -g
 LDFLAGS += -g
-
-EXE_SUFFIX =
+endif
 
 ifeq ($(WIN32),1)
-EXE_SUFFIX = .exe
-CROSS_COMPILE ?= i386-mingw32-
+ EXE_SUFFIX = .exe
+ ifeq ($(_32BIT),1)
+  CROSS_COMPILE ?= i686-w64-mingw32-
+ else
+  # lfind() complains about size_t* vs. unsigned int* ; ignore for now
+  PEDANTIC =
+  CROSS_COMPILE ?= x86_64-w64-mingw32-
+ endif
+else
+ ifeq ($(_32BIT),1)
+  CFLAGS  += -m32
+  LDFLAGS += -m32
+ endif
 endif
 
 GCC_CFLAGS += -std=c99
@@ -21,12 +33,7 @@ ifeq ($(DEBUG),)
 CFLAGS  += -DNDEBUG -O3
 endif
 
-ifeq ($(_32BIT),1)
-CFLAGS  += -m32
-LDFLAGS += -m32
-endif
-
-PEDANTIC = -Werror -pedantic-errors
+PEDANTIC ?= -Werror -pedantic-errors
 
 FLEX  = flex
 BISON = bison
@@ -45,6 +52,9 @@ DEVICES = ram sparseram debugwrap serial
 DEVOBJS = $(DEVICES:%=%.o)
 
 all: tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+win32: export _32BIT=1
+win32: export WIN32=1
+win32: all
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
@@ -90,6 +100,13 @@ $(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y | lexer.h
 
 $(GENDIR):
 	mkdir -p $@
+
+.PHONY: install
+INSTALL_STEM ?= .
+INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(shell $(CC) -dumpmachine)
+install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+	install -d $(INSTALL_DIR)
+	install $^ $(INSTALL_DIR)
 
 ifndef INHIBIT_DEPS
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
