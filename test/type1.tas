@@ -1,0 +1,4 @@
+M <- G + M
+M <- G + 2
+M <- G + M + 2
+M <- G + 2 + M # this didn't parse as of v0.2.3-23-g4368c8e
