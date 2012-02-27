@@ -73,7 +73,7 @@ struct cstr {
 };
 
 struct directive {
-    enum directive_type { D_GLOBAL } type;
+    enum directive_type { D_NULL, D_GLOBAL, D_SET } type;
     void *data;
 };
 

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "parser_global.h"
 #include "parser.h"
@@ -28,7 +29,7 @@ static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
 static struct instruction_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
 static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
-        enum directive_type type, const char *label);
+        enum directive_type type, ...);
 static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
         directive *d, struct instruction_list *p);
 
@@ -63,7 +64,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <str> INTEGER LABEL LOCAL STRING
 %token <chr> REGISTER
 %token ILLEGAL
-%token WORD ASCII UTF32 GLOBAL
+%token WORD ASCII UTF32 GLOBAL SET
 
 %type <ce> const_expr pconst_expr preloc_expr greloc_expr reloc_expr const_atom eref
 %type <cl> reloc_expr_list
@@ -180,6 +181,8 @@ data
 directive
     : GLOBAL LABEL
         {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $LABEL); }
+    | SET LABEL ',' reloc_expr
+        {   $directive = make_directive(pd, &yylloc, D_SET, $LABEL, $reloc_expr); }
 
 reloc_expr_list[outer]
     : reloc_expr[expr]
@@ -515,15 +518,19 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
 }
 
 static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
-        enum directive_type type, const char *label)
+        enum directive_type type, ...)
 {
-    struct directive *result = NULL;
+    struct directive *result = calloc(1, sizeof *result);
+    result->type = D_NULL;
+
+    va_list vl;
+    va_start(vl,type);
 
     switch (type) {
         case D_GLOBAL:
-            result = malloc(sizeof *result);
             result->type = type;
             result->data = malloc(LABEL_LEN);
+            const char *label = va_arg(vl,const char *);
             snprintf(result->data, LABEL_LEN, label);
             break;
         default: {
@@ -533,6 +540,7 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
         }
     }
 
+    va_end(vl);
     return result;
 }
 
