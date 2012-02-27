@@ -43,7 +43,7 @@
 #define head(Label,Name) \
     .word .L##Label##_end - .L##Label##_start \
 .L##Label##_start: \
-    .ascii #Name \
+    .utf32 #Name \
     .global Label \
 .L##Label##_end: \
 Label
