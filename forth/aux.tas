@@ -197,10 +197,10 @@ head(ROT,ROT):
     .word . + 1
     B   <- [PSP + 3]
     C   <- [PSP + 2]
-    D   <- [PSP + 1]
+    E   <- [PSP + 1]
 
     C   -> [PSP + 3]
-    D   -> [PSP + 2]
+    E   -> [PSP + 2]
     B   -> [PSP + 1]
     goto(NEXT)
 
