@@ -9,7 +9,6 @@ _start:
 
 // Computes fib(C) and stores the result in B.
 fib:
-    f <- p - .
     b <- 0
     d <- 1
 
