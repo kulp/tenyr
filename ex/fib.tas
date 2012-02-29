@@ -21,7 +21,7 @@ fib:
     d <- 1
     d <- c > d          // zero or one ?
     jnzrel(d,_recurse)  // not-zero is true (c >= 2)
-    b <- 1
+    b <- c
     ret
 
 _recurse:
