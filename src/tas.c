@@ -94,12 +94,22 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
 
     switch (ce->type) {
         case EXT:
-            if (symbol_lookup(pd->symbols, ce->symbolname, result))
-                return add_relocation(pd, ce->symbolname, top_insn, width);
-            else
-                return add_relocation(pd, NULL, top_insn, width);
+            if (ce->symbol) {
+                return ce_eval(pd, top_insn, ce->symbol->ce, width, result);
+            } else {
+                if (symbol_lookup(pd->symbols, ce->symbolname, result)) {
+                    return add_relocation(pd, ce->symbolname, top_insn, width);
+                } else {
+                    return add_relocation(pd, NULL, top_insn, width);
+                }
+            }
             return 0;
-        case SYM: return symbol_lookup(pd->symbols, ce->symbolname, result);
+        case SYM:
+            if (ce->symbol) {
+                return ce_eval(pd, top_insn, ce->symbol->ce, width, result);
+            } else {
+                return symbol_lookup(pd->symbols, ce->symbolname, result);
+            }
         case ICI:
             *result = top_insn->reladdr;
             return add_relocation(pd, NULL, top_insn, width);

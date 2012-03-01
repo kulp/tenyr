@@ -68,6 +68,8 @@ struct instruction {
         unsigned resolved:1;
         unsigned global:1;
 
+        struct const_expr *ce;
+
         struct symbol *next;
     } *symbol;
     struct reloc_node *reloc;

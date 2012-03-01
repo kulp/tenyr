@@ -578,16 +578,17 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             break;
         case D_SET: {
             result->type = type;
+            // TODO stop allocating datum_D_SET if we don't need it
             struct datum_D_SET *d = result->data = malloc(sizeof *d);
             const char *symbol = va_arg(vl,const char *);
             snprintf(result->data, SYMBOL_LEN, symbol);
-            d->ce = va_arg(vl,struct const_expr *);
 
             struct symbol *n = calloc(1, sizeof *n);
             n->column   = locp->first_column;
             n->lineno   = locp->first_line;
             n->resolved = 0;
             n->next     = NULL;
+            n->ce       = va_arg(vl,struct const_expr *);
             strncpy(n->name, symbol, sizeof n->name);
 
             add_symbol(locp, pd, n);
