@@ -46,6 +46,7 @@ struct const_expr {
     char symbolname[SYMBOL_LEN];
     int op;
     struct instruction *insn; // for '.'-resolving
+    struct symbol *symbol; // for referencing a specific version of a symbol
     struct const_expr *left, *right;
 };
 

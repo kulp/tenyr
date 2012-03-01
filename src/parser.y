@@ -38,6 +38,8 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
 #define YYLEX_PARAM (pd->scanner)
 
 void ce_free(struct const_expr *ce, int recurse);
+struct symbol *symbol_find(struct symbol_list *list, const char *name);
+
 %}
 
 %error-verbose
@@ -297,7 +299,14 @@ const_atom
             $const_atom->i = $immediate; }
     | LOCAL
         {   $const_atom = make_const_expr(SYM, 0, NULL, NULL);
-            strncpy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname); }
+            struct symbol *s;
+            if ((s = symbol_find(pd->symbols, $LOCAL))) {
+                $const_atom->symbol = s;
+            } else {
+                strncpy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname);
+                $const_atom->symbolname[sizeof $const_atom->symbolname - 1] = 0;
+            }
+        }
     | '.'
         {   $const_atom = make_const_expr(ICI, 0, NULL, NULL); }
 
@@ -312,8 +321,14 @@ pconst_expr
 eref
     : '@' SYMBOL
         {   $eref = make_const_expr(EXT, 0, NULL, NULL);
-            strncpy($eref->symbolname, $SYMBOL, sizeof $eref->symbolname);
-            $eref->symbolname[sizeof $eref->symbolname - 1] = 0; }
+            struct symbol *s;
+            if ((s = symbol_find(pd->symbols, $SYMBOL))) {
+                $eref->symbol = s;
+            } else {
+                strncpy($eref->symbolname, $SYMBOL, sizeof $eref->symbolname);
+                $eref->symbolname[sizeof $eref->symbolname - 1] = 0;
+            }
+        }
 
 symbol
     : SYMBOL
@@ -508,8 +523,6 @@ static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
 
     return 0;
 }
-
-extern struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
 {
