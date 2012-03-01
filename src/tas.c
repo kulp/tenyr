@@ -41,22 +41,21 @@ static int usage(const char *me)
     return 0;
 }
 
-static int label_find(struct label_list *list, const char *name, struct label **label)
+struct label *label_find(struct label_list *list, const char *name)
 {
     list_foreach(label_list, elt, list) {
         if (!strncmp(elt->label->name, name, LABEL_LEN)) {
-            *label = elt->label;
-            return 0;
+            return elt->label;
         }
     }
 
-    return 1;
+    return NULL;
 }
 
 static int label_lookup(struct label_list *list, const char *name, uint32_t *result)
 {
     struct label *label = NULL;
-    if (!label_find(list, name, &label)) {
+    if ((label = label_find(list, name))) {
         if (result) *result = label->reladdr;
         return 0;
     }
@@ -175,37 +174,10 @@ static int mark_globals(struct label_list *labels, struct global_list *globals)
 {
     struct label *which;
     list_foreach(global_list, g, globals)
-        if (!label_find(labels, g->name, &which))
+        if ((which = label_find(labels, g->name)))
             which->global = 1;
 
     return 0;
-}
-
-static int check_labels(struct label_list *labels)
-{
-    int rc = 0;
-    struct label_list *top = labels;
-    typedef int cmp(const void *, const void*);
-
-    // check for and reject duplicates
-    void *tree = NULL;
-    list_foreach(label_list, Node, labels) {
-        const char **name = tsearch(Node->label->name, &tree, (cmp*)strcmp);
-
-        if (*name != Node->label->name) {
-            rc = 1;
-            break;
-        }
-    }
-
-    // delete from tree what we added to it
-    list_foreach(label_list, Node, top) {
-        if (!tree) break;
-        tdelete(Node->label, &tree, (cmp*)strcmp);
-        Node = Node->next;
-    }
-
-    return rc;
 }
 
 int do_assembly(FILE *in, FILE *out, const struct format *f)
@@ -237,9 +209,6 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         }
 
         mark_globals(pd.labels, pd.globals);
-        // TODO make check_labels() more user-friendly
-        if (check_labels(pd.labels))
-            fatal(0, "Error while processing labels : check for duplicate labels");
 
         if (!fixup_deferred_exprs(&pd)) {
             void *ud;

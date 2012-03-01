@@ -1,0 +1,7 @@
+#foo: .word 0
+.word @foo + 2
+.set foo, 1
+.word @foo + 2
+.set foo, 9 + 3
+#foo: .word 0
+#foo: .word 1

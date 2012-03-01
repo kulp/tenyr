@@ -26,11 +26,13 @@ static struct instruction_list *make_ascii(struct cstr *cs);
 static struct instruction_list *make_utf32(struct cstr *cs);
 static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
         const char *label);
+static int add_label(YYLTYPE *locp, struct parse_data *pd, struct label *n);
+static int check_add_label(YYLTYPE *locp, struct parse_data *pd, struct label *n);
 static struct instruction_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
-static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
+static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
         enum directive_type type, ...);
-static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
+static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct instruction_list *p);
 
 #define YYLEX_PARAM (pd->scanner)
@@ -107,10 +109,9 @@ string_or_data[outer]
     | label ':' string_or_data[inner]
         {   $outer = $inner;
             struct label *n = add_label_to_insn(&yyloc, $inner->insn, $label);
-            struct label_list *l = calloc(1, sizeof *l);
-            l->next  = pd->labels;
-            l->label = n;
-            pd->labels = l; }
+            if (check_add_label(&yyloc, pd, n))
+                YYABORT;
+        }
 
 program[outer]
     :   /* empty */
@@ -140,10 +141,9 @@ insn[outer]
     | label ':' insn[inner]
         {   $outer = $inner;
             struct label *n = add_label_to_insn(&yyloc, $inner, $label);
-            struct label_list *l = calloc(1, sizeof *l);
-            l->next  = pd->labels;
-            l->label = n;
-            pd->labels = l; }
+            if (check_add_label(&yyloc, pd, n))
+                YYABORT;
+        }
 
 insn_inner
     : lhs_plain arrow rhs
@@ -498,6 +498,31 @@ static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn, 
     return n;
 }
 
+static int add_label(YYLTYPE *locp, struct parse_data *pd, struct label *n)
+{
+    struct label_list *l = calloc(1, sizeof *l);
+
+    l->next  = pd->labels;
+    l->label = n;
+    pd->labels = l;
+
+    return 0;
+}
+
+extern struct label *label_find(struct label_list *list, const char *name);
+
+static int check_add_label(YYLTYPE *locp, struct parse_data *pd, struct label *n)
+{
+    // TODO check if it exists already
+    if (label_find(pd->labels, n->name)) {
+        char buf[128];
+        snprintf(buf, sizeof buf, "Error adding label '%s' (already exists ?)", n->name);
+        tenyr_error(locp, pd, buf);
+        return 1;
+    } else
+        return add_label(locp, pd, n);
+}
+
 static struct instruction_list *make_data(struct parse_data *pd, struct const_expr_list *list)
 {
     struct instruction_list *result = NULL, **rp = &result;
@@ -517,7 +542,12 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
     return result;
 }
 
-static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
+struct datum_D_SET {
+    char name[LABEL_LEN];
+    struct const_expr *ce;
+};
+
+static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
         enum directive_type type, ...)
 {
     struct directive *result = calloc(1, sizeof *result);
@@ -533,10 +563,27 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
             const char *label = va_arg(vl,const char *);
             snprintf(result->data, LABEL_LEN, label);
             break;
+        case D_SET: {
+            result->type = type;
+            struct datum_D_SET *d = result->data = malloc(sizeof *d);
+            const char *label = va_arg(vl,const char *);
+            snprintf(result->data, LABEL_LEN, label);
+            d->ce = va_arg(vl,struct const_expr *);
+
+            struct label *n = calloc(1, sizeof *n);
+            n->column   = locp->first_column;
+            n->lineno   = locp->first_line;
+            n->resolved = 0;
+            n->next     = NULL;
+            strncpy(n->name, label, sizeof n->name);
+
+            add_label(locp, pd, n);
+            break;
+        }
         default: {
             char buf[128];
             snprintf(buf, sizeof buf, "Unknown directive type %d in %s", type, __func__);
-            tenyr_error(lloc, pd, buf);
+            tenyr_error(locp, pd, buf);
         }
     }
 
@@ -544,7 +591,7 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
     return result;
 }
 
-static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
+static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct instruction_list *p)
 {
     switch (d->type) {
@@ -557,10 +604,16 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
             free(d);
             break;
         }
+        case D_SET: {
+            struct datum_D_SET *data = d->data;
+
+            free(data);
+            break;
+        }
         default: {
             char buf[128];
             snprintf(buf, sizeof buf, "Unknown directive type %d in %s", d->type, __func__);
-            tenyr_error(lloc, pd, buf);
+            tenyr_error(locp, pd, buf);
         }
     }
 }
