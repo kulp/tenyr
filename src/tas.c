@@ -41,27 +41,27 @@ static int usage(const char *me)
     return 0;
 }
 
-struct label *label_find(struct label_list *list, const char *name)
+struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
-    list_foreach(label_list, elt, list) {
-        if (!strncmp(elt->label->name, name, LABEL_LEN)) {
-            return elt->label;
+    list_foreach(symbol_list, elt, list) {
+        if (!strncmp(elt->symbol->name, name, SYMBOL_LEN)) {
+            return elt->symbol;
         }
     }
 
     return NULL;
 }
 
-static int label_lookup(struct label_list *list, const char *name, uint32_t *result)
+static int symbol_lookup(struct symbol_list *list, const char *name, uint32_t *result)
 {
-    struct label *label = NULL;
-    if ((label = label_find(list, name))) {
-        if (result) *result = label->reladdr;
+    struct symbol *symbol = NULL;
+    if ((symbol = symbol_find(list, name))) {
+        if (result) *result = symbol->reladdr;
         return 0;
     }
 
     // unresolved symbols get a zero value, but this is still success in EXT
-    // case (not in LAB case)
+    // case (not in SYM case)
     if (result) *result = 0;
     return 1;
 }
@@ -94,12 +94,12 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
 
     switch (ce->type) {
         case EXT:
-            if (label_lookup(pd->labels, ce->labelname, result))
-                return add_relocation(pd, ce->labelname, top_insn, width);
+            if (symbol_lookup(pd->symbols, ce->symbolname, result))
+                return add_relocation(pd, ce->symbolname, top_insn, width);
             else
                 return add_relocation(pd, NULL, top_insn, width);
             return 0;
-        case LAB: return label_lookup(pd->labels, ce->labelname, result);
+        case SYM: return symbol_lookup(pd->symbols, ce->symbolname, result);
         case ICI:
             *result = top_insn->reladdr;
             return add_relocation(pd, NULL, top_insn, width);
@@ -128,7 +128,7 @@ static void ce_free(struct const_expr *ce, int recurse)
     if (recurse)
         switch (ce->type) {
             case EXT:
-            case LAB:
+            case SYM:
             case ICI:
                 break;
             case IMM:
@@ -170,11 +170,11 @@ static int fixup_deferred_exprs(struct parse_data *pd)
     return 0;
 }
 
-static int mark_globals(struct label_list *labels, struct global_list *globals)
+static int mark_globals(struct symbol_list *symbols, struct global_list *globals)
 {
-    struct label *which;
+    struct symbol *which;
     list_foreach(global_list, g, globals)
-        if ((which = label_find(labels, g->name)))
+        if ((which = symbol_find(symbols, g->name)))
             which->global = 1;
 
     return 0;
@@ -198,7 +198,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         list_foreach(instruction_list, il, pd.top) {
             il->insn->reladdr = baseaddr + reladdr;
 
-            list_foreach(label, l, il->insn->label) {
+            list_foreach(symbol, l, il->insn->symbol) {
                 if (!l->resolved) {
                     l->reladdr = baseaddr + reladdr;
                     l->resolved = 1;
@@ -208,7 +208,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             reladdr++;
         }
 
-        mark_globals(pd.labels, pd.globals);
+        mark_globals(pd.symbols, pd.globals);
 
         if (!fixup_deferred_exprs(&pd)) {
             void *ud;
@@ -225,8 +225,8 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
                 f->fini(out, &ud);
         }
 
-        list_foreach(label_list, Node, pd.labels) {
-            free(Node->label);
+        list_foreach(symbol_list, Node, pd.symbols) {
+            free(Node->symbol);
             free(Node);
         }
 

@@ -20,17 +20,17 @@ struct parse_data {
         int mult;           ///< multiplier (1 or -1, according to sign)
         struct deferred_expr *next;
     } *defexprs;
-    struct label_list {
-        struct label *label;
-        struct label_list *next;
-    } *labels;
+    struct symbol_list {
+        struct symbol *symbol;
+        struct symbol_list *next;
+    } *symbols;
     struct global_list {
-        char name[LABEL_LEN];
+        char name[SYMBOL_LEN];
         struct global_list *next;
     } *globals;
     struct reloc_list {
         struct reloc_node {
-            char name[LABEL_LEN];   ///< can be empty string for non-globals
+            char name[SYMBOL_LEN];   ///< can be empty string for non-globals
             struct instruction *insn;
             int width;
         } reloc;
@@ -41,9 +41,9 @@ struct parse_data {
 int tenyr_parse(struct parse_data *);
 
 struct const_expr {
-    enum const_expr_type { OP2, LAB, EXT, IMM, ICI } type; // TODO namespace
+    enum const_expr_type { OP2, SYM, EXT, IMM, ICI } type; // TODO namespace
     int32_t i;
-    char labelname[LABEL_LEN];
+    char symbolname[SYMBOL_LEN];
     int op;
     struct instruction *insn; // for '.'-resolving
     struct const_expr *left, *right;

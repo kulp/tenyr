@@ -26,7 +26,7 @@ struct link_state {
 };
 
 struct defn {
-    char name[LABEL_LEN];
+    char name[SYMBOL_LEN];
     struct obj *obj;
     UWord reladdr;
 
