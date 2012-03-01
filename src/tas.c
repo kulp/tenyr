@@ -70,7 +70,7 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
-    if (name) {
+    if (name && name[0]) {
         strncpy(node->reloc.name, name, sizeof node->reloc.name);
         node->reloc.name[sizeof node->reloc.name - 1] = 0;
     } else {
@@ -91,24 +91,27 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
         const_expr *ce, int width, uint32_t *result)
 {
     uint32_t left, right;
+    const char *name = ce->symbolname;
+    if (ce->symbol)
+        name = ce->symbol->name;
 
     switch (ce->type) {
         case EXT:
-            if (ce->symbol) {
+            if (ce->symbol && ce->symbol->ce) {
                 return ce_eval(pd, top_insn, ce->symbol->ce, width, result);
             } else {
-                if (symbol_lookup(pd->symbols, ce->symbolname, result)) {
-                    return add_relocation(pd, ce->symbolname, top_insn, width);
+                if (symbol_lookup(pd->symbols, name, result)) {
+                    return add_relocation(pd, name, top_insn, width);
                 } else {
                     return add_relocation(pd, NULL, top_insn, width);
                 }
             }
             return 0;
         case SYM:
-            if (ce->symbol) {
+            if (ce->symbol && ce->symbol->ce) {
                 return ce_eval(pd, top_insn, ce->symbol->ce, width, result);
             } else {
-                return symbol_lookup(pd->symbols, ce->symbolname, result);
+                return symbol_lookup(pd->symbols, name, result);
             }
         case ICI:
             *result = top_insn->reladdr;
@@ -205,6 +208,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         int baseaddr = 0; // TODO
         int reladdr = 0;
         // first pass, fix up addresses
+        // TODO fix up addresses for .set directives
         list_foreach(instruction_list, il, pd.top) {
             il->insn->reladdr = baseaddr + reladdr;
 
