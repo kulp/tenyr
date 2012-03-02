@@ -117,7 +117,9 @@ string_or_data[outer]
 
 program[outer]
     :   /* empty */
-        {   $outer = NULL; }
+        {   $outer = calloc(1, sizeof *$outer);
+            // dummy instruction permits capturing previous instruction from $outer->prev
+        }
     | string_or_data program[inner]
         {   struct instruction_list *p = $string_or_data;
             while (p->next) p = p->next;
@@ -130,8 +132,8 @@ program[outer]
             free($string_or_data); }
     | directive program[inner]
         {   $outer = $inner;
-            $directive->follows = &$inner->prev;
-            $directive->precedes = &$inner;
+            $directive->follows = &$inner->prev; // XXX need this ?
+            $directive->precedes = &$inner; // XXX need this ?
             handle_directive(pd, &yylloc, $directive, $inner); }
     | insn program[inner]
         {   $outer = malloc(sizeof *$outer);
@@ -561,6 +563,7 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
 
 struct datum_D_SET {
     char name[SYMBOL_LEN];
+    struct symbol *symbol;
     struct const_expr *ce;
 };
 
@@ -595,6 +598,8 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             n->ce       = va_arg(vl,struct const_expr *);
             strncpy(n->name, symbol, sizeof n->name);
 
+            d->symbol = n;
+
             add_symbol(locp, pd, n);
             break;
         }
@@ -624,7 +629,8 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         }
         case D_SET: {
             struct datum_D_SET *data = d->data;
-
+            // point to the previous instruction to the one after us, if any
+            data->symbol->ce->deferred = &p->prev;
             free(data);
             break;
         }

@@ -46,6 +46,7 @@ struct const_expr {
     char symbolname[SYMBOL_LEN];
     int op;
     struct instruction *insn; // for '.'-resolving
+    struct instruction_list **deferred; // for an instruction context not available to me yet
     struct symbol *symbol; // for referencing a specific version of a symbol
     struct const_expr *left, *right;
 };
@@ -75,7 +76,7 @@ struct cstr {
 
 struct directive {
     enum directive_type { D_NULL, D_GLOBAL, D_SET } type;
-    struct instruction_list **follows, **precedes;
+    struct instruction_list **follows, **precedes; // XXX need this ?
     void *data;
 };
 

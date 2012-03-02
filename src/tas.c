@@ -98,7 +98,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
     switch (ce->type) {
         case EXT:
             if (ce->symbol && ce->symbol->ce) {
-                return ce_eval(pd, context, ce->symbol->ce, width, result);
+                return ce_eval(pd, ce->symbol->ce->insn, ce->symbol->ce, width, result);
             } else {
                 if (symbol_lookup(pd->symbols, name, result)) {
                     return add_relocation(pd, name, context, width);
@@ -109,7 +109,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
             return 0;
         case SYM:
             if (ce->symbol && ce->symbol->ce) {
-                return ce_eval(pd, context, ce->symbol->ce, width, result);
+                return ce_eval(pd, ce->symbol->ce->insn, ce->symbol->ce, width, result);
             } else {
                 return symbol_lookup(pd->symbols, name, result);
             }
@@ -212,6 +212,13 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         // first pass, fix up addresses
         // TODO fix up addresses for .set directives
         list_foreach(instruction_list, il, pd.top) {
+            if (!il->insn) {
+                // dummy instruction at the end ; chop it
+                il->prev->next = NULL;
+                free(il);
+                break;
+            }
+
             il->insn->reladdr = baseaddr + reladdr;
 
             list_foreach(symbol, l, il->insn->symbol) {
