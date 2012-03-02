@@ -98,7 +98,9 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
     switch (ce->type) {
         case EXT:
             if (ce->symbol && ce->symbol->ce) {
-                return ce_eval(pd, ce->symbol->ce->insn, ce->symbol->ce, width, result);
+                struct instruction_list *prev = *ce->symbol->ce->deferred;
+                struct instruction *c = prev ? prev->insn : NULL;
+                return ce_eval(pd, c, ce->symbol->ce, width, result);
             } else {
                 if (symbol_lookup(pd->symbols, name, result)) {
                     return add_relocation(pd, name, context, width);
@@ -109,14 +111,19 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
             return 0;
         case SYM:
             if (ce->symbol && ce->symbol->ce) {
-                return ce_eval(pd, ce->symbol->ce->insn, ce->symbol->ce, width, result);
+                struct instruction_list *prev = *ce->symbol->ce->deferred;
+                struct instruction *c = prev ? prev->insn : NULL;
+                return ce_eval(pd, c, ce->symbol->ce, width, result);
             } else {
                 return symbol_lookup(pd->symbols, name, result);
             }
         case ICI:
             // TODO context needs to be the previous instruction to a .set, or
             // some dummy that has reladdr 0 if there is no such instruction
-            *result = context->reladdr;
+            if (context)
+                *result = context->reladdr;
+            else
+                *result = 0;
             return add_relocation(pd, NULL, context, width);
         case IMM: *result = ce->i; return 0;
         case OP2:
@@ -214,7 +221,11 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         list_foreach(instruction_list, il, pd.top) {
             if (!il->insn) {
                 // dummy instruction at the end ; chop it
-                il->prev->next = NULL;
+                if (il->prev) {
+                    il->prev->next = NULL;
+                } else {
+                    pd.top = NULL;
+                }
                 free(il);
                 break;
             }

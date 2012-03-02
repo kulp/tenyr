@@ -562,9 +562,7 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
 }
 
 struct datum_D_SET {
-    char name[SYMBOL_LEN];
     struct symbol *symbol;
-    struct const_expr *ce;
 };
 
 static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
