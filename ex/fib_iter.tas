@@ -1,5 +1,9 @@
 #include "common.th"
 
+#ifndef ARGUMENT
+#define ARGUMENT 10
+#endif
+
 _start:
     f <- p - .          // base pointer
     c <- ARGUMENT       // argument
