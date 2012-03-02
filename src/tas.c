@@ -87,7 +87,7 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
     return 0;
 }
 
-static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
+static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         const_expr *ce, int width, uint32_t *result)
 {
     uint32_t left, right;
@@ -98,28 +98,30 @@ static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
     switch (ce->type) {
         case EXT:
             if (ce->symbol && ce->symbol->ce) {
-                return ce_eval(pd, top_insn, ce->symbol->ce, width, result);
+                return ce_eval(pd, context, ce->symbol->ce, width, result);
             } else {
                 if (symbol_lookup(pd->symbols, name, result)) {
-                    return add_relocation(pd, name, top_insn, width);
+                    return add_relocation(pd, name, context, width);
                 } else {
-                    return add_relocation(pd, NULL, top_insn, width);
+                    return add_relocation(pd, NULL, context, width);
                 }
             }
             return 0;
         case SYM:
             if (ce->symbol && ce->symbol->ce) {
-                return ce_eval(pd, top_insn, ce->symbol->ce, width, result);
+                return ce_eval(pd, context, ce->symbol->ce, width, result);
             } else {
                 return symbol_lookup(pd->symbols, name, result);
             }
         case ICI:
-            *result = top_insn->reladdr;
-            return add_relocation(pd, NULL, top_insn, width);
+            // TODO context needs to be the previous instruction to a .set, or
+            // some dummy that has reladdr 0 if there is no such instruction
+            *result = context->reladdr;
+            return add_relocation(pd, NULL, context, width);
         case IMM: *result = ce->i; return 0;
         case OP2:
-            if (!ce_eval(pd, top_insn, ce->left , width, &left) &&
-                !ce_eval(pd, top_insn, ce->right, width, &right))
+            if (!ce_eval(pd, context, ce->left , width, &left) &&
+                !ce_eval(pd, context, ce->right, width, &right))
             {
                 switch (ce->op) {
                     case '+': *result = left +  right; return 0;

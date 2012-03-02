@@ -126,12 +126,16 @@ program[outer]
             $outer = malloc(sizeof *$outer);
             $outer->next = $string_or_data->next;
             $outer->insn = $string_or_data->insn;
+            $inner->prev = $outer;
             free($string_or_data); }
     | directive program[inner]
         {   $outer = $inner;
+            $directive->follows = &$inner->prev;
+            $directive->precedes = &$inner;
             handle_directive(pd, &yylloc, $directive, $inner); }
     | insn program[inner]
         {   $outer = malloc(sizeof *$outer);
+            $inner->prev = $outer;
             $outer->next = $inner;
             $outer->insn = $insn; }
 

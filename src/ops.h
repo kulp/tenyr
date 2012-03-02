@@ -94,7 +94,7 @@ struct instruction {
 
 struct instruction_list {
     struct instruction *insn;
-    struct instruction_list *next;
+    struct instruction_list *prev, *next;
 };
 
 enum op {

@@ -75,6 +75,7 @@ struct cstr {
 
 struct directive {
     enum directive_type { D_NULL, D_GLOBAL, D_SET } type;
+    struct instruction_list **follows, **precedes;
     void *data;
 };
 
