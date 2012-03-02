@@ -125,18 +125,16 @@ program[outer]
             while (p->next) p = p->next;
             p->next = $inner;
 
-            $outer = malloc(sizeof *$outer);
+            $outer = calloc(1, sizeof *$outer);
             $outer->next = $string_or_data->next;
             $outer->insn = $string_or_data->insn;
             $inner->prev = $outer;
             free($string_or_data); }
     | directive program[inner]
         {   $outer = $inner;
-            $directive->follows = &$inner->prev; // XXX need this ?
-            $directive->precedes = &$inner; // XXX need this ?
             handle_directive(pd, &yylloc, $directive, $inner); }
     | insn program[inner]
-        {   $outer = malloc(sizeof *$outer);
+        {   $outer = calloc(1, sizeof *$outer);
             $inner->prev = $outer;
             $outer->next = $inner;
             $outer->insn = $insn; }
