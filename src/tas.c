@@ -126,7 +126,6 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                         return add_relocation(pd, NULL, context, width);
                     }
             }
-            return 0;
         case CE_ICI:
             if (context)
                 *result = context->reladdr;
@@ -302,8 +301,8 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
             f->init(out, ASM_ASSEMBLE, &ud);
 
         list_foreach(instruction_list, Node, pd->top) {
-            f->out(out, Node->insn, ud),
-            free(Node->insn),
+            f->out(out, Node->insn, ud);
+            free(Node->insn);
             free(Node);
         }
 
@@ -331,7 +330,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         assembly_inner(pd, out, f);
     tenyr_lex_destroy(pd->scanner);
 
-    return 0;
+    return result;
 }
 
 int do_disassembly(FILE *in, FILE *out, const struct format *f)

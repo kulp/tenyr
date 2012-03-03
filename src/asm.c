@@ -153,6 +153,9 @@ int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
+/*******************************************************************************
+ * Object format : simple section-based objects
+ */
 struct obj_fdata {
     int flags;
     struct obj *o;
@@ -299,7 +302,7 @@ static int obj_fini(FILE *stream, void **ud)
     return rc;
 }
 
-/*
+/*******************************************************************************
  * Raw format : raw binary data (host endian)
  */
 static int raw_in(FILE *stream, struct instruction *i, void *ud)
@@ -312,7 +315,7 @@ static int raw_out(FILE *stream, struct instruction *i, void *ud)
     return fwrite(&i->u.word, sizeof i->u.word, 1, stream) == 1;
 }
 
-/*
+/*******************************************************************************
  * Text format : hexadecimal numbers
  */
 static int text_in(FILE *stream, struct instruction *i, void *ud)
