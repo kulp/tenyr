@@ -271,7 +271,9 @@ static int assembly_fixup_insns(struct parse_data *pd)
             } else {
                 pd->top = NULL;
             }
-            free(il);
+
+            // we can't free it, because deferred expressions read through it ? XXX
+            //free(il);
             break;
         }
 
