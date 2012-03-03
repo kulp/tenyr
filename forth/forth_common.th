@@ -17,6 +17,14 @@
 #define PSP D
 #define RSP J
 
+#define T0 B
+#define T1 C
+#define T2 E
+#define T3 G
+#define T4 H
+#define T5 L
+#define T6 N
+
 #define BAS F
 
 // save and restore Forth registers on a stack, for calling other ABIs
@@ -45,6 +53,8 @@
 .L##Label##_start: \
     .utf32 #Name \
     .global Label \
+    .word @link \
+    .set link, . \
 .L##Label##_end: \
 Label
 
