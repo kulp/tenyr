@@ -153,9 +153,6 @@ int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
-/*
- * Object format : simple section-based objects
- */
 struct obj_fdata {
     int flags;
     struct obj *o;

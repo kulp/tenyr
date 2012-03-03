@@ -96,27 +96,25 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         name = ce->symbol->name;
 
     switch (ce->type) {
+        case SYM:
         case EXT:
             if (ce->symbol && ce->symbol->ce) {
                 struct instruction_list *prev = *ce->symbol->ce->deferred;
                 struct instruction *c = prev ? prev->insn : NULL;
-                return ce_eval(pd, c, ce->symbol->ce, width, result);
+                ce_eval(pd, c, ce->symbol->ce, width, result);
+                return add_relocation(pd, NULL, c, width);
             } else {
-                if (symbol_lookup(pd->symbols, name, result)) {
-                    return add_relocation(pd, name, context, width);
-                } else {
-                    return add_relocation(pd, NULL, context, width);
-                }
+                int rc = symbol_lookup(pd->symbols, name, result);
+                if (ce->type == SYM) {
+                    return rc;
+                } else
+                    if (rc) {
+                        return add_relocation(pd, name, context, width);
+                    } else {
+                        return add_relocation(pd, NULL, context, width);
+                    }
             }
             return 0;
-        case SYM:
-            if (ce->symbol && ce->symbol->ce) {
-                struct instruction_list *prev = *ce->symbol->ce->deferred;
-                struct instruction *c = prev ? prev->insn : NULL;
-                return ce_eval(pd, c, ce->symbol->ce, width, result);
-            } else {
-                return symbol_lookup(pd->symbols, name, result);
-            }
         case ICI:
             // TODO context needs to be the previous instruction to a .set, or
             // some dummy that has reladdr 0 if there is no such instruction
