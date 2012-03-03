@@ -4,7 +4,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
-static int do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y, uint32_t I)
+static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
+        uint32_t I)
 {
     int32_t  Xs = X;
     uint32_t Xu = X;
@@ -40,8 +41,6 @@ static int do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y, uin
         case OP_RESERVED:
             fatal(0, "Encountered reserved opcode");
     }
-
-    return 0;
 }
 
 static int do_common(struct sim_state *s, int32_t *ip, int32_t *Z, int32_t
@@ -106,6 +105,7 @@ int run_instruction(struct sim_state *s, struct instruction *i)
                                      g->imm);
             do_common(s, ip, &s->machine.regs[g->z], &rhs, &value, g->dd == 2,
                     g->dd & 1, g->dd == 3);
+
             break;
         }
         default:
