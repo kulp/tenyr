@@ -44,7 +44,7 @@ struct obj {
         struct objsym *next;
 
         UWord flags;    ///< unused so far (eventually indicate relocations ?)
-        char name[LABEL_LEN];
+        char name[SYMBOL_LEN];
         UWord value;
     } *symbols;
 
@@ -53,7 +53,7 @@ struct obj {
         struct objrlc *next;
 
         UWord flags;
-        char name[LABEL_LEN];
+        char name[SYMBOL_LEN];
         UWord addr;     ///< relative location in the object to update
         UWord width;    ///< width in bits of the right-justified immediate
     } *relocs;

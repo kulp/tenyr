@@ -8,7 +8,7 @@ CPPFLAGS += -I../lib
 
 vpath %.tas ../lib
 
-TARGETS = hello.texe fib.texe compare.texe sieve.texe maths.texe
+TARGETS = hello.texe fib.texe fib_iter.texe compare.texe sieve.texe maths.texe
 CLEANFILES += $(TARGETS)
 
 all: $(TARGETS)

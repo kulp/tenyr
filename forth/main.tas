@@ -1,48 +1,14 @@
 #include "forth_common.th"
 
 head(start,start):
-    .word @HI
-    .word @NL
-    .word @NL
-    .word @NL
-    .word @NL
     .word @FLOOP
     .word @EXIT
-
-head(HI,HI):
-    .word . + 1
-    c <- reloc(_hi_string)
-    ccall(puts)
-    goto(NEXT)
-
-_hi_string: .ascii  "hello, world" ; .word 0
-
-head(GOODBYE,GOODBYE):
-    .word . + 1
-    c <- reloc(_goodbye_string)
-    ccall(puts)
-    goto(NEXT)
-
-_goodbye_string: .ascii  "goodbye, world" ; .word 0
-
-head(NL,NL):
-    .word . + 1
-    c <- reloc(_nl_string)
-    ccall(puts)
-    goto(NEXT)
-
-_nl_string:
-    .word 0x0a   // newline
-    .word 0
 
 head(FLOOP,FLOOP):
     .word @ENTER
     .word @BLOOP
-    .word @NL
     .word @BLOOP
-    .word @NL
     .word @BLOOP
-    .word @NL
     .word @EXIT
     illegal
 
@@ -50,10 +16,6 @@ head(BLOOP,BLOOP):
     .word @ENTER
     .word @NOOP
     .word @NOOP
-    .word @HI
-    .word @NL
-    .word @HI
-    .word @NL
     .word @LIT
     .word 65
     .word @DUP
@@ -66,10 +28,6 @@ head(BLOOP,BLOOP):
     .word 10
     .word @EMIT
     .word @NOOP
-    .word @HI
-    .word @NL
-    .word @GOODBYE
-    .word @NL
     .word @NOOP
     .word @NOOP
     .word @NOOP

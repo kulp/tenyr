@@ -153,9 +153,6 @@ int find_format_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
-/*
- * Object format : simple section-based objects
- */
 struct obj_fdata {
     int flags;
     struct obj *o;
@@ -222,14 +219,14 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     i->u.word = rec->data[u->pos++];
     // TODO adjust addr where ?
     i->reladdr = rec->addr;
-    i->label = NULL;
+    i->symbol = NULL;
 
     return rc;
 }
 
-static void obj_out_labels(struct label *label, struct obj_fdata *u, struct obj *o)
+static void obj_out_symbols(struct symbol *symbol, struct obj_fdata *u, struct obj *o)
 {
-    list_foreach(label, Node, label) {
+    list_foreach(symbol, Node, symbol) {
         if (Node->global) {
             struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
@@ -269,7 +266,7 @@ static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj 
     u->words++;
     u->insns++;
 
-    obj_out_labels(i->label, u, o);
+    obj_out_symbols(i->symbol, u, o);
     obj_out_reloc(i->reloc, u, o);
 }
 

@@ -5,6 +5,7 @@
 #include "common.h"
 #include "asm.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -27,6 +28,9 @@ static const struct option longopts[] = {
 
 #define version() "tas version " STR(BUILD_NAME)
 
+static int ce_eval(struct parse_data *pd, struct instruction *context, struct
+        const_expr *ce, int width, uint32_t *result);
+
 static int usage(const char *me)
 {
     printf("Usage:\n"
@@ -41,28 +45,36 @@ static int usage(const char *me)
     return 0;
 }
 
-static int label_find(struct label_list *list, const char *name, struct label **label)
+struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
-    list_foreach(label_list, elt, list) {
-        if (!strncmp(elt->label->name, name, LABEL_LEN)) {
-            *label = elt->label;
-            return 0;
-        }
-    }
+    list_foreach(symbol_list, elt, list)
+        if (!strncmp(elt->symbol->name, name, SYMBOL_LEN))
+            return elt->symbol;
 
-    return 1;
+    return NULL;
 }
 
-static int label_lookup(struct label_list *list, const char *name, uint32_t *result)
+static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
+        char *name, uint32_t *result)
 {
-    struct label *label = NULL;
-    if (!label_find(list, name, &label)) {
-        if (result) *result = label->reladdr;
+    struct symbol *symbol = NULL;
+    if ((symbol = symbol_find(list, name))) {
+        if (result) {
+            if (symbol->ce) {
+                struct instruction_list *prev = *symbol->ce->deferred;
+                // TODO handle or make impossible prev == NULL
+                assert(("Unhandled prev == NULL", prev != NULL));
+                struct instruction *c = prev ? prev->insn : NULL;
+                return ce_eval(pd, c, symbol->ce, WORD_BITWIDTH, result);
+            } else {
+                *result = symbol->reladdr;
+            }
+        }
         return 0;
     }
 
     // unresolved symbols get a zero value, but this is still success in EXT
-    // case (not in LAB case)
+    // case (not in SYM case)
     if (result) *result = 0;
     return 1;
 }
@@ -71,7 +83,7 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
-    if (name) {
+    if (name && name[0]) {
         strncpy(node->reloc.name, name, sizeof node->reloc.name);
         node->reloc.name[sizeof node->reloc.name - 1] = 0;
     } else {
@@ -88,26 +100,48 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
     return 0;
 }
 
-static int ce_eval(struct parse_data *pd, struct instruction *top_insn, struct
+static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         const_expr *ce, int width, uint32_t *result)
 {
     uint32_t left, right;
+    const char *name = ce->symbolname;
+    if (ce->symbol)
+        name = ce->symbol->name;
 
     switch (ce->type) {
+        case SYM:
         case EXT:
-            if (label_lookup(pd->labels, ce->labelname, result))
-                return add_relocation(pd, ce->labelname, top_insn, width);
-            else
-                return add_relocation(pd, NULL, top_insn, width);
+            if (ce->symbol && ce->symbol->ce) {
+                struct instruction_list *prev = *ce->symbol->ce->deferred;
+                // TODO handle or make impossible prev == NULL
+                assert(("Unhandled prev == NULL", prev != NULL));
+                struct instruction *c = prev ? prev->insn : NULL;
+                ce_eval(pd, c, ce->symbol->ce, width, result);
+                return add_relocation(pd, NULL, c, width);
+            } else {
+                int rc = symbol_lookup(pd, pd->symbols, name, result);
+                if (ce->type == SYM) {
+                    return rc;
+                } else
+                    if (rc) {
+                        return add_relocation(pd, name, context, width);
+                    } else {
+                        return add_relocation(pd, NULL, context, width);
+                    }
+            }
             return 0;
-        case LAB: return label_lookup(pd->labels, ce->labelname, result);
         case ICI:
-            *result = top_insn->reladdr;
-            return add_relocation(pd, NULL, top_insn, width);
+            // TODO context needs to be the previous instruction to a .set, or
+            // some dummy that has reladdr 0 if there is no such instruction
+            if (context)
+                *result = context->reladdr;
+            else
+                *result = 0;
+            return add_relocation(pd, NULL, context, width);
         case IMM: *result = ce->i; return 0;
         case OP2:
-            if (!ce_eval(pd, top_insn, ce->left , width, &left) &&
-                !ce_eval(pd, top_insn, ce->right, width, &right))
+            if (!ce_eval(pd, context, ce->left , width, &left) &&
+                !ce_eval(pd, context, ce->right, width, &right))
             {
                 switch (ce->op) {
                     case '+': *result = left +  right; return 0;
@@ -129,7 +163,7 @@ static void ce_free(struct const_expr *ce, int recurse)
     if (recurse)
         switch (ce->type) {
             case EXT:
-            case LAB:
+            case SYM:
             case ICI:
                 break;
             case IMM:
@@ -171,37 +205,40 @@ static int fixup_deferred_exprs(struct parse_data *pd)
     return 0;
 }
 
-static int mark_globals(struct label_list *labels, struct global_list *globals)
+static int mark_globals(struct symbol_list *symbols, struct global_list *globals)
 {
-    struct label *which;
+    struct symbol *which;
     list_foreach(global_list, g, globals)
-        if (!label_find(labels, g->name, &which))
+        if ((which = symbol_find(symbols, g->name)))
             which->global = 1;
 
     return 0;
 }
 
-static int check_labels(struct label_list *labels)
+static int check_symbols(struct symbol_list *symbols)
 {
     int rc = 0;
-    struct label_list *top = labels;
+    struct symbol_list *top = symbols;
     typedef int cmp(const void *, const void*);
 
     // check for and reject duplicates
     void *tree = NULL;
-    list_foreach(label_list, Node, labels) {
-        const char **name = tsearch(Node->label->name, &tree, (cmp*)strcmp);
+    list_foreach(symbol_list, Node, symbols) {
+        if (!Node->symbol->unique)
+            continue;
 
-        if (*name != Node->label->name) {
+        const char **name = tsearch(Node->symbol->name, &tree, (cmp*)strcmp);
+
+        if (*name != Node->symbol->name) {
             rc = 1;
             break;
         }
     }
 
     // delete from tree what we added to it
-    list_foreach(label_list, Node, top) {
+    list_foreach(symbol_list, Node, top) {
         if (!tree) break;
-        tdelete(Node->label, &tree, (cmp*)strcmp);
+        tdelete(Node->symbol, &tree, (cmp*)strcmp);
         Node = Node->next;
     }
 
@@ -223,10 +260,22 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         int baseaddr = 0; // TODO
         int reladdr = 0;
         // first pass, fix up addresses
+        // TODO fix up addresses for .set directives
         list_foreach(instruction_list, il, pd.top) {
+            if (!il->insn) {
+                // dummy instruction at the end ; chop it
+                if (il->prev) {
+                    il->prev->next = NULL;
+                } else {
+                    pd.top = NULL;
+                }
+                free(il);
+                break;
+            }
+
             il->insn->reladdr = baseaddr + reladdr;
 
-            list_foreach(label, l, il->insn->label) {
+            list_foreach(symbol, l, il->insn->symbol) {
                 if (!l->resolved) {
                     l->reladdr = baseaddr + reladdr;
                     l->resolved = 1;
@@ -236,10 +285,9 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
             reladdr++;
         }
 
-        mark_globals(pd.labels, pd.globals);
-        // TODO make check_labels() more user-friendly
-        if (check_labels(pd.labels))
-            fatal(0, "Error while processing labels : check for duplicate labels");
+        mark_globals(pd.symbols, pd.globals);
+        if (check_symbols(pd.symbols))
+            fatal(0, "Error while processing symbols : check for duplicate symbols");
 
         if (!fixup_deferred_exprs(&pd)) {
             void *ud;
@@ -256,8 +304,8 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
                 f->fini(out, &ud);
         }
 
-        list_foreach(label_list, Node, pd.labels) {
-            free(Node->label);
+        list_foreach(symbol_list, Node, pd.symbols) {
+            free(Node->symbol);
             free(Node);
         }
 

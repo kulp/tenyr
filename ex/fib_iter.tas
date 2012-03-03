@@ -1,5 +1,9 @@
 #include "common.th"
 
+#ifndef ARGUMENT
+#define ARGUMENT 10
+#endif
+
 _start:
     f <- p - .          // base pointer
     c <- ARGUMENT       // argument
@@ -9,6 +13,7 @@ _start:
 
 // Computes fib(C) and stores the result in B.
 fib:
+    f <- p - .
     b <- 0
     d <- 1
 

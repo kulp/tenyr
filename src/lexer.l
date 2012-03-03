@@ -34,8 +34,8 @@ static int savestr(yyscan_t yyscanner);
 
 regname ([A-P])
 /* don't permit collision with regname */
-label   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
-/* local labels start with ".L" */
+symbol   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
+/* local symbols start with ".L" */
 local   (\.L[A-Z0-9_]{1,31})
 string  (([^"]|\\\")+)
 hexnum  (-?"0"[xX][0-9a-fA-F]+)
@@ -50,13 +50,15 @@ decnum  (-?[0-9]+)
 "illegal"               { return ILLEGAL; }
 
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
-{label}                 { savestr(yyscanner); return LABEL; }
+{symbol}                { savestr(yyscanner); return SYMBOL; }
 {local}                 { savestr(yyscanner); return LOCAL; }
 "\""{string}"\""        { savestr(yyscanner); return STRING; }
 
 ".word"                 { return WORD; }
 ".ascii"                { return ASCII; }
+".utf32"                { return UTF32; }
 ".global"               { return GLOBAL; }
+".set"                  { return SET; }
 
 [][|&+*^>.,:@()-]       { return yytext[0]; }
 
