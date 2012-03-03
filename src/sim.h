@@ -2,6 +2,7 @@
 #define SIM_H_
 
 #include "ops.h"
+#include "machine.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -31,13 +32,7 @@ struct state {
 
     struct recipe_book *recipes;
 
-    // TODO move struct mstate into a separate header from struct state
-    struct mstate {
-        size_t devices_count;   ///< how many device slots are used
-        size_t devices_max;     ///< how many device slots are allocated
-        struct device **devices;
-        int32_t regs[16];
-    } machine;
+    struct mstate machine;
 };
 
 int run_instruction(struct state *s, struct instruction *i);

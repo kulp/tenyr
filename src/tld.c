@@ -217,9 +217,8 @@ static int do_link(struct link_state *s)
         }
     }
 
-    o->records = front; /// XXX hack
+    o->records = front;
 
-    // TODO
     o->rec_count = rec_count;
     o->sym_count = s->syms;
     o->rlc_count = s->rlcs;
