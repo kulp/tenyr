@@ -36,7 +36,7 @@ syn region  cDefine     start="^\s*\(%:\|#\)\s*\(define\|undef\)\>" skip="\\$" e
 syn region tenyrString start='"' end='"' contained
 syn region tenyrStrRegion start="\.\(ascii\|utf32\)\>" end="$" keepend contains=tenyrString,tenyrStrDir
 
-syn match tenyrNumber '-\?\d\+'
+syn match tenyrNumber '-\?\<\d\+\>'
 syn match tenyrNumber '0x[0-9a-fA-F]{1,8}'
 
 let b:current_syntax = "tenyr"
