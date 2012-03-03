@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "common.h"
 #include "parser.h"
@@ -31,6 +32,8 @@ static int savestr(yyscan_t yyscanner);
 %option case-insensitive
 %option extra-type="struct parse_data *"
 %option prefix="tenyr_"
+
+%x charlit
 
 regname ([A-P])
 /* don't permit collision with regname */
@@ -73,14 +76,18 @@ decnum  (-?[0-9]+)
 "<-"                    { return TOL;  }
 "->"                    { return TOR;  }
 
-{hexnum}                { savestr(yyscanner); return INTEGER; }
-{octnum}                { savestr(yyscanner); return INTEGER; }
-{decnum}                { savestr(yyscanner); return INTEGER; }
+{hexnum}                { yylval->i = strtoll(yytext, NULL, 16); return INTEGER; }
+{octnum}                { yylval->i = strtoll(yytext, NULL,  8); return INTEGER; }
+{decnum}                { yylval->i = strtoll(yytext, NULL, 10); return INTEGER; }
 
 [\t\f\v\r ]+            ;
 
 "//".*$                 ; // c99-style comments
 "#".*$                  ; // bash-style comments
+
+"'"                     BEGIN charlit;
+<charlit>"'"            BEGIN INITIAL;
+<charlit>.              { yylval->i = yytext[0]; return INTEGER; }
 
 .                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 

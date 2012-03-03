@@ -33,6 +33,7 @@ syn match   cIncluded   display contained "<[^>]*>"
 syn match   cInclude    display "^\s*\(%:\|#\)\s*include\>\s*["<]" contains=cIncluded
 syn region  cDefine     start="^\s*\(%:\|#\)\s*\(define\|undef\)\>" skip="\\$" end="$" keepend contains=tenyrTodo
 
+syn region tenyrChar start="'" end="'"
 syn region tenyrString start='"' end='"' contained
 syn region tenyrStrRegion start="\.\(ascii\|utf32\)\>" end="$" keepend contains=tenyrString,tenyrStrDir
 
@@ -46,6 +47,7 @@ hi def link tenyrComment     Comment
 hi def link tenyrRegister    Statement
 hi def link tenyrOp          Operator
 hi def link tenyrString      String
+hi def link tenyrChar        String
 hi def link cDefine          Define
 hi def link cInclude         Include
 hi def link cIncluded        String

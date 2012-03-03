@@ -65,7 +65,8 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token <chr> '+' '-' '*'
 %token <chr> ','
 %token <arrow> TOL TOR
-%token <str> INTEGER SYMBOL LOCAL STRING
+%token <str> SYMBOL LOCAL STRING
+%token <i> INTEGER
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
@@ -243,7 +244,7 @@ regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
 
 immediate
-    : INTEGER { $immediate = strtoll($INTEGER, NULL, 0); }
+    : INTEGER
 
 addsub
     : '+' { $addsub =  1; }
