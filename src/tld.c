@@ -72,8 +72,7 @@ static int do_load(struct link_state *s, FILE *in)
     struct obj_list *node = calloc(1, sizeof *node);
 
     struct obj *o = calloc(1, sizeof *o);
-    size_t size;
-    rc = obj_read(o, &size, in);
+    rc = obj_read(o, in);
     node->obj = o;
     node->i = s->obj_count++;
     // put the objects on the list in order
@@ -98,12 +97,6 @@ static int do_make_relocated(struct link_state *s, struct obj **_o)
 {
     struct obj *o = *_o = calloc(1, sizeof *o);
 
-    o->sym_count = 32;
-    o->symbols = calloc(o->sym_count, sizeof *o->records);
-
-    o->rlc_count = 32;
-    o->relocs = calloc(o->rlc_count, sizeof *o->relocs);
-
     s->relocated = o;
 
     return 0;
@@ -117,52 +110,46 @@ static int ptrcmp(const void *a, const void *b)
 TODO_TRAVERSE_(defn)
 TODO_TRAVERSE_(objmeta)
 
-static int do_link(struct link_state *s)
+static int do_link_build_state(struct link_state *s, void **objtree, void **defns)
 {
-    int rc = -1;
+    // running offset, tracking where to pack objects tightly one after another
+    UWord running = 0;
 
-    struct obj *o;
-    do_make_relocated(s, &o);
+    // read in all symbols
+    list_foreach(obj_list, Node, s->objs) {
+        struct obj *i = Node->obj;
 
-    void *objtree = NULL;   ///< tsearch-tree of `struct objmeta'
-    void *defns   = NULL;   ///< tsearch tree of `struct defns'
-    // TODO destroy objtree
+        struct objmeta *meta = calloc(1, sizeof *meta);
+        meta->state = s;
+        meta->obj = i;
+        meta->size = i->records->size;
+        meta->offset = running;
+        running += i->records->size;
+        {
+            struct objmeta **look = tsearch(meta, objtree, ptrcmp);
+            if (*look != meta)
+                fatal(0, "Duplicate object `%p'", (*look)->obj);
+        }
 
-    {
-        // running offset, tracking where to pack objects tightly one after another
-        UWord running = 0;
+        if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
+            struct defn *def = calloc(1, sizeof *def);
+            def->state = s;
+            strncpy(def->name, sym->name, sizeof def->name);
+            def->name[sizeof def->name - 1] = 0;
+            def->obj = i;
+            def->reladdr = sym->value;
 
-        // read in all symbols
-        list_foreach(obj_list, Node, s->objs) {
-            struct obj *i = Node->obj;
-
-            struct objmeta *meta = calloc(1, sizeof *meta);
-            meta->state = s;
-            meta->obj = i;
-            meta->size = i->records->size;
-            meta->offset = running;
-            running += i->records->size;
-            {
-                struct objmeta **look = tsearch(meta, &objtree, ptrcmp);
-                if (*look != meta)
-                    fatal(0, "Duplicate object `%p'", (*look)->obj);
-            }
-
-            if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
-                struct defn *def = calloc(1, sizeof *def);
-                def->state = s;
-                strncpy(def->name, sym->name, sizeof def->name);
-                def->name[sizeof def->name - 1] = 0;
-                def->obj = i;
-                def->reladdr = sym->value;
-
-                struct defn **look = tsearch(def, &defns, (cmp*)strcmp);
-                if (*look != def)
-                    fatal(0, "Duplicate definition for symbol `%s'", def->name);
-            }
+            struct defn **look = tsearch(def, defns, (cmp*)strcmp);
+            if (*look != def)
+                fatal(0, "Duplicate definition for symbol `%s'", def->name);
         }
     }
 
+    return 0;
+}
+
+static int do_link_relocate(struct link_state *s, void **objtree, void **defns)
+{
     // iterate over relocs
     list_foreach(obj_list, Node, s->objs) {
         struct obj *i = Node->obj;
@@ -170,22 +157,21 @@ static int do_link(struct link_state *s)
         if (i->rlc_count) list_foreach(objrlc, rlc, i->relocs) {
             UWord reladdr = 0;
 
-            struct objmeta **me = tfind(&i, &objtree, ptrcmp);
+            struct objmeta **me = tfind(&i, objtree, ptrcmp);
             if (rlc->name[0]) {
                 struct defn def;
                 strncpy(def.name, rlc->name, sizeof def.name);
                 def.name[sizeof def.name - 1] = 0;
-                struct defn **look = tfind(&def, &defns, (cmp*)strcmp);
+                struct defn **look = tfind(&def, defns, (cmp*)strcmp);
                 if (!look)
                     fatal(0, "Missing definition for symbol `%s'", rlc->name);
-                struct objmeta **it = tfind(&(*look)->obj, &objtree, ptrcmp);
+                struct objmeta **it = tfind(&(*look)->obj, objtree, ptrcmp);
 
                 reladdr = (*it)->offset + (*look)->reladdr;
             } else {
                 // this is a null relocation ; it just wants us to update the
                 // offset
-                // XXX remove null relocations
-                reladdr = (*me)->offset; // XXX
+                reladdr = (*me)->offset;
             }
             // here we actually add the found-symbol's value to the relocation
             // slot, being careful to trim to the right width
@@ -197,11 +183,27 @@ static int do_link(struct link_state *s)
         }
     }
 
+    return 0;
+}
+
+static int do_link_process(struct link_state *s)
+{
+    void *objtree = NULL;   ///< tsearch-tree of `struct objmeta'
+    void *defns   = NULL;   ///< tsearch tree of `struct defns'
+
+    do_link_build_state(s, &objtree, &defns);
+    do_link_relocate(s, &objtree, &defns);
+
     struct todo_node *todo;
     s->userdata = &todo;
     tree_destroy(&todo, &objtree, traverse_objmeta, ptrcmp);
     tree_destroy(&todo, &defns  , traverse_defn   , (cmp*)strcmp);
 
+    return 0;
+}
+
+int do_link_emit(struct link_state *s, struct obj *o)
+{
     long rec_count = 0;
     // copy records
     struct objrec **ptr_objrec = &o->records, *front = NULL;
@@ -226,13 +228,24 @@ static int do_link(struct link_state *s)
         }
     }
 
-    o->records = front; /// XXX hack
+    o->records = front;
 
-    // TODO
     o->rec_count = rec_count;
     o->sym_count = s->syms;
     o->rlc_count = s->rlcs;
-    o->length = 5 + s->words; // XXX explain
+
+    return 0;
+}
+
+static int do_link(struct link_state *s)
+{
+    int rc = -1;
+
+    struct obj *o;
+    do_make_relocated(s, &o);
+
+    do_link_process(s);
+    do_link_emit(s, o);
 
     return rc;
 }

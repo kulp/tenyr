@@ -11,7 +11,7 @@ struct debugwrap_state {
     struct device *wrapped;
 };
 
-static int debugwrap_init(struct state *s, void *cookie, ...)
+static int debugwrap_init(struct sim_state *s, void *cookie, ...)
 {
     // our own init done in debugwrap_add_device ()
     struct debugwrap_state *debugwrap = *(void**)cookie;
@@ -20,7 +20,7 @@ static int debugwrap_init(struct state *s, void *cookie, ...)
     return 0;
 }
 
-static int debugwrap_fini(struct state *s, void *cookie)
+static int debugwrap_fini(struct sim_state *s, void *cookie)
 {
     // TODO destroy wrapped device ? or unwrap somehow ?
     struct debugwrap_state *debugwrap = cookie;
@@ -30,7 +30,7 @@ static int debugwrap_fini(struct state *s, void *cookie)
     return 0;
 }
 
-static int debugwrap_op(struct state *s, void *cookie, int op, uint32_t addr,
+static int debugwrap_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
         uint32_t *data)
 {
     struct debugwrap_state *debugwrap = cookie;

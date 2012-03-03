@@ -46,7 +46,7 @@ struct breakpoint {
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
 
-static int next_device(struct state *s)
+static int next_device(struct sim_state *s)
 {
     if (s->machine.devices_count >= s->machine.devices_max) {
         s->machine.devices_max *= 2;
@@ -57,13 +57,13 @@ static int next_device(struct state *s)
     return s->machine.devices_count++;
 }
 
-static int recipe_abort(struct state *s)
+static int recipe_abort(struct sim_state *s)
 {
     s->conf.abort = 1;
     return 0;
 }
 
-static int recipe_prealloc(struct state *s)
+static int recipe_prealloc(struct sim_state *s)
 {
     int ram_add_device(struct device **device);
     int index = next_device(s);
@@ -71,7 +71,7 @@ static int recipe_prealloc(struct state *s)
     return ram_add_device(&s->machine.devices[index]);
 }
 
-static int recipe_sparse(struct state *s)
+static int recipe_sparse(struct sim_state *s)
 {
     int sparseram_add_device(struct device **device);
     int index = next_device(s);
@@ -79,7 +79,7 @@ static int recipe_sparse(struct state *s)
     return sparseram_add_device(&s->machine.devices[index]);
 }
 
-static int recipe_serial(struct state *s)
+static int recipe_serial(struct sim_state *s)
 {
     int serial_add_device(struct device **device);
     int index = next_device(s);
@@ -87,7 +87,7 @@ static int recipe_serial(struct state *s)
     return serial_add_device(&s->machine.devices[index]);
 }
 
-static int recipe_nowrap(struct state *s)
+static int recipe_nowrap(struct sim_state *s)
 {
     s->conf.nowrap = 1;
     return 0;
@@ -112,7 +112,7 @@ static int find_device_by_addr(const void *_test, const void *_in)
     }
 }
 
-static int dispatch_op(struct state *s, int op, uint32_t addr, uint32_t *data)
+static int dispatch_op(struct sim_state *s, int op, uint32_t addr, uint32_t *data)
 {
     size_t count = s->machine.devices_count;
     struct device **device = bsearch(&addr, s->machine.devices, count, sizeof *device,
@@ -184,7 +184,7 @@ static int compare_devices_by_base(const void *_a, const void *_b)
     return (*a)->bounds[0] - (*b)->bounds[0];
 }
 
-static int devices_setup(struct state *s)
+static int devices_setup(struct sim_state *s)
 {
     s->machine.devices_count = 0;
     s->machine.devices_max = 8;
@@ -193,7 +193,7 @@ static int devices_setup(struct state *s)
     return 0;
 }
 
-static int devices_finalise(struct state *s)
+static int devices_finalise(struct sim_state *s)
 {
     if (s->conf.verbose > 2) {
         assert(("device to be wrapped is not NULL", s->machine.devices[0] != NULL));
@@ -215,7 +215,7 @@ static int devices_finalise(struct state *s)
     return 0;
 }
 
-static int devices_teardown(struct state *s)
+static int devices_teardown(struct sim_state *s)
 {
     for (unsigned i = 0; i < s->machine.devices_count; i++) {
         s->machine.devices[i]->fini(s, s->machine.devices[i]->cookie);
@@ -227,12 +227,12 @@ static int devices_teardown(struct state *s)
     return 0;
 }
 
-static int run_recipe(struct state *s, recipe r)
+static int run_recipe(struct sim_state *s, recipe r)
 {
     return r(s);
 }
 
-static int run_recipes(struct state *s)
+static int run_recipes(struct sim_state *s)
 {
     if (s->conf.run_defaults) {
         #define RUN_RECIPE(Recipe) run_recipe(s, recipe_##Recipe);
@@ -253,7 +253,7 @@ static int find_recipe_by_name(const void *_a, const void *_b)
     return strcmp(a->name, b->name);
 }
 
-static int add_recipe(struct state *s, const char *name)
+static int add_recipe(struct sim_state *s, const char *name)
 {
     static const struct recipe_entry {
         const char *name;
@@ -280,7 +280,7 @@ static int add_recipe(struct state *s, const char *name)
     }
 }
 
-static int run_sim(struct state *s)
+static int run_sim(struct sim_state *s)
 {
     while (1) {
         assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
@@ -309,7 +309,7 @@ static int run_sim(struct state *s)
     }
 }
 
-static int load_sim(struct state *s, const struct format *f, FILE *in,
+static int load_sim(struct sim_state *s, const struct format *f, FILE *in,
         int load_address, int start_address)
 {
     devices_setup(s);
@@ -366,7 +366,7 @@ static int delete_breakpoint(void **breakpoints, int32_t addr)
     return 0;
 }
 
-static int matches_breakpoint(struct mstate *m, void *cud)
+static int matches_breakpoint(struct machine_state *m, void *cud)
 {
     uint32_t pc = m->regs[15];
     void *breakpoints = cud;
@@ -374,7 +374,7 @@ static int matches_breakpoint(struct mstate *m, void *cud)
     return c && c->enabled && c->addr == pc;
 }
 
-static int print_expr(struct state *s, struct debug_expr *expr, int fmt)
+static int print_expr(struct sim_state *s, struct debug_expr *expr, int fmt)
 {
     static const char *fmts[DISP_max] ={
         [DISP_NULL] = "%d",     // this is used by default
@@ -419,7 +419,7 @@ static int print_expr(struct state *s, struct debug_expr *expr, int fmt)
     return -1;
 }
 
-static int get_info(struct state *s, struct debug_cmd *c)
+static int get_info(struct sim_state *s, struct debug_cmd *c)
 {
     if (!strncmp(c->arg.str, "registers", sizeof c->arg.str)) {
         print_registers(stdout, s->machine.regs);
@@ -512,7 +512,7 @@ static int debugger_step(struct debugger_data *dd)
     return done;
 }
 
-static int run_debugger(struct state *s, FILE *stream)
+static int run_debugger(struct sim_state *s, FILE *stream)
 {
     struct debugger_data _dd = { .s = s }, *dd = &_dd;
     kv_int_init(&dd->breakpoints);
@@ -537,7 +537,7 @@ int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
 
-    struct state _s = {
+    struct sim_state _s = {
         .conf = {
             .verbose = 0,
             .run_defaults = 1,

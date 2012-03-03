@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <stddef.h>
 
 typedef uint32_t UWord;
 typedef  int32_t SWord;
@@ -19,7 +18,6 @@ struct obj {
         } parsed;
     } magic;
 
-    UWord length;       ///< total length of object in words, minimum 2
     UWord flags;        ///< flags
 
     /// each flag is set if the corresponding structure was allocated (and
@@ -60,7 +58,7 @@ struct obj {
 };
 
 int obj_write(struct obj *o, FILE *out);
-int obj_read(struct obj *o, size_t *size, FILE *in);
+int obj_read(struct obj *o, FILE *in);
 void obj_free(struct obj *o);
 
 #endif
