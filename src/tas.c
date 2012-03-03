@@ -5,6 +5,7 @@
 #include "common.h"
 #include "asm.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -27,6 +28,9 @@ static const struct option longopts[] = {
 
 #define version() "tas version " STR(BUILD_NAME)
 
+static int ce_eval(struct parse_data *pd, struct instruction *context, struct
+        const_expr *ce, int width, uint32_t *result);
+
 static int usage(const char *me)
 {
     printf("Usage:\n"
@@ -43,20 +47,29 @@ static int usage(const char *me)
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
-    list_foreach(symbol_list, elt, list) {
-        if (!strncmp(elt->symbol->name, name, SYMBOL_LEN)) {
+    list_foreach(symbol_list, elt, list)
+        if (!strncmp(elt->symbol->name, name, SYMBOL_LEN))
             return elt->symbol;
-        }
-    }
 
     return NULL;
 }
 
-static int symbol_lookup(struct symbol_list *list, const char *name, uint32_t *result)
+static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
+        char *name, uint32_t *result)
 {
     struct symbol *symbol = NULL;
     if ((symbol = symbol_find(list, name))) {
-        if (result) *result = symbol->reladdr;
+        if (result) {
+            if (symbol->ce) {
+                struct instruction_list *prev = *symbol->ce->deferred;
+                // TODO handle or make impossible prev == NULL
+                assert(("Unhandled prev == NULL", prev != NULL));
+                struct instruction *c = prev ? prev->insn : NULL;
+                return ce_eval(pd, c, symbol->ce, WORD_BITWIDTH, result);
+            } else {
+                *result = symbol->reladdr;
+            }
+        }
         return 0;
     }
 
@@ -100,11 +113,13 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         case EXT:
             if (ce->symbol && ce->symbol->ce) {
                 struct instruction_list *prev = *ce->symbol->ce->deferred;
+                // TODO handle or make impossible prev == NULL
+                assert(("Unhandled prev == NULL", prev != NULL));
                 struct instruction *c = prev ? prev->insn : NULL;
                 ce_eval(pd, c, ce->symbol->ce, width, result);
                 return add_relocation(pd, NULL, c, width);
             } else {
-                int rc = symbol_lookup(pd->symbols, name, result);
+                int rc = symbol_lookup(pd, pd->symbols, name, result);
                 if (ce->type == SYM) {
                     return rc;
                 } else
