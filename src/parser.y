@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "parser_global.h"
 #include "parser.h"
@@ -23,18 +24,22 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct instruction_list *make_ascii(struct cstr *cs);
 static struct instruction_list *make_utf32(struct cstr *cs);
-static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn,
-        const char *label);
+static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct instruction *insn,
+        const char *symbol);
+static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
+static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
 static struct instruction_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
-static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
-        enum directive_type type, const char *label);
-static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
+static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
+        enum directive_type type, ...);
+static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct instruction_list *p);
 
 #define YYLEX_PARAM (pd->scanner)
 
 void ce_free(struct const_expr *ce, int recurse);
+struct symbol *symbol_find(struct symbol_list *list, const char *name);
+
 %}
 
 %error-verbose
@@ -60,10 +65,10 @@ void ce_free(struct const_expr *ce, int recurse);
 %token <chr> '+' '-' '*'
 %token <chr> ','
 %token <arrow> TOL TOR
-%token <str> INTEGER LABEL LOCAL STRING
+%token <str> INTEGER SYMBOL LOCAL STRING
 %token <chr> REGISTER
 %token ILLEGAL
-%token WORD ASCII UTF32 GLOBAL
+%token WORD ASCII UTF32 GLOBAL SET
 
 %type <ce> const_expr pconst_expr preloc_expr greloc_expr reloc_expr const_atom eref
 %type <cl> reloc_expr_list
@@ -73,7 +78,7 @@ void ce_free(struct const_expr *ce, int recurse);
 %type <op> op
 %type <program> program ascii utf32 data string_or_data
 %type <s> addsub
-%type <str> label
+%type <str> symbol
 %type <cstr> string
 %type <dctv> directive
 
@@ -103,31 +108,34 @@ string_or_data[outer]
     : ascii
     | utf32
     | data
-    | label ':' string_or_data[inner]
+    | symbol ':' string_or_data[inner]
         {   $outer = $inner;
-            struct label *n = add_label_to_insn(&yyloc, $inner->insn, $label);
-            struct label_list *l = calloc(1, sizeof *l);
-            l->next  = pd->labels;
-            l->label = n;
-            pd->labels = l; }
+            struct symbol *n = add_symbol_to_insn(&yyloc, $inner->insn, $symbol);
+            if (check_add_symbol(&yyloc, pd, n))
+                YYABORT;
+        }
 
 program[outer]
     :   /* empty */
-        {   $outer = NULL; }
+        {   $outer = calloc(1, sizeof *$outer);
+            // dummy instruction permits capturing previous instruction from $outer->prev
+        }
     | string_or_data program[inner]
         {   struct instruction_list *p = $string_or_data;
             while (p->next) p = p->next;
             p->next = $inner;
 
-            $outer = malloc(sizeof *$outer);
+            $outer = calloc(1, sizeof *$outer);
             $outer->next = $string_or_data->next;
             $outer->insn = $string_or_data->insn;
+            $inner->prev = $outer;
             free($string_or_data); }
     | directive program[inner]
         {   $outer = $inner;
             handle_directive(pd, &yylloc, $directive, $inner); }
     | insn program[inner]
-        {   $outer = malloc(sizeof *$outer);
+        {   $outer = calloc(1, sizeof *$outer);
+            $inner->prev = $outer;
             $outer->next = $inner;
             $outer->insn = $insn; }
 
@@ -136,13 +144,12 @@ insn[outer]
         {   $outer = calloc(1, sizeof *$outer);
             $outer->u.word = -1; }
     | insn_inner
-    | label ':' insn[inner]
+    | symbol ':' insn[inner]
         {   $outer = $inner;
-            struct label *n = add_label_to_insn(&yyloc, $inner, $label);
-            struct label_list *l = calloc(1, sizeof *l);
-            l->next  = pd->labels;
-            l->label = n;
-            pd->labels = l; }
+            struct symbol *n = add_symbol_to_insn(&yyloc, $inner, $symbol);
+            if (check_add_symbol(&yyloc, pd, n))
+                YYABORT;
+        }
 
 insn_inner
     : lhs_plain arrow rhs
@@ -178,8 +185,10 @@ data
         {   $data = make_data(pd, $reloc_expr_list); }
 
 directive
-    : GLOBAL LABEL
-        {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $LABEL); }
+    : GLOBAL SYMBOL
+        {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $SYMBOL); }
+    | SET SYMBOL ',' reloc_expr
+        {   $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL, $reloc_expr); }
 
 reloc_expr_list[outer]
     : reloc_expr[expr]
@@ -293,8 +302,15 @@ const_atom
         {   $const_atom = make_const_expr(IMM, 0, NULL, NULL);
             $const_atom->i = $immediate; }
     | LOCAL
-        {   $const_atom = make_const_expr(LAB, 0, NULL, NULL);
-            strncpy($const_atom->labelname, $LOCAL, sizeof $const_atom->labelname); }
+        {   $const_atom = make_const_expr(SYM, 0, NULL, NULL);
+            struct symbol *s;
+            if ((s = symbol_find(pd->symbols, $LOCAL))) {
+                $const_atom->symbol = s;
+            } else {
+                strncpy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname);
+                $const_atom->symbolname[sizeof $const_atom->symbolname - 1] = 0;
+            }
+        }
     | '.'
         {   $const_atom = make_const_expr(ICI, 0, NULL, NULL); }
 
@@ -307,13 +323,19 @@ pconst_expr
         {   $pconst_expr = $const_expr; }
 
 eref
-    : '@' LABEL
+    : '@' SYMBOL
         {   $eref = make_const_expr(EXT, 0, NULL, NULL);
-            strncpy($eref->labelname, $LABEL, sizeof $eref->labelname);
-            $eref->labelname[sizeof $eref->labelname - 1] = 0; }
+            struct symbol *s;
+            if ((s = symbol_find(pd->symbols, $SYMBOL))) {
+                $eref->symbol = s;
+            } else {
+                strncpy($eref->symbolname, $SYMBOL, sizeof $eref->symbolname);
+                $eref->symbolname[sizeof $eref->symbolname - 1] = 0;
+            }
+        }
 
-label
-    : LABEL
+symbol
+    : SYMBOL
     | LOCAL
 
 %%
@@ -482,17 +504,45 @@ static struct instruction_list *make_ascii(struct cstr *cs)
     return result;
 }
 
-static struct label *add_label_to_insn(YYLTYPE *locp, struct instruction *insn, const char *label)
+static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct instruction *insn, const char *symbol)
 {
-    struct label *n = calloc(1, sizeof *n);
+    struct symbol *n = calloc(1, sizeof *n);
     n->column   = locp->first_column;
     n->lineno   = locp->first_line;
     n->resolved = 0;
-    n->next     = insn->label;
-    strncpy(n->name, label, sizeof n->name);
-    insn->label = n;
+    n->next     = insn->symbol;
+    n->unique   = 1;
+    strncpy(n->name, symbol, sizeof n->name);
+    insn->symbol = n;
 
     return n;
+}
+
+static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
+{
+    struct symbol_list *l = calloc(1, sizeof *l);
+
+    l->next  = pd->symbols;
+    l->symbol = n;
+    pd->symbols = l;
+
+    return 0;
+}
+
+static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
+{
+    // TODO we could check for colliding symbols at parse time, but I don't
+    // believe this is reliable right now. It would be much nicer for
+    // diagnostics, though.
+    #if CHECK_SYMBOLS_DURING_PARSE
+    if (symbol_find(pd->symbols, n->name)) {
+        char buf[128];
+        snprintf(buf, sizeof buf, "Error adding symbol '%s' (already exists ?)", n->name);
+        tenyr_error(locp, pd, buf);
+        return 1;
+    } else
+    #endif
+        return add_symbol(locp, pd, n);
 }
 
 static struct instruction_list *make_data(struct parse_data *pd, struct const_expr_list *list)
@@ -514,29 +564,58 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
     return result;
 }
 
-static struct directive *make_directive(struct parse_data *pd, YYLTYPE *lloc,
-        enum directive_type type, const char *label)
+struct datum_D_SET {
+    struct symbol *symbol;
+};
+
+static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
+        enum directive_type type, ...)
 {
-    struct directive *result = NULL;
+    struct directive *result = calloc(1, sizeof *result);
+    result->type = D_NULL;
+
+    va_list vl;
+    va_start(vl,type);
 
     switch (type) {
         case D_GLOBAL:
-            result = malloc(sizeof *result);
             result->type = type;
-            result->data = malloc(LABEL_LEN);
-            snprintf(result->data, LABEL_LEN, label);
+            result->data = malloc(SYMBOL_LEN);
+            const char *symbol = va_arg(vl,const char *);
+            snprintf(result->data, SYMBOL_LEN, symbol);
             break;
+        case D_SET: {
+            result->type = type;
+            // TODO stop allocating datum_D_SET if we don't need it
+            struct datum_D_SET *d = result->data = malloc(sizeof *d);
+            const char *symbol = va_arg(vl,const char *);
+
+            struct symbol *n = calloc(1, sizeof *n);
+            n->column   = locp->first_column;
+            n->lineno   = locp->first_line;
+            n->resolved = 0;
+            n->next     = NULL;
+            n->ce       = va_arg(vl,struct const_expr *);
+            n->unique   = 0;
+            strncpy(n->name, symbol, sizeof n->name);
+
+            d->symbol = n;
+
+            add_symbol(locp, pd, n);
+            break;
+        }
         default: {
             char buf[128];
             snprintf(buf, sizeof buf, "Unknown directive type %d in %s", type, __func__);
-            tenyr_error(lloc, pd, buf);
+            tenyr_error(locp, pd, buf);
         }
     }
 
+    va_end(vl);
     return result;
 }
 
-static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
+static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct instruction_list *p)
 {
     switch (d->type) {
@@ -549,10 +628,17 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *lloc, struct
             free(d);
             break;
         }
+        case D_SET: {
+            struct datum_D_SET *data = d->data;
+            // point to the previous instruction to the one after us, if any
+            data->symbol->ce->deferred = &p->prev;
+            free(data);
+            break;
+        }
         default: {
             char buf[128];
             snprintf(buf, sizeof buf, "Unknown directive type %d in %s", d->type, __func__);
-            tenyr_error(lloc, pd, buf);
+            tenyr_error(locp, pd, buf);
         }
     }
 }

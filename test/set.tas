@@ -1,0 +1,2 @@
+.set abc, 2
+.set bcd, 0xdeadbeef - 0xbeef

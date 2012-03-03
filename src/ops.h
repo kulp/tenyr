@@ -59,17 +59,20 @@
 // TODO assumes bits are filled in rightmost-first
 struct instruction {
     uint32_t reladdr;    // used for ICI resolving
-    struct label {
-        char name[LABEL_LEN];
+    struct symbol {
+        char name[SYMBOL_LEN];
         int column;
         int lineno;
         uint32_t reladdr;
 
         unsigned resolved:1;
         unsigned global:1;
+        unsigned unique:1;  ///< if this symbol comes from a label
 
-        struct label *next;
-    } *label;
+        struct const_expr *ce;
+
+        struct symbol *next;
+    } *symbol;
     struct reloc_node *reloc;
     union {
         uint32_t word;
@@ -92,7 +95,7 @@ struct instruction {
 
 struct instruction_list {
     struct instruction *insn;
-    struct instruction_list *next;
+    struct instruction_list *prev, *next;
 };
 
 enum op {

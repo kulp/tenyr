@@ -75,7 +75,7 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BU
 lexer.o: parser.h
 
 # don't complain about unused values that we might use in asserts
-asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
+tas.o asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
 ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 

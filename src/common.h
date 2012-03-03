@@ -19,7 +19,7 @@
             Node = Next)
 
 // TODO document fixed lengths or remove the limitations
-#define LABEL_LEN    32
+#define SYMBOL_LEN   32
 #define LINE_LEN    512
 
 #define PRINT_ERRNO 0x80
