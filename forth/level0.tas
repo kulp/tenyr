@@ -16,10 +16,10 @@
 // NAME   stack in -- stack out          description
 //
 //   Guide to stack diagrams:  R: = return stack,
-//   c = 8-bit character, flag = boolean (0 or -1),
+//   c = 32-bit character, flag = boolean (0 or -1),
 //   n = signed 32-bit, u = unsigned 32-bit,
 //   d = signed 64-bit, ud = unsigned 64-bit,
-//   +n = unsigned 15-bit, x = any cell value,
+//   +n = unsigned 31-bit, x = any cell value,
 //   i*x j*x = any number of cell values,
 //   a-addr = aligned adrs, c-addr = character adrs
 //   p-addr = I/O port adrs, sys = system-specific.
@@ -76,10 +76,10 @@ head(CMP_GT,>): BINOP(>)
 // >R     x --   R: -- x        push to return stack
 head(PUSH_R,>R):
     .word . + 1
-     W    <- [PSP + 1]
-    [RSP] <-  W
-     RSP  <-  RSP - 1
-     PSP  <-  PSP + 1
+    W   <- [PSP + 1]
+    W   -> [RSP]
+    RSP <-  RSP - 1
+    PSP <-  PSP + 1
     goto(NEXT)
 
 // ?DUP   x -- 0 | x x                DUP if nonzero

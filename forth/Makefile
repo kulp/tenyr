@@ -13,7 +13,7 @@ CLEANFILES += $(TARGETS)
 
 all: $(TARGETS)
 
-forty.texe: main.to puts.to aux.to
+forty.texe: main.to level0.to level1.to
 
 %.to: %.tas
 	cpp $(CPPFLAGS) $^ | $(TAS) -o$@ -
@@ -22,8 +22,7 @@ forty.texe: main.to puts.to aux.to
 	$(TLD) -o$@ $^
 
 clean:
-	$(RM) $(CLEANFILES)
+	$(RM) *.to $(CLEANFILES)
 
 clobber: clean
-	$(RM) *.to
 
