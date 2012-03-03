@@ -8,7 +8,6 @@ enum { ASM_ASSEMBLE = 1, ASM_DISASSEMBLE = 2 };
 struct format {
     const char *name;
     int (*init)(FILE *, int flags, void **ud);
-    // TODO combine `in' and `out' functions
     int (*in  )(FILE *, struct instruction *, void *ud);
     int (*out )(FILE *, struct instruction *, void *ud);
     int (*fini)(FILE *, void **ud);

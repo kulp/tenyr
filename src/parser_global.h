@@ -41,7 +41,7 @@ struct parse_data {
 int tenyr_parse(struct parse_data *);
 
 struct const_expr {
-    enum const_expr_type { OP2, SYM, EXT, IMM, ICI } type; // TODO namespace
+    enum const_expr_type { CE_OP2, CE_SYM, CE_EXT, CE_IMM, CE_ICI } type;
     int32_t i;
     char symbolname[SYMBOL_LEN];
     int op;
@@ -63,7 +63,6 @@ struct expr {
     int op;
     int y;
     int32_t i;
-    int width;  ///< width of deferred expression XXX cleanup
     int mult;   ///< multiplier from addsub
     struct const_expr *ce;
 };

@@ -71,8 +71,8 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
         return 0;
     }
 
-    // unresolved symbols get a zero value, but this is still success in EXT
-    // case (not in SYM case)
+    // unresolved symbols get a zero value, but this is still success in CE_EXT
+    // case (not in CE_SYM case)
     if (result) *result = 0;
     return 1;
 }
@@ -107,8 +107,8 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         name = ce->symbol->name;
 
     switch (ce->type) {
-        case SYM:
-        case EXT:
+        case CE_SYM:
+        case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
                 struct instruction_list *prev = *ce->symbol->ce->deferred;
                 assert(("Unhandled prev == NULL", prev != NULL));
@@ -117,7 +117,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 return add_relocation(pd, NULL, c, width);
             } else {
                 int rc = symbol_lookup(pd, pd->symbols, name, result);
-                if (ce->type == SYM) {
+                if (ce->type == CE_SYM) {
                     return rc;
                 } else
                     if (rc) {
@@ -127,14 +127,14 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                     }
             }
             return 0;
-        case ICI:
+        case CE_ICI:
             if (context)
                 *result = context->reladdr;
             else
                 *result = 0;
             return add_relocation(pd, NULL, context, width);
-        case IMM: *result = ce->i; return 0;
-        case OP2:
+        case CE_IMM: *result = ce->i; return 0;
+        case CE_OP2:
             if (!ce_eval(pd, context, ce->left , width, &left) &&
                 !ce_eval(pd, context, ce->right, width, &right))
             {
@@ -157,14 +157,14 @@ static void ce_free(struct const_expr *ce, int recurse)
 {
     if (recurse)
         switch (ce->type) {
-            case EXT:
-            case SYM:
-            case ICI:
+            case CE_EXT:
+            case CE_SYM:
+            case CE_ICI:
                 break;
-            case IMM:
+            case CE_IMM:
                 free(ce->left);
                 break;
-            case OP2:
+            case CE_OP2:
                 ce_free(ce->left, recurse);
                 ce_free(ce->right, recurse);
                 break;

@@ -285,24 +285,24 @@ reloc_expr[outer]
     | eref
     | preloc_expr
     | eref reloc_op const_atom
-        {   $outer = make_const_expr(OP2, $reloc_op, $eref, $const_atom); }
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_atom); }
 
 const_expr[outer]
     : const_atom
     | const_expr[left] reloc_op const_atom[right]
-        {   $outer = make_const_expr(OP2, $reloc_op, $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right); }
     | const_expr[left] '*' const_atom[right]
-        {   $outer = make_const_expr(OP2, '*', $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, '*', $left, $right); }
     | const_expr[left] LSH const_atom[right]
-        {   $outer = make_const_expr(OP2, LSH, $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
 
 const_atom
     : pconst_expr
     | immediate
-        {   $const_atom = make_const_expr(IMM, 0, NULL, NULL);
+        {   $const_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
             $const_atom->i = $immediate; }
     | LOCAL
-        {   $const_atom = make_const_expr(SYM, 0, NULL, NULL);
+        {   $const_atom = make_const_expr(CE_SYM, 0, NULL, NULL);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL))) {
                 $const_atom->symbol = s;
@@ -312,7 +312,7 @@ const_atom
             }
         }
     | '.'
-        {   $const_atom = make_const_expr(ICI, 0, NULL, NULL); }
+        {   $const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
 
 preloc_expr
     : '(' reloc_expr ')'
@@ -324,7 +324,7 @@ pconst_expr
 
 eref
     : '@' SYMBOL
-        {   $eref = make_const_expr(EXT, 0, NULL, NULL);
+        {   $eref = make_const_expr(CE_EXT, 0, NULL, NULL);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $SYMBOL))) {
                 $eref->symbol = s;

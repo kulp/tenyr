@@ -284,7 +284,6 @@ static int run_sim(struct sim_state *s)
 {
     while (1) {
         assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
-        // TODO make it possible to cast memory location to instruction again
         struct instruction i;
         int len = 0;
         s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
