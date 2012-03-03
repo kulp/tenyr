@@ -161,6 +161,9 @@ static void ce_free(struct const_expr *ce, int recurse)
         switch (ce->type) {
             case CE_EXT:
             case CE_SYM:
+                if (ce->symbol && ce->symbol->ce)
+                    ce_free(ce->symbol->ce, recurse);
+                break;
             case CE_ICI:
                 break;
             case CE_IMM:

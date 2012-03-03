@@ -37,7 +37,6 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
 
 #define YYLEX_PARAM (pd->scanner)
 
-void ce_free(struct const_expr *ce, int recurse);
 struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %}
@@ -381,7 +380,7 @@ static struct instruction *make_insn_general(struct parse_data *pd, struct
 static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width)
 {
-    struct deferred_expr *n = malloc(sizeof *n);
+    struct deferred_expr *n = calloc(1, sizeof *n);
 
     n->next  = pd->defexprs;
     n->ce    = ce;
@@ -397,7 +396,7 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
 static struct const_expr *make_const_expr(enum const_expr_type type, int op,
         struct const_expr *left, struct const_expr *right)
 {
-    struct const_expr *n = malloc(sizeof *n);
+    struct const_expr *n = calloc(1, sizeof *n);
 
     n->type  = type;
     n->op    = op;
@@ -411,7 +410,7 @@ static struct const_expr *make_const_expr(enum const_expr_type type, int op,
 static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
         const_expr *defexpr)
 {
-    struct expr *e = malloc(sizeof *e);
+    struct expr *e = calloc(1, sizeof *e);
 
     e->type  = 0;
     e->deref = 0;
@@ -431,7 +430,7 @@ static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
 static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
         int y)
 {
-    struct expr *e = malloc(sizeof *e);
+    struct expr *e = calloc(1, sizeof *e);
 
     e->type  = 1;
     e->deref = 0;
@@ -632,6 +631,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
             // point to the previous instruction to the one after us, if any
             data->symbol->ce->deferred = &p->prev;
             free(data);
+            free(d);
             break;
         }
         default: {
