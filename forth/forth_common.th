@@ -38,7 +38,7 @@
                      pop(o,PSP) \
                      pop(o,IP)  \
                      pop(o,X)   \
-                     pop(o, W)
+                     pop(o,W)
 
 #define jmp(Reg)    p <- Reg + BAS
 #define ccall(Loc)  o <- RSP - 1 ; pushregs(o) ; push(o,p + 3); goto(Loc) ; popregs(o)
@@ -48,14 +48,14 @@
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
-#define head(Label,Name) \
+#define head(Label,Name)                      \
     .word .L##Label##_end - .L##Label##_start \
-.L##Label##_start: \
-    .utf32 #Name \
-    .global Label \
-    .word @link \
-    .set link, . \
-.L##Label##_end: \
+.L##Label##_start:                            \
+    .utf32 #Name                              \
+    .global Label                             \
+    .word @link                               \
+    .set link, .                              \
+.L##Label##_end:                              \
 Label
 
 #endif

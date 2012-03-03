@@ -62,8 +62,8 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
         if (result) {
             if (symbol->ce) {
                 struct instruction_list *prev = *symbol->ce->deferred;
-                assert(("Unhandled prev == NULL", prev != NULL));
-                return ce_eval(pd, prev->insn, symbol->ce, WORD_BITWIDTH, result);
+                struct instruction *c = prev ? prev->insn : NULL;
+                return ce_eval(pd, c, symbol->ce, WORD_BITWIDTH, result);
             } else {
                 *result = symbol->reladdr;
             }
@@ -93,7 +93,8 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
     node->next = pd->relocs;
     pd->relocs = node;
 
-    insn->reloc = &node->reloc;
+    if (insn)
+        insn->reloc = &node->reloc;
 
     return 0;
 }
@@ -111,10 +112,12 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
                 struct instruction_list *prev = *ce->symbol->ce->deferred;
-                assert(("Unhandled prev == NULL", prev != NULL));
-                struct instruction *c = prev->insn;
-                ce_eval(pd, c, ce->symbol->ce, width, result);
-                return add_relocation(pd, NULL, c, width);
+                struct instruction *c = prev ? prev->insn : NULL;
+                int rc = ce_eval(pd, c, ce->symbol->ce, width, result);
+                if (c)
+                    return add_relocation(pd, NULL, c, width);
+                else
+                    return rc;
             } else {
                 int rc = symbol_lookup(pd, pd->symbols, name, result);
                 if (ce->type == CE_SYM) {

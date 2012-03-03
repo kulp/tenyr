@@ -1,3 +1,7 @@
+#include "forth_common.th"
+
+.set link, @level0_link
+
 // These comments were adapted from CamelForth's
 // glosshi.txt
 // NAME   stack in -- stack out          description
@@ -128,4 +132,10 @@
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
+head(ISNUMBER,?NUMBER):
+    .word @ENTER
+    .word @EXIT
+
+.global level1_link
+.set level0_link, @link
 

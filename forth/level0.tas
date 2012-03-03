@@ -5,10 +5,12 @@
     .word . + 1      \
     T0  <- [PSP + 2] \
     T1  <- [PSP + 1] \
-    W   <-  T0 Op T1  \
+    W   <-  T0 Op T1 \
     PSP <-  PSP + 1  \
     W   -> [PSP + 1] \
     goto(NEXT)
+
+.set link, 0
 
 // These comments were adapted from CamelForth
 // http://www.bradrodriguez.com/papers/glosslo.txt
@@ -340,4 +342,7 @@ head(LIT,LIT):
 head(NOOP,NOOP):
     .word @ENTER
     .word @EXIT
+
+.global level0_link
+.set level0_link, @link
 

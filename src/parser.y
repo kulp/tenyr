@@ -460,10 +460,9 @@ static struct instruction_list *make_utf32(struct cstr *cs)
         unsigned spos = 0; // position in the string
         int len = p->len;
         for (; len > 0; wpos++, spos++, len--) {
-            struct instruction_list *temp = *rp;
             *rp = calloc(1, sizeof **rp);
+            (*rp)->prev = t;
             t = *rp;
-            t->next = temp;
             rp = &t->next;
             t->insn = calloc(1, sizeof *t->insn);
 
@@ -488,10 +487,9 @@ static struct instruction_list *make_ascii(struct cstr *cs)
         int len = p->len;
         for (; len > 0; wpos++, spos++, len--) {
             if (wpos % 4 == 0) {
-                struct instruction_list *temp = *rp;
                 *rp = calloc(1, sizeof **rp);
+                (*rp)->prev = t;
                 t = *rp;
-                t->next = temp;
                 rp = &t->next;
                 t->insn = calloc(1, sizeof *t->insn);
             }

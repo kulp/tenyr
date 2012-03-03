@@ -97,7 +97,7 @@ int run_instruction(struct sim_state *s, struct instruction *i)
         case 0x6:
         case 0x7: {
             struct instruction_general *g = &i->u._0xxx;
-            int32_t rhs;
+            int32_t rhs = 0;
             uint32_t value;
 
             do_op(g->op, g->p, &rhs, s->machine.regs[g->x],
