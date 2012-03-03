@@ -240,76 +240,96 @@ static int check_symbols(struct symbol_list *symbols)
     return rc;
 }
 
+static int assembly_cleanup(struct parse_data *pd)
+{
+    list_foreach(symbol_list, Node, pd->symbols) {
+        free(Node->symbol);
+        free(Node);
+    }
+
+    list_foreach(global_list, Node, pd->globals)
+        free(Node);
+
+    list_foreach(reloc_list, Node, pd->relocs)
+        free(Node);
+
+    return 0;
+}
+
+static int assembly_fixup_insns(struct parse_data *pd)
+{
+    int baseaddr = 0; // relative to beginning of object
+    int reladdr = 0;
+    // first pass, fix up addresses
+    list_foreach(instruction_list, il, pd->top) {
+        if (!il->insn) {
+            // dummy instruction at the end ; chop it
+            if (il->prev) {
+                il->prev->next = NULL;
+            } else {
+                pd->top = NULL;
+            }
+            free(il);
+            break;
+        }
+
+        il->insn->reladdr = baseaddr + reladdr;
+
+        list_foreach(symbol, l, il->insn->symbol) {
+            if (!l->resolved) {
+                l->reladdr = baseaddr + reladdr;
+                l->resolved = 1;
+            }
+        }
+
+        reladdr++;
+    }
+
+    return 0;
+}
+
+static int assembly_inner(struct parse_data *pd, FILE *out, const struct format *f)
+{
+    assembly_fixup_insns(pd);
+
+    mark_globals(pd->symbols, pd->globals);
+    if (check_symbols(pd->symbols))
+        fatal(0, "Error while processing symbols : check for duplicate symbols");
+
+    if (!fixup_deferred_exprs(pd)) {
+        void *ud;
+        if (f->init)
+            f->init(out, ASM_ASSEMBLE, &ud);
+
+        list_foreach(instruction_list, Node, pd->top) {
+            f->out(out, Node->insn, ud),
+            free(Node->insn),
+            free(Node);
+        }
+
+        if (f->fini)
+            f->fini(out, &ud);
+    }
+
+    assembly_cleanup(pd);
+
+    return 0;
+}
+
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
-    struct parse_data pd = { .top = NULL };
+    struct parse_data _pd = { .top = NULL }, *pd = &_pd;
 
-    tenyr_lex_init(&pd.scanner);
-    tenyr_set_extra(&pd, pd.scanner);
+    tenyr_lex_init(&pd->scanner);
+    tenyr_set_extra(pd, pd->scanner);
 
     if (in)
-        tenyr_set_in(in, pd.scanner);
+        tenyr_set_in(in, pd->scanner);
 
-    int result = tenyr_parse(&pd);
-    if (!result && f) {
-        int baseaddr = 0; // relative to beginning of object
-        int reladdr = 0;
-        // first pass, fix up addresses
-        list_foreach(instruction_list, il, pd.top) {
-            if (!il->insn) {
-                // dummy instruction at the end ; chop it
-                if (il->prev) {
-                    il->prev->next = NULL;
-                } else {
-                    pd.top = NULL;
-                }
-                free(il);
-                break;
-            }
-
-            il->insn->reladdr = baseaddr + reladdr;
-
-            list_foreach(symbol, l, il->insn->symbol) {
-                if (!l->resolved) {
-                    l->reladdr = baseaddr + reladdr;
-                    l->resolved = 1;
-                }
-            }
-
-            reladdr++;
-        }
-
-        mark_globals(pd.symbols, pd.globals);
-        if (check_symbols(pd.symbols))
-            fatal(0, "Error while processing symbols : check for duplicate symbols");
-
-        if (!fixup_deferred_exprs(&pd)) {
-            void *ud;
-            if (f->init)
-                f->init(out, ASM_ASSEMBLE, &ud);
-
-            list_foreach(instruction_list, Node, pd.top) {
-                f->out(out, Node->insn, ud),
-                free(Node->insn),
-                free(Node);
-            }
-
-            if (f->fini)
-                f->fini(out, &ud);
-        }
-
-        list_foreach(symbol_list, Node, pd.symbols) {
-            free(Node->symbol);
-            free(Node);
-        }
-
-        list_foreach(global_list, Node, pd.globals)
-            free(Node);
-
-        list_foreach(reloc_list, Node, pd.relocs)
-            free(Node);
-    }
-    tenyr_lex_destroy(pd.scanner);
+    int result = tenyr_parse(pd);
+    if (!result && f)
+        assembly_inner(pd, out, f);
+    tenyr_lex_destroy(pd->scanner);
 
     return 0;
 }
