@@ -30,7 +30,6 @@ static int obj_v0_write(struct obj *o, FILE *out)
 {
     put_sized(&MAGIC_BYTES, 3, out);
     PUT(o->magic.parsed.version, out);
-    PUT(o->length, out);
     PUT(o->flags, out);
 
     PUT(o->rec_count, out);
@@ -75,9 +74,8 @@ int obj_write(struct obj *o, FILE *out)
             _f++) \
         for (UWord _i = (Count); _i > 0; _l ? (void)(_l->next = Name) : (void)0, _l = Name++, _i--)
 
-static int obj_v0_read(struct obj *o, size_t *size, FILE *in)
+static int obj_v0_read(struct obj *o, FILE *in)
 {
-    GET(o->length, in);
     GET(o->flags, in);
 
     GET(o->rec_count, in);
@@ -107,13 +105,10 @@ static int obj_v0_read(struct obj *o, size_t *size, FILE *in)
         GET(rlc->width, in);
     }
 
-    // TODO this isn't actually useful ; change its semantics or remove it
-    *size = sizeof *o;
-
     return 0;
 }
 
-int obj_read(struct obj *o, size_t *size, FILE *in)
+int obj_read(struct obj *o, FILE *in)
 {
     GET(o->magic.parsed.TOV, in);
 
@@ -123,7 +118,7 @@ int obj_read(struct obj *o, size_t *size, FILE *in)
     GET(o->magic.parsed.version, in);
 
     switch (o->magic.parsed.version) {
-        case 0: return obj_v0_read(o, size, in);
+        case 0: return obj_v0_read(o, in);
         default:
             fatal(0, "Unhandled version number when loading object");
     }

@@ -62,10 +62,8 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
         if (result) {
             if (symbol->ce) {
                 struct instruction_list *prev = *symbol->ce->deferred;
-                // TODO handle or make impossible prev == NULL
                 assert(("Unhandled prev == NULL", prev != NULL));
-                struct instruction *c = prev ? prev->insn : NULL;
-                return ce_eval(pd, c, symbol->ce, WORD_BITWIDTH, result);
+                return ce_eval(pd, prev->insn, symbol->ce, WORD_BITWIDTH, result);
             } else {
                 *result = symbol->reladdr;
             }
@@ -113,9 +111,8 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         case EXT:
             if (ce->symbol && ce->symbol->ce) {
                 struct instruction_list *prev = *ce->symbol->ce->deferred;
-                // TODO handle or make impossible prev == NULL
                 assert(("Unhandled prev == NULL", prev != NULL));
-                struct instruction *c = prev ? prev->insn : NULL;
+                struct instruction *c = prev->insn;
                 ce_eval(pd, c, ce->symbol->ce, width, result);
                 return add_relocation(pd, NULL, c, width);
             } else {
@@ -131,8 +128,6 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
             }
             return 0;
         case ICI:
-            // TODO context needs to be the previous instruction to a .set, or
-            // some dummy that has reladdr 0 if there is no such instruction
             if (context)
                 *result = context->reladdr;
             else
@@ -257,10 +252,9 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
     int result = tenyr_parse(&pd);
     if (!result && f) {
-        int baseaddr = 0; // TODO
+        int baseaddr = 0; // relative to beginning of object
         int reladdr = 0;
         // first pass, fix up addresses
-        // TODO fix up addresses for .set directives
         list_foreach(instruction_list, il, pd.top) {
             if (!il->insn) {
                 // dummy instruction at the end ; chop it

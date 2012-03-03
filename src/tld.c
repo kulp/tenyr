@@ -72,8 +72,7 @@ static int do_load(struct link_state *s, FILE *in)
     struct obj_list *node = calloc(1, sizeof *node);
 
     struct obj *o = calloc(1, sizeof *o);
-    size_t size;
-    rc = obj_read(o, &size, in);
+    rc = obj_read(o, in);
     node->obj = o;
     node->i = s->obj_count++;
     // put the objects on the list in order
@@ -98,12 +97,6 @@ static int do_make_relocated(struct link_state *s, struct obj **_o)
 {
     struct obj *o = *_o = calloc(1, sizeof *o);
 
-    o->sym_count = 32;
-    o->symbols = calloc(o->sym_count, sizeof *o->records);
-
-    o->rlc_count = 32;
-    o->relocs = calloc(o->rlc_count, sizeof *o->relocs);
-
     s->relocated = o;
 
     return 0;
@@ -126,7 +119,6 @@ static int do_link(struct link_state *s)
 
     void *objtree = NULL;   ///< tsearch-tree of `struct objmeta'
     void *defns   = NULL;   ///< tsearch tree of `struct defns'
-    // TODO destroy objtree
 
     {
         // running offset, tracking where to pack objects tightly one after another
@@ -182,10 +174,9 @@ static int do_link(struct link_state *s)
 
                 reladdr = (*it)->offset + (*look)->reladdr;
             } else {
-                // this is a null relocation ; it just wants us to update the
-                // offset
-                // XXX remove null relocations
-                reladdr = (*me)->offset; // XXX
+				// this is a null relocation ; it just wants us to update the
+				// offset
+                reladdr = (*me)->offset;
             }
             // here we actually add the found-symbol's value to the relocation
             // slot, being careful to trim to the right width
@@ -232,7 +223,6 @@ static int do_link(struct link_state *s)
     o->rec_count = rec_count;
     o->sym_count = s->syms;
     o->rlc_count = s->rlcs;
-    o->length = 5 + s->words; // XXX explain
 
     return rc;
 }

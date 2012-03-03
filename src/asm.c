@@ -160,7 +160,6 @@ struct obj_fdata {
     long insns;
     long syms;
     long rlcs;
-    size_t size;    ///< bytes size of `o'
 
     struct objrec *curr_rec;
 
@@ -190,7 +189,7 @@ static int obj_init(FILE *stream, int flags, void **ud)
         u->next_sym = &o->symbols;
         u->next_rlc = &o->relocs;
     } else if (flags & ASM_DISASSEMBLE) {
-        rc = obj_read(u->o, &u->size, stream);
+        rc = obj_read(u->o, stream);
         u->curr_rec = o->records;
     }
 
@@ -236,7 +235,6 @@ static void obj_out_symbols(struct symbol *symbol, struct obj_fdata *u, struct o
 
             u->next_sym = &sym->next;
             u->syms++;
-            u->words++; // TODO check
         }
     }
 }
@@ -256,14 +254,12 @@ static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct 
     u->next_rlc = &rlc->next;
 
     u->rlcs++;
-    u->words++; // XXX wrong
 }
 
 static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj *o)
 {
     o->records->data[u->insns] = i->u.word;
 
-    u->words++;
     u->insns++;
 
     obj_out_symbols(i->symbol, u, o);
@@ -291,7 +287,6 @@ static int obj_fini(FILE *stream, void **ud)
         o->records->size = u->insns;
         o->sym_count = u->syms;
         o->rlc_count = u->rlcs;
-        o->length = 5 + u->words; // XXX explain
 
         obj_write(u->o, stream);
     }
