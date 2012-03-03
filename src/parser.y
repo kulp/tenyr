@@ -511,6 +511,7 @@ static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct instruction *insn
     n->lineno   = locp->first_line;
     n->resolved = 0;
     n->next     = insn->symbol;
+    n->unique   = 1;
     strncpy(n->name, symbol, sizeof n->name);
     insn->symbol = n;
 
@@ -530,13 +531,17 @@ static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
 
 static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
 {
-    // TODO check if it exists already
+    // TODO we could check for colliding symbols at parse time, but I don't
+    // believe this is reliable right now. It would be much nicer for
+    // diagnostics, though.
+    #if CHECK_SYMBOLS_DURING_PARSE
     if (symbol_find(pd->symbols, n->name)) {
         char buf[128];
         snprintf(buf, sizeof buf, "Error adding symbol '%s' (already exists ?)", n->name);
         tenyr_error(locp, pd, buf);
         return 1;
     } else
+    #endif
         return add_symbol(locp, pd, n);
 }
 
@@ -584,7 +589,6 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             // TODO stop allocating datum_D_SET if we don't need it
             struct datum_D_SET *d = result->data = malloc(sizeof *d);
             const char *symbol = va_arg(vl,const char *);
-            snprintf(result->data, SYMBOL_LEN, symbol);
 
             struct symbol *n = calloc(1, sizeof *n);
             n->column   = locp->first_column;
@@ -592,6 +596,7 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             n->resolved = 0;
             n->next     = NULL;
             n->ce       = va_arg(vl,struct const_expr *);
+            n->unique   = 0;
             strncpy(n->name, symbol, sizeof n->name);
 
             d->symbol = n;

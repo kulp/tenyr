@@ -67,6 +67,7 @@ struct instruction {
 
         unsigned resolved:1;
         unsigned global:1;
+        unsigned unique:1;  ///< if this symbol comes from a label
 
         struct const_expr *ce;
 

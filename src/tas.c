@@ -202,6 +202,36 @@ static int mark_globals(struct symbol_list *symbols, struct global_list *globals
     return 0;
 }
 
+static int check_symbols(struct symbol_list *symbols)
+{
+    int rc = 0;
+    struct symbol_list *top = symbols;
+    typedef int cmp(const void *, const void*);
+
+    // check for and reject duplicates
+    void *tree = NULL;
+    list_foreach(symbol_list, Node, symbols) {
+        if (!Node->symbol->unique)
+            continue;
+
+        const char **name = tsearch(Node->symbol->name, &tree, (cmp*)strcmp);
+
+        if (*name != Node->symbol->name) {
+            rc = 1;
+            break;
+        }
+    }
+
+    // delete from tree what we added to it
+    list_foreach(symbol_list, Node, top) {
+        if (!tree) break;
+        tdelete(Node->symbol, &tree, (cmp*)strcmp);
+        Node = Node->next;
+    }
+
+    return rc;
+}
+
 int do_assembly(FILE *in, FILE *out, const struct format *f)
 {
     struct parse_data pd = { .top = NULL };
@@ -243,6 +273,8 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         }
 
         mark_globals(pd.symbols, pd.globals);
+        if (check_symbols(pd.symbols))
+            fatal(0, "Error while processing symbols : check for duplicate symbols");
 
         if (!fixup_deferred_exprs(&pd)) {
             void *ud;
