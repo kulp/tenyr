@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-struct mstate {
+struct machine_state {
 	size_t devices_count;   ///< how many device slots are used
 	size_t devices_max;     ///< how many device slots are allocated
 	struct device **devices;

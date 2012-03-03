@@ -19,7 +19,7 @@ enum display_type {
 };
 
 struct debugger_data {
-    struct state *s;    ///< simulator state to which we belong
+    struct sim_state *s;    ///< simulator state to which we belong
 
     void *scanner;
     void *breakpoints;

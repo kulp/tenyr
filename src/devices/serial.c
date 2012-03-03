@@ -8,17 +8,17 @@
 
 #define SERIAL_BASE (1ULL << 5)
 
-static int serial_init(struct state *s, void *cookie, ...)
+static int serial_init(struct sim_state *s, void *cookie, ...)
 {
     return 0;
 }
 
-static int serial_fini(struct state *s, void *cookie)
+static int serial_fini(struct sim_state *s, void *cookie)
 {
     return 0;
 }
 
-static int serial_op(struct state *s, void *cookie, int op, uint32_t addr, uint32_t *data)
+static int serial_op(struct sim_state *s, void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     int tmp;
 

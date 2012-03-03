@@ -12,13 +12,13 @@
 #define MAX(A,B) ((A) > (B) ? (A) : (B))
 #endif
 
-static int at_pc(struct mstate *m, void *cud)
+static int at_pc(struct machine_state *m, void *cud)
 {
     int32_t *pc = cud;
     return m->regs[15] == *pc;
 }
 
-int tf_run_until(struct state *s, uint32_t start_address, int flags, cont_pred
+int tf_run_until(struct sim_state *s, uint32_t start_address, int flags, cont_pred
         stop, void *cud)
 {
     int rc = 0;
@@ -38,7 +38,7 @@ int tf_run_until(struct state *s, uint32_t start_address, int flags, cont_pred
     return rc;
 }
 
-int tf_get_addr(const struct state *s, const char *symbol, uint32_t *addr)
+int tf_get_addr(const struct sim_state *s, const char *symbol, uint32_t *addr)
 {
     int rc = 0;
 
@@ -51,7 +51,7 @@ int tf_get_addr(const struct state *s, const char *symbol, uint32_t *addr)
     return rc;
 }
 
-int tf_call(struct state *s, const char *symbol)
+int tf_call(struct sim_state *s, const char *symbol)
 {
     int rc = 0;
     uint32_t addr, nextaddr;

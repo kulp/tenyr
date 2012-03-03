@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-int run_instruction(struct state *s, struct instruction *i)
+int run_instruction(struct sim_state *s, struct instruction *i)
 {
     int32_t *ip = &s->machine.regs[15];
 
