@@ -53,6 +53,8 @@
 .L##Label##_start: \
     .utf32 #Name \
     .global Label \
+    .word @link \
+    .set link, . \
 .L##Label##_end: \
 Label
 
