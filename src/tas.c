@@ -157,12 +157,17 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
 
 static void ce_free(struct const_expr *ce, int recurse)
 {
+    if (!ce)
+        return;
+
     if (recurse)
         switch (ce->type) {
             case CE_EXT:
             case CE_SYM:
-                if (ce->symbol && ce->symbol->ce)
+                if (ce->symbol && ce->symbol->ce) {
                     ce_free(ce->symbol->ce, recurse);
+                    ce->symbol->ce = NULL;
+                }
                 break;
             case CE_ICI:
                 break;
@@ -248,7 +253,10 @@ static int check_symbols(struct symbol_list *symbols)
 static int assembly_cleanup(struct parse_data *pd)
 {
     list_foreach(symbol_list, Node, pd->symbols) {
+        ce_free(Node->symbol->ce, 1);
+        Node->symbol->ce = NULL;
         free(Node->symbol);
+        Node->symbol = NULL;
         free(Node);
     }
 

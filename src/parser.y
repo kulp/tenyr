@@ -447,6 +447,18 @@ static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
     return e;
 }
 
+static void free_cstr(struct cstr *cs, int recurse)
+{
+    if (!cs)
+        return;
+
+    if (recurse)
+        free_cstr(cs->right, recurse);
+
+    free(cs->str);
+    free(cs);
+}
+
 static struct instruction_list *make_utf32(struct cstr *cs)
 {
     struct instruction_list *result = NULL, **rp = &result;
@@ -470,6 +482,8 @@ static struct instruction_list *make_utf32(struct cstr *cs)
 
         p = p->right;
     }
+
+    free_cstr(cs, 1);
 
     return result;
 }
@@ -498,6 +512,8 @@ static struct instruction_list *make_ascii(struct cstr *cs)
 
         p = p->right;
     }
+
+    free_cstr(cs, 1);
 
     return result;
 }
