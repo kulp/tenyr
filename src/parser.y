@@ -556,7 +556,9 @@ static struct instruction_list *make_data(struct parse_data *pd, struct const_ex
         q->insn = calloc(1, sizeof *q->insn);
         add_deferred_expr(pd, p->ce, 1, &q->insn->u.word, WORD_BITWIDTH);
         p->ce->insn = q->insn;
+        struct const_expr_list *temp = p;
         p = p->right;
+        free(temp);
     }
 
     return result;

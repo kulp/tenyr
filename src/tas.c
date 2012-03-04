@@ -267,18 +267,8 @@ static int assembly_fixup_insns(struct parse_data *pd)
     int reladdr = 0;
     // first pass, fix up addresses
     list_foreach(instruction_list, il, pd->top) {
-        if (!il->insn) {
-            // dummy instruction at the end ; chop it
-            if (il->prev) {
-                il->prev->next = NULL;
-            } else {
-                pd->top = NULL;
-            }
-
-            // we can't free it, because deferred expressions read through it ? XXX
-            //free(il);
-            break;
-        }
+        if (!il->insn)
+            continue;
 
         il->insn->reladdr = baseaddr + reladdr;
 
@@ -309,8 +299,11 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
             f->init(out, ASM_ASSEMBLE, &ud);
 
         list_foreach(instruction_list, Node, pd->top) {
-            f->out(out, Node->insn, ud);
-            free(Node->insn);
+            // if !Node->insn, it's a placeholder or some kind of dummy
+            if (Node->insn) {
+                f->out(out, Node->insn, ud);
+                free(Node->insn);
+            }
             free(Node);
         }
 
