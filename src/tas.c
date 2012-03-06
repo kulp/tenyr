@@ -223,8 +223,6 @@ static int mark_globals(struct symbol_list *symbols, struct global_list *globals
 static int check_symbols(struct symbol_list *symbols)
 {
     int rc = 0;
-    struct symbol_list *top = symbols;
-    typedef int cmp(const void *, const void*);
 
     // check for and reject duplicates
     void *tree = NULL;
@@ -241,7 +239,7 @@ static int check_symbols(struct symbol_list *symbols)
     }
 
     // delete from tree what we added to it
-    list_foreach(symbol_list, Node, top) {
+    list_foreach(symbol_list, Node, symbols) {
         if (!tree) break;
         tdelete(Node->symbol, &tree, (cmp*)strcmp);
         Node = Node->next;
@@ -254,9 +252,7 @@ static int assembly_cleanup(struct parse_data *pd)
 {
     list_foreach(symbol_list, Node, pd->symbols) {
         ce_free(Node->symbol->ce, 1);
-        Node->symbol->ce = NULL;
         free(Node->symbol);
-        Node->symbol = NULL;
         free(Node);
     }
 
@@ -271,18 +267,17 @@ static int assembly_cleanup(struct parse_data *pd)
 
 static int assembly_fixup_insns(struct parse_data *pd)
 {
-    int baseaddr = 0; // relative to beginning of object
     int reladdr = 0;
     // first pass, fix up addresses
     list_foreach(instruction_list, il, pd->top) {
         if (!il->insn)
             continue;
 
-        il->insn->reladdr = baseaddr + reladdr;
+        il->insn->reladdr = reladdr;
 
         list_foreach(symbol, l, il->insn->symbol) {
             if (!l->resolved) {
-                l->reladdr = baseaddr + reladdr;
+                l->reladdr = reladdr;
                 l->resolved = 1;
             }
         }
