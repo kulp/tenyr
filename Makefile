@@ -21,12 +21,8 @@ else
  endif
 endif
 
-GCC_CFLAGS += -std=c99
-GCC_CFLAGS += -Wall -Wextra $(PEDANTIC)
-
-ifneq ($(findstring -gcc, $(CC)),0)
-CFLAGS += $(GCC_CFLAGS)
-endif
+CFLAGS += -std=c99
+CFLAGS += -Wall -Wextra $(PEDANTIC)
 
 # Optimised build
 ifeq ($(DEBUG),)
@@ -64,7 +60,7 @@ tsim$(EXE_SUFFIX): asm.o obj.o ffi.o \
 tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o
 tld$(EXE_SUFFIX): obj.o
 
-asm.o: GCC_CFLAGS += -Wno-override-init
+asm.o: CFLAGS += -Wno-override-init
 
 %$(EXE_SUFFIX): %.o
 	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)

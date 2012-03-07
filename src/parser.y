@@ -598,7 +598,8 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             result->type = type;
             result->data = malloc(SYMBOL_LEN);
             const char *symbol = va_arg(vl,const char *);
-            snprintf(result->data, SYMBOL_LEN, symbol);
+            strncpy(result->data, symbol, SYMBOL_LEN);
+            ((char*)result->data)[SYMBOL_LEN - 1] = 0;
             break;
         case D_SET: {
             result->type = type;
