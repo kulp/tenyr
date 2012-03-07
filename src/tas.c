@@ -82,8 +82,7 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
     struct reloc_list *node = calloc(1, sizeof *node);
 
     if (name && name[0]) {
-        strncpy(node->reloc.name, name, sizeof node->reloc.name);
-        node->reloc.name[sizeof node->reloc.name - 1] = 0;
+        strcopy(node->reloc.name, name, sizeof node->reloc.name);
     } else {
         node->reloc.name[0] = 0;
     }

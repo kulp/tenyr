@@ -106,10 +106,9 @@ print
 info_command
     : INFO whitespace IDENT
         {   $info_command.code = CMD_GET_INFO;
-            strncpy($info_command.arg.str,
+            strcopy($info_command.arg.str,
                     $IDENT,
-                    sizeof $info_command.arg.str - 1);
-            $info_command.arg.str[sizeof $info_command.arg.str - 1] = 0; }
+                    sizeof $info_command.arg.str - 1); }
 
 format
     : 'i' { $format = DISP_INST; }

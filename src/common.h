@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <search.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 #define STR(X) STR_(X)
@@ -42,6 +43,13 @@ typedef int cmp(const void *, const void*);
 typedef void traverse(const void *node, VISIT order, int level);
 
 int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp);
+
+static inline char *strcopy(char *dest, const char *src, size_t sz)
+{
+	char *result = strncpy(dest, src, sz);
+	dest[sz - 1] = '\0';
+	return result;
+}
 
 // defines a function that traverses a tsearch tree, adding todo nodes
 // assumes struct Tag has a reference to an aggregate named `state' that has a

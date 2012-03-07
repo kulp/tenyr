@@ -232,7 +232,7 @@ static void obj_out_symbols(struct symbol *symbol, struct obj_fdata *u, struct o
         if (Node->global) {
             struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
-            strncpy(sym->name, Node->name, sizeof sym->name);
+            strcopy(sym->name, Node->name, sizeof sym->name);
             assert(("Symbol address resolved", Node->resolved != 0));
             sym->value = Node->reladdr;
 
@@ -249,7 +249,7 @@ static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
     rlc->flags = 0; // TODO
-    strncpy(rlc->name, reloc->name, sizeof rlc->name);
+    strcopy(rlc->name, reloc->name, sizeof rlc->name);
     rlc->name[sizeof rlc->name - 1] = 0;
     rlc->addr = reloc->insn->reladdr;
     rlc->width = reloc->width;

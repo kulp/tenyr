@@ -169,7 +169,7 @@ string[outer]
             $outer->len = strlen($STRING) - 2; // drop quotes
             $outer->str = malloc($outer->len + 1);
             // skip quotes
-            strncpy($outer->str, $STRING + 1, $outer->len);
+            strcopy($outer->str, $STRING + 1, $outer->len);
             $outer->right = $inner; }
 
 utf32
@@ -307,8 +307,7 @@ const_atom
             if ((s = symbol_find(pd->symbols, $LOCAL))) {
                 $const_atom->symbol = s;
             } else {
-                strncpy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname);
-                $const_atom->symbolname[sizeof $const_atom->symbolname - 1] = 0;
+                strcopy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname);
             }
         }
     | '.'
@@ -329,8 +328,7 @@ eref
             if ((s = symbol_find(pd->symbols, $SYMBOL))) {
                 $eref->symbol = s;
             } else {
-                strncpy($eref->symbolname, $SYMBOL, sizeof $eref->symbolname);
-                $eref->symbolname[sizeof $eref->symbolname - 1] = 0;
+                strcopy($eref->symbolname, $SYMBOL, sizeof $eref->symbolname);
             }
         }
 
@@ -526,7 +524,7 @@ static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct instruction *insn
     n->resolved = 0;
     n->next     = insn->symbol;
     n->unique   = 1;
-    strncpy(n->name, symbol, sizeof n->name);
+    strcopy(n->name, symbol, sizeof n->name);
     insn->symbol = n;
 
     return n;
@@ -598,8 +596,7 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             result->type = type;
             result->data = malloc(SYMBOL_LEN);
             const char *symbol = va_arg(vl,const char *);
-            strncpy(result->data, symbol, SYMBOL_LEN);
-            ((char*)result->data)[SYMBOL_LEN - 1] = 0;
+            strcopy(result->data, symbol, SYMBOL_LEN);
             break;
         case D_SET: {
             result->type = type;
@@ -614,7 +611,7 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             n->next     = NULL;
             n->ce       = va_arg(vl,struct const_expr *);
             n->unique   = 0;
-            strncpy(n->name, symbol, sizeof n->name);
+            strcopy(n->name, symbol, sizeof n->name);
 
             d->symbol = n;
 
@@ -638,7 +635,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
     switch (d->type) {
         case D_GLOBAL: {
             struct global_list *g = malloc(sizeof *g);
-            strncpy(g->name, d->data, sizeof g->name);
+            strcopy(g->name, d->data, sizeof g->name);
             free(d->data);
             g->next = pd->globals;
             pd->globals = g;

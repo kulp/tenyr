@@ -93,15 +93,6 @@ static int do_unload(struct link_state *s)
     return 0;
 }
 
-static int do_make_relocated(struct link_state *s, struct obj **_o)
-{
-    struct obj *o = *_o = calloc(1, sizeof *o);
-
-    s->relocated = o;
-
-    return 0;
-}
-
 static int ptrcmp(const void *a, const void *b)
 {
     return *(const char**)a - *(const char**)b;
@@ -125,17 +116,14 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
         meta->size = i->records->size;
         meta->offset = running;
         running += i->records->size;
-        {
-            struct objmeta **look = tsearch(meta, objtree, ptrcmp);
-            if (*look != meta)
-                fatal(0, "Duplicate object `%p'", (*look)->obj);
-        }
+        struct objmeta **look = tsearch(meta, objtree, ptrcmp);
+        if (*look != meta)
+            fatal(0, "Duplicate object `%p'", (*look)->obj);
 
         if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
             struct defn *def = calloc(1, sizeof *def);
             def->state = s;
-            strncpy(def->name, sym->name, sizeof def->name);
-            def->name[sizeof def->name - 1] = 0;
+            strcopy(def->name, sym->name, sizeof def->name);
             def->obj = i;
             def->reladdr = sym->value;
 
@@ -160,8 +148,7 @@ static int do_link_relocate(struct link_state *s, void **objtree, void **defns)
             struct objmeta **me = tfind(&i, objtree, ptrcmp);
             if (rlc->name[0]) {
                 struct defn def;
-                strncpy(def.name, rlc->name, sizeof def.name);
-                def.name[sizeof def.name - 1] = 0;
+                strcopy(def.name, rlc->name, sizeof def.name);
                 struct defn **look = tfind(&def, defns, (cmp*)strcmp);
                 if (!look)
                     fatal(0, "Missing definition for symbol `%s'", rlc->name);
@@ -241,8 +228,7 @@ static int do_link(struct link_state *s)
 {
     int rc = -1;
 
-    struct obj *o;
-    do_make_relocated(s, &o);
+    struct obj *o = s->relocated = o = calloc(1, sizeof *o);
 
     do_link_process(s);
     do_link_emit(s, o);
@@ -254,10 +240,33 @@ static int do_emit(struct link_state *s, FILE *out)
 {
     int rc = -1;
 
-    if (s->relocated)
-        rc = obj_write(s->relocated, out);
+    rc = obj_write(s->relocated, out);
 
     return rc;
+}
+
+int do_load_all(struct link_state *s, int count, char *names[count])
+{
+    for (int i = 0; i < count; i++) {
+        FILE *in = NULL;
+
+        if (!strcmp(names[i], "-")) {
+            in = stdin;
+        } else {
+            in = fopen(names[i], "rb");
+            if (!in) {
+                char buf[128];
+                snprintf(buf, sizeof buf, "Failed to open input file `%s'", names[i]);
+                fatal(PRINT_ERRNO, buf);
+            }
+        }
+
+        do_load(s, in);
+
+        fclose(in);
+    }
+
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -291,31 +300,13 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (optind >= argc) {
+    if (optind >= argc)
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
-    }
 
-    for (int i = optind; i < argc; i++) {
-        FILE *in = NULL;
-        if (!out)
-            fatal(PRINT_ERRNO, "Failed to open output file");
+    if (!out)
+        fatal(PRINT_ERRNO, "Failed to open output file");
 
-        if (!strcmp(argv[i], "-")) {
-            in = stdin;
-        } else {
-            in = fopen(argv[i], "rb");
-            if (!in) {
-                char buf[128];
-                snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
-                fatal(PRINT_ERRNO, buf);
-            }
-        }
-
-        do_load(s, in);
-
-        fclose(in);
-    }
-
+    do_load_all(s, argc - optind, &argv[optind]);
     do_link(s);
     do_emit(s, out);
     do_unload(s);
