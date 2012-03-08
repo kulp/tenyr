@@ -1,15 +1,15 @@
-all: tenor
+all: tenyr
 
 .SUFFIXES:
 .SUFFIXES: .v
 
-tenor: tb.v
+tenyr: tb.v
 
 %: %.v
 	iverilog -Wall -o $@ $^
 
 clean:
-	$(RM) tenor
+	$(RM) tenyr
 
 clobber: clean
 	$(RM) *.vcd
