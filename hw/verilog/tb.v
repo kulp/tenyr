@@ -22,7 +22,7 @@ module Test();
             mem_data <= _mem_data;
     end
 
-    initial begin
+    initial #0 begin
         #1;
 
         mem_addr = 2;
@@ -77,9 +77,12 @@ module Test();
                           .indexY(reg_indexY), .valueY(_reg_dataY),
             .pc(pc));
 
-    initial begin
+    initial #0 begin
 
         @(posedge clk);
+
+        #00 reg_indexX = 2;
+        #00 reg_indexY = 5;
 
         #01 reg_indexZ = 2;
         #00 reg_dataZ  = 3;
@@ -119,7 +122,7 @@ module Test();
 
     end
 
-    initial begin
+    initial #0 begin
         $dumpfile("Test.vcd");
         $dumpvars(0,Test);
         $display("hallo, Welt");

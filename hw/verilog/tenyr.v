@@ -40,14 +40,18 @@ module Reg(input clk,
                    input[3:0] indexY, output[31:0] valueY, // Y is RO
         output[23:0] pc);
 
-    reg[31:0] store[15:0];
+    reg[31:0] store[0:15];
     reg[31:0] r_valueZ = 0,
               r_valueX = 0,
               r_valueY = 0;
 
     reg r_rwZ = 0;
 
-    initial store[15] = 0; // PC inits to zero
+    generate
+        genvar i;
+        for (i = 0; i < 16; i = i + 1)
+            initial #0 store[i] = 'b0;
+    endgenerate
 
     assign pc = store[15];
     assign valueZ = rwZ ? 'bz : r_valueZ;
