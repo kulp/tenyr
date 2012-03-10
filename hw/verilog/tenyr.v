@@ -3,16 +3,35 @@
 `define CLOCKPERIOD 5
 `define RAMDELAY (1 * `CLOCKPERIOD)
 
+module Serial(input clk, input enable, input rw,
+        input[31:0] addr, inout[31:0] data
+        );
+    parameter BASE = 1 << 5;
+    parameter SIZE = 2;
+
+    wire in_range;
+    assign in_range = (addr >= BASE && addr < SIZE + BASE);
+
+    always @(negedge clk) begin
+        if (enable && in_range) begin
+            if (rw)
+                $putchar(data);
+            else
+                $getchar(data);
+        end
+    end
+endmodule
+
 // Two-port memory required if we don't have wait states ; one instruction
 // fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
 module Mem(input clk, input enable, input p0rw,
-        input[23:0] p0_addr, inout[31:0] p0_data,
-        input[23:0] p1_addr, inout[31:0] p1_data
+        input[31:0] p0_addr, inout[31:0] p0_data,
+        input[31:0] p1_addr, inout[31:0] p1_data
         );
     parameter BASE = 1 << 12;
     parameter SIZE = (1 << 24) - (1 << 12);
 
-    reg[23:0] ram[(SIZE + BASE - 1):BASE];
+    reg[31:0] ram[(SIZE + BASE - 1):BASE];
     reg[31:0] p0data = 0;
     reg[31:0] p1data = 0;
 
@@ -47,7 +66,7 @@ module Reg(input clk,
         input rwZ, input[3:0] indexZ, inout [31:0] valueZ, // Z is RW
                    input[3:0] indexX, output[31:0] valueX, // X is RO
                    input[3:0] indexY, output[31:0] valueY, // Y is RO
-        output[23:0] pc);
+        output[31:0] pc);
 
     reg[31:0] store[0:15];
     reg[31:0] r_valueZ = 0,
@@ -119,9 +138,10 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
 
 endmodule
 
-module Core(input clk);
+module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
+            output rw, output[31:0] norm_addr, inout[31:0] norm_data);
     wire _operand_rw, reg_rw;
-    wire[23:0] pc  , _operand_addr;
+    wire[31:0] pc  , _operand_addr;
     wire[31:0] insn, _operand_data;
     reg[3:0] reg_indexZ,
              reg_indexX,
@@ -147,9 +167,6 @@ module Core(input clk);
                           .indexY(reg_indexY), .valueY(_reg_dataY),
             .pc(pc));
 
-    Mem ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
-            .p0_addr(_operand_addr), .p0_data(_operand_data),
-            .p1_addr(pc)           , .p1_data(insn));
     Decode decode(.insn(insn), .Z(_reg_indexZ), .X(_reg_indexX), .Y(_reg_indexY),
                   .I(_reg_dataI), .op(op), .flip(flip));
 endmodule
@@ -157,7 +174,17 @@ endmodule
 module Top();
     reg clk = 0;
     always #(`CLOCKPERIOD) clk = !clk;
+    wire[31:0] pc, _operand_addr;
+    wire[31:0] insn, _operand_data;
+    wire _operand_rw;
 
-    Core core(clk);
+    Mem ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
+            .p0_addr(_operand_addr), .p0_data(_operand_data),
+            .p1_addr(pc)           , .p1_data(insn));
+    Serial serial(.clk(clk), .enable('b1), .rw(_operand_rw),
+                  .addr(_operand_addr), .data(_operand_data));
+    Core core(.clk(clk), .rw(_operand_rw),
+            .norm_addr(_operand_addr), .norm_data(_operand_data),
+            .insn_addr(pc)           , .insn_data(insn));
 endmodule
 

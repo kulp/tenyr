@@ -5,7 +5,7 @@ module Test();
     always #5 clk = !clk;
 
     Top top();
-    reg[23:0] operand_addr, insn_addr;
+    reg[31:0] operand_addr, insn_addr;
     reg[31:0] operand_data, insn_data;
     wire[31:0] _operand_data = (mem_enable && writing) ? operand_data : 'bz;
     wire[31:0] _insn_data;
@@ -24,6 +24,8 @@ module Test();
         testmem1(.clk(clk), .enable(mem_enable), .p0rw(writing),
                  .p0_addr(operand_addr), .p0_data(_operand_data),
                  .p1_addr(pc), .p1_data(_insn_data));
+    Serial #(.BASE(8)) serial(.clk(clk), .enable(mem_enable), .rw(writing),
+                  .addr(operand_addr), .data(_operand_data));
 
     always @(negedge clk) begin
         if (reading)
@@ -61,6 +63,13 @@ module Test();
         #10 reading = 0;
         val = operand_data;
 
+        #10;
+
+        operand_addr = 8;
+        operand_data = 65;
+        writing = 1;
+        #10 writing = 0;
+
     end
 
     reg reg_rw = 0;
@@ -76,7 +85,7 @@ module Test();
     wire[31:0] _reg_dataZ = reg_rw ? reg_dataZ : 'bz;
     wire[31:0] _reg_dataX;
     wire[31:0] _reg_dataY;
-    wire[23:0] pc;
+    wire[31:0] pc;
 
     //Reg regs(clk, reg_rw, reg_index, _reg_data, pc);
     Reg regs(.clk(clk),

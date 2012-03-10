@@ -9,7 +9,7 @@ tenyr: VFLAGS += -m glue
 tenyr: | glue.vpi
 tenyr: tb.v
 
-glue.vpi: callbacks.o
+glue.vpi: callbacks.o serial.o
 
 %: %.v
 	iverilog $(VFLAGS) -Wall -o $@ $^
