@@ -24,8 +24,8 @@ module Test();
         testmem1(.clk(clk), .enable(mem_enable), .p0rw(writing),
                  .p0_addr(operand_addr), .p0_data(_operand_data),
                  .p1_addr(pc), .p1_data(_insn_data));
-    Serial #(.BASE(8)) serial(.clk(clk), .enable(mem_enable), .rw(writing),
-                  .addr(operand_addr), .data(_operand_data));
+    SimSerial #(.BASE(8)) serial(.clk(clk), .enable(mem_enable), .rw(writing),
+                                 .addr(operand_addr), .data(_operand_data));
 
     always @(negedge clk) begin
         if (reading)

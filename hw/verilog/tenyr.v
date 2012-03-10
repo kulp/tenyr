@@ -3,7 +3,7 @@
 `define CLOCKPERIOD 5
 `define RAMDELAY (1 * `CLOCKPERIOD)
 
-module Serial(input clk, input enable, input rw,
+module SimSerial(input clk, input enable, input rw,
         input[31:0] addr, inout[31:0] data
         );
     parameter BASE = 1 << 5;
@@ -181,8 +181,8 @@ module Top();
     Mem ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
             .p0_addr(_operand_addr), .p0_data(_operand_data),
             .p1_addr(pc)           , .p1_data(insn));
-    Serial serial(.clk(clk), .enable('b1), .rw(_operand_rw),
-                  .addr(_operand_addr), .data(_operand_data));
+    SimSerial serial(.clk(clk), .enable('b1), .rw(_operand_rw),
+                     .addr(_operand_addr), .data(_operand_data));
     Core core(.clk(clk), .rw(_operand_rw),
             .norm_addr(_operand_addr), .norm_data(_operand_data),
             .insn_addr(pc)           , .insn_data(insn));
