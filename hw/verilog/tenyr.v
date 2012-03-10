@@ -182,7 +182,7 @@ endmodule
 
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data);
-    wire _operand_rw, reg_rw;
+    wire _norm_rw, reg_rw;
     wire[31:0] pc  , _operand_addr;
     wire[31:0] insn, _operand_data;
     reg[3:0] reg_indexZ,
@@ -204,8 +204,13 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     reg reading = 0;
     reg[31:0] rhs;
     wire[31:0] _rhs;
+    wire[1:0] deref;
 
     always @(negedge clk) rhs <= _rhs;
+
+    // [Z] <-  ...  -- deref == 10
+    //  Z  -> [...] -- deref == 11
+    wire norm_rw = deref[1];
 
     Reg regs(.clk(clk),
             .rwZ(reg_rw), .indexZ(reg_indexZ), .valueZ(_reg_dataZ),
@@ -214,7 +219,8 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             .pc(pc));
 
     Decode decode(.insn(insn), .Z(_reg_indexZ), .X(_reg_indexX),
-                  .Y(_reg_indexY), .I(_reg_dataI), .op(op), .flip(flip));
+                  .Y(_reg_indexY), .I(_reg_dataI), .op(op), .flip(flip),
+                  .deref(deref));
     Exec exec(.clk(clk), .rhs(_rhs), .Z(_reg_dataZ), .X(_reg_dataX),
               .Y(_reg_dataY), .I(_reg_dataI), .op(op), .flip(flip),
               .type(type));
