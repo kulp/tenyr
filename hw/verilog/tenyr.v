@@ -89,51 +89,6 @@ module Reg(input clk,
 
 endmodule
 
-module Core(input clk, output mem_rw, output[23:0] _addr, inout[31:0] _data);
-
-    reg[31:0] insn = 0;
-    wire[3:0] _type = insn[31:28];
-    wire[31:0] _reg_valueZ,
-               _reg_valueX,
-               _reg_valueY;
-    reg[31:0] reg_valueX,
-              reg_valueY;
-    reg[3:0] reg_indexZ = 0,
-             reg_indexX = 0,
-             reg_indexY = 0;
-    wire[23:0] pc;
-    reg reg_rw = 0;
-    reg[23:0] addr = 0;
-
-    reg[31:0] mem_data = 0;
-    wire[23:0] _mem_addr;
-    wire[31:0] _mem_data = writing ? mem_data : 'bz;
-    reg writing = 0;
-    reg reading = 0;
-
-    wire mem_rw = writing;
-
-    Reg regs(.clk(clk),
-            .rwZ(reg_rw), .indexZ(reg_indexZ), .valueZ(_reg_valueZ),
-                          .indexX(reg_indexX), .valueX(_reg_valueX),
-                          .indexY(reg_indexY), .valueY(_reg_valueY),
-            .pc(pc));
-
-    always @(negedge clk) begin
-        if (reading)
-            mem_data <= _mem_data;
-    end
-
-    assign _addr = addr;
-
-    always @(negedge clk) begin
-        // instruction fetch
-        addr <= pc;
-        insn <= #(`RAMDELAY) _data;
-    end
-
-endmodule
-
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
               output[3:0] op, output[1:0] deref, output flip, type, illegal);
 
@@ -152,11 +107,11 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
             rflip  <= insn[29] & insn[28];
             rtype  <= insn[30];
 
-            rZ  <= insn[27:24];
-            rX  <= insn[23:20];
-            rY  <= insn[19:16];
-            rop <= insn[15:12];
-            rI  <= insn[11: 0];
+            rZ  <= insn[24 +: 4];
+            rX  <= insn[20 +: 4];
+            rY  <= insn[16 +: 4];
+            rop <= insn[12 +: 4];
+            rI  <= insn[ 0 +:12];
         end
         4'b1111: rillegal <= &insn;
         default: $stop(1);
@@ -164,20 +119,45 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
 
 endmodule
 
+module Core(input clk);
+    wire _operand_rw, reg_rw;
+    wire[23:0] pc  , _operand_addr;
+    wire[31:0] insn, _operand_data;
+    reg[3:0] reg_indexZ,
+             reg_indexX,
+             reg_indexY;
+    wire[3:0] _reg_indexZ,
+              _reg_indexX,
+              _reg_indexY;
+    reg[31:0] reg_dataZ,
+              reg_dataX,
+              reg_dataY,
+              reg_dataI;
+    wire[31:0] _reg_dataZ = reg_rw ? reg_dataZ : 'bz;
+    wire[31:0] _reg_dataX, _reg_dataY;
+    wire[11:0] _reg_dataI;
+    wire[3:0] op;
+    wire flip, illegal, type;
+    reg writing = 0;
+    reg reading = 0;
+
+    Reg regs(.clk(clk),
+            .rwZ(reg_rw), .indexZ(reg_indexZ), .valueZ(_reg_dataZ),
+                          .indexX(reg_indexX), .valueX(_reg_dataX),
+                          .indexY(reg_indexY), .valueY(_reg_dataY),
+            .pc(pc));
+
+    Mem ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
+            .p0_addr(_operand_addr), .p0_data(_operand_data),
+            .p1_addr(pc)           , .p1_data(insn));
+    Decode decode(.insn(insn), .Z(_reg_indexZ), .X(_reg_indexX), .Y(_reg_indexY),
+                  .I(_reg_dataI), .op(op), .flip(flip));
+endmodule
+
 module Top();
     reg clk = 0;
-
     always #(`CLOCKPERIOD) clk = !clk;
 
-    wire _operand_rw;
-    wire[23:0] _insn_addr, _operand_addr;
-    wire[31:0] _insn_data, _operand_data;
-
-    // TODO make BASE (1 << 12)
-    Mem #(.BASE(0), .SIZE(1 << 12))
-        ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
-            .p0_addr(_operand_addr), .p0_data(_operand_data),
-            .p1_addr(_insn_addr)   , .p1_data(_insn_data));
-    Core core(clk, _operand_rw, _operand_addr, _operand_data);
+    Core core(clk);
 endmodule
 
