@@ -138,6 +138,48 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
 
 endmodule
 
+module Exec(input clk, output[31:0] rhs, input[31:0] Z, X, Y, input[11:0] I,
+            input[3:0] op, input flip, input type);
+
+    wire[31:0] Z, X, Y, O, Is;
+    reg[31:0] rhs;
+    wire[31:0] Xu, Ou;
+    // TODO signed net or integer support
+    wire[31:0] Xs, Os, As;
+
+    assign Xs = X;
+    assign Xu = X;
+
+    assign Is = { {20{I[11]}}, I };
+    assign Ou = (type == 0) ? Y  : Is;
+    assign Os = (type == 0) ? Y  : Is;
+    assign As = (type == 0) ? Is : Y;
+
+    always @(negedge clk) begin
+        case (op)
+            4'b0000: rhs =  (Xu  |  Ou) + As; // X bitwise or Y
+            4'b0001: rhs =  (Xu  &  Ou) + As; // X bitwise and Y
+            4'b0010: rhs =  (Xs  +  Os) + As; // X add Y
+            4'b0011: rhs =  (Xs  *  Os) + As; // X multiply Y
+          //4'b0100:                          // reserved
+            4'b0101: rhs =  (Xu  << Ou) + As; // X shift left Y
+            4'b0110: rhs =  (Xs  <= Os) + As; // X compare <= Y
+            4'b0111: rhs =  (Xs  == Os) + As; // X compare == Y
+            4'b1000: rhs = ~(Xu  |  Ou) + As; // X bitwise nor Y
+            4'b1001: rhs = ~(Xu  &  Ou) + As; // X bitwise nand Y
+            4'b1010: rhs =  (Xu  ^  Ou) + As; // X bitwise xor Y
+            4'b1011: rhs =  (Xs  + -Os) + As; // X add two's complement Y
+            4'b1100: rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
+            4'b1101: rhs =  (Xu  >> Ou) + As; // X shift right logical Y
+            4'b1110: rhs =  (Xs  >  Os) + As; // X compare > Y
+            4'b1111: rhs =  (Xs  != Os) + As; // X compare <> Y
+
+            default: $stop;
+        endcase
+    end
+
+endmodule
+
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data);
     wire _operand_rw, reg_rw;
@@ -160,6 +202,10 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire flip, illegal, type;
     reg writing = 0;
     reg reading = 0;
+    reg[31:0] rhs;
+    wire[31:0] _rhs;
+
+    always @(negedge clk) rhs <= _rhs;
 
     Reg regs(.clk(clk),
             .rwZ(reg_rw), .indexZ(reg_indexZ), .valueZ(_reg_dataZ),
@@ -167,8 +213,11 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
                           .indexY(reg_indexY), .valueY(_reg_dataY),
             .pc(pc));
 
-    Decode decode(.insn(insn), .Z(_reg_indexZ), .X(_reg_indexX), .Y(_reg_indexY),
-                  .I(_reg_dataI), .op(op), .flip(flip));
+    Decode decode(.insn(insn), .Z(_reg_indexZ), .X(_reg_indexX),
+                  .Y(_reg_indexY), .I(_reg_dataI), .op(op), .flip(flip));
+    Exec exec(.clk(clk), .rhs(_rhs), .Z(_reg_dataZ), .X(_reg_dataX),
+              .Y(_reg_dataY), .I(_reg_dataI), .op(op), .flip(flip),
+              .type(type));
 endmodule
 
 module Top();
