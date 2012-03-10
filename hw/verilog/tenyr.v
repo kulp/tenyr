@@ -59,19 +59,23 @@ module Reg(input clk,
     assign valueY = r_valueY;
 
     always @(negedge clk) begin
-        r_rwZ <= #3 rwZ;
-        if (rwZ)
+        r_rwZ <= rwZ;
+        if (rwZ) begin
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
-                store[indexZ] <= #3 valueZ;
+                store[indexZ] <= valueZ;
             end
-        else begin
-            r_valueZ <= #3 store[indexZ];
         end
+    end
 
-        r_valueX <= #3 store[indexX];
-        r_valueY <= #3 store[indexY];
+    always @(indexZ) begin
+        r_valueZ <= store[indexZ];
+    end
+
+    always @(negedge clk or indexX or indexY) begin
+        r_valueX <= store[indexX];
+        r_valueY <= store[indexY];
     end
 
 endmodule
@@ -118,6 +122,35 @@ module Core(input clk, output mem_rw, output[23:0] _addr, inout[31:0] _data);
         addr <= pc;
         insn <= #(`RAMDELAY) _data;
     end
+
+endmodule
+
+module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
+              output[3:0] op, output[1:0] deref, output flip, type);
+
+    wire[31:0] insn;
+    reg[3:0] rZ, rX, rY, rop;
+    reg[11:0] rI;
+    reg[1:0] rderef;
+    reg rflip, rtype;
+
+    assign Z = rZ, X = rX, Y = rY, op = rop, deref = rderef, flip = rflip,
+           type = rtype;
+
+    always @(insn) casex (insn[31:28])
+        4'b0???: begin
+            rderef <= { insn[29] & ~insn[28], insn[28] };
+            rflip  <= insn[29] & insn[28];
+            rtype  <= insn[30];
+
+            rZ  <= insn[27:24];
+            rX  <= insn[23:20];
+            rY  <= insn[19:16];
+            rop <= insn[15:12];
+            rI  <= insn[11: 0];
+        end
+        default: $stop(1);
+    endcase
 
 endmodule
 
