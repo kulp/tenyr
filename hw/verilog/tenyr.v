@@ -135,16 +135,16 @@ module Core(input clk, output mem_rw, output[23:0] _addr, inout[31:0] _data);
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output flip, type);
+              output[3:0] op, output[1:0] deref, output flip, type, illegal);
 
     wire[31:0] insn;
     reg[3:0] rZ, rX, rY, rop;
     reg[11:0] rI;
     reg[1:0] rderef;
-    reg rflip, rtype;
+    reg rflip, rtype, rillegal;
 
     assign Z = rZ, X = rX, Y = rY, op = rop, deref = rderef, flip = rflip,
-           type = rtype;
+           type = rtype, illegal = rillegal;
 
     always @(insn) casex (insn[31:28])
         4'b0???: begin
@@ -158,6 +158,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
             rop <= insn[15:12];
             rI  <= insn[11: 0];
         end
+        4'b1111: rillegal <= &insn;
         default: $stop(1);
     endcase
 
