@@ -5,53 +5,61 @@ module Test();
     always #5 clk = !clk;
 
     Top top();
-    reg[23:0] mem_addr;
-    reg[31:0] mem_data;
-    wire[31:0] _mem_data = (mem_enable && writing) ? mem_data : 'bz;
+    reg[23:0] operand_addr, insn_addr;
+    reg[31:0] operand_data, insn_data;
+    wire[31:0] _operand_data = (mem_enable && writing) ? operand_data : 'bz;
+    wire[31:0] _insn_data;
+    always @(negedge clk) insn_data <= _insn_data;
     reg writing = 0;
     reg reading = 0;
 
     reg[31:0] val;
 
     wire mem_enable = reading ^ writing;
-    Mem #(.BASE(0), .SIZE(4)) testmem0(clk, mem_enable, writing, mem_addr, _mem_data);
-    Mem #(.BASE(4), .SIZE(4)) testmem1(clk, mem_enable, writing, mem_addr, _mem_data);
+    Mem #(.BASE(0), .SIZE(4))
+        testmem0(.clk(clk), .enable(mem_enable), .p0rw(writing),
+                 .p0_addr(operand_addr), .p0_data(_operand_data),
+                 .p1_addr(pc), .p1_data(_insn_data));
+    Mem #(.BASE(4), .SIZE(4))
+        testmem1(.clk(clk), .enable(mem_enable), .p0rw(writing),
+                 .p0_addr(operand_addr), .p0_data(_operand_data),
+                 .p1_addr(pc), .p1_data(_insn_data));
 
     always @(negedge clk) begin
         if (reading)
-            mem_data <= _mem_data;
+            operand_data <= _operand_data;
     end
 
     initial #0 begin
         #1;
 
-        mem_addr = 2;
-        mem_data = 3;
+        operand_addr = 2;
+        operand_data = 3;
         writing = 1;
         #10 writing = 0;
 
         #10;
 
-        mem_addr = 5;
-        mem_data = 6;
+        operand_addr = 5;
+        operand_data = 6;
         writing = 1;
         #10 writing = 0;
 
         #10;
 
-        mem_addr = 2;
-        mem_data = 0;
+        operand_addr = 2;
+        operand_data = 0;
         reading = 1;
         #10 reading = 0;
-        val = mem_data;
+        val = operand_data;
 
         #10;
 
-        mem_addr = 5;
-        mem_data = 0;
+        operand_addr = 5;
+        operand_data = 0;
         reading = 1;
         #10 reading = 0;
-        val = mem_data;
+        val = operand_data;
 
     end
 

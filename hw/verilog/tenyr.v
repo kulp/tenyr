@@ -3,33 +3,42 @@
 `define CLOCKPERIOD 5
 `define RAMDELAY (1 * `CLOCKPERIOD)
 
-module Mem(input clk, input enable, input rw, input[23:0] _addr, inout[31:0] _data);
-    parameter BASE = 0;
-    parameter SIZE = 1 << 24;
+// Two-port memory required if we don't have wait states ; one instruction
+// fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
+module Mem(input clk, input enable, input p0rw,
+        input[23:0] p0_addr, inout[31:0] p0_data,
+        input[23:0] p1_addr, inout[31:0] p1_data
+        );
+    parameter BASE = 1 << 12;
+    parameter SIZE = (1 << 24) - (1 << 12);
 
     reg[23:0] ram[(SIZE + BASE - 1):BASE];
-    // it's not strictly necessary to register the address, so perhaps elide
-    reg[23:0] addr = 0;
-    reg[31:0] data = 0;
+    reg[31:0] p0data = 0;
+    reg[31:0] p1data = 0;
 
-    reg sticky = 0;
+    wire p0_inrange, p1_inrange;
 
-    assign _data = (enable && !rw && sticky) ? data : 'bz;
+    assign p0_data = (enable && !p0rw && p0_inrange) ? p0data : 'bz;
+    assign p1_data = enable ? p1data : 'bz;
+
+    assign p0_inrange = (p0_addr >= BASE && p0_addr < SIZE + BASE);
+    assign p1_inrange = (p1_addr >= BASE && p1_addr < SIZE + BASE);
 
     always @(negedge clk) begin
-        if (enable && _addr >= BASE && _addr < SIZE + BASE) begin
-            addr = _addr;
-            sticky = 1;
-
-            // rw = 1 is writing
-            if (rw) begin
-                data = _data;
-                ram[addr] = data;
-            end else begin
-                data = ram[addr];
+        if (enable) begin
+            if (p0_inrange) begin
+                // rw = 1 is writing
+                if (p0rw) begin
+                    p0data = p0_data;
+                    ram[p0_addr] = p0data;
+                end else begin
+                    p0data = ram[p0_addr];
+                end
             end
-        end else
-            sticky = 0;
+
+            if (p1_inrange)
+                p1data = ram[p1_addr];
+        end
     end
 
 endmodule
@@ -159,11 +168,15 @@ module Top();
 
     always #(`CLOCKPERIOD) clk = !clk;
 
-    wire _mem_rw;
-    wire[23:0] _mem_addr;
-    wire[31:0] _mem_data;
+    wire _operand_rw;
+    wire[23:0] _insn_addr, _operand_addr;
+    wire[31:0] _insn_data, _operand_data;
 
-    Mem #(.BASE(0), .SIZE(1 << 12)) ram(clk, 'b1, _mem_rw, _mem_addr, _mem_data);
-    Core core(clk, _mem_rw, _mem_addr, _mem_data);
+    // TODO make BASE (1 << 12)
+    Mem #(.BASE(0), .SIZE(1 << 12))
+        ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
+            .p0_addr(_operand_addr), .p0_data(_operand_data),
+            .p1_addr(_insn_addr)   , .p1_data(_insn_data));
+    Core core(clk, _operand_rw, _operand_addr, _operand_data);
 endmodule
 
