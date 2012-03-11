@@ -119,3 +119,37 @@ int run_instruction(struct sim_state *s, struct instruction *i)
 }
 
 
+int run_sim(struct sim_state *s, struct run_ops *ops)
+{
+    while (1) {
+        assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
+        struct instruction i;
+        s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
+
+		if (ops->pre_insn)
+			ops->pre_insn(s, &i);
+
+        if (run_instruction(s, &i))
+            return 1;
+    }
+}
+
+int load_sim(struct sim_state *s, const struct format *f, FILE *in,
+        int load_address, int start_address)
+{
+    void *ud;
+    if (f->init)
+        f->init(in, ASM_DISASSEMBLE, &ud);
+
+    struct instruction i;
+    while (f->in(in, &i, ud) > 0) {
+        s->dispatch_op(s, OP_WRITE, load_address++, &i.u.word);
+    }
+
+    if (f->fini)
+        f->fini(in, &ud);
+
+    s->machine.regs[15] = start_address & PTR_MASK;
+    return 0;
+}
+

@@ -3,9 +3,11 @@
 
 #include "ops.h"
 #include "machine.h"
+#include "asm.h"
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 
 struct sim_state;
 
@@ -34,7 +36,14 @@ struct sim_state {
     struct machine_state machine;
 };
 
+struct run_ops {
+	int (*pre_insn)(struct sim_state *s, struct instruction *i);
+};
+
 int run_instruction(struct sim_state *s, struct instruction *i);
+int run_sim(struct sim_state *s, struct run_ops *ops);
+int load_sim(struct sim_state *s, const struct format *f, FILE *in,
+        int load_address, int start_address);
 
 #endif
 

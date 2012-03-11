@@ -280,57 +280,6 @@ static int add_recipe(struct sim_state *s, const char *name)
     }
 }
 
-static int run_sim(struct sim_state *s)
-{
-    while (1) {
-        assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
-        struct instruction i;
-        int len = 0;
-        s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
-
-        if (s->conf.verbose > 0)
-            printf("IP = 0x%06x\t", s->machine.regs[15]);
-        if (s->conf.verbose > 1)
-            len = print_disassembly(stdout, &i, ASM_AS_INSN);
-        if (s->conf.verbose > 1)
-            fprintf(stdout, "%*s# ", 30 - len, "");
-        if (s->conf.verbose > 1)
-            print_disassembly(stdout, &i, ASM_AS_DATA);
-        if (s->conf.verbose > 3)
-            fputs("\n", stdout);
-        if (s->conf.verbose > 3)
-            print_registers(stdout, s->machine.regs);
-        if (s->conf.verbose > 0)
-            fputs("\n", stdout);
-
-        if (run_instruction(s, &i))
-            return 1;
-    }
-}
-
-static int load_sim(struct sim_state *s, const struct format *f, FILE *in,
-        int load_address, int start_address)
-{
-    devices_setup(s);
-    run_recipes(s);
-    devices_finalise(s);
-
-    void *ud;
-    if (f->init)
-        f->init(in, ASM_DISASSEMBLE, &ud);
-
-    struct instruction i;
-    while (f->in(in, &i, ud) > 0) {
-        s->dispatch_op(s, OP_WRITE, load_address++, &i.u.word);
-    }
-
-    if (f->fini)
-        f->fini(in, &ud);
-
-    s->machine.regs[15] = start_address & PTR_MASK;
-    return 0;
-}
-
 static int set_breakpoint(void **breakpoints, int32_t addr)
 {
     struct breakpoint *old = kv_int_get(breakpoints, addr);
@@ -532,6 +481,28 @@ static int run_debugger(struct sim_state *s, FILE *stream)
     return 0;
 }
 
+static int pre_insn(struct sim_state *s, struct instruction *i)
+{
+    if (s->conf.verbose > 0)
+        printf("IP = 0x%06x\t", s->machine.regs[15]);
+
+    if (s->conf.verbose > 1) {
+        int len = print_disassembly(stdout, i, ASM_AS_INSN);
+        fprintf(stdout, "%*s# ", 30 - len, "");
+        print_disassembly(stdout, i, ASM_AS_DATA);
+    }
+
+    if (s->conf.verbose > 3) {
+        fputs("\n", stdout);
+        print_registers(stdout, s->machine.regs);
+    }
+
+    if (s->conf.verbose > 0)
+        fputs("\n", stdout);
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -603,12 +574,18 @@ int main(int argc, char *argv[])
         }
     }
 
+    devices_setup(s);
+    run_recipes(s);
+    devices_finalise(s);
+
     load_sim(s, f, in, load_address, start_address);
+
+    struct run_ops ops = { .pre_insn = pre_insn };
 
     if (s->conf.debugging)
         run_debugger(s, stdin);
     else
-        run_sim(s);
+        run_sim(s, &ops);
 
     if (in)
         fclose(in);
