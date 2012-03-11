@@ -112,8 +112,9 @@ static int find_device_by_addr(const void *_test, const void *_in)
     }
 }
 
-static int dispatch_op(struct sim_state *s, int op, uint32_t addr, uint32_t *data)
+static int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
 {
+    struct sim_state *s = ud;
     size_t count = s->machine.devices_count;
     struct device **device = bsearch(&addr, s->machine.devices, count, sizeof *device,
             find_device_by_addr);
@@ -578,7 +579,8 @@ int main(int argc, char *argv[])
     run_recipes(s);
     devices_finalise(s);
 
-    load_sim(s, f, in, load_address, start_address);
+    load_sim(s->dispatch_op, s, f, in, load_address);
+    s->machine.regs[15] = start_address & PTR_MASK;
 
     struct run_ops ops = { .pre_insn = pre_insn };
 

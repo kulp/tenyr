@@ -20,6 +20,8 @@ struct recipe_book {
     struct recipe_book *next;
 };
 
+typedef int op_dispatcher(void *ud, int op, uint32_t addr, uint32_t *data);
+
 struct sim_state {
     struct {
         int abort;
@@ -29,7 +31,7 @@ struct sim_state {
         int debugging;
     } conf;
 
-    int (*dispatch_op)(struct sim_state *s, int op, uint32_t addr, uint32_t *data);
+	op_dispatcher *dispatch_op;
 
     struct recipe_book *recipes;
 
@@ -42,8 +44,8 @@ struct run_ops {
 
 int run_instruction(struct sim_state *s, struct instruction *i);
 int run_sim(struct sim_state *s, struct run_ops *ops);
-int load_sim(struct sim_state *s, const struct format *f, FILE *in,
-        int load_address, int start_address);
+int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
+		FILE *in, int load_address);
 
 #endif
 
