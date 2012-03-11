@@ -1,11 +1,9 @@
-#include <vpi_user.h>
+#include "tenyr_vpi.h"
+
 #include <stdlib.h>
 
 static void *user_data = NULL;
 static void *pud = (void*)&user_data;
-
-typedef int tenyr_sim_cb(p_cb_data data);
-typedef int tenyr_sim_tf();
 
 void register_genesis(void)
 {

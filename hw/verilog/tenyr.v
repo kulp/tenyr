@@ -31,7 +31,7 @@ module Mem(input clk, input enable, input p0rw,
     parameter BASE = 1 << 12;
     parameter SIZE = (1 << 24) - (1 << 12);
 
-    reg[31:0] ram[(SIZE + BASE - 1):BASE];
+    reg[31:0] store[(SIZE + BASE - 1):BASE];
     reg[31:0] p0data = 0;
     reg[31:0] p1data = 0;
 
@@ -49,14 +49,14 @@ module Mem(input clk, input enable, input p0rw,
                 // rw = 1 is writing
                 if (p0rw) begin
                     p0data = p0_data;
-                    ram[p0_addr] = p0data;
+                    store[p0_addr] = p0data;
                 end else begin
-                    p0data = ram[p0_addr];
+                    p0data = store[p0_addr];
                 end
             end
 
             if (p1_inrange)
-                p1data = ram[p1_addr];
+                p1data = store[p1_addr];
         end
     end
 
@@ -133,7 +133,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
             rI  <= insn[ 0 +:12];
         end
         4'b1111: rillegal <= &insn;
-        default: $stop(1);
+        default: $stop;
     endcase
 
 endmodule
