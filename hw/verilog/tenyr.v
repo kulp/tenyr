@@ -77,9 +77,10 @@ module Reg(input clk,
 
     generate
         genvar i;
-        for (i = 0; i < 16; i = i + 1)
+        for (i = 0; i < 15; i = i + 1)
             initial #0 store[i] = 'b0;
     endgenerate
+    initial #0 store[15] = 4096;
 
     assign pc = store[15];
     assign valueZ = rwZ ? 'bz : r_valueZ;
@@ -117,8 +118,8 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
     reg[1:0] rderef;
     reg rflip, rtype, rillegal;
 
-    assign Z = rZ, X = rX, Y = rY, op = rop, deref = rderef, flip = rflip,
-           type = rtype, illegal = rillegal;
+    assign Z = rZ, X = rX, Y = rY, I = rI, op = rop, deref = rderef,
+           flip = rflip, type = rtype, illegal = rillegal;
 
     always @(insn) casex (insn[31:28])
         4'b0???: begin
@@ -133,7 +134,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
             rI  <= insn[ 0 +:12];
         end
         4'b1111: rillegal <= &insn;
-        default: $stop;
+        //default: $stop;
     endcase
 
 endmodule
@@ -174,7 +175,7 @@ module Exec(input clk, output[31:0] rhs, input[31:0] Z, X, Y, input[11:0] I,
             4'b1110: rhs =  (Xs  >  Os) + As; // X compare > Y
             4'b1111: rhs =  (Xs  != Os) + As; // X compare <> Y
 
-            default: $stop;
+            //default: $stop;
         endcase
     end
 
@@ -182,20 +183,14 @@ endmodule
 
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data);
-    wire _norm_rw, reg_rw;
-    wire[31:0] pc  , _operand_addr;
-    wire[31:0] insn, _operand_data;
-    reg[3:0] reg_indexZ,
-             reg_indexX,
-             reg_indexY;
+    wire _norm_rw;
+    wire[31:0] pc, _operand_addr;
+    wire[31:0] _operand_data;
     wire[3:0] _reg_indexZ,
               _reg_indexX,
               _reg_indexY;
-    reg[31:0] reg_dataZ,
-              reg_dataX,
-              reg_dataY,
-              reg_dataI;
-    wire[31:0] _reg_dataZ = reg_rw ? reg_dataZ : 'bz;
+    reg[31:0] reg_dataZ;
+    wire[31:0] _reg_dataZ = reg_rw ? rhs : 'bz;
     wire[31:0] _reg_dataX, _reg_dataY;
     wire[11:0] _reg_dataI;
     wire[3:0] op;
@@ -211,16 +206,20 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
     wire norm_rw = deref[1];
+    assign insn_addr = pc;
+    //  Z  <-  ...  -- deref == 00
+    //  Z  <- [...] -- deref == 01
+    wire reg_rw = ~deref[0];
 
     Reg regs(.clk(clk),
-            .rwZ(reg_rw), .indexZ(reg_indexZ), .valueZ(_reg_dataZ),
-                          .indexX(reg_indexX), .valueX(_reg_dataX),
-                          .indexY(reg_indexY), .valueY(_reg_dataY),
+            .rwZ(reg_rw), .indexZ(_reg_indexZ), .valueZ(_reg_dataZ),
+                          .indexX(_reg_indexX), .valueX(_reg_dataX),
+                          .indexY(_reg_indexY), .valueY(_reg_dataY),
             .pc(pc));
 
-    Decode decode(.insn(insn), .Z(_reg_indexZ), .X(_reg_indexX),
+    Decode decode(.insn(insn_data), .Z(_reg_indexZ), .X(_reg_indexX),
                   .Y(_reg_indexY), .I(_reg_dataI), .op(op), .flip(flip),
-                  .deref(deref));
+                  .deref(deref), .type(type));
     Exec exec(.clk(clk), .rhs(_rhs), .Z(_reg_dataZ), .X(_reg_dataX),
               .Y(_reg_dataY), .I(_reg_dataI), .op(op), .flip(flip),
               .type(type));
@@ -232,6 +231,12 @@ module Top();
     wire[31:0] pc, _operand_addr;
     wire[31:0] insn, _operand_data;
     wire _operand_rw;
+
+    initial #0 begin
+        $dumpfile("Top.vcd");
+        $dumpvars;
+        #100 $finish;
+    end
 
     Mem ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
             .p0_addr(_operand_addr), .p0_data(_operand_data),

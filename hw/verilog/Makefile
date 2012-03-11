@@ -13,7 +13,6 @@ all: tenyr glue.vpi
 
 tenyr: VFLAGS += -m glue
 tenyr: | glue.vpi
-tenyr: tb.v
 
 glue.vpi: callbacks.o serial.o load.o ../../sim.o ../../asm.o ../../obj.o ../../common.o
 
