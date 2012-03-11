@@ -48,8 +48,7 @@ module Mem(input clk, input enable, input p0rw,
             if (p0_inrange) begin
                 // rw = 1 is writing
                 if (p0rw) begin
-                    p0data = p0_data;
-                    store[p0_addr] = p0data;
+                    store[p0_addr] = p0_data;
                 end else begin
                     p0data = store[p0_addr];
                 end
@@ -66,13 +65,14 @@ module Reg(input clk,
         input rwZ, input[3:0] indexZ, inout [31:0] valueZ, // Z is RW
                    input[3:0] indexX, output[31:0] valueX, // X is RO
                    input[3:0] indexY, output[31:0] valueY, // Y is RO
-        output[31:0] pc);
+        inout[31:0] pc, input rwP);
 
     reg[31:0] store[0:15];
     reg[31:0] r_valueZ = 0,
               r_valueX = 0,
               r_valueY = 0;
 
+    wire rwP;
     reg r_rwZ = 0;
 
     generate
@@ -80,7 +80,7 @@ module Reg(input clk,
         for (i = 0; i < 15; i = i + 1)
             initial #0 store[i] = 'b0;
     endgenerate
-    initial #0 store[15] = 4096;
+    initial #0 store[15] = 4096; // TODO move out and replace with real reset vector
 
     assign pc = store[15];
     assign valueZ = rwZ ? 'bz : r_valueZ;
@@ -88,12 +88,14 @@ module Reg(input clk,
     assign valueY = r_valueY;
 
     always @(negedge clk) begin
+        if (rwP)
+            store[15] = pc;
         r_rwZ <= rwZ;
         if (rwZ) begin
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
-                store[indexZ] <= valueZ;
+                store[indexZ] = valueZ;
             end
         end
     end
@@ -184,7 +186,6 @@ endmodule
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data);
     wire _norm_rw;
-    wire[31:0] pc, _operand_addr;
     wire[31:0] _operand_data;
     wire[3:0] _reg_indexZ,
               _reg_indexX,
@@ -203,19 +204,29 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
 
     always @(negedge clk) rhs <= _rhs;
 
+    wire[31:0] pc;
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
     wire norm_rw = deref[1];
-    assign insn_addr = pc;
+    assign insn_addr = rpc;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
     wire reg_rw = ~deref[0];
+    wire jumping = _reg_indexZ == 15 && reg_rw;
+    wire writeP = !jumping;
+    reg[31:0] rpc = 4096; // TODO
+    reg[31:0] new_pc = 3096, next_pc = 4096; // TODO
+    //assign pc = jumping ? new_pc : next_pc;
+    //assign pc = next_pc;
+    always @(negedge clk) next_pc <= pc + 1;
+    always @(negedge clk) new_pc <= _reg_dataZ;
+    always @(negedge clk) rpc <= jumping ? new_pc : next_pc;
 
     Reg regs(.clk(clk),
             .rwZ(reg_rw), .indexZ(_reg_indexZ), .valueZ(_reg_dataZ),
                           .indexX(_reg_indexX), .valueX(_reg_dataX),
                           .indexY(_reg_indexY), .valueY(_reg_dataY),
-            .pc(pc));
+            .pc(pc), .rwP(writeP));
 
     Decode decode(.insn(insn_data), .Z(_reg_indexZ), .X(_reg_indexX),
                   .Y(_reg_indexY), .I(_reg_dataI), .op(op), .flip(flip),
@@ -235,7 +246,7 @@ module Top();
     initial #0 begin
         $dumpfile("Top.vcd");
         $dumpvars;
-        #100 $finish;
+        #500 $finish;
     end
 
     Mem ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
