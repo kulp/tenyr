@@ -1,7 +1,10 @@
 VPI_CFLAGS := $(shell iverilog-vpi --cflags)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
+CFLAGS += -I../../src
 
+ifdef DEBUG
 CFLAGS += -O0 -g
+endif
 
 all: tenyr glue.vpi
 
@@ -11,7 +14,7 @@ tenyr: VFLAGS += -m glue
 tenyr: | glue.vpi
 tenyr: tb.v
 
-glue.vpi: callbacks.o serial.o load.o
+glue.vpi: callbacks.o serial.o load.o ../../sim.o ../../asm.o ../../obj.o ../../common.o
 
 %: %.v
 	iverilog $(VFLAGS) -Wall -o $@ $^

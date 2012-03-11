@@ -1,5 +1,6 @@
 #include "tenyr_vpi.h"
 
+#include "common.h"
 #include <stdlib.h>
 
 int tenyr_sim_genesis(p_cb_data data)
@@ -21,6 +22,11 @@ int tenyr_sim_genesis(p_cb_data data)
 
     vpi_register_cb(&cbd);
 
+    int rc = 0;
+    if ((rc = setjmp(errbuf)))
+        exit(rc);
+
+    // TODO filename
     tenyr_sim_load(d, "filename");
 
     if (d->cb.genesis)

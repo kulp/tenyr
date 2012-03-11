@@ -126,8 +126,8 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
         struct instruction i;
         s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
 
-		if (ops->pre_insn)
-			ops->pre_insn(s, &i);
+        if (ops->pre_insn)
+            ops->pre_insn(s, &i);
 
         if (run_instruction(s, &i))
             return 1;
@@ -135,7 +135,7 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
 }
 
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
-		FILE *in, int load_address)
+        FILE *in, int load_address)
 {
     void *ud;
     if (f->init)
@@ -143,6 +143,7 @@ int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
 
     struct instruction i;
     while (f->in(in, &i, ud) > 0) {
+        // TODO stop assuming addresses are contiguous and monotonic
         dispatch_op(sud, OP_WRITE, load_address++, &i.u.word);
     }
 
