@@ -6,6 +6,11 @@
 int tenyr_sim_genesis(p_cb_data data)
 {
     struct tenyr_sim_state *d = *(void**)data->user_data = calloc(1, sizeof *d);
+
+#if DEBUG
+    d->debug = DEBUG;
+#endif
+
     if (d->debug > 4)
         vpi_printf("%s ; userdata = %p\n", __func__, data->user_data);
 

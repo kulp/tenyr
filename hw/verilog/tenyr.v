@@ -28,7 +28,7 @@ module Mem(input clk, input enable, input p0rw,
         input[31:0] p0_addr, inout[31:0] p0_data,
         input[31:0] p1_addr, inout[31:0] p1_data
         );
-    parameter BASE = 1 << 12;
+    parameter BASE = 1 << 12; // TODO pull from environmental define
     parameter SIZE = (1 << 24) - (1 << 12);
 
     reg[31:0] store[(SIZE + BASE - 1):BASE];

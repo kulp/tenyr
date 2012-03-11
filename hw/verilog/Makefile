@@ -4,6 +4,7 @@ CFLAGS += -I../../src
 
 ifdef DEBUG
 CFLAGS += -O0 -g
+CFLAGS += -DDEBUG=$(DEBUG)
 endif
 
 all: tenyr glue.vpi

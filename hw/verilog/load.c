@@ -15,11 +15,26 @@ struct dispatch_userdata {
 static int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
 {
     struct dispatch_userdata *d = ud;
+    struct tenyr_sim_state *s = d->state;
 
     vpiHandle word = vpi_handle_by_index(d->array, addr);
-    vpi_printf("\t%s\n", vpi_get_str(vpiName, word));
-    vpi_printf("\t%s\n", vpi_get_str(vpiType, word));
-    // TODO real work
+    struct t_vpi_value argval = { .format = vpiIntVal };
+    switch (op) {
+        case OP_WRITE:
+            argval.value.integer = *data;
+            vpi_put_value(word, &argval, NULL, vpiNoDelay);
+            if (s->debug > 4)
+                vpi_printf("put value %#x @ %#x\n", *data, addr);
+            break;
+        case OP_READ:
+            vpi_get_value(word, &argval);
+            *data = argval.value.integer;
+            if (s->debug > 4)
+                vpi_printf("got value %#x @ %#x\n", *data, addr);
+            break;
+        default:
+            fatal(0, "Invalid op type %d", op);
+    }
 
     return 0;
 }
@@ -28,7 +43,6 @@ static int get_range(vpiHandle from, int which)
 {
     vpiHandle lr = vpi_handle(which, from);
     struct t_vpi_value argval = { .format = vpiIntVal };
-    argval.format = vpiIntVal;
     vpi_get_value(lr, &argval);
     return argval.value.integer;
 }
