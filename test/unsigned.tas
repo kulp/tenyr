@@ -1,7 +1,7 @@
-b <- 0xffd
+b <- $-3
 c <- -3
 d <- b + -2
-e <- b + 0xffe
+e <- b + $-2
 f <- c + -2
-g <- c + 0xffe
+g <- c + $-2
 illegal

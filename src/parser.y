@@ -73,7 +73,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %type <ce> const_expr pconst_expr preloc_expr unsigned_greloc_expr signed_greloc_expr greloc_expr
 %type <ce> reloc_expr signed_immediate_atom const_atom unsigned_const_atom eref
 %type <cl> reloc_expr_list
-%type <expr> rhs rhs_plain rhs_plain_type0 rhs_plain_type1 rhs_deref lhs_plain lhs_deref
+%type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
 %type <i> arrow signed_immediate unsigned_immediate regname reloc_op
 %type <insn> insn insn_inner
 %type <op> op signed_op unsigned_op
@@ -216,30 +216,24 @@ rhs
     | rhs_deref
 
 rhs_plain
-    : rhs_plain_type0
-    | rhs_plain_type1
-
-rhs_plain_type0
     : regname[x] op regname[y] addsub greloc_expr
-        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $greloc_expr); }
+        { $rhs_plain = make_expr_type0($x, $op, $y, $addsub, $greloc_expr); }
     | regname[x] op regname[y]
-        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, 0, NULL); }
-    | regname[x] signed_op greloc_expr
-        { $rhs_plain_type0 = make_expr_type0($x, $signed_op, 0, 1, $greloc_expr); }
+        { $rhs_plain = make_expr_type0($x, $op, $y, 0, NULL); }
     | regname[x]
-        { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
-
-rhs_plain_type1
-    : regname[x] signed_op signed_greloc_expr addsub regname[y]
-        { $rhs_plain_type1 = make_expr_type1($x, $signed_op, $signed_greloc_expr, $y); }
-    | regname[x] unsigned_op unsigned_greloc_expr addsub regname[y]
-        { $rhs_plain_type1 = make_expr_type1($x, $unsigned_op, $unsigned_greloc_expr, $y); }
-    | regname[x] unsigned_op greloc_expr
-        { $rhs_plain_type1 = make_expr_type1($x, $unsigned_op, $greloc_expr, 0); }
-    | unsigned_greloc_expr
-        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $unsigned_greloc_expr, 0); }
+        { $rhs_plain = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
     | signed_greloc_expr
-        { $rhs_plain_type1 = make_expr_type1(0, OP_ADD, $signed_greloc_expr, 0); }
+        { $rhs_plain = make_expr_type0(0, OP_ADD, 0, 1, $signed_greloc_expr); }
+    | regname[x] signed_op signed_greloc_expr addsub regname[y]
+        { $rhs_plain = make_expr_type1($x, $signed_op, $signed_greloc_expr, $y); }
+    | regname[x] unsigned_op unsigned_greloc_expr addsub regname[y]
+        { $rhs_plain = make_expr_type1($x, $unsigned_op, $unsigned_greloc_expr, $y); }
+    | regname[x] unsigned_op greloc_expr
+        { $rhs_plain = make_expr_type1($x, $unsigned_op, $greloc_expr, 0); }
+    | regname[x] signed_op greloc_expr
+        { $rhs_plain = make_expr_type1($x, $signed_op, $greloc_expr, 0); }
+    | unsigned_greloc_expr
+        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $unsigned_greloc_expr, 0); }
 
 rhs_deref
     : '[' rhs_plain ']'
