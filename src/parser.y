@@ -70,10 +70,11 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
 
-%type <ce> const_expr pconst_expr preloc_expr greloc_expr reloc_expr const_atom eref
+%type <ce> const_expr pconst_expr preloc_expr pos_greloc_expr neg_greloc_expr greloc_expr
+%type <ce> reloc_expr neg_immediate_atom const_atom pos_const_atom eref
 %type <cl> reloc_expr_list
 %type <expr> rhs rhs_plain rhs_plain_type0 rhs_plain_type1 rhs_deref lhs_plain lhs_deref
-%type <i> arrow immediate regname reloc_op
+%type <i> arrow neg_immediate pos_immediate regname reloc_op
 %type <insn> insn insn_inner
 %type <op> op
 %type <program> program ascii utf32 data string_or_data
@@ -223,14 +224,16 @@ rhs_plain_type0
         { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $greloc_expr); }
     | regname[x] op regname[y]
         { $rhs_plain_type0 = make_expr_type0($x, $op, $y, 0, NULL); }
+    | regname[x] op neg_greloc_expr
+        { $rhs_plain_type0 = make_expr_type0($x, $op, 0, 0, $neg_greloc_expr); }
     | regname[x]
         { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
 
 rhs_plain_type1
     : regname[x] op greloc_expr addsub regname[y]
         { $rhs_plain_type1 = make_expr_type1($x, $op, $greloc_expr, $y); }
-    | regname[x] op greloc_expr
-        { $rhs_plain_type1 = make_expr_type1($x, $op, $greloc_expr, 0); }
+    | regname[x] op pos_greloc_expr
+        { $rhs_plain_type1 = make_expr_type1($x, $op, $pos_greloc_expr, 0); }
     | greloc_expr
         { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $greloc_expr, 0); }
 
@@ -242,7 +245,13 @@ rhs_deref
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
 
-immediate
+/* negative immediates control sign extension to differentiate between
+ * `B <- -3' and `B <- 0xffd' */
+neg_immediate
+    : '-' INTEGER
+        {   $neg_immediate = -$INTEGER; }
+
+pos_immediate
     : INTEGER
 
 addsub
@@ -274,11 +283,20 @@ reloc_op
     : '+' { $$ = '+'; }
     | '-' { $$ = '-'; }
 
-/* guarded reloc_expr : either a single term, or a parenthesised reloc_expr */
-greloc_expr
+/* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
+/* positive greloc_expr : anything except an immediate starting with a `-' */
+pos_greloc_expr
     : eref
-    | const_atom
+    | pos_const_atom
     | preloc_expr
+
+neg_greloc_expr
+    : neg_immediate_atom
+
+/* any greloc_expr : pos_greloc_expr or a negative immediate */
+greloc_expr
+    : pos_greloc_expr
+    | neg_greloc_expr
 
 reloc_expr[outer]
     : const_expr
@@ -297,22 +315,31 @@ const_expr[outer]
         {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
 
 const_atom
+    : neg_immediate_atom
+    | pos_const_atom
+
+neg_immediate_atom
+    : neg_immediate
+        {   $neg_immediate_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
+            $neg_immediate_atom->i = $neg_immediate; }
+
+pos_const_atom
     : pconst_expr
-    | immediate
-        {   $const_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
-            $const_atom->i = $immediate; }
+    | pos_immediate
+        {   $pos_const_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
+            $pos_const_atom->i = $pos_immediate; }
     | LOCAL
-        {   $const_atom = make_const_expr(CE_SYM, 0, NULL, NULL);
+        {   $pos_const_atom = make_const_expr(CE_SYM, 0, NULL, NULL);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL))) {
-                $const_atom->symbol = s;
+                $pos_const_atom->symbol = s;
             } else {
-                strncpy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname);
-                $const_atom->symbolname[sizeof $const_atom->symbolname - 1] = 0;
+                strncpy($pos_const_atom->symbolname, $LOCAL, sizeof $pos_const_atom->symbolname);
+                $pos_const_atom->symbolname[sizeof $pos_const_atom->symbolname - 1] = 0;
             }
         }
     | '.'
-        {   $const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
+        {   $pos_const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
 
 preloc_expr
     : '(' reloc_expr ')'
