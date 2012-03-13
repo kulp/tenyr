@@ -4,8 +4,8 @@
 `define RAMDELAY (1 * `CLOCKPERIOD)
 
 module SimSerial(input clk, input enable, input rw,
-        input[31:0] addr, inout[31:0] data
-        );
+        input[31:0] addr, inout[31:0] data,
+        input _reset);
     parameter BASE = 1 << 5;
     parameter SIZE = 2;
 
@@ -150,7 +150,8 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
 endmodule
 
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
-            output rw, output[31:0] norm_addr, inout[31:0] norm_data);
+            output rw, output[31:0] norm_addr, inout[31:0] norm_data,
+            input _reset);
     reg[31:0] norm_addr = 0;
 
     wire[3:0]  indexX, indexY, indexZ;
@@ -169,19 +170,27 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     //  Z  <- [...] -- deref == 01
     wire reg_rw = ~deref[0] && indexZ != 0;
     wire jumping = indexZ == 15 && reg_rw;
-    wire writeP = 1; //XXX !jumping;
-    reg[31:0] insn_addr = 4096; // TODO
-    reg[31:0] new_pc = 4096, next_pc = 4096; // TODO
+    // TODO use proper reset vectors
+    reg[31:0] insn_addr = 'h1000,
+              new_pc    = 'h1000,
+              next_pc   = 'h1000;
     wire[31:0] pc = jumping ? new_pc : next_pc;
 
     always @(negedge clk) begin
-        next_pc <= #2 pc + 1;
-        if (jumping)
-            new_pc <= #2 valueZ;
-        insn_addr <= #2 pc;
+        if (!_reset) begin
+            // TODO use proper reset vectors
+            insn_addr = 'h1000;
+            new_pc    = 'h1000;
+            next_pc   = 'h1000;
+        end else begin
+            next_pc <= #2 pc + 1;
+            if (jumping)
+                new_pc <= #2 valueZ;
+            insn_addr <= #2 pc;
+        end
     end
 
-    Reg regs(.clk(clk), .pc(pc), .rwP(writeP), .rwZ(reg_rw),
+    Reg regs(.clk(clk), .pc(pc), .rwP('b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
 
@@ -195,28 +204,31 @@ endmodule
 
 module Top();
     reg halt = 1;
+    reg _reset = 0;
     reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
     always #(`CLOCKPERIOD / 2) if (!halt) clk = !clk;
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, operand_data;
     wire operand_rw;
 
-    initial #(`CLOCKPERIOD * 2) halt = 0;
+    initial #(2 * `CLOCKPERIOD) halt = 0;
+    initial #(1 * `CLOCKPERIOD) _reset = 1;
 
     initial #0 begin
         $dumpfile("Top.vcd");
         $dumpvars;
-        #100 $finish;
+        #(20 * `CLOCKPERIOD) $finish;
     end
 
     Mem ram(.clk(clk), .enable('b1), .p0rw(operand_rw),
             .p0_addr(operand_addr), .p0_data(operand_data),
             .p1_addr(insn_addr)   , .p1_data(insn_data));
 
-    SimSerial serial(.clk(clk), .enable('b1), .rw(operand_rw),
-                     .addr(operand_addr), .data(operand_data));
+    SimSerial serial(.clk(clk), ._reset(_reset), .enable('b1),
+                     .rw(operand_rw), .addr(operand_addr),
+                     .data(operand_data));
 
-    Core core(.clk(clk), .rw(operand_rw),
+    Core core(.clk(clk), ._reset(_reset), .rw(operand_rw),
             .norm_addr(operand_addr), .norm_data(operand_data),
             .insn_addr(insn_addr)   , .insn_data(insn_data));
 endmodule
