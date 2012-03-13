@@ -1,6 +1,6 @@
 `timescale 1ms/10us
 
-`define CLOCKPERIOD 5
+`define CLOCKPERIOD 10
 `define RAMDELAY (1 * `CLOCKPERIOD)
 
 module SimSerial(input clk, input enable, input rw,
@@ -9,8 +9,7 @@ module SimSerial(input clk, input enable, input rw,
     parameter BASE = 1 << 5;
     parameter SIZE = 2;
 
-    wire in_range;
-    assign in_range = (addr >= BASE && addr < SIZE + BASE);
+    wire in_range = (addr >= BASE && addr < SIZE + BASE);
 
     always @(negedge clk) begin
         if (enable && in_range) begin
@@ -29,34 +28,19 @@ module Mem(input clk, input enable, input p0rw,
         input[31:0] p1_addr, inout[31:0] p1_data
         );
     parameter BASE = 1 << 12; // TODO pull from environmental define
-    parameter SIZE = (1 << 24) - (1 << 12);
+    parameter SIZE = (1 << 24) - BASE;
 
     reg[31:0] store[(SIZE + BASE - 1):BASE];
-    reg[31:0] p0data = 0;
-    reg[31:0] p1data = 0;
 
-    wire p0_inrange, p1_inrange;
+    wire p0_inrange = (p0_addr >= BASE && p0_addr < SIZE + BASE);
+    wire p1_inrange = (p1_addr >= BASE && p1_addr < SIZE + BASE);
 
-    assign p0_data = (enable && !p0rw && p0_inrange) ? p0data : 'bz;
-    assign p1_data = enable ? p1data : 'bz;
+    assign p0_data = (enable && p0_inrange && !p0rw) ? store[p0_addr] : 'bz;
+    assign p1_data = (enable && p1_inrange         ) ? store[p1_addr] : 'bz;
 
-    assign p0_inrange = (p0_addr >= BASE && p0_addr < SIZE + BASE);
-    assign p1_inrange = (p1_addr >= BASE && p1_addr < SIZE + BASE);
-
-    always @(p1_addr)
-        if (enable && p1_inrange)
-            p1data = store[p1_addr];
-
-    always @(negedge clk) begin
-        if (enable && p0_inrange) begin
-            // rw = 1 is writing
-            if (p0rw) begin
-                store[p0_addr] = p0_data;
-            end else begin
-                p0data = store[p0_addr];
-            end
-        end
-    end
+    always @(negedge clk)
+        if (enable && p0_inrange && p0rw)
+            store[p0_addr] = p0_data;
 
 endmodule
 
@@ -67,29 +51,21 @@ module Reg(input clk,
         inout[31:0] pc, input rwP);
 
     reg[31:0] store[0:15];
-    reg[31:0] r_valueZ = 0,
-              r_valueX = 0,
-              r_valueY = 0;
-
-    wire rwP;
-    reg r_rwZ = 0;
 
     generate
         genvar i;
-        for (i = 0; i < 15; i = i + 1)
+        for (i = 0; i < 15; i = i + 1) // P is set externally
             initial #0 store[i] = 'b0;
     endgenerate
-    initial #0 store[15] = 4096; // TODO move out and replace with real reset vector
 
-    assign pc = rwP ? 'bz : store[15];
-    assign valueZ = rwZ ? 'bz : r_valueZ;
-    assign valueX = r_valueX;
-    assign valueY = r_valueY;
+    assign pc     = rwP ? 'bz : store[15];
+    assign valueZ = rwZ ? 'bz : store[indexZ];
+    assign valueX = store[indexX];
+    assign valueY = store[indexY];
 
     always @(negedge clk) begin
         if (rwP)
             store[15] = pc;
-        r_rwZ <= rwZ;
         if (rwZ) begin
             if (indexZ == 0)
                 $display("wrote to zero register");
@@ -97,15 +73,6 @@ module Reg(input clk,
                 store[indexZ] = valueZ;
             end
         end
-    end
-
-    always @(indexZ) begin
-        r_valueZ <= store[indexZ];
-    end
-
-    always @(negedge clk or indexX or indexY) begin
-        r_valueX <= store[indexX];
-        r_valueY <= store[indexY];
     end
 
 endmodule
@@ -189,15 +156,15 @@ endmodule
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data);
     reg[31:0] norm_addr = 0;
-    wire[3:0] _reg_indexZ,
-              _reg_indexX,
-              _reg_indexY;
-    wire[31:0] _reg_dataZ = reg_rw ? _rhs : 'bz;
-    wire[31:0] _reg_dataX, _reg_dataY;
-    wire[11:0] _reg_dataI;
+    wire[3:0] indexZ,
+              indexX,
+              indexY;
+    wire[31:0] valueZ = reg_rw ? rhs : 'bz;
+    wire[31:0] valueX, valueY;
+    wire[11:0] valueI;
     wire[3:0] op;
     wire flip, illegal, type, insn_valid;
-    wire[31:0] _rhs;
+    wire[31:0] rhs;
     wire[1:0] deref;
 
     wire[31:0] pc;
@@ -206,37 +173,40 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire norm_rw = deref[1];
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
-    wire reg_rw = ~deref[0] && _reg_indexZ != 0;
-    wire jumping = _reg_indexZ == 15 && reg_rw;
+    wire reg_rw = ~deref[0] && indexZ != 0;
+    wire jumping = indexZ == 15 && reg_rw;
     wire writeP = 1; //XXX !jumping;
     reg[31:0] insn_addr = 4096; // TODO
     reg[31:0] new_pc = 4096, next_pc = 4096; // TODO
     assign pc = jumping ? new_pc : next_pc;
     always @(negedge clk) next_pc <= #2 pc + 1;
-    always @(negedge clk) if (jumping) new_pc <= #2 _reg_dataZ;
+    always @(negedge clk) if (jumping) new_pc <= #2 valueZ;
     always @(negedge clk) insn_addr <= #2 pc;
 
 
     Reg regs(.clk(clk),
-            .rwZ(reg_rw), .indexZ(_reg_indexZ), .valueZ(_reg_dataZ),
-                          .indexX(_reg_indexX), .valueX(_reg_dataX),
-                          .indexY(_reg_indexY), .valueY(_reg_dataY),
+            .rwZ(reg_rw), .indexZ(indexZ), .valueZ(valueZ),
+                          .indexX(indexX), .valueX(valueX),
+                          .indexY(indexY), .valueY(valueY),
             .pc(pc), .rwP(writeP));
 
-    Decode decode(.insn(insn_data), .Z(_reg_indexZ), .X(_reg_indexX),
-                  .Y(_reg_indexY), .I(_reg_dataI), .op(op), .flip(flip),
+    Decode decode(.insn(insn_data), .Z(indexZ), .X(indexX),
+                  .Y(indexY), .I(valueI), .op(op), .flip(flip),
                   .deref(deref), .type(type), .valid(insn_valid));
-    Exec exec(.clk(clk), .rhs(_rhs), .X(_reg_dataX), .Y(_reg_dataY),
-              .I(_reg_dataI), .op(op), .flip(flip),
+    Exec exec(.clk(clk), .rhs(rhs), .X(valueX), .Y(valueY),
+              .I(valueI), .op(op), .flip(flip),
               .type(type));
 endmodule
 
 module Top();
+    reg halt = 1;
     reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
-    always #(`CLOCKPERIOD) clk = !clk;
+    always #(`CLOCKPERIOD / 2) if (!halt) clk = !clk;
     wire[31:0] pc, _operand_addr;
     wire[31:0] insn, _operand_data;
     wire _operand_rw;
+
+    initial #(`CLOCKPERIOD * 2) halt = 0;
 
     initial #0 begin
         $dumpfile("Top.vcd");
