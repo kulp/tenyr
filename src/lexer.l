@@ -63,7 +63,7 @@ decnum  ([0-9]+)
 ".global"               { return GLOBAL; }
 ".set"                  { return SET; }
 
-[][|&+*^>.,:@()-]       { return yytext[0]; }
+[][|&+*^>.,:@()$-]      { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "<="                    { return LTE;  }

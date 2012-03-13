@@ -62,7 +62,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*'
-%token <chr> ','
+%token <chr> ',' '$'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
 %token <i> INTEGER
@@ -70,13 +70,13 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
 
-%type <ce> const_expr pconst_expr preloc_expr pos_greloc_expr neg_greloc_expr greloc_expr
-%type <ce> reloc_expr neg_immediate_atom const_atom pos_const_atom eref
+%type <ce> const_expr pconst_expr preloc_expr unsigned_greloc_expr signed_greloc_expr greloc_expr
+%type <ce> reloc_expr signed_immediate_atom const_atom unsigned_const_atom eref
 %type <cl> reloc_expr_list
 %type <expr> rhs rhs_plain rhs_plain_type0 rhs_plain_type1 rhs_deref lhs_plain lhs_deref
-%type <i> arrow neg_immediate pos_immediate regname reloc_op
+%type <i> arrow signed_immediate unsigned_immediate regname reloc_op
 %type <insn> insn insn_inner
-%type <op> op
+%type <op> op signed_op unsigned_op
 %type <program> program ascii utf32 data string_or_data
 %type <s> addsub
 %type <str> symbol
@@ -224,20 +224,22 @@ rhs_plain_type0
         { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $greloc_expr); }
     | regname[x] op regname[y]
         { $rhs_plain_type0 = make_expr_type0($x, $op, $y, 0, NULL); }
-    | regname[x] op neg_greloc_expr
-        { $rhs_plain_type0 = make_expr_type0($x, $op, 0, 1, $neg_greloc_expr); }
+    | regname[x] signed_op greloc_expr
+        { $rhs_plain_type0 = make_expr_type0($x, $signed_op, 0, 1, $greloc_expr); }
     | regname[x]
         { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
 
 rhs_plain_type1
-    : regname[x] op greloc_expr addsub regname[y]
-        { $rhs_plain_type1 = make_expr_type1($x, $op, $greloc_expr, $y); }
-    | regname[x] op pos_greloc_expr
-        { $rhs_plain_type1 = make_expr_type1($x, $op, $pos_greloc_expr, 0); }
-    | pos_greloc_expr
-        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $pos_greloc_expr, 0); }
-    | neg_greloc_expr
-        { $rhs_plain_type1 = make_expr_type1(0, OP_ADD, $neg_greloc_expr, 0); }
+    : regname[x] signed_op signed_greloc_expr addsub regname[y]
+        { $rhs_plain_type1 = make_expr_type1($x, $signed_op, $signed_greloc_expr, $y); }
+    | regname[x] unsigned_op unsigned_greloc_expr addsub regname[y]
+        { $rhs_plain_type1 = make_expr_type1($x, $unsigned_op, $unsigned_greloc_expr, $y); }
+    | regname[x] unsigned_op greloc_expr
+        { $rhs_plain_type1 = make_expr_type1($x, $unsigned_op, $greloc_expr, 0); }
+    | unsigned_greloc_expr
+        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $unsigned_greloc_expr, 0); }
+    | signed_greloc_expr
+        { $rhs_plain_type1 = make_expr_type1(0, OP_ADD, $signed_greloc_expr, 0); }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -247,35 +249,43 @@ rhs_deref
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
 
-/* negative immediates control sign extension to differentiate between
- * `B <- -3' and `B <- 0xffd' */
-neg_immediate
-    : '-' INTEGER
-        {   $neg_immediate = -$INTEGER; }
-
-pos_immediate
+signed_immediate
     : INTEGER
+    | '-' INTEGER
+        {   $signed_immediate = -$INTEGER; }
+
+unsigned_immediate
+    : '$' INTEGER
+        {   $unsigned_immediate = $INTEGER; }
+    | '$' '-' INTEGER
+        {   $unsigned_immediate = (-$INTEGER) & SMALL_IMMEDIATE_MASK; }
 
 addsub
     : '+' { $addsub =  1; }
     | '-' { $addsub = -1; }
 
 op
-    : '|'   { $op = OP_BITWISE_OR         ; }
-    | '&'   { $op = OP_BITWISE_AND        ; }
-    | '+'   { $op = OP_ADD                ; }
-    | '*'   { $op = OP_MULTIPLY           ; }
-    | LSH   { $op = OP_SHIFT_LEFT         ; }
-    | LTE   { $op = OP_COMPARE_LTE        ; }
-    | EQ    { $op = OP_COMPARE_EQ         ; }
-    | NOR   { $op = OP_BITWISE_NOR        ; }
-    | NAND  { $op = OP_BITWISE_NAND       ; }
-    | '^'   { $op = OP_BITWISE_XOR        ; }
-    | '-'   { $op = OP_ADD_NEGATIVE_Y     ; }
-    | XORN  { $op = OP_XOR_INVERT_X       ; }
-    | RSH   { $op = OP_SHIFT_RIGHT_LOGICAL; }
-    | '>'   { $op = OP_COMPARE_GT         ; }
-    | NEQ   { $op = OP_COMPARE_NE         ; }
+    : unsigned_op
+    | signed_op
+
+unsigned_op
+    : '|'   { $unsigned_op = OP_BITWISE_OR         ; }
+    | '&'   { $unsigned_op = OP_BITWISE_AND        ; }
+    | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
+    | NOR   { $unsigned_op = OP_BITWISE_NOR        ; }
+    | NAND  { $unsigned_op = OP_BITWISE_NAND       ; }
+    | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
+    | XORN  { $unsigned_op = OP_XOR_INVERT_X       ; }
+    | RSH   { $unsigned_op = OP_SHIFT_RIGHT_LOGICAL; }
+
+signed_op
+    : '+'   { $signed_op = OP_ADD           ; }
+    | '*'   { $signed_op = OP_MULTIPLY      ; }
+    | LTE   { $signed_op = OP_COMPARE_LTE   ; }
+    | EQ    { $signed_op = OP_COMPARE_EQ    ; }
+    | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
+    | '>'   { $signed_op = OP_COMPARE_GT    ; }
+    | NEQ   { $signed_op = OP_COMPARE_NE    ; }
 
 arrow
     : TOL { $arrow = 0; }
@@ -287,18 +297,18 @@ reloc_op
 
 /* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
 /* positive greloc_expr : anything except an immediate starting with a `-' */
-pos_greloc_expr
+unsigned_greloc_expr
     : eref
-    | pos_const_atom
+    | unsigned_const_atom
     | preloc_expr
 
-neg_greloc_expr
-    : neg_immediate_atom
+signed_greloc_expr
+    : signed_immediate_atom
 
-/* any greloc_expr : pos_greloc_expr or a negative immediate */
+/* any greloc_expr : unsigned_greloc_expr or a negative immediate */
 greloc_expr
-    : pos_greloc_expr
-    | neg_greloc_expr
+    : unsigned_greloc_expr
+    | signed_greloc_expr
 
 reloc_expr[outer]
     : const_expr
@@ -317,31 +327,31 @@ const_expr[outer]
         {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
 
 const_atom
-    : neg_immediate_atom
-    | pos_const_atom
+    : signed_immediate_atom
+    | unsigned_const_atom
 
-neg_immediate_atom
-    : neg_immediate
-        {   $neg_immediate_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
-            $neg_immediate_atom->i = $neg_immediate; }
+signed_immediate_atom
+    : signed_immediate
+        {   $signed_immediate_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
+            $signed_immediate_atom->i = $signed_immediate; }
 
-pos_const_atom
+unsigned_const_atom
     : pconst_expr
-    | pos_immediate
-        {   $pos_const_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
-            $pos_const_atom->i = $pos_immediate; }
+    | unsigned_immediate
+        {   $unsigned_const_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
+            $unsigned_const_atom->i = $unsigned_immediate; }
     | LOCAL
-        {   $pos_const_atom = make_const_expr(CE_SYM, 0, NULL, NULL);
+        {   $unsigned_const_atom = make_const_expr(CE_SYM, 0, NULL, NULL);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL))) {
-                $pos_const_atom->symbol = s;
+                $unsigned_const_atom->symbol = s;
             } else {
-                strncpy($pos_const_atom->symbolname, $LOCAL, sizeof $pos_const_atom->symbolname);
-                $pos_const_atom->symbolname[sizeof $pos_const_atom->symbolname - 1] = 0;
+                strncpy($unsigned_const_atom->symbolname, $LOCAL, sizeof $unsigned_const_atom->symbolname);
+                $unsigned_const_atom->symbolname[sizeof $unsigned_const_atom->symbolname - 1] = 0;
             }
         }
     | '.'
-        {   $pos_const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
+        {   $unsigned_const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
 
 preloc_expr
     : '(' reloc_expr ')'
