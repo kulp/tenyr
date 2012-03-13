@@ -1,2 +1,7 @@
-b <- -3
 b <- 0xffd
+c <- -3
+d <- b + -2
+e <- b + 0xffe
+f <- c + -2
+g <- c + 0xffe
+illegal

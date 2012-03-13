@@ -225,7 +225,7 @@ rhs_plain_type0
     | regname[x] op regname[y]
         { $rhs_plain_type0 = make_expr_type0($x, $op, $y, 0, NULL); }
     | regname[x] op neg_greloc_expr
-        { $rhs_plain_type0 = make_expr_type0($x, $op, 0, 0, $neg_greloc_expr); }
+        { $rhs_plain_type0 = make_expr_type0($x, $op, 0, 1, $neg_greloc_expr); }
     | regname[x]
         { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
 
@@ -234,8 +234,10 @@ rhs_plain_type1
         { $rhs_plain_type1 = make_expr_type1($x, $op, $greloc_expr, $y); }
     | regname[x] op pos_greloc_expr
         { $rhs_plain_type1 = make_expr_type1($x, $op, $pos_greloc_expr, 0); }
-    | greloc_expr
-        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $greloc_expr, 0); }
+    | pos_greloc_expr
+        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $pos_greloc_expr, 0); }
+    | neg_greloc_expr
+        { $rhs_plain_type1 = make_expr_type1(0, OP_ADD, $neg_greloc_expr, 0); }
 
 rhs_deref
     : '[' rhs_plain ']'
