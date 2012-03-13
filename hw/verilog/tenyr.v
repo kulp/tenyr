@@ -81,7 +81,6 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
               output[3:0] op, output[1:0] deref, output flip, type, illegal,
               valid);
 
-    wire[31:0] insn;
     reg[3:0] rZ = 0, rX = 0, rY = 0, rop = 0;
     reg[11:0] rI = 0;
     reg[1:0] rderef = 0;
@@ -114,19 +113,16 @@ endmodule
 module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
             input[3:0] op, input flip, input type);
 
-    wire[31:0] X, Y, O, Is;
     reg[31:0] rhs = 0;
-    wire[31:0] Xu, Ou;
+
     // TODO signed net or integer support
-    wire[31:0] Xs, Os, As;
+    wire[31:0] Xs = X;
+    wire[31:0] Xu = X;
 
-    assign Xs = X;
-    assign Xu = X;
-
-    assign Is = { {20{I[11]}}, I };
-    assign Ou = (type == 0) ? Y  : Is;
-    assign Os = (type == 0) ? Y  : Is;
-    assign As = (type == 0) ? Is : Y;
+    wire[31:0] Is = { {20{I[11]}}, I };
+    wire[31:0] Ou = (type == 0) ? Y  : Is;
+    wire[31:0] Os = (type == 0) ? Y  : Is;
+    wire[31:0] As = (type == 0) ? Is : Y;
 
     always @(negedge clk) begin
         case (op)
@@ -156,18 +152,16 @@ endmodule
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data);
     reg[31:0] norm_addr = 0;
-    wire[3:0] indexZ,
-              indexX,
-              indexY;
-    wire[31:0] valueZ = reg_rw ? rhs : 'bz;
+
+    wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
+    wire[31:0] valueZ = reg_rw ? rhs : 'bz;
     wire[11:0] valueI;
     wire[3:0] op;
     wire flip, illegal, type, insn_valid;
     wire[31:0] rhs;
     wire[1:0] deref;
 
-    wire[31:0] pc;
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
     wire norm_rw = deref[1];
@@ -178,33 +172,34 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire writeP = 1; //XXX !jumping;
     reg[31:0] insn_addr = 4096; // TODO
     reg[31:0] new_pc = 4096, next_pc = 4096; // TODO
-    assign pc = jumping ? new_pc : next_pc;
-    always @(negedge clk) next_pc <= #2 pc + 1;
-    always @(negedge clk) if (jumping) new_pc <= #2 valueZ;
-    always @(negedge clk) insn_addr <= #2 pc;
+    wire[31:0] pc = jumping ? new_pc : next_pc;
 
+    always @(negedge clk) begin
+        next_pc <= #2 pc + 1;
+        if (jumping)
+            new_pc <= #2 valueZ;
+        insn_addr <= #2 pc;
+    end
 
-    Reg regs(.clk(clk),
-            .rwZ(reg_rw), .indexZ(indexZ), .valueZ(valueZ),
-                          .indexX(indexX), .valueX(valueX),
-                          .indexY(indexY), .valueY(valueY),
-            .pc(pc), .rwP(writeP));
+    Reg regs(.clk(clk), .pc(pc), .rwP(writeP), .rwZ(reg_rw),
+             .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
+             .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
 
-    Decode decode(.insn(insn_data), .Z(indexZ), .X(indexX),
-                  .Y(indexY), .I(valueI), .op(op), .flip(flip),
-                  .deref(deref), .type(type), .valid(insn_valid));
-    Exec exec(.clk(clk), .rhs(rhs), .X(valueX), .Y(valueY),
-              .I(valueI), .op(op), .flip(flip),
-              .type(type));
+    Decode decode(.insn(insn_data), .op(op), .flip(flip),
+                  .deref(deref), .type(type), .valid(insn_valid),
+                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
+
+    Exec exec(.clk(clk), .op(op), .flip(flip), .type(type),
+              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI));
 endmodule
 
 module Top();
     reg halt = 1;
     reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
     always #(`CLOCKPERIOD / 2) if (!halt) clk = !clk;
-    wire[31:0] pc, _operand_addr;
-    wire[31:0] insn, _operand_data;
-    wire _operand_rw;
+    wire[31:0] insn_addr, operand_addr;
+    wire[31:0] insn_data, operand_data;
+    wire operand_rw;
 
     initial #(`CLOCKPERIOD * 2) halt = 0;
 
@@ -214,13 +209,15 @@ module Top();
         #100 $finish;
     end
 
-    Mem ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),
-            .p0_addr(_operand_addr), .p0_data(_operand_data),
-            .p1_addr(pc)           , .p1_data(insn));
-    SimSerial serial(.clk(clk), .enable('b1), .rw(_operand_rw),
-                     .addr(_operand_addr), .data(_operand_data));
-    Core core(.clk(clk), .rw(_operand_rw),
-            .norm_addr(_operand_addr), .norm_data(_operand_data),
-            .insn_addr(pc)           , .insn_data(insn));
+    Mem ram(.clk(clk), .enable('b1), .p0rw(operand_rw),
+            .p0_addr(operand_addr), .p0_data(operand_data),
+            .p1_addr(insn_addr)   , .p1_data(insn_data));
+
+    SimSerial serial(.clk(clk), .enable('b1), .rw(operand_rw),
+                     .addr(operand_addr), .data(operand_data));
+
+    Core core(.clk(clk), .rw(operand_rw),
+            .norm_addr(operand_addr), .norm_data(operand_data),
+            .insn_addr(insn_addr)   , .insn_data(insn_data));
 endmodule
 
