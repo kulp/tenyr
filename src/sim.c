@@ -13,9 +13,8 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     uint32_t Yu = Y;
     int32_t  Is = SEXTEND(12, I);
 
-    // note Is, not Iu, since immediate is always sign-extended
     int32_t  Os = (type == 0) ? Ys : Is;
-    uint32_t Ou = (type == 0) ? Yu : (uint32_t)Is;
+    uint32_t Ou = (type == 0) ? Yu : I;
     int32_t  As = (type == 0) ? Is : Ys;
 
     switch (op) {
