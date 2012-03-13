@@ -349,11 +349,13 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
     if (f->init)
         f->init(in, ASM_DISASSEMBLE, &ud);
 
+    uint32_t reladdr = 0;
     while (f->in(in, &i, ud) == 1) {
         int len = print_disassembly(out, &i, ASM_AS_INSN);
         fprintf(out, "%*s# ", 30 - len, "");
         print_disassembly(out, &i, ASM_AS_DATA);
-        fputs("\n", out);
+        // TODO make i.reladdr correct so we can use that XXX hack
+        fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
     }
 
     if (f->fini)
