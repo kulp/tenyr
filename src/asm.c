@@ -70,8 +70,8 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
 
             // indices : [g->p][op1][op2][op3][sgnd]
             static const char *fmts[2][2][2][2][2] = {
-                // args :       f0f1f2 f3 f4f5   f6 f7       f8f9
-              //[0][0][0][0][0] = "%c%c%c %s %c"               "%c"  , // [Z] <- [           ]
+                // args :          f0f1f2 f3 f4f5   f6 f7      f8 f9
+              //[0][0][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
                 [0][0][0][1][0] = "%c%c%c %s %c"           "$0x%08x%c", // [Z] <- [        0x0]
                 [0][0][1][0][0] = "%c%c%c %s %c"      "%c"        "%c", // [Z] <- [    Y      ]
                 [0][0][1][1][0] = "%c%c%c %s %c"      "%c + $0x%08x%c", // [Z] <- [    Y + 0x0]
@@ -79,7 +79,16 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                 [0][1][0][1][0] = "%c%c%c %s %c%c"      " + $0x%08x%c", // [Z] <- [X     + 0x0]
                 [0][1][1][0][0] = "%c%c%c %s %c%c %-2s %c"        "%c", // [Z] <- [X - Y      ]
                 [0][1][1][1][0] = "%c%c%c %s %c%c %-2s %c + $0x%08x%c", // [Z] <- [X - Y + 0x0]
-                // args :          f0f1f2 f3 f4f5   f6 f8       f7f9
+                // args :          f0f1f2 f3 f4f5   f6 f7     f8   f9
+              //[0][0][0][0][1] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
+                [0][0][0][1][1] = "%c%c%c %s %c"             "%-10d%c", // [Z] <- [         -0]
+                [0][0][1][0][1] = "%c%c%c %s %c"      "%c"        "%c", // [Z] <- [    Y      ]
+                [0][0][1][1][1] = "%c%c%c %s %c"      "%c +   %-10d%c", // [Z] <- [    Y +  -0]
+                [0][1][0][0][1] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
+                [0][1][0][1][1] = "%c%c%c %s %c%c"      " +   %-10d%c", // [Z] <- [X     +  -0]
+                [0][1][1][0][1] = "%c%c%c %s %c%c %-2s %c"        "%c", // [Z] <- [X - Y      ]
+                [0][1][1][1][1] = "%c%c%c %s %c%c %-2s %c +   %-10d%c", // [Z] <- [X - Y +  -0]
+                // args :          f0f1f2 f3 f4f5   f6    f8    f7 f9
               //[1][0][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
                 [1][0][0][1][0] = "%c%c%c %s %c"                "%c%c", // [Z] <- [          Y]
                 [1][0][1][0][0] = "%c%c%c %s %c"      "$0x%08x"   "%c", // [Z] <- [    0x0    ]
@@ -88,10 +97,15 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                 [1][1][0][1][0] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [X       + Y]
                 [1][1][1][0][0] = "%c%c%c %s %c%c %-2s $0x%08x"   "%c", // [Z] <- [X - 0x0    ]
                 [1][1][1][1][0] = "%c%c%c %s %c%c %-2s $0x%08x + %c%c", // [Z] <- [X - 0x0 + Y]
-                // args :          f0f1f2 f3 f4f5   f6 fa       f7f9
-                [0][0][0][1][1] = "%c%c%c %s %c"              "%10d%c", // [Z] <- [         -0]
-                [1][0][1][0][1] = "%c%c%c %s %c"        " %10d"   "%c", // [Z] <- [     -0    ]
-                [1][0][1][1][1] = "%c%c%c %s %c"        " %10d + %c%c", // [Z] <- [     -0 + Y]
+                // args :          f0f1f2 f3 f4f5   f6 fa        f7f9
+              //[1][0][0][0][1] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
+                [1][0][0][1][1] = "%c%c%c %s %c"                "%c%c", // [Z] <- [          Y]
+                [1][0][1][0][1] = "%c%c%c %s %c"       " %-10d"   "%c", // [Z] <- [     -0    ]
+                [1][0][1][1][1] = "%c%c%c %s %c"       " %-10d + %c%c", // [Z] <- [     -0 + Y]
+                [1][1][0][0][1] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
+                [1][1][0][1][1] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [X       + Y]
+                [1][1][1][0][1] = "%c%c%c %s %c%c %-2s ""%-10d"   "%c", // [Z] <- [X -  -0    ]
+                [1][1][1][1][1] = "%c%c%c %s %c%c %-2s ""%-10d + %c%c", // [Z] <- [X -  -0 + Y]
             };
 
             int inert = g->op == OP_BITWISE_OR || g->op == OP_ADD;
@@ -124,11 +138,26 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                 case C_(1,1,1,0,0): PUT(f0,f1,f2,f3,f4,f5,f6,f8,   f9); break;
                 case C_(1,1,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f8,f7,f9); break;
 
+              //case C_(0,0,0,0,1): PUT(f0,f1,f2,f3,f4,            f9); break;
+                case C_(0,0,0,1,1): PUT(f0,f1,f2,f3,f4,         fa,f9); break;
+                case C_(0,0,1,0,1): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
+                case C_(0,0,1,1,1): PUT(f0,f1,f2,f3,f4,      f7,fa,f9); break;
+                case C_(0,1,0,0,1): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
+                case C_(0,1,0,1,1): PUT(f0,f1,f2,f3,f4,f5,      fa,f9); break;
+                case C_(0,1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
+                case C_(0,1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,fa,f9); break;
+
+              //case C_(1,0,0,0,1): PUT(f0,f1,f2,f3,f4,            f9); break;
+                case C_(1,0,0,1,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
                 case C_(1,0,1,0,1): PUT(f0,f1,f2,f3,f4,      fa,   f9); break;
                 case C_(1,0,1,1,1): PUT(f0,f1,f2,f3,f4,      fa,f7,f9); break;
+                case C_(1,1,0,0,1): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
+                case C_(1,1,0,1,1): PUT(f0,f1,f2,f3,f4,f5,      f7,f9); break;
+                case C_(1,1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,f6,fa,   f9); break;
+                case C_(1,1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,fa,f7,f9); break;
 
                 default:
-                    fatal(0, "Unsupported type/op1/op2/op3/sgnd %04x",
+                    fatal(0, "Unsupported type/op1/op2/op3/sgnd %05x",
                             C_(g->p,op1,op2,op3,sgnd));
             }
 
