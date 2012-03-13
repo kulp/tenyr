@@ -43,19 +43,18 @@ module Mem(input clk, input enable, input p0rw,
     assign p0_inrange = (p0_addr >= BASE && p0_addr < SIZE + BASE);
     assign p1_inrange = (p1_addr >= BASE && p1_addr < SIZE + BASE);
 
-    always @(negedge clk) begin
-        if (enable) begin
-            if (p0_inrange) begin
-                // rw = 1 is writing
-                if (p0rw) begin
-                    store[p0_addr] = p0_data;
-                end else begin
-                    p0data = store[p0_addr];
-                end
-            end
+    always @(p1_addr)
+        if (enable && p1_inrange)
+            p1data = store[p1_addr];
 
-            if (p1_inrange)
-                p1data = store[p1_addr];
+    always @(negedge clk) begin
+        if (enable && p0_inrange) begin
+            // rw = 1 is writing
+            if (p0rw) begin
+                store[p0_addr] = p0_data;
+            end else begin
+                p0data = store[p0_addr];
+            end
         end
     end
 
@@ -82,7 +81,7 @@ module Reg(input clk,
     endgenerate
     initial #0 store[15] = 4096; // TODO move out and replace with real reset vector
 
-    assign pc = store[15];
+    assign pc = rwP ? 'bz : store[15];
     assign valueZ = rwZ ? 'bz : r_valueZ;
     assign valueX = r_valueX;
     assign valueY = r_valueY;
@@ -112,40 +111,44 @@ module Reg(input clk,
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output flip, type, illegal);
+              output[3:0] op, output[1:0] deref, output flip, type, illegal,
+              valid);
 
     wire[31:0] insn;
-    reg[3:0] rZ, rX, rY, rop;
-    reg[11:0] rI;
-    reg[1:0] rderef;
-    reg rflip, rtype, rillegal;
+    reg[3:0] rZ = 0, rX = 0, rY = 0, rop = 0;
+    reg[11:0] rI = 0;
+    reg[1:0] rderef = 0;
+    reg rflip = 0, rtype = 0, rillegal = 0, valid = 0;
 
     assign Z = rZ, X = rX, Y = rY, I = rI, op = rop, deref = rderef,
            flip = rflip, type = rtype, illegal = rillegal;
 
-    always @(insn) casex (insn[31:28])
-        4'b0???: begin
-            rderef <= { insn[29] & ~insn[28], insn[28] };
-            rflip  <= insn[29] & insn[28];
-            rtype  <= insn[30];
+    always @(insn) begin
+        valid = 1;
+        casex (insn[31:28])
+            4'b0???: begin
+                rderef <= { insn[29] & ~insn[28], insn[28] };
+                rflip  <= insn[29] & insn[28];
+                rtype  <= insn[30];
 
-            rZ  <= insn[24 +: 4];
-            rX  <= insn[20 +: 4];
-            rY  <= insn[16 +: 4];
-            rop <= insn[12 +: 4];
-            rI  <= insn[ 0 +:12];
-        end
-        4'b1111: rillegal <= &insn;
-        //default: $stop;
-    endcase
+                rZ  <= insn[24 +: 4];
+                rX  <= insn[20 +: 4];
+                rY  <= insn[16 +: 4];
+                rop <= insn[12 +: 4];
+                rI  <= insn[ 0 +:12];
+            end
+            4'b1111: rillegal <= &insn;
+            default: valid = 0;
+        endcase
+    end
 
 endmodule
 
-module Exec(input clk, output[31:0] rhs, input[31:0] Z, X, Y, input[11:0] I,
+module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
             input[3:0] op, input flip, input type);
 
-    wire[31:0] Z, X, Y, O, Is;
-    reg[31:0] rhs;
+    wire[31:0] X, Y, O, Is;
+    reg[31:0] rhs = 0;
     wire[31:0] Xu, Ou;
     // TODO signed net or integer support
     wire[31:0] Xs, Os, As;
@@ -185,42 +188,34 @@ endmodule
 
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data);
-    wire _norm_rw;
-    wire[31:0] _operand_data;
+    reg[31:0] norm_addr = 0;
     wire[3:0] _reg_indexZ,
               _reg_indexX,
               _reg_indexY;
-    reg[31:0] reg_dataZ;
-    wire[31:0] _reg_dataZ = reg_rw ? rhs : 'bz;
+    wire[31:0] _reg_dataZ = reg_rw ? _rhs : 'bz;
     wire[31:0] _reg_dataX, _reg_dataY;
     wire[11:0] _reg_dataI;
     wire[3:0] op;
-    wire flip, illegal, type;
-    reg writing = 0;
-    reg reading = 0;
-    reg[31:0] rhs;
+    wire flip, illegal, type, insn_valid;
     wire[31:0] _rhs;
     wire[1:0] deref;
-
-    always @(negedge clk) rhs <= _rhs;
 
     wire[31:0] pc;
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
     wire norm_rw = deref[1];
-    assign insn_addr = rpc;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
-    wire reg_rw = ~deref[0];
+    wire reg_rw = ~deref[0] && _reg_indexZ != 0;
     wire jumping = _reg_indexZ == 15 && reg_rw;
-    wire writeP = !jumping;
-    reg[31:0] rpc = 4096; // TODO
-    reg[31:0] new_pc = 3096, next_pc = 4096; // TODO
-    //assign pc = jumping ? new_pc : next_pc;
-    //assign pc = next_pc;
-    always @(negedge clk) next_pc <= pc + 1;
-    always @(negedge clk) new_pc <= _reg_dataZ;
-    always @(negedge clk) rpc <= jumping ? new_pc : next_pc;
+    wire writeP = 1; //XXX !jumping;
+    reg[31:0] insn_addr = 4096; // TODO
+    reg[31:0] new_pc = 4096, next_pc = 4096; // TODO
+    assign pc = jumping ? new_pc : next_pc;
+    always @(negedge clk) next_pc <= #2 pc + 1;
+    always @(negedge clk) if (jumping) new_pc <= #2 _reg_dataZ;
+    always @(negedge clk) insn_addr <= #2 pc;
+
 
     Reg regs(.clk(clk),
             .rwZ(reg_rw), .indexZ(_reg_indexZ), .valueZ(_reg_dataZ),
@@ -230,14 +225,14 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
 
     Decode decode(.insn(insn_data), .Z(_reg_indexZ), .X(_reg_indexX),
                   .Y(_reg_indexY), .I(_reg_dataI), .op(op), .flip(flip),
-                  .deref(deref), .type(type));
-    Exec exec(.clk(clk), .rhs(_rhs), .Z(_reg_dataZ), .X(_reg_dataX),
-              .Y(_reg_dataY), .I(_reg_dataI), .op(op), .flip(flip),
+                  .deref(deref), .type(type), .valid(insn_valid));
+    Exec exec(.clk(clk), .rhs(_rhs), .X(_reg_dataX), .Y(_reg_dataY),
+              .I(_reg_dataI), .op(op), .flip(flip),
               .type(type));
 endmodule
 
 module Top();
-    reg clk = 0;
+    reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
     always #(`CLOCKPERIOD) clk = !clk;
     wire[31:0] pc, _operand_addr;
     wire[31:0] insn, _operand_data;
@@ -246,7 +241,7 @@ module Top();
     initial #0 begin
         $dumpfile("Top.vcd");
         $dumpvars;
-        #500 $finish;
+        #100 $finish;
     end
 
     Mem ram(.clk(clk), .enable('b1), .p0rw(_operand_rw),

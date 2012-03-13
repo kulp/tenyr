@@ -17,7 +17,7 @@ tenyr: | glue.vpi
 glue.vpi: callbacks.o serial.o load.o ../../sim.o ../../asm.o ../../obj.o ../../common.o
 
 %: %.v
-	iverilog $(VFLAGS) -Wall -o $@ $^
+	iverilog $(VFLAGS) -s Top -Wall -o $@ $^
 
 %.vpi: %.o
 	iverilog-vpi -o $@ $^
