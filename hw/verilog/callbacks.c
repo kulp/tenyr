@@ -31,9 +31,6 @@ int tenyr_sim_genesis(p_cb_data data)
     if ((rc = setjmp(errbuf)))
         exit(rc);
 
-    // TODO filename
-    tenyr_sim_load(d, "filename");
-
     if (d->cb.genesis)
         d->cb.genesis(d, data);
 

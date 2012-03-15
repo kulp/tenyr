@@ -11,7 +11,6 @@ int tenyr_sim_putchar(struct tenyr_sim_state *state)
               argh      = vpi_scan(args_iter);
 
     struct t_vpi_value argval = { .format = vpiIntVal };
-    argval.format = vpiIntVal;
     vpi_get_value(argh, &argval);
     putchar(argval.value.integer);
 

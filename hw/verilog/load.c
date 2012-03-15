@@ -4,6 +4,7 @@
 #include "ops.h"
 
 #include <stdlib.h>
+#include <vpi_user.h>
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
@@ -47,7 +48,7 @@ static int get_range(vpiHandle from, int which)
     return argval.value.integer;
 }
 
-int tenyr_sim_load(struct tenyr_sim_state *state, void *userdata)
+int tenyr_sim_load(struct tenyr_sim_state *state)
 {
     vpiHandle ram = vpi_handle_by_name("Top.ram", NULL);
     vpiHandle array = vpi_handle_by_name("store", ram);
@@ -61,7 +62,21 @@ int tenyr_sim_load(struct tenyr_sim_state *state, void *userdata)
     int right = get_range(array, vpiRightRange);
     int min = MIN(left, right);
 
-    load_sim(dispatch_op, &data, &formats[0], stdin, min);
+    vpiHandle systfref  = vpi_handle(vpiSysTfCall, NULL),
+              args_iter = vpi_iterate(vpiArgument, systfref),
+              argh      = vpi_scan(args_iter);
+
+    struct t_vpi_value argval = { .format = vpiStringVal };
+    vpi_get_value(argh, &argval);
+    const char *filename = argval.value.str;
+
+    vpi_free_object(args_iter);
+
+    FILE *stream = fopen(filename, "rb");
+    if (stream)
+        load_sim(dispatch_op, &data, &formats[0], stream, min);
+    else
+        return 1;
 
     return 0;
 }

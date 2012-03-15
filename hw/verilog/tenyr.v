@@ -214,10 +214,13 @@ module Top();
     initial #(2 * `CLOCKPERIOD) halt = 0;
     initial #(1 * `CLOCKPERIOD) _reset = 1;
 
+    reg [100:1] filename;
     initial #0 begin
         $dumpfile("Top.vcd");
+        if ($value$plusargs("LOAD=%s", filename))
+            $tenyr_load(filename);
         $dumpvars;
-        #(20 * `CLOCKPERIOD) $finish;
+        #(10 * `CLOCKPERIOD) $finish;
     end
 
     Mem ram(.clk(clk), .enable('b1), .p0rw(operand_rw),
