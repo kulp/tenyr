@@ -2,6 +2,8 @@
 
 `define CLOCKPERIOD 10
 `define RAMDELAY (1 * `CLOCKPERIOD)
+// TODO use proper reset vectors
+`define RESETVECTOR 'h1000
 
 // Two-port memory required if we don't have wait states ; one instruction
 // fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
@@ -152,18 +154,17 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     //  Z  <- [...] -- deref == 01
     wire reg_rw = ~deref[0] && indexZ != 0;
     wire jumping = indexZ == 15 && reg_rw;
-    // TODO use proper reset vectors
-    reg[31:0] insn_addr = 'h1000,
-              new_pc    = 'h1000,
-              next_pc   = 'h1000;
+    reg[31:0] insn_addr = `RESETVECTOR,
+              new_pc    = `RESETVECTOR,
+              next_pc   = `RESETVECTOR;
     wire[31:0] pc = jumping ? new_pc : next_pc;
 
     always @(negedge clk) begin
         if (!_reset) begin
             // TODO use proper reset vectors
-            insn_addr = 'h1000;
-            new_pc    = 'h1000;
-            next_pc   = 'h1000;
+            insn_addr = `RESETVECTOR;
+            new_pc    = `RESETVECTOR;
+            next_pc   = `RESETVECTOR;
         end else begin
             next_pc <= #2 pc + 1;
             if (jumping)
