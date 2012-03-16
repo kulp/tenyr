@@ -1,16 +1,21 @@
 #include "tenyr_vpi.h"
 
-#include <vpi_user.h>
+#include "common.h"
 #include <stdlib.h>
 
 int tenyr_sim_genesis(p_cb_data data)
 {
     struct tenyr_sim_state *d = *(void**)data->user_data = calloc(1, sizeof *d);
+
+#if DEBUG
+    d->debug = DEBUG;
+#endif
+
     if (d->debug > 4)
         vpi_printf("%s ; userdata = %p\n", __func__, data->user_data);
 
     extern int tenyr_sim_clock(p_cb_data data);
-    vpiHandle clock = vpi_handle_by_name("Test.top.clk", NULL);
+    vpiHandle clock = vpi_handle_by_name("Top.tenyr.clk", NULL);
     s_cb_data cbd = {
         .reason    = cbValueChange,
         .cb_rtn    = tenyr_sim_clock,
@@ -21,6 +26,10 @@ int tenyr_sim_genesis(p_cb_data data)
     };
 
     vpi_register_cb(&cbd);
+
+    int rc = 0;
+    if ((rc = setjmp(errbuf)))
+        exit(rc);
 
     if (d->cb.genesis)
         d->cb.genesis(d, data);
