@@ -202,7 +202,7 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
               .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI));
 endmodule
 
-module Top();
+module Tenyr();
     reg halt = 1;
     reg _reset = 0;
     reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
@@ -213,15 +213,6 @@ module Top();
 
     initial #(2 * `CLOCKPERIOD) halt = 0;
     initial #(1 * `CLOCKPERIOD) _reset = 1;
-
-    reg [100:1] filename;
-    initial #0 begin
-        $dumpfile("Top.vcd");
-        if ($value$plusargs("LOAD=%s", filename))
-            $tenyr_load(filename);
-        $dumpvars;
-        #(10 * `CLOCKPERIOD) $finish;
-    end
 
     Mem ram(.clk(clk), .enable('b1), .p0rw(operand_rw),
             .p0_addr(operand_addr), .p0_data(operand_data),

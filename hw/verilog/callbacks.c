@@ -15,7 +15,7 @@ int tenyr_sim_genesis(p_cb_data data)
         vpi_printf("%s ; userdata = %p\n", __func__, data->user_data);
 
     extern int tenyr_sim_clock(p_cb_data data);
-    vpiHandle clock = vpi_handle_by_name("Top.clk", NULL);
+    vpiHandle clock = vpi_handle_by_name("Top.tenyr.clk", NULL);
     s_cb_data cbd = {
         .reason    = cbValueChange,
         .cb_rtn    = tenyr_sim_clock,

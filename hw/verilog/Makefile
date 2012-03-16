@@ -12,12 +12,12 @@ all: tenyr glue.vpi
 .SUFFIXES: .v
 
 tenyr: VFLAGS += -m glue
-tenyr: | glue.vpi
+tenyr: top.v | glue.vpi
 
 glue.vpi: callbacks.o serial.o load.o ../../sim.o ../../asm.o ../../obj.o ../../common.o
 
 %: %.v
-	iverilog $(VFLAGS) -s Top -Wall -o $@ $^
+	iverilog $(VFLAGS) -Wall -o $@ $^
 
 %.vpi: %.o
 	iverilog-vpi -o $@ $^

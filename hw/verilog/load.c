@@ -50,7 +50,7 @@ static int get_range(vpiHandle from, int which)
 
 int tenyr_sim_load(struct tenyr_sim_state *state)
 {
-    vpiHandle ram = vpi_handle_by_name("Top.ram", NULL);
+    vpiHandle ram = vpi_handle_by_name("Top.tenyr.ram", NULL);
     vpiHandle array = vpi_handle_by_name("store", ram);
 
     struct dispatch_userdata data = {
