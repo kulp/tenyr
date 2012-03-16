@@ -4,6 +4,7 @@
 `define RAMDELAY (1 * `CLOCKPERIOD)
 // TODO use proper reset vectors
 `define RESETVECTOR 'h1000
+`define SETUP #2
 
 // Two-port memory required if we don't have wait states ; one instruction
 // fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
@@ -24,7 +25,7 @@ module Mem(input clk, input enable, input p0rw,
 
     always @(negedge clk)
         if (enable && p0_inrange && p0rw)
-            store[p0_addr] = p0_data;
+            store[p0_addr] <= `SETUP p0_data;
 
 endmodule
 
@@ -39,7 +40,7 @@ module Reg(input clk,
     generate
         genvar i;
         for (i = 0; i < 15; i = i + 1) // P is set externally
-            initial #0 store[i] = 'b0;
+            initial #0 store[i] <= 'b0;
     endgenerate
 
     assign pc     = rwP ? 'bz : store[15];
@@ -49,12 +50,12 @@ module Reg(input clk,
 
     always @(negedge clk) begin
         if (rwP)
-            store[15] = pc;
+            store[15] <= `SETUP pc;
         if (rwZ) begin
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
-                store[indexZ] = valueZ;
+                store[indexZ] <= `SETUP valueZ;
             end
         end
     end
@@ -70,12 +71,18 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
     reg[1:0] rderef = 0;
     reg rflip = 0, rtype = 0, rillegal = 0, valid = 0;
 
-    assign Z = rZ, X = rX, Y = rY, I = rI, op = rop, deref = rderef,
-           flip = rflip, type = rtype, illegal = rillegal;
+    assign Z       = valid ? rZ       : 'bz,
+           X       = valid ? rX       : 'bz,
+           Y       = valid ? rY       : 'bz,
+           I       = valid ? rI       : 'bz,
+           op      = valid ? rop      : 'bz,
+           deref   = valid ? rderef   : 'bz,
+           flip    = valid ? rflip    : 'bz,
+           type    = valid ? rtype    : 'bz,
+           illegal = rillegal;
 
     always @(insn) begin
-        valid = 1;
-        casex (insn[31:28])
+        casez (insn[31:28])
             4'b0???: begin
                 rderef <= { insn[29] & ~insn[28], insn[28] };
                 rflip  <= insn[29] & insn[28];
@@ -86,18 +93,23 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
                 rY  <= insn[16 +: 4];
                 rop <= insn[12 +: 4];
                 rI  <= insn[ 0 +:12];
+                valid <= `SETUP 1;
             end
-            4'b1111: rillegal <= &insn;
-            default: valid = 0;
+            4'b1111: begin
+                rillegal <= &insn;
+                valid <= `SETUP 1;
+            end
+            default: valid <= `SETUP 0;
         endcase
     end
 
 endmodule
 
 module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
-            input[3:0] op, input flip, input type);
+            input[3:0] op, input flip, type, valid);
 
-    reg[31:0] rhs = 0;
+    assign rhs = valid ? i_rhs : 'bz;
+    reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
     wire[31:0] Xs = X;
@@ -110,22 +122,22 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
 
     always @(negedge clk) begin
         case (op)
-            4'b0000: rhs =  (Xu  |  Ou) + As; // X bitwise or Y
-            4'b0001: rhs =  (Xu  &  Ou) + As; // X bitwise and Y
-            4'b0010: rhs =  (Xs  +  Os) + As; // X add Y
-            4'b0011: rhs =  (Xs  *  Os) + As; // X multiply Y
-          //4'b0100:                          // reserved
-            4'b0101: rhs =  (Xu  << Ou) + As; // X shift left Y
-            4'b0110: rhs =  (Xs  <= Os) + As; // X compare <= Y
-            4'b0111: rhs =  (Xs  == Os) + As; // X compare == Y
-            4'b1000: rhs = ~(Xu  |  Ou) + As; // X bitwise nor Y
-            4'b1001: rhs = ~(Xu  &  Ou) + As; // X bitwise nand Y
-            4'b1010: rhs =  (Xu  ^  Ou) + As; // X bitwise xor Y
-            4'b1011: rhs =  (Xs  + -Os) + As; // X add two's complement Y
-            4'b1100: rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
-            4'b1101: rhs =  (Xu  >> Ou) + As; // X shift right logical Y
-            4'b1110: rhs =  (Xs  >  Os) + As; // X compare > Y
-            4'b1111: rhs =  (Xs  != Os) + As; // X compare <> Y
+            4'b0000: i_rhs = `SETUP  (Xu  |  Ou) + As; // X bitwise or Y
+            4'b0001: i_rhs = `SETUP  (Xu  &  Ou) + As; // X bitwise and Y
+            4'b0010: i_rhs = `SETUP  (Xs  +  Os) + As; // X add Y
+            4'b0011: i_rhs = `SETUP  (Xs  *  Os) + As; // X multiply Y
+          //4'b0100:                                   // reserved
+            4'b0101: i_rhs = `SETUP  (Xu  << Ou) + As; // X shift left Y
+            4'b0110: i_rhs = `SETUP  (Xs  <= Os) + As; // X compare <= Y
+            4'b0111: i_rhs = `SETUP  (Xs  == Os) + As; // X compare == Y
+            4'b1000: i_rhs = `SETUP ~(Xu  |  Ou) + As; // X bitwise nor Y
+            4'b1001: i_rhs = `SETUP ~(Xu  &  Ou) + As; // X bitwise nand Y
+            4'b1010: i_rhs = `SETUP  (Xu  ^  Ou) + As; // X bitwise xor Y
+            4'b1011: i_rhs = `SETUP  (Xs  + -Os) + As; // X add two's complement Y
+            4'b1100: i_rhs = `SETUP  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
+            4'b1101: i_rhs = `SETUP  (Xu  >> Ou) + As; // X shift right logical Y
+            4'b1110: i_rhs = `SETUP  (Xs  >  Os) + As; // X compare > Y
+            4'b1111: i_rhs = `SETUP  (Xs  != Os) + As; // X compare <> Y
 
             //default: $stop;
         endcase
@@ -135,7 +147,7 @@ endmodule
 
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data,
-            input _reset);
+            input _reset, output halt);
     reg[31:0] norm_addr = 0;
 
     wire[3:0]  indexX, indexY, indexZ;
@@ -144,8 +156,11 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire[11:0] valueI;
     wire[3:0] op;
     wire flip, illegal, type, insn_valid;
+    reg state_valid = 0;
     wire[31:0] rhs;
     wire[1:0] deref;
+
+    reg halt = 0;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
@@ -157,19 +172,27 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     reg[31:0] insn_addr = `RESETVECTOR,
               new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-    wire[31:0] pc = jumping ? new_pc : next_pc;
+    wire[31:0] pc = halt    ? 'bz :
+                    jumping ? new_pc : next_pc;
+
+    always @(_reset) begin
+        if (!_reset) begin
+            state_valid <= 1;
+            // TODO use proper reset vectors
+            insn_addr   <= `RESETVECTOR;
+            new_pc      <= `RESETVECTOR;
+            next_pc     <= `RESETVECTOR;
+        end
+    end
 
     always @(negedge clk) begin
-        if (!_reset) begin
-            // TODO use proper reset vectors
-            insn_addr = `RESETVECTOR;
-            new_pc    = `RESETVECTOR;
-            next_pc   = `RESETVECTOR;
-        end else begin
-            next_pc <= #2 pc + 1;
+        halt <= `SETUP illegal;
+        if (!halt) begin
+            state_valid <= `SETUP state_valid & insn_valid;
+            next_pc <= `SETUP pc + 1;
             if (jumping)
-                new_pc <= #2 valueZ;
-            insn_addr <= #2 pc;
+                new_pc <= `SETUP valueZ;
+            insn_addr <= `SETUP pc;
         end
     end
 
@@ -179,14 +202,17 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
 
     Decode decode(.insn(insn_data), .op(op), .flip(flip),
                   .deref(deref), .type(type), .valid(insn_valid),
-                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
+                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI),
+                  .illegal(illegal));
 
     Exec exec(.clk(clk), .op(op), .flip(flip), .type(type),
-              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI));
+              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI),
+              .valid(state_valid));
 endmodule
 
 module Tenyr();
     reg halt = 1;
+    wire _halt;
     reg _reset = 0;
     reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
     always #(`CLOCKPERIOD / 2) if (!halt) clk = !clk;
@@ -194,19 +220,21 @@ module Tenyr();
     wire[31:0] insn_data, operand_data;
     wire operand_rw;
 
-    initial #(2 * `CLOCKPERIOD) halt = 0;
-    initial #(1 * `CLOCKPERIOD) _reset = 1;
+    initial #(2 * `CLOCKPERIOD) halt = `SETUP 0;
+    initial #(1 * `CLOCKPERIOD) _reset = `SETUP 1;
 
-    Mem ram(.clk(clk), .enable('b1), .p0rw(operand_rw),
+    always @(negedge clk) halt <= _halt;
+
+    Mem ram(.clk(clk), .enable(!halt), .p0rw(operand_rw),
             .p0_addr(operand_addr), .p0_data(operand_data),
             .p1_addr(insn_addr)   , .p1_data(insn_data));
 
-    SimSerial serial(.clk(clk), ._reset(_reset), .enable('b1),
+    SimSerial serial(.clk(clk), ._reset(_reset), .enable(!halt),
                      .rw(operand_rw), .addr(operand_addr),
                      .data(operand_data));
 
     Core core(.clk(clk), ._reset(_reset), .rw(operand_rw),
             .norm_addr(operand_addr), .norm_data(operand_data),
-            .insn_addr(insn_addr)   , .insn_data(insn_data));
+            .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(_halt));
 endmodule
 
