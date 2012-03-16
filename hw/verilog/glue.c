@@ -22,9 +22,9 @@ void register_apocalypse(void)
 void register_serial(void)
 {
     extern tenyr_sim_tf tenyr_sim_putchar, tenyr_sim_getchar, tenyr_sim_load;
-    s_vpi_systf_data put = { vpiSysTask, 0, "$putchar", tenyr_sim_putchar, NULL, NULL, pud };
+    s_vpi_systf_data put = { vpiSysTask, 0, "$tenyr_putchar", tenyr_sim_putchar, NULL, NULL, pud };
     vpi_register_systf(&put);
-    s_vpi_systf_data get = { vpiSysTask, 0, "$getchar", tenyr_sim_getchar, NULL, NULL, pud };
+    s_vpi_systf_data get = { vpiSysTask, 0, "$tenyr_getchar", tenyr_sim_getchar, NULL, NULL, pud };
     vpi_register_systf(&get);
     s_vpi_systf_data load = { vpiSysTask, 0, "$tenyr_load", (int(*)())tenyr_sim_load, NULL, NULL, pud };
     vpi_register_systf(&load);

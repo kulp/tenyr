@@ -12,7 +12,7 @@ all: tenyr glue.vpi
 .SUFFIXES: .v
 
 tenyr: VFLAGS += -m glue
-tenyr: top.v | glue.vpi
+tenyr: top.v simserial.v | glue.vpi
 
 glue.vpi: callbacks.o serial.o load.o ../../sim.o ../../asm.o ../../obj.o ../../common.o
 

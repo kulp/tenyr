@@ -3,24 +3,6 @@
 `define CLOCKPERIOD 10
 `define RAMDELAY (1 * `CLOCKPERIOD)
 
-module SimSerial(input clk, input enable, input rw,
-        input[31:0] addr, inout[31:0] data,
-        input _reset);
-    parameter BASE = 1 << 5;
-    parameter SIZE = 2;
-
-    wire in_range = (addr >= BASE && addr < SIZE + BASE);
-
-    always @(negedge clk) begin
-        if (enable && in_range) begin
-            if (rw)
-                $putchar(data);
-            else
-                $getchar(data);
-        end
-    end
-endmodule
-
 // Two-port memory required if we don't have wait states ; one instruction
 // fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
 module Mem(input clk, input enable, input p0rw,
