@@ -13,9 +13,8 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     uint32_t Yu = Y;
     int32_t  Is = SEXTEND(12, I);
 
-    // note Is, not Iu, since immediate is always sign-extended
     int32_t  Os = (type == 0) ? Ys : Is;
-    uint32_t Ou = (type == 0) ? Yu : (uint32_t)Is;
+    uint32_t Ou = (type == 0) ? Yu : I;
     int32_t  As = (type == 0) ? Is : Ys;
 
     switch (op) {
@@ -118,4 +117,38 @@ int run_instruction(struct sim_state *s, struct instruction *i)
     return 0;
 }
 
+
+int run_sim(struct sim_state *s, struct run_ops *ops)
+{
+    while (1) {
+        assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
+        struct instruction i;
+        s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
+
+        if (ops->pre_insn)
+            ops->pre_insn(s, &i);
+
+        if (run_instruction(s, &i))
+            return 1;
+    }
+}
+
+int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
+        FILE *in, int load_address)
+{
+    void *ud;
+    if (f->init)
+        f->init(in, ASM_DISASSEMBLE, &ud);
+
+    struct instruction i;
+    while (f->in(in, &i, ud) > 0) {
+        // TODO stop assuming addresses are contiguous and monotonic
+        dispatch_op(sud, OP_WRITE, load_address++, &i.u.word);
+    }
+
+    if (f->fini)
+        f->fini(in, &ud);
+
+    return 0;
+}
 

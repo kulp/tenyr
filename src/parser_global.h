@@ -6,6 +6,9 @@
 #define SMALL_IMMEDIATE_BITWIDTH    12
 #define WORD_BITWIDTH               32
 
+#define SMALL_IMMEDIATE_MASK    ((1 << SMALL_IMMEDIATE_BITWIDTH) - 1)
+#define WORD_MASK               ((1 << WORD_BITWIDTH) - 1)
+
 struct parse_data {
     void *scanner;
     struct {

@@ -5,6 +5,8 @@
 
 enum { ASM_ASSEMBLE = 1, ASM_DISASSEMBLE = 2 };
 
+struct instruction;
+
 struct format {
     const char *name;
     int (*init)(FILE *, int flags, void **ud);

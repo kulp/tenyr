@@ -65,7 +65,7 @@ struct instruction {
             unsigned t :  4;    ///< type code
         } _xxxx;
         struct instruction_general {
-            signed   imm : 12;  ///< immediate
+            unsigned imm : 12;  ///< immediate
             unsigned op  :  4;  ///< operation
             unsigned y   :  4;  ///< operand y
             unsigned x   :  4;  ///< operand x

@@ -41,9 +41,9 @@ symbol   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
 /* local symbols start with ".L" */
 local   (\.L[A-Z0-9_]{1,31})
 string  (([^"]|\\\")+)
-hexnum  (-?"0"[xX][0-9a-fA-F]+)
-octnum  (-?"0"[0-7]+)
-decnum  (-?[0-9]+)
+hexnum  ("0"[xX][0-9a-fA-F]+)
+octnum  ("0"[0-7]+)
+decnum  ([0-9]+)
 
 %%
 
@@ -63,7 +63,7 @@ decnum  (-?[0-9]+)
 ".global"               { return GLOBAL; }
 ".set"                  { return SET; }
 
-[][|&+*^>.,:@()-]       { return yytext[0]; }
+[][|&+*^>.,:@()$-]      { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "<="                    { return LTE;  }

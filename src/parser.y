@@ -62,7 +62,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*'
-%token <chr> ','
+%token <chr> ',' '$'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
 %token <i> INTEGER
@@ -70,12 +70,13 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
 
-%type <ce> const_expr pconst_expr preloc_expr greloc_expr reloc_expr const_atom eref
+%type <ce> const_expr pconst_expr preloc_expr unsigned_greloc_expr signed_greloc_expr greloc_expr
+%type <ce> reloc_expr unsigned_immediate_atom const_atom signed_const_atom eref
 %type <cl> reloc_expr_list
-%type <expr> rhs rhs_plain rhs_plain_type0 rhs_plain_type1 rhs_deref lhs_plain lhs_deref
-%type <i> arrow immediate regname reloc_op
+%type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
+%type <i> arrow signed_immediate unsigned_immediate regname reloc_op
 %type <insn> insn insn_inner
-%type <op> op
+%type <op> op signed_op unsigned_op
 %type <program> program ascii utf32 data string_or_data
 %type <s> addsub
 %type <str> symbol
@@ -215,24 +216,26 @@ rhs
     | rhs_deref
 
 rhs_plain
-    : rhs_plain_type0
-    | rhs_plain_type1
-
-rhs_plain_type0
-    : regname[x] op regname[y] addsub greloc_expr
-        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, $addsub, $greloc_expr); }
+    /* type0 */
+    : regname[x] op regname[y] addsub signed_greloc_expr
+        { $rhs_plain = make_expr_type0($x, $op, $y, $addsub, $signed_greloc_expr); }
     | regname[x] op regname[y]
-        { $rhs_plain_type0 = make_expr_type0($x, $op, $y, 0, NULL); }
+        { $rhs_plain = make_expr_type0($x, $op, $y, 0, NULL); }
     | regname[x]
-        { $rhs_plain_type0 = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
-
-rhs_plain_type1
-    : regname[x] op greloc_expr addsub regname[y]
-        { $rhs_plain_type1 = make_expr_type1($x, $op, $greloc_expr, $y); }
-    | regname[x] op greloc_expr
-        { $rhs_plain_type1 = make_expr_type1($x, $op, $greloc_expr, 0); }
-    | greloc_expr
-        { $rhs_plain_type1 = make_expr_type1(0, OP_BITWISE_OR, $greloc_expr, 0); }
+        { $rhs_plain = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
+    /* type1 */
+    | regname[x] op signed_greloc_expr '+' regname[y]
+        { $rhs_plain = make_expr_type1($x, $op, $signed_greloc_expr, $y); }
+    | regname[x] op signed_greloc_expr
+        { $rhs_plain = make_expr_type1($x, $op, $signed_greloc_expr, 0); }
+    | unsigned_greloc_expr
+        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $unsigned_greloc_expr, 0); }
+    | unsigned_greloc_expr '+' regname[y]
+        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $unsigned_greloc_expr, $y); }
+    | signed_greloc_expr
+        { $rhs_plain = make_expr_type1(0, OP_ADD, $signed_greloc_expr, 0); }
+    | signed_greloc_expr '+' regname[y]
+        { $rhs_plain = make_expr_type1(0, OP_ADD, $signed_greloc_expr, $y); }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -242,29 +245,43 @@ rhs_deref
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
 
-immediate
+signed_immediate
     : INTEGER
+    | '-' INTEGER
+        {   $signed_immediate = -$INTEGER; }
+
+unsigned_immediate
+    : '$' INTEGER
+        {   $unsigned_immediate = $INTEGER; }
+    | '$' '-' INTEGER
+        {   $unsigned_immediate = (-$INTEGER) & SMALL_IMMEDIATE_MASK; }
 
 addsub
     : '+' { $addsub =  1; }
     | '-' { $addsub = -1; }
 
 op
-    : '|'   { $op = OP_BITWISE_OR         ; }
-    | '&'   { $op = OP_BITWISE_AND        ; }
-    | '+'   { $op = OP_ADD                ; }
-    | '*'   { $op = OP_MULTIPLY           ; }
-    | LSH   { $op = OP_SHIFT_LEFT         ; }
-    | LTE   { $op = OP_COMPARE_LTE        ; }
-    | EQ    { $op = OP_COMPARE_EQ         ; }
-    | NOR   { $op = OP_BITWISE_NOR        ; }
-    | NAND  { $op = OP_BITWISE_NAND       ; }
-    | '^'   { $op = OP_BITWISE_XOR        ; }
-    | '-'   { $op = OP_ADD_NEGATIVE_Y     ; }
-    | XORN  { $op = OP_XOR_INVERT_X       ; }
-    | RSH   { $op = OP_SHIFT_RIGHT_LOGICAL; }
-    | '>'   { $op = OP_COMPARE_GT         ; }
-    | NEQ   { $op = OP_COMPARE_NE         ; }
+    : unsigned_op
+    | signed_op
+
+unsigned_op
+    : '|'   { $unsigned_op = OP_BITWISE_OR         ; }
+    | '&'   { $unsigned_op = OP_BITWISE_AND        ; }
+    | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
+    | NOR   { $unsigned_op = OP_BITWISE_NOR        ; }
+    | NAND  { $unsigned_op = OP_BITWISE_NAND       ; }
+    | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
+    | XORN  { $unsigned_op = OP_XOR_INVERT_X       ; }
+    | RSH   { $unsigned_op = OP_SHIFT_RIGHT_LOGICAL; }
+
+signed_op
+    : '+'   { $signed_op = OP_ADD           ; }
+    | '*'   { $signed_op = OP_MULTIPLY      ; }
+    | LTE   { $signed_op = OP_COMPARE_LTE   ; }
+    | EQ    { $signed_op = OP_COMPARE_EQ    ; }
+    | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
+    | '>'   { $signed_op = OP_COMPARE_GT    ; }
+    | NEQ   { $signed_op = OP_COMPARE_NE    ; }
 
 arrow
     : TOL { $arrow = 0; }
@@ -274,11 +291,18 @@ reloc_op
     : '+' { $$ = '+'; }
     | '-' { $$ = '-'; }
 
-/* guarded reloc_expr : either a single term, or a parenthesised reloc_expr */
-greloc_expr
+/* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
+unsigned_greloc_expr
+    : unsigned_immediate_atom
+
+signed_greloc_expr
     : eref
-    | const_atom
+    | signed_const_atom
     | preloc_expr
+
+greloc_expr
+    : unsigned_greloc_expr
+    | signed_greloc_expr
 
 reloc_expr[outer]
     : const_expr
@@ -297,21 +321,30 @@ const_expr[outer]
         {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
 
 const_atom
+    : unsigned_immediate_atom
+    | signed_const_atom
+
+unsigned_immediate_atom
+    : unsigned_immediate
+        {   $unsigned_immediate_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
+            $unsigned_immediate_atom->i = $unsigned_immediate; }
+
+signed_const_atom
     : pconst_expr
-    | immediate
-        {   $const_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
-            $const_atom->i = $immediate; }
+    | signed_immediate
+        {   $signed_const_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
+            $signed_const_atom->i = $signed_immediate; }
     | LOCAL
-        {   $const_atom = make_const_expr(CE_SYM, 0, NULL, NULL);
+        {   $signed_const_atom = make_const_expr(CE_SYM, 0, NULL, NULL);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL))) {
-                $const_atom->symbol = s;
+                $signed_const_atom->symbol = s;
             } else {
-                strcopy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname);
+                strcopy($signed_const_atom->symbolname, $LOCAL, sizeof $signed_const_atom->symbolname);
             }
         }
     | '.'
-        {   $const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
+        {   $signed_const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
 
 preloc_expr
     : '(' reloc_expr ')'
