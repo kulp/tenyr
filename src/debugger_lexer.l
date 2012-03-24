@@ -16,7 +16,7 @@ static int savestr(yyscan_t yyscanner);
 #define YY_USER_ACTION \
     do { \
         int len = MIN(yyleng, sizeof saveline - savecol); \
-        strcopy(&saveline[savecol], yytext, len); \
+        strcopy(&saveline[savecol], yytext, len + 1); \
         saveline[savecol += len] = 0; \
         yylloc->first_line = yylloc->last_line = yylineno; \
         yylloc->first_column = yycolumn; \

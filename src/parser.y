@@ -170,7 +170,7 @@ string[outer]
             $outer->len = strlen($STRING) - 2; // drop quotes
             $outer->str = malloc($outer->len + 1);
             // skip quotes
-            strcopy($outer->str, $STRING + 1, $outer->len);
+            strcopy($outer->str, $STRING + 1, $outer->len + 1);
             $outer->right = $inner; }
 
 utf32

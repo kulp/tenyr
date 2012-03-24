@@ -108,7 +108,7 @@ info_command
         {   $info_command.code = CMD_GET_INFO;
             strcopy($info_command.arg.str,
                     $IDENT,
-                    sizeof $info_command.arg.str - 1); }
+                    sizeof $info_command.arg.str); }
 
 format
     : 'i' { $format = DISP_INST; }
