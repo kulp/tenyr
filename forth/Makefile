@@ -16,10 +16,10 @@ all: $(TARGETS)
 forty.texe: main.to level0.to level1.to
 
 %.to: %.tas
-	cpp $(CPPFLAGS) $^ | $(TAS) -o$@ -
+	cpp $(CPPFLAGS) $^ | $(TAS) -o$@ - || (rm $@ ; exit 1)
 
 %.texe: %.to
-	$(TLD) -o$@ $^
+	$(TLD) -o$@ $^ || (rm $@ ; exit 1)
 
 clean:
 	$(RM) *.to $(CLEANFILES)

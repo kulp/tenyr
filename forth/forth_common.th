@@ -50,11 +50,12 @@
 
 #define head(Label,Name)                      \
     .word .L##Label##_end - .L##Label##_start \
-.L##Label##_start:                            \
-    .utf32 #Name                              \
     .global Label                             \
+.L##Label##_start:                            \
     .word @link                               \
     .set link, .                              \
+    .utf32 #Name                              \
+    .word 0                                   \
 .L##Label##_end:                              \
 Label
 

@@ -2,6 +2,7 @@
 
 head(start,start):
     .word @FLOOP
+    .word @WORDS
     .word @EXIT
 
 head(FLOOP,FLOOP):
