@@ -674,12 +674,15 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         case D_SET: {
             struct datum_D_SET *data = d->data;
             struct instruction_list **context = NULL;
+            #if 0
+            // XXX this deferral code is broken
             if (!p->insn)
                 context = &p->prev; // dummy instruction at end ; defer to prev
             else if (p->next)
                 context = &p->next->prev; // otherwise, defer to current instruction node
             else
                 fatal(0, "Illegal instruction context for .set");
+            #endif
             data->symbol->ce->deferred = context;
             free(data);
             free(d);

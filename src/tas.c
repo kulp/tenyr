@@ -61,8 +61,8 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
     if ((symbol = symbol_find(list, name))) {
         if (result) {
             if (symbol->ce) {
-                struct instruction_list *prev = *symbol->ce->deferred;
-                struct instruction *c = prev ? prev->insn : NULL;
+                struct instruction_list **prev = symbol->ce->deferred;
+                struct instruction *c = (prev && *prev) ? (*prev)->insn : NULL;
                 return ce_eval(pd, c, symbol->ce, WORD_BITWIDTH, result);
             } else {
                 *result = symbol->reladdr;
@@ -82,8 +82,17 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
     struct reloc_list *node = calloc(1, sizeof *node);
 
     if (name && name[0]) {
+        if (insn)
+            debug(5, "Adding relocation for `%s' of width %d @ 0x%08x", name, width, insn->reladdr);
+        else
+            debug(5, "Adding relocation for `%s' of width %d for NULL", name, width);
         strcopy(node->reloc.name, name, sizeof node->reloc.name);
     } else {
+        if (insn)
+            debug(5, "Adding null relocation of width %d @ 0x%08x", width, insn->reladdr);
+        else
+            // XXX what does a relocation with (insn == NULL) mean ?
+            debug(5, "Adding null relocation of width %d for NULL", width);
         node->reloc.name[0] = 0;
     }
     node->reloc.insn  = insn;
@@ -110,23 +119,22 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         case CE_SYM:
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
-                struct instruction_list *prev = *ce->symbol->ce->deferred;
-                struct instruction *c = prev ? prev->insn : context;
+                struct instruction_list **prev = ce->symbol->ce->deferred;
+                // XXX ": context" is voodoo ; hasn't been justified
+                struct instruction *c = (prev && *prev) ? (*prev)->insn : context;
                 int rc = ce_eval(pd, c, ce->symbol->ce, width, result);
-                if (c)
+                if (c) {
                     return add_relocation(pd, NULL, c, width);
-                else
+                } else {
                     return rc;
+                }
             } else {
                 int rc = symbol_lookup(pd, pd->symbols, name, result);
                 if (ce->type == CE_SYM) {
                     return rc;
-                } else
-                    if (rc) {
-                        return add_relocation(pd, name, context, width);
-                    } else {
-                        return add_relocation(pd, NULL, context, width);
-                    }
+                } else {
+                    return add_relocation(pd, rc ? name : NULL, context, width);
+                }
             }
         case CE_ICI:
             if (context)
