@@ -267,8 +267,27 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     return rc;
 }
 
-static void obj_out_symbols(struct symbol *symbol, struct obj_fdata *u, struct obj *o)
+static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj *o)
 {
+    o->records->data[u->insns] = i->u.word;
+    u->insns++;
+}
+
+static int obj_out(FILE *stream, struct instruction *i, void *ud)
+{
+    int rc = 1;
+    struct obj_fdata *u = ud;
+
+    obj_out_insn(i, u, (struct obj*)u->o);
+
+    return rc;
+}
+
+static int obj_sym(FILE *stream, struct symbol *symbol, void *ud)
+{
+    int rc = 1;
+    struct obj_fdata *u = ud;
+
     list_foreach(symbol, Node, symbol) {
         if (Node->global) {
             struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
@@ -281,11 +300,16 @@ static void obj_out_symbols(struct symbol *symbol, struct obj_fdata *u, struct o
             u->syms++;
         }
     }
+
+    return rc;
 }
 
-static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct obj *o)
+static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
 {
-    if (!reloc) return;
+    int rc = 1;
+    struct obj_fdata *u = ud;
+    if (!reloc || !reloc->insn)
+        return 0;
 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
@@ -298,24 +322,6 @@ static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct 
     u->next_rlc = &rlc->next;
 
     u->rlcs++;
-}
-
-static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj *o)
-{
-    o->records->data[u->insns] = i->u.word;
-
-    u->insns++;
-
-    obj_out_symbols(i->symbol, u, o);
-    obj_out_reloc(i->reloc, u, o);
-}
-
-static int obj_out(FILE *stream, struct instruction *i, void *ud)
-{
-    int rc = 1;
-    struct obj_fdata *u = ud;
-
-    obj_out_insn(i, u, (struct obj*)u->o);
 
     return rc;
 }
@@ -371,9 +377,15 @@ static int text_out(FILE *stream, struct instruction *i, void *ud)
 
 const struct format formats[] = {
     // first format is default
-    { "obj"   , obj_init, obj_in , obj_out , obj_fini },
-    { "raw"   , NULL    , raw_in , raw_out , NULL     },
-    { "text"  , NULL    , text_in, text_out, NULL     },
+    { "obj",
+        .init  = obj_init,
+        .in    = obj_in,
+        .out   = obj_out,
+        .fini  = obj_fini,
+        .sym   = obj_sym,
+        .reloc = obj_reloc },
+    { "raw" , .in = raw_in , .out = raw_out  },
+    { "text", .in = text_in, .out = text_out },
 };
 
 const size_t formats_count = countof(formats);

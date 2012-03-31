@@ -111,7 +111,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
                 struct instruction_list *prev = *ce->symbol->ce->deferred;
-                struct instruction *c = prev ? prev->insn : NULL;
+                struct instruction *c = prev ? prev->insn : context;
                 int rc = ce_eval(pd, c, ce->symbol->ce, width, result);
                 if (c)
                     return add_relocation(pd, NULL, c, width);
@@ -249,6 +249,11 @@ static int check_symbols(struct symbol_list *symbols)
 
 static int assembly_cleanup(struct parse_data *pd)
 {
+    list_foreach(instruction_list, Node, pd->top) {
+        free(Node->insn);
+        free(Node);
+    }
+
     list_foreach(symbol_list, Node, pd->symbols) {
         ce_free(Node->symbol->ce, 1);
         free(Node->symbol);
@@ -284,6 +289,14 @@ static int assembly_fixup_insns(struct parse_data *pd)
         reladdr++;
     }
 
+    list_foreach(symbol_list, li, pd->symbols)
+        list_foreach(symbol, l, li->symbol) {
+            if (!l->resolved) {
+                if (!ce_eval(pd, NULL, l->ce, WORD_BITWIDTH, &l->reladdr))
+                    l->resolved = 1;
+            }
+        }
+
     return 0;
 }
 
@@ -300,14 +313,19 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
         if (f->init)
             f->init(out, ASM_ASSEMBLE, &ud);
 
-        list_foreach(instruction_list, Node, pd->top) {
+        list_foreach(instruction_list, Node, pd->top)
             // if !Node->insn, it's a placeholder or some kind of dummy
-            if (Node->insn) {
+            if (Node->insn)
                 f->out(out, Node->insn, ud);
-                free(Node->insn);
-            }
-            free(Node);
-        }
+
+        if (f->sym)
+            list_foreach(symbol_list, Node, pd->symbols)
+                f->sym(out, Node->symbol, ud);
+
+        if (f->reloc)
+            list_foreach(reloc_list, Node, pd->relocs)
+                f->reloc(out, &Node->reloc, ud);
+
 
         if (f->fini)
             f->fini(out, &ud);
