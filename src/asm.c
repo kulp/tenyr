@@ -246,23 +246,28 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     struct obj_fdata *u = ud;
 
     struct objrec *rec = u->curr_rec;
-    if (!rec)
-        return -1;
-
-    if (u->pos >= rec->size) {
-        u->curr_rec = rec = rec->next;
-        u->pos = 0;
-
-        if (!rec) {
-            // TODO get symbols
+    int done = 0;
+    while (!done) {
+        if (!rec)
             return -1;
+
+        if (rec->size == 0) {
+            while (rec && rec->size == 0)
+                u->curr_rec = rec = rec->next;
+            u->pos = 0;
+        } else {
+            if (u->pos >= rec->size) {
+                u->curr_rec = rec = rec->next;
+                u->pos = 0;
+            } else {
+                i->u.word = rec->data[u->pos++];
+                // TODO adjust addr where ?
+                i->reladdr = rec->addr;
+                i->symbol = NULL;
+                done = 1;
+            }
         }
     }
-
-    i->u.word = rec->data[u->pos++];
-    // TODO adjust addr where ?
-    i->reladdr = rec->addr;
-    i->symbol = NULL;
 
     return rc;
 }

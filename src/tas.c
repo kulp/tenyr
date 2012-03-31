@@ -290,12 +290,10 @@ static int assembly_fixup_insns(struct parse_data *pd)
     }
 
     list_foreach(symbol_list, li, pd->symbols)
-        list_foreach(symbol, l, li->symbol) {
-            if (!l->resolved) {
+        list_foreach(symbol, l, li->symbol)
+            if (!l->resolved)
                 if (!ce_eval(pd, NULL, l->ce, WORD_BITWIDTH, &l->reladdr))
                     l->resolved = 1;
-            }
-        }
 
     return 0;
 }
