@@ -33,6 +33,12 @@ extern jmp_buf errbuf;
 void fatal_(int code, const char *file, int line, const char *func,
             const char *fmt, ...);
 
+#define debug(Level,...) \
+    debug_(Level,__FILE__,__LINE__,__func__,__VA_ARGS__)
+
+void debug_(int level, const char *file, int line, const char *func,
+            const char *fmt, ...);
+
 // represents a most basic linked list, used for collecting nodes with twalk
 struct todo_node  {
     void *what;

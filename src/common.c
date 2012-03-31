@@ -24,6 +24,22 @@ void fatal_(int code, const char *file, int line, const char *func,
     longjmp(errbuf, code);
 }
 
+void debug_(int level, const char *file, int line, const char *func,
+            const char *fmt, ...)
+{
+#ifndef DEBUG
+#define DEBUG 0
+#endif
+	if (level < DEBUG)
+		return;
+
+    va_list vl;
+    va_start(vl,fmt);
+    vfprintf(stderr, fmt, vl);
+    va_end(vl);
+    fprintf(stderr, " (in %s() at %s:%d)\n", func, file, line);
+}
+
 // tdestroy() is a glibc extension. Here we generate a list of nodes to delete
 // and then delete them one by one.
 int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp)
