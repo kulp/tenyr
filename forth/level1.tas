@@ -63,9 +63,9 @@
 // CHAR   -- char              parse ASCII character
 // CHARS  n1 -- n2                 chars->adrs units
 head(CHARS,CHARS):
-	.word @ENTER
-	// no-op ; chars are address units in tenyr
-	.word @EXIT
+    .word @ENTER
+    // no-op ; chars are address units in tenyr
+    .word @EXIT
 
 // CHAR+  c-addr1 -- c-addr2   add char size to adrs
 // COUNT  c-addr1 -- c-addr2 u      counted->adr/len
@@ -172,20 +172,20 @@ L_char_bottom:
 //                 -- c-addr 0      if convert error
 head(ISNUMBER,?NUMBER):
     .word @ENTER
-	.word @LIT
+    .word @LIT
     .word '0'       // load '0' onto stack
 
-	.word @FETCHR   // fetch character from string
-
-	.word @LIT
-    .word 1 
-    .word @CHARS 
-    .word @ADD_1    // increment character pointer
-
-	.word @CMP_LT
+    .word @FETCHR   // fetch character from string
 
     .word @LIT
-	.word '9'
+    .word 1
+    .word @CHARS
+    .word @ADD_1    // increment character pointer
+
+    .word @CMP_LT
+
+    .word @LIT
+    .word '9'
     // TODO
     .word @EXIT
 
