@@ -293,17 +293,15 @@ static int obj_sym(FILE *stream, struct symbol *symbol, void *ud)
     int rc = 1;
     struct obj_fdata *u = ud;
 
-    list_foreach(symbol, Node, symbol) {
-        if (Node->global) {
-            struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
+    if (symbol->global) {
+        struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
-            strcopy(sym->name, Node->name, sizeof sym->name);
-            assert(("Symbol address resolved", Node->resolved != 0));
-            sym->value = Node->reladdr;
+        strcopy(sym->name, symbol->name, sizeof sym->name);
+        assert(("Symbol address resolved", symbol->resolved != 0));
+        sym->value = symbol->reladdr;
 
-            u->next_sym = &sym->next;
-            u->syms++;
-        }
+        u->next_sym = &sym->next;
+        u->syms++;
     }
 
     return rc;

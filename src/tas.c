@@ -324,7 +324,6 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
             list_foreach(reloc_list, Node, pd->relocs)
                 f->reloc(out, &Node->reloc, ud);
 
-
         if (f->fini)
             f->fini(out, &ud);
     }
