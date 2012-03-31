@@ -17,11 +17,14 @@ hello.texe: puts.to
 compare.texe: strcmp.to puts.to
 maths.texe: isqrt.to umod.to udiv.to
 
+%.tas: %.tas.cpp
+	cpp $(CPPFLAGS) $< -o $@
+
 %.to: %.tas
-	cpp $(CPPFLAGS) $^ | $(TAS) -o$@ -
+	$(TAS) -o$@ $< || (rm $@ ; exit 1)
 
 %.texe: %.to
-	$(TLD) -o$@ $^
+	$(TLD) -o$@ $^ || (rm $@ ; exit 1)
 
 clean:
 	$(RM) $(CLEANFILES)
