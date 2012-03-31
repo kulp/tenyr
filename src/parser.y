@@ -673,8 +673,15 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         }
         case D_SET: {
             struct datum_D_SET *data = d->data;
-            // point to the previous instruction to the one after us, if any
-            data->symbol->ce->deferred = &p->prev;
+            struct instruction_list **context = NULL;
+            // XXX context hack ; this if-tree isn't justifiable
+            if (p->next)
+                context = &p->next->prev;
+            else if (p->prev)
+                context = &p->prev->next;
+            else
+                context = &p->prev;
+            data->symbol->ce->deferred = context;
             free(data);
             free(d);
             break;
