@@ -674,13 +674,12 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         case D_SET: {
             struct datum_D_SET *data = d->data;
             struct instruction_list **context = NULL;
-            // XXX context hack ; this if-tree isn't justifiable
-            if (p->next)
-                context = &p->next->prev;
-            else if (p->prev)
-                context = &p->prev->next;
+            if (!p->insn)
+                context = &p->prev; // dummy instruction at end ; defer to prev
+            else if (p->next)
+                context = &p->next->prev; // otherwise, defer to current instruction node
             else
-                context = &p->prev;
+                fatal(0, "Illegal instruction context for .set");
             data->symbol->ce->deferred = context;
             free(data);
             free(d);
