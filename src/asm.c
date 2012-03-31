@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "obj.h"
 #include "ops.h"
@@ -36,6 +37,13 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
 {
     if (flags & ASM_AS_DATA)
         return fprintf(out, ".word 0x%08x", i->u.word);
+
+    if (flags & ASM_AS_CHAR) {
+        if (isprint(i->u.word))
+            return fprintf(out, ".word '%c'", i->u.word);
+        else
+            return fprintf(out, "         ");
+    }
 
     int type = i->u._xxxx.t;
     switch (type) {

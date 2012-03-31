@@ -22,6 +22,7 @@ int find_format_by_name(const void *_a, const void *_b);
 
 #define ASM_AS_INSN 1
 #define ASM_AS_DATA 2
+#define ASM_AS_CHAR 4
 
 // returns number of characters printed
 int print_disassembly(FILE *out, struct instruction *i, int flags);

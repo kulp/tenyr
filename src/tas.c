@@ -363,6 +363,8 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
         int len = print_disassembly(out, &i, ASM_AS_INSN);
         fprintf(out, "%*s# ", 30 - len, "");
         print_disassembly(out, &i, ASM_AS_DATA);
+        fprintf(out, " ; ");
+        print_disassembly(out, &i, ASM_AS_CHAR);
         // TODO make i.reladdr correct so we can use that XXX hack
         fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
     }
