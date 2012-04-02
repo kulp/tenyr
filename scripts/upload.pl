@@ -57,7 +57,7 @@ for my $filepath (@ARGV) {
     $file{name} = "$file{stem}-$file{arch}-$file{version}$file{ext}";
     $file{desc} = "$file{stem} version $file{version} on $file{arch}";
     $file{size} = (stat $filepath)[7];
-    $file{type} = "application/octet-stream";
+    chomp($file{type} = `file --brief $filepath` || "application/octet-stream");
 
     my $repo = $p->repos->get(repo => $reponame);
     my $d = $p->repos->downloads->new(
