@@ -7,13 +7,15 @@ use LWP::UserAgent;
 use HTTP::Request::Common;
 use JSON::Any;
 use Perl6::Slurp;
-use File::Basename qw(fileparse);
+use File::Basename qw(dirname fileparse);
 
 use Data::Dumper;
 
+my $here = dirname $0;
+
 my $username = q(kulp);
 my $reponame = q(tenyr);
-chomp(my $password = slurp "upload.password");
+chomp(my $password = slurp "$here/upload.password");
 
 my %args = (
     arch    => shift(@ARGV) || die("provide arch as first argument"),
@@ -36,7 +38,7 @@ my $token = do {
 
         my $token = $parsed->{token};
         die "Failed to get OAuth token : $auth" unless $token;
-        open my $fh, ">", "upload.token";
+        open my $fh, ">", "$here/upload.token";
         print $fh $token;
         $token;
     }
@@ -52,7 +54,7 @@ for my $filepath (@ARGV) {
     ($file{stem}, $file{dir}, $file{ext}) = fileparse($filepath, qr/\.\w+$/);
     $file{version} = $args{version};
     $file{arch} = $args{arch};
-    $file{name} = "$file{stem}-$file{version}";
+    $file{name} = "$file{stem}-$file{arch}-$file{version}$file{ext}";
     $file{desc} = "$file{stem} version $file{version} on $file{arch}";
     $file{size} = (stat $filepath)[7];
     $file{type} = "application/octet-stream";
