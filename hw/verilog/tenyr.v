@@ -164,7 +164,10 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
-    wire norm_rw = deref[1];
+    wire mem_active = |deref;
+    assign rw = mem_active ? deref[1] : 'b1;
+    wire[31:0] mem_operand = mem_active ? (deref[0] ? valueZ : rhs) : 'bz;
+    assign norm_data = mem_active ? mem_operand : 'bz;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
     wire reg_rw = ~deref[0] && indexZ != 0;
