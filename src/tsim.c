@@ -149,14 +149,22 @@ static const char *version()
     return "tsim version " STR(BUILD_NAME);
 }
 
+static int format_has_input(const struct format *f)
+{
+    return !!f->in;
+}
+
 static int usage(const char *me)
 {
+    char format_list[256];
+    make_format_list(format_has_input, formats_count, formats, sizeof format_list, format_list, ", ");
+
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -d, --debug           start the simulator in debugger mode\n"
            "  -s, --start=N         start execution at word address N\n"
-           "  -f, --format=F        select input format (binary, text, obj)\n"
+           "  -f, --format=F        select input format (%s)\n"
            "  -n, --scratch         don't run default recipes\n"
            "  -r, --recipe=R        run recipe R (see list below)\n"
            "  -v, --verbose         increase verbosity of output\n"
@@ -169,7 +177,7 @@ static int usage(const char *me)
            "Default recipes:\n"
            "  " DEFAULT_RECIPES(Space)
            "\n"
-           , me, version());
+           , me, format_list, version());
 
     return 0;
 }

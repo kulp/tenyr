@@ -369,12 +369,42 @@ static int text_out(FILE *stream, struct instruction *i, void *ud)
     return fprintf(stream, "0x%08x\n", i->u.word) > 0;
 }
 
+/*******************************************************************************
+ * Verilog format : behavioural assignment statements
+ */
+static int verilog_out(FILE *stream, struct instruction *i, void *ud)
+{
+    return -1;
+}
+
 const struct format formats[] = {
     // first format is default
-    { "obj"   , obj_init, obj_in , obj_out , obj_fini },
-    { "raw"   , NULL    , raw_in , raw_out , NULL     },
-    { "text"  , NULL    , text_in, text_out, NULL     },
+    { "obj"    , obj_init, obj_in , obj_out    , obj_fini },
+    { "raw"    , NULL    , raw_in , raw_out    , NULL     },
+    { "text"   , NULL    , text_in, text_out   , NULL     },
+    { "verilog", NULL    , NULL   , verilog_out, NULL     },
 };
 
 const size_t formats_count = countof(formats);
+
+int make_format_list(int (*pred)(const struct format *), size_t flen,
+        const struct format formats[flen], size_t len, char buf[len],
+        const char *sep)
+{
+	int pos = 0;
+    const struct format *f = formats;
+	while (pos < (signed)len && f < formats + flen) {
+        if (pred == NULL || pred(f)) {
+            if (pos > 0) {
+                pos += snprintf(&buf[pos], len - pos, "%s%s", sep, f->name);
+            } else {
+                pos += snprintf(&buf[pos], len - pos, "%s", f->name);
+            }
+        }
+
+        f++;
+	}
+
+	return pos;
+}
 
