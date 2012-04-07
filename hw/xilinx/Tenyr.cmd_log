@@ -1,0 +1,2 @@
+xst -intstyle ise -ifn "/mnt/kiri-kulp/Documents/Code/C/tenyr/hw/xilinx/Tenyr.xst" -ofn "/mnt/kiri-kulp/Documents/Code/C/tenyr/hw/xilinx/Tenyr.syr" 
+xst -intstyle ise -ifn "/mnt/kiri-kulp/Documents/Code/C/tenyr/hw/xilinx/Tenyr.xst" -ofn "/mnt/kiri-kulp/Documents/Code/C/tenyr/hw/xilinx/Tenyr.syr" 
