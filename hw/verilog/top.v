@@ -1,5 +1,7 @@
 `timescale 1ms/10us
 
+`define CLOCKPERIOD 10
+
 module Top();
     Tenyr tenyr();
 

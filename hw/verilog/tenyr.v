@@ -23,8 +23,12 @@ module Mem(input clk, input enable, input p0rw,
     wire p0_inrange = (p0_addr >= BASE && p0_addr < SIZE + BASE);
     wire p1_inrange = (p1_addr >= BASE && p1_addr < SIZE + BASE);
 
-    assign p0_data = (enable && p0_inrange && !p0rw) ? store[p0_addr] : 'bz;
-    assign p1_data = (enable && p1_inrange         ) ? store[p1_addr] : 'bz;
+    assign p0_data = (enable && p0_inrange && !p0rw) ? store[p0_addr] : 32'bz;
+    assign p1_data = (enable && p1_inrange         ) ? store[p1_addr] : 32'bz;
+
+    initial begin
+        `include "small.vh"
+    end
 
     always @(negedge clk)
         if (enable && p0_inrange && p0rw)
@@ -46,8 +50,8 @@ module Reg(input clk,
             initial #0 store[i] <= 'b0;
     endgenerate
 
-    assign pc     = rwP ? 'bz : store[15];
-    assign valueZ = rwZ ? 'bz : store[indexZ];
+    assign pc     = rwP ? 32'bz : store[15];
+    assign valueZ = rwZ ? 32'bz : store[indexZ];
     assign valueX = store[indexX];
     assign valueY = store[indexY];
 
@@ -72,17 +76,19 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
     reg[3:0] rZ = 0, rX = 0, rY = 0, rop = 0;
     reg[11:0] rI = 0;
     reg[1:0] rderef = 0;
-    reg rflip = 0, rtype = 0, rillegal = 0, valid = 0;
+    reg rflip = 0, rtype = 0, rillegal = 0, rvalid = 0;
 
-    assign Z       = valid ? rZ       : 'bz,
-           X       = valid ? rX       : 'bz,
-           Y       = valid ? rY       : 'bz,
-           I       = valid ? rI       : 'bz,
-           op      = valid ? rop      : 'bz,
-           deref   = valid ? rderef   : 'bz,
-           flip    = valid ? rflip    : 'bz,
-           type    = valid ? rtype    : 'bz,
-           illegal = rillegal;
+    assign valid = rvalid;
+
+    assign Z       = rvalid ? rZ       :  4'bz,
+           X       = rvalid ? rX       :  4'bz,
+           Y       = rvalid ? rY       :  4'bz,
+           I       = rvalid ? rI       : 12'bz,
+           op      = rvalid ? rop      :  4'bz,
+           deref   = rvalid ? rderef   :  2'bz,
+           flip    = rvalid ? rflip    :  1'bz,
+           type    = rvalid ? rtype    :  1'bz,
+           illegal = &insn;
 
     always @(insn) begin
         casez (insn[31:28])
@@ -96,13 +102,20 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
                 rY  <= insn[16 +: 4];
                 rop <= insn[12 +: 4];
                 rI  <= insn[ 0 +:12];
-                valid <= `DECODETIME 1;
+                rvalid <= `DECODETIME 1;
             end
-            4'b1111: begin
-                rillegal <= &insn;
-                valid <= `DECODETIME &insn;
+            default: begin
+                rvalid <= `DECODETIME &insn[31:28];
+                rderef <= 2'bz;
+                rflip  <= 1'bz;
+                rtype  <= 1'bz;
+
+                rZ  <=  4'bz;
+                rX  <=  4'bz;
+                rY  <=  4'bz;
+                rop <=  4'bz;
+                rI  <= 12'bz;
             end
-            default: valid <= `DECODETIME 0;
         endcase
     end
 
@@ -111,7 +124,7 @@ endmodule
 module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
             input[3:0] op, input flip, type, valid);
 
-    assign rhs = valid ? i_rhs : 'bz;
+    assign rhs = valid ? i_rhs : 32'bz;
     reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
@@ -151,11 +164,13 @@ endmodule
 module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             output rw, output[31:0] norm_addr, inout[31:0] norm_data,
             input _reset, output halt);
-    reg[31:0] norm_addr = 0;
+    reg[31:0] _norm_addr = 0;
+
+    assign norm_addr = _norm_addr;
 
     wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
-    wire[31:0] valueZ = reg_rw ? rhs : 'bz;
+    wire[31:0] valueZ = reg_rw ? rhs : 32'bz;
     wire[11:0] valueI;
     wire[3:0] op;
     wire flip, illegal, type, insn_valid;
@@ -164,14 +179,14 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire[1:0] deref;
 
     reg _halt = 1;
-    wire halt = _reset ? 'bz : _halt;
+    assign halt = _reset ? 1'bz : _halt;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
     wire mem_active = |deref;
-    assign rw = mem_active ? deref[1] : 'b1;
-    wire[31:0] mem_operand = mem_active ? (deref[0] ? valueZ : rhs) : 'bz;
-    assign norm_data = mem_active ? mem_operand : 'bz;
+    assign rw = mem_active ? deref[1] : 1'b1;
+    wire[31:0] mem_operand = mem_active ? (deref[0] ? valueZ : rhs) : 32'bz;
+    assign norm_data = mem_active ? mem_operand : 32'bz;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
     wire reg_rw = ~deref[0] && indexZ != 0;
@@ -181,7 +196,7 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire[31:0] pc = _halt   ? new_pc :
                     jumping ? new_pc : next_pc;
 
-    wire[31:0] insn_addr = halt ? 'bz : pc;
+    assign insn_addr = halt ? 32'bz : pc;
 
     always @(negedge clk, negedge _reset) begin
         if (!_reset) begin
@@ -200,7 +215,7 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
         end
     end
 
-    Reg regs(.clk(clk), .pc(pc), .rwP('b1), .rwZ(reg_rw),
+    Reg regs(.clk(clk), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
 
@@ -217,8 +232,12 @@ endmodule
 module Tenyr();
     reg halt = 1;
     reg _reset = 0;
-    reg clk = 0;
-    always #(`CLOCKPERIOD / 2) if (!halt) clk = !clk;
+    reg clk;
+
+    initial clk = 0;
+    // TODO halt ?
+    always #(`CLOCKPERIOD / 2) clk = ~clk;
+
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, operand_data;
     wire operand_rw;
@@ -226,16 +245,18 @@ module Tenyr();
     initial #(2 * `CLOCKPERIOD) halt = `SETUP 0;
     initial #(1 * `CLOCKPERIOD) _reset = `SETUP 1;
 
-    wire _halt = _reset ? halt : 'bz;
+    wire _halt = _reset ? halt : 1'bz;
     always @(negedge clk) halt <= _halt;
 
-    Mem ram(.clk(clk), .enable(!halt), .p0rw(operand_rw),
+    Mem #(.SIZE(16)) ram(.clk(clk), .enable(!halt), .p0rw(operand_rw),
             .p0_addr(operand_addr), .p0_data(operand_data),
             .p1_addr(insn_addr)   , .p1_data(insn_data));
 
+/*
     SimSerial serial(.clk(clk), ._reset(_reset), .enable(!halt),
                      .rw(operand_rw), .addr(operand_addr),
                      .data(operand_data));
+*/
 
     Core core(.clk(clk), ._reset(_reset), .rw(operand_rw),
             .norm_addr(operand_addr), .norm_data(operand_data),
