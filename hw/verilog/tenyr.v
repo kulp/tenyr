@@ -176,30 +176,27 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     //  Z  <- [...] -- deref == 01
     wire reg_rw = ~deref[0] && indexZ != 0;
     wire jumping = indexZ == 15 && reg_rw;
-    reg[31:0] insn_addr = `RESETVECTOR,
-              new_pc    = `RESETVECTOR,
+    reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-    wire[31:0] pc = halt    ? 'bz :
+    wire[31:0] pc = _halt   ? new_pc :
                     jumping ? new_pc : next_pc;
 
-    always @(_reset) begin
+    wire[31:0] insn_addr = halt ? 'bz : pc;
+
+    always @(negedge clk, negedge _reset) begin
         if (!_reset) begin
             state_valid <= 1;
             // TODO use proper reset vectors
-            insn_addr   <= `RESETVECTOR;
             new_pc      <= `RESETVECTOR;
             next_pc     <= `RESETVECTOR;
-        end
-    end
-
-    always @(negedge clk) begin
-        _halt <= `SETUP (halt | illegal);
-        if (!_halt) begin
-            state_valid <= `SETUP state_valid & insn_valid;
-            next_pc <= `SETUP pc + 1;
-            if (jumping)
-                new_pc <= `SETUP valueZ;
-            insn_addr <= `SETUP pc;
+        end else begin
+            _halt <= `SETUP (halt | illegal);
+            if (!_halt) begin
+                state_valid <= `SETUP state_valid & insn_valid;
+                next_pc <= `SETUP pc + 1;
+                if (jumping)
+                    new_pc <= `SETUP valueZ;
+            end
         end
     end
 
@@ -220,7 +217,7 @@ endmodule
 module Tenyr();
     reg halt = 1;
     reg _reset = 0;
-    reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
+    reg clk = 0;
     always #(`CLOCKPERIOD / 2) if (!halt) clk = !clk;
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, operand_data;
