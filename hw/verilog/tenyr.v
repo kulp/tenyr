@@ -4,7 +4,10 @@
 `define RAMDELAY (1 * `CLOCKPERIOD)
 // TODO use proper reset vectors
 `define RESETVECTOR 'h1000
-`define SETUP #2
+`define SETUPTIME 2
+`define SETUP #(`SETUPTIME)
+`define DECODETIME `SETUP
+`define EXECTIME `SETUP
 
 // Two-port memory required if we don't have wait states ; one instruction
 // fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
@@ -93,13 +96,13 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
                 rY  <= insn[16 +: 4];
                 rop <= insn[12 +: 4];
                 rI  <= insn[ 0 +:12];
-                valid <= `SETUP 1;
+                valid <= `DECODETIME 1;
             end
             4'b1111: begin
                 rillegal <= &insn;
-                valid <= `SETUP 1;
+                valid <= `DECODETIME &insn;
             end
-            default: valid <= `SETUP 0;
+            default: valid <= `DECODETIME 0;
         endcase
     end
 
@@ -122,22 +125,22 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
 
     always @(negedge clk) begin
         case (op)
-            4'b0000: i_rhs = `SETUP  (Xu  |  Ou) + As; // X bitwise or Y
-            4'b0001: i_rhs = `SETUP  (Xu  &  Ou) + As; // X bitwise and Y
-            4'b0010: i_rhs = `SETUP  (Xs  +  Os) + As; // X add Y
-            4'b0011: i_rhs = `SETUP  (Xs  *  Os) + As; // X multiply Y
+            4'b0000: i_rhs = `EXECTIME  (Xu  |  Ou) + As; // X bitwise or Y
+            4'b0001: i_rhs = `EXECTIME  (Xu  &  Ou) + As; // X bitwise and Y
+            4'b0010: i_rhs = `EXECTIME  (Xs  +  Os) + As; // X add Y
+            4'b0011: i_rhs = `EXECTIME  (Xs  *  Os) + As; // X multiply Y
           //4'b0100:                                   // reserved
-            4'b0101: i_rhs = `SETUP  (Xu  << Ou) + As; // X shift left Y
-            4'b0110: i_rhs = `SETUP  (Xs  <= Os) + As; // X compare <= Y
-            4'b0111: i_rhs = `SETUP  (Xs  == Os) + As; // X compare == Y
-            4'b1000: i_rhs = `SETUP ~(Xu  |  Ou) + As; // X bitwise nor Y
-            4'b1001: i_rhs = `SETUP ~(Xu  &  Ou) + As; // X bitwise nand Y
-            4'b1010: i_rhs = `SETUP  (Xu  ^  Ou) + As; // X bitwise xor Y
-            4'b1011: i_rhs = `SETUP  (Xs  + -Os) + As; // X add two's complement Y
-            4'b1100: i_rhs = `SETUP  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
-            4'b1101: i_rhs = `SETUP  (Xu  >> Ou) + As; // X shift right logical Y
-            4'b1110: i_rhs = `SETUP  (Xs  >  Os) + As; // X compare > Y
-            4'b1111: i_rhs = `SETUP  (Xs  != Os) + As; // X compare <> Y
+            4'b0101: i_rhs = `EXECTIME  (Xu  << Ou) + As; // X shift left Y
+            4'b0110: i_rhs = `EXECTIME  (Xs  <= Os) + As; // X compare <= Y
+            4'b0111: i_rhs = `EXECTIME  (Xs  == Os) + As; // X compare == Y
+            4'b1000: i_rhs = `EXECTIME ~(Xu  |  Ou) + As; // X bitwise nor Y
+            4'b1001: i_rhs = `EXECTIME ~(Xu  &  Ou) + As; // X bitwise nand Y
+            4'b1010: i_rhs = `EXECTIME  (Xu  ^  Ou) + As; // X bitwise xor Y
+            4'b1011: i_rhs = `EXECTIME  (Xs  + -Os) + As; // X add two's complement Y
+            4'b1100: i_rhs = `EXECTIME  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
+            4'b1101: i_rhs = `EXECTIME  (Xu  >> Ou) + As; // X shift right logical Y
+            4'b1110: i_rhs = `EXECTIME  (Xs  >  Os) + As; // X compare > Y
+            4'b1111: i_rhs = `EXECTIME  (Xs  != Os) + As; // X compare <> Y
 
             //default: $stop;
         endcase
@@ -160,7 +163,8 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire[31:0] rhs;
     wire[1:0] deref;
 
-    reg halt = 0;
+    reg _halt = 1;
+    wire halt = _reset ? 'bz : _halt;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
@@ -189,8 +193,8 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     end
 
     always @(negedge clk) begin
-        halt <= `SETUP illegal;
-        if (!halt) begin
+        _halt <= `SETUP (halt | illegal);
+        if (!_halt) begin
             state_valid <= `SETUP state_valid & insn_valid;
             next_pc <= `SETUP pc + 1;
             if (jumping)
@@ -215,7 +219,6 @@ endmodule
 
 module Tenyr();
     reg halt = 1;
-    wire _halt;
     reg _reset = 0;
     reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
     always #(`CLOCKPERIOD / 2) if (!halt) clk = !clk;
@@ -226,6 +229,7 @@ module Tenyr();
     initial #(2 * `CLOCKPERIOD) halt = `SETUP 0;
     initial #(1 * `CLOCKPERIOD) _reset = `SETUP 1;
 
+    wire _halt = _reset ? halt : 'bz;
     always @(negedge clk) halt <= _halt;
 
     Mem ram(.clk(clk), .enable(!halt), .p0rw(operand_rw),
