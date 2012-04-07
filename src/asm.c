@@ -390,7 +390,7 @@ static int verilog_init(FILE *stream, int flags, void **ud)
 static int verilog_out(FILE *stream, struct instruction *i, void *ud)
 {
     struct verilog_data *v = ud;
-    return fprintf(stream, "%s[32'h%08x] = 32'h%08x;\n", v->storename, i->reladdr, i->u.word);
+    return fprintf(stream, "%s[32'h%08x + BASE] = 32'h%08x;\n", v->storename, i->reladdr, i->u.word);
 }
 
 static int verilog_fini(FILE *stream, void **ud)
