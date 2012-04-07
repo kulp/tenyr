@@ -372,17 +372,44 @@ static int text_out(FILE *stream, struct instruction *i, void *ud)
 /*******************************************************************************
  * Verilog format : behavioural assignment statements
  */
+struct verilog_data {
+    char storename[32];
+};
+
+static int verilog_init(FILE *stream, int flags, void **ud)
+{
+    int rc = 0;
+    struct verilog_data *v = *ud = calloc(1, sizeof *v);
+
+    // TODO make configurable
+    snprintf(v->storename, sizeof v->storename, "store");
+
+    return rc;
+}
+
 static int verilog_out(FILE *stream, struct instruction *i, void *ud)
 {
-    return -1;
+    struct verilog_data *v = ud;
+    return fprintf(stream, "%s[32'h%08x] = 32'h%08x;\n", v->storename, i->reladdr, i->u.word);
+}
+
+static int verilog_fini(FILE *stream, void **ud)
+{
+    int rc = 0;
+
+    struct verilog_data *v = *ud;
+    free(v);
+    *ud = NULL;
+
+    return rc;
 }
 
 const struct format formats[] = {
     // first format is default
-    { "obj"    , obj_init, obj_in , obj_out    , obj_fini },
-    { "raw"    , NULL    , raw_in , raw_out    , NULL     },
-    { "text"   , NULL    , text_in, text_out   , NULL     },
-    { "verilog", NULL    , NULL   , verilog_out, NULL     },
+    { "obj"    , obj_init    , obj_in , obj_out    , obj_fini     },
+    { "raw"    , NULL        , raw_in , raw_out    , NULL         },
+    { "text"   , NULL        , text_in, text_out   , NULL         },
+    { "verilog", verilog_init, NULL   , verilog_out, verilog_fini },
 };
 
 const size_t formats_count = countof(formats);
