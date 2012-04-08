@@ -42,12 +42,13 @@ module Reg(input clk,
                    input[3:0] indexY, output[31:0] valueY, // Y is RO
         inout[31:0] pc, input rwP);
 
+    (* KEEP = "TRUE" *)
     reg[31:0] store[0:15];
 
     generate
         genvar i;
         for (i = 0; i < 15; i = i + 1) // P is set externally
-            initial #0 store[i] <= 'b0;
+            initial #0 store[i] <= 32'b0;
     endgenerate
 
     assign pc     = rwP ? 32'bz : store[15];
@@ -70,31 +71,29 @@ module Reg(input clk,
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output flip, type, illegal,
+              output[3:0] op, output[1:0] deref, output type, illegal,
               valid);
 
     reg[3:0] rZ = 0, rX = 0, rY = 0, rop = 0;
     reg[11:0] rI = 0;
     reg[1:0] rderef = 0;
-    reg rflip = 0, rtype = 0, rillegal = 0, rvalid = 0;
+    reg rtype = 0, rillegal = 0, rvalid = 0;
 
     assign valid = rvalid;
 
-    assign Z       = rvalid ? rZ       :  4'bz,
-           X       = rvalid ? rX       :  4'bz,
-           Y       = rvalid ? rY       :  4'bz,
-           I       = rvalid ? rI       : 12'bz,
-           op      = rvalid ? rop      :  4'bz,
-           deref   = rvalid ? rderef   :  2'bz,
-           flip    = rvalid ? rflip    :  1'bz,
-           type    = rvalid ? rtype    :  1'bz,
+    assign Z       = rvalid ? rZ       :  4'bx,
+           X       = rvalid ? rX       :  4'bx,
+           Y       = rvalid ? rY       :  4'bx,
+           I       = rvalid ? rI       : 12'bx,
+           op      = rvalid ? rop      :  4'bx,
+           deref   = rvalid ? rderef   :  2'bx,
+           type    = rvalid ? rtype    :  1'bx,
            illegal = &insn;
 
     always @(insn) begin
         casez (insn[31:28])
             4'b0???: begin
                 rderef <= { insn[29] & ~insn[28], insn[28] };
-                rflip  <= insn[29] & insn[28];
                 rtype  <= insn[30];
 
                 rZ  <= insn[24 +: 4];
@@ -106,15 +105,14 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
             end
             default: begin
                 rvalid <= `DECODETIME &insn[31:28];
-                rderef <= 2'bz;
-                rflip  <= 1'bz;
-                rtype  <= 1'bz;
+                rderef <= 2'bx;
+                rtype  <= 1'bx;
 
-                rZ  <=  4'bz;
-                rX  <=  4'bz;
-                rY  <=  4'bz;
-                rop <=  4'bz;
-                rI  <= 12'bz;
+                rZ  <=  4'bx;
+                rX  <=  4'bx;
+                rY  <=  4'bx;
+                rop <=  4'bx;
+                rI  <= 12'bx;
             end
         endcase
     end
@@ -122,9 +120,9 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
 endmodule
 
 module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
-            input[3:0] op, input flip, type, valid);
+            input[3:0] op, input type, valid);
 
-    assign rhs = valid ? i_rhs : 32'bz;
+    assign rhs = valid ? i_rhs : 32'bx;
     reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
@@ -173,12 +171,18 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire[31:0] valueZ = reg_rw ? rhs : 32'bz;
     wire[11:0] valueI;
     wire[3:0] op;
-    wire flip, illegal, type, insn_valid;
-    reg state_valid = 0;
+    wire illegal, type, insn_valid;
+    reg state_invalid;
     wire[31:0] rhs;
     wire[1:0] deref;
 
-    reg _halt = 1;
+    reg _halt;
+
+    initial begin
+        #0 _halt = 1;
+        #0 state_invalid = 1;
+    end
+
     assign halt = _reset ? 1'bz : _halt;
 
     // [Z] <-  ...  -- deref == 10
@@ -200,14 +204,14 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
 
     always @(negedge clk, negedge _reset) begin
         if (!_reset) begin
-            state_valid <= 1;
+            state_invalid <= 1;
             // TODO use proper reset vectors
             new_pc      <= `RESETVECTOR;
             next_pc     <= `RESETVECTOR;
         end else begin
             _halt <= `SETUP (halt | illegal);
             if (!_halt) begin
-                state_valid <= `SETUP state_valid & insn_valid;
+                state_invalid <= `SETUP !(state_invalid & insn_valid);
                 next_pc <= `SETUP pc + 1;
                 if (jumping)
                     new_pc <= `SETUP valueZ;
@@ -219,22 +223,20 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
 
-    Decode decode(.insn(insn_data), .op(op), .flip(flip),
-                  .deref(deref), .type(type), .valid(insn_valid),
-                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI),
-                  .illegal(illegal));
+    Decode decode(.insn(insn_data), .op(op), .deref(deref), .type(type),
+                  .valid(insn_valid), .illegal(illegal),
+                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
-    Exec exec(.clk(clk), .op(op), .flip(flip), .type(type),
-              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI),
-              .valid(state_valid));
+    Exec exec(.clk(clk), .op(op), .type(type), .rhs(rhs),
+              .X(valueX), .Y(valueY), .I(valueI),
+              .valid(!state_invalid));
 endmodule
 
 module Tenyr();
     reg halt = 1;
     reg _reset = 0;
-    reg clk;
+    reg clk = 0;
 
-    initial clk = 0;
     // TODO halt ?
     always #(`CLOCKPERIOD / 2) clk = ~clk;
 
@@ -248,9 +250,11 @@ module Tenyr();
     wire _halt = _reset ? halt : 1'bz;
     always @(negedge clk) halt <= _halt;
 
+/*
     Mem #(.SIZE(16)) ram(.clk(clk), .enable(!halt), .p0rw(operand_rw),
             .p0_addr(operand_addr), .p0_data(operand_data),
             .p1_addr(insn_addr)   , .p1_data(insn_data));
+*/
 
 /*
     SimSerial serial(.clk(clk), ._reset(_reset), .enable(!halt),
