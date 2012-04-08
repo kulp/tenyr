@@ -34,13 +34,6 @@
     <file xil_pn:name="Tenyr.ucf" xil_pn:type="FILE_UCF">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="Core.ucf" xil_pn:type="FILE_UCF">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
-    <file xil_pn:name="blk_mem_gen_v6_3.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="159"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="159"/>
-    </file>
   </files>
 
   <properties>
@@ -76,7 +69,6 @@
 
   <bindings>
     <binding xil_pn:location="/Tenyr" xil_pn:name="Tenyr.ucf"/>
-    <binding xil_pn:location="/Tenyr" xil_pn:name="Core.ucf"/>
   </bindings>
 
   <libraries/>

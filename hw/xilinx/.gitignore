@@ -8,3 +8,14 @@ webtalk_pn.xml
 tmp
 _ngo
 *.xml
+*_run_?/
+*.log
+Tenyr.bld
+Tenyr.cgc
+Tenyr.ngc
+Tenyr.ngd
+Tenyr.ngr
+Tenyr.stx
+Tenyr.sym
+Tenyr.tfi
+*.gise
