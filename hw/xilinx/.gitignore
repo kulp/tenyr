@@ -1,5 +1,10 @@
 *.html
 _xmsgs
-Tenyr_xst.xrpt
+*.xrpt
 iseconfig
 webtalk_pn.xml
+*.cmd_log
+*.syr
+tmp
+_ngo
+*.xml

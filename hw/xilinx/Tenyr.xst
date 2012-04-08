@@ -4,7 +4,7 @@ run
 -ifn Tenyr.prj
 -ofn Tenyr
 -ofmt NGC
--p xc6slx4-3-tqg144
+-p xc6slx16-3-csg324
 -top Tenyr
 -opt_mode Speed
 -opt_level 1
