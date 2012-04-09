@@ -12,12 +12,12 @@ all: tenyr glue.vpi
 .SUFFIXES: .v .c
 
 vpath %.c ../vpi
-vpath %.v ../verilog
+vpath %.v ../verilog ../verilog/sim .
 
 VFLAGS += -I../verilog
 
 tenyr: VFLAGS += -m glue
-tenyr: top.v simserial.v | glue.vpi
+tenyr: top.v simserial.v icarus_top.v simmem.v | glue.vpi
 
 glue.vpi: callbacks.o serial.o load.o ../../sim.o ../../asm.o ../../obj.o ../../common.o
 
