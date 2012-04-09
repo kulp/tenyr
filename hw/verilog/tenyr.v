@@ -1,14 +1,6 @@
 `include "common.vh"
 `timescale 1ms/10us
 
-// Two-port memory required if we don't have wait states ; one instruction
-// fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
-module MemInterface(input clk, input enable, input p0rw,
-        input[31:0] p0_addr, inout[31:0] p0_data,
-        input[31:0] p1_addr, inout[31:0] p1_data
-        );
-endmodule
-
 module Reg(input clk,
         input rwZ, input[3:0] indexZ, inout [31:0] valueZ, // Z is RW
                    input[3:0] indexX, output[31:0] valueX, // X is RO
