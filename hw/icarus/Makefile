@@ -9,7 +9,12 @@ endif
 
 all: tenyr glue.vpi
 
-.SUFFIXES: .v
+.SUFFIXES: .v .c
+
+vpath %.c ../vpi
+vpath %.v ../verilog
+
+VFLAGS += -I../verilog
 
 tenyr: VFLAGS += -m glue
 tenyr: top.v simserial.v | glue.vpi
