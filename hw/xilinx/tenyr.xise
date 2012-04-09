@@ -15,7 +15,7 @@
   <version xil_pn:ise_version="13.4" xil_pn:schema_version="2"/>
 
   <files>
-    <file xil_pn:name="../verilog/simserial.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../verilog/sim/simserial.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
       <association xil_pn:name="PostMapSimulation" xil_pn:seqID="1"/>
       <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="1"/>
@@ -80,7 +80,7 @@
     <!-- Do not hand-edit this section, as it will be overwritten when the    -->
     <!-- project is analyzed based on files automatically identified as       -->
     <!-- include files.                                                       -->
-    <file xil_pn:name="../verilog/small.vh" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../verilog/common.vh" xil_pn:type="FILE_VERILOG"/>
   </autoManagedFiles>
 
 </project>
