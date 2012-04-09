@@ -1,0 +1,22 @@
+# Date: Mon Apr  9 00:30:33 2012
+
+SET addpads = false
+SET asysymbol = true
+SET busformat = BusFormatAngleBracketNotRipped
+SET createndf = false
+SET designentry = Verilog
+SET device = xc6slx16
+SET devicefamily = spartan6
+SET flowvendor = Foundation_ISE
+SET formalverification = false
+SET foundationsym = false
+SET implementationfiletype = Ngc
+SET package = csg324
+SET removerpms = false
+SET simulationfiles = Behavioral
+SET speedgrade = -3
+SET verilogsim = true
+SET vhdlsim = false
+SET workingdirectory = ./tmp/
+
+# CRC: d9e5042e
