@@ -105,7 +105,7 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
             4'b0001: i_rhs = `EXECTIME  (Xu  &  Ou) + As; // X bitwise and Y
             4'b0010: i_rhs = `EXECTIME  (Xs  +  Os) + As; // X add Y
             4'b0011: i_rhs = `EXECTIME  (Xs  *  Os) + As; // X multiply Y
-          //4'b0100:                                   // reserved
+          //4'b0100:                                      // reserved
             4'b0101: i_rhs = `EXECTIME  (Xu  << Ou) + As; // X shift left Y
             4'b0110: i_rhs = `EXECTIME  (Xs  <= Os) + As; // X compare <= Y
             4'b0111: i_rhs = `EXECTIME  (Xs  == Os) + As; // X compare == Y
@@ -118,7 +118,7 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
             4'b1110: i_rhs = `EXECTIME  (Xs  >  Os) + As; // X compare > Y
             4'b1111: i_rhs = `EXECTIME  (Xs  != Os) + As; // X compare <> Y
 
-            //default: $stop;
+            default: i_rhs = 32'bx; //$stop;
         endcase
     end
 
