@@ -1,4 +1,18 @@
 
-#Created by Constraints Editor (xc6slx16-csg324-3) - 2012/04/08
 NET "clk" TNM_NET = clk;
 TIMESPEC TS_clk = PERIOD "clk" 20 MHz HIGH 50%;
+NET "txd" LOC = N4;
+#Created by Constraints Editor (xc6slx16-csg324-3) - 2012/04/09
+INST "an<0>" TNM = seg7;
+INST "an<1>" TNM = seg7;
+INST "an<2>" TNM = seg7;
+INST "an<3>" TNM = seg7;
+INST "seg<0>" TNM = seg7;
+INST "seg<1>" TNM = seg7;
+INST "seg<2>" TNM = seg7;
+INST "seg<3>" TNM = seg7;
+INST "seg<4>" TNM = seg7;
+INST "seg<5>" TNM = seg7;
+INST "seg<6>" TNM = seg7;
+INST "seg<7>" TNM = seg7;
+TIMEGRP "seg7" OFFSET = OUT 50 ns AFTER "clk";
