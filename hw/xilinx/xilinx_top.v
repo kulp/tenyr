@@ -20,11 +20,11 @@ module Tenyr(input _halt, input _reset, input clk, output txd, input rxd, output
     Serial serial(.clk(clk), ._reset(_reset), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .txd(txd), .rxd(rxd));
-/*
+
     Seg7   seg7  (.clk(clk), ._reset(_reset), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .seg(seg), .an(an));
-*/
+
     Core core(.clk(clk), ._reset(_reset), .rw(operand_rw),
             .norm_addr(operand_addr), .norm_data(operand_data),
             .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(_halt));

@@ -1,9 +1,9 @@
 `include "common.vh"
 `timescale 1ms/10us
 
-module lookup7(input[7:0] char, output[6:0] lines);
-    reg[6:0] out = 7'b0;
-    assign lines = out;
+module lookup7(char, out);
+    input[7:0] char;
+    output reg[6:0] out = 0;
 
     always @(char) begin
         case (char)
