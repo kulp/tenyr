@@ -13,7 +13,9 @@ module Reg(input clk,
     generate
         genvar i;
         for (i = 0; i < 15; i = i + 1) // P is set externally
-            initial #0 store[i] <= 32'b0;
+            initial begin:setup
+                #0 store[i] <= 32'b0;
+            end
     endgenerate
 
     assign pc     = rwP ? 32'bz : store[15];

@@ -5,8 +5,10 @@
 module Seg7(clk, enable, rw, addr, data, _reset, seg, an); 
 
     parameter BASE = 1 << 4;
-    parameter SIZE = 2;
+    parameter SIZE = 1;
     parameter N = 4;
+    localparam NI = N - 1;
+    localparam NI4 = N * 4 - 1;
 
     input clk;
     input enable;
@@ -15,32 +17,32 @@ module Seg7(clk, enable, rw, addr, data, _reset, seg, an);
     inout[31:0] data;
     input _reset;
     output[7:0] seg;
-    output reg[(N - 1):0] an;
+    output[NI:0] an;
 
-    wire in_range = (addr >= BASE && addr < SIZE + BASE);
-    wire en = in_range && enable && rw;
-
-    reg[(N * 4 - 1):0] mydata = 0;
-    wire[(N - 1):0][7:0] ascii;
-    wire[(N - 1):0][6:0] lines;
     integer idx = 0;
+    reg[NI4:0] mydata = 0;
+    wire[NI:0][7:0] ascii;
+    wire[NI:0][6:0] lines;
 
     assign seg = lines[idx];
+    assign an = 1'b1 << idx;
+
+    wire in_range = (addr >= BASE && addr < SIZE + BASE);
 
     generate
         genvar i;
-        for (i = 0; i < N; i = i + 1) begin
+        for (i = 0; i < N; i = i + 1) begin:digit
             Hex2AsciiDigit digit(mydata[(4 * i) +: 4], ascii[i]);
             lookup7 lookup(ascii[i], lines[i]);
         end
     endgenerate
 
+    // TODO cycle more slowly than system clock
     always @(negedge clk) begin
-        // TODO cycle more slowly than system clock
-        an = {an[0],an[3:1]};
+        //an = {an[2:0],an[3]};
         idx = (idx + 1) % N;
-        if (en)
-            mydata = data[(N * 4 - 1):0];
+        if (in_range && enable && rw)
+            mydata = data[NI4:0];
     end
 
 endmodule
