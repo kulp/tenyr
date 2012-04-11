@@ -4,8 +4,19 @@
 
 int display7(FILE *stream, unsigned char digit)
 {
-    const char *digits[] = {
+    const char digits[][7] = {
         ['-'] = "      -",
+
+        ['0'] = "-||-|| ",
+        ['1'] = " ||    ",
+        ['2'] = "-| -| -",
+        ['3'] = "-||-  -",
+        ['4'] = " ||  |-",
+        ['5'] = "- |- |-",
+        ['6'] = "- |-||-",
+        ['7'] = "-||    ",
+        ['8'] = "-||-||-",
+        ['9'] = "-||- |-",
 
         ['A'] = "-|| ||-",
         ['C'] = "-  -|| ",
@@ -35,17 +46,6 @@ int display7(FILE *stream, unsigned char digit)
         ['u'] = "  |-|  ",
         ['y'] = " ||- |-",
         ['z'] = "-| -| -", // 2
-
-        ['0'] = "-||-|| ",
-        ['1'] = " ||    ",
-        ['2'] = "-| -| -",
-        ['3'] = "-||-  -",
-        ['4'] = " ||  |-",
-        ['5'] = "- |- |-",
-        ['6'] = "- |-||-",
-        ['7'] = "-||    ",
-        ['8'] = "-||-||-",
-        ['9'] = "-||- |-",
     };
 
     if (digit > countof(digits))
@@ -53,7 +53,7 @@ int display7(FILE *stream, unsigned char digit)
 
     const char *d = digits[digit];
 
-    if (!d)
+    if (!d[0])
         return -1;
 
     fprintf(stream,

@@ -124,12 +124,14 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
 
 endmodule
 
-module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
-            output rw, output[31:0] norm_addr, inout[31:0] norm_data,
-            input _reset, output halt);
-    reg[31:0] _norm_addr = 0;
-
-    assign norm_addr = _norm_addr;
+module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
+    input clk;
+    output[31:0] insn_addr;
+    input[31:0] insn_data;
+    output rw;
+    output reg[31:0] norm_addr = 0;
+    inout[31:0] norm_data;
+    input _reset;
 
     wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
@@ -141,14 +143,12 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire[31:0] rhs;
     wire[1:0] deref;
 
-    reg _halt;
+    output reg halt;
 
     initial begin
-        #0 _halt = 1;
+        #0 halt = 1;
         #0 state_invalid = 1;
     end
-
-    assign halt = _reset ? 1'bz : _halt;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
@@ -162,7 +162,7 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
     wire jumping = indexZ == 15 && reg_rw;
     reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-    wire[31:0] pc = _halt   ? new_pc :
+    wire[31:0] pc = halt    ? new_pc :
                     jumping ? new_pc : next_pc;
 
     assign insn_addr = halt ? 32'bz : pc;
@@ -174,8 +174,8 @@ module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
             new_pc      <= `RESETVECTOR;
             next_pc     <= `RESETVECTOR;
         end else begin
-            _halt <= `SETUP (halt | illegal);
-            if (!_halt) begin
+            halt <= `SETUP (halt | illegal);
+            if (!halt) begin
                 state_invalid <= `SETUP !(state_invalid & insn_valid);
                 next_pc <= `SETUP pc + 1;
                 if (jumping)
