@@ -2,7 +2,7 @@
 
 `define CLOCKPERIOD 250
 `define PERIOD      8
-`define NDIGITS     3
+`define NDIGITS     4
 
 module Top();
     reg clk = 0;

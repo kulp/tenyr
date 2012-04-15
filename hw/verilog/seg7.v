@@ -4,11 +4,13 @@
 // basic 7-segment driver
 module Seg7(clk, enable, rw, addr, data, _reset, seg, an); 
 
+    parameter STATES = 4;
     parameter BASE = 1 << 4;
     parameter SIZE = 1;
     parameter N = 4;
     localparam NI = N - 1;
     localparam NI4 = N * 4 - 1;
+    localparam NIS = N * STATES - 1;
 
     input clk;
     input enable;
@@ -17,9 +19,9 @@ module Seg7(clk, enable, rw, addr, data, _reset, seg, an);
     inout[31:0] data;
     input _reset;
     output[7:0] seg;
-    //output reg[NI:0] an = (1'b1 << (N - 1));
-    output reg[NI:0] an = ~4'b0001;
+    output[NI:0] an;
 
+    reg[NIS:0] ena = 1'b1;
     reg[NI4:0] mydata = 0;
 
     wire in_range = (addr >= BASE && addr < SIZE + BASE);
@@ -35,17 +37,21 @@ module Seg7(clk, enable, rw, addr, data, _reset, seg, an);
             lookup7 lookup(char, line);
 
             for (j = 0; j < 8; j = j + 1) begin:bit
-                assign bits[j * N + i] = ~an[i] & line[j];
+                assign bits[j * N + i] = ena[i * STATES] ? line[j] : 1'b1;
             end
         end
 
         for (j = 0; j < 8; j = j + 1) begin:bit
-            assign seg[j] = |bits[j * N +: N];
+            assign seg[j] = &bits[j * N +: N];
+        end
+
+        for (j = 0; j < N; j = j + 1) begin:en
+            assign an[j] = ~ena[j * STATES];
         end
     endgenerate
 
     always @(negedge clk) begin
-        an = {an[NI - 1:0],an[NI]};
+        ena = {ena[NIS - 1:0],ena[NIS]};
         if (in_range && enable && rw)
             mydata = data[NI4:0];
     end
