@@ -346,13 +346,15 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
 int do_disassembly(FILE *in, FILE *out, const struct format *f)
 {
+    int rc = 0;
+
     struct instruction i;
     void *ud;
     if (f->init)
         f->init(in, ASM_DISASSEMBLE, &ud);
 
     uint32_t reladdr = 0;
-    while (f->in(in, &i, ud) == 1) {
+    while ((rc = f->in(in, &i, ud)) == 1) {
         int len = print_disassembly(out, &i, ASM_AS_INSN);
         fprintf(out, "%*s# ", 30 - len, "");
         print_disassembly(out, &i, ASM_AS_DATA);
@@ -360,10 +362,12 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
         fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
     }
 
-    if (f->fini)
-        f->fini(in, &ud);
+    rc = feof(in) ? 0 : -1;
 
-    return 0;
+    if (f->fini)
+        rc = f->fini(in, &ud);
+
+    return rc;
 }
 
 int main(int argc, char *argv[])
@@ -426,7 +430,7 @@ int main(int argc, char *argv[])
 
         if (disassemble) {
             if (f->in) {
-                do_disassembly(in, out, f);
+                rc = do_disassembly(in, out, f);
             } else {
                 fatal(0, "Format `%s' does not support disassembly", f->name);
             }
