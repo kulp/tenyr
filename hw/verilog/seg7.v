@@ -4,11 +4,13 @@
 // basic 7-segment driver
 module Seg7(clk, enable, rw, addr, data, _reset, seg, an); 
 
+    parameter STATES = 4;
     parameter BASE = 1 << 4;
     parameter SIZE = 1;
     parameter N = 4;
     localparam NI = N - 1;
     localparam NI4 = N * 4 - 1;
+    localparam NIS = N * STATES - 1;
 
     input clk;
     input enable;
@@ -19,28 +21,37 @@ module Seg7(clk, enable, rw, addr, data, _reset, seg, an);
     output[7:0] seg;
     output[NI:0] an;
 
-    integer idx = 0;
+    reg[NIS:0] ena = 1'b1;
     reg[NI4:0] mydata = 0;
-    wire[NI:0][7:0] ascii;
-    wire[NI:0][6:0] lines;
-
-    assign seg = lines[idx];
-    assign an = 1'b1 << idx;
 
     wire in_range = (addr >= BASE && addr < SIZE + BASE);
 
     generate
-        genvar i;
+        genvar i, j;
+        wire[8 * N - 1:0] bits;
+
         for (i = 0; i < N; i = i + 1) begin:digit
-            Hex2AsciiDigit digit(mydata[(4 * i) +: 4], ascii[i]);
-            lookup7 lookup(ascii[i], lines[i]);
+            wire[7:0] char;
+            wire[7:0] line;
+            Hex2AsciiDigit digit(mydata[(4 * i) +: 4], char);
+            lookup7 lookup(char, line);
+
+            for (j = 0; j < 8; j = j + 1) begin:bit
+                assign bits[j * N + i] = ena[i * STATES] ? line[j] : 1'b1;
+            end
+        end
+
+        for (j = 0; j < 8; j = j + 1) begin:bit
+            assign seg[j] = &bits[j * N +: N];
+        end
+
+        for (j = 0; j < N; j = j + 1) begin:en
+            assign an[j] = ~ena[j * STATES];
         end
     endgenerate
 
-    // TODO cycle more slowly than system clock
     always @(negedge clk) begin
-        //an = {an[2:0],an[3]};
-        idx = (idx + 1) % N;
+        ena = {ena[NIS - 1:0],ena[NIS]};
         if (in_range && enable && rw)
             mydata = data[NI4:0];
     end
