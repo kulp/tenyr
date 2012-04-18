@@ -17,7 +17,7 @@ module Seg7Test(input clk, output[7:0] seg, output[NDIGITS - 1:0] an);
     wire downclk = clk;
 `endif
 
-    Seg7 #(.BASE(0), .N(NDIGITS))
+    Seg7 #(.BASE(0), .NDIGITS(NDIGITS))
         seg7(.clk(downclk), .enable(1'b1), .rw(1'b1), .addr(32'b0),
              .data(c), ._reset(1'b1), .seg(seg), .an(an));
 
