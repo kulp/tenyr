@@ -20,7 +20,7 @@ module SimMem(input clk, input enable, input p0rw,
 
     always @(negedge clk)
         if (enable && p0_inrange && p0rw)
-            store[p0_addr] <= `SETUP p0_data;
+            store[p0_addr] = p0_data;
 
 endmodule
 

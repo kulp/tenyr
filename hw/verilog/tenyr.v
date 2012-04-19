@@ -18,10 +18,14 @@ module Reg(input clk,
             end
     endgenerate
 
+    wire ZisP = indexZ == 15;
+    wire XisP = indexX == 15;
+    wire YisP = indexY == 15;
+
     assign pc     = rwP ? 32'bz : store[15];
-    assign valueZ = rwZ ? 32'bz : store[indexZ];
-    assign valueX = store[indexX];
-    assign valueY = store[indexY];
+    assign valueZ = rwZ ? 32'bz : (ZisP ? pc : store[indexZ]);
+    assign valueX = XisP ? pc : store[indexX];
+    assign valueY = YisP ? pc : store[indexY];
 
     always @(negedge clk) begin
         if (rwP)
@@ -60,7 +64,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
     always @(insn) begin
         casez (insn[31:28])
             4'b0???: begin
-                rderef <= { insn[29] & ~insn[28], insn[28] };
+                rderef <= insn[28 +: 2];
                 rtype  <= insn[30];
 
                 rZ  <= insn[24 +: 4];
@@ -161,10 +165,10 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
     wire mem_active = |deref;
-    assign rw = mem_active ? deref[1] : 1'b1;
+    assign rw = mem_active ? deref[1] : 1'b0;
     wire[31:0] mem_operand = deref[0] ? valueZ : rhs;
     wire[31:0] mem_addr = deref[0] ? rhs : valueZ;
-    assign norm_data = mem_active ? mem_operand : 32'bz;
+    assign norm_data = (rw && mem_active) ? mem_operand : 32'bz;
     assign norm_addr = mem_active ? mem_addr : 32'bz;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
