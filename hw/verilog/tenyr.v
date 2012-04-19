@@ -151,7 +151,7 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     wire[11:0] valueI;
     wire[3:0] op;
     wire illegal, type, insn_valid;
-    reg state_invalid;
+    reg state_valid = 0;
     wire[31:0] rhs;
     wire[1:0] deref;
 
@@ -159,7 +159,6 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
 
     initial begin
         #0 halt = 1;
-        #0 state_invalid = 1;
     end
 
     // [Z] <-  ...  -- deref == 10
@@ -169,7 +168,7 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     wire[31:0] mem_operand = deref[0] ? valueZ : rhs;
     wire[31:0] mem_addr = deref[0] ? rhs : valueZ;
     assign norm_data = (rw && mem_active) ? mem_operand : 32'bz;
-    assign norm_addr = mem_active ? mem_addr : 32'bz;
+    assign norm_addr = mem_active ? mem_addr : 32'b0;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
     wire reg_rw = ~deref[0] && indexZ != 0;
@@ -183,7 +182,7 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
 
     always @(negedge clk or negedge _reset) begin
         if (!_reset) begin
-            state_invalid <= 0;
+            state_valid <= 1;
             // TODO use proper reset vectors
             new_pc      <= `RESETVECTOR;
             next_pc     <= `RESETVECTOR;
@@ -191,7 +190,7 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
             //halt <= `SETUP (halt | insn_valid ? illegal : 0);
             halt <= `SETUP 0;
             if (!halt) begin
-                state_invalid <= `SETUP state_invalid | !insn_valid;
+                state_valid <= `SETUP state_valid & insn_valid;
                 next_pc <= `SETUP pc + 1;
                 if (jumping)
                     new_pc <= `SETUP valueZ;
@@ -209,6 +208,6 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
 
     Exec exec(.clk(clk), .op(op), .type(type), .rhs(rhs),
               .X(valueX), .Y(valueY), .I(valueI),
-              .valid(!state_invalid));
+              .valid(state_valid));
 endmodule
 
