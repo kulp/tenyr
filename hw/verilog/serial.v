@@ -1,5 +1,5 @@
 `include "common.vh"
-`timescale 1ms/10us
+`timescale 1ns/10ps
 
 // Mostly-dummy serial device to give synthesis something to produce output
 // from that doesn't need to be high-speed.

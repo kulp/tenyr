@@ -1,5 +1,5 @@
 `include "common.vh"
-`timescale 1ms/10us
+`timescale 1ns/10ps
 
 module Reg(input clk,
         input rwZ, input[3:0] indexZ, inout [31:0] valueZ, // Z is RW
@@ -50,7 +50,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
     reg[1:0] rderef = 0;
     reg rtype = 0, rillegal = 0, rvalid = 0;
 
-    assign valid = 1;
+    assign valid = rvalid;
 
     assign Z       = rvalid ? rZ       :  4'bx,
            X       = rvalid ? rX       :  4'bx,
@@ -59,7 +59,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
            op      = rvalid ? rop      :  4'bx,
            deref   = rvalid ? rderef   :  2'bx,
            type    = rvalid ? rtype    :  1'bx,
-           illegal = &insn;
+           illegal = rvalid ? rillegal :  1'b0;
 
     always @(insn) begin
         casez (insn[31:28])
@@ -73,9 +73,20 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
                 rop <= insn[12 +: 4];
                 rI  <= insn[ 0 +:12];
                 rvalid <= `DECODETIME 1;
+                rillegal <= 0;
             end
             default: begin
-                rvalid <= `DECODETIME &insn[31:28];
+                casex (insn[31:28])
+                    4'b1111: begin
+                        rillegal <= 1;
+                        rvalid   <= 1; //&insn[27:0];
+                    end
+                    default: begin
+                        rillegal <= 0;
+                        rvalid   <= 0;
+                    end
+                endcase
+                //rillegal <= &insn[31:28];
                 rderef <= 2'bx;
                 rtype  <= 1'bx;
 
@@ -155,19 +166,18 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     wire[31:0] rhs;
     wire[1:0] deref;
 
-    output reg halt;
-
-    initial begin
-        #0 halt = 1;
-    end
+    reg rhalt = 0;
+    output wor halt;
+   
+    assign halt = rhalt ? rhalt : 1'bz;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
-    wire mem_active = |deref;
+    wire mem_active = state_valid ? |deref : 1'b0;
     assign rw = mem_active ? deref[1] : 1'b0;
-    wire[31:0] mem_operand = deref[0] ? valueZ : rhs;
-    wire[31:0] mem_addr = deref[0] ? rhs : valueZ;
-    assign norm_data = (rw && mem_active) ? mem_operand : 32'bz;
+    wire[31:0] mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
+    wire[31:0] mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
+    assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
     assign norm_addr = mem_active ? mem_addr : 32'b0;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
@@ -175,25 +185,35 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     wire jumping = indexZ == 15 && reg_rw;
     reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-    wire[31:0] pc = halt    ? new_pc :
-                    jumping ? new_pc : next_pc;
+//    wire[31:0] pc = halt    ? new_pc :
+//                    jumping ? new_pc : next_pc;
+// FIXME
+    wire[31:0] pc = next_pc;
 
     assign insn_addr = halt ? 32'bz : pc;
+    wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     always @(negedge clk or negedge _reset) begin
         if (!_reset) begin
-            state_valid <= 1;
-            // TODO use proper reset vectors
-            new_pc      <= `RESETVECTOR;
-            next_pc     <= `RESETVECTOR;
-        end else begin
-            //halt <= `SETUP (halt | insn_valid ? illegal : 0);
-            halt <= `SETUP 0;
-            if (!halt) begin
-                state_valid <= `SETUP state_valid & insn_valid;
-                next_pc <= `SETUP pc + 1;
+            new_pc      = `RESETVECTOR;
+            next_pc     = `RESETVECTOR;
+        end else if (!halt) begin
+            state_valid = 1;
+        end
+    end
+
+    always @(negedge clk) begin
+        if (state_valid) begin
+            //rhalt <= 0;
+            // FIXME
+            if (illegal)
+                state_valid = 0;
+            rhalt <= `SETUP (rhalt | insn_valid ? illegal : 0);
+            if (!rhalt && !halt && state_valid) begin
+                state_valid <= `SETUP state_valid & insn_valid & !illegal;
+                next_pc <= #(`CLOCKPERIOD / 2) pc + 1;
                 if (jumping)
-                    new_pc <= `SETUP valueZ;
+                    new_pc <= #(`CLOCKPERIOD / 2) valueZ;
             end
         end
     end
@@ -202,7 +222,7 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
 
-    Decode decode(.insn(insn_data), .op(op), .deref(deref), .type(type),
+    Decode decode(.insn(insn), .op(op), .deref(deref), .type(type),
                   .valid(insn_valid), .illegal(illegal),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 

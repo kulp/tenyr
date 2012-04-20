@@ -1,5 +1,5 @@
 `include "common.vh"
-`timescale 1ms/10us
+`timescale 1ns/10ps
 
 module SimSerial(input clk, input enable, input rw,
         input[31:0] addr, inout[31:0] data,

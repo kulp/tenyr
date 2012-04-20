@@ -4,19 +4,30 @@
 // For now, we expose the serial wires txd and rxd as ports to keep ISE from
 // optimising away the whole design. Once I figure out what I am doing, these
 // should be replaced by whatever actual ports we end up with.
-module Tenyr(/*input _halt, input _reset,*/ input clk, /*output txd, input rxd,*/ output[7:0] seg, output[3:0] an);
+module Tenyr(_halt, _reset, clk, txd, rxd, seg, an);
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, in_data, out_data, operand_data;
     wire operand_rw;
 
-    wire _reset = 1;
-    wire _halt = 0;
+    input clk;
+    input rxd;
+    output txd;
+
+    output[7:0] seg;
+    output[3:0] an;
 
     assign in_data      =  operand_rw ? operand_data : 32'bx;
     assign operand_data = !operand_rw ?     out_data : 32'bz;
 
+    input _reset;
+    inout wor _halt;
+`ifdef ISIM
+    wire downclk = clk;
+`else
     tenyr_clk_S clkdiv(.in(clk), .out(downclk));
+`endif
 
+    // active on posedge clock
     GenedBlockMem ram(.clka(downclk), .wea(operand_rw), .addra(operand_addr),
                       .dina(in_data), .douta(out_data),
                       .clkb(downclk), .web(1'b0), .addrb(insn_addr),

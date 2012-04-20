@@ -16,15 +16,15 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     initial #(2 * `CLOCKPERIOD) halt = `SETUP 0;
     initial #(1 * `CLOCKPERIOD) _reset = `SETUP 1;
 
-    wire _halt = _reset ? halt : 1'bz;
+    wire _halt; // = _reset ? halt : 1'bz;
     always @(negedge clk) halt <= _halt;
 
     SimMem #(.BASE(`RESETVECTOR))
-           ram(.clk(clk), .enable(!halt), .p0rw(operand_rw),
+           ram(.clk(clk), .enable(!_halt), .p0rw(operand_rw),
                .p0_addr(operand_addr), .p0_data(operand_data),
                .p1_addr(insn_addr)   , .p1_data(insn_data));
 
-    SimSerial serial(.clk(clk), ._reset(_reset), .enable(!halt),
+    SimSerial serial(.clk(clk), ._reset(_reset), .enable(!_halt),
                      .rw(operand_rw), .addr(operand_addr),
                      .data(operand_data));
 

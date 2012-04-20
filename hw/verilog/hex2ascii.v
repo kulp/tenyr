@@ -1,5 +1,5 @@
 `include "common.vh"
-`timescale 1ms/10us
+`timescale 1ns/10ps
 
 module Hex2AsciiDigit(hex, digit);
 

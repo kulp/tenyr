@@ -1,5 +1,5 @@
 `include "common.vh"
-`timescale 1ms/10us
+`timescale 1ns/10ps
 
 module Seg7Test(input clk, output[7:0] seg, output[NDIGITS - 1:0] an); 
 

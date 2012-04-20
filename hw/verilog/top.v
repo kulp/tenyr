@@ -1,4 +1,4 @@
-`timescale 1ms/10us
+`timescale 1ns/10ps
 
 `define CLOCKPERIOD 10
 

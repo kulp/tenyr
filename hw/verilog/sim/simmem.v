@@ -1,5 +1,5 @@
 `include "common.vh"
-`timescale 1ms/10us
+`timescale 1ns/10ps
 
 // Two-port memory required if we don't have wait states ; one instruction
 // fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O

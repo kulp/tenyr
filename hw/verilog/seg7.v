@@ -1,5 +1,5 @@
 `include "common.vh"
-`timescale 1ms/10us
+`timescale 1ns/10ps
 
 // basic 7-segment driver
 module Seg7(clk, enable, rw, addr, data, _reset, seg, an); 
