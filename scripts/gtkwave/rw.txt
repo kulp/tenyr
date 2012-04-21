@@ -1,0 +1,2 @@
+0 reading
+1 writing
