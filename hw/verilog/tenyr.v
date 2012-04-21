@@ -108,17 +108,19 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
     reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
-    wire[31:0] Xs = X;
-    wire[31:0] Xu = X;
+    wire[31:0] `SETUP Xs = X;
+    wire[31:0] `SETUP Xu = X;
 
-    wire[31:0] Is = { {20{I[11]}}, I };
-    wire[31:0] Ou = (type == 0) ? Y  : Is;
-    wire[31:0] Os = (type == 0) ? Y  : Is;
-    wire[31:0] As = (type == 0) ? Is : Y;
+    wire[31:0] Is_ = { {20{I[11]}}, I };
+    wire[31:0] `SETUP Is = Is_;
+    wire[31:0] `SETUP Ou = (type == 0) ? Y   : Is_;
+    wire[31:0] `SETUP Os = (type == 0) ? Y   : Is_;
+    wire[31:0] `SETUP As = (type == 0) ? Is_ : Y;
 
     // cheat and use posedge clk to do calculations so they are ready by
     // negedge clk
-    always @(posedge clk) begin
+    //always @(posedge clk) begin
+    always @(negedge clk) begin
         if (valid) begin
             case (op)
                 4'b0000: i_rhs = `EXECTIME  (Xu  |  Ou) + As; // X bitwise or Y
@@ -181,8 +183,8 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     assign norm_addr = mem_active ? mem_addr : 32'b0;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
-    wire reg_rw = ~deref[0] && indexZ != 0;
-    wire jumping = indexZ == 15 && reg_rw;
+    wire reg_rw  = state_valid ? (~deref[0] && indexZ != 0) : 1'b0;
+    wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
     reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
 //    wire[31:0] pc = halt    ? new_pc :
@@ -191,9 +193,11 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     wire[31:0] pc = next_pc;
 
     assign insn_addr = halt ? 32'bz : pc;
-    wire[31:0] insn = state_valid ? insn_data : 32'b0;
+    wire[31:0] `SETUP insn = state_valid ? insn_data : 32'b0;
 
-    always @(negedge clk or negedge _reset) begin
+    /*
+    // FIXME posedge ?
+    always @(posedge clk or negedge _reset) begin
         if (!_reset) begin
             new_pc      = `RESETVECTOR;
             next_pc     = `RESETVECTOR;
@@ -201,19 +205,26 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
             state_valid = 1;
         end
     end
+    */
 
+    // FIXME synchronous reset
     always @(negedge clk) begin
-        if (state_valid) begin
+        if (!_reset) begin
+            new_pc      = `RESETVECTOR;
+            next_pc     = `RESETVECTOR;
+        end else if (!halt) begin
+            state_valid = 1;
+        //end if (state_valid) begin
             //rhalt <= 0;
             // FIXME
             if (illegal)
                 state_valid = 0;
             rhalt <= `SETUP (rhalt | insn_valid ? illegal : 0);
             if (!rhalt && !halt && state_valid) begin
-                state_valid <= `SETUP state_valid & insn_valid & !illegal;
-                next_pc <= #(`CLOCKPERIOD / 2) pc + 1;
+                state_valid = `SETUP state_valid & insn_valid & !illegal;
+                next_pc = `SETUP pc + 1;
                 if (jumping)
-                    new_pc <= #(`CLOCKPERIOD / 2) valueZ;
+                    new_pc = `SETUP valueZ;
             end
         end
     end
