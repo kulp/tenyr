@@ -1,0 +1,34 @@
+nclude "common.th"
+
+.global dw_mul
+
+// Performs B:C <- D * E
+dw_mul:
+  // Load mask.
+  m <- [rel(mask)]
+  
+  // Split up factors into 16-bit components.
+  g <- d & m
+  h <- d >> 16
+  i <- e & m
+  j <- e >> 16
+  
+  // Compute "middle" product.
+  k <- g * j
+  l <- h * i
+  k <- l + k
+  
+  // Compute low 32 bits.
+  c <- g * i
+  l <- k & m
+  l <- l << 16
+  c <- c + l
+  
+  // Compute high 32 bits.
+  b <- h * j
+  k <- k >> 16
+  b <- b + k
+  
+  ret
+
+mask: .word 0xffff
