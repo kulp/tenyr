@@ -7,6 +7,7 @@
 //`define SETUPTIME (`CLOCKPERIOD / 2 - 1)
 `define SETUPTIME 0
 `define SETUP #(`SETUPTIME)
-`define DECODETIME `SETUP
-`define EXECTIME #0
+//`define DECODETIME `SETUP
+`define EXECTIME `SETUP
+`define RAMDELAY #2
 

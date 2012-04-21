@@ -14,6 +14,6 @@ module Top();
 
     wor _halt = halt;
 
-    Tenyr tenyr(.clk(clk), ._reset(_reset), ._halt(_halt));
+    Tenyr tenyr(.clk(clk)/*, ._reset(_reset)*/, ._halt(_halt));
 endmodule
 

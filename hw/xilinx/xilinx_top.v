@@ -52,11 +52,9 @@ module Tenyr(_halt/*, _reset*/, clk, txd, rxd, seg, an, R, G, B, hsync, vsync);
               .norm_addr(operand_addr), .norm_data(operand_data),
               .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(_halt));
 
-`ifndef ISIM
     // reset is active-high in vga80x40_test
     vga80x40_test vga(.reset(~_reset), .clk50MHz(clk_vga), .R(R), .G(G), .B(B),
                       .hsync(hsync), .vsync(vsync));
-`endif
 
 endmodule
 

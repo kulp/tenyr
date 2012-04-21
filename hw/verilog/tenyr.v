@@ -10,6 +10,8 @@ module Reg(input clk,
     (* KEEP = "TRUE" *)
     reg[31:0] store[0:15];
 
+    initial #0 store[15] = `RESETVECTOR;
+
     generate
         genvar i;
         for (i = 0; i < 15; i = i + 1) // P is set externally
@@ -34,6 +36,7 @@ module Reg(input clk,
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
+                #2 // this fixes simulation but is not helpful for synth
                 store[indexZ] = valueZ;
             end
         end
@@ -72,7 +75,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
                 rY  <= insn[16 +: 4];
                 rop <= insn[12 +: 4];
                 rI  <= insn[ 0 +:12];
-                rvalid <= `DECODETIME 1;
+                rvalid <= 1;
                 rillegal <= 0;
             end
             default: begin
@@ -163,8 +166,17 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     wire[31:0] valueZ = reg_rw ? rhs : 32'bz;
     wire[11:0] valueI;
     wire[3:0] op;
-    wire illegal, type, insn_valid;
-    reg state_valid = 0;
+    wire illegal, type;
+    reg insn_valid = 0;
+    // FIXME rename manual_invalidate*
+    reg manual_invalidate_pr = 0,
+        manual_invalidate_nr = 0,
+        manual_invalidate_nc = 0;
+    wire manual_invalidate = manual_invalidate_pr | 
+                             manual_invalidate_nr |
+                             manual_invalidate_nc;
+    wire decode_valid; // FIXME decode_valid never deasserts
+    wire state_valid = insn_valid && decode_valid && !manual_invalidate; // && !illegal;
     wire[31:0] rhs;
     wire[1:0] deref;
 
@@ -192,17 +204,30 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
 // FIXME
     wire[31:0] pc = next_pc;
 
-    assign insn_addr = halt ? 32'bz : pc;
+    assign insn_addr = halt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
     wire[31:0] `SETUP insn = state_valid ? insn_data : 32'b0;
 
-    /*
+    always @(posedge _reset)
+        manual_invalidate_pr = 0;
+
+    // FIXME this is a hack ; insn_valid needs to be defined better
+    always @(posedge clk) begin
+        case (insn_addr)
+            4'hzzzz: insn_valid = 0; // FIXME this is useless in synthesis
+            default: insn_valid = `RAMDELAY !halt & _reset;
+        endcase
+    end
+
     // FIXME posedge ?
-    always @(posedge clk or negedge _reset) begin
+    /*
+    //always @(posedge clk or negedge _reset) begin
+    always @(negedge _reset) begin
         if (!_reset) begin
             new_pc      = `RESETVECTOR;
             next_pc     = `RESETVECTOR;
-        end else if (!halt) begin
-            state_valid = 1;
+        end else
+        if (!halt && !illegal) begin
+            manual_invalidate_nr = 0;
         end
     end
     */
@@ -212,16 +237,14 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
         if (!_reset) begin
             new_pc      = `RESETVECTOR;
             next_pc     = `RESETVECTOR;
-        end else if (!halt) begin
-            state_valid = 1;
-        //end if (state_valid) begin
-            //rhalt <= 0;
+        end else begin
             // FIXME
             if (illegal)
-                state_valid = 0;
-            rhalt <= `SETUP (rhalt | insn_valid ? illegal : 0);
+                //state_valid = 0;
+                manual_invalidate_nc = 1;
+            rhalt <= `SETUP (rhalt | (insn_valid ? illegal : 1'b0));
             if (!rhalt && !halt && state_valid) begin
-                state_valid = `SETUP state_valid & insn_valid & !illegal;
+                manual_invalidate_nc = illegal;
                 next_pc = `SETUP pc + 1;
                 if (jumping)
                     new_pc = `SETUP valueZ;
@@ -234,7 +257,7 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
              .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
 
     Decode decode(.insn(insn), .op(op), .deref(deref), .type(type),
-                  .valid(insn_valid), .illegal(illegal),
+                  .valid(decode_valid), .illegal(illegal),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
     Exec exec(.clk(clk), .op(op), .type(type), .rhs(rhs),
