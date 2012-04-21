@@ -1,9 +1,9 @@
 #include "common.th"
 
-.global dw_mult
+.global dw_mul
 
 // Performs B:C <- D * E
-dw_mult:
+dw_mul:
   // Load mask.
   m <- [rel(mask)]
   
