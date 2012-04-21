@@ -1,0 +1,9 @@
+#NET "clk100MHz" LOC = "V10" ;
+#NET "reset" LOC = "A8" ;
+
+NET "R" LOC = "N7" ;
+NET "G" LOC = "V6" ;
+NET "B" LOC = "T7" ;
+
+NET "hsync" LOC = "N6" ;
+NET "vsync" LOC = "P7" ;

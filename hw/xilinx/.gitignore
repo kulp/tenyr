@@ -45,3 +45,5 @@ Tenyr.tfi
 *_pad.txt
 xst/
 *.rpt
+default.wcfg
+auto_project.ipf
