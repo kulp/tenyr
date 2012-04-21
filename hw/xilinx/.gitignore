@@ -47,3 +47,13 @@ xst/
 *.rpt
 default.wcfg
 auto_project.ipf
+GenedBlockMem.mif
+Top_isim_beh1.wdb
+fuse.xmsgs
+fuseRelaunch.cmd
+impact.xsl
+impact_impact.xwbt
+pa.fromHdl.tcl
+pa.fromNetlist.tcl
+small.coe
+vga80x40.vhd
