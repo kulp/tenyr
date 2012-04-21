@@ -13,6 +13,11 @@
 #include <string.h>
 #include <strings.h>
 
+#if _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 static const char shortopts[] = "df:o::hV";
 
 static const struct option longopts[] = {
@@ -399,6 +404,13 @@ int main(int argc, char *argv[])
 
     if (optind >= argc)
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
+
+    // ensure we are in binary mode on Windows
+    if (out == stdout && freopen(NULL, "wb", stdout) == 0)
+#if _WIN32
+        if (setmode(1, O_BINARY) == -1)
+#endif
+            fatal(0, "Failed to set binary mode on stdout ; use -ofilename to avoid corrupted binaries.");
 
     for (int i = optind; i < argc; i++) {
         FILE *in = NULL;
