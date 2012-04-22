@@ -21,12 +21,10 @@ dw_mul:
   c <- c * e
   
   // Adjust lower sum.
-  e <- m << 16
-  c <- c + e
+  c <- m << 16 + c
   
   // Adjust upper sum.
-  m <- m >> 16
-  b <- b + m
+  b <- m >> 16 + b
   
   ret
 
