@@ -1,7 +1,5 @@
 #include "common.th"
 
-.global dw_mul
-
 // Performs B:C <- D * E
 dw_mul:
   // Load mask.
@@ -13,21 +11,20 @@ dw_mul:
   d <- e >> 16
   e <- e & m
   
-  // Compute "middle" product.
-  g <- b * e
-  h <- c * d
-  g <- g + h
-  
-  // Compute low 32 bits.
-  c <- c * e
-  h <- g & m
-  h <- h << 16
-  c <- c + h
-  
-  // Compute high 32 bits.
+  // Compute upper and lower sums as well as an intermediate component.
+  m <- b * e
   b <- b * d
-  g <- g >> 16
-  b <- b + g
+  d <- c * d
+  m <- m + d
+  c <- c * e
+  
+  // Adjust lower sum.
+  e <- m << 16
+  c <- c + e
+  
+  // Adjust upper sum.
+  m <- m >> 16
+  b <- b + m
   
   ret
 
