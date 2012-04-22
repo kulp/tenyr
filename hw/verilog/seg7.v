@@ -2,7 +2,7 @@
 `timescale 1ns/10ps
 
 // basic 7-segment driver
-module Seg7(clk, enable, rw, addr, data, _reset, seg, an); 
+module Seg7(clk, enable, rw, addr, data, reset_n, seg, an); 
 
     parameter STATES = 4;
     parameter BASE = 1 << 4;
@@ -17,7 +17,7 @@ module Seg7(clk, enable, rw, addr, data, _reset, seg, an);
     input rw;
     input[31:0] addr;
     inout[31:0] data;
-    input _reset;
+    input reset_n;
     output[7:0] seg;
     output[NI:0] an;
 

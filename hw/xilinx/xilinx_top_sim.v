@@ -4,16 +4,16 @@
 
 module Top();
     reg clk = 0; // TODO test starting with opposite polarity
-    reg halt = 1;
-    reg _reset = 0;
+    reg rhalt = 1;
+    reg reset_n = 0;
     
     always #(`CLOCKPERIOD / 2) clk = ~clk;
     
-    initial #(2 * `CLOCKPERIOD/* - 2*/) halt = 0;
-    initial #(1 * `CLOCKPERIOD/* - 2*/) _reset = 1;
+    initial #(2 * `CLOCKPERIOD/* - 2*/) rhalt = 0;
+    initial #(1 * `CLOCKPERIOD/* - 2*/) reset_n = 1;
 
-    wor _halt = halt;
+    wor halt = rhalt;
 
-    Tenyr tenyr(.clk(clk)/*, ._reset(_reset)*/, ._halt(_halt));
+    Tenyr tenyr(.clk(clk)/*, .reset_n(reset_n)*/, .halt(halt));
 endmodule
 

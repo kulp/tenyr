@@ -4,12 +4,14 @@
 // For now, we expose the serial wires txd and rxd as ports to keep ISE from
 // optimising away the whole design. Once I figure out what I am doing, these
 // should be replaced by whatever actual ports we end up with.
-module Tenyr(_halt/*, _reset*/, clk, txd, rxd, seg, an, R, G, B, hsync, vsync);
+module Tenyr(halt/*, reset_n*/, clk, txd, rxd, seg, an, R, G, B, hsync, vsync);
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, in_data, out_data, operand_data;
     wire operand_rw;
 
     input clk;
+    inout halt;
+    wor ohalt;
     input rxd;
     output txd;
 
@@ -22,39 +24,58 @@ module Tenyr(_halt/*, _reset*/, clk, txd, rxd, seg, an, R, G, B, hsync, vsync);
     assign in_data      =  operand_rw ? operand_data : 32'bx;
     assign operand_data = !operand_rw ?     out_data : 32'bz;
 
-    reg _reset = 1;
-    inout wor _halt;
+    wire phases_valid;
+    reg reset_n = 1;
+    wire clk_core0, clk_core90, clk_core180, clk_core270;
 `ifdef ISIM
-    wire clk_core = clk;
+    assign clk_core0 = clk;
+    assign #3 clk_core90 = clk;
+    assign phases_valid = 1;
 `else
     // reset is active-high for tenyr_clocks
-    tenyr_clocks clkdiv(.reset(~_reset), .in(clk), .clk_vga(clk_vga), .clk_core(clk_core));
+/*
+    wire clk_core;
+    tenyr_clocks clkdiv(.reset(~reset_n), .in(clk), .clk_vga(clk_vga), .clk_core(clk_core));
+    */
+
+    /*
+    clock_phasing phaser(.reset(~reset_n), .valid(phases_valid),
+                         .in(clk_core), .out0(clk_core0), .out90(clk_core90),
+                         .out180(clk_core180), .out270(clk_core270));
+    */
+    tenyr_mainclock clocks(.reset(~reset_n), .locked(phases_valid),
+                           .in(clk), .clk_core0(clk_core0), .clk_core90(clk_core90),
+                           .clk_vga(clk_vga));
 `endif
 
+    assign ohalt = ~phases_valid;
+
     // active on posedge clock
-    GenedBlockMem ram(.clka(clk_core), .wea(operand_rw), .addra(operand_addr),
+    GenedBlockMem ram(.clka(clk_core0), .wea(operand_rw), .addra(operand_addr),
                       .dina(in_data), .douta(out_data),
-                      .clkb(clk_core), .web(1'b0), .addrb(insn_addr),
+                      .clkb(clk_core0), .web(1'b0), .addrb(insn_addr),
                       .dinb(32'bx), .doutb(insn_data));
 
 /*
-    Serial serial(.clk(clk_core), ._reset(_reset), .enable(1'b1), // XXX use halt ?
+    Serial serial(.clk(clk_core), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .txd(txd), .rxd(rxd));
 */
 
     Seg7 #(.BASE(12'h100))
-             seg7(.clk(clk_core), ._reset(_reset), .enable(1'b1), // XXX use halt ?
+             seg7(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .seg(seg), .an(an));
 
-    Core core(.clk(clk_core), ._reset(_reset), .rw(operand_rw),
+    Core core(.clk(clk_core0), .clkL(clk_core90), .reset_n(reset_n), .rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),
-              .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(_halt));
+              .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(ohalt));
 
+`ifndef SIM
     // reset is active-high in vga80x40_test
-    vga80x40_test vga(.reset(~_reset), .clk50MHz(clk_vga), .R(R), .G(G), .B(B),
+    vga80x40_test vga(.reset(~reset_n), .clk50MHz(clk_vga), .R(R), .G(G), .B(B),
                       .hsync(hsync), .vsync(vsync));
+`endif
 
 endmodule
 

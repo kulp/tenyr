@@ -57,3 +57,5 @@ pa.fromHdl.tcl
 pa.fromNetlist.tcl
 small.coe
 vga80x40.vhd
+*.cmd
+isim/

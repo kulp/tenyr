@@ -10,8 +10,6 @@ module Reg(input clk,
     (* KEEP = "TRUE" *)
     reg[31:0] store[0:15];
 
-    initial #0 store[15] = `RESETVECTOR;
-
     generate
         genvar i;
         for (i = 0; i < 15; i = i + 1) // P is set externally
@@ -36,7 +34,7 @@ module Reg(input clk,
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
-                #2 // this fixes simulation but is not helpful for synth
+                //#2 // this fixes simulation but does not reflect synth reality
                 store[indexZ] = valueZ;
             end
         end
@@ -111,14 +109,14 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
     reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
-    wire[31:0] `SETUP Xs = X;
-    wire[31:0] `SETUP Xu = X;
+    wire[31:0] Xs = X;
+    wire[31:0] Xu = X;
 
     wire[31:0] Is_ = { {20{I[11]}}, I };
-    wire[31:0] `SETUP Is = Is_;
-    wire[31:0] `SETUP Ou = (type == 0) ? Y   : Is_;
-    wire[31:0] `SETUP Os = (type == 0) ? Y   : Is_;
-    wire[31:0] `SETUP As = (type == 0) ? Is_ : Y;
+    wire[31:0] Is = Is_;
+    wire[31:0] Ou = (type == 0) ? Y   : Is_;
+    wire[31:0] Os = (type == 0) ? Y   : Is_;
+    wire[31:0] As = (type == 0) ? Is_ : Y;
 
     // cheat and use posedge clk to do calculations so they are ready by
     // negedge clk
@@ -126,22 +124,22 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
     always @(negedge clk) begin
         if (valid) begin
             case (op)
-                4'b0000: i_rhs = `EXECTIME  (Xu  |  Ou) + As; // X bitwise or Y
-                4'b0001: i_rhs = `EXECTIME  (Xu  &  Ou) + As; // X bitwise and Y
-                4'b0010: i_rhs = `EXECTIME  (Xs  +  Os) + As; // X add Y
-                4'b0011: i_rhs = `EXECTIME  (Xs  *  Os) + As; // X multiply Y
-              //4'b0100:                                      // reserved
-                4'b0101: i_rhs = `EXECTIME  (Xu  << Ou) + As; // X shift left Y
-                4'b0110: i_rhs = `EXECTIME  (Xs  <= Os) + As; // X compare <= Y
-                4'b0111: i_rhs = `EXECTIME  (Xs  == Os) + As; // X compare == Y
-                4'b1000: i_rhs = `EXECTIME ~(Xu  |  Ou) + As; // X bitwise nor Y
-                4'b1001: i_rhs = `EXECTIME ~(Xu  &  Ou) + As; // X bitwise nand Y
-                4'b1010: i_rhs = `EXECTIME  (Xu  ^  Ou) + As; // X bitwise xor Y
-                4'b1011: i_rhs = `EXECTIME  (Xs  + -Os) + As; // X add two's complement Y
-                4'b1100: i_rhs = `EXECTIME  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
-                4'b1101: i_rhs = `EXECTIME  (Xu  >> Ou) + As; // X shift right logical Y
-                4'b1110: i_rhs = `EXECTIME  (Xs  >  Os) + As; // X compare > Y
-                4'b1111: i_rhs = `EXECTIME  (Xs  != Os) + As; // X compare <> Y
+                4'b0000: i_rhs =  (Xu  |  Ou) + As; // X bitwise or Y
+                4'b0001: i_rhs =  (Xu  &  Ou) + As; // X bitwise and Y
+                4'b0010: i_rhs =  (Xs  +  Os) + As; // X add Y
+                4'b0011: i_rhs =  (Xs  *  Os) + As; // X multiply Y
+              //4'b0100:                            // reserved
+                4'b0101: i_rhs =  (Xu  << Ou) + As; // X shift left Y
+                4'b0110: i_rhs =  (Xs  <= Os) + As; // X compare <= Y
+                4'b0111: i_rhs =  (Xs  == Os) + As; // X compare == Y
+                4'b1000: i_rhs = ~(Xu  |  Ou) + As; // X bitwise nor Y
+                4'b1001: i_rhs = ~(Xu  &  Ou) + As; // X bitwise nand Y
+                4'b1010: i_rhs =  (Xu  ^  Ou) + As; // X bitwise xor Y
+                4'b1011: i_rhs =  (Xs  + -Os) + As; // X add two's complement Y
+                4'b1100: i_rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
+                4'b1101: i_rhs =  (Xu  >> Ou) + As; // X shift right logical Y
+                4'b1110: i_rhs =  (Xs  >  Os) + As; // X compare > Y
+                4'b1111: i_rhs =  (Xs  != Os) + As; // X compare <> Y
 
                 default: i_rhs = 32'bx;
             endcase
@@ -152,14 +150,14 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
 
 endmodule
 
-module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
-    input clk;
+module Core(clk, clkL, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
+    input clk, clkL;
     output[31:0] insn_addr;
     input[31:0] insn_data;
     output rw;
     output[31:0] norm_addr;
     inout[31:0] norm_data;
-    input _reset;
+    input reset_n;
 
     wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
@@ -180,10 +178,11 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     wire[31:0] rhs;
     wire[1:0] deref;
 
-    reg rhalt = 0;
-    output wor halt;
-   
-    assign halt = rhalt ? rhalt : 1'bz;
+    //reg rhalt = 0;
+    inout halt;
+    wor ohalt;
+    assign ohalt = halt;
+    assign ohalt = ~insn_valid | ~illegal;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
@@ -205,24 +204,24 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
     wire[31:0] pc = next_pc;
 
     assign insn_addr = halt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
-    wire[31:0] `SETUP insn = state_valid ? insn_data : 32'b0;
+    wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
-    always @(posedge _reset)
+    always @(posedge reset_n)
         manual_invalidate_pr = 0;
 
     // FIXME this is a hack ; insn_valid needs to be defined better
     always @(posedge clk) begin
         case (insn_addr)
             4'hzzzz: insn_valid = 0; // FIXME this is useless in synthesis
-            default: insn_valid = `RAMDELAY !halt & _reset;
+            default: insn_valid = !halt & reset_n;
         endcase
     end
 
     // FIXME posedge ?
     /*
-    //always @(posedge clk or negedge _reset) begin
-    always @(negedge _reset) begin
-        if (!_reset) begin
+    //always @(posedge clk or negedge reset_n) begin
+    always @(negedge reset_n) begin
+        if (!reset_n) begin
             new_pc      = `RESETVECTOR;
             next_pc     = `RESETVECTOR;
         end else
@@ -234,7 +233,7 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
 
     // FIXME synchronous reset
     always @(negedge clk) begin
-        if (!_reset) begin
+        if (!reset_n) begin
             new_pc      = `RESETVECTOR;
             next_pc     = `RESETVECTOR;
         end else begin
@@ -242,17 +241,18 @@ module Core(clk, insn_addr, insn_data, rw, norm_addr, norm_data, _reset, halt);
             if (illegal)
                 //state_valid = 0;
                 manual_invalidate_nc = 1;
-            rhalt <= `SETUP (rhalt | (insn_valid ? illegal : 1'b0));
-            if (!rhalt && !halt && state_valid) begin
+            //rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
+            if (/*!rhalt && */!halt && state_valid) begin
                 manual_invalidate_nc = illegal;
-                next_pc = `SETUP pc + 1;
+                next_pc = pc + 1;
                 if (jumping)
-                    new_pc = `SETUP valueZ;
+                    new_pc = valueZ;
             end
         end
     end
 
-    Reg regs(.clk(clk), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+    // regs gets shifted clock
+    Reg regs(.clk(clkL), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
 
