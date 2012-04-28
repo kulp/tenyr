@@ -1,25 +1,54 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
+module JCounter(input clk, input ce, output tick);
+
+    parameter STAGES = 6;
+    parameter SHIFTS = 10;
+
+    assign tick = stage[STAGES - 1].s[SHIFTS - 1];
+
+    generate
+        genvar i;
+        for (i = 0; i < STAGES; i = i + 1) begin:stage
+            reg[SHIFTS-1:0] s = 1;
+
+            if (i == 0) begin:zero
+                always @(negedge clk)
+                    if (ce)
+                        stage[i].s <= { stage[i].s, stage[i].s[SHIFTS - 1] };
+            end else begin:nonzero
+                always @(negedge clk)
+                    if (stage[i - 1].s[SHIFTS - 1] | stage[i].s[SHIFTS - 1])
+                        if (ce)
+                            stage[i].s <= { stage[i].s, stage[i].s[SHIFTS - 1] };
+            end
+        end
+    endgenerate
+
+endmodule
+
 module Seg7Test(input clk, output[7:0] seg, output[NDIGITS - 1:0] an); 
 
     parameter NDIGITS = 4;
-    parameter PERIODBITS = 21;
+    parameter BASE = 0;
 
-    wire[31:0] c;
-	wire[PERIODBITS - 1:0] counter;
-    wire downclk, clk_valid, tick;
+    reg[15:0] counter;
+    wire[15:0] c = counter;
+    wire downclk, tick;
 
-    clk_wiz_v3_3 clkdiv(.in(clk), .out(downclk), .CLK_VALID(clk_valid));
+    JCounter #(.STAGES(2), .SHIFTS(10))
+        downclocker(.clk(clk), .ce(1'b1), .tick(downclk));
 
-    Seg7 #(.BASE(0), .NDIGITS(NDIGITS))
-        seg7(.clk(downclk), .enable(1'b1), .rw(1'b1), .addr(32'b0),
-             .data(c), .reset_n(1'b1), .seg(seg), .an(an));
+    Seg7 #(.BASE(BASE), .NDIGITS(NDIGITS))
+        seg7(.clk(downclk), .enable(1'b1), .rw(1'b1), .addr(BASE),
+             .data({16'b0,c}), .reset_n(1'b1), .seg(seg), .an(an));
 
-	assign tick = ~|counter;
+    JCounter #(.STAGES(5), .SHIFTS(10))
+        div(.clk(downclk), .ce(1'b1), .tick(tick));
 
-	upcounter21 div(.clk(downclk), .q(counter), .ce(clk_valid));
-	upcounter   ctr(.clk(downclk), .q(c), .ce(tick & clk_valid));
+    always @(posedge tick)
+        counter = counter + 1;
 
 endmodule
 
