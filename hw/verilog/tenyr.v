@@ -7,7 +7,7 @@ module Reg(input clk,
                    input[3:0] indexY, output[31:0] valueY, // Y is RO
         inout[31:0] pc, input rwP);
 
-    (* KEEP = "TRUE" *)
+    //(* KEEP = "TRUE" *)
     reg[31:0] store[0:15];
 
     generate
@@ -150,8 +150,9 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
 
 endmodule
 
-module Core(clk, clkL, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
+module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
     input clk, clkL;
+    input en;
     output[31:0] insn_addr;
     input[31:0] insn_data;
     output rw;
@@ -179,10 +180,15 @@ module Core(clk, clkL, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, 
     wire[1:0] deref;
 
     //reg rhalt = 0;
-    inout halt;
-    wor ohalt;
-    assign ohalt = halt;
-    assign ohalt = ~insn_valid | ~illegal;
+    `HALTTYPE halt;
+    //wor ohalt;
+    assign thalt = ~insn_valid | illegal;
+    reg rhalt = 0;
+    always @(thalt) rhalt <= reset_n ? rhalt | thalt : 0;
+    assign halt[`HALT_EXEC] = rhalt;
+    wire lhalt = |halt;
+    //assign ohalt = halt;
+    //assign ohalt = ~insn_valid | ~illegal;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
@@ -198,23 +204,28 @@ module Core(clk, clkL, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, 
     wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
     reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-//    wire[31:0] pc = halt    ? new_pc :
+//    wire[31:0] pc = lhalt   ? new_pc :
 //                    jumping ? new_pc : next_pc;
 // FIXME
     wire[31:0] pc = next_pc;
 
-    assign insn_addr = halt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
+    assign insn_addr = lhalt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
-    always @(posedge reset_n)
+    always @(posedge reset_n) if (en) begin
         manual_invalidate_pr = 0;
+        //rhalt = 0;
+    end
 
     // FIXME this is a hack ; insn_valid needs to be defined better
-    always @(posedge clk) begin
+    always @(posedge clk) if(en) begin
+        insn_valid = reset_n;
+        /*
         case (insn_addr)
             4'hzzzz: insn_valid = 0; // FIXME this is useless in synthesis
-            default: insn_valid = !halt & reset_n;
+            default: insn_valid = !lhalt & reset_n;
         endcase
+        */
     end
 
     // FIXME posedge ?
@@ -225,14 +236,14 @@ module Core(clk, clkL, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, 
             new_pc      = `RESETVECTOR;
             next_pc     = `RESETVECTOR;
         end else
-        if (!halt && !illegal) begin
+        if (!lhalt && !illegal) begin
             manual_invalidate_nr = 0;
         end
     end
     */
 
     // FIXME synchronous reset
-    always @(negedge clk) begin
+    always @(negedge clk) if (en) begin
         if (!reset_n) begin
             new_pc      = `RESETVECTOR;
             next_pc     = `RESETVECTOR;
@@ -242,7 +253,7 @@ module Core(clk, clkL, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, 
                 //state_valid = 0;
                 manual_invalidate_nc = 1;
             //rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-            if (/*!rhalt && */!halt && state_valid) begin
+            if (/*!rhalt && */!lhalt && state_valid) begin
                 manual_invalidate_nc = illegal;
                 next_pc = pc + 1;
                 if (jumping)

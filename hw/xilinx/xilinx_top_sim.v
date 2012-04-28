@@ -9,11 +9,11 @@ module Top();
     
     always #(`CLOCKPERIOD / 2) clk = ~clk;
     
-    initial #(2 * `CLOCKPERIOD/* - 2*/) rhalt = 0;
-    initial #(1 * `CLOCKPERIOD/* - 2*/) reset_n = 1;
+    initial #(40 * `CLOCKPERIOD/* - 2*/) rhalt = 0;
+    initial #(50 * `CLOCKPERIOD/* - 2*/) reset_n = 1;
 
     wor halt = rhalt;
 
-    Tenyr tenyr(.clk(clk)/*, .reset_n(reset_n)*/, .halt(halt));
+    Tenyr tenyr(.clk(clk), .reset_n(reset_n), .halt(halt));
 endmodule
 
