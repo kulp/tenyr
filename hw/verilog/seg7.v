@@ -31,10 +31,10 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
         wire[8 * NDIGITS - 1:0] bits;
 
         for (i = 0; i < NDIGITS; i = i + 1) begin:digit
-            wire[7:0] char;
+            wire[6:0] char;
             wire[7:0] line;
-            Hex2AsciiDigit digit(mydata[(4 * i) +: 4], char);
-            lookup7 lookup(char, line);
+            Hex2AsciiDigit digit(clk, mydata[(4 * i) +: 4], char);
+            lookup7 lookup(clk, char, line);
 
             for (j = 0; j < 8; j = j + 1) begin:bit
                 assign bits[j * NDIGITS + i] = ena[i * STATES] ? line[j] : 1'b1;
