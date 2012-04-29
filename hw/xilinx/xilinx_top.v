@@ -4,9 +4,6 @@
 `define VGA
 `undef  SERIAL
 
-// For now, we expose the serial wires txd and rxd as ports to keep ISE from
-// optimising away the whole design. Once I figure out what I am doing, these
-// should be replaced by whatever actual ports we end up with.
 module Tenyr(halt,
 `ifdef ISIM
         reset_n,
@@ -19,7 +16,6 @@ module Tenyr(halt,
     input clk /* synthesis .ispad = 1 */;
 
     `HALTTYPE halt;
-    //wor ohalt;
     input rxd;
     output txd;
 
@@ -36,35 +32,11 @@ module Tenyr(halt,
     reg reset_n = 1;
     //input reset_n;
     wire clk_core0, clk_core90, clk_core180, clk_core270;
-    /*
-`ifdef ISIM
-    assign clk_core0 = clk;
-    assign #3 clk_core90 = clk;
-    assign phases_valid = 1;
-`else
-*/
-    // reset is active-high for tenyr_clocks
-/*
-    wire clk_core;
-    tenyr_clocks clkdiv(.reset(~reset_n), .in(clk), .clk_vga(clk_vga), .clk_core(clk_core));
-    */
-
-    /*
-    clock_phasing phaser(.reset(~reset_n), .valid(phases_valid),
-                         .in(clk_core), .out0(clk_core0), .out90(clk_core90),
-                         .out180(clk_core180), .out270(clk_core270));
-    */
-    wire clk_vga, clk_vga2;
+    wire clk_vga;
     tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
                            .in(clk), .clk_core0(clk_core0), .clk_core90(clk_core90),
-                           .clk_vga(clk_vga), .clk_vga2(clk_vga2));
+                           .clk_vga(clk_vga));
 
-    wire vga_locked = phases_valid;
-    //vga_clocker vga_clock(.CLK_IN1(clk), .CLK_OUT1(clk_vga), .LOCKED(vga_locked));
-
-//`endif
-
-    //assign ohalt = ~phases_valid;
     assign halt[`HALT_TENYR] = ~phases_valid;
 
     // active on posedge clock
@@ -91,14 +63,6 @@ module Tenyr(halt,
 
 `ifndef SIM
 `ifdef VGA
-
-//`define USETEST
-
-`ifdef USETEST
-    // reset is active-high in vga80x40_test
-    vga80x40_test vga(.reset(~reset_n), .clk50MHz(clk_vga2), .R(R), .G(G), .B(B),
-                      .hsync(hsync), .vsync(vsync));
-`else
 
     reg[7:0] crx_oreg = 8'd40;
     reg[7:0] cry_oreg = 8'd20;
@@ -155,8 +119,6 @@ module Tenyr(halt,
         .addra (rom_adB),
         .douta (rom_doB)
     );
-
-`endif
 
 `endif
 `endif

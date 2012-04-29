@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.4
-# Date: Sat Apr 28 20:31:14 2012
+# Date: Sat Apr 28 22:51:22 2012
 #
 ##############################################################
 #
@@ -86,7 +86,7 @@ CSET clkout4_drives=BUFG
 CSET clkout4_requested_duty_cycle=50.000
 CSET clkout4_requested_out_freq=50.000
 CSET clkout4_requested_phase=0.000
-CSET clkout4_used=true
+CSET clkout4_used=false
 CSET clkout5_drives=BUFG
 CSET clkout5_requested_duty_cycle=50.000
 CSET clkout5_requested_out_freq=100.000
@@ -189,7 +189,7 @@ CSET mmcm_notes=None
 CSET mmcm_ref_jitter1=0.010
 CSET mmcm_ref_jitter2=0.010
 CSET mmcm_startup_wait=false
-CSET num_out_clks=4
+CSET num_out_clks=3
 CSET override_dcm=false
 CSET override_dcm_clkgen=false
 CSET override_mmcm=false
@@ -263,4 +263,4 @@ CSET use_status=false
 MISC pkg_timestamp=2011-06-09T17:33:40Z
 # END Extra information
 GENERATE
-# CRC: ef4f32a6
+# CRC: d45f47e6

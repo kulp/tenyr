@@ -8,15 +8,7 @@ module Reg(input clk,
         inout[31:0] pc, input rwP);
 
     //(* KEEP = "TRUE" *)
-    reg[31:0] store[0:15];
-
-    generate
-        genvar i;
-        for (i = 0; i < 15; i = i + 1) // P is set externally
-            initial begin:setup
-                #0 store[i] = 32'b0;
-            end
-    endgenerate
+    reg[31:0] store[0:15] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,`RESETVECTOR };
 
     wire ZisP = indexZ == 15;
     wire XisP = indexX == 15;

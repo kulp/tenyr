@@ -74,9 +74,6 @@
     <file xil_pn:name="vga80x40_col1fixed.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="Implementation" xil_pn:seqID="5"/>
     </file>
-    <file xil_pn:name="vga80x40_test.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
     <file xil_pn:name="ipcore_dir/fontrom.xco" xil_pn:type="FILE_COREGEN">
       <association xil_pn:name="Implementation" xil_pn:seqID="9"/>
     </file>
