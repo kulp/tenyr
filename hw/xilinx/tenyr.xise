@@ -80,20 +80,9 @@
     <file xil_pn:name="ipcore_dir/textram.xco" xil_pn:type="FILE_COREGEN">
       <association xil_pn:name="Implementation" xil_pn:seqID="6"/>
     </file>
-    <file xil_pn:name="ipcore_dir/tenyr_clocks.xco" xil_pn:type="FILE_COREGEN">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
-    <file xil_pn:name="ipcore_dir/clock_phasing.xco" xil_pn:type="FILE_COREGEN">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
     <file xil_pn:name="ipcore_dir/tenyr_mainclock.xco" xil_pn:type="FILE_COREGEN">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="7"/>
-    </file>
-    <file xil_pn:name="ipcore_dir/vga_clocker.xco" xil_pn:type="FILE_COREGEN">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
     <file xil_pn:name="ipcore_dir/GenedBlockMem.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
@@ -104,16 +93,7 @@
     <file xil_pn:name="ipcore_dir/textram.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="ipcore_dir/tenyr_clocks.xise" xil_pn:type="FILE_COREGENISE">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
-    <file xil_pn:name="ipcore_dir/clock_phasing.xise" xil_pn:type="FILE_COREGENISE">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
     <file xil_pn:name="ipcore_dir/tenyr_mainclock.xise" xil_pn:type="FILE_COREGENISE">
-      <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
-    </file>
-    <file xil_pn:name="ipcore_dir/vga_clocker.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
   </files>
@@ -131,7 +111,7 @@
     <property xil_pn:name="Keep Hierarchy" xil_pn:value="Yes" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Last Applied Goal" xil_pn:value="Timing Performance" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Last Applied Strategy" xil_pn:value="Performance with Physical Synthesis;E:/Xilinx/13.4/ISE_DS/ISE/spartan6/data/spartan6_performance_with_physicalsynthesis.xds" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Last Selected UCF File" xil_pn:value="/mnt/kiri-kulp/Documents/Code/C/tenyr/hw/xilinx/Tenyr.ucf" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Last Selected UCF File" xil_pn:value="Z:/Documents/Code/C/tenyr/hw/xilinx/Tenyr.ucf" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Netlist Hierarchy" xil_pn:value="Rebuilt" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Optimization Effort spartan6" xil_pn:value="High" xil_pn:valueState="non-default" xil_pn:x_locked="true"/>
     <property xil_pn:name="Optimization Goal" xil_pn:value="Speed" xil_pn:valueState="default" xil_pn:x_locked="true"/>
@@ -146,8 +126,8 @@
     <property xil_pn:name="Property Specification in Project File" xil_pn:value="Store non-default values only" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Register Balancing" xil_pn:value="Yes" xil_pn:valueState="non-default" xil_pn:x_locked="true"/>
     <property xil_pn:name="Register Duplication Map" xil_pn:value="Off" xil_pn:valueState="default" xil_pn:x_locked="true"/>
-    <property xil_pn:name="Selected Module Instance Name" xil_pn:value="/Top/tenyr" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Selected Simulation Root Source Node Behavioral" xil_pn:value="work.Tenyr" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Selected Module Instance Name" xil_pn:value="/Top" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Selected Simulation Root Source Node Behavioral" xil_pn:value="work.Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Root Source Node Post-Route" xil_pn:value="work.Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Root Source Node Post-Translate" xil_pn:value="work.Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Source Node" xil_pn:value="tenyr" xil_pn:valueState="non-default"/>

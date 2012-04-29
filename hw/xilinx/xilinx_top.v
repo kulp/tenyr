@@ -8,7 +8,7 @@ module Tenyr(halt,
 `ifdef ISIM
         reset_n,
 `endif
-        clk, txd, rxd, seg, an, R, G, B, hsync, vsync);
+        clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync);
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, in_data, out_data, operand_data;
     wire operand_rw;
@@ -19,7 +19,13 @@ module Tenyr(halt,
     input rxd;
     output txd;
 
-    output R, G, B;
+    output[2:0] vgaRed;
+    output[2:0] vgaGreen;
+    output[2:1] vgaBlue;
+    assign vgaRed[1:0] = {2{vgaRed[2]}};
+    assign vgaGreen[1:0] = {2{vgaGreen[2]}};
+    assign vgaBlue[1] = {1{vgaBlue[2]}};
+
     output hsync, vsync;
 
     output[7:0] seg;
@@ -29,8 +35,11 @@ module Tenyr(halt,
     assign operand_data = !operand_rw ?     out_data : 32'bz;
 
     wire phases_valid;
+`ifdef ISIM
+    input reset_n;
+`else
     reg reset_n = 1;
-    //input reset_n;
+`endif
     wire clk_core0, clk_core90, clk_core180, clk_core270;
     wire clk_vga;
     tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
@@ -66,7 +75,15 @@ module Tenyr(halt,
 
     reg[7:0] crx_oreg = 8'd40;
     reg[7:0] cry_oreg = 8'd20;
-    reg[7:0] ctl_oreg = 8'b11110010;
+    reg vga_en = 1'b1;
+    reg vga_cursor_en = 1'b1;
+    reg vga_cursor_blink = 1'b0;
+    reg vga_cursor_small = 1'b0;
+    reg[2:0] vga_colour = 3'b111;
+    reg[7:0] ctl_oreg = 0;
+    always @(negedge clk_vga)
+        ctl_oreg = {vga_en,vga_cursor_en,vga_cursor_blink,vga_cursor_small,1'b0,vga_colour};
+
     reg crx_oreg_ce   = 1'b1;
     reg cry_oreg_ce   = 1'b1;
     reg ctl_oreg_ce   = 1'b1;
@@ -87,9 +104,9 @@ module Tenyr(halt,
     vga80x40 vga(
         .reset       (~reset_n),
         .clk25MHz    (clk_vga),
-        .R           (R),
-        .G           (G),
-        .B           (B),
+        .R           (vgaRed[2]),
+        .G           (vgaGreen[2]),
+        .B           (vgaBlue[2]),
         .hsync       (hsync),
         .vsync       (vsync),
         .TEXT_A      (ram_adB),
