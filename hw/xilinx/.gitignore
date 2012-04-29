@@ -179,3 +179,6 @@ tenyr.mhs
 tenyr.mss
 tenyr.xmp
 tenyr_incl.make
+Top_isim_beh.wdb
+ipcore_dir/coregen.cgc
+xlnx_auto_0_xdb/cst.xbcd
