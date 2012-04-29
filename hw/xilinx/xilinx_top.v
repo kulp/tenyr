@@ -55,9 +55,12 @@ module Tenyr(halt,
                       .dinb(32'bx), .doutb(insn_data));
 
 `ifdef SERIAL
-    Serial serial(.clk(clk_core), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
+    Serial serial(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .txd(txd), .rxd(rxd));
+    Serial serial2(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
+                  .rw(operand_rw), .addr(operand_addr),
+                  .data(operand_data), .rxd(txd));
 `endif
 
     Seg7 #(.BASE(12'h100))
@@ -83,6 +86,10 @@ module Tenyr(halt,
     reg[7:0] ctl_oreg = 0;
     always @(negedge clk_vga)
         ctl_oreg = {vga_en,vga_cursor_en,vga_cursor_blink,vga_cursor_small,1'b0,vga_colour};
+
+    mmr #(.ADDR(`VIDEO_ADDR))
+        video_ctl(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
+                  .rw(operand_rw), .addr(operand_addr), .data(operand_data), .val(clk_oreg));
 
     reg crx_oreg_ce   = 1'b1;
     reg cry_oreg_ce   = 1'b1;

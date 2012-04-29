@@ -21,5 +21,7 @@
 
 `define HALTTYPE inout[`HALTBUSWIDTH-1:0]
 
+`define VIDEO_ADDR 2048
+
 /* vi: set ts=4 sw=4 et syntax=verilog: */
 

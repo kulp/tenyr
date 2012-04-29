@@ -5,7 +5,7 @@
 // from that doesn't need to be high-speed.
 module Serial(input clk, input enable, input rw,
         input[31:0] addr, inout[31:0] data,
-        input _reset, output txd, input rxd);
+        input reset_n, output txd, input rxd);
     parameter BASE = 1 << 5;
     parameter SIZE = 2;
 
@@ -15,7 +15,7 @@ module Serial(input clk, input enable, input rw,
     wire in_range = (addr >= BASE && addr < SIZE + BASE);
 
     reg[31:0] rdata = 0;
-    //assign data = (enable && in_range && !rw) ? rdata : 32'bz;
+    assign data = (enable && in_range && !rw) ? rdata : 32'bz;
 
     reg[15:0] sclk = 16'b1;
     always @(negedge clk) sclk = {sclk[0],sclk[15:1]};
