@@ -3,7 +3,7 @@
 
 module SimSerial(input clk, input enable, input rw,
         input[31:0] addr, inout[31:0] data,
-        input _reset);
+        input reset_n);
     parameter BASE = 1 << 5;
     parameter SIZE = 2;
 

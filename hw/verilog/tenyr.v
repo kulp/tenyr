@@ -8,7 +8,11 @@ module Reg(input clk,
         inout[31:0] pc, input rwP);
 
     //(* KEEP = "TRUE" *)
-    reg[31:0] store[0:15] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,`RESETVECTOR };
+    reg[31:0] store[0:15]
+`ifndef ICARUS
+        = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,`RESETVECTOR }
+`endif
+        ;
 
     wire ZisP = indexZ == 15;
     wire XisP = indexX == 15;
@@ -171,10 +175,8 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire[31:0] rhs;
     wire[1:0] deref;
 
-    //reg rhalt = 0;
     `HALTTYPE halt;
-    //wor ohalt;
-    assign thalt = ~insn_valid | illegal;
+    wire thalt = ~insn_valid | illegal;
     reg rhalt = 0;
     always @(thalt) rhalt <= reset_n ? rhalt | thalt : 0;
     assign halt[`HALT_EXEC] = rhalt;

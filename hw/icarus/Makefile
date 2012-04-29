@@ -15,7 +15,7 @@ vpath %.c ../vpi
 vpath %.v ../verilog ../verilog/sim .
 
 VFLAGS += -I../verilog
-VFLAGS += -DICARUS
+VFLAGS += -DICARUS -DSIM
 
 tenyr: VFLAGS += -m glue
 tenyr: top.v simserial.v icarus_top.v simmem.v seg7.v seglookup.v hex2ascii.v | glue.vpi
