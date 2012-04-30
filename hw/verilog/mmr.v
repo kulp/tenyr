@@ -1,25 +1,42 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-// TODO use reset_n
-module mmr(clk, enable, rw, addr, data, reset_n, val);
+module mmr(clk, enable, rw, addr, data, reset_n, we, re, val);
 
-    parameter ADDR = `VIDEO_ADDR;
+    parameter ADDR = 0;
+    parameter RE = 1; // reads possible ?
+    parameter WE = 1; // writes possible ?
+    parameter DEFAULT = 0;
+    parameter BUS_ADDR_WIDTH = 32;
+    parameter BUS_DATA_WIDTH = 32;
+    parameter MMR_WIDTH = BUS_DATA_WIDTH;
 
     input clk;
     input enable;
     input rw;
-    input[31:0] addr;
-    inout[31:0] data;
+    input[BUS_ADDR_WIDTH - 1:0] addr;
+    inout[BUS_DATA_WIDTH - 1:0] data;
     input reset_n;
+    input we, re; // write-enable, read-enable through val port
+    inout[MMR_WIDTH - 1:0] val;
 
-    inout val;
+    reg[MMR_WIDTH - 1:0] store = DEFAULT;
 
-    wire in_range = addr == ADDR;
-    wire active = enable && in_range;
+    wire active = enable && addr == ADDR;
 
-    assign data = (active && !rw) ? val  : 32'bz;
-    assign val  = (active &&  rw) ? data : 32'bz;
+    assign data = (active && !rw && RE) ? {'b0,store} : 'bz;
+    assign val  = re ? store : 'bz;
+
+    always @(negedge clk)
+        if (active) begin
+            if (rw && WE) begin
+                store <= data;
+            end
+        end else begin
+            if (we) begin
+                store <= val;
+            end
+        end
 
 endmodule
 
