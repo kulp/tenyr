@@ -1,12 +1,8 @@
 
 NET "clk" TNM_NET = clk;
 NET "clk" LOC = V10;
-#NET "txd" LOC = N4;
-#Created by Constraints Editor (xc6slx16-csg324-3) - 2012/04/18
-#Created by Constraints Editor (xc6slx16-csg324-3) - 2012/04/21
+#NET "txd" LOC = N18;
+#NET "rxd" LOC = N17;
 NET "vga/clk25MHz" TNM_NET = vga/clk25MHz;
 TIMESPEC TS_vga_clk25MHz = PERIOD "vga/clk25MHz" 25 MHz HIGH 50%;
-#TIMESPEC TS_clk = PERIOD "clk" 5 MHz HIGH 50%;
-#Created by Constraints Editor (xc6slx16-csg324-3) - 2012/04/21
-TEMPERATURE = 35 C;
-#>DISABLED<#VOLTAGE = 1.14 V;
+#TIMESPEC TS_clk = PERIOD "clk" 10 MHz HIGH 50%;

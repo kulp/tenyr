@@ -76,13 +76,8 @@ module Tenyr(halt,
 `ifndef SIM
 `ifdef VGA
 
-    reg[7:0] crx_oreg = 8'd40;
-    reg[7:0] cry_oreg = 8'd20;
-    reg vga_en = 1'b1;
-    reg vga_cursor_en = 1'b1;
-    reg vga_cursor_blink = 1'b0;
-    reg vga_cursor_small = 1'b0;
-    reg[2:0] vga_colour = 3'b111;
+    wire[7:0] crx; // 1-based ?
+    wire[7:0] cry; // 0-based ?
     wire[7:0] vga_ctl;
 
     mmr #(.ADDR(`VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11000111))
@@ -90,9 +85,19 @@ module Tenyr(halt,
                   .rw(operand_rw), .addr(operand_addr), .data(operand_data),
                   .re(1'b1), .we(1'b0), .val(vga_ctl));
 
-    reg crx_oreg_ce   = 1'b1;
-    reg cry_oreg_ce   = 1'b1;
-    reg vga_ctl_ce    = 1'b1;
+    mmr #(.ADDR(`VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(8'd1))
+        crx_mmr(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
+                .rw(operand_rw), .addr(operand_addr), .data(operand_data),
+                .re(1'b1), .we(1'b0), .val(crx));
+
+    mmr #(.ADDR(`VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(8'd1))
+        cry_mmr(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
+                .rw(operand_rw), .addr(operand_addr), .data(operand_data),
+                .re(1'b1), .we(1'b0), .val(cry));
+
+    reg crx_ce     = 1'b1;
+    reg cry_ce     = 1'b1;
+    reg vga_ctl_ce = 1'b1;
 
     wire[ 7:0] ram_diA;
     wire[ 7:0] ram_doA;
@@ -119,8 +124,8 @@ module Tenyr(halt,
         .TEXT_D      (ram_doB),
         .FONT_A      (rom_adB),
         .FONT_D      (rom_doB),
-        .ocrx        (crx_oreg),
-        .ocry        (cry_oreg),
+        .ocrx        (crx),
+        .ocry        (cry),
         .octl        (vga_ctl)
     );
 
