@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>tenyr by kulp</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>tenyr</h1>
+        <p>A simple 32-bit computing environment</p>
+        <p class="view"><a href="https://github.com/kulp/tenyr">View the Project on GitHub <small>kulp/tenyr</small></a></p>
+        <ul>
+          <li><a href="https://github.com/kulp/tenyr/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/kulp/tenyr/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/kulp/tenyr">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h3>Usage</h3>
+
+<pre><code>$ tas -ohello.to hello.tas
+$ tld -ohello.texe hello.to puts.to
+$ tsim hello.texe
+hello, world !
+</code></pre>
+
+<h3>Overview</h3>
+
+<p><strong>tenyr</strong> is a simple 32-bit computing environment with focus on simplicity of design and implementation.</p>
+
+<p><strong>tenyr</strong> currently provides</p>
+
+<ul>
+<li>an <a href="https://github.com/kulp/tenyr/wiki/Assembly-language">instruction set architecture</a>
+</li>
+<li>an <a href="https://github.com/kulp/tenyr/wiki/Assembler">assembler / disassembler (tas)</a>
+</li>
+<li>a linker (tld)</li>
+<li>an <a href="https://github.com/kulp/tenyr/wiki/Simulator">architectural simulator (tsim)</a>
+</li>
+</ul><p>shows progress on</p>
+
+<ul>
+<li>a <a href="https://github.com/kulp/tenyr/tree/master/lib">standard library</a>
+</li>
+<li>a <a href="https://github.com/kulp/tenyr/tree/master/forth">Forth environment</a>
+</li>
+<li>a <a href="https://github.com/kulp/tenyr/tree/master/hw/verilog">synthesisable HDL implementation</a>
+</li>
+</ul><p>and aspires to achieve</p>
+
+<ul>
+<li>a <a href="https://github.com/kulp/toycen">C compiler</a>
+</li>
+<li>a novel operating system</li>
+</ul><p>The novel <strong>tenyr</strong> architecture is a two's complement, 32-bit, modified Harvard architecture. Everything possible is one word of 32 bits wide. The architecture design focuses on simplicity of design and implementation, with as many features as possible implemented in terms of simpler features. For example, there is no hardware stack support, although a set of assembly macros are provided for stack manipulation. For simplicity, <strong>tenyr</strong> is designed as a non-concurrent single-core architecture. It is intended that <strong>tenyr</strong> be useful as a didactic tool, though documentation may lag behind implementation.</p>
+
+<p><strong>tenyr</strong> is made available under the <a href="https://github.com/kulp/tenyr/blob/master/COPYING">MIT license</a>, and is Copyright 2011-2012 <a href="darren@kulp.ch">Darren Kulp</a> and <a href="https://github.com/kulp/tenyr/blob/master/CREDITS">contributors</a>.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/kulp">kulp</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-25274107-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
