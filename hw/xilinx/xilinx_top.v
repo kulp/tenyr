@@ -68,7 +68,7 @@ module Tenyr(halt,
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .seg(seg), .an(an));
 
-    Core core(.clk(clk_core0), .clkL(clk_core90), .en(phases_valid),
+    Core core(.clk(clk_core90), .clkL(clk_core0), .en(phases_valid),
               .reset_n(reset_n), .rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),
               .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));
@@ -80,17 +80,17 @@ module Tenyr(halt,
     wire[7:0] cry; // 0-based ?
     wire[7:0] vga_ctl;
 
-    mmr #(.ADDR(`VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11000111))
+    mmr #(.ADDR(`VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11110111))
         video_ctl(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
                   .rw(operand_rw), .addr(operand_addr), .data(operand_data),
                   .re(1'b1), .we(1'b0), .val(vga_ctl));
 
-    mmr #(.ADDR(`VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(8'd1))
+    mmr #(.ADDR(`VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(8'd40))
         crx_mmr(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
                 .re(1'b1), .we(1'b0), .val(crx));
 
-    mmr #(.ADDR(`VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(8'd1))
+    mmr #(.ADDR(`VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(8'd20))
         cry_mmr(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
                 .re(1'b1), .we(1'b0), .val(cry));
