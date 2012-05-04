@@ -35,13 +35,13 @@ module Reg(input clk,
 
     always @(negedge clk) begin
         if (rwP)
-            store[15] = pc;
+            store[15] <= pc;
         if (rwZ) begin
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
                 //#2 // this fixes simulation but does not reflect synth reality
-                store[indexZ] = valueZ;
+                store[indexZ] <= valueZ;
             end
         end
     end
@@ -115,14 +115,14 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
     reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
-    wire[31:0] Xs = X;
-    wire[31:0] Xu = X;
+    wire[31:0] #1 Xs = X;
+    wire[31:0] #1 Xu = X;
 
     wire[31:0] Is_ = { {20{I[11]}}, I };
-    wire[31:0] Is = Is_;
-    wire[31:0] Ou = (type == 0) ? Y   : Is_;
-    wire[31:0] Os = (type == 0) ? Y   : Is_;
-    wire[31:0] As = (type == 0) ? Is_ : Y;
+    wire[31:0] #1 Is = Is_;
+    wire[31:0] #1 Ou = (type == 0) ? Y   : Is_;
+    wire[31:0] #1 Os = (type == 0) ? Y   : Is_;
+    wire[31:0] #1 As = (type == 0) ? Is_ : Y;
 
     // cheat and use posedge clk to do calculations so they are ready by
     // negedge clk
@@ -267,7 +267,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     end
 
     // regs gets shifted clock
-    Reg regs(.clk(clkL), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+    Reg regs(.clk(clk), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
 
@@ -275,7 +275,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
                   .valid(decode_valid), .illegal(illegal),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
-    Exec exec(.clk(clk), .op(op), .type(type), .rhs(rhs),
+    Exec exec(.clk(clkL), .op(op), .type(type), .rhs(rhs),
               .X(valueX), .Y(valueY), .I(valueI),
               .valid(state_valid));
 endmodule
