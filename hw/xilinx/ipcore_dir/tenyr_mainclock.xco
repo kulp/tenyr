@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.4
-# Date: Sat May 05 04:31:07 2012
+# Date: Sat May 05 08:10:27 2012
 #
 ##############################################################
 #
@@ -55,7 +55,7 @@ CSET clk_out6_port=CLK_OUT6
 CSET clk_out6_use_fine_ps_gui=false
 CSET clk_out7_port=CLK_OUT7
 CSET clk_out7_use_fine_ps_gui=false
-CSET clk_valid_port=CLK_VALID
+CSET clk_valid_port=valid
 CSET clkfb_in_n_port=CLKFB_IN_N
 CSET clkfb_in_p_port=CLKFB_IN_P
 CSET clkfb_in_port=CLKFB_IN
@@ -74,7 +74,7 @@ CSET clkout1_requested_out_freq=10.000
 CSET clkout1_requested_phase=0.000
 CSET clkout2_drives=BUFGCE
 CSET clkout2_requested_duty_cycle=50.000
-CSET clkout2_requested_out_freq=10.000
+CSET clkout2_requested_out_freq=10
 CSET clkout2_requested_phase=90.000
 CSET clkout2_used=true
 CSET clkout3_drives=BUFGCE
@@ -107,14 +107,14 @@ CSET component_name=tenyr_mainclock
 CSET daddr_port=DADDR
 CSET dclk_port=DCLK
 CSET dcm_clk_feedback=1X
-CSET dcm_clk_out1_port=CLKFX
-CSET dcm_clk_out2_port=CLKDV
-CSET dcm_clk_out3_port=CLK0
+CSET dcm_clk_out1_port=CLK0
+CSET dcm_clk_out2_port=CLK90
+CSET dcm_clk_out3_port=CLKFX
 CSET dcm_clk_out4_port=CLK0
 CSET dcm_clk_out5_port=CLK0
 CSET dcm_clk_out6_port=CLK0
-CSET dcm_clkdv_divide=5.0
-CSET dcm_clkfx_divide=10
+CSET dcm_clkdv_divide=4.0
+CSET dcm_clkfx_divide=8
 CSET dcm_clkfx_multiply=2
 CSET dcm_clkgen_clk_out1_port=CLKFX
 CSET dcm_clkgen_clk_out2_port=CLKFX
@@ -263,4 +263,4 @@ CSET use_status=false
 MISC pkg_timestamp=2011-06-09T17:33:40Z
 # END Extra information
 GENERATE
-# CRC: b1baaee2
+# CRC: 822f8154
