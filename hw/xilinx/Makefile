@@ -34,17 +34,23 @@ GenedBlockMem.ngc: GenedBlockMem.xco small.coe
 vpath %.v ../verilog
 
 Tenyr_SRCDEPS += \
+	fontram.xco \
+	GenedBlockMem.xco \
 	hex2ascii.v \
+	mmr.v \
+	Nexys3_Master.ucf \
+	ramwrap.v \
 	seg7.v \
 	seglookup.v \
 	serial.v \
-	tenyr.v \
-	top.v \
-	Nexys3_Master.ucf \
+	tenyr_mainclock.xco \
 	Tenyr.ucf \
-	GenedBlockMem.xco \
-	tenyr_clk_S.xco \
-	xilinx_top.v
+	tenyr.v \
+	textram.xco \
+	vga80x40_col1fixed.vhd \
+	vga80x40.ucf \
+	xilinx_top.v \
+# end of Tenyr_SRCDEPS list
 
 # TODO pull tenyr.tcl components into Makefile to allow incremental builds
 %.bit: $($*_SRCDEPS) GenedBlockMem.ngc
