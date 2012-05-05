@@ -8,7 +8,7 @@ module Tenyr(halt,
 `ifdef ISIM
         reset_n,
 `endif
-        clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync);
+        clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync, Led);
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, in_data, out_data, operand_data;
     wire operand_rw;
@@ -31,6 +31,9 @@ module Tenyr(halt,
     output[7:0] seg;
     output[3:0] an;
 
+    output[7:0] Led;
+    assign Led[7:3] = 5'b00000;
+
     assign in_data      =  operand_rw ? operand_data : 32'bx;
     assign operand_data = !operand_rw ?     out_data : 32'bz;
 
@@ -49,6 +52,7 @@ module Tenyr(halt,
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
 
     assign halt[`HALT_TENYR] = ~phases_valid;
+    assign Led[2:0] = halt;
 
     // active on posedge clock
     GenedBlockMem ram(.clka(~clk_core0), .wea(operand_rw), .addra(operand_addr),

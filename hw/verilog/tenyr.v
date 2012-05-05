@@ -124,9 +124,6 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
     wire[31:0] Os = (type == 0) ? Y   : Is_;
     wire[31:0] As = (type == 0) ? Is_ : Y;
 
-    // cheat and use posedge clk to do calculations so they are ready by
-    // negedge clk
-    //always @(posedge clk) begin
     always @(negedge clk) begin
         if (valid) begin
             case (op)
@@ -186,24 +183,16 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire[1:0] deref;
 
     `HALTTYPE halt;
-    wire thalt = ~insn_valid | illegal;
     reg rhalt = 0;
-    always @(thalt) rhalt <= reset_n ? rhalt | thalt : 0;
     assign halt[`HALT_EXEC] = rhalt;
     wire lhalt = |halt;
-    //assign ohalt = halt;
-    //assign ohalt = ~insn_valid | ~illegal;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
-    //wire mem_active = state_valid ? |deref : 1'b0;
     reg mem_active = 0;
-    //assign rw = mem_active ? deref[1] : 1'b0;
-	reg rw = 0;
-    //wire[31:0] mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
-	reg[31:0] mem_data = 0;
-    //wire[31:0] mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
-	reg[31:0] mem_addr = 0;
+    reg rw = 0;
+    reg[31:0] mem_data = 0;
+    reg[31:0] mem_addr = 0;
     assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
     assign norm_addr = mem_active ? mem_addr : 32'b0;
     //  Z  <-  ...  -- deref == 00
@@ -214,20 +203,13 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
               next_pc   = `RESETVECTOR;
     wire[31:0] pc = lhalt   ? new_pc :
                     jumping ? new_pc : next_pc;
-// FIXME
-    //wire[31:0] pc = next_pc;
 
     assign insn_addr = lhalt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     always @(posedge reset_n) if (en) begin
         manual_invalidate_pr = 0;
-        //rhalt = 0;
     end
-
-	always @(negedge clkL) if (en && !lhalt) begin
-		//norm_addr = mem_active ? mem_addr : 32'b0;
-	end
 
     // FIXME synchronous reset
     always @(negedge clk) if (en) begin
@@ -239,12 +221,12 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
             if (illegal)
                 //state_valid = 0;
                 manual_invalidate_nc = 1;
-            //rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
+            rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
             if (/*!rhalt && */!lhalt && state_valid) begin
-				mem_active = state_valid ? |deref : 1'b0;
-				rw = mem_active ? deref[1] : 1'b0;
-				mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
-				mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
+                mem_active = state_valid ? |deref : 1'b0;
+                rw = mem_active ? deref[1] : 1'b0;
+                mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
+                mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
                 manual_invalidate_nc = illegal;
                 next_pc = pc + 1;
                 if (jumping)
