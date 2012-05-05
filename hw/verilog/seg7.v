@@ -21,6 +21,9 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
     output[7:0] seg;
     output[NI:0] an;
 
+    JCounter #(.STAGES(2), .SHIFTS(10))
+        downclocker(.clk(clk), .ce(1'b1), .tick(downclk));
+
     reg[NIS:0] ena = 1'b1;
 `ifndef SIM
     reg[NI4:0] mydata[SIZE - 1:0] = { 0, 0 };
@@ -42,8 +45,8 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
         for (i = 0; i < NDIGITS; i = i + 1) begin:digit
             wire[6:0] char;
             wire[7:0] line;
-            Hex2AsciiDigit digit(clk, mydata[0][(4 * i) +: 4], char);
-            lookup7 lookup(clk, char, line);
+            Hex2AsciiDigit digit(downclk, mydata[0][(4 * i) +: 4], char);
+            lookup7 lookup(downclk, char, line);
 
             for (j = 0; j < 8; j = j + 1) begin:bit
                 assign bits[j * NDIGITS + i] = ena[i * STATES] ? line[j] : 1'b1;
@@ -59,11 +62,12 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
         end
     endgenerate
 
-    always @(negedge clk) begin
+    always @(negedge downclk)
         ena = {ena[NIS - 1:0],ena[NIS]};
+
+    always @(negedge clk)
         if (in_range && enable && rw)
             mydata[addr - BASE] = data[NI4:0];
-    end
 
 endmodule
 
