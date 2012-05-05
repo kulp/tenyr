@@ -6,8 +6,8 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
 
     parameter STATES = 4;
     parameter BASE = 1 << 4;
-    parameter SIZE = 1;
     parameter NDIGITS = 4;
+    localparam SIZE = 2; // TODO compute based on NDIGITS ?
     localparam NI = NDIGITS - 1;
     localparam NI4 = NDIGITS * 4 - 1;
     localparam NIS = NDIGITS * STATES - 1;
@@ -22,7 +22,16 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
     output[NI:0] an;
 
     reg[NIS:0] ena = 1'b1;
-    reg[NI4:0] mydata = 0;
+`ifndef SIM
+    reg[NI4:0] mydata[SIZE - 1:0] = { 0, 0 };
+`else
+    reg[NI4:0] mydata[SIZE - 1:0];
+	generate
+		genvar q;
+		for (q = 0; q < SIZE; q = q + 1)
+			initial begin:setup mydata[q] = 0; end
+	endgenerate
+`endif
 
     wire in_range = (addr >= BASE && addr < SIZE + BASE);
 
@@ -33,7 +42,7 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
         for (i = 0; i < NDIGITS; i = i + 1) begin:digit
             wire[6:0] char;
             wire[7:0] line;
-            Hex2AsciiDigit digit(clk, mydata[(4 * i) +: 4], char);
+            Hex2AsciiDigit digit(clk, mydata[0][(4 * i) +: 4], char);
             lookup7 lookup(clk, char, line);
 
             for (j = 0; j < 8; j = j + 1) begin:bit
@@ -53,7 +62,7 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
     always @(negedge clk) begin
         ena = {ena[NIS - 1:0],ena[NIS]};
         if (in_range && enable && rw)
-            mydata = data[NI4:0];
+            mydata[addr - BASE] = data[NI4:0];
     end
 
 endmodule

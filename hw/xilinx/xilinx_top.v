@@ -49,9 +49,9 @@ module Tenyr(halt,
     assign halt[`HALT_TENYR] = ~phases_valid;
 
     // active on posedge clock
-    GenedBlockMem ram(.clka(clk_core0), .wea(operand_rw), .addra(operand_addr),
+    GenedBlockMem ram(.clka(~clk_core0), .wea(operand_rw), .addra(operand_addr),
                       .dina(in_data), .douta(out_data),
-                      .clkb(clk_core0), .web(1'b0), .addrb(insn_addr),
+                      .clkb(~clk_core0), .web(1'b0), .addrb(insn_addr),
                       .dinb(32'bx), .doutb(insn_data));
 
 `ifdef SERIAL
@@ -64,11 +64,11 @@ module Tenyr(halt,
 `endif
 
     Seg7 #(.BASE(12'h100))
-             seg7(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
+             seg7(.clk(clk_core90), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .seg(seg), .an(an));
 
-    Core core(.clk(clk_core90), .clkL(clk_core0), .en(phases_valid),
+    Core core(.clk(clk_core0), .clkL(clk_core90), .en(phases_valid),
               .reset_n(reset_n), .rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),
               .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));

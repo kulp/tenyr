@@ -5,7 +5,7 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     reg reset_n = 0;
     reg rhalt = 1;
     reg clk = 0;
-    wire #(`CLOCKPERIOD / 4) clkL = ~clk;
+    wire #(`CLOCKPERIOD / 4) clkL = clk;
 
     // TODO halt ?
     always #(`CLOCKPERIOD / 2) clk = ~clk;
@@ -22,7 +22,9 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     assign halt[`HALT_TENYR] = rhalt;
 
     SimMem #(.BASE(`RESETVECTOR))
-           ram(.clk(clk), .enable(!halt), .p0rw(operand_rw),
+		// TODO don't enable RAM until we need to (but need first instruction
+		// to enable !)
+           ram(.clk(clk), .enable(1'b1), .p0rw(operand_rw),
                .p0_addr(operand_addr), .p0_data(operand_data),
                .p1_addr(insn_addr)   , .p1_data(insn_data));
 

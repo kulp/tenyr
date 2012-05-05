@@ -115,14 +115,14 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
     reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
-    wire[31:0] #1 Xs = X;
-    wire[31:0] #1 Xu = X;
+    wire[31:0] Xs = X;
+    wire[31:0] Xu = X;
 
     wire[31:0] Is_ = { {20{I[11]}}, I };
-    wire[31:0] #1 Is = Is_;
-    wire[31:0] #1 Ou = (type == 0) ? Y   : Is_;
-    wire[31:0] #1 Os = (type == 0) ? Y   : Is_;
-    wire[31:0] #1 As = (type == 0) ? Is_ : Y;
+    wire[31:0] Is = Is_;
+    wire[31:0] Ou = (type == 0) ? Y   : Is_;
+    wire[31:0] Os = (type == 0) ? Y   : Is_;
+    wire[31:0] As = (type == 0) ? Is_ : Y;
 
     // cheat and use posedge clk to do calculations so they are ready by
     // negedge clk
@@ -172,7 +172,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire[11:0] valueI;
     wire[3:0] op;
     wire illegal, type;
-    reg insn_valid = 0;
+    reg insn_valid = 1; // XXX
     // FIXME rename manual_invalidate*
     reg manual_invalidate_pr = 0,
         manual_invalidate_nr = 0,
@@ -196,22 +196,26 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
-    wire mem_active = state_valid ? |deref : 1'b0;
-    assign rw = mem_active ? deref[1] : 1'b0;
-    wire[31:0] mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
-    wire[31:0] mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
+    //wire mem_active = state_valid ? |deref : 1'b0;
+    reg mem_active = 0;
+    //assign rw = mem_active ? deref[1] : 1'b0;
+	reg rw;
+    //wire[31:0] mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
+	reg[31:0] mem_data = 0;
+    //wire[31:0] mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
+	reg[31:0] mem_addr = 0;
     assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
     assign norm_addr = mem_active ? mem_addr : 32'b0;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
-    wire reg_rw  = state_valid ? (~deref[0] && indexZ != 0) : 1'b0;
+    wire reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
     wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
     reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-//    wire[31:0] pc = lhalt   ? new_pc :
-//                    jumping ? new_pc : next_pc;
+    wire[31:0] pc = lhalt   ? new_pc :
+                    jumping ? new_pc : next_pc;
 // FIXME
-    wire[31:0] pc = next_pc;
+    //wire[31:0] pc = next_pc;
 
     assign insn_addr = lhalt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
@@ -221,30 +225,9 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
         //rhalt = 0;
     end
 
-    // FIXME this is a hack ; insn_valid needs to be defined better
-    always @(posedge clk) if(en) begin
-        insn_valid = reset_n;
-        /*
-        case (insn_addr)
-            4'hzzzz: insn_valid = 0; // FIXME this is useless in synthesis
-            default: insn_valid = !lhalt & reset_n;
-        endcase
-        */
-    end
-
-    // FIXME posedge ?
-    /*
-    //always @(posedge clk or negedge reset_n) begin
-    always @(negedge reset_n) begin
-        if (!reset_n) begin
-            new_pc      = `RESETVECTOR;
-            next_pc     = `RESETVECTOR;
-        end else
-        if (!lhalt && !illegal) begin
-            manual_invalidate_nr = 0;
-        end
-    end
-    */
+	always @(negedge clkL) if (en && !lhalt) begin
+		//norm_addr = mem_active ? mem_addr : 32'b0;
+	end
 
     // FIXME synchronous reset
     always @(negedge clk) if (en) begin
@@ -258,6 +241,10 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
                 manual_invalidate_nc = 1;
             //rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
             if (/*!rhalt && */!lhalt && state_valid) begin
+				mem_active = state_valid ? |deref : 1'b0;
+				rw = mem_active ? deref[1] : 1'b0;
+				mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
+				mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
                 manual_invalidate_nc = illegal;
                 next_pc = pc + 1;
                 if (jumping)
