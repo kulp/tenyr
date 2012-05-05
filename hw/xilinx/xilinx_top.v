@@ -43,8 +43,10 @@ module Tenyr(halt,
     wire clk_core0, clk_core90, clk_core180, clk_core270;
     wire clk_vga;
     tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
-                           .in(clk), .clk_core0(clk_core0), .clk_core90(clk_core90),
-                           .clk_vga(clk_vga));
+                           .in(clk),
+                           .clk_core0(clk_core0), .clk_core0_CE(phases_valid),
+                           .clk_core90(clk_core90), .clk_core90_CE(phases_valid),
+                           .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
 
     assign halt[`HALT_TENYR] = ~phases_valid;
 

@@ -111,7 +111,7 @@ endmodule
 module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
             input[3:0] op, input type, valid);
 
-    assign rhs = valid ? i_rhs : 32'bx;
+    assign rhs = valid ? i_rhs : 32'b0;
     reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
@@ -199,7 +199,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     //wire mem_active = state_valid ? |deref : 1'b0;
     reg mem_active = 0;
     //assign rw = mem_active ? deref[1] : 1'b0;
-	reg rw;
+	reg rw = 0;
     //wire[31:0] mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
 	reg[31:0] mem_data = 0;
     //wire[31:0] mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
