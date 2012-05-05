@@ -18,7 +18,7 @@ VFLAGS += -I../verilog
 VFLAGS += -DICARUS -DSIM
 
 tenyr: VFLAGS += -m glue
-tenyr: top.v simserial.v icarus_top.v simmem.v seg7.v seglookup.v hex2ascii.v | glue.vpi
+tenyr: top.v simserial.v icarus_top.v simmem.v seg7.v seglookup.v hex2ascii.v jcounter.v | glue.vpi
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 
