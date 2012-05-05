@@ -101,22 +101,11 @@ module Tenyr(halt,
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
                 .re(1'b1), .we(1'b0), .val(cry));
 
-    reg crx_ce     = 1'b1;
-    reg cry_ce     = 1'b1;
-    reg vga_ctl_ce = 1'b1;
-
-    wire[ 7:0] ram_diA;
     wire[ 7:0] ram_doA;
     wire[11:0] ram_adA;
-    wire ram_weA;
 
-    wire[ 7:0] ram_diB;
-    wire[ 7:0] ram_doB;
-    wire[11:0] ram_adB;
-    wire ram_weB;
-
-    wire[11:0] rom_adB;
-    wire[ 7:0] rom_doB;
+    wire[11:0] rom_adA;
+    wire[ 7:0] rom_doA;
 
     vga80x40 vga(
         .reset       (~reset_n),
@@ -126,32 +115,33 @@ module Tenyr(halt,
         .B           (vgaBlue[2]),
         .hsync       (hsync),
         .vsync       (vsync),
-        .TEXT_A      (ram_adB),
-        .TEXT_D      (ram_doB),
-        .FONT_A      (rom_adB),
-        .FONT_D      (rom_doB),
+        .TEXT_A      (ram_adA),
+        .TEXT_D      (ram_doA),
+        .FONT_A      (rom_adA),
+        .FONT_D      (rom_doA),
         .ocrx        (crx),
         .ocry        (cry),
         .octl        (vga_ctl)
     );
 
-    textram text(
+    ramwrap #(.BASE('h10000), .SIZE(80 * 40)) text(
+    //textram text(
         .clka  (clk_vga),
-        .dina  (ram_diA),
+        .dina  ('bz),
         .addra (ram_adA),
         .wea   (1'b0),
         .douta (ram_doA),
-        .clkb  (clk_vga),
-        .dinb  (ram_diB),
-        .addrb (ram_adB),
-        .web   (1'b0),
-        .doutb (ram_doB)
+        .clkb  (clk_core0),
+        .dinb  (operand_data),
+        .addrb (operand_addr),
+        .web   (operand_rw),
+        .doutb (operand_data)
     );
 
     fontrom font(
         .clka  (clk_vga),
-        .addra (rom_adB),
-        .douta (rom_doB)
+        .addra (rom_adA),
+        .douta (rom_doA)
     );
 
 `endif

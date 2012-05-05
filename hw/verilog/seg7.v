@@ -49,9 +49,11 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
             Hex2AsciiDigit digit(downclk, mydata[0][(4 * i) +: 4], char);
             lookup7 lookup(downclk, char, line);
 
+            // digit segments
             for (j = 0; j < 7; j = j + 1) begin:bit
                 assign bits[j * NDIGITS + i] = ena[i * STATES] ? line[j] : 1'b1;
             end
+            // decimal points
             assign bits[7 * NDIGITS + i] = ena[i * STATES] ? ~mydata[1][i] : 1'b1;
         end
 

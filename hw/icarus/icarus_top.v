@@ -1,6 +1,19 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
+module Top();
+    Tenyr tenyr();
+
+    reg [100:0] filename;
+    initial #0 begin
+        $dumpfile("Top.vcd");
+        if ($value$plusargs("LOAD=%s", filename))
+            $tenyr_load(filename);
+        $dumpvars;
+        #(32 * `CLOCKPERIOD) $finish;
+    end
+endmodule
+
 module Tenyr(output[7:0] seg, output[3:0] an);
     reg reset_n = 0;
     reg rhalt = 1;
