@@ -21,6 +21,7 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
     output[7:0] seg;
     output[NI:0] an;
 
+    wire downclk;
     JCounter #(.STAGES(2), .SHIFTS(10))
         downclocker(.clk(clk), .ce(1'b1), .tick(downclk));
 
@@ -29,11 +30,11 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
     reg[NI4:0] mydata[SIZE - 1:0] = { 0, 0 };
 `else
     reg[NI4:0] mydata[SIZE - 1:0];
-	generate
-		genvar q;
-		for (q = 0; q < SIZE; q = q + 1)
-			initial begin:setup mydata[q] = 0; end
-	endgenerate
+    generate
+        genvar q;
+        for (q = 0; q < SIZE; q = q + 1)
+            initial begin:setup mydata[q] = 0; end
+    endgenerate
 `endif
 
     wire in_range = (addr >= BASE && addr < SIZE + BASE);
@@ -48,9 +49,10 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
             Hex2AsciiDigit digit(downclk, mydata[0][(4 * i) +: 4], char);
             lookup7 lookup(downclk, char, line);
 
-            for (j = 0; j < 8; j = j + 1) begin:bit
+            for (j = 0; j < 7; j = j + 1) begin:bit
                 assign bits[j * NDIGITS + i] = ena[i * STATES] ? line[j] : 1'b1;
             end
+            assign bits[7 * NDIGITS + i] = ena[i * STATES] ? ~mydata[1][i] : 1'b1;
         end
 
         for (j = 0; j < 8; j = j + 1) begin:bit

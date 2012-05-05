@@ -1,6 +1,19 @@
 b <- 4
-c <- 5
+c <- 0x300
+c <- c * b + 2
+c <- c + 3
+c <- c >> 1
+c <- c ^ 7
+c <- c + 11
+c <- c + 13
+c -> [0x100]
+d <- 5
+d -> [0x101]
+#p <- 1
+#illegal
 d <- b + c + 6
-a <- a
-d -> [0x123]
+d -> [p - (. - 0x123)]
+o <- p - .
+e <- [p - (. - 0x123)] # triggers a premature bad read first, FIXME
+f <- [p - .]
 illegal
