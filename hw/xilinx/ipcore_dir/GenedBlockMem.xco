@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.4
-# Date: Sun May  6 06:07:39 2012
+# Date: Sun May  6 23:19:44 2012
 #
 ##############################################################
 #
@@ -46,7 +46,7 @@ CSET axi_id_width=4
 CSET axi_slave_type=Memory_Slave
 CSET axi_type=AXI4_Full
 CSET byte_size=9
-CSET coe_file=/mnt/kiri-kulp/Documents/Code/C/tenyr/hw/xilinx/small.coe
+CSET coe_file=small.coe
 CSET collision_warnings=ALL
 CSET component_name=GenedBlockMem
 CSET disable_collision_warnings=false
