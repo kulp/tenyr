@@ -18,7 +18,7 @@
 #include <io.h>
 #endif
 
-static const char shortopts[] = "df:o::hV";
+static const char shortopts[] = "df:o:hV";
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
