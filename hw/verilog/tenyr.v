@@ -1,11 +1,18 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(input clk,
-        input rwZ, input[3:0] indexZ, inout [31:0] valueZ, // Z is RW
-                   input[3:0] indexX, output[31:0] valueX, // X is RO
-                   input[3:0] indexY, output[31:0] valueY, // Y is RO
-        inout[31:0] pc, input rwP);
+module Reg(clk, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
+
+    input clk;
+    input rwZ;
+    input[3:0] indexZ, indexX, indexY;
+    inout [31:0] valueZ; // Z is RW
+    output[31:0] valueX; // X is RO
+    output[31:0] valueY; // Y is RO
+    inout[31:0] pc;
+    input rwP;
+
+    reg[31:0] rvalueZ, rvalueX, rvalueY;
 
     //(* KEEP = "TRUE" *)
     reg[31:0] store[0:15]
@@ -34,14 +41,18 @@ module Reg(input clk,
     assign valueY = YisP ? pc : store[indexY];
 
     always @(negedge clk) begin
+        //rvalueZ = ZisP ? pc : store[indexZ];
+        //rvalueX = XisP ? pc : store[indexX];
+        //rvalueY = YisP ? pc : store[indexY];
+
         if (rwP)
-            store[15] <= pc;
+            store[15] = pc;
         if (rwZ) begin
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
                 //#2 // this fixes simulation but does not reflect synth reality
-                store[indexZ] <= valueZ;
+                store[indexZ] = valueZ;
             end
         end
     end
@@ -201,16 +212,24 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
     reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-    //wire[31:0] pc = lhalt   ? new_pc :
-    //                jumping ? new_pc : next_pc;
-    reg[31:0] rpc = `RESETVECTOR;
-    wire[31:0] pc = rpc;
+    wire[31:0] pc = new_pc;
 
     assign insn_addr = lhalt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     always @(posedge reset_n) if (en) begin
         manual_invalidate_pr = 0;
+    end
+
+    // update PC on 180-degree phase, after Exec has had time to compute new P
+    always @(posedge clk) if (en) begin
+        if (reset_n) begin
+            next_pc = pc + 1;
+            if (lhalt || jumping)
+                new_pc = valueZ;
+            else
+                new_pc = next_pc;
+        end
     end
 
     // FIXME synchronous reset
@@ -230,12 +249,6 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
                 mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
                 mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
                 manual_invalidate_nc = illegal;
-                next_pc = pc + 1;
-                if (lhalt || jumping)
-                    //new_pc = valueZ;
-                    rpc = valueZ;
-                else
-                    rpc = next_pc;
             end
         end
     end
