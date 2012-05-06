@@ -12,8 +12,6 @@ module Reg(clk, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
     inout[31:0] pc;
     input rwP;
 
-    reg[31:0] rvalueZ, rvalueX, rvalueY;
-
     //(* KEEP = "TRUE" *)
     reg[31:0] store[0:15]
 `ifndef SIM
@@ -41,17 +39,12 @@ module Reg(clk, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
     assign valueY = YisP ? pc : store[indexY];
 
     always @(negedge clk) begin
-        //rvalueZ = ZisP ? pc : store[indexZ];
-        //rvalueX = XisP ? pc : store[indexX];
-        //rvalueY = YisP ? pc : store[indexY];
-
         if (rwP)
             store[15] = pc;
         if (rwZ) begin
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
-                //#2 // this fixes simulation but does not reflect synth reality
                 store[indexZ] = valueZ;
             end
         end
@@ -174,6 +167,8 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     inout[31:0] norm_data;
     input reset_n;
 
+	wire clkN = ~clk;
+
     wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
     wire[31:0] valueZ = reg_rw ? rhs : 32'bz;
@@ -192,6 +187,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire state_valid = insn_valid && decode_valid && !manual_invalidate; // && !illegal;
     wire[31:0] rhs;
     wire[1:0] deref;
+	wire[31:0] deref_valueZ = (mem_active && !rw) ? mem_data : valueZ;
 
     `HALTTYPE halt;
     reg rhalt = 0;
@@ -222,11 +218,14 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     end
 
     // update PC on 180-degree phase, after Exec has had time to compute new P
-    always @(posedge clk) if (en) begin
-        if (reset_n) begin
+    always @(negedge clkN) if (en) begin
+        if (!reset_n) begin
+            new_pc  = `RESETVECTOR;
+            next_pc = `RESETVECTOR;
+        end else begin
             next_pc = pc + 1;
             if (lhalt || jumping)
-                new_pc = valueZ;
+                new_pc = deref_valueZ;
             else
                 new_pc = next_pc;
         end
@@ -234,10 +233,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
 
     // FIXME synchronous reset
     always @(negedge clk) if (en) begin
-        if (!reset_n) begin
-            new_pc      = `RESETVECTOR;
-            next_pc     = `RESETVECTOR;
-        end else begin
+        if (reset_n) begin
             // FIXME
             if (illegal)
                 //state_valid = 0;
@@ -246,8 +242,8 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
             if (/*!rhalt && */!lhalt && state_valid) begin
                 mem_active = state_valid ? |deref : 1'b0;
                 rw = mem_active ? deref[1] : 1'b0;
-                mem_addr = state_valid ? (deref[0] ? rhs : valueZ) : 32'bz;
-                mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
+                mem_addr = (state_valid && mem_active) ? (deref[0] ? rhs : valueZ) : 32'bz;
+                mem_data = (state_valid && rw        ) ? (deref[0] ? valueZ : rhs) : 32'bz;
                 manual_invalidate_nc = illegal;
             end
         end
@@ -255,7 +251,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
 
     Reg regs(.clk(clk), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
-             .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
+             .valueX(valueX), .valueY(valueY), .valueZ(deref_valueZ));
 
     Decode decode(.insn(insn), .op(op), .deref(deref), .type(type),
                   .valid(decode_valid), .illegal(illegal),
