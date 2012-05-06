@@ -79,20 +79,20 @@ ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
 $(GENDIR)/parser.o $(GENDIR)/lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
-lexer.h parser.h debugger_lexer.h debugger_parser.h: $(GENDIR)
+$(GENDIR)/lexer.h $(GENDIR)/debugger_lexer.h: $(GENDIR)
 tas.o: $(GENDIR)/parser.h
 tsim.o: $(GENDIR)/debugger_parser.h
 
 $(GENDIR)/debugger_lexer.h $(GENDIR)/debugger_lexer.c: debugger_lexer.l
 	$(FLEX) --header-file=$(GENDIR)/debugger_lexer.h -o $(GENDIR)/debugger_lexer.c $<
 
-$(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y debugger_lexer.h
+$(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y $(GENDIR)/debugger_lexer.h
 	$(BISON) --defines=$(GENDIR)/debugger_parser.h -o $(GENDIR)/debugger_parser.c $<
 
 $(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
 	$(FLEX) --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<
 
-$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y | lexer.h
+$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y $(GENDIR)/lexer.h
 	$(BISON) --defines=$(GENDIR)/parser.h -o $(GENDIR)/parser.c $<
 
 $(GENDIR):
@@ -113,11 +113,12 @@ ifeq ($(filter clean,$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)
 endif
 
+# TODO fix .d files ; something is causing many unnecessary rebuilds
 %.d: %.c
 	@set -e; rm -f $@; \
-	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
+	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null && \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@ && \
+	rm -f $@.$$$$ || rm -f $@.$$$$
 endif
 
 clean:

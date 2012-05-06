@@ -8,6 +8,9 @@ exist, a Forth implementation is in its infancy, and the toycen compiler
 project from https://github.com/kulp/toycen will probably supply the C compiler
 component when it can generate code at all.
 
+To build tenyr, both flex and bison are required.  Bison needs to be version 2.5;
+bison 2.4.x will not work.
+
 Darren Kulp
 darren@kulp.ch
 kulp@freenode
