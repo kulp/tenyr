@@ -32,7 +32,9 @@ module ramwrap(clka, dina, addra, wea, douta, clkb, dinb, addrb, web, doutb);
         .douta (douta),
         .clkb  (clkb),
         .dinb  (dinb),
-        .addrb (addrb),
+        // XXX when this subtractor was introduced, maximum speed dropped from
+        // 58MHz to 48MHz
+        .addrb (addrb - BASE),
         .web   (web & in_range),
         .doutb (doutb_internal)
     );

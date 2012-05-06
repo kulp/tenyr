@@ -32,8 +32,10 @@ vpath %.ngc ipcore_dir
 GenedBlockMem.ngc: GenedBlockMem.xco small.coe
 
 vpath %.v ../verilog
+vpath %.vh ../verilog
 
 Tenyr_SRCDEPS += \
+	common.vh \
 	fontram.xco \
 	GenedBlockMem.xco \
 	hex2ascii.v \

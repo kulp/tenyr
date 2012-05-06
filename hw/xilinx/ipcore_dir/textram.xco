@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.4
-# Date: Fri Apr 20 21:37:14 2012
+# Date: Sun May 06 02:43:02 2012
 #
 ##############################################################
 #
@@ -81,7 +81,7 @@ CSET register_porta_output_of_memory_primitives=false
 CSET register_portb_output_of_memory_core=false
 CSET register_portb_output_of_memory_primitives=false
 CSET register_portb_output_of_softecc=false
-CSET remaining_memory_locations=69
+CSET remaining_memory_locations=20
 CSET reset_memory_latch_a=false
 CSET reset_memory_latch_b=false
 CSET reset_priority_a=CE
@@ -103,4 +103,4 @@ CSET write_width_b=8
 MISC pkg_timestamp=2011-10-21T13:54:23Z
 # END Extra information
 GENERATE
-# CRC: 1aeaaf8c
+# CRC: 4dae8720

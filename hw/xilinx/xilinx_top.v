@@ -87,19 +87,19 @@ module Tenyr(halt,
     wire[7:0] vga_ctl;
 
     mmr #(.ADDR(`VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11110111))
-        video_ctl(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
+        video_ctl(.clk(clk_core0), .reset_n(reset_n), .enable(1),
                   .rw(operand_rw), .addr(operand_addr), .data(operand_data),
-                  .re(1'b1), .we(1'b0), .val(vga_ctl));
+                  .re(1), .we(0), .val(vga_ctl));
 
-    mmr #(.ADDR(`VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(8'd40))
-        crx_mmr(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
+    mmr #(.ADDR(`VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(1))
+        crx_mmr(.clk(clk_core0), .reset_n(reset_n), .enable(1),
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
-                .re(1'b1), .we(1'b0), .val(crx));
+                .re(1), .we(0), .val(crx));
 
-    mmr #(.ADDR(`VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(8'd20))
-        cry_mmr(.clk(clk_core0), .reset_n(reset_n), .enable(1'b1),
+    mmr #(.ADDR(`VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(0))
+        cry_mmr(.clk(clk_core0), .reset_n(reset_n), .enable(1),
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
-                .re(1'b1), .we(1'b0), .val(cry));
+                .re(1), .we(0), .val(cry));
 
     wire[ 7:0] ram_doA;
     wire[11:0] ram_adA;
@@ -124,8 +124,7 @@ module Tenyr(halt,
         .octl        (vga_ctl)
     );
 
-    ramwrap #(.BASE('h10000), .SIZE(80 * 40)) text(
-    //textram text(
+    ramwrap #(.BASE(`VIDEO_ADDR + 'h10), .SIZE(80 * 40)) text(
         .clka  (clk_vga),
         .dina  ('bz),
         .addra (ram_adA),
