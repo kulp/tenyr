@@ -1,3 +1,4 @@
+j <- 0
 f <- p - .
 b <- 4
 c <- 0x300
@@ -13,13 +14,25 @@ d -> [0x101]
 g <- 0x100
 g <- g << 8
 h <- g + 0x10
-//h <- [f + @video_base]
-//g <- [f + @video_offset]
-//g <- h + g
-i <- 2
-i -> [g + 1]
-i -> [g + 2]
+//g <- [f + @video_base]
+//h <- [f + @video_offset]
+//h <- h + g
 [h] <- 'K'
+loop:
+a <- a
+j <- j + 1
+i <- j >> 17
+k <- j >> 23
+i -> [g + 1]
+k -> [g + 2]
+i -> [0x100]
+p -> [0x101]
+p <- p + (@loop - .)
+a <- a
+p -> [0x101]
+a <- a
+p -> [0x101]
+a <- a
 illegal
 #p <- 1
 d <- b + c + 6

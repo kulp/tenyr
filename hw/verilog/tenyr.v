@@ -201,8 +201,10 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
     reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-    wire[31:0] pc = lhalt   ? new_pc :
-                    jumping ? new_pc : next_pc;
+    //wire[31:0] pc = lhalt   ? new_pc :
+    //                jumping ? new_pc : next_pc;
+    reg[31:0] rpc = `RESETVECTOR;
+    wire[31:0] pc = rpc;
 
     assign insn_addr = lhalt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
@@ -229,8 +231,11 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
                 mem_data = state_valid ? (deref[0] ? valueZ : rhs) : 32'bz;
                 manual_invalidate_nc = illegal;
                 next_pc = pc + 1;
-                if (jumping)
-                    new_pc = valueZ;
+                if (lhalt || jumping)
+                    //new_pc = valueZ;
+                    rpc = valueZ;
+                else
+                    rpc = next_pc;
             end
         end
     end
