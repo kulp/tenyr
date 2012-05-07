@@ -171,7 +171,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
 
     wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
-    wire[31:0] valueZ = reg_rw ? rhs : 32'bz;
+    wire[31:0] valueZ = reg_rw ? deref_rhs : reg_valueZ;
     wire[11:0] valueI;
     wire[3:0] op;
     wire illegal, type;
@@ -186,8 +186,10 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire decode_valid; // FIXME decode_valid never deasserts
     wire state_valid = insn_valid && decode_valid && !manual_invalidate; // && !illegal;
     wire[31:0] rhs;
+    wire[31:0] deref_rhs = deref[0] ? norm_data : rhs;
     wire[1:0] deref;
-	wire[31:0] deref_valueZ = (mem_active && !rw) ? mem_data : valueZ;
+	wire[31:0] deref_valueZ = deref[1] ? norm_data : reg_valueZ;
+	wire[31:0] reg_valueZ = reg_rw ? valueZ : 32'bz;
 
     `HALTTYPE halt;
     reg rhalt = 0;
@@ -201,7 +203,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     reg[31:0] mem_data = 0;
     reg[31:0] mem_addr = 0;
     assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
-    assign norm_addr = mem_active ? mem_addr : 32'b0;
+    assign norm_addr = mem_active ? mem_addr : 32'bz;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
     wire reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
@@ -214,6 +216,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     always @(posedge reset_n) if (en) begin
+		// XXX use manual_invalidate_pr or remove it
         manual_invalidate_pr = 0;
     end
 
@@ -242,8 +245,10 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
             if (/*!rhalt && */!lhalt && state_valid) begin
                 mem_active = state_valid ? |deref : 1'b0;
                 rw = mem_active ? deref[1] : 1'b0;
-                mem_addr = (state_valid && mem_active) ? (deref[0] ? rhs : valueZ) : 32'bz;
-                mem_data = (state_valid && rw        ) ? (deref[0] ? valueZ : rhs) : 32'bz;
+				if (state_valid) begin
+					if (mem_active) mem_addr = deref[0] ? rhs : valueZ;
+					if (rw        ) mem_data = deref[0] ? valueZ : rhs;
+				end
                 manual_invalidate_nc = illegal;
             end
         end
@@ -251,7 +256,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
 
     Reg regs(.clk(clk), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
-             .valueX(valueX), .valueY(valueY), .valueZ(deref_valueZ));
+             .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
     Decode decode(.insn(insn), .op(op), .deref(deref), .type(type),
                   .valid(decode_valid), .illegal(illegal),
