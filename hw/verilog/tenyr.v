@@ -167,7 +167,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     inout[31:0] norm_data;
     input reset_n;
 
-	wire clkN = ~clk;
+    wire clkN = ~clk;
 
     wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
@@ -188,8 +188,8 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire[31:0] rhs;
     wire[31:0] deref_rhs = deref[0] ? norm_data : rhs;
     wire[1:0] deref;
-	wire[31:0] deref_valueZ = deref[1] ? norm_data : reg_valueZ;
-	wire[31:0] reg_valueZ = reg_rw ? valueZ : 32'bz;
+    wire[31:0] deref_valueZ = deref[1] ? norm_data : reg_valueZ;
+    wire[31:0] reg_valueZ = reg_rw ? valueZ : 32'bz;
 
     `HALTTYPE halt;
     reg rhalt = 0;
@@ -216,7 +216,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     always @(posedge reset_n) if (en) begin
-		// XXX use manual_invalidate_pr or remove it
+        // XXX use manual_invalidate_pr or remove it
         manual_invalidate_pr = 0;
     end
 
@@ -245,16 +245,17 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
             if (/*!rhalt && */!lhalt && state_valid) begin
                 mem_active = state_valid ? |deref : 1'b0;
                 rw = mem_active ? deref[1] : 1'b0;
-				if (state_valid) begin
-					if (mem_active) mem_addr = deref[0] ? rhs : valueZ;
-					if (rw        ) mem_data = deref[0] ? valueZ : rhs;
-				end
+                if (state_valid) begin
+                    if (mem_active) mem_addr = deref[0] ? rhs : valueZ;
+                    if (rw        ) mem_data = deref[0] ? valueZ : rhs;
+                end
                 manual_invalidate_nc = illegal;
             end
         end
     end
 
-    Reg regs(.clk(clk), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+    // registers should write last, so feed Reg a 180deg clock
+    Reg regs(.clk(clkL), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 

@@ -55,7 +55,7 @@ module Tenyr(halt,
     assign Led[2:0] = halt;
 
     // active on posedge clock
-    GenedBlockMem ram(.clka(~clk_core0), .wea(operand_rw), .addra(operand_addr),
+    GenedBlockMem ram(.clka(~clk_core90), .wea(operand_rw), .addra(operand_addr),
                       .dina(in_data), .douta(out_data),
                       .clkb(~clk_core0), .web(1'b0), .addrb(insn_addr),
                       .dinb(32'bx), .doutb(insn_data));
