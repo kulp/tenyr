@@ -9,6 +9,10 @@ burn: $(TARGET).bit
 	djtgcfg -d Nexys3 -i 0 -f $< prog
 
 vpath %.tas ../verilog
+vpath %.tas.cpp ../verilog
+
+%.tas: %.tas.cpp
+	cpp -I../../lib -o $@ $<
 
 %.to: %.tas
 	$(TAS) $< > $@

@@ -34,8 +34,9 @@ module Tenyr(output[7:0] seg, output[3:0] an);
 
     wire operand_rw;
 
+    // TODO currently can't come out of reset before coming out of halt
     initial #(2 * `CLOCKPERIOD) rhalt = 0;
-    initial #(1 * `CLOCKPERIOD) reset_n = 1;
+    initial #(3 * `CLOCKPERIOD) reset_n = 1;
 
     wire[`HALTBUSWIDTH-1:0] halt;
     assign halt[`HALT_SIM] = rhalt;
