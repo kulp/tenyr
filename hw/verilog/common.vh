@@ -1,4 +1,4 @@
-`define CLOCKPERIOD 10
+`define CLOCKPERIOD 20
 `define RAMDELAY (1 * `CLOCKPERIOD)
 // TODO use proper reset vectors
 `define RESETVECTOR 'h0000
