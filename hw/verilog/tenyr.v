@@ -1,10 +1,11 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(clk, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
+module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
 
     input clk;
     input rwZ;
+    input en;
     input[3:0] indexZ, indexX, indexY;
     inout [31:0] valueZ; // Z is RW
     output[31:0] valueX; // X is RO
@@ -38,7 +39,7 @@ module Reg(clk, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
     assign valueX = XisP ? pc : store[indexX];
     assign valueY = YisP ? pc : store[indexY];
 
-    always @(negedge clk) begin
+    always @(negedge clk) if (en) begin
         if (rwP)
             store[15] = pc;
         if (rwZ) begin
@@ -52,7 +53,7 @@ module Reg(clk, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
+module Decode(input[31:0] insn, input en, output[3:0] Z, X, Y, output[11:0] I,
               output[3:0] op, output[1:0] deref, output type, illegal,
               valid);
 
@@ -72,7 +73,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
            type    = rvalid ? rtype    :  1'bx,
            illegal = rvalid ? rillegal :  1'b0;
 
-    always @(insn) begin
+    always @(insn) if (en) begin
         casez (insn[31:28])
             4'b0???: begin
                 rderef <= insn[28 +: 2];
@@ -112,7 +113,7 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
 
 endmodule
 
-module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
+module Exec(input clk, input en, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
             input[3:0] op, input type, valid);
 
     assign rhs = valid ? i_rhs : 32'b0;
@@ -128,7 +129,7 @@ module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
     wire[31:0] Os = (type == 0) ? Y   : Is_;
     wire[31:0] As = (type == 0) ? Is_ : Y;
 
-    always @(negedge clk) begin
+    always @(negedge clk) if (en) begin
         if (valid) begin
             case (op)
                 4'b0000: i_rhs =  (Xu  |  Ou) + As; // X bitwise or Y
@@ -159,6 +160,12 @@ endmodule
 
 module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
     input clk, clkL;
+
+    wire clk0   = clk;
+    wire clk90  = clkL;
+    wire clk180 = ~clk0;
+    wire clk270 = ~clkL;
+
     input en;
     output[31:0] insn_addr;
     input[31:0] insn_data;
@@ -167,10 +174,14 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     inout[31:0] norm_data;
     input reset_n;
 
-    wire clkN = ~clk;
+    wire[31:0] rhs;
+    wire[1:0] deref;
+    wire reg_rw;
 
     wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
+
+    wire[31:0] deref_rhs, reg_valueZ, deref_lhs;
     wire[31:0] valueZ = reg_rw ? deref_rhs : reg_valueZ;
     wire[11:0] valueI;
     wire[3:0] op;
@@ -184,12 +195,10 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
                              manual_invalidate_nr |
                              manual_invalidate_nc;
     wire decode_valid; // FIXME decode_valid never deasserts
-    wire state_valid = insn_valid && decode_valid && !manual_invalidate; // && !illegal;
-    wire[31:0] rhs;
-    wire[31:0] deref_rhs = deref[0] ? norm_data : rhs;
-    wire[1:0] deref;
-    wire[31:0] deref_valueZ = deref[1] ? norm_data : reg_valueZ;
-    wire[31:0] reg_valueZ = reg_rw ? valueZ : 32'bz;
+    wire state_valid = insn_valid && /*decode_valid &&*/ !manual_invalidate; // && !illegal;
+    assign deref_rhs = (deref[0] && !rw) ? norm_data : rhs;
+    assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
+    assign reg_valueZ = reg_rw ? valueZ : 32'bz;
 
     `HALTTYPE halt;
     reg rhalt = 0;
@@ -204,13 +213,14 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire rw = mem_active ? deref[1] : 1'b0;
     //reg[31:0] mem_data = 0;
     //reg[31:0] mem_addr = 0;
-    wire[31:0] mem_addr = mem_active ? (deref[0] ? rhs : valueZ) : 32'bz;
-    wire[31:0] mem_data = rw         ? (deref[0] ? valueZ : rhs) : 32'bz;
+    // TODO Find a safe place to use for default address
+    wire[31:0] mem_addr = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
+    wire[31:0] mem_data = rw         ? (deref[0] ? valueZ : rhs) : 32'b0;
     assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
-    assign norm_addr = mem_active ? mem_addr : 32'bz;
+    assign norm_addr = mem_active ? mem_addr : 32'b0;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
-    wire reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
+    assign reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
     wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
     reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
@@ -224,59 +234,46 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
         manual_invalidate_pr = 0;
     end
 
-    /*
-    always @(negedge clkN) if (en) begin
-        if (!lhalt && state_valid) begin
-            //mem_active = state_valid ? |deref : 1'b0;
-            rw = mem_active ? deref[1] : 1'b0;
-            if (state_valid) begin
-                if (mem_active) mem_addr = deref[0] ? rhs : valueZ;
-                if (rw        ) mem_data = deref[0] ? valueZ : rhs;
-            end
-        end
-    end
-    */
-
     // update PC on 180-degree phase, after Exec has had time to compute new P
-    always @(negedge clkN) if (en) begin
+    always @(negedge clk180) if (en && reset_n) begin
         if (!reset_n) begin
             new_pc  = `RESETVECTOR;
             next_pc = `RESETVECTOR;
         end else begin
             next_pc = pc + 1;
             if (lhalt || jumping)
-                new_pc = deref_valueZ;
+                new_pc = deref_lhs;
             else
                 new_pc = next_pc;
         end
     end
 
     // FIXME synchronous reset
-    always @(negedge clk) if (en) begin
+    always @(negedge clk0) if (en) begin
         if (reset_n) begin
             // FIXME
             if (illegal)
                 //state_valid = 0;
                 manual_invalidate_nc = 1;
             rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-            if (/*!rhalt && */!lhalt && state_valid) begin
+            if (!lhalt && state_valid) begin
                 manual_invalidate_nc = illegal;
             end
         end
     end
 
-    // registers should write last, so feed Reg a 180deg clock
-    Reg regs(.clk(clkN), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+    // registers should write last, so feed Reg a 270deg clock
+    Reg regs(.clk(clk270), .en(en && reset_n), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
-    Decode decode(.insn(insn), .op(op), .deref(deref), .type(type),
+    Decode decode(.en(en && reset_n), .insn(insn), .op(op), .deref(deref), .type(type),
                   .valid(decode_valid), .illegal(illegal),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
     // Exec gets shifted clock
     // TODO see if we can't use the standard clock again
-    Exec exec(.clk(clkL), .op(op), .type(type), .rhs(rhs),
+    Exec exec(.clk(clk90), .en(en && reset_n), .op(op), .type(type), .rhs(rhs),
               .X(valueX), .Y(valueY), .I(valueI),
               .valid(state_valid));
 endmodule
