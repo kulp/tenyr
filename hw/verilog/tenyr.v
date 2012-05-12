@@ -187,6 +187,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     wire[3:0] op;
     wire illegal, type;
     reg insn_valid = 1; // XXX
+    reg firstcyc_ok = 0;
     // FIXME rename manual_invalidate*
     reg manual_invalidate_pr = 0,
         manual_invalidate_nr = 0,
@@ -195,7 +196,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
                              manual_invalidate_nr |
                              manual_invalidate_nc;
     wire decode_valid; // FIXME decode_valid never deasserts
-    wire state_valid = insn_valid && /*decode_valid &&*/ !manual_invalidate; // && !illegal;
+    wire state_valid = insn_valid && /*decode_valid &&*/ !manual_invalidate && firstcyc_ok; // && !illegal;
     assign deref_rhs = (deref[0] && !rw) ? norm_data : rhs;
     assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
     assign reg_valueZ = reg_rw ? valueZ : 32'bz;
@@ -235,7 +236,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     end
 
     // update PC on 180-degree phase, after Exec has had time to compute new P
-    always @(negedge clk180) if (en && reset_n) begin
+    always @(negedge clk180) if (en && state_valid) begin
         if (!reset_n) begin
             new_pc  = `RESETVECTOR;
             next_pc = `RESETVECTOR;
@@ -251,6 +252,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     // FIXME synchronous reset
     always @(negedge clk0) if (en) begin
         if (reset_n) begin
+            firstcyc_ok = 1;
             // FIXME
             if (illegal)
                 //state_valid = 0;
@@ -263,17 +265,17 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     end
 
     // registers should write last, so feed Reg a 270deg clock
-    Reg regs(.clk(clk270), .en(en && reset_n), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+    Reg regs(.clk(clk270), .en(en && state_valid && reset_n), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
-    Decode decode(.en(en && reset_n), .insn(insn), .op(op), .deref(deref), .type(type),
+    Decode decode(.en(en && state_valid && reset_n), .insn(insn), .op(op), .deref(deref), .type(type),
                   .valid(decode_valid), .illegal(illegal),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
     // Exec gets shifted clock
     // TODO see if we can't use the standard clock again
-    Exec exec(.clk(clk90), .en(en && reset_n), .op(op), .type(type), .rhs(rhs),
+    Exec exec(.clk(clk90), .en(en && state_valid && reset_n), .op(op), .type(type), .rhs(rhs),
               .X(valueX), .Y(valueY), .I(valueI),
               .valid(state_valid));
 endmodule
