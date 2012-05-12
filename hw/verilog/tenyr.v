@@ -235,8 +235,8 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
         manual_invalidate_pr = 0;
     end
 
-    // update PC on 180-degree phase, after Exec has had time to compute new P
-    always @(negedge clk180) if (en && state_valid) begin
+    // update PC on 270-degree phase, after Exec has had time to compute new P
+    always @(negedge clk270) if (en && state_valid) begin
         if (!reset_n) begin
             new_pc  = `RESETVECTOR;
             next_pc = `RESETVECTOR;

@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.4
-# Date: Sat May 12 06:47:15 2012
+# Date: Sat May 12 16:15:51 2012
 #
 ##############################################################
 #
@@ -41,12 +41,12 @@ SELECT Block_Memory_Generator xilinx.com:ip:blk_mem_gen:6.3
 # BEGIN Parameters
 CSET additional_inputs_for_power_estimation=false
 CSET algorithm=Minimum_Area
-CSET assume_synchronous_clk=true
+CSET assume_synchronous_clk=false
 CSET axi_id_width=4
 CSET axi_slave_type=Memory_Slave
 CSET axi_type=AXI4_Full
 CSET byte_size=9
-CSET coe_file=.\small.coe
+CSET coe_file=./small.coe
 CSET collision_warnings=ALL
 CSET component_name=GenedBlockMem
 CSET disable_collision_warnings=false
@@ -103,4 +103,4 @@ CSET write_width_b=32
 MISC pkg_timestamp=2011-10-21T13:54:23Z
 # END Extra information
 GENERATE
-# CRC:  a0130e7
+# CRC: 7ee230f9

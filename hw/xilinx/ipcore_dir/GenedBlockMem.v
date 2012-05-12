@@ -70,7 +70,7 @@ output [31 : 0] doutb;
     .C_AXI_SLAVE_TYPE(0),
     .C_AXI_TYPE(1),
     .C_BYTE_SIZE(9),
-    .C_COMMON_CLK(1),
+    .C_COMMON_CLK(0),
     .C_DEFAULT_DATA("FFFFFFFF"),
     .C_DISABLE_WARN_BHV_COLL(0),
     .C_DISABLE_WARN_BHV_RANGE(0),
