@@ -17,14 +17,21 @@ endmodule
 module Tenyr(output[7:0] seg, output[3:0] an);
     reg reset_n = 0;
     reg rhalt = 1;
-    reg clk = 0;
-    wire #(`CLOCKPERIOD / 4) clkL = clk;
+    reg clk_core0 = 0;
+    wire #(`CLOCKPERIOD / 4) clk_core90 = clk_core0;
+    wire clk_core180 = ~clk_core0;
+    wire clk_core270 = ~clk_core90;
+
+    wire clk_datamem = clk_core180;
+    wire clk_insnmem = clk_core0;
 
     // TODO halt ?
-    always #(`CLOCKPERIOD / 2) clk = ~clk;
+    always #(`CLOCKPERIOD / 2) clk_core0 = ~clk_core0;
 
-    wire[31:0] insn_addr, operand_addr;
-    wire[31:0] insn_data, operand_data;
+    wire[31:0] insn_addr, operand_addr, insn_data, out_data;
+    wire[31:0] in_data      =  operand_rw ? operand_data : 32'bx;
+    wire[31:0] operand_data = !operand_rw ?     out_data : 32'bz;
+
     wire operand_rw;
 
     initial #(2 * `CLOCKPERIOD) rhalt = 0;
@@ -34,25 +41,26 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     assign halt[`HALT_SIM] = rhalt;
     assign halt[`HALT_TENYR] = rhalt;
 
+    // active on posedge clock
     SimMem #(.BASE(`RESETVECTOR))
-		// TODO don't enable RAM until we need to (but need first instruction
-		// to enable !)
-           ram(.clk(clk), .enable(1'b1), .p0rw(operand_rw),
-               .p0_addr(operand_addr), .p0_data(operand_data),
-               .p1_addr(insn_addr)   , .p1_data(insn_data));
+        ram(.clka(~clk_datamem), .wea(operand_rw), .addra(operand_addr),
+            .dina(in_data), .douta(out_data),
+            .clkb(~clk_insnmem), .web(1'b0), .addrb(insn_addr),
+            .dinb(32'bx), .doutb(insn_data));
 
-    SimSerial serial(.clk(clk), .reset_n(reset_n), .enable(!halt),
+    SimSerial serial(.clk(clk_datamem), .reset_n(reset_n), .enable(!halt),
                      .rw(operand_rw), .addr(operand_addr),
                      .data(operand_data));
 
     Seg7 #(.BASE(12'h100))
-             seg7(.clk(clk), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
+             seg7(.clk(clk_datamem), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .seg(seg), .an(an));
 
     // TODO clkL
-    Core core(.clk(clk), .clkL(clkL), .en(1'b1), .reset_n(reset_n), .rw(operand_rw),
-            .norm_addr(operand_addr), .norm_data(operand_data),
-            .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));
+    Core core(.clk0(clk_core0), .clk90(clk_core90), .clk180(clk_core180), .clk270(clk_core270),
+              .en(1'b1), .reset_n(reset_n), .rw(operand_rw),
+              .norm_addr(operand_addr), .norm_data(operand_data),
+              .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));
 endmodule
 

@@ -1,26 +1,51 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-// Two-port memory required if we don't have wait states ; one instruction
-// fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
-module SimMem(input clk, input enable, input p0rw,
-        input[31:0] p0_addr, inout[31:0] p0_data,
-        input[31:0] p1_addr, inout[31:0] p1_data
-        );
+module SimMem(clka, wea, addra, dina, douta,
+              clkb, web, addrb, dinb, doutb);
+
+    input clka;
+    input wea;
+    input[9:0] addra;
+    input[31:0] dina;
+    output[31:0] douta;
+    input clkb;
+    input web;
+    input[9:0] addrb;
+    input[31:0] dinb;
+    output[31:0] doutb;
+
+    reg[31:0] rdouta;
+    reg[31:0] rdoutb;
+
     parameter BASE = 1 << 12; // TODO pull from environmental define
     parameter SIZE = (1 << 24) - BASE;
 
     reg[31:0] store[(SIZE + BASE - 1):BASE];
 
-    wire p0_inrange = (p0_addr >= BASE && p0_addr < SIZE + BASE);
-    wire p1_inrange = (p1_addr >= BASE && p1_addr < SIZE + BASE);
+    wire a_inrange = (addra >= BASE && addra < SIZE + BASE);
+    wire b_inrange = (addrb >= BASE && addrb < SIZE + BASE);
 
-    assign p0_data = (enable && p0_inrange && !p0rw) ? store[p0_addr] : 32'bz;
-    assign p1_data = (enable && p1_inrange         ) ? store[p1_addr] : 32'bz;
+    assign douta = (!wea) ? rdouta : 32'bz;
+    assign doutb = (!web) ? rdoutb : 32'bz;
 
-    always @(negedge clk)
-        if (enable && p0_inrange && p0rw)
-            store[p0_addr] = p0_data;
+    // For consistency with the Xilinx generated block RAMs, use posedge
+    always @(posedge clka) begin
+        if (a_inrange)
+            if (wea)
+                store[addra] = dina;
+            else
+                rdouta = store[addra];
+    end
+
+    always @(posedge clkb) begin
+        if (b_inrange)
+            if (web)
+                store[addrb] = dinb;
+            else
+                rdoutb = store[addrb];
+    end
+
 
 endmodule
 
