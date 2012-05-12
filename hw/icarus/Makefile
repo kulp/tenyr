@@ -13,7 +13,7 @@ all: tenyr glue.vpi
 
 .SUFFIXES: .v .c
 
-vpath %.c ../vpi
+vpath %.c ../vpi ../../src
 vpath %.v ../verilog ../verilog/sim .
 
 VFLAGS += -I../verilog
@@ -24,7 +24,7 @@ tenyr: simserial.v icarus_top.v simmem.v seg7.v seglookup.v hex2ascii.v jcounter
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 
-glue.vpi: callbacks.o serial.o load.o ../../sim.o ../../asm.o ../../obj.o ../../common.o
+glue.vpi: callbacks.o serial.o load.o sim.o asm.o obj.o common.o
 
 vpath %.tas ../verilog
 
