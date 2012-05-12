@@ -158,13 +158,8 @@ module Exec(input clk, input en, output[31:0] rhs, input[31:0] X, Y, input[11:0]
 
 endmodule
 
-module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
-    input clk, clkL;
-
-    wire clk0   = clk;
-    wire clk90  = clkL;
-    wire clk180 = ~clk0;
-    wire clk270 = ~clkL;
+module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
+    input clk0, clk90, clk180, clk270;
 
     input en;
     output[31:0] insn_addr;
@@ -209,7 +204,7 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
     //reg mem_active = 0;
-    wire mem_active = state_valid ? |deref : 1'b0;
+    wire mem_active = (state_valid && !illegal) ? |deref : 1'b0;
     //reg rw = 0;
     wire rw = mem_active ? deref[1] : 1'b0;
     //reg[31:0] mem_data = 0;
