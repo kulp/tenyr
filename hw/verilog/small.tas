@@ -1,0 +1,49 @@
+p <- 7
+b <- 1
+c <- [3]
+d <- 3
+e <- b + c + 10
+e -> [0x100]
+illegal
+j <- 0
+f <- p - .
+b <- 4
+c <- 0x300
+c <- c * b + 2
+c <- c + 3
+c <- c >> 1
+c <- c ^ 7
+c <- c + 11
+c <- c + 13
+c -> [0x100]
+d <- 5
+d -> [0x101]
+g <- 0x100
+g <- g << 8
+h <- g + 0x10
+//g <- [f + @video_base]
+//h <- [f + @video_offset]
+//h <- h + g
+[h] <- 'K'
+loop:
+j <- j + 1
+i <- j >> 17
+k <- j >> 23
+i -> [g + 1]
+k -> [g + 2]
+i -> [0x100]
+m <- [0x100]
+m -> [0x101]
+p <- p + (@loop - .)
+p -> [0x101]
+p -> [0x101]
+illegal
+#p <- 1
+d <- b + c + 6
+d -> [p - (. - 0x123)]
+o <- p - .
+e <- [p - (. - 0x123)] # triggers a premature bad read first, FIXME
+h <- [p - .]
+illegal
+video_base: .word 0x10000
+video_offset: .word 0x10

@@ -82,12 +82,12 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                 // args :          f0f1f2 f3 f4f5   f6    f8    f7 f9
               //[0][1][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
                 [0][1][0][0][1] = "%c%c%c %s %c"                "%c%c", // [Z] <- [          Y]
-                [0][1][0][1][0] = "%c%c%c %s %c"      "$0x%08x"   "%c", // [Z] <- [    0x0    ]
-                [0][1][0][1][1] = "%c%c%c %s %c"      "$0x%08x + %c%c", // [Z] <- [    0x0 + Y]
+                [0][1][0][1][0] = "%c%c%c %s %c"       "0x%08x"   "%c", // [Z] <- [    0x0    ]
+                [0][1][0][1][1] = "%c%c%c %s %c"       "0x%08x + %c%c", // [Z] <- [    0x0 + Y]
                 [0][1][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
                 [0][1][1][0][1] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [X       + Y]
-                [0][1][1][1][0] = "%c%c%c %s %c%c %-2s $0x%08x"   "%c", // [Z] <- [X - 0x0    ]
-                [0][1][1][1][1] = "%c%c%c %s %c%c %-2s $0x%08x + %c%c", // [Z] <- [X - 0x0 + Y]
+                [0][1][1][1][0] = "%c%c%c %s %c%c %-2s  0x%08x"   "%c", // [Z] <- [X - 0x0    ]
+                [0][1][1][1][1] = "%c%c%c %s %c%c %-2s  0x%08x + %c%c", // [Z] <- [X - 0x0 + Y]
                 // args :          f0f1f2 f3 f4f5   f6 f7     fa   f9
               //[1][0][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
                 [1][0][0][0][1] = "%c%c%c %s %c"             "%-10d%c", // [Z] <- [         -0]
@@ -369,12 +369,69 @@ static int text_out(FILE *stream, struct instruction *i, void *ud)
     return fprintf(stream, "0x%08x\n", i->u.word) > 0;
 }
 
+/*******************************************************************************
+ * Verilog format : behavioural assignment statements
+ */
+struct verilog_data {
+    char storename[32];
+};
+
+static int verilog_init(FILE *stream, int flags, void **ud)
+{
+    int rc = 0;
+    struct verilog_data *v = *ud = calloc(1, sizeof *v);
+
+    // TODO make configurable
+    snprintf(v->storename, sizeof v->storename, "store");
+
+    return rc;
+}
+
+static int verilog_out(FILE *stream, struct instruction *i, void *ud)
+{
+    struct verilog_data *v = ud;
+    return fprintf(stream, "%s[32'h%08x + BASE] = 32'h%08x;\n", v->storename, i->reladdr, i->u.word);
+}
+
+static int verilog_fini(FILE *stream, void **ud)
+{
+    int rc = 0;
+
+    struct verilog_data *v = *ud;
+    free(v);
+    *ud = NULL;
+
+    return rc;
+}
+
 const struct format formats[] = {
     // first format is default
-    { "obj"   , obj_init, obj_in , obj_out , obj_fini },
-    { "raw"   , NULL    , raw_in , raw_out , NULL     },
-    { "text"  , NULL    , text_in, text_out, NULL     },
+    { "obj"    , obj_init    , obj_in , obj_out    , obj_fini     },
+    { "raw"    , NULL        , raw_in , raw_out    , NULL         },
+    { "text"   , NULL        , text_in, text_out   , NULL         },
+    { "verilog", verilog_init, NULL   , verilog_out, verilog_fini },
 };
 
 const size_t formats_count = countof(formats);
+
+int make_format_list(int (*pred)(const struct format *), size_t flen,
+        const struct format formats[flen], size_t len, char buf[len],
+        const char *sep)
+{
+	int pos = 0;
+    const struct format *f = formats;
+	while (pos < (signed)len && f < formats + flen) {
+        if (pred == NULL || pred(f)) {
+            if (pos > 0) {
+                pos += snprintf(&buf[pos], len - pos, "%s%s", sep, f->name);
+            } else {
+                pos += snprintf(&buf[pos], len - pos, "%s", f->name);
+            }
+        }
+
+        f++;
+	}
+
+	return pos;
+}
 
