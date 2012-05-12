@@ -26,30 +26,17 @@ h <- g + 0x10
 //h <- h + g
 [h] <- 'K'
 loop:
-a <- a
 j <- j + 1
 i <- j >> 17
 k <- j >> 23
 i -> [g + 1]
 k -> [g + 2]
 i -> [0x100]
-a <- a
-a <- a
-a <- a
 m <- [0x100]
-a <- a
-a <- a
-a <- a
 m -> [0x101]
-a <- a
-a <- a
-a <- a
 p <- p + (@loop - .)
-a <- a
 p -> [0x101]
-a <- a
 p -> [0x101]
-a <- a
 illegal
 #p <- 1
 d <- b + c + 6
