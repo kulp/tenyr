@@ -198,10 +198,14 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
-    reg mem_active = 0;
-    reg rw = 0;
-    reg[31:0] mem_data = 0;
-    reg[31:0] mem_addr = 0;
+    //reg mem_active = 0;
+    wire mem_active = state_valid ? |deref : 1'b0;
+    //reg rw = 0;
+    wire rw = mem_active ? deref[1] : 1'b0;
+    //reg[31:0] mem_data = 0;
+    //reg[31:0] mem_addr = 0;
+    wire[31:0] mem_addr = mem_active ? (deref[0] ? rhs : valueZ) : 32'bz;
+    wire[31:0] mem_data = rw         ? (deref[0] ? valueZ : rhs) : 32'bz;
     assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
     assign norm_addr = mem_active ? mem_addr : 32'bz;
     //  Z  <-  ...  -- deref == 00
@@ -219,6 +223,19 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
         // XXX use manual_invalidate_pr or remove it
         manual_invalidate_pr = 0;
     end
+
+    /*
+    always @(negedge clkN) if (en) begin
+        if (!lhalt && state_valid) begin
+            //mem_active = state_valid ? |deref : 1'b0;
+            rw = mem_active ? deref[1] : 1'b0;
+            if (state_valid) begin
+                if (mem_active) mem_addr = deref[0] ? rhs : valueZ;
+                if (rw        ) mem_data = deref[0] ? valueZ : rhs;
+            end
+        end
+    end
+    */
 
     // update PC on 180-degree phase, after Exec has had time to compute new P
     always @(negedge clkN) if (en) begin
@@ -243,19 +260,13 @@ module Core(clk, clkL, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset
                 manual_invalidate_nc = 1;
             rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
             if (/*!rhalt && */!lhalt && state_valid) begin
-                mem_active = state_valid ? |deref : 1'b0;
-                rw = mem_active ? deref[1] : 1'b0;
-                if (state_valid) begin
-                    if (mem_active) mem_addr = deref[0] ? rhs : valueZ;
-                    if (rw        ) mem_data = deref[0] ? valueZ : rhs;
-                end
                 manual_invalidate_nc = illegal;
             end
         end
     end
 
     // registers should write last, so feed Reg a 180deg clock
-    Reg regs(.clk(clkL), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+    Reg regs(.clk(clkN), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
