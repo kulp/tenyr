@@ -43,9 +43,9 @@ module Tenyr(output[7:0] seg, output[3:0] an);
 
     // active on posedge clock
     SimMem #(.BASE(`RESETVECTOR))
-        ram(.clka(~clk_datamem), .wea(operand_rw), .addra(operand_addr),
+        ram(.clka(~clk_datamem), .wea(operand_rw), .addra(operand_addr[9:0]),
             .dina(in_data), .douta(out_data),
-            .clkb(~clk_insnmem), .web(1'b0), .addrb(insn_addr),
+            .clkb(~clk_insnmem), .web(1'b0), .addrb(insn_addr[9:0]),
             .dinb(32'bx), .doutb(insn_data));
 
     SimSerial serial(.clk(clk_datamem), .reset_n(reset_n), .enable(!halt),
