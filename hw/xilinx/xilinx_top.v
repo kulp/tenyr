@@ -44,8 +44,8 @@ module Tenyr(halt,
     reg reset_n = 1;
 `endif
     wire clk_core0, clk_core90, clk_core180, clk_core270;
-	wire clk_datamem = clk_core180;
-	wire clk_insnmem = clk_core0;
+    wire clk_datamem = clk_core180;
+    wire clk_insnmem = clk_core0;
     wire clk_vga;
     tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
                            .in(clk),
@@ -58,10 +58,14 @@ module Tenyr(halt,
     assign halt[`HALT_TENYR] = ~phases_valid;
     assign Led[2:0] = halt;
 
+    // TODO pull out constant or pull out RAM
+    wire ram_inrange = operand_addr < 1024;
     // active on posedge clock
-    GenedBlockMem ram(.clka(~clk_datamem), .wea(operand_rw), .addra(operand_addr),
+    GenedBlockMem ram(.clka(~clk_datamem),
+                      .ena(ram_inrange), .wea(operand_rw), .addra(operand_addr),
                       .dina(in_data), .douta(out_data),
-                      .clkb(~clk_insnmem), .web(1'b0), .addrb(insn_addr),
+                      .clkb(~clk_insnmem),
+                      /*.enb(1'b1),*/ .web(1'b0), .addrb(insn_addr),
                       .dinb(32'bx), .doutb(insn_data));
 
 `ifdef SERIAL
@@ -79,7 +83,7 @@ module Tenyr(halt,
                   .data(operand_data), .seg(seg), .an(an));
 
     Core core(.clk0(clk_core0), .clk90(clk_core90), .clk180(clk_core180), .clk270(clk_core270),
-			  .en(phases_valid),
+              .en(phases_valid),
               .reset_n(reset_n), .rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),
               .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));

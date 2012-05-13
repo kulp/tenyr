@@ -20,7 +20,7 @@ vpath %.tas.cpp ../verilog
 %.tasd: %.to
 	$(TAS) -d $< > $@
 
-%.coe: %.tasd
+%.coe: %.tas
 	echo 'memory_initialization_radix = 16;' > $@
 	echo 'memory_initialization_vector =' >> $@
 	$(TAS) -f text $< | sed 's/^0x//' >> $@

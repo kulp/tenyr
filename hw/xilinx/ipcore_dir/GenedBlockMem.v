@@ -38,6 +38,7 @@
 
 module GenedBlockMem(
   clka,
+  ena,
   wea,
   addra,
   dina,
@@ -50,6 +51,7 @@ module GenedBlockMem(
 );
 
 input clka;
+input ena;
 input [0 : 0] wea;
 input [9 : 0] addra;
 input [31 : 0] dina;
@@ -77,7 +79,7 @@ output [31 : 0] doutb;
     .C_ENABLE_32BIT_ADDRESS(0),
     .C_FAMILY("spartan6"),
     .C_HAS_AXI_ID(0),
-    .C_HAS_ENA(0),
+    .C_HAS_ENA(1),
     .C_HAS_ENB(0),
     .C_HAS_INJECTERR(0),
     .C_HAS_MEM_OUTPUT_REGS_A(0),
@@ -125,6 +127,7 @@ output [31 : 0] doutb;
   )
   inst (
     .CLKA(clka),
+    .ENA(ena),
     .WEA(wea),
     .ADDRA(addra),
     .DINA(dina),
@@ -135,7 +138,6 @@ output [31 : 0] doutb;
     .DINB(dinb),
     .DOUTB(doutb),
     .RSTA(),
-    .ENA(),
     .REGCEA(),
     .RSTB(),
     .ENB(),

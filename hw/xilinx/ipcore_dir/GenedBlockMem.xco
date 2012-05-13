@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.4
-# Date: Sat May 12 22:45:13 2012
+# Date: Sun May 13 05:46:25 2012
 #
 ##############################################################
 #
@@ -46,7 +46,7 @@ CSET axi_id_width=4
 CSET axi_slave_type=Memory_Slave
 CSET axi_type=AXI4_Full
 CSET byte_size=9
-CSET coe_file=./small.coe
+CSET coe_file=.\small.coe
 CSET collision_warnings=ALL
 CSET component_name=GenedBlockMem
 CSET disable_collision_warnings=false
@@ -54,7 +54,7 @@ CSET disable_out_of_range_warnings=false
 CSET ecc=false
 CSET ecctype=No_ECC
 CSET enable_32bit_address=false
-CSET enable_a=Always_Enabled
+CSET enable_a=Use_ENA_Pin
 CSET enable_b=Always_Enabled
 CSET error_injection_type=Single_Bit_Error_Injection
 CSET fill_remaining_memory_locations=true
@@ -103,4 +103,4 @@ CSET write_width_b=32
 MISC pkg_timestamp=2011-10-21T13:54:23Z
 # END Extra information
 GENERATE
-# CRC: 7ee230f9
+# CRC: 55928d0f
