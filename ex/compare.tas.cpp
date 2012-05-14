@@ -2,7 +2,6 @@
 #define newline 
 
 _start:
-    f <- p - .
     o <- -1                     // set up stack
 
     c <- rel(this)

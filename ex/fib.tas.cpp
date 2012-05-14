@@ -11,7 +11,6 @@
 #include "common.th"
 
 _start:
-    f <- p - .          // base pointer
     c <- ARGUMENT       // argument
     o <- -1             // stack pointer
     call(fib)

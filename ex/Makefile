@@ -7,6 +7,7 @@ TLD = ../tld
 CPPFLAGS += -I../lib -I../lib/dword
 
 vpath %.tas ../lib ../lib/dword
+vpath %.tas.cpp ../lib ../lib/dword
 
 TARGETS = hello.texe fib.texe fib_iter.texe compare.texe sieve.texe maths.texe
 CLEANFILES += $(TARGETS)
@@ -17,9 +18,13 @@ hello.texe: puts.to
 compare.texe: strcmp.to puts.to
 maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/mul.to
 
+%.tas: %.tas.cpp
+	mkdir -p $(*D)
+	$(CPP) $(CPPFLAGS) -o $@ $<
+
 %.to: %.tas
-	mkdir -p $(dir $@)
-	cpp $(CPPFLAGS) $^ | $(TAS) -o$@ -
+	mkdir -p $(*D)
+	$(TAS) -o$@ $<
 
 %.texe: %.to
 	$(TLD) -o$@ $^

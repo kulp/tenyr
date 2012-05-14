@@ -2,7 +2,6 @@
 
 start:
   // set up base pointer and stack
-  f <- p - .
   o <- -1
 
   c <- 11
