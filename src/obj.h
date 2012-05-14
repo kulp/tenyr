@@ -7,7 +7,6 @@
 #include <stdint.h>
 
 typedef uint32_t UWord;
-typedef  int32_t SWord;
 
 struct obj {
     union {
