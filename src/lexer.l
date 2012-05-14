@@ -33,7 +33,7 @@ static int savestr(yyscan_t yyscanner);
 %option extra-type="struct parse_data *"
 %option prefix="tenyr_"
 
-%x charlit
+%x charlit charend
 
 regname ([A-P])
 /* don't permit collision with regname */
@@ -86,8 +86,8 @@ decnum  ([0-9]+)
 "#".*$                  ; // bash-style comments
 
 "'"                     BEGIN charlit;
-<charlit>"'"            BEGIN INITIAL;
-<charlit>.              { yylval->i = yytext[0]; return INTEGER; }
+<charend>"'"            BEGIN INITIAL;
+<charlit>.              { yylval->i = yytext[0]; BEGIN charend; return INTEGER; }
 
 .                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 

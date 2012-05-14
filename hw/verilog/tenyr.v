@@ -1,91 +1,82 @@
-`timescale 1ms/10us
+`include "common.vh"
+`timescale 1ns/10ps
 
-`define CLOCKPERIOD 10
-`define RAMDELAY (1 * `CLOCKPERIOD)
-// TODO use proper reset vectors
-`define RESETVECTOR 'h1000
-`define SETUP #2
+module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
 
-// Two-port memory required if we don't have wait states ; one instruction
-// fetch per cycle, and up to one read or write. Port 0 is R/W ; port 1 is R/O
-module Mem(input clk, input enable, input p0rw,
-        input[31:0] p0_addr, inout[31:0] p0_data,
-        input[31:0] p1_addr, inout[31:0] p1_data
-        );
-    parameter BASE = 1 << 12; // TODO pull from environmental define
-    parameter SIZE = (1 << 24) - BASE;
+    input clk;
+    input rwZ;
+    input en;
+    input[3:0] indexZ, indexX, indexY;
+    inout [31:0] valueZ; // Z is RW
+    output[31:0] valueX; // X is RO
+    output[31:0] valueY; // Y is RO
+    inout[31:0] pc;
+    input rwP;
 
-    reg[31:0] store[(SIZE + BASE - 1):BASE];
+    //(* KEEP = "TRUE" *)
+    reg[31:0] store[0:15]
+`ifndef SIM
+        = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,`RESETVECTOR }
+`endif
+        ;
 
-    wire p0_inrange = (p0_addr >= BASE && p0_addr < SIZE + BASE);
-    wire p1_inrange = (p1_addr >= BASE && p1_addr < SIZE + BASE);
-
-    assign p0_data = (enable && p0_inrange && !p0rw) ? store[p0_addr] : 'bz;
-    assign p1_data = (enable && p1_inrange         ) ? store[p1_addr] : 'bz;
-
-    always @(negedge clk)
-        if (enable && p0_inrange && p0rw)
-            store[p0_addr] <= `SETUP p0_data;
-
-endmodule
-
-module Reg(input clk,
-        input rwZ, input[3:0] indexZ, inout [31:0] valueZ, // Z is RW
-                   input[3:0] indexX, output[31:0] valueX, // X is RO
-                   input[3:0] indexY, output[31:0] valueY, // Y is RO
-        inout[31:0] pc, input rwP);
-
-    reg[31:0] store[0:15];
-
+`ifdef SIM
     generate
         genvar i;
         for (i = 0; i < 15; i = i + 1) // P is set externally
-            initial #0 store[i] <= 'b0;
+            initial begin:setup
+                #0 store[i] = 32'b0;
+            end
     endgenerate
+`endif
 
-    assign pc     = rwP ? 'bz : store[15];
-    assign valueZ = rwZ ? 'bz : store[indexZ];
-    assign valueX = store[indexX];
-    assign valueY = store[indexY];
+    wire ZisP = indexZ == 15;
+    wire XisP = indexX == 15;
+    wire YisP = indexY == 15;
 
-    always @(negedge clk) begin
+    assign pc     = rwP ? 32'bz : store[15];
+    assign valueZ = rwZ ? 32'bz : (ZisP ? pc : store[indexZ]);
+    assign valueX = XisP ? pc : store[indexX];
+    assign valueY = YisP ? pc : store[indexY];
+
+    always @(negedge clk) if (en) begin
         if (rwP)
-            store[15] <= `SETUP pc;
+            store[15] = pc;
         if (rwZ) begin
             if (indexZ == 0)
                 $display("wrote to zero register");
             else begin
-                store[indexZ] <= `SETUP valueZ;
+                store[indexZ] = valueZ;
             end
         end
     end
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output flip, type, illegal,
+module Decode(input[31:0] insn, input en, output[3:0] Z, X, Y, output[11:0] I,
+              output[3:0] op, output[1:0] deref, output type, illegal,
               valid);
 
     reg[3:0] rZ = 0, rX = 0, rY = 0, rop = 0;
     reg[11:0] rI = 0;
     reg[1:0] rderef = 0;
-    reg rflip = 0, rtype = 0, rillegal = 0, valid = 0;
+    reg rtype = 0, rillegal = 0, rvalid = 0;
 
-    assign Z       = valid ? rZ       : 'bz,
-           X       = valid ? rX       : 'bz,
-           Y       = valid ? rY       : 'bz,
-           I       = valid ? rI       : 'bz,
-           op      = valid ? rop      : 'bz,
-           deref   = valid ? rderef   : 'bz,
-           flip    = valid ? rflip    : 'bz,
-           type    = valid ? rtype    : 'bz,
-           illegal = rillegal;
+    assign valid = rvalid;
 
-    always @(insn) begin
+    assign Z       = rvalid ? rZ       :  4'bx,
+           X       = rvalid ? rX       :  4'bx,
+           Y       = rvalid ? rY       :  4'bx,
+           I       = rvalid ? rI       : 12'bx,
+           op      = rvalid ? rop      :  4'bx,
+           deref   = rvalid ? rderef   :  2'bx,
+           type    = rvalid ? rtype    :  1'bx,
+           illegal = rvalid ? rillegal :  1'b0;
+
+    always @(insn) if (en) begin
         casez (insn[31:28])
             4'b0???: begin
-                rderef <= { insn[29] & ~insn[28], insn[28] };
-                rflip  <= insn[29] & insn[28];
+                rderef <= insn[28 +: 2];
                 rtype  <= insn[30];
 
                 rZ  <= insn[24 +: 4];
@@ -93,148 +84,194 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
                 rY  <= insn[16 +: 4];
                 rop <= insn[12 +: 4];
                 rI  <= insn[ 0 +:12];
-                valid <= `SETUP 1;
+                rvalid <= 1;
+                rillegal <= 0;
             end
-            4'b1111: begin
-                rillegal <= &insn;
-                valid <= `SETUP 1;
+            default: begin
+                casex (insn[31:28])
+                    4'b1111: begin
+                        rillegal <= 1;
+                        rvalid   <= 1; //&insn[27:0];
+                    end
+                    default: begin
+                        rillegal <= 0;
+                        rvalid   <= 0;
+                    end
+                endcase
+                //rillegal <= &insn[31:28];
+                rderef <= 2'bx;
+                rtype  <= 1'bx;
+
+                rZ  <=  4'bx;
+                rX  <=  4'bx;
+                rY  <=  4'bx;
+                rop <=  4'bx;
+                rI  <= 12'bx;
             end
-            default: valid <= `SETUP 0;
         endcase
     end
 
 endmodule
 
-module Exec(input clk, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
-            input[3:0] op, input flip, type, valid);
+module Exec(input clk, input en, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
+            input[3:0] op, input type, valid);
 
-    assign rhs = valid ? i_rhs : 'bz;
+    assign rhs = valid ? i_rhs : 32'b0;
     reg[31:0] i_rhs = 0;
 
     // TODO signed net or integer support
     wire[31:0] Xs = X;
     wire[31:0] Xu = X;
 
-    wire[31:0] Is = { {20{I[11]}}, I };
-    wire[31:0] Ou = (type == 0) ? Y  : Is;
-    wire[31:0] Os = (type == 0) ? Y  : Is;
-    wire[31:0] As = (type == 0) ? Is : Y;
+    wire[31:0] Is_ = { {20{I[11]}}, I };
+    wire[31:0] Is = Is_;
+    wire[31:0] Ou = (type == 0) ? Y   : Is_;
+    wire[31:0] Os = (type == 0) ? Y   : Is_;
+    wire[31:0] As = (type == 0) ? Is_ : Y;
 
-    always @(negedge clk) begin
-        case (op)
-            4'b0000: i_rhs = `SETUP  (Xu  |  Ou) + As; // X bitwise or Y
-            4'b0001: i_rhs = `SETUP  (Xu  &  Ou) + As; // X bitwise and Y
-            4'b0010: i_rhs = `SETUP  (Xs  +  Os) + As; // X add Y
-            4'b0011: i_rhs = `SETUP  (Xs  *  Os) + As; // X multiply Y
-          //4'b0100:                                   // reserved
-            4'b0101: i_rhs = `SETUP  (Xu  << Ou) + As; // X shift left Y
-            4'b0110: i_rhs = `SETUP  (Xs  <= Os) + As; // X compare <= Y
-            4'b0111: i_rhs = `SETUP  (Xs  == Os) + As; // X compare == Y
-            4'b1000: i_rhs = `SETUP ~(Xu  |  Ou) + As; // X bitwise nor Y
-            4'b1001: i_rhs = `SETUP ~(Xu  &  Ou) + As; // X bitwise nand Y
-            4'b1010: i_rhs = `SETUP  (Xu  ^  Ou) + As; // X bitwise xor Y
-            4'b1011: i_rhs = `SETUP  (Xs  + -Os) + As; // X add two's complement Y
-            4'b1100: i_rhs = `SETUP  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
-            4'b1101: i_rhs = `SETUP  (Xu  >> Ou) + As; // X shift right logical Y
-            4'b1110: i_rhs = `SETUP  (Xs  >  Os) + As; // X compare > Y
-            4'b1111: i_rhs = `SETUP  (Xs  != Os) + As; // X compare <> Y
+    always @(negedge clk) if (en) begin
+        if (valid) begin
+            case (op)
+                4'b0000: i_rhs =  (Xu  |  Ou) + As; // X bitwise or Y
+                4'b0001: i_rhs =  (Xu  &  Ou) + As; // X bitwise and Y
+                4'b0010: i_rhs =  (Xs  +  Os) + As; // X add Y
+                4'b0011: i_rhs =  (Xs  *  Os) + As; // X multiply Y
+              //4'b0100:                            // reserved
+                4'b0101: i_rhs =  (Xu  << Ou) + As; // X shift left Y
+                4'b0110: i_rhs = -(Xs  <= Os) + As; // X compare <= Y
+                4'b0111: i_rhs = -(Xs  == Os) + As; // X compare == Y
+                4'b1000: i_rhs = ~(Xu  |  Ou) + As; // X bitwise nor Y
+                4'b1001: i_rhs = ~(Xu  &  Ou) + As; // X bitwise nand Y
+                4'b1010: i_rhs =  (Xu  ^  Ou) + As; // X bitwise xor Y
+                4'b1011: i_rhs =  (Xs  + -Os) + As; // X add two's complement Y
+                4'b1100: i_rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
+                4'b1101: i_rhs =  (Xu  >> Ou) + As; // X shift right logical Y
+                4'b1110: i_rhs = -(Xs  >  Os) + As; // X compare > Y
+                4'b1111: i_rhs =  (Xs  != Os) + As; // X compare <> Y
 
-            //default: $stop;
-        endcase
+                default: i_rhs = 32'bx;
+            endcase
+        end else begin
+            i_rhs = 32'bx;
+        end
     end
 
 endmodule
 
-module Core(input clk, output[31:0] insn_addr, input[31:0] insn_data,
-            output rw, output[31:0] norm_addr, inout[31:0] norm_data,
-            input _reset, output halt);
-    reg[31:0] norm_addr = 0;
+module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
+    input clk0, clk90, clk180, clk270;
+
+    input en;
+    output[31:0] insn_addr;
+    input[31:0] insn_data;
+    output rw;
+    output[31:0] norm_addr;
+    inout[31:0] norm_data;
+    input reset_n;
+
+    wire[31:0] rhs;
+    wire[1:0] deref;
+    wire reg_rw;
 
     wire[3:0]  indexX, indexY, indexZ;
     wire[31:0] valueX, valueY;
-    wire[31:0] valueZ = reg_rw ? rhs : 'bz;
+
+    wire[31:0] deref_rhs, reg_valueZ, deref_lhs;
+    wire[31:0] valueZ = reg_rw ? deref_rhs : reg_valueZ;
     wire[11:0] valueI;
     wire[3:0] op;
-    wire flip, illegal, type, insn_valid;
-    reg state_valid = 0;
-    wire[31:0] rhs;
-    wire[1:0] deref;
+    wire illegal, type;
+    reg insn_valid = 1; // XXX
+    reg firstcyc_ok = 0;
+    // FIXME rename manual_invalidate*
+    reg manual_invalidate_pr = 0,
+        manual_invalidate_nr = 0,
+        manual_invalidate_nc = 0;
+    wire manual_invalidate = manual_invalidate_pr | 
+                             manual_invalidate_nr |
+                             manual_invalidate_nc;
+    wire decode_valid; // FIXME decode_valid never deasserts
+    wire state_valid = insn_valid && /*decode_valid &&*/ !manual_invalidate && firstcyc_ok; // && !illegal;
+    assign deref_rhs = (deref[0] && !rw) ? norm_data : rhs;
+    assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
+    assign reg_valueZ = reg_rw ? valueZ : 32'bz;
 
-    reg halt = 0;
+    `HALTTYPE halt;
+    reg rhalt = 0;
+    assign halt[`HALT_EXEC] = rhalt;
+    wire lhalt = |halt;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
-    wire norm_rw = deref[1];
+    //reg mem_active = 0;
+    wire mem_active = (state_valid && !illegal) ? |deref : 1'b0;
+    //reg rw = 0;
+    wire rw = mem_active ? deref[1] : 1'b0;
+    //reg[31:0] mem_data = 0;
+    //reg[31:0] mem_addr = 0;
+    // TODO Find a safe place to use for default address
+    wire[31:0] mem_addr = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
+    wire[31:0] mem_data = rw         ? (deref[0] ? valueZ : rhs) : 32'b0;
+    assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
+    assign norm_addr = mem_active ? mem_addr : 32'b0;
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
-    wire reg_rw = ~deref[0] && indexZ != 0;
-    wire jumping = indexZ == 15 && reg_rw;
-    reg[31:0] insn_addr = `RESETVECTOR,
-              new_pc    = `RESETVECTOR,
+    assign reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
+    wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
+    reg[31:0] new_pc    = `RESETVECTOR,
               next_pc   = `RESETVECTOR;
-    wire[31:0] pc = halt    ? 'bz :
-                    jumping ? new_pc : next_pc;
+    wire[31:0] pc = new_pc;
 
-    always @(_reset) begin
-        if (!_reset) begin
-            state_valid <= 1;
-            // TODO use proper reset vectors
-            insn_addr   <= `RESETVECTOR;
-            new_pc      <= `RESETVECTOR;
-            next_pc     <= `RESETVECTOR;
+    assign insn_addr = lhalt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
+    wire[31:0] insn = state_valid ? insn_data : 32'b0;
+
+    always @(posedge reset_n) if (en) begin
+        // XXX use manual_invalidate_pr or remove it
+        manual_invalidate_pr = 0;
+    end
+
+    // update PC on 270-degree phase, after Exec has had time to compute new P
+    always @(negedge clk270) if (en && state_valid) begin
+        if (!reset_n) begin
+            new_pc  = `RESETVECTOR;
+            next_pc = `RESETVECTOR;
+        end else begin
+            next_pc = pc + 1;
+            if (lhalt || jumping)
+                new_pc = deref_lhs;
+            else
+                new_pc = next_pc;
         end
     end
 
-    always @(negedge clk) begin
-        halt <= `SETUP illegal;
-        if (!halt) begin
-            state_valid <= `SETUP state_valid & insn_valid;
-            next_pc <= `SETUP pc + 1;
-            if (jumping)
-                new_pc <= `SETUP valueZ;
-            insn_addr <= `SETUP pc;
+    // FIXME synchronous reset
+    always @(negedge clk0) if (en) begin
+        if (reset_n) begin
+            firstcyc_ok = 1;
+            // FIXME
+            if (illegal)
+                //state_valid = 0;
+                manual_invalidate_nc = 1;
+            rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
+            if (!lhalt && state_valid) begin
+                manual_invalidate_nc = illegal;
+            end
         end
     end
 
-    Reg regs(.clk(clk), .pc(pc), .rwP('b1), .rwZ(reg_rw),
+    // registers should write last, so feed Reg a 270deg clock
+    Reg regs(.clk(clk270), .en(en && state_valid && reset_n), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
-             .valueX(valueX), .valueY(valueY), .valueZ(valueZ));
+             .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
-    Decode decode(.insn(insn_data), .op(op), .flip(flip),
-                  .deref(deref), .type(type), .valid(insn_valid),
-                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI),
-                  .illegal(illegal));
+    Decode decode(.en(en && state_valid && reset_n), .insn(insn), .op(op), .deref(deref), .type(type),
+                  .valid(decode_valid), .illegal(illegal),
+                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
-    Exec exec(.clk(clk), .op(op), .flip(flip), .type(type),
-              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI),
+    // Exec gets shifted clock
+    // TODO see if we can't use the standard clock again
+    Exec exec(.clk(clk90), .en(en && state_valid && reset_n), .op(op), .type(type), .rhs(rhs),
+              .X(valueX), .Y(valueY), .I(valueI),
               .valid(state_valid));
-endmodule
-
-module Tenyr();
-    reg halt = 1;
-    wire _halt;
-    reg _reset = 0;
-    reg clk = 1; // TODO if we start at 0 it changes behaviour (shouldn't)
-    always #(`CLOCKPERIOD / 2) if (!halt) clk = !clk;
-    wire[31:0] insn_addr, operand_addr;
-    wire[31:0] insn_data, operand_data;
-    wire operand_rw;
-
-    initial #(2 * `CLOCKPERIOD) halt = `SETUP 0;
-    initial #(1 * `CLOCKPERIOD) _reset = `SETUP 1;
-
-    always @(negedge clk) halt <= _halt;
-
-    Mem ram(.clk(clk), .enable(!halt), .p0rw(operand_rw),
-            .p0_addr(operand_addr), .p0_data(operand_data),
-            .p1_addr(insn_addr)   , .p1_data(insn_data));
-
-    SimSerial serial(.clk(clk), ._reset(_reset), .enable(!halt),
-                     .rw(operand_rw), .addr(operand_addr),
-                     .data(operand_data));
-
-    Core core(.clk(clk), ._reset(_reset), .rw(operand_rw),
-            .norm_addr(operand_addr), .norm_data(operand_data),
-            .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(_halt));
 endmodule
 
