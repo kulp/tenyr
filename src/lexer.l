@@ -43,7 +43,9 @@ local   (\.L[A-Z0-9_]{1,31})
 string  (([^"]|\\\")+)
 hexnum  ("0"[xX][0-9a-fA-F]+)
 octnum  ("0"[0-7]+)
+binnum  ("0"[bB][01]+)
 decnum  ([0-9]+)
+regnum  {hexnum}|{octnum}|{decnum}
 
 %%
 
@@ -76,9 +78,8 @@ decnum  ([0-9]+)
 "<-"                    { return TOL;  }
 "->"                    { return TOR;  }
 
-{hexnum}                { yylval->i = strtoll(yytext, NULL, 16); return INTEGER; }
-{octnum}                { yylval->i = strtoll(yytext, NULL,  8); return INTEGER; }
-{decnum}                { yylval->i = strtoll(yytext, NULL, 10); return INTEGER; }
+{regnum}                { yylval->i = strtoll(&yytext[0], NULL, 0); return INTEGER; }
+{binnum}                { yylval->i = strtoll(&yytext[2], NULL, 2); return INTEGER; }
 
 [\t\f\v\r ]+            ;
 
