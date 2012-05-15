@@ -7,6 +7,7 @@ TLD = ../tld
 CPPFLAGS += -I../lib
 
 vpath %.tas ../lib
+vpath %.tas.cpp ../lib
 
 TARGETS = forty.texe
 CLEANFILES += $(TARGETS)

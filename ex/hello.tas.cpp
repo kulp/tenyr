@@ -1,7 +1,6 @@
 #include "common.th"
 
 _start:
-    f <- p - .
     o <- -1             // set up stack pointer
     c <- rel(hi)        // string starts at @hi
     call(puts)
