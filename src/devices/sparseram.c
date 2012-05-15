@@ -72,6 +72,10 @@ static int sparseram_op(struct sim_state *s, void *cookie, int op, uint32_t addr
         // useful optimisation, but we could avoid allocating a page until the
         // first write.
         struct element *node = malloc(PAGESIZE + sizeof *node);
+        if (s->conf.should_init)
+            for (unsigned long i = 0; i < PAGESIZE; i++)
+                node->space[i] = s->conf.initval;
+
         *node = (struct element){ addr & ~WORDMASK, cookie };
         *p = node;
     }

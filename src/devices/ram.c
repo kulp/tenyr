@@ -16,7 +16,9 @@ struct ram_state {
 static int ram_init(struct sim_state *s, void *cookie, ...)
 {
     struct ram_state *ram = *(void**)cookie = malloc(sizeof *ram);
-    memset(ram->mem, 0, sizeof ram->mem);
+    if (s->conf.should_init)
+        for (unsigned long i = 0; i < countof(ram->mem); i++)
+            ram->mem[i] = s->conf.initval;
 
     return 0;
 }
