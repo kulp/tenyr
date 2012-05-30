@@ -27,8 +27,7 @@ do_magic:
   jnzrel(k, shift)
 
   c <- c - e
-  b <- b + g
-  b <- b + g
+  b <- g * 2 + b
 
 shift:
   b <- b >> 1
