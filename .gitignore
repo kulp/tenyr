@@ -12,3 +12,4 @@ tags
 *.to
 *.texe
 *.exe
+tmp/

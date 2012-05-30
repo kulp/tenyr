@@ -18,7 +18,7 @@
 #include <io.h>
 #endif
 
-static const char shortopts[] = "df:o::hV";
+static const char shortopts[] = "df:o:hV";
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
@@ -36,16 +36,24 @@ static const struct option longopts[] = {
 static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         const_expr *ce, int width, uint32_t *result);
 
+static int format_has_output(const struct format *f)
+{
+    return !!f->out;
+}
+
 static int usage(const char *me)
 {
+    char format_list[256];
+    make_format_list(format_has_output, formats_count, formats, sizeof format_list, format_list, ", ");
+
     printf("Usage:\n"
            "  %s [ OPTIONS ] assembly-or-image-file [ assembly-or-image-file ... ] \n"
            "  -d, --disassemble     disassemble (default is to assemble)\n"
-           "  -f, --format=F        select output format (binary, text, obj)\n"
+           "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
-           , me, version());
+           , me, format_list, version());
 
     return 0;
 }
@@ -343,13 +351,15 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
 
 int do_disassembly(FILE *in, FILE *out, const struct format *f)
 {
+    int rc = 0;
+
     struct instruction i;
     void *ud;
     if (f->init)
         f->init(in, ASM_DISASSEMBLE, &ud);
 
     uint32_t reladdr = 0;
-    while (f->in(in, &i, ud) == 1) {
+    while ((rc = f->in(in, &i, ud)) == 1) {
         int len = print_disassembly(out, &i, ASM_AS_INSN);
         fprintf(out, "%*s# ", 30 - len, "");
         print_disassembly(out, &i, ASM_AS_DATA);
@@ -357,10 +367,12 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
         fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
     }
 
-    if (f->fini)
-        f->fini(in, &ud);
+    rc = feof(in) ? 0 : -1;
 
-    return 0;
+    if (f->fini)
+        rc = f->fini(in, &ud);
+
+    return rc;
 }
 
 int main(int argc, char *argv[])
@@ -428,10 +440,19 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (disassemble)
-            do_disassembly(in, out, f);
-        else
-            do_assembly(in, out, f);
+        if (disassemble) {
+            if (f->in) {
+                rc = do_disassembly(in, out, f);
+            } else {
+                fatal(0, "Format `%s' does not support disassembly", f->name);
+            }
+        } else {
+            if (f->out) {
+                do_assembly(in, out, f);
+            } else {
+                fatal(0, "Format `%s' does not support assembly", f->name);
+            }
+        }
 
         fclose(in);
     }

@@ -41,7 +41,7 @@ struct objmeta {
     struct link_state *state;   ///< state reference used for twalk() support
 };
 
-static const char shortopts[] = "o::hV";
+static const char shortopts[] = "o:hV";
 
 static const struct option longopts[] = {
     { "output"      , required_argument, NULL, 'o' },
