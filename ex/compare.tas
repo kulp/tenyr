@@ -2,8 +2,7 @@
 #define newline 
 
 _start:
-    f <- p - .
-    o <- -1                     // set up stack
+    prologue
 
     c <- rel(this)
     d <- rel(that)
