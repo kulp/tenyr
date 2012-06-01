@@ -1,8 +1,7 @@
 #include "common.th"
 
 _start:
-  f <- p - .
-  o <- -1
+  prologue
   
   c <- 67
   call(totient)
