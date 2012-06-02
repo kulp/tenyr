@@ -36,6 +36,8 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
         enum directive_type type, ...);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct instruction_list *p);
+static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
+        imm);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -67,7 +69,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token <chr> ',' '$'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
-%token <i> INTEGER
+%token <u> INTEGER
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
@@ -87,6 +89,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %union {
     int32_t i;
+    uint32_t u;
     signed s;
     struct const_expr *ce;
     struct const_expr_list *cl;
@@ -257,8 +260,11 @@ regname
 
 signed_immediate
     : INTEGER
+        {   check_immediate_size(pd, &yyloc, $INTEGER);
+            $signed_immediate = SEXTEND(SMALL_IMMEDIATE_BITWIDTH,$INTEGER); }
     | '-' INTEGER
-        {   $signed_immediate = -$INTEGER; }
+        {   check_immediate_size(pd, &yyloc, $INTEGER);
+            $signed_immediate = -SEXTEND(SMALL_IMMEDIATE_BITWIDTH,$INTEGER); /* TODO what about -0xfff ? */ }
 
 unsigned_immediate
     : '$' INTEGER
@@ -729,5 +735,20 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
             tenyr_error(locp, pd, buf);
         }
     }
+}
+
+static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
+        imm)
+{
+    if (imm & ~SMALL_IMMEDIATE_MASK) {
+        char buf[128];
+        snprintf(buf, sizeof buf, "Immediate with value %#x is too large for "
+                "%d-bit signed immediate field", imm, SMALL_IMMEDIATE_BITWIDTH);
+        tenyr_error(locp, pd, buf);
+
+        return 1;
+    }
+
+    return 0;
 }
 
