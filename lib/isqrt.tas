@@ -10,7 +10,9 @@ isqrt:
   g <- 1
   g <- g << 30
 compute_4:
-  k <- g <= c
+  j <- g <  c
+  k <- g == c
+  k <- j | k
   jnzrel(k, do_magic)
   g <- g >> 2
   goto(compute_4)
@@ -21,9 +23,7 @@ do_magic:
   jnzrel(k, done)
 
   e <- b + g
-  j <- c <= e
-  k <- c <> e
-  k <- j & k
+  k <- c < e
   jnzrel(k, shift)
 
   c <- c - e
