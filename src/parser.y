@@ -323,11 +323,14 @@ here
     : '.'
         {   $here = make_const_expr(CE_ICI, 0, NULL, NULL); }
 
-here_expr
+here_expr[outer]
     : here_atom
-    | phere_expr
-    | here_atom reloc_op const_atom
-        {   $here_expr = make_const_expr(CE_OP2, $reloc_op, $here_atom, $const_atom); }
+    | here_expr[left] reloc_op const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right); }
+    | here_expr[left] '*' const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, '*', $left, $right); }
+    | here_expr[left] LSH const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
 
 phere_expr
     : '(' here_expr ')'
