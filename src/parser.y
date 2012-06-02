@@ -53,7 +53,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %start top
 
-%left EQ
+%left EQ NEQ
 %left '<' '>'
 %left '+' '-'
 %left '*'
@@ -290,6 +290,7 @@ signed_op
     | EQ    { $signed_op = OP_COMPARE_EQ    ; }
     | '>'   { $signed_op = OP_COMPARE_GT    ; }
     | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
+    | NEQ   { $signed_op = OP_COMPARE_NE    ; }
 
 arrow
     : TOL { $arrow = 0; }

@@ -70,6 +70,7 @@ regnum  {hexnum}|{octnum}|{decnum}
 "<<"                    { return LSH;  }
 "=="                    { return EQ;   }
 "~&"                    { return NAND; }
+"<>"                    { return NEQ;  }
 "^~"                    { return XORN; }
 ">>"                    { return RSH;  }
 "<-"                    { return TOL;  }

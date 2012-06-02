@@ -113,10 +113,10 @@ enum op {
     OP_ADD_NEGATIVE_Y      = 0xb,
     OP_XOR_INVERT_X        = 0xc,
     OP_SHIFT_RIGHT_LOGICAL = 0xd,
+    OP_COMPARE_NE          = 0xe,
 
     OP_RESERVED0           = 0x4,
-    OP_RESERVED1           = 0xe,
-    OP_RESERVED2           = 0xf,
+    OP_RESERVED1           = 0xf,
 };
 
 #endif
