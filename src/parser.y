@@ -743,7 +743,8 @@ static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
         imm)
 {
     int hasupperbits = imm & ~SMALL_IMMEDIATE_MASK;
-    int notsignextended = hasupperbits != (-1 << SMALL_IMMEDIATE_BITWIDTH);
+    uint32_t semask = -1 << (SMALL_IMMEDIATE_BITWIDTH - 1);
+    int notsignextended = (imm & semask) != semask;
 
     if (hasupperbits && notsignextended) {
         char buf[128];
