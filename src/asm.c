@@ -28,9 +28,9 @@ static const struct {
     [OP_XOR_INVERT_X       ] = { "^~", 0 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
 
-    [OP_RESERVED0          ] = { "XX", 0 },
-    [OP_RESERVED1          ] = { "XX", 0 },
-    [OP_RESERVED2          ] = { "XX", 0 },
+    [OP_RESERVED0          ] = { "X0", 0 },
+    [OP_RESERVED1          ] = { "X1", 0 },
+    [OP_RESERVED2          ] = { "X2", 0 },
 };
 
 int print_disassembly(FILE *out, struct instruction *i, int flags)
@@ -68,6 +68,9 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                  uint32_t f8 = g->imm;                // immediate value, unsigned
                   char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
                   int32_t fa = SEXTEND(12,g->imm);    // immediate value, signed
+
+            if (f6[0] == 'X')   // reserved
+                return fprintf(out, ".word 0x%08x", i->u.word);
 
             // indices : [sgnd][g->p][op1][op2][op3]
             static const char *fmts[2][2][2][2][2] = {
