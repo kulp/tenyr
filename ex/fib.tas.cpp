@@ -11,8 +11,8 @@
 #include "common.th"
 
 _start:
+    prologue            // sets up base/stack pointer
     c <- ARGUMENT       // argument
-    o <- -1             // stack pointer
     call(fib)
     illegal
 

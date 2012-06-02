@@ -1,9 +1,8 @@
 #include "common.th"
 
 start:
-  // set up base pointer and stack
-  o <- -1
-
+  prologue
+  
   c <- 11
   d <- 5
   call(umod)

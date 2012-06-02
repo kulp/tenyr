@@ -5,8 +5,8 @@
 #endif
 
 _start:
+    prologue
     c <- ARGUMENT       // argument
-    o <- -1             // stack pointer
     call(fib)
     illegal
 
