@@ -119,6 +119,26 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int op2   = !inert || (g->p ? g->imm : !opYA);
             int op1   = !(opXA && inert) || (!op2 && !op3);
             int sgnd  = op_meta[g->op].sgnd;
+            int type  = g->p;
+
+            // losslessly  disambiguate these three cases :
+            //  b <- a
+            //  b <- 0
+            //  b <- $0
+            // so that assembly rountripping works more reliably
+            int rhs0  = (g->op == OP_ADD || (inert && type == 1)) && opXA && !g->imm;
+            int rhsA  = (g->op == OP_BITWISE_OR    && type == 0)  && opXA && !g->imm;
+
+            if (rhs0) {
+                op3 = 1;
+                op2 = 0;
+                op1 = 0;
+                type = 0;
+            } else if (rhsA) {
+                op1 = 1;
+                op2 = 0;
+                op3 = 0;
+            }
 
             if (!(flags & ASM_NO_SUGAR)) {
                 if (g->op == OP_XOR_INVERT_X && g->y == 0) {
@@ -131,9 +151,9 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             }
 
             #define C_(A,B,C,D,E) (((A) << 16) | ((B) << 12) | ((C) << 8) | ((D) << 4) | (E))
-            #define PUT(...) return fprintf(out, fmts[sgnd][g->p][op1][op2][op3], __VA_ARGS__)
+            #define PUT(...) return fprintf(out, fmts[!!sgnd][!!type][!!op1][!!op2][!!op3], __VA_ARGS__)
 
-            switch (C_(sgnd,g->p,op1,op2,op3)) {
+            switch (C_(sgnd,type,op1,op2,op3)) {
               //case C_(0,0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
                 case C_(0,0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
                 case C_(0,0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
