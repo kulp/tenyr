@@ -20,6 +20,8 @@ static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
         const_expr *defexpr);
 static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
         int y);
+static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
+        *defexpr);
 static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct instruction_list *make_ascii(struct cstr *cs);
@@ -51,17 +53,17 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %start top
 
-%left EQ NEQ
-%left LTE '>'
+%left EQ
+%left '<' '>'
 %left '+' '-'
 %left '*'
 %left '^' XORN
-%left '|' NOR
+%left '|'
 %left '&' NAND
 %left LSH RSH
 
 %token <chr> '[' ']' '.' '(' ')'
-%token <chr> '+' '-' '*'
+%token <chr> '+' '-' '*' '~'
 %token <chr> ',' '$'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
@@ -76,7 +78,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
 %type <i> arrow signed_immediate unsigned_immediate regname reloc_op
 %type <insn> insn insn_inner
-%type <op> op signed_op unsigned_op
+%type <op> op signed_op unsigned_op unary_op
 %type <program> program ascii utf32 data string_or_data
 %type <s> addsub
 %type <str> symbol
@@ -236,6 +238,14 @@ rhs_plain
         { $rhs_plain = make_expr_type1(0, OP_ADD, $signed_greloc_expr, 0); }
     | signed_greloc_expr '+' regname[y]
         { $rhs_plain = make_expr_type1(0, OP_ADD, $signed_greloc_expr, $y); }
+    | unary_op regname[x] addsub signed_greloc_expr
+        { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $signed_greloc_expr); }
+    | unary_op regname[x]
+        { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
+
+unary_op
+    : '~' { $unary_op = OP_XOR_INVERT_X; }
+    | '-' { $unary_op = OP_ADD_NEGATIVE_Y; }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -268,7 +278,6 @@ unsigned_op
     : '|'   { $unsigned_op = OP_BITWISE_OR         ; }
     | '&'   { $unsigned_op = OP_BITWISE_AND        ; }
     | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
-    | NOR   { $unsigned_op = OP_BITWISE_NOR        ; }
     | NAND  { $unsigned_op = OP_BITWISE_NAND       ; }
     | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
     | XORN  { $unsigned_op = OP_XOR_INVERT_X       ; }
@@ -277,11 +286,10 @@ unsigned_op
 signed_op
     : '+'   { $signed_op = OP_ADD           ; }
     | '*'   { $signed_op = OP_MULTIPLY      ; }
-    | LTE   { $signed_op = OP_COMPARE_LTE   ; }
+    | '<'   { $signed_op = OP_COMPARE_LT    ; }
     | EQ    { $signed_op = OP_COMPARE_EQ    ; }
-    | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
     | '>'   { $signed_op = OP_COMPARE_GT    ; }
-    | NEQ   { $signed_op = OP_COMPARE_NE    ; }
+    | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
 
 arrow
     : TOL { $arrow = 0; }
@@ -466,6 +474,41 @@ static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
     e->ce    = defexpr;
     e->mult  = 1;
     e->y     = y;
+    if (defexpr)
+        e->i = 0xfffffbad; // put in a placeholder that must be overwritten
+    else
+        e->i = 0; // there was no const_expr ; zero defined by language
+
+    return e;
+}
+
+static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
+        *defexpr)
+{
+    // tenyr has no true unary ops, but the following sugars are recognised by
+    // the assembler and converted into their corresponding binary equivalents :
+    //
+    // b <- ~b      becomes     b <- b ^~ a
+    // b <- -b      becomes     b <- a -  b
+
+    struct expr *e = calloc(1, sizeof *e);
+
+    switch (op) {
+        case OP_ADD_NEGATIVE_Y:
+            e->x = 0;
+            e->y = x;
+            break;
+        case OP_XOR_INVERT_X:
+            e->x = x;
+            e->y = 0;
+            break;
+    }
+
+    e->type  = 0;
+    e->deref = 0;
+    e->op    = op;
+    e->mult  = mult;
+    e->ce    = defexpr;
     if (defexpr)
         e->i = 0xfffffbad; // put in a placeholder that must be overwritten
     else

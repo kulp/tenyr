@@ -65,16 +65,13 @@ regnum  {hexnum}|{octnum}|{decnum}
 ".global"               { return GLOBAL; }
 ".set"                  { return SET; }
 
-[][|&+*^>.,:@()$-]      { return yytext[0]; }
+[][|&+*^<>.,:@()$~-]    { return yytext[0]; }
 
 "<<"                    { return LSH;  }
-"<="                    { return LTE;  }
 "=="                    { return EQ;   }
-"~|"                    { return NOR;  }
 "~&"                    { return NAND; }
 "^~"                    { return XORN; }
 ">>"                    { return RSH;  }
-"<>"                    { return NEQ;  }
 "<-"                    { return TOL;  }
 "->"                    { return TOR;  }
 

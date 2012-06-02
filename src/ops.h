@@ -103,18 +103,20 @@ enum op {
     OP_BITWISE_AND         = 0x1,
     OP_ADD                 = 0x2,
     OP_MULTIPLY            = 0x3,
-    OP_RESERVED            = 0x4,
+
     OP_SHIFT_LEFT          = 0x5,
-    OP_COMPARE_LTE         = 0x6,
+    OP_COMPARE_LT          = 0x6,
     OP_COMPARE_EQ          = 0x7,
-    OP_BITWISE_NOR         = 0x8 | OP_BITWISE_OR,
-    OP_BITWISE_NAND        = 0x8 | OP_BITWISE_AND,
+    OP_COMPARE_GT          = 0x8,
+    OP_BITWISE_NAND        = 0x9,
     OP_BITWISE_XOR         = 0xa,
     OP_ADD_NEGATIVE_Y      = 0xb,
     OP_XOR_INVERT_X        = 0xc,
     OP_SHIFT_RIGHT_LOGICAL = 0xd,
-    OP_COMPARE_GT          = 0x8 | OP_COMPARE_LTE,
-    OP_COMPARE_NE          = 0x8 | OP_COMPARE_EQ,
+
+    OP_RESERVED0           = 0x4,
+    OP_RESERVED1           = 0xe,
+    OP_RESERVED2           = 0xf,
 };
 
 #endif

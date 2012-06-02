@@ -18,12 +18,13 @@
 #include <io.h>
 #endif
 
-static const char shortopts[] = "df:o:hV";
+static const char shortopts[] = "df:o:s" "hV";
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
     { "format"      , required_argument, NULL, 'f' },
     { "output"      , required_argument, NULL, 'o' },
+    { "strict"      ,       no_argument, NULL, 's' },
 
     { "help"        ,       no_argument, NULL, 'h' },
     { "version"     ,       no_argument, NULL, 'V' },
@@ -51,6 +52,7 @@ static int usage(const char *me)
            "  -d, --disassemble     disassemble (default is to assemble)\n"
            "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"
+           "  -s, --strict          disable syntax sugar in disassembly\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
            , me, format_list, version());
@@ -349,7 +351,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
     return result;
 }
 
-int do_disassembly(FILE *in, FILE *out, const struct format *f)
+int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
 {
     int rc = 0;
 
@@ -360,9 +362,9 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
 
     uint32_t reladdr = 0;
     while ((rc = f->in(in, &i, ud)) == 1) {
-        int len = print_disassembly(out, &i, ASM_AS_INSN);
+        int len = print_disassembly(out, &i, ASM_AS_INSN | flags);
         fprintf(out, "%*s# ", 30 - len, "");
-        print_disassembly(out, &i, ASM_AS_DATA);
+        print_disassembly(out, &i, ASM_AS_DATA | flags);
         // TODO make i.reladdr correct so we can use that XXX hack
         fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
     }
@@ -379,6 +381,7 @@ int main(int argc, char *argv[])
 {
     int rc = 0;
     int disassemble = 0;
+    int flags = 0;
 
     const struct format *f = &formats[0];
 
@@ -395,6 +398,7 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'o': out = fopen(optarg, "wb"); break;
             case 'd': disassemble = 1; break;
+            case 's': flags |= ASM_NO_SUGAR; break;
             case 'f': {
                 size_t sz = formats_count;
                 f = lfind(&(struct format){ .name = optarg }, formats, &sz,
@@ -442,7 +446,7 @@ int main(int argc, char *argv[])
 
         if (disassemble) {
             if (f->in) {
-                rc = do_disassembly(in, out, f);
+                rc = do_disassembly(in, out, f, flags);
             } else {
                 fatal(0, "Format `%s' does not support disassembly", f->name);
             }

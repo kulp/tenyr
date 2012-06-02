@@ -17,19 +17,20 @@ static const struct {
     [OP_BITWISE_AND        ] = { "&" , 0 },
     [OP_ADD                ] = { "+" , 1 },
     [OP_MULTIPLY           ] = { "*" , 1 },
+
     [OP_SHIFT_LEFT         ] = { "<<", 0 },
-    [OP_COMPARE_LTE        ] = { "<=", 1 },
+    [OP_COMPARE_LT         ] = { "<" , 1 },
     [OP_COMPARE_EQ         ] = { "==", 1 },
-    [OP_BITWISE_NOR        ] = { "~|", 0 },
+    [OP_COMPARE_GT         ] = { ">" , 1 },
     [OP_BITWISE_NAND       ] = { "~&", 0 },
     [OP_BITWISE_XOR        ] = { "^" , 0 },
     [OP_ADD_NEGATIVE_Y     ] = { "-" , 1 },
     [OP_XOR_INVERT_X       ] = { "^~", 0 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
-    [OP_COMPARE_GT         ] = { ">" , 1 },
-    [OP_COMPARE_NE         ] = { "<>", 1 },
 
-    [OP_RESERVED           ] = { "XX", 0 }
+    [OP_RESERVED0          ] = { "XX", 0 },
+    [OP_RESERVED1          ] = { "XX", 0 },
+    [OP_RESERVED2          ] = { "XX", 0 },
 };
 
 int print_disassembly(FILE *out, struct instruction *i, int flags)
@@ -115,6 +116,16 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int op2   = !inert || (g->p ? g->imm : !opYA);
             int op1   = !(opXA && inert) || (!op2 && !op3);
             int sgnd  = op_meta[g->op].sgnd;
+
+            if (!(flags & ASM_NO_SUGAR)) {
+                if (g->op == OP_XOR_INVERT_X && g->y == 0) {
+                    f7 = f5;    // Y slot is now X
+                    f5 = ' ';   // don't print X
+                    f6 = "~";   // change op to a unary not
+                } else if (g->op == OP_ADD_NEGATIVE_Y && g->x == 0) {
+                    f5 = ' ';   // don't bring X
+                }
+            }
 
             #define C_(A,B,C,D,E) (((A) << 16) | ((B) << 12) | ((C) << 8) | ((D) << 4) | (E))
             #define PUT(...) return fprintf(out, fmts[sgnd][g->p][op1][op2][op3], __VA_ARGS__)
