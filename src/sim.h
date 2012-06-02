@@ -31,7 +31,7 @@ struct sim_state {
         int debugging;
     } conf;
 
-	op_dispatcher *dispatch_op;
+    op_dispatcher *dispatch_op;
 
     struct recipe_book *recipes;
 
@@ -39,13 +39,13 @@ struct sim_state {
 };
 
 struct run_ops {
-	int (*pre_insn)(struct sim_state *s, struct instruction *i);
+    int (*pre_insn)(struct sim_state *s, struct instruction *i);
 };
 
 int run_instruction(struct sim_state *s, struct instruction *i);
 int run_sim(struct sim_state *s, struct run_ops *ops);
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
-		FILE *in, int load_address);
+        FILE *in, int load_address);
 
 #endif
 

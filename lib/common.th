@@ -4,7 +4,8 @@
 #define rel(Label)          f + @Label
 #define goto(Label)         p <- rel(Label)
 #define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
-#define jnzrel(Cond,Label)  n <- f - p + (@Label - 3) ; n <- n & Cond ; p <- p + n + 1
+#define jnzrel(Cond,Label)  n <- f - p + (@Label - 3) ; n <- n  & Cond ; p <- p + n + 1
+#define jzrel(Cond,Label)   Cond <- ~ Cond ; jnzrel(Cond,Label)
 #define push(Reg)           Reg -> [o] ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)

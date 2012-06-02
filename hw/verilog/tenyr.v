@@ -138,16 +138,16 @@ module Exec(input clk, input en, output[31:0] rhs, input[31:0] X, Y, input[11:0]
                 4'b0011: i_rhs =  (Xs  *  Os) + As; // X multiply Y
               //4'b0100:                            // reserved
                 4'b0101: i_rhs =  (Xu  << Ou) + As; // X shift left Y
-                4'b0110: i_rhs = -(Xs  <= Os) + As; // X compare <= Y
+                4'b0110: i_rhs = -(Xs  <  Os) + As; // X compare < Y
                 4'b0111: i_rhs = -(Xs  == Os) + As; // X compare == Y
-                4'b1000: i_rhs = ~(Xu  |  Ou) + As; // X bitwise nor Y
+                4'b1000: i_rhs = -(Xs  >  Os) + As; // X compare > Y
                 4'b1001: i_rhs = ~(Xu  &  Ou) + As; // X bitwise nand Y
                 4'b1010: i_rhs =  (Xu  ^  Ou) + As; // X bitwise xor Y
                 4'b1011: i_rhs =  (Xs  + -Os) + As; // X add two's complement Y
                 4'b1100: i_rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
                 4'b1101: i_rhs =  (Xu  >> Ou) + As; // X shift right logical Y
-                4'b1110: i_rhs = -(Xs  >  Os) + As; // X compare > Y
-                4'b1111: i_rhs =  (Xs  != Os) + As; // X compare <> Y
+              //4'b1110:                            // reserved
+              //4'b1111:                            // reserved
 
                 default: i_rhs = 32'bx;
             endcase
