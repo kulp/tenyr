@@ -9,7 +9,7 @@
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
 #define prologue            f <- p - . ; o <- -1
-#define not(Reg)            Reg ^~ a
+#define inv(Reg)            Reg ^~ a
 
 #endif
 
