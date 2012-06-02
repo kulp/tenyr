@@ -260,11 +260,8 @@ regname
 
 signed_immediate
     : INTEGER
-        {   check_immediate_size(pd, &yyloc, $INTEGER);
-            $signed_immediate = SEXTEND(SMALL_IMMEDIATE_BITWIDTH,$INTEGER); }
     | '-' INTEGER
-        {   check_immediate_size(pd, &yyloc, $INTEGER);
-            $signed_immediate = -SEXTEND(SMALL_IMMEDIATE_BITWIDTH,$INTEGER); /* TODO what about -0xfff ? */ }
+        {   $signed_immediate = -$INTEGER; }
 
 unsigned_immediate
     : '$' INTEGER
@@ -312,8 +309,13 @@ unsigned_greloc_expr
 
 signed_greloc_expr
     : eref
-    | signed_const_atom
     | preloc_expr
+    | signed_const_atom
+        {   struct const_expr *c = $signed_const_atom;
+            if (c->type == CE_IMM)
+                check_immediate_size(pd, &yylloc, c->i);
+            $signed_greloc_expr = c;
+        }
 
 reloc_expr[outer]
     : const_expr
@@ -740,7 +742,10 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
 static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
         imm)
 {
-    if (imm & ~SMALL_IMMEDIATE_MASK) {
+    int hasupperbits = imm & ~SMALL_IMMEDIATE_MASK;
+    int notsignextended = hasupperbits != (-1 << SMALL_IMMEDIATE_BITWIDTH);
+
+    if (hasupperbits && notsignextended) {
         char buf[128];
         snprintf(buf, sizeof buf, "Immediate with value %#x is too large for "
                 "%d-bit signed immediate field", imm, SMALL_IMMEDIATE_BITWIDTH);
