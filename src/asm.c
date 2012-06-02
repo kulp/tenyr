@@ -432,9 +432,9 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format formats[flen], size_t len, char buf[len],
         const char *sep)
 {
-	int pos = 0;
+    int pos = 0;
     const struct format *f = formats;
-	while (pos < (signed)len && f < formats + flen) {
+    while (pos < (signed)len && f < formats + flen) {
         if (pred == NULL || pred(f)) {
             if (pos > 0) {
                 pos += snprintf(&buf[pos], len - pos, "%s%s", sep, f->name);
@@ -444,8 +444,8 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
         }
 
         f++;
-	}
+    }
 
-	return pos;
+    return pos;
 }
 
