@@ -71,7 +71,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token WORD ASCII UTF32 GLOBAL SET
 
 %type <ce> const_expr pconst_expr preloc_expr unsigned_greloc_expr signed_greloc_expr
-%type <ce> reloc_expr unsigned_immediate_atom const_atom signed_const_atom eref
+%type <ce> reloc_expr unsigned_immediate_atom const_atom signed_const_atom eref here_atom here_expr phere_expr here
 %type <cl> reloc_expr_list
 %type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
 %type <i> arrow signed_immediate unsigned_immediate regname reloc_op
@@ -298,14 +298,43 @@ unsigned_greloc_expr
 signed_greloc_expr
     : eref
     | signed_const_atom
+    | here_atom
     | preloc_expr
 
 reloc_expr[outer]
     : const_expr
     | eref
     | preloc_expr
+    | here_expr
     | eref reloc_op const_atom
         {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_atom); }
+    | eref reloc_op here_atom
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $here_atom); }
+    | eref reloc_op[lop] here_atom reloc_op[rop] const_atom
+        {   struct const_expr *inner = make_const_expr(CE_OP2, $lop, $eref, $here_atom);
+            $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom);
+        }
+
+here_atom
+    : here
+    | phere_expr
+
+here
+    : '.'
+        {   $here = make_const_expr(CE_ICI, 0, NULL, NULL); }
+
+here_expr[outer]
+    : here_atom
+    | here_expr[left] reloc_op const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right); }
+    | here_expr[left] '*' const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, '*', $left, $right); }
+    | here_expr[left] LSH const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
+
+phere_expr
+    : '(' here_expr ')'
+        {   $phere_expr = $here_expr; }
 
 const_expr[outer]
     : const_atom
@@ -339,8 +368,6 @@ signed_const_atom
                 strcopy($signed_const_atom->symbolname, $LOCAL, sizeof $signed_const_atom->symbolname);
             }
         }
-    | '.'
-        {   $signed_const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
 
 preloc_expr
     : '(' reloc_expr ')'
