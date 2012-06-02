@@ -71,7 +71,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token WORD ASCII UTF32 GLOBAL SET
 
 %type <ce> const_expr pconst_expr preloc_expr unsigned_greloc_expr signed_greloc_expr
-%type <ce> reloc_expr unsigned_immediate_atom const_atom signed_const_atom eref here_atom here_expr
+%type <ce> reloc_expr unsigned_immediate_atom const_atom signed_const_atom eref here_atom here_expr phere_expr here
 %type <cl> reloc_expr_list
 %type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
 %type <i> arrow signed_immediate unsigned_immediate regname reloc_op
@@ -298,7 +298,7 @@ unsigned_greloc_expr
 signed_greloc_expr
     : eref
     | signed_const_atom
-    | here_expr
+    | here_atom
     | preloc_expr
 
 reloc_expr[outer]
@@ -316,13 +316,22 @@ reloc_expr[outer]
         }
 
 here_atom
+    : here
+    | phere_expr
+
+here
     : '.'
-        {   $here_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
+        {   $here = make_const_expr(CE_ICI, 0, NULL, NULL); }
 
 here_expr
     : here_atom
+    | phere_expr
     | here_atom reloc_op const_atom
         {   $here_expr = make_const_expr(CE_OP2, $reloc_op, $here_atom, $const_atom); }
+
+phere_expr
+    : '(' here_expr ')'
+        {   $phere_expr = $here_expr; }
 
 const_expr[outer]
     : const_atom
