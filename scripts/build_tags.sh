@@ -5,7 +5,7 @@ for t in $tags ; do
     make clobber
     git checkout $t
     if git describe --tags --exact-match ; then
-        make upload
+        make $* upload
     fi
 done
 
