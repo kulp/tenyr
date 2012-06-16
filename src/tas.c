@@ -1,4 +1,6 @@
 #include "ops.h"
+// obj.h is included for RLC_* flags ; reconsider their location
+#include "obj.h"
 #include "parser.h"
 #include "parser_global.h"
 #include "lexer.h"
@@ -18,6 +20,9 @@
 #include <io.h>
 #endif
 
+// flag to mark flipping value of relocations after a '-'
+#define RHS_FLIP 1
+
 static const char shortopts[] = "df:o:hV";
 
 static const struct option longopts[] = {
@@ -34,7 +39,7 @@ static const struct option longopts[] = {
 #define version() "tas version " STR(BUILD_NAME)
 
 static int ce_eval(struct parse_data *pd, struct instruction *context, struct
-        const_expr *ce, int width, uint32_t *result);
+        const_expr *ce, int flags, int width, uint32_t *result);
 
 static int format_has_output(const struct format *f)
 {
@@ -76,7 +81,7 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
             if (symbol->ce) {
                 struct instruction_list **prev = symbol->ce->deferred;
                 struct instruction *c = (prev && *prev) ? (*prev)->insn : NULL;
-                return ce_eval(pd, c, symbol->ce, WORD_BITWIDTH, result);
+                return ce_eval(pd, c, symbol->ce, -1, WORD_BITWIDTH, result);
             } else {
                 *result = symbol->reladdr;
             }
@@ -122,12 +127,17 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
 }
 
 static int ce_eval(struct parse_data *pd, struct instruction *context, struct
-        const_expr *ce, int width, uint32_t *result)
+        const_expr *ce, int flags, int width, uint32_t *result)
 {
     uint32_t left, right;
     const char *name = ce->symbolname;
     if (ce->symbol)
         name = ce->symbol->name;
+
+    int rlc_flags = 0;
+
+    if (flags & RHS_FLIP)
+        rlc_flags |= RLC_NEGATE;
 
     switch (ce->type) {
         case CE_SYM:
@@ -136,9 +146,9 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 struct instruction_list **prev = ce->symbol->ce->deferred;
                 // XXX ": context" is voodoo ; hasn't been justified
                 struct instruction *c = (prev && *prev) ? (*prev)->insn : context;
-                int rc = ce_eval(pd, c, ce->symbol->ce, width, result);
+                int rc = ce_eval(pd, c, ce->symbol->ce, flags, width, result);
                 if (c) {
-                    return add_relocation(pd, NULL, c, width, 0);
+                    return add_relocation(pd, NULL, c, width, rlc_flags);
                 } else {
                     return rc;
                 }
@@ -147,7 +157,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 if (ce->type == CE_SYM) {
                     return rc;
                 } else {
-                    return add_relocation(pd, rc ? name : NULL, context, width, 0);
+                    return add_relocation(pd, rc ? name : NULL, context, width, rlc_flags);
                 }
             }
         case CE_ICI:
@@ -155,11 +165,11 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 *result = context->reladdr;
             else
                 *result = 0;
-            return add_relocation(pd, NULL, context, width, 0);
+            return add_relocation(pd, NULL, context, width, rlc_flags);
         case CE_IMM: *result = ce->i; return 0;
         case CE_OP2:
-            if (!ce_eval(pd, context, ce->left , width, &left) &&
-                !ce_eval(pd, context, ce->right, width, &right))
+            if (!ce_eval(pd, context, ce->left , flags           , width, &left) &&
+                !ce_eval(pd, context, ce->right, flags ^ RHS_FLIP, width, &right))
             {
                 switch (ce->op) {
                     case '+': *result = left +  right; return 0;
@@ -214,7 +224,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if ((rc = ce_eval(pd, ce->insn, ce, r->width, &result)) == 0) {
+        if ((rc = ce_eval(pd, ce->insn, ce, -1, r->width, &result)) == 0) {
             uint32_t mask = ~(((1ULL << (r->width - 1)) << 1) - 1);
             result *= r->mult;
             *r->dest &= mask;
@@ -314,7 +324,7 @@ static int assembly_fixup_insns(struct parse_data *pd)
     list_foreach(symbol_list, li, pd->symbols)
         list_foreach(symbol, l, li->symbol)
             if (!l->resolved)
-                if (!ce_eval(pd, NULL, l->ce, WORD_BITWIDTH, &l->reladdr))
+                if (!ce_eval(pd, NULL, l->ce, -1, WORD_BITWIDTH, &l->reladdr))
                     l->resolved = 1;
 
     return 0;
