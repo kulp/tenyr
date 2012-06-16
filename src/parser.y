@@ -134,6 +134,7 @@ program[outer]
             $outer = calloc(1, sizeof *$outer);
             $outer->next = $string_or_data->next;
             $outer->insn = $string_or_data->insn;
+            $outer->next->prev = $outer;
             $inner->prev = $outer;
             free($string_or_data); }
     | directive program[inner]
