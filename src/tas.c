@@ -169,9 +169,13 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 *result = 0;
             return add_relocation(pd, NULL, context, width, rlc_flags);
         case CE_IMM: *result = ce->i; return 0;
-        case CE_OP2:
-            if (!ce_eval(pd, context, ce->left , flags           , width, &left) &&
-                !ce_eval(pd, context, ce->right, flags ^ RHS_FLIP, width, &right))
+        case CE_OP2: {
+            int lhsflags = flags;
+            int rhsflags = flags;
+            if (ce->op == '-')
+                rhsflags ^= RHS_FLIP;
+            if (!ce_eval(pd, context, ce->left , lhsflags, width, &left) &&
+                !ce_eval(pd, context, ce->right, rhsflags, width, &right))
             {
                 switch (ce->op) {
                     case '+': *result = left +  right; return 0;
@@ -182,6 +186,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 }
             }
             return 1;
+        }
         default:
             fatal(0, "Unrecognised const_expr type %d", ce->type);
             return 1;
