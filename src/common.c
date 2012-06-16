@@ -30,7 +30,7 @@ void debug_(int level, const char *file, int line, const char *func,
 #ifndef DEBUG
 #define DEBUG 0
 #endif
-	if (level < DEBUG)
+	if (level > DEBUG)
 		return;
 
     va_list vl;
