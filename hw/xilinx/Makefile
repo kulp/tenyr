@@ -11,8 +11,10 @@ burn: $(TARGET).bit
 vpath %.tas ../verilog
 vpath %.tas.cpp ../verilog
 
+CPPFLAGS += -I../../lib
+
 %.tas: %.tas.cpp
-	cpp -I../../lib -o $@ $<
+	$(CPP) $(CPPFLAGS) -o $@ $<
 
 %.to: %.tas
 	$(TAS) $< > $@

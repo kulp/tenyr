@@ -9,17 +9,21 @@ struct instruction;
 
 struct format {
     const char *name;
-    int (*init)(FILE *, int flags, void **ud);
-    int (*in  )(FILE *, struct instruction *, void *ud);
-    int (*out )(FILE *, struct instruction *, void *ud);
-    int (*fini)(FILE *, void **ud);
+    int (*init )(FILE *, int flags, void **ud);
+    int (*in   )(FILE *, struct instruction *, void *ud);
+    int (*out  )(FILE *, struct instruction *, void *ud);
+
+    int (*sym  )(FILE *, struct symbol *, void *ud);
+    int (*reloc)(FILE *, struct reloc_node *, void *ud);
+    int (*fini )(FILE *, void **ud);
 };
 
 int find_format_by_name(const void *_a, const void *_b);
 
 #define ASM_AS_INSN     1
 #define ASM_AS_DATA     2
-#define ASM_NO_SUGAR    4
+#define ASM_AS_CHAR     4
+#define ASM_NO_SUGAR    8
 
 // returns number of characters printed
 int print_disassembly(FILE *out, struct instruction *i, int flags);

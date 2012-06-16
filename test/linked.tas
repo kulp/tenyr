@@ -1,0 +1,10 @@
+.set link, .
+.word @link
+.set link, .
+.word @link
+.set link, .
+.word @link
+.set link, .
+.word @link
+.set link, .
+.word @link

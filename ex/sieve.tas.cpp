@@ -4,7 +4,6 @@
 
 #include "common.th"
 
-    f <- p - .          // load base
     b <- ARGUMENT       // b = upper limit (N)
     c <- b >> 1         // c = (N/2)
     i <- 2              // i = outer loop control

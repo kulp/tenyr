@@ -29,6 +29,8 @@ struct sim_state {
         int verbose;
         int run_defaults;   ///< whether to run default recipes
         int debugging;
+		int should_init;
+		uint32_t initval;
     } conf;
 
     op_dispatcher *dispatch_op;

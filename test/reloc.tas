@@ -1,0 +1,18 @@
+.word . - 5 + 10 - 10
+.word . + (2 + 3)
+bar: .word @foo - .
+.word 1,2,3,4,5
+//.word . - . // should not work
+foo: .word 0
+.set baz, @bar + 2
+.word 0,0,0
+.word @baz
+.set baz, @bar + 6
+.word 0,0,0
+.word @baz
+.set baz, .
+.word 0,0
+.word @baz
+.set baz, .
+.word 0,0
+.word @baz

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "obj.h"
 #include "ops.h"
@@ -37,6 +38,13 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
 {
     if (flags & ASM_AS_DATA)
         return fprintf(out, ".word 0x%08x", i->u.word);
+
+    if (flags & ASM_AS_CHAR) {
+        if (isprint(i->u.word))
+            return fprintf(out, ".word '%c'", i->u.word);
+        else
+            return fprintf(out, "         ");
+    }
 
     int type = i->u._xxxx.t;
     switch (type) {
@@ -280,68 +288,36 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     struct obj_fdata *u = ud;
 
     struct objrec *rec = u->curr_rec;
-    if (!rec)
-        return -1;
-
-    if (u->pos >= rec->size) {
-        u->curr_rec = rec = rec->next;
-        u->pos = 0;
-
-        if (!rec) {
-            // TODO get symbols
+    int done = 0;
+    while (!done) {
+        if (!rec)
             return -1;
+
+        if (rec->size == 0) {
+            while (rec && rec->size == 0)
+                u->curr_rec = rec = rec->next;
+            u->pos = 0;
+        } else {
+            if (u->pos >= rec->size) {
+                u->curr_rec = rec = rec->next;
+                u->pos = 0;
+            } else {
+                i->u.word = rec->data[u->pos++];
+                // TODO adjust addr where ?
+                i->reladdr = rec->addr;
+                i->symbol = NULL;
+                done = 1;
+            }
         }
     }
-
-    i->u.word = rec->data[u->pos++];
-    // TODO adjust addr where ?
-    i->reladdr = rec->addr;
-    i->symbol = NULL;
 
     return rc;
-}
-
-static void obj_out_symbols(struct symbol *symbol, struct obj_fdata *u, struct obj *o)
-{
-    list_foreach(symbol, Node, symbol) {
-        if (Node->global) {
-            struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
-
-            strcopy(sym->name, Node->name, sizeof sym->name);
-            assert(("Symbol address resolved", Node->resolved != 0));
-            sym->value = Node->reladdr;
-
-            u->next_sym = &sym->next;
-            u->syms++;
-        }
-    }
-}
-
-static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct obj *o)
-{
-    if (!reloc) return;
-
-    struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
-
-    rlc->flags = 0; // TODO
-    strcopy(rlc->name, reloc->name, sizeof rlc->name);
-    rlc->name[sizeof rlc->name - 1] = 0;
-    rlc->addr = reloc->insn->reladdr;
-    rlc->width = reloc->width;
-
-    u->next_rlc = &rlc->next;
-
-    u->rlcs++;
 }
 
 static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj *o)
 {
     o->records->data[u->insns] = i->u.word;
-
     u->insns++;
-
-    obj_out_symbols(i->symbol, u, o);
-    obj_out_reloc(i->reloc, u, o);
 }
 
 static int obj_out(FILE *stream, struct instruction *i, void *ud)
@@ -350,6 +326,47 @@ static int obj_out(FILE *stream, struct instruction *i, void *ud)
     struct obj_fdata *u = ud;
 
     obj_out_insn(i, u, (struct obj*)u->o);
+
+    return rc;
+}
+
+static int obj_sym(FILE *stream, struct symbol *symbol, void *ud)
+{
+    int rc = 1;
+    struct obj_fdata *u = ud;
+
+    if (symbol->global) {
+        struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
+
+        strcopy(sym->name, symbol->name, sizeof sym->name);
+        assert(("Symbol address resolved", symbol->resolved != 0));
+        sym->value = symbol->reladdr;
+
+        u->next_sym = &sym->next;
+        u->syms++;
+    }
+
+    return rc;
+}
+
+static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
+{
+    int rc = 1;
+    struct obj_fdata *u = ud;
+    if (!reloc || !reloc->insn)
+        return 0;
+
+    struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
+
+    rlc->flags = reloc->flags;
+    strcopy(rlc->name, reloc->name, sizeof rlc->name);
+    rlc->name[sizeof rlc->name - 1] = 0;
+    rlc->addr = reloc->insn->reladdr;
+    rlc->width = reloc->width;
+
+    u->next_rlc = &rlc->next;
+
+    u->rlcs++;
 
     return rc;
 }
@@ -440,10 +457,16 @@ static int verilog_fini(FILE *stream, void **ud)
 
 const struct format formats[] = {
     // first format is default
-    { "obj"    , obj_init    , obj_in , obj_out    , obj_fini     },
-    { "raw"    , NULL        , raw_in , raw_out    , NULL         },
-    { "text"   , NULL        , text_in, text_out   , NULL         },
-    { "verilog", verilog_init, NULL   , verilog_out, verilog_fini },
+    { "obj",
+        .init  = obj_init,
+        .in    = obj_in,
+        .out   = obj_out,
+        .fini  = obj_fini,
+        .sym   = obj_sym,
+        .reloc = obj_reloc },
+    { "raw" , .in = raw_in , .out = raw_out  },
+    { "text", .in = text_in, .out = text_out },
+	{ "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
 };
 
 const size_t formats_count = countof(formats);
