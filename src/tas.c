@@ -39,8 +39,10 @@ static const struct option longopts[] = {
 
 #define version() "tas version " STR(BUILD_NAME)
 
+typedef int reloc_handler(struct parse_data *pd, struct instruction *context, int flags, struct const_expr *ce, void *ud);
+
 static int ce_eval(struct parse_data *pd, struct instruction *context, struct
-        const_expr *ce, int flags, int width, uint32_t *result);
+        const_expr *ce, int flags, reloc_handler *rhandler, void *rud, uint32_t *result);
 
 static int format_has_output(const struct format *f)
 {
@@ -74,6 +76,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name)
     return NULL;
 }
 
+// symbol_lookup returns 1 on success
 static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
         char *name, uint32_t *result)
 {
@@ -83,20 +86,21 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
             if (symbol->ce) {
                 struct instruction_list **prev = symbol->ce->deferred;
                 struct instruction *c = (prev && *prev) ? (*prev)->insn : NULL;
-                return ce_eval(pd, c, symbol->ce, 0, WORD_BITWIDTH, result);
+                return ce_eval(pd, c, symbol->ce, 0, NULL, NULL, result);
             } else {
                 *result = symbol->reladdr;
             }
         }
-        return 0;
+        return 1;
     }
 
     // unresolved symbols get a zero value, but this is still success in CE_EXT
     // case (not in CE_SYM case)
     if (result) *result = 0;
-    return 1;
+    return 0;
 }
 
+// add_relocation returns 1 on success
 static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width, int flags)
 {
     struct reloc_list *node = calloc(1, sizeof *node);
@@ -125,16 +129,13 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
     if (insn)
         insn->reloc = &node->reloc;
 
-    return 0;
+    return 1;
 }
 
-static int ce_eval(struct parse_data *pd, struct instruction *context, struct
-        const_expr *ce, int flags, int width, uint32_t *result)
+static int sym_reloc_handler(struct parse_data *pd, struct instruction *context, int flags, struct const_expr *ce, void *ud)
 {
-    uint32_t left, right;
-    const char *name = ce->symbolname;
-    if (ce->symbol)
-        name = ce->symbol->name;
+    int rc = 0;
+    int *width = ud;
 
     int rlc_flags = 0;
 
@@ -148,45 +149,63 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 struct instruction_list **prev = ce->symbol->ce->deferred;
                 // XXX ": context" is voodoo ; hasn't been justified
                 struct instruction *c = (prev && *prev) ? (*prev)->insn : context;
-                int rc = ce_eval(pd, c, ce->symbol->ce, flags, width, result);
-                if (c) {
-                    return add_relocation(pd, NULL, c, width, rlc_flags);
-                } else {
-                    return rc;
-                }
+                return c ?  add_relocation(pd, NULL, c, *width, rlc_flags) : 0;
+            } else if (ce->type == CE_EXT) {
+                const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
+                return add_relocation(pd, rc ? name : NULL, context, *width, rlc_flags);
+            }
+        case CE_ICI:
+            return add_relocation(pd, NULL, context, *width, rlc_flags);
+        default:
+            return 0;
+    }
+
+    return rc;
+}
+
+// ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
+static int ce_eval(struct parse_data *pd, struct instruction *context, struct
+        const_expr *ce, int flags, reloc_handler *rhandler, void *rud, uint32_t *result)
+{
+    uint32_t left, right;
+
+    switch (ce->type) {
+        case CE_SYM:
+        case CE_EXT:
+            if (ce->symbol && ce->symbol->ce) {
+                return ce_eval(pd, (*ce->symbol->ce->deferred)->insn, ce->symbol->ce, flags, rhandler, rud, result)
+                    || (rhandler ? rhandler(pd, context, flags, ce, rud) : 0);
             } else {
-                int rc = symbol_lookup(pd, pd->symbols, name, result);
-                if (ce->type == CE_SYM) {
-                    return rc;
-                } else {
-                    return add_relocation(pd, rc ? name : NULL, context, width, rlc_flags);
-                }
+                const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
+                return symbol_lookup(pd, pd->symbols, name, result)
+                    || (rhandler ? rhandler(pd, context, flags, ce, rud) : 0);
             }
         case CE_ICI:
             *result = context ? context->reladdr : 0;
-            return add_relocation(pd, NULL, context, width, rlc_flags);
-        case CE_IMM: *result = ce->i; return 0;
+            return rhandler ? rhandler(pd, context, flags, ce, rud) : 0; // incomplete if no handler
+        case CE_IMM: *result = ce->i; return 1;
         case CE_OP2: {
             int lhsflags = flags;
             int rhsflags = flags;
             if (ce->op == '-')
                 rhsflags ^= RHS_FLIP;
-            if (!ce_eval(pd, context, ce->left , lhsflags, width, &left) &&
-                !ce_eval(pd, context, ce->right, rhsflags, width, &right))
+            // TODO what if rhandler doesn't always succeed ? could change lhs but not rhs
+            if (ce_eval(pd, context, ce->left , lhsflags, rhandler, rud, &left) &&
+                ce_eval(pd, context, ce->right, rhsflags, rhandler, rud, &right))
             {
                 switch (ce->op) {
-                    case '+': *result = left +  right; return 0;
-                    case '-': *result = left -  right; return 0;
-                    case '*': *result = left *  right; return 0;
-                    case LSH: *result = left << right; return 0;
+                    case '+': *result = left +  right; return 1;
+                    case '-': *result = left -  right; return 1;
+                    case '*': *result = left *  right; return 1;
+                    case LSH: *result = left << right; return 1;
                     default: fatal(0, "Unrecognised const_expr op '%c'", ce->op);
                 }
             }
-            return 1;
+            return 0;
         }
         default:
             fatal(0, "Unrecognised const_expr type %d", ce->type);
-            return 1;
+            return 0;
     }
 }
 
@@ -222,13 +241,11 @@ static void ce_free(struct const_expr *ce, int recurse)
 
 static int fixup_deferred_exprs(struct parse_data *pd)
 {
-    int rc = 0;
-
     list_foreach(deferred_expr, r, pd->defexprs) {
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if ((rc = ce_eval(pd, ce->insn, ce, 0, r->width, &result)) == 0) {
+        if (ce_eval(pd, ce->insn, ce, 0, sym_reloc_handler, &r->width, &result)) {
             uint32_t mask = ~(((1ULL << (r->width - 1)) << 1) - 1);
             result *= r->mult;
             *r->dest &= mask;
@@ -328,7 +345,7 @@ static int assembly_fixup_insns(struct parse_data *pd)
     list_foreach(symbol_list, li, pd->symbols)
         list_foreach(symbol, l, li->symbol)
             if (!l->resolved)
-                if (!ce_eval(pd, NULL, l->ce, 0, WORD_BITWIDTH, &l->reladdr))
+                if (ce_eval(pd, NULL, l->ce, 0, NULL, (int[]){ WORD_BITWIDTH }, &l->reladdr))
                     l->resolved = 1;
 
     return 0;
