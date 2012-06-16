@@ -54,7 +54,8 @@ for my $filepath (@ARGV) {
     ($file{stem}, $file{dir}, $file{ext}) = fileparse($filepath, qr/\.\w+$/);
     $file{version} = $args{version};
     $file{arch} = $args{arch};
-    $file{name} = "$file{stem}-$file{arch}-$file{version}$file{ext}";
+    $file{aarc} = simplify($file{arch});
+    $file{name} = "$file{stem}-$file{aarc}-$file{version}$file{ext}";
     $file{desc} = "$file{stem} version $file{version} on $file{arch}";
     $file{size} = (stat $filepath)[7];
     chomp($file{type} = `file --brief $filepath` || "application/octet-stream");
@@ -79,5 +80,17 @@ for my $filepath (@ARGV) {
         result => $result,
         file   => $filepath,
     ) and $result->is_success;
+}
+
+sub simplify
+{
+    my ($arch) = @_;
+    my ($chip, $fam, $sys) = split "-", $arch;
+    return "mac"   if $fam =~ /apple/i;
+    return "win32" if $fam =~ /\bw(32|64)\b/i and $chip =~ /86/;
+    return "win64" if $fam =~ /\bw(32|64)\b/i and $chip =~ /64/;
+    return "lin32" if $fam =~ /linux/         and $chip =~ /86/;
+    return "lin64" if $fam =~ /linux/         and $chip =~ /64/;
+    die "unknown arch $arch";
 }
 

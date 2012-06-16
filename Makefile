@@ -106,7 +106,7 @@ install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	install $^ $(INSTALL_DIR)
 
 upload: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) | scripts/upload.pl
-	$(realpath $|) "$(shell $(CC) -dumpmachine)" "$(shell git describe --always --tags)" $^
+	$(realpath $|) "$(shell $(CC) -dumpmachine)" "$(shell git describe --tags)" $^
 
 ifndef INHIBIT_DEPS
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
