@@ -83,7 +83,7 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
             if (symbol->ce) {
                 struct instruction_list **prev = symbol->ce->deferred;
                 struct instruction *c = (prev && *prev) ? (*prev)->insn : NULL;
-                return ce_eval(pd, c, symbol->ce, -1, WORD_BITWIDTH, result);
+                return ce_eval(pd, c, symbol->ce, 0, WORD_BITWIDTH, result);
             } else {
                 *result = symbol->reladdr;
             }
@@ -231,7 +231,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if ((rc = ce_eval(pd, ce->insn, ce, -1, r->width, &result)) == 0) {
+        if ((rc = ce_eval(pd, ce->insn, ce, 0, r->width, &result)) == 0) {
             uint32_t mask = ~(((1ULL << (r->width - 1)) << 1) - 1);
             result *= r->mult;
             *r->dest &= mask;
@@ -331,7 +331,7 @@ static int assembly_fixup_insns(struct parse_data *pd)
     list_foreach(symbol_list, li, pd->symbols)
         list_foreach(symbol, l, li->symbol)
             if (!l->resolved)
-                if (!ce_eval(pd, NULL, l->ce, -1, WORD_BITWIDTH, &l->reladdr))
+                if (!ce_eval(pd, NULL, l->ce, 0, WORD_BITWIDTH, &l->reladdr))
                     l->resolved = 1;
 
     return 0;

@@ -1,2 +1,17 @@
 .set abc, 2
 .set bcd, 0xdeadbeef - 0xbeef
+c <- d
+.word @bcd
+.set bcd, . + 0xdeadbeef - 0xbeef
+.set efg, .
+b <- 1
+c <- 2
+d <- 3
+.set efg, .
+e <- 4 // this works as expected with the previous .set
+.word 0,0,0,0,0,0,0
+.word @bcd
+.word @efg
+.set efg, .
+.word 0 // this does not work as expected with the previous .set as of 560fe15
+.word @efg

@@ -3,16 +3,17 @@
 bar: .word @foo - .
 .word 1,2,3,4,5
 //.word . - . // should not work
-foo: .word 0
+foo: b <- c + d
 .set baz, @bar + 2
-.word 0,0,0
+c <- d - e
+.word 2,3,4
 .word @baz
 .set baz, @bar + 6
-.word 0,0,0
+.word 5,6,7
 .word @baz
 .set baz, .
-.word 0,0
+.word 8,9
 .word @baz
 .set baz, .
-.word 0,0
+.word 10,11
 .word @baz
