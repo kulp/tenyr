@@ -36,6 +36,7 @@ struct parse_data {
             char name[SYMBOL_LEN];   ///< can be empty string for non-globals
             struct instruction *insn;
             int width;
+            long flags;
         } reloc;
         struct reloc_list *next;
     } *relocs;

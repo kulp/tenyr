@@ -90,26 +90,27 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
     return 1;
 }
 
-static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width)
+static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width, int flags)
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
     if (name && name[0]) {
         if (insn)
-            debug(5, "Adding relocation for `%s' of width %d @ 0x%08x", name, width, insn->reladdr);
+            debug(5, "Adding relocation for `%s' of width %d @ 0x%08x with flags %#x", name, width, insn->reladdr, flags);
         else
-            debug(5, "Adding relocation for `%s' of width %d for NULL", name, width);
+            debug(5, "Adding relocation for `%s' of width %d for NULL with flags %#x", name, width, flags);
         strcopy(node->reloc.name, name, sizeof node->reloc.name);
     } else {
         if (insn)
-            debug(5, "Adding null relocation of width %d @ 0x%08x", width, insn->reladdr);
+            debug(5, "Adding null relocation of width %d @ 0x%08x with flags %#x", width, insn->reladdr, flags);
         else
             // XXX what does a relocation with (insn == NULL) mean ?
-            debug(5, "Adding null relocation of width %d for NULL", width);
+            debug(5, "Adding null relocation of width %d for NULL with flags %#x", width, flags);
         node->reloc.name[0] = 0;
     }
     node->reloc.insn  = insn;
     node->reloc.width = width;
+    node->reloc.flags = flags;
 
     node->next = pd->relocs;
     pd->relocs = node;
@@ -137,7 +138,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 struct instruction *c = (prev && *prev) ? (*prev)->insn : context;
                 int rc = ce_eval(pd, c, ce->symbol->ce, width, result);
                 if (c) {
-                    return add_relocation(pd, NULL, c, width);
+                    return add_relocation(pd, NULL, c, width, 0);
                 } else {
                     return rc;
                 }
@@ -146,7 +147,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 if (ce->type == CE_SYM) {
                     return rc;
                 } else {
-                    return add_relocation(pd, rc ? name : NULL, context, width);
+                    return add_relocation(pd, rc ? name : NULL, context, width, 0);
                 }
             }
         case CE_ICI:
@@ -154,7 +155,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 *result = context->reladdr;
             else
                 *result = 0;
-            return add_relocation(pd, NULL, context, width);
+            return add_relocation(pd, NULL, context, width, 0);
         case CE_IMM: *result = ce->i; return 0;
         case CE_OP2:
             if (!ce_eval(pd, context, ce->left , width, &left) &&
