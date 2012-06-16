@@ -130,13 +130,9 @@ program[outer]
         {   struct instruction_list *p = $string_or_data;
             while (p->next) p = p->next;
             p->next = $inner;
-
-            $outer = calloc(1, sizeof *$outer);
-            $outer->next = $string_or_data->next;
-            $outer->insn = $string_or_data->insn;
-            $outer->next->prev = $outer;
-            $inner->prev = $outer;
-            free($string_or_data); }
+            $inner->prev = p;
+            $outer = $string_or_data;
+        }
     | directive program[inner]
         {   $outer = $inner;
             handle_directive(pd, &yylloc, $directive, $inner); }
@@ -754,7 +750,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         case D_SET: {
             struct datum_D_SET *data = d->data;
             struct instruction_list **context = NULL;
-            #if 1
+
             // XXX this deferral code is broken
             if (!p->insn)
                 context = &p->prev; // dummy instruction at end ; defer to prev
@@ -762,7 +758,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
                 context = &p->next->prev; // otherwise, defer to current instruction node
             else
                 fatal(0, "Illegal instruction context for .set");
-            #endif
+
             data->symbol->ce->deferred = context;
             free(data);
             free(d);

@@ -163,10 +163,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                 }
             }
         case CE_ICI:
-            if (context)
-                *result = context->reladdr;
-            else
-                *result = 0;
+            *result = context ? context->reladdr : 0;
             return add_relocation(pd, NULL, context, width, rlc_flags);
         case CE_IMM: *result = ce->i; return 0;
         case CE_OP2: {
