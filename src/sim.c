@@ -28,6 +28,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_COMPARE_LT          : *rhs = -(Xs  <  Os) + As; break;
         case OP_COMPARE_EQ          : *rhs = -(Xs  == Os) + As; break;
         case OP_COMPARE_GT          : *rhs = -(Xs  >  Os) + As; break;
+        case OP_COMPARE_NE          : *rhs = -(Xs  != Os) + As; break;
 
         case OP_BITWISE_AND         : *rhs =  (Xu  &  Ou) + As; break;
         case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Ou) + As; break;
