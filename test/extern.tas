@@ -1,0 +1,2 @@
+c <- @hi        # both of these lines should emit references to @hi
+c <- (@hi + .)
