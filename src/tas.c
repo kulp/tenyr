@@ -23,6 +23,8 @@
 // flag to mark flipping value of relocations after a '-'
 #define RHS_FLIP 1
 
+#define NO_NAMED_RELOC 2
+
 static const char shortopts[] = "df:o:s" "hV";
 
 static const struct option longopts[] = {
@@ -43,6 +45,8 @@ typedef int reloc_handler(struct parse_data *pd, struct instruction *context, in
 
 static int ce_eval(struct parse_data *pd, struct instruction *context, struct
         const_expr *ce, int flags, reloc_handler *rhandler, void *rud, uint32_t *result);
+
+static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width, int flags);
 
 static int format_has_output(const struct format *f)
 {
@@ -149,10 +153,11 @@ static int sym_reloc_handler(struct parse_data *pd, struct instruction *context,
                 struct instruction_list **prev = ce->symbol->ce->deferred;
                 // XXX ": context" is voodoo ; hasn't been justified
                 struct instruction *c = (prev && *prev) ? (*prev)->insn : context;
-                return c ?  add_relocation(pd, NULL, c, *width, rlc_flags) : 0;
+                return c ? add_relocation(pd, NULL, c, *width, rlc_flags) : 0;
             } else if (ce->type == CE_EXT) {
                 const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
-                return add_relocation(pd, rc ? name : NULL, context, *width, rlc_flags);
+                const char *n = (flags & NO_NAMED_RELOC) ? NULL : name;
+                return add_relocation(pd, n, context, *width, rlc_flags);
             }
         case CE_ICI:
             return add_relocation(pd, NULL, context, *width, rlc_flags);
@@ -177,8 +182,12 @@ static int ce_eval(struct parse_data *pd, struct instruction *context, struct
                     || (rhandler ? rhandler(pd, context, flags, ce, rud) : 0);
             } else {
                 const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
-                return symbol_lookup(pd, pd->symbols, name, result)
-                    || (rhandler ? rhandler(pd, context, flags, ce, rud) : 0);
+                int found = symbol_lookup(pd, pd->symbols, name, result);
+                int hflags = flags;
+                if (found)
+                    hflags |= NO_NAMED_RELOC;
+                int handled = (rhandler ? rhandler(pd, context, hflags, ce, rud) : 0);
+                return found || handled;
             }
         case CE_ICI:
             *result = context ? context->reladdr : 0;
