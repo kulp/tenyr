@@ -4,6 +4,7 @@
 // Expects a global symbol called `start' to be defined in another object, which
 // should be a list of addresses of code to run, ending with EXIT.
 
+.set link, 0
 __boot:
     BAS <- p - .
     PSP <- [reloc(_PSPinit)]
