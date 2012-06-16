@@ -27,16 +27,16 @@ build_subtrahend:
 
 compute_quotient:
   // If our subtrahend is equal to our divisor, we're done.
-  k <- g <= d
+  j <- g <  d
+  k <- g == d
+  k <- j | k
   jnzrel(k, done)
 
   // Divide the subtrahend by 2.
   g <- g >> 1
 
   // Check to see if we can subtract the subtrahend.
-  j <- c <= g
-  k <- c <> g
-  k <- j & k
+  k <- c < g
   jnzrel(k, shift_quotient)
 
   // Perform a subtraction and set this output bit to 1.

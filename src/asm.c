@@ -18,19 +18,20 @@ static const struct {
     [OP_BITWISE_AND        ] = { "&" , 0 },
     [OP_ADD                ] = { "+" , 1 },
     [OP_MULTIPLY           ] = { "*" , 1 },
+
     [OP_SHIFT_LEFT         ] = { "<<", 0 },
-    [OP_COMPARE_LTE        ] = { "<=", 1 },
+    [OP_COMPARE_LT         ] = { "<" , 1 },
     [OP_COMPARE_EQ         ] = { "==", 1 },
-    [OP_BITWISE_NOR        ] = { "~|", 0 },
+    [OP_COMPARE_GT         ] = { ">" , 1 },
     [OP_BITWISE_NAND       ] = { "~&", 0 },
     [OP_BITWISE_XOR        ] = { "^" , 0 },
     [OP_ADD_NEGATIVE_Y     ] = { "-" , 1 },
     [OP_XOR_INVERT_X       ] = { "^~", 0 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
-    [OP_COMPARE_GT         ] = { ">" , 1 },
-    [OP_COMPARE_NE         ] = { "<>", 1 },
+    [OP_COMPARE_NE         ] = { "~|", 0 },
 
-    [OP_RESERVED           ] = { "XX", 0 }
+    [OP_RESERVED0          ] = { "X0", 0 },
+    [OP_RESERVED1          ] = { "X1", 0 },
 };
 
 int print_disassembly(FILE *out, struct instruction *i, int flags)
@@ -75,6 +76,9 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                  uint32_t f8 = g->imm;                // immediate value, unsigned
                   char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
                   int32_t fa = SEXTEND(12,g->imm);    // immediate value, signed
+
+            if (f6[0] == 'X')   // reserved
+                return fprintf(out, ".word 0x%08x", i->u.word);
 
             // indices : [sgnd][g->p][op1][op2][op3]
             static const char *fmts[2][2][2][2][2] = {
@@ -123,11 +127,41 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int op2   = !inert || (g->p ? g->imm : !opYA);
             int op1   = !(opXA && inert) || (!op2 && !op3);
             int sgnd  = op_meta[g->op].sgnd;
+            int type  = g->p;
+
+            // losslessly  disambiguate these three cases :
+            //  b <- a
+            //  b <- 0
+            //  b <- $0
+            // so that assembly rountripping works more reliably
+            int rhs0  = (g->op == OP_ADD || (inert && type == 1)) && opXA && !g->imm;
+            int rhsA  = (g->op == OP_BITWISE_OR    && type == 0)  && opXA && !g->imm;
+
+            if (rhs0) {
+                op3 = 1;
+                op2 = 0;
+                op1 = 0;
+                type = 0;
+            } else if (rhsA) {
+                op1 = 1;
+                op2 = 0;
+                op3 = 0;
+            }
+
+            if (!(flags & ASM_NO_SUGAR)) {
+                if (g->op == OP_XOR_INVERT_X && g->y == 0) {
+                    f7 = f5;    // Y slot is now X
+                    f5 = ' ';   // don't print X
+                    f6 = "~";   // change op to a unary not
+                } else if (g->op == OP_ADD_NEGATIVE_Y && g->x == 0) {
+                    f5 = ' ';   // don't bring X
+                }
+            }
 
             #define C_(A,B,C,D,E) (((A) << 16) | ((B) << 12) | ((C) << 8) | ((D) << 4) | (E))
-            #define PUT(...) return fprintf(out, fmts[sgnd][g->p][op1][op2][op3], __VA_ARGS__)
+            #define PUT(...) return fprintf(out, fmts[!!sgnd][!!type][!!op1][!!op2][!!op3], __VA_ARGS__)
 
-            switch (C_(sgnd,g->p,op1,op2,op3)) {
+            switch (C_(sgnd,type,op1,op2,op3)) {
               //case C_(0,0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
                 case C_(0,0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
                 case C_(0,0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
@@ -441,9 +475,9 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format formats[flen], size_t len, char buf[len],
         const char *sep)
 {
-	int pos = 0;
+    int pos = 0;
     const struct format *f = formats;
-	while (pos < (signed)len && f < formats + flen) {
+    while (pos < (signed)len && f < formats + flen) {
         if (pred == NULL || pred(f)) {
             if (pos > 0) {
                 pos += snprintf(&buf[pos], len - pos, "%s%s", sep, f->name);
@@ -453,8 +487,8 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
         }
 
         f++;
-	}
+    }
 
-	return pos;
+    return pos;
 }
 
