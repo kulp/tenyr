@@ -184,10 +184,9 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     wire[3:0] op;
     wire illegal, type;
     reg insn_valid = 1; // XXX
-    reg firstcyc_ok = 0;
     reg manual_invalidate = 0;
     wire decode_valid; // FIXME decode_valid never deasserts
-    wire state_valid = insn_valid && !manual_invalidate && firstcyc_ok;
+    wire state_valid = insn_valid && !manual_invalidate;
     assign deref_rhs = (deref[0] && !rw) ? norm_data : rhs;
     assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
     assign reg_valueZ = reg_rw ? valueZ : 32'bz;
@@ -234,7 +233,6 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     // FIXME synchronous reset
     always @(negedge clk0) if (en) begin
         if (reset_n) begin
-            firstcyc_ok = 1;
             rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
             if (!lhalt && state_valid)
                 manual_invalidate = illegal;
