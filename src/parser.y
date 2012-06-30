@@ -69,7 +69,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token <chr> ',' '$'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
-%token <u> INTEGER
+%token <i> INTEGER
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET

@@ -10,6 +10,7 @@
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 static int savestr(yyscan_t yyscanner);
+static int translate_escape(int what);
 
 #define savecol  yyextra->lexstate.savecol
 #define saveline yyextra->lexstate.saveline
@@ -33,7 +34,7 @@ static int savestr(yyscan_t yyscanner);
 %option extra-type="struct parse_data *"
 %option prefix="tenyr_"
 
-%x charlit charend
+%x charlit charend charesc
 
 regname ([A-P])
 /* don't permit collision with regname */
@@ -86,7 +87,9 @@ regnum  {hexnum}|{octnum}|{decnum}
 
 "'"                     BEGIN charlit;
 <charend>"'"            BEGIN INITIAL;
+<charlit>\\             BEGIN charesc;
 <charlit>.              { yylval->i = yytext[0]; BEGIN charend; return INTEGER; }
+<charesc>[nbrt\\]       { yylval->i = translate_escape(yytext[0]); BEGIN charend; return INTEGER; }
 
 .                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 
@@ -107,6 +110,18 @@ static int savestr(yyscan_t yyscanner)
         memset(lval->str, 0, sizeof lval->str);
         strcopy(lval->str, text, len + 1);
         return 0;
+    }
+}
+
+static int translate_escape(int what)
+{
+    switch (what) {
+        case '\\': return '\\';
+        case 'r' : return '\r';
+        case 't' : return '\t';
+        case 'b' : return '\b';
+        case 'n' : return '\n';
+        default: return -1;
     }
 }
 
