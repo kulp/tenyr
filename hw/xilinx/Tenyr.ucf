@@ -4,7 +4,12 @@ NET "clk" LOC = V10;
 #NET "txd" LOC = N18;
 #NET "rxd" LOC = N17;
 NET "vga/clk25MHz" TNM_NET = vga/clk25MHz;
-#>DISABLED<#TIMESPEC TS_vga_clk25MHz = PERIOD "vga/clk25MHz" 25 MHz HIGH 50%;
+TIMESPEC TS_vga_clk25MHz = PERIOD "vga/clk25MHz" 25 MHz HIGH 50%;
 #TIMESPEC TS_clk = PERIOD "clk" 10 MHz HIGH 50%;
 #Created by Constraints Editor (xc6slx16-csg324-3) - 2012/06/20
 TIMESPEC TS_clk = PERIOD "clk" 100 MHz HIGH 50%;
+#Created by Constraints Editor (xc6slx16-csg324-3) - 2012/06/21
+TIMESPEC TS_false01 = FROM "clocks_clkout0" TO "clocks_clkout1" 20 ns;
+TIMESPEC TS_false12 = FROM "clocks_clkout1" TO "clocks_clkout2" 20 ns;
+TIMESPEC TS_false23 = FROM "clocks_clkout2" TO "clocks_clkout3" 20 ns;
+TIMESPEC TS_false30 = FROM "clocks_clkout3" TO "clocks_clkout0" 20 ns;

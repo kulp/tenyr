@@ -234,8 +234,8 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     always @(negedge clk0) if (en) begin
         if (reset_n) begin
             rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-            if (!lhalt && state_valid)
-                manual_invalidate = illegal;
+            //if (!lhalt && state_valid)
+                //manual_invalidate = illegal;
         end
     end
 

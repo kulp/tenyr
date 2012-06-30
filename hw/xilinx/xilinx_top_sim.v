@@ -14,6 +14,10 @@ module Top();
     wire[`HALTBUSWIDTH-1:0] halt;
     assign halt[`HALT_SIM] = rhalt;
 
-    Tenyr tenyr(.clk(clk), .reset_n(reset_n), .halt(halt));
+    Tenyr tenyr(.clk(clk),
+            `ifdef HACK
+            .reset_n(reset_n),
+            `endif
+            .halt(halt));
 endmodule
 

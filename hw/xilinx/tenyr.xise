@@ -17,7 +17,7 @@
   <files>
     <file xil_pn:name="../verilog/sim/simserial.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
-      <association xil_pn:name="PostMapSimulation" xil_pn:seqID="1"/>
+      <association xil_pn:name="PostMapSimulation" xil_pn:seqID="0"/>
       <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="1"/>
       <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="0"/>
     </file>
@@ -57,7 +57,7 @@
     </file>
     <file xil_pn:name="xilinx_top_sim.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="9"/>
-      <association xil_pn:name="PostMapSimulation" xil_pn:seqID="91"/>
+      <association xil_pn:name="PostMapSimulation" xil_pn:seqID="2"/>
       <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="91"/>
       <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="2"/>
     </file>
@@ -137,6 +137,7 @@
     <property xil_pn:name="Register Duplication Map" xil_pn:value="Off" xil_pn:valueState="default" xil_pn:x_locked="true"/>
     <property xil_pn:name="Selected Module Instance Name" xil_pn:value="/Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Root Source Node Behavioral" xil_pn:value="work.Top" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Selected Simulation Root Source Node Post-Map" xil_pn:value="work.Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Root Source Node Post-Route" xil_pn:value="work.Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Root Source Node Post-Translate" xil_pn:value="work.Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Source Node" xil_pn:value="tenyr" xil_pn:valueState="non-default"/>
@@ -158,6 +159,7 @@
     <property xil_pn:name="PROP_BehavioralSimTop" xil_pn:value="Module|Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="PROP_DesignName" xil_pn:value="tenyr" xil_pn:valueState="non-default"/>
     <property xil_pn:name="PROP_DevFamilyPMName" xil_pn:value="spartan6" xil_pn:valueState="default"/>
+    <property xil_pn:name="PROP_PostMapSimTop" xil_pn:value="Module|Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="PROP_PostXlateSimTop" xil_pn:value="Module|Top" xil_pn:valueState="non-default"/>
     <property xil_pn:name="PROP_intProjectCreationTimestamp" xil_pn:value="2012-04-07T09:31:44" xil_pn:valueState="non-default"/>
     <property xil_pn:name="PROP_intWbtProjectID" xil_pn:value="484DF68C62CE19E3CD93A8624E6F7A9F" xil_pn:valueState="non-default"/>

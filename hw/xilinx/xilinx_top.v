@@ -43,10 +43,9 @@ module Tenyr(halt,
 `else
     reg reset_n = 1;
 `endif
-    wire clk_core0, clk_core90, clk_core180, clk_core270;
-    wire clk_datamem = clk_core180;
-    wire clk_insnmem = clk_core0;
     wire clk_vga;
+    `ifdef OLDCLOCK
+    wire clk_core0, clk_core90, clk_core180, clk_core270;
     tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
                            .in(clk),
                            .clk_core0(clk_core0), .clk_core0_CE(phases_valid),
@@ -54,6 +53,22 @@ module Tenyr(halt,
                            .clk_core180(clk_core180), .clk_core180_CE(phases_valid),
                            .clk_core270(clk_core270), .clk_core270_CE(phases_valid),
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
+    `else
+    tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
+                           .in(clk),
+                           .clk_core0(clk_core_base), .clk_core0_CE(phases_valid),
+                           .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
+    reg clk_core0   = 1,
+        clk_core90  = 0,
+        clk_core180 = 0,
+        clk_core270 = 0;
+    `endif
+    wire clk_datamem = clk_core180;
+    wire clk_insnmem = clk_core0;
+
+    always @(negedge clk_core_base) begin
+        {clk_core270,clk_core180,clk_core90,clk_core0} = {clk_core180,clk_core90,clk_core0,clk_core270};
+    end
 
     assign halt[`HALT_TENYR] = ~phases_valid;
     assign Led[2:0] = halt;
@@ -138,12 +153,18 @@ module Tenyr(halt,
         .dina  ('bz),
         .addra (ram_adA),
         .wea   (1'b0),
-        .douta (ram_doA),
+        .clkb  ('b0),
+        .dinb  ('bz),
+        .addrb ('bz),
+        .web   ('b0),
+        .doutb (nonce_doutb)
+        /*
         .clkb  (clk_datamem),
         .dinb  (operand_data),
         .addrb (operand_addr),
         .web   (operand_rw),
         .doutb (operand_data)
+        */
     );
 
     fontrom font(
