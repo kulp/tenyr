@@ -136,8 +136,7 @@ head(CHARS,CHARS):
 // WORDS  --                 list all words in dict.
 head(WORDS,WORDS):
     .word . + 1
-    T0   <- reloc(level1_link)
-    T1   <- [T0]        // T1 <- value of curr link
+    T1   <- @level1_link    // already relocated
 L_WORDS_top:
     T0   <- T1 + BAS    // T0 <- addr of next link
     T3   <- T0 + 1      // T3 <- addr of name string
