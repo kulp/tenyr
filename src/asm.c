@@ -28,7 +28,7 @@ static const struct {
     [OP_ADD_NEGATIVE_Y     ] = { "-" , 1 },
     [OP_XOR_INVERT_X       ] = { "^~", 0 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
-    [OP_COMPARE_NE         ] = { "~|", 0 },
+    [OP_COMPARE_NE         ] = { "<>", 0 },
 
     [OP_RESERVED0          ] = { "X0", 0 },
     [OP_RESERVED1          ] = { "X1", 0 },
