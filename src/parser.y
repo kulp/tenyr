@@ -127,10 +127,10 @@ program[outer]
             // dummy instruction permits capturing previous instruction from $outer->prev
         }
     | string_or_data program[inner]
-        {   struct instruction_list *p = $string_or_data;
+        {   struct instruction_list *p = $string_or_data, *i = $inner;
             while (p->next) p = p->next;
-            p->next = $inner;
-            $inner->prev = p;
+            p->next = i;
+            i->prev = p;
             $outer = $string_or_data;
         }
     | directive program[inner]
@@ -664,12 +664,14 @@ static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol 
 
 static struct instruction_list *make_data(struct parse_data *pd, struct const_expr_list *list)
 {
-    struct instruction_list *result = NULL, **rp = &result;
+    struct instruction_list *result = NULL, **rp = &result, *last = NULL;
 
     struct const_expr_list *p = list;
     while (p) {
         *rp = calloc(1, sizeof **rp);
         struct instruction_list *q = *rp;
+        q->prev = last;
+        last = *rp;
         rp = &q->next;
 
         q->insn = calloc(1, sizeof *q->insn);
