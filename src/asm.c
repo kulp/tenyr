@@ -41,10 +41,12 @@ static int is_printable(int ch, size_t len, char buf[len])
     switch (ch) {
         case ' ' : buf[0] = ' ' ;                return 1;
         case '\\': buf[0] = '\\'; buf[1] = '\\'; return 1;
+        case '\b': buf[0] = '\\'; buf[1] = 'b' ; return 1;
+        case '\f': buf[0] = '\\'; buf[1] = 'f' ; return 1;
+        case '\n': buf[0] = '\\'; buf[1] = 'n' ; return 1;
         case '\r': buf[0] = '\\'; buf[1] = 'r' ; return 1;
         case '\t': buf[0] = '\\'; buf[1] = 't' ; return 1;
-        case '\b': buf[0] = '\\'; buf[1] = 'b' ; return 1;
-        case '\n': buf[0] = '\\'; buf[1] = 'n' ; return 1;
+        case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
         default: return isprint(ch);
     }
 }

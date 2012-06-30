@@ -89,7 +89,7 @@ regnum  {hexnum}|{octnum}|{decnum}
 <charend>"'"            BEGIN INITIAL;
 <charlit>\\             BEGIN charesc;
 <charlit>.              { yylval->i = yytext[0]; BEGIN charend; return INTEGER; }
-<charesc>[nbrt\\]       { yylval->i = translate_escape(yytext[0]); BEGIN charend; return INTEGER; }
+<charesc>[nbrtfv\\]     { yylval->i = translate_escape(yytext[0]); BEGIN charend; return INTEGER; }
 
 .                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 
@@ -117,10 +117,12 @@ static int translate_escape(int what)
 {
     switch (what) {
         case '\\': return '\\';
+        case 'b' : return '\b';
+        case 'f' : return '\f';
+        case 'n' : return '\n';
         case 'r' : return '\r';
         case 't' : return '\t';
-        case 'b' : return '\b';
-        case 'n' : return '\n';
+        case 'v' : return '\v';
         default: return -1;
     }
 }
