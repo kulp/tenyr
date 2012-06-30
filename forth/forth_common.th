@@ -53,7 +53,7 @@
     .global Label                             ; \
 .L##Label##_start:                              \
     .word @link                               ; \
-    .set link, .                              ; \
+    .set link, . - 1                          ; \
     .utf32 #Name                              ; \
     .word 0                                   ; \
 .L##Label##_end:                                \
