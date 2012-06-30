@@ -26,7 +26,10 @@ CFLAGS += -Wall -Wextra $(PEDANTIC)
 
 # Optimised build
 ifeq ($(DEBUG),)
-CFLAGS  += -DNDEBUG -O3
+CPPFLAGS += -DNDEBUG
+CFLAGS   += -O3
+else
+CPPFLAGS += -DDEBUG=$(DEBUG)
 endif
 
 PEDANTIC ?= -Werror -pedantic-errors

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "obj.h"
 #include "ops.h"
@@ -17,25 +18,33 @@ static const struct {
     [OP_BITWISE_AND        ] = { "&" , 0 },
     [OP_ADD                ] = { "+" , 1 },
     [OP_MULTIPLY           ] = { "*" , 1 },
+
     [OP_SHIFT_LEFT         ] = { "<<", 0 },
-    [OP_COMPARE_LTE        ] = { "<=", 1 },
+    [OP_COMPARE_LT         ] = { "<" , 1 },
     [OP_COMPARE_EQ         ] = { "==", 1 },
-    [OP_BITWISE_NOR        ] = { "~|", 0 },
+    [OP_COMPARE_GT         ] = { ">" , 1 },
     [OP_BITWISE_NAND       ] = { "~&", 0 },
     [OP_BITWISE_XOR        ] = { "^" , 0 },
     [OP_ADD_NEGATIVE_Y     ] = { "-" , 1 },
     [OP_XOR_INVERT_X       ] = { "^~", 0 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
-    [OP_COMPARE_GT         ] = { ">" , 1 },
-    [OP_COMPARE_NE         ] = { "<>", 1 },
+    [OP_COMPARE_NE         ] = { "~|", 0 },
 
-    [OP_RESERVED           ] = { "XX", 0 }
+    [OP_RESERVED0          ] = { "X0", 0 },
+    [OP_RESERVED1          ] = { "X1", 0 },
 };
 
 int print_disassembly(FILE *out, struct instruction *i, int flags)
 {
     if (flags & ASM_AS_DATA)
         return fprintf(out, ".word 0x%08x", i->u.word);
+
+    if (flags & ASM_AS_CHAR) {
+        if (isprint(i->u.word))
+            return fprintf(out, ".word '%c'", i->u.word);
+        else
+            return fprintf(out, "         ");
+    }
 
     int type = i->u._xxxx.t;
     switch (type) {
@@ -67,6 +76,9 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                  uint32_t f8 = g->imm;                // immediate value, unsigned
                   char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
                   int32_t fa = SEXTEND(12,g->imm);    // immediate value, signed
+
+            if (f6[0] == 'X')   // reserved
+                return fprintf(out, ".word 0x%08x", i->u.word);
 
             // indices : [sgnd][g->p][op1][op2][op3]
             static const char *fmts[2][2][2][2][2] = {
@@ -115,11 +127,41 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int op2   = !inert || (g->p ? g->imm : !opYA);
             int op1   = !(opXA && inert) || (!op2 && !op3);
             int sgnd  = op_meta[g->op].sgnd;
+            int type  = g->p;
+
+            // losslessly  disambiguate these three cases :
+            //  b <- a
+            //  b <- 0
+            //  b <- $0
+            // so that assembly rountripping works more reliably
+            int rhs0  = (g->op == OP_ADD || (inert && type == 1)) && opXA && !g->imm;
+            int rhsA  = (g->op == OP_BITWISE_OR    && type == 0)  && opXA && !g->imm;
+
+            if (rhs0) {
+                op3 = 1;
+                op2 = 0;
+                op1 = 0;
+                type = 0;
+            } else if (rhsA) {
+                op1 = 1;
+                op2 = 0;
+                op3 = 0;
+            }
+
+            if (!(flags & ASM_NO_SUGAR)) {
+                if (g->op == OP_XOR_INVERT_X && g->y == 0) {
+                    f7 = f5;    // Y slot is now X
+                    f5 = ' ';   // don't print X
+                    f6 = "~";   // change op to a unary not
+                } else if (g->op == OP_ADD_NEGATIVE_Y && g->x == 0) {
+                    f5 = ' ';   // don't bring X
+                }
+            }
 
             #define C_(A,B,C,D,E) (((A) << 16) | ((B) << 12) | ((C) << 8) | ((D) << 4) | (E))
-            #define PUT(...) return fprintf(out, fmts[sgnd][g->p][op1][op2][op3], __VA_ARGS__)
+            #define PUT(...) return fprintf(out, fmts[!!sgnd][!!type][!!op1][!!op2][!!op3], __VA_ARGS__)
 
-            switch (C_(sgnd,g->p,op1,op2,op3)) {
+            switch (C_(sgnd,type,op1,op2,op3)) {
               //case C_(0,0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
                 case C_(0,0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
                 case C_(0,0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
@@ -246,68 +288,36 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     struct obj_fdata *u = ud;
 
     struct objrec *rec = u->curr_rec;
-    if (!rec)
-        return -1;
-
-    if (u->pos >= rec->size) {
-        u->curr_rec = rec = rec->next;
-        u->pos = 0;
-
-        if (!rec) {
-            // TODO get symbols
+    int done = 0;
+    while (!done) {
+        if (!rec)
             return -1;
+
+        if (rec->size == 0) {
+            while (rec && rec->size == 0)
+                u->curr_rec = rec = rec->next;
+            u->pos = 0;
+        } else {
+            if (u->pos >= rec->size) {
+                u->curr_rec = rec = rec->next;
+                u->pos = 0;
+            } else {
+                i->u.word = rec->data[u->pos++];
+                // TODO adjust addr where ?
+                i->reladdr = rec->addr;
+                i->symbol = NULL;
+                done = 1;
+            }
         }
     }
-
-    i->u.word = rec->data[u->pos++];
-    // TODO adjust addr where ?
-    i->reladdr = rec->addr;
-    i->symbol = NULL;
 
     return rc;
-}
-
-static void obj_out_symbols(struct symbol *symbol, struct obj_fdata *u, struct obj *o)
-{
-    list_foreach(symbol, Node, symbol) {
-        if (Node->global) {
-            struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
-
-            strcopy(sym->name, Node->name, sizeof sym->name);
-            assert(("Symbol address resolved", Node->resolved != 0));
-            sym->value = Node->reladdr;
-
-            u->next_sym = &sym->next;
-            u->syms++;
-        }
-    }
-}
-
-static void obj_out_reloc(struct reloc_node *reloc, struct obj_fdata *u, struct obj *o)
-{
-    if (!reloc) return;
-
-    struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
-
-    rlc->flags = 0; // TODO
-    strcopy(rlc->name, reloc->name, sizeof rlc->name);
-    rlc->name[sizeof rlc->name - 1] = 0;
-    rlc->addr = reloc->insn->reladdr;
-    rlc->width = reloc->width;
-
-    u->next_rlc = &rlc->next;
-
-    u->rlcs++;
 }
 
 static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj *o)
 {
     o->records->data[u->insns] = i->u.word;
-
     u->insns++;
-
-    obj_out_symbols(i->symbol, u, o);
-    obj_out_reloc(i->reloc, u, o);
 }
 
 static int obj_out(FILE *stream, struct instruction *i, void *ud)
@@ -316,6 +326,47 @@ static int obj_out(FILE *stream, struct instruction *i, void *ud)
     struct obj_fdata *u = ud;
 
     obj_out_insn(i, u, (struct obj*)u->o);
+
+    return rc;
+}
+
+static int obj_sym(FILE *stream, struct symbol *symbol, void *ud)
+{
+    int rc = 1;
+    struct obj_fdata *u = ud;
+
+    if (symbol->global) {
+        struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
+
+        strcopy(sym->name, symbol->name, sizeof sym->name);
+        assert(("Symbol address resolved", symbol->resolved != 0));
+        sym->value = symbol->reladdr;
+
+        u->next_sym = &sym->next;
+        u->syms++;
+    }
+
+    return rc;
+}
+
+static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
+{
+    int rc = 1;
+    struct obj_fdata *u = ud;
+    if (!reloc || !reloc->insn)
+        return 0;
+
+    struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
+
+    rlc->flags = reloc->flags;
+    strcopy(rlc->name, reloc->name, sizeof rlc->name);
+    rlc->name[sizeof rlc->name - 1] = 0;
+    rlc->addr = reloc->insn->reladdr;
+    rlc->width = reloc->width;
+
+    u->next_rlc = &rlc->next;
+
+    u->rlcs++;
 
     return rc;
 }
@@ -406,10 +457,16 @@ static int verilog_fini(FILE *stream, void **ud)
 
 const struct format formats[] = {
     // first format is default
-    { "obj"    , obj_init    , obj_in , obj_out    , obj_fini     },
-    { "raw"    , NULL        , raw_in , raw_out    , NULL         },
-    { "text"   , NULL        , text_in, text_out   , NULL         },
-    { "verilog", verilog_init, NULL   , verilog_out, verilog_fini },
+    { "obj",
+        .init  = obj_init,
+        .in    = obj_in,
+        .out   = obj_out,
+        .fini  = obj_fini,
+        .sym   = obj_sym,
+        .reloc = obj_reloc },
+    { "raw" , .in = raw_in , .out = raw_out  },
+    { "text", .in = text_in, .out = text_out },
+	{ "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
 };
 
 const size_t formats_count = countof(formats);
@@ -418,9 +475,9 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format formats[flen], size_t len, char buf[len],
         const char *sep)
 {
-	int pos = 0;
+    int pos = 0;
     const struct format *f = formats;
-	while (pos < (signed)len && f < formats + flen) {
+    while (pos < (signed)len && f < formats + flen) {
         if (pred == NULL || pred(f)) {
             if (pos > 0) {
                 pos += snprintf(&buf[pos], len - pos, "%s%s", sep, f->name);
@@ -430,8 +487,8 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
         }
 
         f++;
-	}
+    }
 
-	return pos;
+    return pos;
 }
 

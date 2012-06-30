@@ -32,7 +32,7 @@
 // specified by the ANS Forth document.
 //
 // !      x a-addr --           store cell in memory
-head(STOMEM,!):
+head(STORE,!):
     .word . + 1
     T0  <- [PSP + 2]
     T1  <- [PSP + 1]
@@ -63,9 +63,7 @@ head(CMP_LT,<):
     T0  <- [PSP + 2]
     T1  <- [PSP + 1]
     PSP <- PSP + 1
-    T2  <- T0 <= T1
-    T3  <- T0 <> T1
-    T2  <- T2 & T3
+    T2  <- T0 < T1
     T2  -> [PSP + 1]
     goto(NEXT)
 
@@ -94,7 +92,7 @@ head(DUPNZ,?DUP):
     goto(NEXT)
 
 // @      a-addr -- x         fetch cell from memory
-head(AROBASE,@):
+head(FETCH,@):
     .word . + 1
     W <- [PSP + 1]
     W <- [W]
@@ -105,9 +103,7 @@ head(AROBASE,@):
 head(LTZ,0<):
     .word . + 1
     T0  <- [PSP + 1]
-    T0  <- T0 <> 0
-    T1  <- T0 <= 0
-    T0  <- T0 & T1
+    T0  <- T0 < 0
     T0  -> [PSP + 1]
     goto(NEXT)
 
@@ -158,13 +154,13 @@ head(AND,AND): BINOP(&)
 // C!     c c-addr --           store char in memory
 head(STOCHR,C!):
     .word @ENTER
-    .word @STOMEM
+    .word @STORE
     .word @EXIT
 
 // C@     c-addr -- c         fetch char from memory
 head(FETCHR,C@):
     .word @ENTER
-    .word @AROBASE
+    .word @FETCH
     .word @EXIT
 
 // DROP   x --                     drop top of stack

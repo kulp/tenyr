@@ -1,4 +1,5 @@
 #include "forth_common.th"
+#include "serial.th"
 
 .set link, @level0_link
 
@@ -61,6 +62,11 @@
 // CELL+  a-addr1 -- a-addr2   add cell size to adrs
 // CHAR   -- char              parse ASCII character
 // CHARS  n1 -- n2                 chars->adrs units
+head(CHARS,CHARS):
+    .word @ENTER
+    // no-op ; chars are address units in tenyr
+    .word @EXIT
+
 // CHAR+  c-addr1 -- c-addr2   add char size to adrs
 // COUNT  c-addr1 -- c-addr2 u      counted->adr/len
 // CR     --                          output newline
@@ -128,14 +134,61 @@
 // TIB    -- a-addr            Terminal Input Buffer
 // WITHIN n1|u1 n2|u2 n3|u3 -- f     test n2<=n1<n3?
 // WORDS  --                 list all words in dict.
+head(WORDS,WORDS):
+    .word . + 1
+    T0   <- reloc(level0_link)
+L_WORDS_top:
+    T1   <- [T0]        // T1 <- value of curr link
+    T0   <- T1 + F      // T0 <- addr of next link
+    T3   <- T0 + 1      // T3 <- addr of name string
+
+L_char_top:
+    T4   <- [T3]        // T4 <- character
+    T5   <- T4 == 0     // T5 <- end of string ?
+
+    // jnzrel(T5,L_char_bottom)
+    T6   <- f - p + (@L_char_bottom - 3)
+    T6   <- T6 & T5
+    p    <- p + T6 + 1
+
+    T4   -> SERIAL      // emit character
+    T3   <- T3 + 1      // increment char addr
+    p    <- reloc(L_char_top)
+L_char_bottom:
+    T4   <- 0xa         // newline
+    T4   -> SERIAL
+
+    T2   <- T1 <> 0     // T2 <- continue ?
+    // jnzrel(T2,L_WORDS_top)
+    T3   <- f - p + (@L_WORDS_top - 3)
+    T3   <- T3 & T2
+    p    <- p + T3 + 1
+
+    goto(NEXT)
+
 //
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
 head(ISNUMBER,?NUMBER):
     .word @ENTER
+    .word @LIT
+    .word '0'       // load '0' onto stack
+
+    .word @FETCHR   // fetch character from string
+
+    .word @LIT
+    .word 1
+    .word @CHARS
+    .word @ADD_1    // increment character pointer
+
+    .word @CMP_LT
+
+    .word @LIT
+    .word '9'
+    // TODO
     .word @EXIT
 
 .global level1_link
-.set level0_link, @link
+.set level1_link, @link
 

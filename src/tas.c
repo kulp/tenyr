@@ -1,4 +1,6 @@
 #include "ops.h"
+// obj.h is included for RLC_* flags ; reconsider their location
+#include "obj.h"
 #include "parser.h"
 #include "parser_global.h"
 #include "lexer.h"
@@ -18,12 +20,18 @@
 #include <io.h>
 #endif
 
-static const char shortopts[] = "df:o:hV";
+// flag to mark flipping value of relocations after a '-'
+#define RHS_FLIP 1
+
+#define NO_NAMED_RELOC 2
+
+static const char shortopts[] = "df:o:s" "hV";
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
     { "format"      , required_argument, NULL, 'f' },
     { "output"      , required_argument, NULL, 'o' },
+    { "strict"      ,       no_argument, NULL, 's' },
 
     { "help"        ,       no_argument, NULL, 'h' },
     { "version"     ,       no_argument, NULL, 'V' },
@@ -33,8 +41,15 @@ static const struct option longopts[] = {
 
 #define version() "tas version " STR(BUILD_NAME)
 
-static int ce_eval(struct parse_data *pd, struct instruction *context, struct
-        const_expr *ce, int width, uint32_t *result);
+typedef int reloc_handler(struct parse_data *pd, struct instruction *evalctx,
+        struct instruction *defctx, int flags, struct const_expr *ce, void
+        *ud);
+
+static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
+        instruction *defctx, struct const_expr *ce, int flags, reloc_handler
+        *rhandler, void *rud, uint32_t *result);
+
+static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width, int flags);
 
 static int format_has_output(const struct format *f)
 {
@@ -51,6 +66,7 @@ static int usage(const char *me)
            "  -d, --disassemble     disassemble (default is to assemble)\n"
            "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"
+           "  -s, --strict          disable syntax sugar in disassembly\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
            , me, format_list, version());
@@ -67,6 +83,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name)
     return NULL;
 }
 
+// symbol_lookup returns 1 on success
 static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
         char *name, uint32_t *result)
 {
@@ -74,33 +91,44 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
     if ((symbol = symbol_find(list, name))) {
         if (result) {
             if (symbol->ce) {
-                struct instruction_list *prev = *symbol->ce->deferred;
-                struct instruction *c = prev ? prev->insn : NULL;
-                return ce_eval(pd, c, symbol->ce, WORD_BITWIDTH, result);
+                struct instruction_list **prev = symbol->ce->deferred;
+                struct instruction *c = (prev && *prev) ? (*prev)->insn : NULL;
+                return ce_eval(pd, c, NULL, symbol->ce, 0, NULL, NULL, result);
             } else {
                 *result = symbol->reladdr;
             }
         }
-        return 0;
+        return 1;
     }
 
     // unresolved symbols get a zero value, but this is still success in CE_EXT
     // case (not in CE_SYM case)
     if (result) *result = 0;
-    return 1;
+    return 0;
 }
 
-static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width)
+// add_relocation returns 1 on success
+static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width, int flags)
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
     if (name && name[0]) {
+        if (insn)
+            debug(5, "Adding relocation for `%s' of width %d @ 0x%08x with flags %#x", name, width, insn->reladdr, flags);
+        else
+            debug(5, "Adding relocation for `%s' of width %d for NULL with flags %#x", name, width, flags);
         strcopy(node->reloc.name, name, sizeof node->reloc.name);
     } else {
+        if (insn)
+            debug(5, "Adding null relocation of width %d @ 0x%08x with flags %#x", width, insn->reladdr, flags);
+        else
+            // XXX what does a relocation with (insn == NULL) mean ?
+            debug(5, "Adding null relocation of width %d for NULL with flags %#x", width, flags);
         node->reloc.name[0] = 0;
     }
     node->reloc.insn  = insn;
     node->reloc.width = width;
+    node->reloc.flags = flags;
 
     node->next = pd->relocs;
     pd->relocs = node;
@@ -108,62 +136,90 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
     if (insn)
         insn->reloc = &node->reloc;
 
-    return 0;
+    return 1;
 }
 
-static int ce_eval(struct parse_data *pd, struct instruction *context, struct
-        const_expr *ce, int width, uint32_t *result)
+static int sym_reloc_handler(struct parse_data *pd, struct instruction
+        *evalctx, struct instruction *defctx, int flags, struct const_expr *ce,
+        void *ud)
 {
-    uint32_t left, right;
-    const char *name = ce->symbolname;
-    if (ce->symbol)
-        name = ce->symbol->name;
+    int rc = 0;
+    int *width = ud;
+
+    int rlc_flags = 0;
+
+    if (flags & RHS_FLIP)
+        rlc_flags |= RLC_NEGATE;
 
     switch (ce->type) {
         case CE_SYM:
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
-                struct instruction_list *prev = *ce->symbol->ce->deferred;
-                struct instruction *c = prev ? prev->insn : NULL;
-                int rc = ce_eval(pd, c, ce->symbol->ce, width, result);
-                if (c)
-                    return add_relocation(pd, NULL, c, width);
-                else
-                    return rc;
-            } else {
-                int rc = symbol_lookup(pd, pd->symbols, name, result);
-                if (ce->type == CE_SYM) {
-                    return rc;
-                } else
-                    if (rc) {
-                        return add_relocation(pd, name, context, width);
-                    } else {
-                        return add_relocation(pd, NULL, context, width);
-                    }
+                return defctx ? add_relocation(pd, NULL, defctx, *width, rlc_flags) : 0;
+            } else if (ce->type == CE_EXT) {
+                const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
+                const char *n = (flags & NO_NAMED_RELOC) ? NULL : name;
+                return add_relocation(pd, n, evalctx, *width, rlc_flags);
             }
         case CE_ICI:
-            if (context)
-                *result = context->reladdr;
-            else
-                *result = 0;
-            return add_relocation(pd, NULL, context, width);
-        case CE_IMM: *result = ce->i; return 0;
-        case CE_OP2:
-            if (!ce_eval(pd, context, ce->left , width, &left) &&
-                !ce_eval(pd, context, ce->right, width, &right))
+            return add_relocation(pd, NULL, evalctx, *width, rlc_flags);
+        default:
+            return 0;
+    }
+
+    return rc;
+}
+
+// ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
+static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
+        instruction *defctx, struct const_expr *ce, int flags, reloc_handler
+        *rhandler, void *rud, uint32_t *result)
+{
+    uint32_t left, right;
+
+    switch (ce->type) {
+        case CE_SYM:
+        case CE_EXT:
+            if (ce->symbol && ce->symbol->ce) {
+                struct instruction *dc = (*ce->symbol->ce->deferred)->insn;
+                return ce_eval(pd, evalctx, dc, ce->symbol->ce, flags, rhandler, rud, result)
+                    || (rhandler ? rhandler(pd, evalctx, dc, flags, ce, rud) : 0);
+            } else {
+                const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
+                int found = symbol_lookup(pd, pd->symbols, name, result);
+                int hflags = flags;
+                if (found)
+                    hflags |= NO_NAMED_RELOC;
+                int handled = (rhandler ? rhandler(pd, evalctx, defctx, hflags, ce, rud) : 0);
+                return found || handled;
+            }
+        case CE_ICI:
+            // XXX explain this voodoo ; why should defctx and evalctx work this way ?
+            *result = defctx ? defctx->reladdr : evalctx ? evalctx->reladdr : 0;
+            return rhandler ? rhandler(pd, evalctx, defctx, flags, ce, rud) : !!defctx;
+        case CE_IMM: *result = ce->i; return 1;
+        case CE_OP2: {
+            int lhsflags = flags;
+            int rhsflags = flags;
+            if (ce->op == '-')
+                rhsflags ^= RHS_FLIP;
+            // TODO what if rhandler doesn't always succeed ? could change lhs but not rhs
+            if (ce_eval(pd, evalctx, defctx, ce->left , lhsflags, rhandler, rud, &left) &&
+                ce_eval(pd, evalctx, defctx, ce->right, rhsflags, rhandler, rud, &right))
             {
                 switch (ce->op) {
-                    case '+': *result = left +  right; return 0;
-                    case '-': *result = left -  right; return 0;
-                    case '*': *result = left *  right; return 0;
-                    case LSH: *result = left << right; return 0;
+                    case '+': *result = left +  right; return 1;
+                    case '-': *result = left -  right; return 1;
+                    case '*': *result = left *  right; return 1;
+                    case LSH: *result = left << right; return 1;
                     default: fatal(0, "Unrecognised const_expr op '%c'", ce->op);
                 }
             }
-            return 1;
+            return 0;
+        }
         default:
             fatal(0, "Unrecognised const_expr type %d", ce->type);
-            return 1;
+            return 0;
     }
 }
 
@@ -199,13 +255,11 @@ static void ce_free(struct const_expr *ce, int recurse)
 
 static int fixup_deferred_exprs(struct parse_data *pd)
 {
-    int rc = 0;
-
     list_foreach(deferred_expr, r, pd->defexprs) {
         struct const_expr *ce = r->ce;
 
         uint32_t result;
-        if ((rc = ce_eval(pd, ce->insn, ce, r->width, &result)) == 0) {
+        if (ce_eval(pd, ce->insn, NULL, ce, 0, sym_reloc_handler, &r->width, &result)) {
             uint32_t mask = ~(((1ULL << (r->width - 1)) << 1) - 1);
             result *= r->mult;
             *r->dest &= mask;
@@ -262,6 +316,11 @@ static int check_symbols(struct symbol_list *symbols)
 
 static int assembly_cleanup(struct parse_data *pd)
 {
+    list_foreach(instruction_list, Node, pd->top) {
+        free(Node->insn);
+        free(Node);
+    }
+
     list_foreach(symbol_list, Node, pd->symbols) {
         ce_free(Node->symbol->ce, 1);
         free(Node->symbol);
@@ -297,6 +356,12 @@ static int assembly_fixup_insns(struct parse_data *pd)
         reladdr++;
     }
 
+    list_foreach(symbol_list, li, pd->symbols)
+        list_foreach(symbol, l, li->symbol)
+            if (!l->resolved)
+                if (ce_eval(pd, NULL, NULL, l->ce, 0, sym_reloc_handler, (int[]){ WORD_BITWIDTH }, &l->reladdr))
+                    l->resolved = 1;
+
     return 0;
 }
 
@@ -313,14 +378,18 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
         if (f->init)
             f->init(out, ASM_ASSEMBLE, &ud);
 
-        list_foreach(instruction_list, Node, pd->top) {
+        list_foreach(instruction_list, Node, pd->top)
             // if !Node->insn, it's a placeholder or some kind of dummy
-            if (Node->insn) {
+            if (Node->insn)
                 f->out(out, Node->insn, ud);
-                free(Node->insn);
-            }
-            free(Node);
-        }
+
+        if (f->sym)
+            list_foreach(symbol_list, Node, pd->symbols)
+                f->sym(out, Node->symbol, ud);
+
+        if (f->reloc)
+            list_foreach(reloc_list, Node, pd->relocs)
+                f->reloc(out, &Node->reloc, ud);
 
         if (f->fini)
             f->fini(out, &ud);
@@ -349,7 +418,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
     return result;
 }
 
-int do_disassembly(FILE *in, FILE *out, const struct format *f)
+int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
 {
     int rc = 0;
 
@@ -360,9 +429,11 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f)
 
     uint32_t reladdr = 0;
     while ((rc = f->in(in, &i, ud)) == 1) {
-        int len = print_disassembly(out, &i, ASM_AS_INSN);
+        int len = print_disassembly(out, &i, ASM_AS_INSN | flags);
         fprintf(out, "%*s# ", 30 - len, "");
-        print_disassembly(out, &i, ASM_AS_DATA);
+        print_disassembly(out, &i, ASM_AS_DATA | flags);
+        fprintf(out, " ; ");
+        print_disassembly(out, &i, ASM_AS_CHAR | flags);
         // TODO make i.reladdr correct so we can use that XXX hack
         fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
     }
@@ -379,6 +450,7 @@ int main(int argc, char *argv[])
 {
     int rc = 0;
     int disassemble = 0;
+    int flags = 0;
 
     const struct format *f = &formats[0];
 
@@ -395,6 +467,7 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'o': out = fopen(optarg, "wb"); break;
             case 'd': disassemble = 1; break;
+            case 's': flags |= ASM_NO_SUGAR; break;
             case 'f': {
                 size_t sz = formats_count;
                 f = lfind(&(struct format){ .name = optarg }, formats, &sz,
@@ -442,7 +515,7 @@ int main(int argc, char *argv[])
 
         if (disassemble) {
             if (f->in) {
-                rc = do_disassembly(in, out, f);
+                rc = do_disassembly(in, out, f, flags);
             } else {
                 fatal(0, "Format `%s' does not support disassembly", f->name);
             }

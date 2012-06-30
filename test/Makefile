@@ -7,11 +7,15 @@ TLD = ../tld
 CPPFLAGS += -I../lib
 
 vpath %.tas ../lib
+vpath %.tas.cpp ../lib
 
 all:
 
+%.tas: %.tas.cpp
+	$(CPP) $(CPPFLAGS) -o $@ $<
+
 %.to: %.tas
-	cpp $(CPPFLAGS) $^ | $(TAS) -o$@ -
+	$(TAS) -o$@ $<
 
 %.texe: %.to
 	$(TLD) -o$@ $^
