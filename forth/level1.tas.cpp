@@ -136,18 +136,17 @@ head(CHARS,CHARS):
 // WORDS  --                 list all words in dict.
 head(WORDS,WORDS):
     .word . + 1
-    T0   <- reloc(level0_link)
+    T0   <- reloc(level1_link)
     T1   <- [T0]        // T1 <- value of curr link
 L_WORDS_top:
-    T0   <- T1 + F      // T0 <- addr of next link
+    T0   <- T1 + BAS    // T0 <- addr of next link
     T3   <- T0 + 1      // T3 <- addr of name string
 
 L_char_top:
     T4   <- [T3]        // T4 <- character
     T5   <- T4 == 0     // T5 <- end of string ?
 
-    // jnzrel(T5,L_char_bottom)
-    T6   <- f - p + (@L_char_bottom - 3)
+    T6   <- BAS - p + (@L_char_bottom - 3)
     T6   <- T6 & T5
     p    <- p + T6 + 1
 
@@ -160,8 +159,7 @@ L_char_bottom:
 
     T1   <- [T0]
     T2   <- T1 <> 0     // T2 <- continue ?
-    // jnzrel(T2,L_WORDS_top)
-    T3   <- f - p + (@L_WORDS_top - 3)
+    T3   <- BAS - p + (@L_WORDS_top - 3)
     T3   <- T3 & T2
     p    <- p + T3 + 1
 
