@@ -2,7 +2,7 @@
 
 .set link, 0
 head(start,start):
-    .word @FLOOP
+    //.word @FLOOP
     .word @WORDS
     .word @EXIT
 

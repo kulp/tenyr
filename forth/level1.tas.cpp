@@ -137,8 +137,8 @@ head(CHARS,CHARS):
 head(WORDS,WORDS):
     .word . + 1
     T0   <- reloc(level0_link)
-L_WORDS_top:
     T1   <- [T0]        // T1 <- value of curr link
+L_WORDS_top:
     T0   <- T1 + F      // T0 <- addr of next link
     T3   <- T0 + 1      // T3 <- addr of name string
 
@@ -158,6 +158,7 @@ L_char_bottom:
     T4   <- 0xa         // newline
     T4   -> SERIAL
 
+    T1   <- [T0]
     T2   <- T1 <> 0     // T2 <- continue ?
     // jnzrel(T2,L_WORDS_top)
     T3   <- f - p + (@L_WORDS_top - 3)
