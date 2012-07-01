@@ -34,16 +34,34 @@ static const struct {
     [OP_RESERVED1          ] = { "X1", 0 },
 };
 
+static int is_printable(int ch, size_t len, char buf[len])
+{
+    memset(buf, 0, len);
+
+    switch (ch) {
+        case ' ' : buf[0] = ' ' ;                return 1;
+        case '\\': buf[0] = '\\'; buf[1] = '\\'; return 1;
+        case '\b': buf[0] = '\\'; buf[1] = 'b' ; return 1;
+        case '\f': buf[0] = '\\'; buf[1] = 'f' ; return 1;
+        case '\n': buf[0] = '\\'; buf[1] = 'n' ; return 1;
+        case '\r': buf[0] = '\\'; buf[1] = 'r' ; return 1;
+        case '\t': buf[0] = '\\'; buf[1] = 't' ; return 1;
+        case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
+        default: return isprint(ch);
+    }
+}
+
 int print_disassembly(FILE *out, struct instruction *i, int flags)
 {
     if (flags & ASM_AS_DATA)
         return fprintf(out, ".word 0x%08x", i->u.word);
 
     if (flags & ASM_AS_CHAR) {
-        if (isprint(i->u.word))
-            return fprintf(out, ".word '%c'", i->u.word);
+        char buf[10];
+        if (is_printable(i->u.word, sizeof buf, buf))
+            return fprintf(out, ".word '%s'%*s", buf, (int)(2 - strlen(buf)), "");
         else
-            return fprintf(out, "         ");
+            return fprintf(out, "          ");
     }
 
     int type = i->u._xxxx.t;
