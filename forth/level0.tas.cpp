@@ -117,35 +117,25 @@ head(EQZ,0=):
 
 // 1+     n1/u1 -- n2/u2                add 1 to TOS
 head(ADD_1,1+):
-    .word . + 1
-    W <- [PSP + 1]
-    W <- W + 1
-    W -> [PSP + 1]
-    goto(NEXT)
+    .word @ENTER, @LIT, 1, @ADD, @EXIT
 
 // 1-     n1/u1 -- n2/u2         subtract 1 from TOS
 head(SUB_1,1-):
-    .word . + 1
-    W <- [PSP + 1]
-    W <- W - 1
-    W -> [PSP + 1]
-    goto(NEXT)
+    .word @ENTER, @LIT, 1, @SUB, @EXIT
 
 // 2*     x1 -- x2             arithmetic left shift
 head(MUL_2,2*):
-    .word . + 1
-    W <- [PSP + 1]
-    W <- W << 1
-    W -> [PSP + 1]
-    goto(NEXT)
+    .word @ENTER, @LIT, 1, @LSHIFT, @EXIT
 
 // 2/     x1 -- x2            arithmetic right shift
 head(DIV_2,2/):
-    .word . + 1
-    W <- [PSP + 1]
-    W <- W >> 1
-    W -> [PSP + 1]
-    goto(NEXT)
+    // TODO this needs to truncate toward zero
+    .word @ENTER,
+    @DUP, @LIT, 0x80000000, @AND,   // get sign bit
+    @SWAP,
+    @LIT, 1, @RSHIFT,               // do division
+    @OR,                            // restore sign
+    @EXIT
 
 // AND    x1 x2 -- x3                    logical AND
 head(AND,AND): BINOP(&)
@@ -153,15 +143,11 @@ head(AND,AND): BINOP(&)
 // CONSTANT   n --           define a Forth constant
 // C!     c c-addr --           store char in memory
 head(STOCHR,C!):
-    .word @ENTER
-    .word @STORE
-    .word @EXIT
+    .word @ENTER, @STORE, @EXIT
 
 // C@     c-addr -- c         fetch char from memory
 head(FETCHR,C@):
-    .word @ENTER
-    .word @FETCH
-    .word @EXIT
+    .word @ENTER, @FETCH, @EXIT
 
 // DROP   x --                     drop top of stack
 head(DROP,DROP):

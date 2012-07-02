@@ -44,13 +44,8 @@ L_TICK_char_top:
     T4   <- T4 |  T6    // T4 <- either name ends ?
     T2   <- T2 |  T4    // T2 <- name mismatch ?
 
-    T4   <- BAS - P + (@L_TICK_match - 3)
-    T4   <- T4 & T3
-    P    <- P + T4 + 1
-
-    T4   <- BAS - P + (@L_TICK_char_bottom - 3)
-    T4   <- T4 & T2
-    P    <- P + T4 + 1
+    iftrue(T3,T4,L_TICK_match)
+    iftrue(T2,T4,L_TICK_char_bottom)
 
     T1   <- T1 + 1      // increment test-name addr
     T5   <- T5 + 1      // increment find-name addr
@@ -213,9 +208,7 @@ L_WORDS_char_top:
     T2   <- [T1]        // T2 <- character
     T3   <- T2 == 0     // T3 <- end of string ?
 
-    T4   <- BAS - P + (@L_WORDS_char_bottom - 3)
-    T4   <- T4 & T3
-    P    <- P + T4 + 1
+    iftrue(T3,T4,L_WORDS_char_bottom)
 
     T2   -> SERIAL      // emit character
     T1   <- T1 + 1      // increment char addr
@@ -226,9 +219,8 @@ L_WORDS_char_bottom:
 
     T0   <- [T0]
     T1   <- T0 <> 0     // T1 <- continue ?
-    T2   <- BAS - P + (@L_WORDS_top - 3)
-    T2   <- T2 & T1
-    P    <- P + T2 + 1
+
+    iftrue(T1,T2,L_WORDS_top)
 
     goto(NEXT)
 

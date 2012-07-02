@@ -13,6 +13,11 @@ head(start,start): .word // top level word has no @ENTER
     @EMIT32HEX,
     @CR,
 
+    @LIT, -3,
+    @DIV_2,
+    @EMIT32HEX,
+    @CR,
+
     @EXIT
 
 head(EMIT32HEX,EMIT32HEX): .word @ENTER,

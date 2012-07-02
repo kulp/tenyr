@@ -48,6 +48,11 @@
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
+#define iftrue(Predicate,Temporary,Target) \
+    Temporary <- BAS - P + (@Target - 3) ; \
+    Temporary <- Temporary & Predicate ; \
+    P <- P + Temporary + 1
+
 #define headstr(Label,Name)                     \
     .word .L##Label##_end - .L##Label##_start ; \
     .global Label                             ; \
