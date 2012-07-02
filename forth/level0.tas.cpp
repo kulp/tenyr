@@ -129,12 +129,18 @@ head(MUL_2,2*):
 
 // 2/     x1 -- x2            arithmetic right shift
 head(DIV_2,2/):
-    // TODO this needs to truncate toward zero
+    // compensation used to truncate negs toward 0
     .word @ENTER,
-    @DUP, @LIT, 0x80000000, @AND,   // get sign bit
-    @SWAP,
-    @LIT, 1, @RSHIFT,               // do division
-    @OR,                            // restore sign
+    @DUP, @LIT, 0x80000000, @AND, // x1 sign
+    @DUP, @LIT, 31, @RSHIFT,    // x1 sign comp
+    @ROT,                       // sign comp x1
+    @SWAP,                      // sign x1 comp
+    @TUCK,                      // sign comp x1 comp
+    @SUB,                       // sign comp x1c
+    @LIT, 1, @RSHIFT,           // sign comp x1c
+    @ROT,                       // comp x1c sign
+    @OR,                        // comp x1cs
+    @ADD,                       // x1csc
     @EXIT
 
 // AND    x1 x2 -- x3                    logical AND

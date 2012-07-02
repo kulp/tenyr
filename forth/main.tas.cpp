@@ -13,7 +13,22 @@ head(start,start): .word // top level word has no @ENTER
     @EMIT32HEX,
     @CR,
 
-    @LIT, -3,
+    @LIT, -5,
+    @DIV_2,
+    @EMIT32HEX,
+    @CR,
+
+    @LIT, 5,
+    @DIV_2,
+    @EMIT32HEX,
+    @CR,
+
+    @LIT, -10,
+    @DIV_2,
+    @EMIT32HEX,
+    @CR,
+
+    @LIT, 10,
     @DIV_2,
     @EMIT32HEX,
     @CR,
