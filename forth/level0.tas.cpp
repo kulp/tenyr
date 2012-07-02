@@ -248,6 +248,8 @@ head(ROT,ROT):
     goto(NEXT)
 
 // RSHIFT x1 u -- x2        logical R shift u places
+head(RSHIFT,RSHIFT): BINOP(>>)
+
 // R>     -- x    R: x --      pop from return stack
 head(POP_R,R>):
     .word . + 1
@@ -290,13 +292,6 @@ head(XOR,XOR): BINOP(^)
 //
 // <>     x1 x2 -- flag               test not equal
 head(CMP_NE,<>): BINOP(<>)
-
-// BYE    i*x --                      return to CP/M
-head(BYE,BYE):
-    .word . + 1
-    PSP <- [reloc(_PSPinit)]
-    RSP <- [reloc(_RSPinit)]
-    illegal
 
 // CMOVE  c-addr1 c-addr2 u --      move from bottom
 // CMOVE> c-addr1 c-addr2 u --         move from top

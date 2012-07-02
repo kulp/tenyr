@@ -48,16 +48,19 @@
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
-#define head(Label,Name)                        \
+#define headstr(Label,Name)                     \
     .word .L##Label##_end - .L##Label##_start ; \
     .global Label                             ; \
 .L##Label##_start:                              \
     .word @link                               ; \
     .set link, . - 1                          ; \
-    .utf32 #Name                              ; \
+    .utf32 Name                               ; \
     .word 0                                   ; \
 .L##Label##_end:                                \
 Label
+
+#define head(Label,Name) \
+    headstr(Label,#Name)
 
 #endif
 

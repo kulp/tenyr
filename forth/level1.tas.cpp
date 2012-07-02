@@ -25,6 +25,59 @@
 // #S     ud1 -- ud2        convert remaining digits
 // #>     ud1 -- c-addr u      end conv., get string
 // '      -- xt              find word in dictionary
+headstr(TICK,"'"): //' fix syntax highlighting
+    .word . + 1
+    T0   <- @dict       // already relocated
+    T5   <- [PSP + 1]   // T5 <- name to look up
+    T5   <- T5 + BAS    // relocate T5
+L_TICK_top:
+    T0   <- T0 + BAS    // T0 <- addr of next link
+    T1   <- T0 + 1      // T1 <- addr of name string
+
+L_TICK_char_top:
+    T2   <- [T1]        // T2 <- test-name char
+    T3   <- [T5]        // T3 <- find-name char
+
+    T4   <- T2 == 0     // T4 <- end of test name ?
+    T6   <- T3 == 0     // T6 <- end of test name ?
+
+    T2   <- T4 &  T6    // T2 <- both names end ?
+    T6   <- T4 |  T6    // T6 <- either name ends ?
+    T4   <- T4 <> T6    // T4 <- mismatch ?
+
+    T3   <- T4 | T6     // T3 <- name mismatch ?
+
+    T4   <- BAS - p + (@L_TICK_match - 3)
+    T4   <- T4 & T2
+    p    <- p + T4 + 1
+
+    T4   <- BAS - p + (@L_TICK_char_bottom - 3)
+    T4   <- T4 & T3
+    p    <- p + T4 + 1
+
+    T1   <- T1 + 1      // increment test-name addr
+    T5   <- T5 + 1      // increment find-name addr
+    p    <- reloc(L_TICK_char_top)
+
+L_TICK_char_bottom:
+    // now T2 is true if there was a match
+    T0   <- [T0]        // T0 <- follow link
+    T1   <- T0 <> 0     // T1 <- more words ?
+    T2   <- BAS - p + (@L_TICK_top - 3)
+    T2   <- T2 & T1
+    p    <- p + T2 + 1
+
+    // F94 states if there is no match in the
+    // dictionary, an ambiguous condition exists ;
+    // we choose to put a zero on the stack
+    A    -> [PSP + 1]
+    goto(NEXT)
+
+L_TICK_match:
+    T0   -> [PSP + 1]   // put xt on stack
+
+    goto(NEXT)
+
 // (      --                      skip input until )
 // *      n1 n2 -- n3                signed multiply
 // */     n1 n2 n3 -- n4                    n1*n2/n3
@@ -47,6 +100,12 @@
 // 2!     x1 x2 a-addr --              store 2 cells
 // 2@     a-addr -- x1 x2              fetch 2 cells
 // ABORT  i*x --   R: j*x --      clear stack & QUIT
+head(ABORT,ABORT):
+    .word . + 1
+    PSP <- [reloc(_PSPinit)]
+    RSP <- [reloc(_RSPinit)]
+    illegal
+
 // ABORT" i*x 0  -- i*x   R: j*x -- j*x  print msg &
 //        i*x x1 --       R: j*x --      abort,x1<>0
 // ABS    n1 -- +n2                   absolute value
@@ -59,6 +118,11 @@
 // BL     -- char                     an ASCII space
 // C,     char --                append char to dict
 // CELLS  n1 -- n2                 cells->adrs units
+head(CELLS,CELLS):
+    .word @ENTER
+    // no-op ; cells are address units in tenyr
+    .word @EXIT
+
 // CELL+  a-addr1 -- a-addr2   add cell size to adrs
 // CHAR   -- char              parse ASCII character
 // CHARS  n1 -- n2                 chars->adrs units
@@ -70,6 +134,13 @@ head(CHARS,CHARS):
 // CHAR+  c-addr1 -- c-addr2   add char size to adrs
 // COUNT  c-addr1 -- c-addr2 u      counted->adr/len
 // CR     --                          output newline
+head(CR,CR):
+    .word @ENTER
+    .word @LIT
+    .word '\n'
+    .word @EMIT
+    .word @EXIT
+
 // CREATE --              create an empty definition
 // DECIMAL --             set number base to decimal
 // DEPTH  -- +n             number of items on stack
@@ -136,31 +207,31 @@ head(CHARS,CHARS):
 // WORDS  --                 list all words in dict.
 head(WORDS,WORDS):
     .word . + 1
-    T1   <- @level1_link    // already relocated
+    T0   <- @dict       // already relocated
 L_WORDS_top:
-    T0   <- T1 + BAS    // T0 <- addr of next link
-    T3   <- T0 + 1      // T3 <- addr of name string
+    T0   <- T0 + BAS    // T0 <- addr of next link
+    T1   <- T0 + 1      // T1 <- addr of name string
 
-L_char_top:
-    T4   <- [T3]        // T4 <- character
-    T5   <- T4 == 0     // T5 <- end of string ?
+L_WORDS_char_top:
+    T2   <- [T1]        // T2 <- character
+    T3   <- T2 == 0     // T3 <- end of string ?
 
-    T6   <- BAS - p + (@L_char_bottom - 3)
-    T6   <- T6 & T5
-    p    <- p + T6 + 1
+    T4   <- BAS - p + (@L_WORDS_char_bottom - 3)
+    T4   <- T4 & T3
+    p    <- p + T4 + 1
 
-    T4   -> SERIAL      // emit character
-    T3   <- T3 + 1      // increment char addr
-    p    <- reloc(L_char_top)
-L_char_bottom:
-    T4   <- 0xa         // newline
-    T4   -> SERIAL
+    T2   -> SERIAL      // emit character
+    T1   <- T1 + 1      // increment char addr
+    p    <- reloc(L_WORDS_char_top)
+L_WORDS_char_bottom:
+    T1   <- '\n'
+    T1   -> SERIAL
 
-    T1   <- [T0]
-    T2   <- T1 <> 0     // T2 <- continue ?
-    T3   <- BAS - p + (@L_WORDS_top - 3)
-    T3   <- T3 & T2
-    p    <- p + T3 + 1
+    T0   <- [T0]
+    T1   <- T0 <> 0     // T1 <- continue ?
+    T2   <- BAS - p + (@L_WORDS_top - 3)
+    T2   <- T2 & T1
+    p    <- p + T2 + 1
 
     goto(NEXT)
 
@@ -169,6 +240,7 @@ L_char_bottom:
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
 head(ISNUMBER,?NUMBER):
+    // TODO make sensitive to BASE
     .word @ENTER
     .word @LIT
     .word '0'       // load '0' onto stack
@@ -189,4 +261,7 @@ head(ISNUMBER,?NUMBER):
 
 .global level1_link
 .set level1_link, @link
+
+.global dict
+.set dict, @level1_link
 

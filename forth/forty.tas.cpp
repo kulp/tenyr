@@ -33,5 +33,5 @@ head(ENTER,ENTER):
     goto(NEXT)
 
 _done:
-    .word @BYE
+    .word @ABORT
 
