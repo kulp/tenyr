@@ -95,7 +95,7 @@ head(DUPNZ,?DUP):
 head(FETCH,@):
     .word . + 1
     W <- [PSP + 1]
-    W <- [W]
+    W <- [W + BAS]
     W -> [PSP + 1]
     goto(NEXT)
 

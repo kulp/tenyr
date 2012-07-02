@@ -1,53 +1,31 @@
 #include "forth_common.th"
 
-searchterm: .utf32 "?NUMBER" ; .word 0
+searchterm: .utf32 "OVER" ; .word 0
 
 .set link, 0
 head(start,start):
     //.word @FLOOP
-    .word @WORDS
-    .word @LIT
-    .word @searchterm
-    .word @TICK
+    .word
+    //@WORDS,
+    @LIT,
+    @searchterm,
+    @TICK,
 
-    .word @DUP
-    .word @LIT, 4
-    .word @RSHIFT
+    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LIT, 4, @RSHIFT,
 
-    .word @DUP
-    .word @LIT, 4
-    .word @RSHIFT
+    @LIT, 15, @AND, @LIT, @hexchars, @ADD, @FETCHR, @EMIT,
+    @LIT, 15, @AND, @LIT, @hexchars, @ADD, @FETCHR, @EMIT,
+    @LIT, 15, @AND, @LIT, @hexchars, @ADD, @FETCHR, @EMIT,
+    @LIT, 15, @AND, @LIT, @hexchars, @ADD, @FETCHR, @EMIT,
 
-    .word @DUP
-    .word @LIT, 4
-    .word @RSHIFT
+    //@DUP, @LIT, 15, @AND, @LIT, @hexchars, @ADD, @FETCHR, @EMIT, @LIT, 4, @RSHIFT,
+    //@DUP, @LIT, 15, @AND, @LIT, @hexchars, @ADD, @FETCHR, @EMIT, @LIT, 4, @RSHIFT,
+    //@DUP, @LIT, 15, @AND, @LIT, @hexchars, @ADD, @FETCHR, @EMIT, @LIT, 4, @RSHIFT,
+    //@DUP, @LIT, 15, @AND, @LIT, @hexchars, @ADD, @FETCHR, @EMIT, @LIT, 4, @RSHIFT,
 
-    .word @LIT, 15
-    .word @AND
-    //.word @LIT, 'A'
-    .word @LIT, @hexes
-    .word @ADD
-    .word @FETCHR
-    .word @EMIT
-
-    .word @LIT, 15
-    .word @AND
-    //.word @LIT, 'A'
-    //.word @ADD
-    .word @EMIT
-
-    .word @LIT, 15
-    .word @AND
-    //.word @LIT, 'A'
-    //.word @ADD
-    .word @EMIT
-
-    .word @LIT, 15
-    .word @AND
-    //.word @LIT, 'A'
-    //.word @ADD
-    .word @EMIT
-    .word @CR
+    @CR
 
     .word @EXIT
 
@@ -78,6 +56,6 @@ head(BLOOP,BLOOP):
     .word @EXIT
     illegal
 
-hexes:
+hexchars:
     .word '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
 

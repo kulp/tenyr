@@ -28,9 +28,9 @@
 headstr(TICK,"'"): //' fix syntax highlighting
     .word . + 1
     T0   <- @dict       // already relocated
+L_TICK_top:
     T5   <- [PSP + 1]   // T5 <- name to look up
     T5   <- T5 + BAS    // relocate T5
-L_TICK_top:
     T0   <- T0 + BAS    // T0 <- addr of next link
     T1   <- T0 + 1      // T1 <- addr of name string
 
@@ -38,21 +38,20 @@ L_TICK_char_top:
     T2   <- [T1]        // T2 <- test-name char
     T3   <- [T5]        // T3 <- find-name char
 
-    T4   <- T2 == 0     // T4 <- end of test name ?
-    T6   <- T3 == 0     // T6 <- end of test name ?
+    T4   <- T2 == 0     // T4 <- end of test-name ?
+    T6   <- T3 == 0     // T6 <- end of find-name ?
 
-    T2   <- T4 &  T6    // T2 <- both names end ?
+    T2   <- T2 <> T3    // T2 <- char mismatch ?
+    T3   <- T4 &  T6    // T3 <- both names end ?
     T6   <- T4 |  T6    // T6 <- either name ends ?
-    T4   <- T4 <> T6    // T4 <- mismatch ?
-
-    T3   <- T4 | T6     // T3 <- name mismatch ?
+    T2   <- T2 |  T6    // T3 <- name mismatch ?
 
     T4   <- BAS - p + (@L_TICK_match - 3)
-    T4   <- T4 & T2
+    T4   <- T4 & T3
     p    <- p + T4 + 1
 
     T4   <- BAS - p + (@L_TICK_char_bottom - 3)
-    T4   <- T4 & T3
+    T4   <- T4 & T2
     p    <- p + T4 + 1
 
     T1   <- T1 + 1      // increment test-name addr
