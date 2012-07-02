@@ -27,48 +27,46 @@
 // '      -- xt              find word in dictionary
 headstr(TICK,"'"): //' fix syntax highlighting
     .word . + 1
-    T0   <- @dict       // already relocated
+    T0   <- @dict       // T0 <- addr of dictionary
 L_TICK_top:
     T5   <- [PSP + 1]   // T5 <- name to look up
-    T5   <- T5 + BAS    // relocate T5
-    T0   <- T0 + BAS    // T0 <- addr of next link
     T1   <- T0 + 1      // T1 <- addr of name string
 
 L_TICK_char_top:
-    T2   <- [T1]        // T2 <- test-name char
-    T3   <- [T5]        // T3 <- find-name char
+    T2   <- [T1 + BAS]  // T2 <- test-name char
+    T3   <- [T5 + BAS]  // T3 <- find-name char
 
     T4   <- T2 == 0     // T4 <- end of test-name ?
     T6   <- T3 == 0     // T6 <- end of find-name ?
 
     T2   <- T2 <> T3    // T2 <- char mismatch ?
     T3   <- T4 &  T6    // T3 <- both names end ?
-    T6   <- T4 |  T6    // T6 <- either name ends ?
-    T2   <- T2 |  T6    // T3 <- name mismatch ?
+    T4   <- T4 |  T6    // T4 <- either name ends ?
+    T2   <- T2 |  T4    // T2 <- name mismatch ?
 
-    T4   <- BAS - p + (@L_TICK_match - 3)
+    T4   <- BAS - P + (@L_TICK_match - 3)
     T4   <- T4 & T3
-    p    <- p + T4 + 1
+    P    <- P + T4 + 1
 
-    T4   <- BAS - p + (@L_TICK_char_bottom - 3)
+    T4   <- BAS - P + (@L_TICK_char_bottom - 3)
     T4   <- T4 & T2
-    p    <- p + T4 + 1
+    P    <- P + T4 + 1
 
     T1   <- T1 + 1      // increment test-name addr
     T5   <- T5 + 1      // increment find-name addr
-    p    <- reloc(L_TICK_char_top)
+    P    <- reloc(L_TICK_char_top)
 
 L_TICK_char_bottom:
-    // now T2 is true if there was a match
-    T0   <- [T0]        // T0 <- follow link
+    T0   <- [T0 + BAS]  // T0 <- follow link
     T1   <- T0 <> 0     // T1 <- more words ?
-    T2   <- BAS - p + (@L_TICK_top - 3)
+    T2   <- BAS - P + (@L_TICK_top - 3)
     T2   <- T2 & T1
-    p    <- p + T2 + 1
+    P    <- P + T2 + 1
 
+    // If we reach this point, there was a mismatch.
     // F94 states if there is no match in the
     // dictionary, an ambiguous condition exists ;
-    // we choose to put a zero on the stack
+    // we choose to put a zero on the stack.
     A    -> [PSP + 1]
     goto(NEXT)
 
@@ -215,22 +213,22 @@ L_WORDS_char_top:
     T2   <- [T1]        // T2 <- character
     T3   <- T2 == 0     // T3 <- end of string ?
 
-    T4   <- BAS - p + (@L_WORDS_char_bottom - 3)
+    T4   <- BAS - P + (@L_WORDS_char_bottom - 3)
     T4   <- T4 & T3
-    p    <- p + T4 + 1
+    P    <- P + T4 + 1
 
     T2   -> SERIAL      // emit character
     T1   <- T1 + 1      // increment char addr
-    p    <- reloc(L_WORDS_char_top)
+    P    <- reloc(L_WORDS_char_top)
 L_WORDS_char_bottom:
     T1   <- '\n'
     T1   -> SERIAL
 
     T0   <- [T0]
     T1   <- T0 <> 0     // T1 <- continue ?
-    T2   <- BAS - p + (@L_WORDS_top - 3)
+    T2   <- BAS - P + (@L_WORDS_top - 3)
     T2   <- T2 & T1
-    p    <- p + T2 + 1
+    P    <- P + T2 + 1
 
     goto(NEXT)
 
