@@ -5,8 +5,9 @@ searchterm: .utf32 "over" ; .word 0
 .set link, 0
 head(start,start): .word // top level word has no @ENTER
     @WORDS,
-    @CR,
+    @CR
 
+top: .word
     @LIT,
     @searchterm,
     @TICK,
@@ -18,6 +19,17 @@ head(start,start): .word // top level word has no @ENTER
     @BL,
     @EMIT,
     @CR,
+
+    // example of a computed branch
+    @LIT, 0,
+    @LIT, @top,             // F a1
+    @SWAP, @DUP, @ROT,      // F F a1
+    @AND,                   // F a1
+    @LIT, @bottom,          // F a1 a2
+    @ROT, @INVERT, @AND,    // a1 a2
+    @OR,                    // a
+    @SET_IP
+bottom: .word
 
     @EXIT
 
@@ -33,6 +45,12 @@ head(TOHEXCHAR,>HEXCHAR): .word @ENTER,
 head(PUTS,PUTS): .word @ENTER,
     // TODO
     @EXIT
+
+head(SET_IP,SET_IP): .word . + 1
+    PSP <- PSP + 1
+    IP  <- [PSP]
+    IP  <- IP + BAS
+    goto(NEXT)
 
 hexchars:
     .word '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
