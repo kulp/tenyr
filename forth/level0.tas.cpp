@@ -129,6 +129,9 @@ head(MUL_2,2*):
 
 // 2/     x1 -- x2            arithmetic right shift
 head(DIV_2,2/):
+    .word @ENTER, @LIT, 1, @RSHIFT, @EXIT
+
+head(DIV_2N,DIV_2N):
     // compensation used to truncate negs toward 0
     .word @ENTER,
     @DUP, @LIT, 0x80000000, @AND, // x1 sign
@@ -137,7 +140,7 @@ head(DIV_2,2/):
     @SWAP,                      // sign x1 comp
     @TUCK,                      // sign comp x1 comp
     @SUB,                       // sign comp x1c
-    @LIT, 1, @RSHIFT,           // sign comp x1c
+    @DIV_2,                     // sign comp x1c
     @ROT,                       // comp x1c sign
     @OR,                        // comp x1cs
     @ADD,                       // x1csc

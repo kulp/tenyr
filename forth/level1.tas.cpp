@@ -36,6 +36,9 @@ L_TICK_char_top:
     T2   <- [T1 + BAS]  // T2 <- test-name char
     T3   <- [T5 + BAS]  // T3 <- find-name char
 
+    T2   <- T2 & 0xdf   // uppercase test-name char
+    T3   <- T3 & 0xdf   // uppercase find-name char
+
     T4   <- T2 == 0     // T4 <- end of test-name ?
     T6   <- T3 == 0     // T6 <- end of find-name ?
 
@@ -108,6 +111,10 @@ head(ABORT,ABORT):
 // BASE   -- a-addr           holds conversion radix
 // BEGIN  -- adrs         target for backward branch
 // BL     -- char                     an ASCII space
+head(BL,BL): .word @ENTER,
+    @LIT, ' ',
+    @EXIT
+
 // C,     char --                append char to dict
 // CELLS  n1 -- n2                 cells->adrs units
 head(CELLS,CELLS):
@@ -126,12 +133,9 @@ head(CHARS,CHARS):
 // CHAR+  c-addr1 -- c-addr2   add char size to adrs
 // COUNT  c-addr1 -- c-addr2 u      counted->adr/len
 // CR     --                          output newline
-head(CR,CR):
-    .word @ENTER
-    .word @LIT
-    .word '\n'
-    .word @EMIT
-    .word @EXIT
+head(CR,CR): .word @ENTER,
+    @LIT, '\n', @EMIT,
+    @EXIT
 
 // CREATE --              create an empty definition
 // DECIMAL --             set number base to decimal
@@ -165,6 +169,10 @@ head(CR,CR):
 // SM/REM d1 n1 -- n2 n3   symmetric signed division
 // SOURCE -- adr n              current input buffer
 // SPACE  --                          output a space
+head(SPACE,SPACE): .word @ENTER,
+    @BL, @EMIT,
+    @EXIT
+
 // SPACES n --                       output n spaces
 // STATE  -- a-addr             holds compiler state
 // S"     --                  compile in-line string
@@ -174,6 +182,29 @@ head(CR,CR):
 // TYPE   c-addr +n --         type line to terminal
 // UNTIL  adrs --        conditional backward branch
 // U.     u --                    display u unsigned
+head(EMIT_UNSIGNED,U.): .word @ENTER,
+
+    // TODO rewrite this as a loop, and use less stack
+    // TODO pay attention to BASE
+    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LIT, 4, @RSHIFT,
+
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+
+    @EXIT
+
 // .      n --                      display n signed
 // WHILE  -- adrs              branch for WHILE loop
 // WORD   char -- c-addr n  parse word delim by char
@@ -228,25 +259,26 @@ L_WORDS_char_bottom:
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
-head(ISNUMBER,?NUMBER):
+head(ISNUMBER,?NUMBER): .word @ENTER,
     // TODO make sensitive to BASE
-    .word @ENTER
-    .word @LIT
-    .word '0'       // load '0' onto stack
+    @DUP,                   // c-addr c-addr
+    @LIT, 1, @CHARS, @ADD,  // ca ca+1
+    @SWAP,                  // ca+1 ca
+    @FETCHR,                // ca+1 ch
+    @LIT, ('0' - 1),        // ca+1 ch '0'-1
+    @CMP_GT,                // ca+1 ch flag
+    @OVER,                  // ca+1 ch flag ch
+    @LIT, ('9' + 1),        // ca+1 ch flag ch '9'+1
+    @CMP_LT,                // ca+1 ch flag flag
+    @AND,                   // ca+1 ch flag
 
-    .word @FETCHR   // fetch character from string
+    @LIT, 1, @CHARS,
+    @ADD_1,     // increment character pointer
 
-    .word @LIT
-    .word 1
-    .word @CHARS
-    .word @ADD_1    // increment character pointer
+    @CMP_LT,
 
-    .word @CMP_LT
-
-    .word @LIT
-    .word '9'
     // TODO
-    .word @EXIT
+    @EXIT
 
 .global level1_link
 .set level1_link, @link

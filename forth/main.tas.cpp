@@ -1,6 +1,6 @@
 #include "forth_common.th"
 
-searchterm: .utf32 "OVER" ; .word 0
+searchterm: .utf32 "over" ; .word 0
 
 .set link, 0
 head(start,start): .word // top level word has no @ENTER
@@ -10,50 +10,14 @@ head(start,start): .word // top level word has no @ENTER
     @LIT,
     @searchterm,
     @TICK,
-    @EMIT32HEX,
+    @EMIT_UNSIGNED,
+    @BL,
+    @EMIT,
+    @LIT, ':',
+    @EMIT,
+    @BL,
+    @EMIT,
     @CR,
-
-    @LIT, -5,
-    @DIV_2,
-    @EMIT32HEX,
-    @CR,
-
-    @LIT, 5,
-    @DIV_2,
-    @EMIT32HEX,
-    @CR,
-
-    @LIT, -10,
-    @DIV_2,
-    @EMIT32HEX,
-    @CR,
-
-    @LIT, 10,
-    @DIV_2,
-    @EMIT32HEX,
-    @CR,
-
-    @EXIT
-
-head(EMIT32HEX,EMIT32HEX): .word @ENTER,
-
-    // TODO rewrite this as a loop, and use less stack
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-
-    @MASK4BITS, @TOHEXCHAR, @EMIT,
-    @MASK4BITS, @TOHEXCHAR, @EMIT,
-    @MASK4BITS, @TOHEXCHAR, @EMIT,
-    @MASK4BITS, @TOHEXCHAR, @EMIT,
-    @MASK4BITS, @TOHEXCHAR, @EMIT,
-    @MASK4BITS, @TOHEXCHAR, @EMIT,
-    @MASK4BITS, @TOHEXCHAR, @EMIT,
-    @MASK4BITS, @TOHEXCHAR, @EMIT,
 
     @EXIT
 
@@ -64,6 +28,10 @@ head(MASK4BITS,MASK4BITS): .word @ENTER,
 head(TOHEXCHAR,>HEXCHAR): .word @ENTER,
     // TODO stop referring to @hexchars directly
     @LIT, @hexchars, @ADD, @FETCHR,
+    @EXIT
+
+head(PUTS,PUTS): .word @ENTER,
+    // TODO
     @EXIT
 
 hexchars:
