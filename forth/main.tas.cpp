@@ -25,7 +25,25 @@ top: .word
     @LIT, 0,
     IFNOT0(top,bottom)
 bottom: .word
+    @NOOP
 
+wordstart: .word
+    @KEY,
+    @DUP, @LIT, '\n', @CMP_EQ,
+    IFNOT0(linedone,checkspace)
+checkspace: .word
+    @DUP, @BL, @CMP_EQ,
+    IFNOT0(worddone,regular),
+    @NOOP
+regular: .word
+    @EMIT,
+    @LIT, @wordstart, @RELOC, @SET_IP
+worddone: .word
+    @DROP,
+    @CR,
+    @LIT, @wordstart, @RELOC, @SET_IP
+linedone: .word
+    @CR,
     @EXIT
 
 head(MASK4BITS,MASK4BITS):
@@ -52,7 +70,24 @@ head(SET_IP,SET_IP):
 interp(SET_IP): .word . + 1
     PSP <- PSP + 1
     IP  <- [PSP]
-    IP  <- IP + BAS
+    goto(NEXT)
+
+head(GET_IP,GET_IP):
+interp(GET_IP): .word . + 1
+    IP  -> [PSP]
+    PSP <- PSP - 1
+    goto(NEXT)
+
+head(GET_PSP,GET_PSP):
+interp(GET_PSP): .word . + 1
+    PSP -> [PSP]
+    PSP <- PSP - 1
+    goto(NEXT)
+
+head(GET_RSP,GET_RSP):
+interp(GET_RSP): .word . + 1
+    RSP -> [PSP]
+    PSP <- PSP - 1
     goto(NEXT)
 
 head(RELOC,RELOC):

@@ -95,7 +95,7 @@
     @LIT, @Then,        /* F a1 a2 */ \
     @ROT, @EQZ, @AND,   /* a1 a2   */ \
     @OR,                /* a       */ \
-    @SET_IP
+    @RELOC, @SET_IP
 
 
 #endif
