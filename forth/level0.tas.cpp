@@ -194,7 +194,7 @@ head(EXIT,EXIT):
 head(INVERT,INVERT):
     .word . + 1
     W <- [PSP + 1]
-    W <- W ^ -1
+    W <- W ^~ A
     W -> [PSP + 1]
     goto(NEXT)
 
