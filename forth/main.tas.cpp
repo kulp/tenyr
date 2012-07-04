@@ -4,7 +4,7 @@ searchterm: .utf32 "over" ; .word 0
 
 .set link, 0
 head(start,start):
-interp(start): .word // top level word has no @ENTER
+exec(start): .word // top level word has no @ENTER
     @WORDS,
     @CR
 
@@ -47,51 +47,51 @@ linedone: .word
     @EXIT
 
 head(MASK4BITS,MASK4BITS):
-interp(MASK4BITS): .word @ENTER,
+exec(MASK4BITS): .word @ENTER,
     @LIT, 15, @AND,
     @EXIT
 
 head(HEXTABLE,HEXTABLE):
-interp(HEXTABLE): .word @ENTER,
+exec(HEXTABLE): .word @ENTER,
     @LIT, @hexchars, @RELOC,
     @EXIT
 
 head(TOHEXCHAR,>HEXCHAR):
-interp(TOHEXCHAR): .word @ENTER,
+exec(TOHEXCHAR): .word @ENTER,
     @HEXTABLE, @ADD, @FETCHR,
     @EXIT
 
 head(PUTS,PUTS):
-interp(PUTS): .word @ENTER,
+exec(PUTS): .word @ENTER,
     // TODO
     @EXIT
 
 head(SET_IP,SET_IP):
-interp(SET_IP): .word . + 1
+exec(SET_IP): .word . + 1
     PSP <- PSP + 1
     IP  <- [PSP]
     goto(NEXT)
 
 head(GET_IP,GET_IP):
-interp(GET_IP): .word . + 1
+exec(GET_IP): .word . + 1
     IP  -> [PSP]
     PSP <- PSP - 1
     goto(NEXT)
 
 head(GET_PSP,GET_PSP):
-interp(GET_PSP): .word . + 1
+exec(GET_PSP): .word . + 1
     PSP -> [PSP]
     PSP <- PSP - 1
     goto(NEXT)
 
 head(GET_RSP,GET_RSP):
-interp(GET_RSP): .word . + 1
+exec(GET_RSP): .word . + 1
     RSP -> [PSP]
     PSP <- PSP - 1
     goto(NEXT)
 
 head(RELOC,RELOC):
-interp(RELOC): .word . + 1
+exec(RELOC): .word . + 1
     W <- [PSP + 1]
     W <- W + BAS
     W -> [PSP + 1]

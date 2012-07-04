@@ -27,7 +27,7 @@ NEXT:
     jmp(X)
 
 head(ENTER,ENTER):
-interp(ENTER):
+exec(ENTER):
     .word . + 1
     push(RSP,IP)
     IP <- W + 1
