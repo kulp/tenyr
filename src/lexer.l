@@ -28,13 +28,13 @@ static int translate_escape(int what);
 
 %}
 
-%option reentrant bison-bridge bison-locations
+%option reentrant bison-bridge bison-locations stack
 %option noyywrap never-interactive yylineno batch
 %option case-insensitive
 %option extra-type="struct parse_data *"
 %option prefix="tenyr_"
 
-%x charlit charend charesc
+%x charlit charend charesc comment
 
 regname ([A-P])
 /* don't permit collision with regname */
@@ -84,6 +84,8 @@ regnum  {hexnum}|{octnum}|{decnum}
 
 "//".*$                 ; // c99-style comments
 "#".*$                  ; // bash-style comments
+"/*"                    yy_push_state(comment, yyscanner);
+<comment>"*/"           yy_pop_state(yyscanner);
 
 "'"                     BEGIN charlit;
 <charend>"'"            BEGIN INITIAL;
