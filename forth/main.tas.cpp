@@ -23,13 +23,7 @@ top: .word
 
     // example of a computed branch
     @LIT, 0,
-    @LIT, @top,             // F a1
-    @SWAP, @DUP, @ROT,      // F F a1
-    @AND,                   // F a1
-    @LIT, @bottom,          // F a1 a2
-    @ROT, @INVERT, @AND,    // a1 a2
-    @OR,                    // a
-    @SET_IP
+    IFNOT0(top,bottom)
 bottom: .word
 
     @EXIT
