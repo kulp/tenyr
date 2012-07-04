@@ -88,11 +88,11 @@
 
 // expects to be called in a @word context
 #define IFNOT0(Then,Else)             \
-    @EQZ, @EQZ,         /* nrmlise */ \
-    @LIT, @Then,        /* F a1    */ \
+    @EQZ,               /* nrmlise */ \
+    @LIT, @Else,        /* F a1    */ \
     @SWAP, @DUP, @ROT,  /* F F a1  */ \
     @AND,               /* F a1    */ \
-    @LIT, @Else,        /* F a1 a2 */ \
+    @LIT, @Then,        /* F a1 a2 */ \
     @ROT, @EQZ, @AND,   /* a1 a2   */ \
     @OR,                /* a       */ \
     @SET_IP
