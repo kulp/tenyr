@@ -33,10 +33,14 @@ interp(MASK4BITS): .word @ENTER,
     @LIT, 15, @AND,
     @EXIT
 
+head(HEXTABLE,HEXTABLE):
+interp(HEXTABLE): .word @ENTER,
+    @LIT, @hexchars, @RELOC,
+    @EXIT
+
 head(TOHEXCHAR,>HEXCHAR):
 interp(TOHEXCHAR): .word @ENTER,
-    // TODO stop referring to @hexchars directly
-    @LIT, @hexchars, @ADD, @FETCHR,
+    @HEXTABLE, @ADD, @FETCHR,
     @EXIT
 
 head(PUTS,PUTS):
@@ -51,6 +55,14 @@ interp(SET_IP): .word . + 1
     IP  <- IP + BAS
     goto(NEXT)
 
+head(RELOC,RELOC):
+interp(RELOC): .word . + 1
+    W <- [PSP + 1]
+    W <- W + BAS
+    W -> [PSP + 1]
+    goto(NEXT)
+
 hexchars:
-    .word '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
+    .word '0','1','2','3','4','5','6','7',
+          '8','9','A','B','C','D','E','F'
 

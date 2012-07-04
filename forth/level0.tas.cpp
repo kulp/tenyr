@@ -105,7 +105,7 @@ head(FETCH,@):
 interp(FETCH):
     .word . + 1
     W <- [PSP + 1]
-    W <- [W + BAS]  // TODO clarify rules for reloc
+    W <- [W]
     W -> [PSP + 1]
     goto(NEXT)
 
@@ -147,20 +147,22 @@ head(DIV_2,2/):
 interp(DIV_2):
     .word @ENTER, @LIT, 1, @RSHIFT, @EXIT
 
+// this is not ANS-Forth math ; it should probably go away, but serves at least
+// as a demonstration for now
 head(DIV_2N,DIV_2N):
 interp(DIV_2N):
     // compensation used to truncate negs toward 0
     .word @ENTER,
-    @DUP, @LIT, 0x80000000, @AND, // x1 sign
-    @DUP, @LIT, 31, @RSHIFT,    // x1 sign comp
-    @ROT,                       // sign comp x1
-    @SWAP,                      // sign x1 comp
-    @TUCK,                      // sign comp x1 comp
-    @SUB,                       // sign comp x1c
-    @DIV_2,                     // sign comp x1c
-    @ROT,                       // comp x1c sign
-    @OR,                        // comp x1cs
-    @ADD,                       // x1csc
+    @DUP, @LIT, 0x80000000, @AND, // x1 sgn
+    @DUP, @LIT, 31, @RSHIFT,      // x1 sgn cmp
+    @ROT,                         // sgn cmp x1
+    @SWAP,                        // sgn x1 cmp
+    @TUCK,                        // sgn cmp x1 cmp
+    @SUB,                         // sgn cmp x1c
+    @DIV_2,                       // sgn cmp x1c
+    @ROT,                         // cmp x1c sgn
+    @OR,                          // cmp x1cs
+    @ADD,                         // x1csc
     @EXIT
 
 // AND    x1 x2 -- x3                    logical AND
