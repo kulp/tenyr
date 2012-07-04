@@ -33,6 +33,7 @@
 //
 // !      x a-addr --           store cell in memory
 head(STORE,!):
+interp(STORE):
     .word . + 1
     T0  <- [PSP + 2]
     T1  <- [PSP + 1]
@@ -41,10 +42,12 @@ head(STORE,!):
     goto(NEXT)
 
 // +      n1/u1 n2/u2 -- n3/u3             add n1+n2
-head(ADD,+): BINOP(+)
+head(ADD,+):
+interp(ADD): BINOP(+)
 
 // +!     n/u a-addr --           add cell to memory
 head(ADDMEM,+!):
+interp(ADDMEM):
     .word . + 1
     T0  <- [PSP + 2]
     T1  <- [PSP + 1]
@@ -55,10 +58,12 @@ head(ADDMEM,+!):
     goto(NEXT)
 
 // -      n1/u1 n2/u2 -- n3/u3        subtract n1-n2
-head(SUB,-): BINOP(-)
+head(SUB,-):
+interp(SUB): BINOP(-)
 
 // <      n1 n2 -- flag           test n1<n2, signed
 head(CMP_LT,<):
+interp(CMP_LT):
     .word . + 1
     T0  <- [PSP + 2]
     T1  <- [PSP + 1]
@@ -68,13 +73,16 @@ head(CMP_LT,<):
     goto(NEXT)
 
 // =      x1 x2 -- flag                   test x1=x2
-head(CMP_EQ,=): BINOP(==)
+head(CMP_EQ,=):
+interp(CMP_EQ): BINOP(==)
 
 // >      n1 n2 -- flag           test n1>n2, signed
-head(CMP_GT,>): BINOP(>)
+head(CMP_GT,>):
+interp(CMP_GT): BINOP(>)
 
 // >R     x --   R: -- x        push to return stack
 head(PUSH_R,>R):
+interp(PUSH_R):
     .word . + 1
     W   <- [PSP + 1]
     W   -> [RSP]
@@ -84,6 +92,7 @@ head(PUSH_R,>R):
 
 // ?DUP   x -- 0 | x x                DUP if nonzero
 head(DUPNZ,?DUP):
+interp(DUPNZ):
     .word . + 1
     T0  <- [PSP + 1]
     T1  <- T0 <> 0
@@ -93,6 +102,7 @@ head(DUPNZ,?DUP):
 
 // @      a-addr -- x         fetch cell from memory
 head(FETCH,@):
+interp(FETCH):
     .word . + 1
     W <- [PSP + 1]
     W <- [W + BAS]  // TODO clarify rules for reloc
@@ -101,6 +111,7 @@ head(FETCH,@):
 
 // 0<     n -- flag             true if TOS negative
 head(LTZ,0<):
+interp(LTZ):
     .word . + 1
     T0  <- [PSP + 1]
     T0  <- T0 < 0
@@ -109,6 +120,7 @@ head(LTZ,0<):
 
 // 0=     n/u -- flag           return true if TOS=0
 head(EQZ,0=):
+interp(EQZ):
     .word . + 1
     W <- [PSP + 1]
     W <- W == 0
@@ -117,21 +129,26 @@ head(EQZ,0=):
 
 // 1+     n1/u1 -- n2/u2                add 1 to TOS
 head(ADD_1,1+):
+interp(ADD_1):
     .word @ENTER, @LIT, 1, @ADD, @EXIT
 
 // 1-     n1/u1 -- n2/u2         subtract 1 from TOS
 head(SUB_1,1-):
+interp(SUB_1):
     .word @ENTER, @LIT, 1, @SUB, @EXIT
 
 // 2*     x1 -- x2             arithmetic left shift
 head(MUL_2,2*):
+interp(MUL_2):
     .word @ENTER, @LIT, 1, @LSHIFT, @EXIT
 
 // 2/     x1 -- x2            arithmetic right shift
 head(DIV_2,2/):
+interp(DIV_2):
     .word @ENTER, @LIT, 1, @RSHIFT, @EXIT
 
 head(DIV_2N,DIV_2N):
+interp(DIV_2N):
     // compensation used to truncate negs toward 0
     .word @ENTER,
     @DUP, @LIT, 0x80000000, @AND, // x1 sign
@@ -147,25 +164,30 @@ head(DIV_2N,DIV_2N):
     @EXIT
 
 // AND    x1 x2 -- x3                    logical AND
-head(AND,AND): BINOP(&)
+head(AND,AND):
+interp(AND): BINOP(&)
 
 // CONSTANT   n --           define a Forth constant
 // C!     c c-addr --           store char in memory
 head(STOCHR,C!):
+interp(STOCHR):
     .word @ENTER, @STORE, @EXIT
 
 // C@     c-addr -- c         fetch char from memory
 head(FETCHR,C@):
+interp(FETCHR):
     .word @ENTER, @FETCH, @EXIT
 
 // DROP   x --                     drop top of stack
 head(DROP,DROP):
+interp(DROP):
     .word . + 1
     PSP <- PSP + 1
     goto(NEXT)
 
 // DUP    x -- x x            duplicate top of stack
 head(DUP,DUP):
+interp(DUP):
     .word . + 1
     W   <- [PSP + 1]
     PSP <- PSP - 1
@@ -174,6 +196,7 @@ head(DUP,DUP):
 
 // EMIT   c --           output character to console
 head(EMIT,EMIT):
+interp(EMIT):
     .word . + 1
     W   <- [PSP + 1]
     PSP <- PSP + 1
@@ -183,6 +206,7 @@ head(EMIT,EMIT):
 // EXECUTE   i*x xt -- j*x   execute Forth word 'xt'
 // EXIT   --                 exit a colon definition
 head(EXIT,EXIT):
+interp(EXIT):
     .word . + 1
     pop(RSP,IP)
     goto(NEXT)
@@ -192,6 +216,7 @@ head(EXIT,EXIT):
 //                      get the innermost loop index
 // INVERT x1 -- x2                 bitwise inversion
 head(INVERT,INVERT):
+interp(INVERT):
     .word . + 1
     W <- [PSP + 1]
     W <- W ^~ A
@@ -202,6 +227,7 @@ head(INVERT,INVERT):
 //                         get the second loop index
 // KEY    -- c           get character from keyboard
 head(KEY,KEY):
+interp(KEY):
     .word . + 1
     W   <- SERIAL
     PSP <- PSP - 1
@@ -209,10 +235,12 @@ head(KEY,KEY):
     goto(NEXT)
 
 // LSHIFT x1 u -- x2        logical L shift u places
-head(LSHIFT,LSHIFT): BINOP(<<)
+head(LSHIFT,LSHIFT):
+interp(LSHIFT): BINOP(<<)
 
 // NEGATE x1 -- x2                  two's complement
 head(NEGATE,NEGATE):
+interp(NEGATE):
     .word . + 1
     W <- [PSP + 1]
     W <- A - W
@@ -220,10 +248,12 @@ head(NEGATE,NEGATE):
     goto(NEXT)
 
 // OR     x1 x2 -- x3                     logical OR
-head(OR,OR): BINOP(|)
+head(OR,OR):
+interp(OR): BINOP(|)
 
 // OVER   x1 x2 -- x1 x2 x1        per stack diagram
 head(OVER,OVER):
+interp(OVER):
     .word . + 1
     PSP <-  PSP - 1
     W   <- [PSP + 3]
@@ -232,6 +262,7 @@ head(OVER,OVER):
 
 // ROT    x1 x2 x3 -- x2 x3 x1     per stack diagram
 head(ROT,ROT):
+interp(ROT):
     .word . + 1
     T0  <- [PSP + 3]
     T1  <- [PSP + 2]
@@ -243,10 +274,12 @@ head(ROT,ROT):
     goto(NEXT)
 
 // RSHIFT x1 u -- x2        logical R shift u places
-head(RSHIFT,RSHIFT): BINOP(>>)
+head(RSHIFT,RSHIFT):
+interp(RSHIFT): BINOP(>>)
 
 // R>     -- x    R: x --      pop from return stack
 head(POP_R,R>):
+interp(POP_R):
     .word . + 1
     W   <- [RSP + 1]
     RSP <-  RSP + 1
@@ -256,6 +289,7 @@ head(POP_R,R>):
 
 // R@     -- x    R: x -- x       fetch from rtn stk
 head(FETCH_R,R@):
+interp(FETCH_R):
     .word . + 1
     W   <- [RSP + 1]
     PSP <-  PSP - 1
@@ -264,6 +298,7 @@ head(FETCH_R,R@):
 
 // SWAP   x1 x2 -- x2 x1          swap top two items
 head(SWAP,SWAP):
+interp(SWAP):
     .word . + 1
     T0  <- [PSP + 2]
     T1  <- [PSP + 1]
@@ -278,7 +313,8 @@ head(SWAP,SWAP):
 // U<     u1 u2 -- flag         test u1<n2, unsigned
 // VARIABLE   --             define a Forth variable
 // XOR    x1 x2 -- x3                    logical XOR
-head(XOR,XOR): BINOP(^)
+head(XOR,XOR):
+interp(XOR): BINOP(^)
 
 //
 //                ANS Forth Extensions
@@ -286,7 +322,8 @@ head(XOR,XOR): BINOP(^)
 // specified by the ANS Forth document.
 //
 // <>     x1 x2 -- flag               test not equal
-head(CMP_NE,<>): BINOP(<>)
+head(CMP_NE,<>):
+interp(CMP_NE): BINOP(<>)
 
 // CMOVE  c-addr1 c-addr2 u --      move from bottom
 // CMOVE> c-addr1 c-addr2 u --         move from top
@@ -294,6 +331,7 @@ head(CMP_NE,<>): BINOP(<>)
 // M+     d1 n -- d2            add single to double
 // NIP    x1 x2 -- x2              per stack diagram
 head(NIP,NIP):
+interp(NIP):
     .word . + 1
     W   <- [PSP + 1]
     W   -> [PSP + 2]
@@ -302,6 +340,7 @@ head(NIP,NIP):
 
 // TUCK   x1 x2 -- x2 x1 x2        per stack diagram
 head(TUCK,TUCK):
+interp(TUCK):
     .word . + 1
     T0  <- [PSP + 2]
     T1  <- [PSP + 1]
@@ -318,6 +357,7 @@ head(TUCK,TUCK):
 // extensions (possibly borrowed from CamelForth)
 // LIT    -- x         fetch inline literal to stack
 head(LIT,LIT):
+interp(LIT):
     .word . + 1
     W   <- [IP]
     IP  <- IP + 1
@@ -326,6 +366,7 @@ head(LIT,LIT):
     goto(NEXT)
 
 head(NOOP,NOOP):
+interp(NOOP):
     .word @ENTER
     .word @EXIT
 

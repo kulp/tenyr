@@ -26,6 +26,7 @@
 // #>     ud1 -- c-addr u      end conv., get string
 // '      -- xt              find word in dictionary
 headstr(TICK,"'"): //' fix syntax highlighting
+interp(TICK):
     .word . + 1
     T0   <- @dict       // T0 <- addr of dictionary
 L_TICK_top:
@@ -96,6 +97,7 @@ L_TICK_match:
 // 2@     a-addr -- x1 x2              fetch 2 cells
 // ABORT  i*x --   R: j*x --      clear stack & QUIT
 head(ABORT,ABORT):
+interp(ABORT):
     .word . + 1
     PSP <- [reloc(_PSPinit)]
     RSP <- [reloc(_RSPinit)]
@@ -111,13 +113,15 @@ head(ABORT,ABORT):
 // BASE   -- a-addr           holds conversion radix
 // BEGIN  -- adrs         target for backward branch
 // BL     -- char                     an ASCII space
-head(BL,BL): .word @ENTER,
+head(BL,BL):
+interp(BL): .word @ENTER,
     @LIT, ' ',
     @EXIT
 
 // C,     char --                append char to dict
 // CELLS  n1 -- n2                 cells->adrs units
 head(CELLS,CELLS):
+interp(CELLS):
     .word @ENTER
     // no-op ; cells are address units in tenyr
     .word @EXIT
@@ -126,6 +130,7 @@ head(CELLS,CELLS):
 // CHAR   -- char              parse ASCII character
 // CHARS  n1 -- n2                 chars->adrs units
 head(CHARS,CHARS):
+interp(CHARS):
     .word @ENTER
     // no-op ; chars are address units in tenyr
     .word @EXIT
@@ -133,7 +138,8 @@ head(CHARS,CHARS):
 // CHAR+  c-addr1 -- c-addr2   add char size to adrs
 // COUNT  c-addr1 -- c-addr2 u      counted->adr/len
 // CR     --                          output newline
-head(CR,CR): .word @ENTER,
+head(CR,CR):
+interp(CR): .word @ENTER,
     @LIT, '\n', @EMIT,
     @EXIT
 
@@ -169,7 +175,8 @@ head(CR,CR): .word @ENTER,
 // SM/REM d1 n1 -- n2 n3   symmetric signed division
 // SOURCE -- adr n              current input buffer
 // SPACE  --                          output a space
-head(SPACE,SPACE): .word @ENTER,
+head(SPACE,SPACE):
+interp(SPACE): .word @ENTER,
     @BL, @EMIT,
     @EXIT
 
@@ -182,7 +189,8 @@ head(SPACE,SPACE): .word @ENTER,
 // TYPE   c-addr +n --         type line to terminal
 // UNTIL  adrs --        conditional backward branch
 // U.     u --                    display u unsigned
-head(EMIT_UNSIGNED,U.): .word @ENTER,
+head(EMIT_UNSIGNED,U.):
+interp(EMIT_UNSIGNED): .word @ENTER,
 
     // TODO rewrite this as a loop, and use less stack
     // TODO pay attention to BASE
@@ -229,6 +237,7 @@ head(EMIT_UNSIGNED,U.): .word @ENTER,
 // WITHIN n1|u1 n2|u2 n3|u3 -- f     test n2<=n1<n3?
 // WORDS  --                 list all words in dict.
 head(WORDS,WORDS):
+interp(WORDS):
     .word . + 1
     T0   <- @dict       // already relocated
 L_WORDS_top:
@@ -259,7 +268,8 @@ L_WORDS_char_bottom:
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
-head(ISNUMBER,?NUMBER): .word @ENTER,
+head(ISNUMBER,?NUMBER):
+interp(ISNUMBER): .word @ENTER,
     // TODO make sensitive to BASE
     @DUP,                   // c-addr c-addr
     @LIT, 1, @CHARS, @ADD,  // ca ca+1

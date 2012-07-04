@@ -53,6 +53,8 @@
     Temporary <- Temporary & Predicate ; \
     P <- P + Temporary + 1
 
+// .global for L##Label_{interp,compile} is a hack to allow linking to succeed
+// for forward references
 #define headstr(Label,Name)                     \
     .word .L##Label##_end - .L##Label##_start ; \
     .global Label                             ; \
@@ -61,8 +63,25 @@
     .set link, . - 1                          ; \
     .utf32 Name                               ; \
     .word 0                                   ; \
-.L##Label##_end:                                \
-Label
+    .global L##Label##_interp                 ; \
+    .word  @L##Label##_interp                 ; \
+    .set    L##Label##_interp, 0              ; \
+    .global L##Label##_compile                ; \
+    .word  @L##Label##_compile                ; \
+    .set    L##Label##_compile, 0             ; \
+.L##Label##_end
+
+// The .words in interp() and compile() are dummy
+// could be removed if assembler was changed
+#define interp(Label)                           \
+    .word 0x11111111                          ; \
+    .set L##Label##_interp, .                 ; \
+.L##Label##_interp_: Label
+
+#define compile(Label)                          \
+    .word 0xcccccccc                          ; \
+    .set L##Label##_compile, .                ; \
+.L##Label##_compile_
 
 #define head(Label,Name) \
     headstr(Label,#Name)

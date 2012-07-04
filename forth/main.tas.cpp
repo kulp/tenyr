@@ -3,7 +3,8 @@
 searchterm: .utf32 "over" ; .word 0
 
 .set link, 0
-head(start,start): .word // top level word has no @ENTER
+head(start,start):
+interp(start): .word // top level word has no @ENTER
     @WORDS,
     @CR
 
@@ -33,20 +34,24 @@ bottom: .word
 
     @EXIT
 
-head(MASK4BITS,MASK4BITS): .word @ENTER,
+head(MASK4BITS,MASK4BITS):
+interp(MASK4BITS): .word @ENTER,
     @LIT, 15, @AND,
     @EXIT
 
-head(TOHEXCHAR,>HEXCHAR): .word @ENTER,
+head(TOHEXCHAR,>HEXCHAR):
+interp(TOHEXCHAR): .word @ENTER,
     // TODO stop referring to @hexchars directly
     @LIT, @hexchars, @ADD, @FETCHR,
     @EXIT
 
-head(PUTS,PUTS): .word @ENTER,
+head(PUTS,PUTS):
+interp(PUTS): .word @ENTER,
     // TODO
     @EXIT
 
-head(SET_IP,SET_IP): .word . + 1
+head(SET_IP,SET_IP):
+interp(SET_IP): .word . + 1
     PSP <- PSP + 1
     IP  <- [PSP]
     IP  <- IP + BAS
