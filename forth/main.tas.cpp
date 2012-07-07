@@ -10,22 +10,13 @@ INPOS: .word 0
 
 .set link, 0
 head(start,start): .word
-    //@WORDS,
-    //@CR
-    //@LIT, @WORDS,
-    //@RELOC, @EXECUTE,
-    @TO_IN,
-    @FETCH,
-    @TIB, @ADD,
-    @FETCHR,
-    @EMIT_UNSIGNED, @CR,
     @NOOP
 
 top: .word
-    @LIT,
-    @searchterm,
+    @TIB, @TO_IN, @FETCH, @ADD,
+    //@LIT, @searchterm, @RELOC,
     @FIND,
-    @DROP, // drop code for now, assume found
+    @DROP, // drop flag for now, assume found
     @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     //@GET_RSP, @EMIT_UNSIGNED, @CR,

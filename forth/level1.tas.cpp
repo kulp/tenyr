@@ -120,7 +120,7 @@ L_FIND_top:
 
 L_FIND_char_top:
     T2   <- [T1 + BAS]  // T2 <- test-name char
-    T3   <- [T5 + BAS]  // T3 <- find-name char
+    T3   <- [T5]        // T3 <- find-name char
 
     T2   <- T2 & 0xdf   // uppercase test-name char
     T3   <- T3 & 0xdf   // uppercase find-name char
