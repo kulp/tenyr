@@ -2,18 +2,30 @@
 
 searchterm: .utf32 "words" ; .word 0
 
+.global INBUF
+INBUF: .utf32 "words"
+.word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 # 84 long
+.global INPOS
+INPOS: .word 0
+
 .set link, 0
 head(start,start): .word
     //@WORDS,
     //@CR
     //@LIT, @WORDS,
     //@RELOC, @EXECUTE,
+    @TO_IN,
+    @FETCH,
+    @TIB, @ADD,
+    @FETCHR,
+    @EMIT_UNSIGNED, @CR,
     @NOOP
 
 top: .word
     @LIT,
     @searchterm,
-    @TICK,
+    @FIND,
+    @DROP, // drop code for now, assume found
     @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     //@GET_RSP, @EMIT_UNSIGNED, @CR,

@@ -25,54 +25,6 @@
 // #S     ud1 -- ud2        convert remaining digits
 // #>     ud1 -- c-addr u      end conv., get string
 // '      -- xt              find word in dictionary
-headstr(TICK,"'"): //' fix syntax highlighting
-    .word . + 1
-    T0   <- @dict       // T0 <- addr of dictionary
-L_TICK_top:
-    T5   <- [PSP + 1]   // T5 <- name to look up
-    T1   <- T0 + 2      // T1 <- addr of name string
-
-L_TICK_char_top:
-    T2   <- [T1 + BAS]  // T2 <- test-name char
-    T3   <- [T5 + BAS]  // T3 <- find-name char
-
-    T2   <- T2 & 0xdf   // uppercase test-name char
-    T3   <- T3 & 0xdf   // uppercase find-name char
-
-    T4   <- T2 == 0     // T4 <- end of test-name ?
-    T6   <- T3 == 0     // T6 <- end of find-name ?
-
-    T2   <- T2 <> T3    // T2 <- char mismatch ?
-    T3   <- T4 &  T6    // T3 <- both names end ?
-    T4   <- T4 |  T6    // T4 <- either name ends ?
-    T2   <- T2 |  T4    // T2 <- name mismatch ?
-
-    iftrue(T3,T4,L_TICK_match)
-    iftrue(T2,T4,L_TICK_char_bottom)
-
-    T1   <- T1 + 1      // increment test-name addr
-    T5   <- T5 + 1      // increment find-name addr
-    P    <- reloc(L_TICK_char_top)
-
-L_TICK_char_bottom:
-    T0   <- [T0 + BAS]  // T0 <- follow link
-    T1   <- T0 <> 0     // T1 <- more words ? .word . + 1
-    T2   <- BAS - P + (@L_TICK_top - 3)
-    T2   <- T2 & T1
-    P    <- P + T2 + 1
-
-    // If we reach this point, there was a mismatch.
-    // F94 states if there is no match in the
-    // dictionary, an ambiguous condition exists ;
-    // we choose to put a zero on the stack.
-    A    -> [PSP + 1]
-    goto(NEXT)
-
-L_TICK_match:
-    T0   -> [PSP + 1]   // put xt on stack
-
-    goto(NEXT)
-
 // (      --                      skip input until )
 // *      n1 n2 -- n3                signed multiply
 // */     n1 n2 n3 -- n4                    n1*n2/n3
@@ -86,6 +38,11 @@ L_TICK_match:
 // <#     --                begin numeric conversion
 // >BODY  xt -- a-addr           adrs of param field
 // >IN    -- a-addr            holds offset into TIB
+head(TO_IN,>IN): .word
+    @ENTER,
+    @LIT, @INPOS, @RELOC,
+    @EXIT
+
 // >NUMBER  ud adr u -- ud' adr' u'
 //                          convert string to number
 // 2DROP  x1 x2 --                      drop 2 cells
@@ -132,6 +89,10 @@ head(CHARS,CHARS): .word
     @EXIT
 
 // CHAR+  c-addr1 -- c-addr2   add char size to adrs
+head(CHAR_PLUS,CHAR+): .word
+    @ADD_1,
+    @EXIT
+
 // COUNT  c-addr1 -- c-addr2 u      counted->adr/len
 // CR     --                          output newline
 head(CR,CR): .word
@@ -150,6 +111,56 @@ head(CR,CR): .word
 // FIND   c-addr -- c-addr 0     ..if name not found
 //                  xt  1        ..if immediate
 //                  xt -1        ..if "normal"
+head(FIND,FIND):
+    .word . + 1
+    T0   <- @dict       // T0 <- addr of dictionary
+L_FIND_top:
+    T5   <- [PSP + 1]   // T5 <- name to look up
+    T1   <- T0 + 2      // T1 <- addr of name string
+
+L_FIND_char_top:
+    T2   <- [T1 + BAS]  // T2 <- test-name char
+    T3   <- [T5 + BAS]  // T3 <- find-name char
+
+    T2   <- T2 & 0xdf   // uppercase test-name char
+    T3   <- T3 & 0xdf   // uppercase find-name char
+
+    T4   <- T2 == 0     // T4 <- end of test-name ?
+    T6   <- T3 == 0     // T6 <- end of find-name ?
+
+    T2   <- T2 <> T3    // T2 <- char mismatch ?
+    T3   <- T4 &  T6    // T3 <- both names end ?
+    T4   <- T4 |  T6    // T4 <- either name ends ?
+    T2   <- T2 |  T4    // T2 <- name mismatch ?
+
+    iftrue(T3,T4,L_FIND_match)
+    iftrue(T2,T4,L_FIND_char_bottom)
+
+    T1   <- T1 + 1      // increment test-name addr
+    T5   <- T5 + 1      // increment find-name addr
+    P    <- reloc(L_FIND_char_top)
+
+L_FIND_char_bottom:
+    T0   <- [T0 + BAS]  // T0 <- follow link
+    T1   <- T0 <> 0     // T1 <- more words ? .word . + 1
+    T2   <- BAS - P + (@L_FIND_top - 3)
+    T2   <- T2 & T1
+    P    <- P + T2 + 1
+
+    // If we reach this point, there was a mismatch.
+    PSP  <- PSP - 1
+    A    -> [PSP + 1]
+    goto(NEXT)
+
+L_FIND_match:
+    PSP  <- PSP - 1
+    T0   -> [PSP + 2]   // put xt on stack
+    T0   <- -1
+    // TODO support flag for immediate words
+    T0   -> [PSP + 1]   // put flag on stack
+
+    goto(NEXT)
+
 // FM/MOD d1 n1 -- n2 n3     floored signed division
 // HERE   -- addr         returns dictionary pointer
 // HOLD   char --          add char to output string
@@ -230,6 +241,11 @@ head(EMIT_UNSIGNED,U.): .word
 // HEX    --                  set number base to hex
 // PAD    -- a-addr                  user PAD buffer
 // TIB    -- a-addr            Terminal Input Buffer
+head(TIB,TIB): .word
+    @ENTER,
+    @LIT, @INBUF, @RELOC,
+    @EXIT
+
 // WITHIN n1|u1 n2|u2 n3|u3 -- f     test n2<=n1<n3?
 // WORDS  --                 list all words in dict.
 head(WORDS,WORDS):
