@@ -55,28 +55,18 @@
 
 // .global for L##Label_{exec,compile} is a hack to allow linking to succeed
 // for forward references
-#define headstr(Label,Name)                     \
-    .word .L##Label##_end - .L##Label##_start ; \
-    .global Label                             ; \
-.L##Label##_start:                              \
-    .word @link                               ; \
-    .set link, . - 1                          ; \
-    .utf32 Name                               ; \
-    .word 0                                   ; \
-    .global L##Label##_exec                   ; \
-    .word  @L##Label##_exec                   ; \
-    .set    L##Label##_exec, 0                ; \
-    .global L##Label##_compile                ; \
-    .word  @L##Label##_compile                ; \
-    .set    L##Label##_compile, 0             ; \
-.L##Label##_end
-
-// The .words in exec() and compile() are dummy
-// could be removed if assembler was changed
-#define exec(Label)                             \
-    .word 0x11111111                          ; \
-    .set L##Label##_exec, .                   ; \
-.L##Label##_exec_: Label
+#define headstr(Label,Name)                                     \
+    .word .L##Label##_end - .L##Label##_start ; /* offset -1 */ \
+    .global Label                             ;                 \
+.L##Label##_start:                                              \
+    .word @link                               ; /* offset  0 */ \
+    .set link, . - 1                          ;                 \
+    .global L##Label##_compile                ; /* offset  1 */ \
+    .word  @L##Label##_compile                ;                 \
+    .set    L##Label##_compile, 0             ;                 \
+    .utf32 Name                               ; /* offset  2 */ \
+    .word 0                                   ;                 \
+.L##Label##_end: Label
 
 #define compile(Label)                          \
     .word 0xcccccccc                          ; \

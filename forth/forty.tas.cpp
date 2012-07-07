@@ -27,10 +27,14 @@ NEXT:
     jmp(X)
 
 head(ENTER,ENTER):
-exec(ENTER):
     .word . + 1
     push(RSP,IP)
     IP <- W + 1
+    goto(NEXT)
+
+head(EXIT,EXIT):
+    .word . + 1
+    pop(RSP,IP)
     goto(NEXT)
 
 _done:
