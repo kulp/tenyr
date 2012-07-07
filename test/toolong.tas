@@ -1,0 +1,8 @@
+b <- -1     // ok
+c <- 0xfff  // ok
+d <- 0xffff // bad
+e <- 12345  // bad
+e <- -0xfff // bad
+f <- -555   // ok
+g <- 07777  // ok
+h <- 017777 // bad

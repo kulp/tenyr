@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#define RLC_NEGATE 1
+
 typedef uint32_t UWord;
 typedef  int32_t SWord;
 

@@ -20,6 +20,8 @@ static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
         const_expr *defexpr);
 static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
         int y);
+static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
+        *defexpr);
 static struct instruction *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct instruction_list *make_ascii(struct cstr *cs);
@@ -34,6 +36,8 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
         enum directive_type type, ...);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct instruction_list *p);
+static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
+        imm);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -52,31 +56,31 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %start top
 
 %left EQ NEQ
-%left LTE '>'
+%left '<' '>'
 %left '+' '-'
 %left '*'
 %left '^' XORN
-%left '|' NOR
+%left '|'
 %left '&' NAND
 %left LSH RSH
 
 %token <chr> '[' ']' '.' '(' ')'
-%token <chr> '+' '-' '*'
+%token <chr> '+' '-' '*' '~'
 %token <chr> ',' '$'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
-%token <i> INTEGER
+%token <u> INTEGER
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
 
 %type <ce> const_expr pconst_expr preloc_expr unsigned_greloc_expr signed_greloc_expr
-%type <ce> reloc_expr unsigned_immediate_atom const_atom signed_const_atom eref
+%type <ce> reloc_expr unsigned_immediate_atom const_atom signed_const_atom eref here_atom here_expr phere_expr here
 %type <cl> reloc_expr_list
 %type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
 %type <i> arrow signed_immediate unsigned_immediate regname reloc_op
 %type <insn> insn insn_inner
-%type <op> op signed_op unsigned_op
+%type <op> op signed_op unsigned_op unary_op
 %type <program> program ascii utf32 data string_or_data
 %type <s> addsub
 %type <str> symbol
@@ -85,6 +89,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %union {
     int32_t i;
+    uint32_t u;
     signed s;
     struct const_expr *ce;
     struct const_expr_list *cl;
@@ -122,15 +127,12 @@ program[outer]
             // dummy instruction permits capturing previous instruction from $outer->prev
         }
     | string_or_data program[inner]
-        {   struct instruction_list *p = $string_or_data;
+        {   struct instruction_list *p = $string_or_data, *i = $inner;
             while (p->next) p = p->next;
-            p->next = $inner;
-
-            $outer = calloc(1, sizeof *$outer);
-            $outer->next = $string_or_data->next;
-            $outer->insn = $string_or_data->insn;
-            $inner->prev = $outer;
-            free($string_or_data); }
+            p->next = i;
+            i->prev = p;
+            $outer = $string_or_data;
+        }
     | directive program[inner]
         {   $outer = $inner;
             handle_directive(pd, &yylloc, $directive, $inner); }
@@ -236,6 +238,14 @@ rhs_plain
         { $rhs_plain = make_expr_type1(0, OP_ADD, $signed_greloc_expr, 0); }
     | signed_greloc_expr '+' regname[y]
         { $rhs_plain = make_expr_type1(0, OP_ADD, $signed_greloc_expr, $y); }
+    | unary_op regname[x] addsub signed_greloc_expr
+        { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $signed_greloc_expr); }
+    | unary_op regname[x]
+        { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
+
+unary_op
+    : '~' { $unary_op = OP_XOR_INVERT_X; }
+    | '-' { $unary_op = OP_ADD_NEGATIVE_Y; }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -268,7 +278,6 @@ unsigned_op
     : '|'   { $unsigned_op = OP_BITWISE_OR         ; }
     | '&'   { $unsigned_op = OP_BITWISE_AND        ; }
     | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
-    | NOR   { $unsigned_op = OP_BITWISE_NOR        ; }
     | NAND  { $unsigned_op = OP_BITWISE_NAND       ; }
     | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
     | XORN  { $unsigned_op = OP_XOR_INVERT_X       ; }
@@ -277,10 +286,10 @@ unsigned_op
 signed_op
     : '+'   { $signed_op = OP_ADD           ; }
     | '*'   { $signed_op = OP_MULTIPLY      ; }
-    | LTE   { $signed_op = OP_COMPARE_LTE   ; }
+    | '<'   { $signed_op = OP_COMPARE_LT    ; }
     | EQ    { $signed_op = OP_COMPARE_EQ    ; }
-    | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
     | '>'   { $signed_op = OP_COMPARE_GT    ; }
+    | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
     | NEQ   { $signed_op = OP_COMPARE_NE    ; }
 
 arrow
@@ -297,15 +306,49 @@ unsigned_greloc_expr
 
 signed_greloc_expr
     : eref
-    | signed_const_atom
+    | here_atom
     | preloc_expr
+    | signed_const_atom
+        {   struct const_expr *c = $signed_const_atom;
+            if (c->type == CE_IMM)
+                check_immediate_size(pd, &yylloc, c->i);
+            $signed_greloc_expr = c;
+        }
 
 reloc_expr[outer]
     : const_expr
     | eref
     | preloc_expr
+    | here_expr
     | eref reloc_op const_atom
         {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_atom); }
+    | eref reloc_op here_atom
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $here_atom); }
+    | eref reloc_op[lop] here_atom reloc_op[rop] const_atom
+        {   struct const_expr *inner = make_const_expr(CE_OP2, $lop, $eref, $here_atom);
+            $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom);
+        }
+
+here_atom
+    : here
+    | phere_expr
+
+here
+    : '.'
+        {   $here = make_const_expr(CE_ICI, 0, NULL, NULL); }
+
+here_expr[outer]
+    : here_atom
+    | here_expr[left] reloc_op const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right); }
+    | here_expr[left] '*' const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, '*', $left, $right); }
+    | here_expr[left] LSH const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
+
+phere_expr
+    : '(' here_expr ')'
+        {   $phere_expr = $here_expr; }
 
 const_expr[outer]
     : const_atom
@@ -339,8 +382,6 @@ signed_const_atom
                 strcopy($signed_const_atom->symbolname, $LOCAL, sizeof $signed_const_atom->symbolname);
             }
         }
-    | '.'
-        {   $signed_const_atom = make_const_expr(CE_ICI, 0, NULL, NULL); }
 
 preloc_expr
     : '(' reloc_expr ')'
@@ -474,6 +515,41 @@ static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
     return e;
 }
 
+static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
+        *defexpr)
+{
+    // tenyr has no true unary ops, but the following sugars are recognised by
+    // the assembler and converted into their corresponding binary equivalents :
+    //
+    // b <- ~b      becomes     b <- b ^~ a
+    // b <- -b      becomes     b <- a -  b
+
+    struct expr *e = calloc(1, sizeof *e);
+
+    switch (op) {
+        case OP_ADD_NEGATIVE_Y:
+            e->x = 0;
+            e->y = x;
+            break;
+        case OP_XOR_INVERT_X:
+            e->x = x;
+            e->y = 0;
+            break;
+    }
+
+    e->type  = 0;
+    e->deref = 0;
+    e->op    = op;
+    e->mult  = mult;
+    e->ce    = defexpr;
+    if (defexpr)
+        e->i = 0xfffffbad; // put in a placeholder that must be overwritten
+    else
+        e->i = 0; // there was no const_expr ; zero defined by language
+
+    return e;
+}
+
 static void free_cstr(struct cstr *cs, int recurse)
 {
     if (!cs)
@@ -588,12 +664,14 @@ static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol 
 
 static struct instruction_list *make_data(struct parse_data *pd, struct const_expr_list *list)
 {
-    struct instruction_list *result = NULL, **rp = &result;
+    struct instruction_list *result = NULL, **rp = &result, *last = NULL;
 
     struct const_expr_list *p = list;
     while (p) {
         *rp = calloc(1, sizeof **rp);
         struct instruction_list *q = *rp;
+        q->prev = last;
+        last = *rp;
         rp = &q->next;
 
         q->insn = calloc(1, sizeof *q->insn);
@@ -673,8 +751,17 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         }
         case D_SET: {
             struct datum_D_SET *data = d->data;
-            // point to the previous instruction to the one after us, if any
-            data->symbol->ce->deferred = &p->prev;
+            struct instruction_list **context = NULL;
+
+            // XXX this deferral code is broken
+            if (!p->insn)
+                context = &p->prev; // dummy instruction at end ; defer to prev
+            else if (p->next)
+                context = &p->next->prev; // otherwise, defer to current instruction node
+            else
+                fatal(0, "Illegal instruction context for .set");
+
+            data->symbol->ce->deferred = context;
             free(data);
             free(d);
             break;
@@ -685,5 +772,24 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
             tenyr_error(locp, pd, buf);
         }
     }
+}
+
+static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
+        imm)
+{
+    int hasupperbits = imm & ~SMALL_IMMEDIATE_MASK;
+    uint32_t semask = -1 << (SMALL_IMMEDIATE_BITWIDTH - 1);
+    int notsignextended = (imm & semask) != semask;
+
+    if (hasupperbits && notsignextended) {
+        char buf[128];
+        snprintf(buf, sizeof buf, "Immediate with value %#x is too large for "
+                "%d-bit signed immediate field", imm, SMALL_IMMEDIATE_BITWIDTH);
+        tenyr_error(locp, pd, buf);
+
+        return 1;
+    }
+
+    return 0;
 }
 

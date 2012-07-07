@@ -159,6 +159,9 @@ static int do_link_relocate(struct link_state *s, void **objtree, void **defns)
                 // this is a null relocation ; it just wants us to update the
                 // offset
                 reladdr = (*me)->offset;
+                // negative null relocations invert the value of the offset
+                if (rlc->flags & RLC_NEGATE)
+                    reladdr = -reladdr;
             }
             // here we actually add the found-symbol's value to the relocation
             // slot, being careful to trim to the right width

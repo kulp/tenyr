@@ -34,11 +34,13 @@ struct breakpoint {
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
+    _(inittrap, "initialise unused memory to the illegal instruction") \
     _(nowrap  , "stop when PC wraps around 24-bit boundary")
 
 #define DEFAULT_RECIPES(_) \
-    _(sparse) \
-    _(serial) \
+    _(sparse)   \
+    _(serial)   \
+    _(inittrap) \
     _(nowrap)
 
 #define Space(X) STR(X) " "
@@ -90,6 +92,13 @@ static int recipe_serial(struct sim_state *s)
 static int recipe_nowrap(struct sim_state *s)
 {
     s->conf.nowrap = 1;
+    return 0;
+}
+
+static int recipe_inittrap(struct sim_state *s)
+{
+    s->conf.should_init = 1;
+	s->conf.initval = 0xffffffff;
     return 0;
 }
 

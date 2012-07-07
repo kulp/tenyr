@@ -4,7 +4,6 @@
 
 #include "common.th"
 
-    f <- p - .          // load base
     b <- ARGUMENT       // b = upper limit (N)
     c <- b >> 1         // c = (N/2)
     i <- 2              // i = outer loop control
@@ -17,8 +16,8 @@
 init:
     d -> [o + j]        // write truth to table cell
     j <- j + 1          // increment table index
-    m <- j <= b         // exit loop when i > N
-    jnzrel(m,init)
+    m <- j > b          // exit loop when i > N
+    jzrel(m,init)
 outer:
     m <- i > c          // exit loop when i > N/2
     jnzrel(m,done)
