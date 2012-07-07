@@ -125,8 +125,12 @@ L_FIND_char_top:
     T2   <- T2 & 0xdf   // uppercase test-name char
     T3   <- T3 & 0xdf   // uppercase find-name char
 
+    // Right now we check for either NUL-termination
+    // or space-termination
+    T6   <- T3 == ' '   // T4 <- end of find-name ?
+    T4   <- T3 == 0     // T6 <- end of find-name ?
+    T6   <- T4 | T6     // T4 <- either ending ?
     T4   <- T2 == 0     // T4 <- end of test-name ?
-    T6   <- T3 == 0     // T6 <- end of find-name ?
 
     T2   <- T2 <> T3    // T2 <- char mismatch ?
     T3   <- T4 &  T6    // T3 <- both names end ?
