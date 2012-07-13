@@ -1,7 +1,5 @@
 #include "forth_common.th"
 
-searchterm: .utf32 "words" ; .word 0
-
 .global INBUF
 INBUF: .utf32 "words"
 .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 # 84 long
@@ -14,14 +12,14 @@ head(start,start): .word
 
 top: .word
     @TIB, @TO_IN, @FETCH, @ADD,
-    //@LIT, @searchterm, @RELOC,
     @FIND,
     @DROP, // drop flag for now, assume found
     @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     //@GET_RSP, @EMIT_UNSIGNED, @CR,
     //@DUP, @RELOC, @EMIT_UNSIGNED, @CR,
-    //@RELOC, @EXECUTE,
+    @RELOC, @EXECUTE,
+    //@ABORT,
     //@GET_RSP, @EMIT_UNSIGNED, @CR,
 
     // example of a computed branch

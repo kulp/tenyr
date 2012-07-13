@@ -185,13 +185,24 @@ head(EMIT,EMIT):
 // EXECUTE   i*x xt -- j*x   execute Forth word 'xt'
 head(EXECUTE,EXECUTE):
     .word . + 1
-    //IP <- @EXIT
-    //IP <- IP + 1
-    IP -> [RSP + 1]
-    //push(RSP,IP)
+    push(RSP,IP)
     PSP <- PSP + 1
-    IP  <- [PSP]
+    W   <- [PSP]
+    T0  <- [W - 1]
+    T0  <- W + T0
+    T0  <- T0 - F   // unrelocate
+    T0  -> [reloc(execute_trampoline)]
+    IP  <- BAS + @execute_trampoline
+    // We need to use a trampoline ; something needs to do the corresponding
+    // pop(RSP,IP) after the EXECUTEd word finishes. The current trampoline is
+    // technically non-reentrant, but we can get away with it because only one
+    // word is changed in the trampoline, which word is consumed by the time
+    // reentrance could occur. This doesn't address multiprogramming properly.
     goto(NEXT)
+execute_trampoline: .word
+    // the effect of the @ENTER is already done in EXECUTE
+    @ABORT, // gets overwritten
+    @EXIT
 
 // EXIT   --                 exit a colon definition
 // implemented in forty.tas.cpp

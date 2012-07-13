@@ -305,6 +305,12 @@ head(ISNUMBER,?NUMBER): .word
     // TODO
     @EXIT
 
+head(DEBUG,DEBUG): .word . + 1
+    illegal
+    //@ENTER,
+    //@ABORT,
+    //@EXIT
+
 .global level1_link
 .set level1_link, @link
 
