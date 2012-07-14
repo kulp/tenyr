@@ -521,7 +521,7 @@ int main(int argc, char *argv[])
             }
         } else {
             if (f->out) {
-                do_assembly(in, out, f);
+                rc = do_assembly(in, out, f);
             } else {
                 fatal(0, "Format `%s' does not support assembly", f->name);
             }

@@ -7,10 +7,10 @@
 .set link, 0
 __boot:
     BAS <- p - .
-    PSP <- [reloc(_PSPinit)]
-    RSP <- [reloc(_RSPinit)]
-    push(RSP,reloc(_done))
-    IP  <- reloc(start)
+    S   <- [reloc(_PSPinit)]
+    R   <- [reloc(_RSPinit)]
+    push(R,reloc(_done))
+    I   <- reloc(start)
     goto(NEXT)
 
     .global _PSPinit
@@ -20,18 +20,23 @@ _RSPinit:   .word   0x00ffffff
 
     .global NEXT
 NEXT:
-    W  <- [IP]
+    W  <- [I]
     W  <-  W + BAS
-    IP <-  IP + 1
+    I  <-  I + 1
     X  <- [W]
     jmp(X)
 
 head(ENTER,ENTER):
     .word . + 1
-    push(RSP,IP)
-    IP <- W + 1
+    push(R,I)
+    I  <- W + 1
+    goto(NEXT)
+
+head(EXIT,EXIT):
+    .word . + 1
+    pop(R,I)
     goto(NEXT)
 
 _done:
-    .word @BYE
+    .word @ABORT
 

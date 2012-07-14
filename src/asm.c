@@ -28,7 +28,7 @@ static const struct {
     [OP_ADD_NEGATIVE_Y     ] = { "-" , 1 },
     [OP_XOR_INVERT_X       ] = { "^~", 0 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
-    [OP_COMPARE_NE         ] = { "~|", 0 },
+    [OP_COMPARE_NE         ] = { "<>", 0 },
 
     [OP_RESERVED0          ] = { "X0", 0 },
     [OP_RESERVED1          ] = { "X1", 0 },
@@ -47,7 +47,7 @@ static int is_printable(int ch, size_t len, char buf[len])
         case '\r': buf[0] = '\\'; buf[1] = 'r' ; return 1;
         case '\t': buf[0] = '\\'; buf[1] = 't' ; return 1;
         case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
-        default: return isprint(ch);
+        default: buf[0] = ch; return isprint(ch);
     }
 }
 
@@ -484,7 +484,7 @@ const struct format formats[] = {
         .reloc = obj_reloc },
     { "raw" , .in = raw_in , .out = raw_out  },
     { "text", .in = text_in, .out = text_out },
-	{ "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
+    { "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
 };
 
 const size_t formats_count = countof(formats);

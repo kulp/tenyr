@@ -98,7 +98,7 @@ static int recipe_nowrap(struct sim_state *s)
 static int recipe_inittrap(struct sim_state *s)
 {
     s->conf.should_init = 1;
-	s->conf.initval = 0xffffffff;
+    s->conf.initval = 0xffffffff;
     return 0;
 }
 

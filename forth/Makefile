@@ -16,7 +16,7 @@ all: $(TARGETS)
 
 forty.texe: main.to level0.to level1.to
 
-%.tas: %.tas.cpp
+%.tas: %.tas.cpp forth_common.th
 	cpp $(CPPFLAGS) $< -o $@
 
 %.to: %.tas
