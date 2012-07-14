@@ -4,60 +4,92 @@
 // Baby ITC Forth
 // Forth's  W   is in M
 //          X   is in K
-//          IP  is in I
-//          PSP is in D
-//          RSP is in J
+//          I   is in I
+//          S   is in D
+//          R   is in J
 // relocation offset is in F
 // alternate (C) stack is in O
 // temporaries : B C E G H L N
 
 #define W   M
 #define X   K
-#define IP  I
-#define PSP D
-#define RSP J
+#define I   I
+#define S   D
+#define R   J
 
-#define T0 B
-#define T1 C
-#define T2 E
-#define T3 G
-#define T4 H
-#define T5 L
-#define T6 N
+#define T0  B
+#define T1  C
+#define T2  E
+#define T3  G
+#define T4  H
+#define T5  L
+#define T6  N
 
 #define BAS F
 
 // save and restore Forth registers on a stack, for calling other ABIs
 #define pushregs(o) push(o,W)   \
                     push(o,X)   \
-                    push(o,IP)  \
-                    push(o,PSP) \
-                    push(o,RSP)
+                    push(o,I )  \
+                    push(o,S  ) \
+                    push(o,R  )
 
-#define  popregs(o)  pop(o,RSP) \
-                     pop(o,PSP) \
-                     pop(o,IP)  \
+#define  popregs(o)  pop(o,R  ) \
+                     pop(o,S  ) \
+                     pop(o,I )  \
                      pop(o,X)   \
                      pop(o,W)
 
 #define jmp(Reg)    p <- Reg + BAS
-#define ccall(Loc)  o <- RSP - 1 ; pushregs(o) ; push(o,p + 3); goto(Loc) ; popregs(o)
+#define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 3); goto(Loc) ; popregs(o)
 
 #define reloc(Label)        BAS + @Label
 #define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
-#define head(Label,Name)                        \
-    .word .L##Label##_end - .L##Label##_start ; \
-    .global Label                             ; \
-.L##Label##_start:                              \
-    .word @link                               ; \
-    .set link, .                              ; \
-    .utf32 #Name                              ; \
-    .word 0                                   ; \
-.L##Label##_end:                                \
-Label
+#define iftrue(Predicate,Temporary,Target) \
+    Temporary <- BAS - P + (@Target - 3) ; \
+    Temporary <- Temporary & Predicate ; \
+    P <- P + Temporary + 1
+
+// .global for L##Label_{exec,compile} is a hack to allow linking to succeed
+// for forward references
+// TODO reorder fields so that an execution token and a @SYMBOL are the same
+// thing. This probably implies that the link field and the length go after the
+// name, possibly directly before the code.
+#define headstr(Label,Name)                                     \
+    .word .L##Label##_end - .L##Label##_start ; /* offset -1 */ \
+    .global Label                             ;                 \
+.L##Label##_start:                                              \
+    .word @link                               ; /* offset  0 */ \
+    .set link, . - 1                          ;                 \
+    .global L##Label##_compile                ; /* offset  1 */ \
+    .word  @L##Label##_compile                ;                 \
+    .set    L##Label##_compile, 0             ;                 \
+    .utf32 Name                               ; /* offset  2 */ \
+    .word 0                                   ;                 \
+.L##Label##_end: Label
+
+#define compile(Label)                          \
+    .word 0xcccccccc                          ; \
+    .set L##Label##_compile, .                ; \
+.L##Label##_compile_
+
+#define head(Label,Name) \
+    headstr(Label,#Name)
+
+// expects to be called in a @word context
+#define IFNOT0(Then,Else)             \
+    @EQZ,               /* nrmlise */ \
+    @LITERAL, @Else,        /* F a1    */ \
+    @SWAP, @DUP, @ROT,  /* F F a1  */ \
+    @AND,               /* F a1    */ \
+    @LITERAL, @Then,        /* F a1 a2 */ \
+    @ROT, @EQZ, @AND,   /* a1 a2   */ \
+    @OR,                /* a       */ \
+    @RELOC, @SET_IP
+
 
 #endif
 
