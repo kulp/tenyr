@@ -55,6 +55,9 @@
 
 // .global for L##Label_{exec,compile} is a hack to allow linking to succeed
 // for forward references
+// TODO reorder fields so that an execution token and a @SYMBOL are the same
+// thing. This probably implies that the link field and the length go after the
+// name, possibly directly before the code.
 #define headstr(Label,Name)                                     \
     .word .L##Label##_end - .L##Label##_start ; /* offset -1 */ \
     .global Label                             ;                 \

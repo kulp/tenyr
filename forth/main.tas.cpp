@@ -13,14 +13,18 @@ head(start,start): .word
 top: .word
     @TIB, @TO_IN, @FETCH, @ADD,
     @FIND,
-    @DROP, // drop flag for now, assume found
+    IFNOT0(found,notfound)
+notfound: .word
+    @ABORT
+
+found: .word
+    //@LIT, 0, @ACCEPT,
+    //@DROP, // drop flag for now, assume found
     @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
-    //@GET_RSP, @EMIT_UNSIGNED, @CR,
-    //@DUP, @RELOC, @EMIT_UNSIGNED, @CR,
     @RELOC, @EXECUTE,
-    //@ABORT,
-    //@GET_RSP, @EMIT_UNSIGNED, @CR,
+    @EXIT,
+    @NOOP,
 
     // example of a computed branch
     @LIT, 0,
@@ -45,6 +49,21 @@ worddone: .word
     @LIT, @wordstart, @RELOC, @SET_IP
 linedone: .word
     @CR,
+    @EXIT
+
+// TODO explicit echoing
+head(ACCEPT,ACCEPT): .word
+    @ENTER
+
+L_ACCEPT_top: .word
+    @DUP//,
+    //IFNOT0(L_ACCEPT_get_one,L_ACCEPT_done)
+    // adding this one instruction pushes us over some barrier
+L_ACCEPT_done: .word
+    @LIT, 'B', @EMIT, @BL, @EMIT,
+    @ABORT
+
+L_ACCEPT_get_one: .word
     @EXIT
 
 head(MASK4BITS,MASK4BITS): .word
