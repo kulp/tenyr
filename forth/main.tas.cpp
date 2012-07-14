@@ -23,8 +23,7 @@ found: .word
     @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
     @RELOC, @EXECUTE,
-    @EXIT,
-    @NOOP,
+	//@EXIT,
 
     // example of a computed branch
     @LIT, 0,
@@ -56,9 +55,9 @@ head(ACCEPT,ACCEPT): .word
     @ENTER
 
 L_ACCEPT_top: .word
-    @DUP//,
+    @DUP,
     //IFNOT0(L_ACCEPT_get_one,L_ACCEPT_done)
-    // adding this one instruction pushes us over some barrier
+    @NOOP
 L_ACCEPT_done: .word
     @LIT, 'B', @EMIT, @BL, @EMIT,
     @ABORT
@@ -91,28 +90,28 @@ head(PUTS,PUTS): .word
     @EXIT
 
 head(SET_IP,SET_IP): .word . + 1
-    PSP <- PSP + 1
-    IP  <- [PSP]
+    S   <- S + 1
+    I   <- [S]
     goto(NEXT)
 
 head(GET_IP,GET_IP): .word . + 1
-    IP  -> [PSP]
-    PSP <- PSP - 1
+    I   -> [S]
+    S   <- S - 1
     goto(NEXT)
 
 head(GET_PSP,GET_PSP): .word . + 1
-    PSP -> [PSP]
-    PSP <- PSP - 1
+    S   -> [S]
+    S   <- S - 1
     goto(NEXT)
 
 head(GET_RSP,GET_RSP): .word . + 1
-    RSP -> [PSP]
-    PSP <- PSP - 1
+    R   -> [S]
+    S   <- S - 1
     goto(NEXT)
 
 head(RELOC,RELOC): .word . + 1
-    W <- [PSP + 1]
-    W <- W + BAS
-    W -> [PSP + 1]
+    W   <- [S + 1]
+    W   <- W + BAS
+    W   -> [S + 1]
     goto(NEXT)
 

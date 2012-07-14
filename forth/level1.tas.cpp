@@ -54,8 +54,8 @@ head(TO_IN,>IN): .word
 // ABORT  i*x --   R: j*x --      clear stack & QUIT
 head(ABORT,ABORT):
     .word . + 1
-    PSP <- [reloc(_PSPinit)]
-    RSP <- [reloc(_RSPinit)]
+    S   <- [reloc(_PSPinit)]
+    R   <- [reloc(_RSPinit)]
     illegal
 
 // ABORT" i*x 0  -- i*x   R: j*x -- j*x  print msg &
@@ -115,7 +115,7 @@ head(FIND,FIND):
     .word . + 1
     T0   <- @dict       // T0 <- addr of dictionary
 L_FIND_top:
-    T5   <- [PSP + 1]   // T5 <- name to look up
+    T5   <- [S + 1]     // T5 <- name to look up
     T1   <- T0 + 2      // T1 <- addr of name string
 
 L_FIND_char_top:
@@ -152,16 +152,16 @@ L_FIND_char_bottom:
     P    <- P + T2 + 1
 
     // If we reach this point, there was a mismatch.
-    PSP  <- PSP - 1
-    A    -> [PSP + 1]
+    S    <- S - 1
+    A    -> [S + 1]
     goto(NEXT)
 
 L_FIND_match:
-    PSP  <- PSP - 1
-    T0   -> [PSP + 2]   // put xt on stack
+    S    <- S - 1
+    T0   -> [S + 2]     // put xt on stack
     T0   <- -1
     // TODO support flag for immediate words
-    T0   -> [PSP + 1]   // put flag on stack
+    T0   -> [S + 1]     // put flag on stack
 
     goto(NEXT)
 
