@@ -122,8 +122,8 @@ clean:
 	*.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
 
 clobber: clean
-	$(RM) $(GENDIR)/{debugger_,}{parser,lexer}.[ch]
-	rmdir $(GENDIR)
+	$(RM) $(GENDIR)/debugger_parser.[ch] $(GENDIR)/debugger_lexer.[ch] $(GENDIR)/parser.[ch] $(GENDIR)/lexer.[ch]
+	-rmdir $(GENDIR)
 	$(RM) -r *.dSYM
 
 ##############################################################################
