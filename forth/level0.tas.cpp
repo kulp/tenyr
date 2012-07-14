@@ -94,9 +94,9 @@ head(DUPNZ,?DUP):
 // @      a-addr -- x         fetch cell from memory
 head(FETCH,@):
     .word . + 1
-    W <- [S + 1]
-    W <- [W]
-    W -> [S + 1]
+    W   <- [S + 1]
+    W   <- [W]
+    W   -> [S + 1]
     goto(NEXT)
 
 // 0<     n -- flag             true if TOS negative
@@ -110,34 +110,34 @@ head(LTZ,0<):
 // 0=     n/u -- flag           return true if TOS=0
 head(EQZ,0=):
     .word . + 1
-    W <- [S + 1]
-    W <- W == 0
-    W -> [S + 1]
+    W   <- [S + 1]
+    W   <- W == 0
+    W   -> [S + 1]
     goto(NEXT)
 
 // 1+     n1/u1 -- n2/u2                add 1 to TOS
 head(ADD_1,1+):
-    .word @ENTER, @LIT, 1, @ADD, @EXIT
+    .word @ENTER, @LITERAL, 1, @ADD, @EXIT
 
 // 1-     n1/u1 -- n2/u2         subtract 1 from TOS
 head(SUB_1,1-):
-    .word @ENTER, @LIT, 1, @SUB, @EXIT
+    .word @ENTER, @LITERAL, 1, @SUB, @EXIT
 
 // 2*     x1 -- x2             arithmetic left shift
 head(MUL_2,2*):
-    .word @ENTER, @LIT, 1, @LSHIFT, @EXIT
+    .word @ENTER, @LITERAL, 1, @LSHIFT, @EXIT
 
 // 2/     x1 -- x2            arithmetic right shift
 head(DIV_2,2/):
-    .word @ENTER, @LIT, 1, @RSHIFT, @EXIT
+    .word @ENTER, @LITERAL, 1, @RSHIFT, @EXIT
 
 // this is not ANS-Forth math ; it should probably go away, but serves at least
 // as a demonstration for now
 head(DIV_2N,DIV_2N):
     // compensation used to truncate negs toward 0
     .word @ENTER,
-    @DUP, @LIT, 0x80000000, @AND, // x1 sgn
-    @DUP, @LIT, 31, @RSHIFT,      // x1 sgn cmp
+    @DUP, @LITERAL, 0x80000000, @AND, // x1 sgn
+    @DUP, @LITERAL, 31, @RSHIFT,      // x1 sgn cmp
     @ROT,                         // sgn cmp x1
     @SWAP,                        // sgn x1 cmp
     @TUCK,                        // sgn cmp x1 cmp
@@ -213,9 +213,9 @@ execute_trampoline: .word
 // INVERT x1 -- x2                 bitwise inversion
 head(INVERT,INVERT):
     .word . + 1
-    W <- [S + 1]
-    W <- W ^~ A
-    W -> [S + 1]
+    W   <- [S + 1]
+    W   <- W ^~ A
+    W   -> [S + 1]
     goto(NEXT)
 
 // J      -- n   R: 4*sys -- 4*sys
@@ -234,9 +234,9 @@ head(LSHIFT,LSHIFT): BINOP(<<)
 // NEGATE x1 -- x2                  two's complement
 head(NEGATE,NEGATE):
     .word . + 1
-    W <- [S + 1]
-    W <- A - W
-    W -> [S + 1]
+    W   <- [S + 1]
+    W   <- A - W
+    W   -> [S + 1]
     goto(NEXT)
 
 // OR     x1 x2 -- x3                     logical OR
@@ -334,16 +334,6 @@ head(TUCK,TUCK):
     goto(NEXT)
 
 // U>     u1 u2 -- flag         test u1>u2, unsigned
-
-// extensions (possibly borrowed from CamelForth)
-// LIT    -- x         fetch inline literal to stack
-head(LIT,LIT):
-    .word . + 1
-    W   <- [I]
-    I   <- I + 1
-    W   -> [S]
-    S   <- S - 1
-    goto(NEXT)
 
 head(NOOP,NOOP):
     .word @ENTER

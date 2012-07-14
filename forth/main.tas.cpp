@@ -18,22 +18,22 @@ notfound: .word
     @ABORT
 
 found: .word
-    //@LIT, 0, @ACCEPT,
+    //@LITERAL, 0, @ACCEPT,
     //@DROP, // drop flag for now, assume found
-    @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
-    @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LIT, ':', @EMIT, @BL, @EMIT, @CR,
+    @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LITERAL, ':', @EMIT, @BL, @EMIT, @CR,
+    @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LITERAL, ':', @EMIT, @BL, @EMIT, @CR,
     @RELOC, @EXECUTE,
 	//@EXIT,
 
     // example of a computed branch
-    @LIT, 0,
+    @LITERAL, 0,
     IFNOT0(top,bottom)
 bottom: .word
     @NOOP
 
 wordstart: .word
     @KEY,
-    @DUP, @LIT, '\n', @CMP_EQ,
+    @DUP, @LITERAL, '\n', @CMP_EQ,
     IFNOT0(linedone,checkspace)
 checkspace: .word
     @DUP, @BL, @CMP_EQ,
@@ -41,11 +41,11 @@ checkspace: .word
     @NOOP
 regular: .word
     @EMIT,
-    @LIT, @wordstart, @RELOC, @SET_IP
+    @LITERAL, @wordstart, @RELOC, @SET_IP
 worddone: .word
     @DROP,
     @CR,
-    @LIT, @wordstart, @RELOC, @SET_IP
+    @LITERAL, @wordstart, @RELOC, @SET_IP
 linedone: .word
     @CR,
     @EXIT
@@ -59,7 +59,7 @@ L_ACCEPT_top: .word
     //IFNOT0(L_ACCEPT_get_one,L_ACCEPT_done)
     @NOOP
 L_ACCEPT_done: .word
-    @LIT, 'B', @EMIT, @BL, @EMIT,
+    @LITERAL, 'B', @EMIT, @BL, @EMIT,
     @ABORT
 
 L_ACCEPT_get_one: .word
@@ -67,12 +67,12 @@ L_ACCEPT_get_one: .word
 
 head(MASK4BITS,MASK4BITS): .word
     @ENTER,
-    @LIT, 15, @AND,
+    @LITERAL, 15, @AND,
     @EXIT
 
 head(HEXTABLE,HEXTABLE): .word
     @ENTER,
-    @LIT, @hexchars, @RELOC,
+    @LITERAL, @hexchars, @RELOC,
     @EXIT
 
 hexchars:

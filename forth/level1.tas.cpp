@@ -40,7 +40,7 @@
 // >IN    -- a-addr            holds offset into TIB
 head(TO_IN,>IN): .word
     @ENTER,
-    @LIT, @INPOS, @RELOC,
+    @LITERAL, @INPOS, @RELOC,
     @EXIT
 
 // >NUMBER  ud adr u -- ud' adr' u'
@@ -70,7 +70,7 @@ head(ABORT,ABORT):
 // BL     -- char                     an ASCII space
 head(BL,BL): .word
     @ENTER,
-    @LIT, ' ',
+    @LITERAL, ' ',
     @EXIT
 
 // C,     char --                append char to dict
@@ -97,7 +97,7 @@ head(CHAR_PLUS,CHAR+): .word
 // CR     --                          output newline
 head(CR,CR): .word
     @ENTER,
-    @LIT, '\n', @EMIT,
+    @LITERAL, '\n', @EMIT,
     @EXIT
 
 // CREATE --              create an empty definition
@@ -167,11 +167,24 @@ L_FIND_match:
 
 // FM/MOD d1 n1 -- n2 n3     floored signed division
 // HERE   -- addr         returns dictionary pointer
+head(HEAD,HEAD): .word
+    @ENTER,
+    @LITERAL, @dict, @RELOC,
+    @EXIT
+
 // HOLD   char --          add char to output string
 // IF     -- adrs         conditional forward branch
 // IMMEDIATE   --          make last def'n immediate
 // LEAVE  --    L: -- adrs             exit DO..LOOP
 // LITERAL x --      append numeric literal to dict.
+head(LITERAL,LITERAL):
+    .word . + 1
+    W   <- [I]
+    I   <- I + 1
+    W   -> [S]
+    S   <- S - 1
+    goto(NEXT)
+
 // LOOP   adrs --   L: 0 a1 a2 .. aN --
 // MAX    n1 n2 -- n3                 signed maximum
 // MIN    n1 n2 -- n3                 signed minimum
@@ -205,13 +218,13 @@ head(EMIT_UNSIGNED,U.): .word
 
     // TODO rewrite this as a loop, and use less stack
     // TODO pay attention to BASE
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
-    @DUP, @LIT, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
 
     @MASK4BITS, @TOHEXCHAR, @EMIT,
     @MASK4BITS, @TOHEXCHAR, @EMIT,
@@ -248,7 +261,7 @@ head(EMIT_UNSIGNED,U.): .word
 // TIB    -- a-addr            Terminal Input Buffer
 head(TIB,TIB): .word
     @ENTER,
-    @LIT, @INBUF, @RELOC,
+    @LITERAL, @INBUF, @RELOC,
     @EXIT
 
 // WITHIN n1|u1 n2|u2 n3|u3 -- f     test n2<=n1<n3?
@@ -287,18 +300,18 @@ L_WORDS_char_bottom:
 head(ISNUMBER,?NUMBER): .word
     @ENTER,
     // TODO make sensitive to BASE
-    @DUP,                   // c-addr c-addr
-    @LIT, 1, @CHARS, @ADD,  // ca ca+1
+    @DUP,                       // c-addr c-addr
+    @LITERAL, 1, @CHARS, @ADD,  // ca ca+1
     @SWAP,                  // ca+1 ca
     @FETCHR,                // ca+1 ch
-    @LIT, ('0' - 1),        // ca+1 ch '0'-1
+    @LITERAL, ('0' - 1),    // ca+1 ch '0'-1
     @CMP_GT,                // ca+1 ch flag
     @OVER,                  // ca+1 ch flag ch
-    @LIT, ('9' + 1),        // ca+1 ch flag ch '9'+1
+    @LITERAL, ('9' + 1),    // ca+1 ch flag ch '9'+1
     @CMP_LT,                // ca+1 ch flag flag
     @AND,                   // ca+1 ch flag
 
-    @LIT, 1, @CHARS,
+    @LITERAL, 1, @CHARS,
     @ADD_1,     // increment character pointer
 
     @CMP_LT,
