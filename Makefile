@@ -1,8 +1,8 @@
-CC       = $(CROSS_COMPILE)gcc
+CC = $(CROSS_COMPILE)gcc
 
 ifndef NDEBUG
-CFLAGS  += -g
-LDFLAGS += -g
+ CFLAGS  += -g
+ LDFLAGS += -g
 endif
 
 ifeq ($(WIN32),1)
@@ -26,10 +26,10 @@ CFLAGS += -Wall -Wextra $(PEDANTIC)
 
 # Optimised build
 ifeq ($(DEBUG),)
-CPPFLAGS += -DNDEBUG
-CFLAGS   += -O3
+ CPPFLAGS += -DNDEBUG
+ CFLAGS   += -O3
 else
-CPPFLAGS += -DDEBUG=$(DEBUG)
+ CPPFLAGS += -DDEBUG=$(DEBUG)
 endif
 
 PEDANTIC ?= -Werror -pedantic-errors
@@ -71,8 +71,6 @@ asm.o: CFLAGS += -Wno-override-init
 # used to apply to .o only but some make versions built directly from .c
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
-lexer.o: parser.h
-
 # don't complain about unused values that we might use in asserts
 tas.o asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
@@ -82,14 +80,14 @@ ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
 $(GENDIR)/parser.o $(GENDIR)/lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
-$(GENDIR)/lexer.h $(GENDIR)/debugger_lexer.h: | $(GENDIR)
-tas.o: $(GENDIR)/parser.h
+$(GENDIR)/lexer.o tas.o: $(GENDIR)/parser.h
 tsim.o: $(GENDIR)/debugger_parser.h
 
-$(GENDIR)/debugger_lexer.h $(GENDIR)/debugger_lexer.c: debugger_lexer.l
-$(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y $(GENDIR)/debugger_lexer.h
-$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
-$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y $(GENDIR)/lexer.h
+$(GENDIR)/debugger_lexer.o: $(GENDIR)/debugger_parser.h
+$(GENDIR)/debugger_lexer.h $(GENDIR)/debugger_lexer.c: debugger_lexer.l | $(GENDIR)
+$(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y $(GENDIR)/debugger_lexer.h | $(GENDIR)
+$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l | $(GENDIR)
+$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y $(GENDIR)/lexer.h | $(GENDIR)
 
 $(GENDIR):
 	mkdir -p $@
