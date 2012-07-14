@@ -87,16 +87,9 @@ tas.o: $(GENDIR)/parser.h
 tsim.o: $(GENDIR)/debugger_parser.h
 
 $(GENDIR)/debugger_lexer.h $(GENDIR)/debugger_lexer.c: debugger_lexer.l
-	$(FLEX) --header-file=$(GENDIR)/debugger_lexer.h -o $(GENDIR)/debugger_lexer.c $<
-
 $(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y $(GENDIR)/debugger_lexer.h
-	$(BISON) --defines=$(GENDIR)/debugger_parser.h -o $(GENDIR)/debugger_parser.c $<
-
 $(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l
-	$(FLEX) --header-file=$(GENDIR)/lexer.h -o $(GENDIR)/lexer.c $<
-
 $(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y $(GENDIR)/lexer.h
-	$(BISON) --defines=$(GENDIR)/parser.h -o $(GENDIR)/parser.c $<
 
 $(GENDIR):
 	mkdir -p $@
@@ -129,6 +122,46 @@ clean:
 	*.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
 
 clobber: clean
-	$(RM) $(GENDIR)/{parser,lexer}.[ch]
+	$(RM) $(GENDIR)/{debugger_,}{parser,lexer}.[ch]
+	rmdir $(GENDIR)
 	$(RM) -r *.dSYM
+
+##############################################################################
+
+OUTPUT_OPTION ?= -o $@
+
+COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+%.o: %.c
+ifneq ($(MAKE_VERBOSE),)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+else
+	@echo "[ CC ] $<"
+	@$(COMPILE.c) $(OUTPUT_OPTION) $<
+endif
+
+LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
+
+%$(EXE_SUFFIX): %.o
+ifneq ($(MAKE_VERBOSE),)
+	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+else
+	@echo "[ LD ] $@"
+	@$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+endif
+
+$(GENDIR)/%.h $(GENDIR)/%.c: %.l
+ifneq ($(MAKE_VERBOSE),)
+	$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
+else
+	@echo "[ FLEX ] $<"
+	@$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
+endif
+
+$(GENDIR)/%.h $(GENDIR)/%.c: %.y
+ifneq ($(MAKE_VERBOSE),)
+	$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
+else
+	@echo "[ BISON ] $<"
+	@$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
+endif
 
