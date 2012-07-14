@@ -5,4 +5,9 @@ B <- 'z'
 B <- ('A' - 'a')
 B <- ('a' - 'A')
 B <- ('a' - 0x20)
-B <- ' '
+.word ' '
+.word '\n'
+.word '\b'
+.word '\t'
+.word '\r'
+.word '\\'

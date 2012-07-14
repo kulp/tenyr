@@ -38,6 +38,11 @@
 // <#     --                begin numeric conversion
 // >BODY  xt -- a-addr           adrs of param field
 // >IN    -- a-addr            holds offset into TIB
+head(TO_IN,>IN): .word
+    @ENTER,
+    @LITERAL, @INPOS, @RELOC,
+    @EXIT
+
 // >NUMBER  ud adr u -- ud' adr' u'
 //                          convert string to number
 // 2DROP  x1 x2 --                      drop 2 cells
@@ -47,6 +52,12 @@
 // 2!     x1 x2 a-addr --              store 2 cells
 // 2@     a-addr -- x1 x2              fetch 2 cells
 // ABORT  i*x --   R: j*x --      clear stack & QUIT
+head(ABORT,ABORT):
+    .word . + 1
+    S   <- [reloc(_PSPinit)]
+    R   <- [reloc(_RSPinit)]
+    illegal
+
 // ABORT" i*x 0  -- i*x   R: j*x -- j*x  print msg &
 //        i*x x1 --       R: j*x --      abort,x1<>0
 // ABS    n1 -- +n2                   absolute value
@@ -57,19 +68,38 @@
 // BASE   -- a-addr           holds conversion radix
 // BEGIN  -- adrs         target for backward branch
 // BL     -- char                     an ASCII space
+head(BL,BL): .word
+    @ENTER,
+    @LITERAL, ' ',
+    @EXIT
+
 // C,     char --                append char to dict
 // CELLS  n1 -- n2                 cells->adrs units
+head(CELLS,CELLS): .word
+    @ENTER,
+    // no-op ; cells are address units in tenyr
+    @EXIT
+
 // CELL+  a-addr1 -- a-addr2   add cell size to adrs
 // CHAR   -- char              parse ASCII character
 // CHARS  n1 -- n2                 chars->adrs units
-head(CHARS,CHARS):
-    .word @ENTER
+head(CHARS,CHARS): .word
+    @ENTER,
     // no-op ; chars are address units in tenyr
-    .word @EXIT
+    @EXIT
 
 // CHAR+  c-addr1 -- c-addr2   add char size to adrs
+head(CHAR_PLUS,CHAR+): .word
+    @ADD_1,
+    @EXIT
+
 // COUNT  c-addr1 -- c-addr2 u      counted->adr/len
 // CR     --                          output newline
+head(CR,CR): .word
+    @ENTER,
+    @LITERAL, '\n', @EMIT,
+    @EXIT
+
 // CREATE --              create an empty definition
 // DECIMAL --             set number base to decimal
 // DEPTH  -- +n             number of items on stack
@@ -81,13 +111,80 @@ head(CHARS,CHARS):
 // FIND   c-addr -- c-addr 0     ..if name not found
 //                  xt  1        ..if immediate
 //                  xt -1        ..if "normal"
+head(FIND,FIND):
+    .word . + 1
+    T0   <- @dict       // T0 <- addr of dictionary
+L_FIND_top:
+    T5   <- [S + 1]     // T5 <- name to look up
+    T1   <- T0 + 2      // T1 <- addr of name string
+
+L_FIND_char_top:
+    T2   <- [T1 + BAS]  // T2 <- test-name char
+    T3   <- [T5]        // T3 <- find-name char
+
+    T2   <- T2 & 0xdf   // uppercase test-name char
+    T3   <- T3 & 0xdf   // uppercase find-name char
+
+    // Right now we check for either NUL-termination
+    // or space-termination
+    T6   <- T3 == ' '   // T4 <- end of find-name ?
+    T4   <- T3 == 0     // T6 <- end of find-name ?
+    T6   <- T4 | T6     // T4 <- either ending ?
+    T4   <- T2 == 0     // T4 <- end of test-name ?
+
+    T2   <- T2 <> T3    // T2 <- char mismatch ?
+    T3   <- T4 &  T6    // T3 <- both names end ?
+    T4   <- T4 |  T6    // T4 <- either name ends ?
+    T2   <- T2 |  T4    // T2 <- name mismatch ?
+
+    iftrue(T3,T4,L_FIND_match)
+    iftrue(T2,T4,L_FIND_char_bottom)
+
+    T1   <- T1 + 1      // increment test-name addr
+    T5   <- T5 + 1      // increment find-name addr
+    P    <- reloc(L_FIND_char_top)
+
+L_FIND_char_bottom:
+    T0   <- [T0 + BAS]  // T0 <- follow link
+    T1   <- T0 <> 0     // T1 <- more words ? .word . + 1
+    T2   <- BAS - P + (@L_FIND_top - 3)
+    T2   <- T2 & T1
+    P    <- P + T2 + 1
+
+    // If we reach this point, there was a mismatch.
+    S    <- S - 1
+    A    -> [S + 1]
+    goto(NEXT)
+
+L_FIND_match:
+    S    <- S - 1
+    T0   -> [S + 2]     // put xt on stack
+    T0   <- -1
+    // TODO support flag for immediate words
+    T0   -> [S + 1]     // put flag on stack
+
+    goto(NEXT)
+
 // FM/MOD d1 n1 -- n2 n3     floored signed division
 // HERE   -- addr         returns dictionary pointer
+head(HEAD,HEAD): .word
+    @ENTER,
+    @LITERAL, @dict, @RELOC,
+    @EXIT
+
 // HOLD   char --          add char to output string
 // IF     -- adrs         conditional forward branch
 // IMMEDIATE   --          make last def'n immediate
 // LEAVE  --    L: -- adrs             exit DO..LOOP
 // LITERAL x --      append numeric literal to dict.
+head(LITERAL,LITERAL):
+    .word . + 1
+    W   <- [I]
+    I   <- I + 1
+    W   -> [S]
+    S   <- S - 1
+    goto(NEXT)
+
 // LOOP   adrs --   L: 0 a1 a2 .. aN --
 // MAX    n1 n2 -- n3                 signed maximum
 // MIN    n1 n2 -- n3                 signed minimum
@@ -102,6 +199,11 @@ head(CHARS,CHARS):
 // SM/REM d1 n1 -- n2 n3   symmetric signed division
 // SOURCE -- adr n              current input buffer
 // SPACE  --                          output a space
+head(SPACE,SPACE): .word
+    @ENTER,
+    @BL, @EMIT,
+    @EXIT
+
 // SPACES n --                       output n spaces
 // STATE  -- a-addr             holds compiler state
 // S"     --                  compile in-line string
@@ -111,6 +213,31 @@ head(CHARS,CHARS):
 // TYPE   c-addr +n --         type line to terminal
 // UNTIL  adrs --        conditional backward branch
 // U.     u --                    display u unsigned
+head(EMIT_UNSIGNED,U.): .word
+    @ENTER,
+
+    // TODO rewrite this as a loop, and use less stack
+    // TODO pay attention to BASE
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+    @DUP, @LITERAL, 4, @RSHIFT,
+
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+    @MASK4BITS, @TOHEXCHAR, @EMIT,
+
+    @EXIT
+
+
 // .      n --                      display n signed
 // WHILE  -- adrs              branch for WHILE loop
 // WORD   char -- c-addr n  parse word delim by char
@@ -132,37 +259,37 @@ head(CHARS,CHARS):
 // HEX    --                  set number base to hex
 // PAD    -- a-addr                  user PAD buffer
 // TIB    -- a-addr            Terminal Input Buffer
+head(TIB,TIB): .word
+    @ENTER,
+    @LITERAL, @INBUF, @RELOC,
+    @EXIT
+
 // WITHIN n1|u1 n2|u2 n3|u3 -- f     test n2<=n1<n3?
 // WORDS  --                 list all words in dict.
 head(WORDS,WORDS):
     .word . + 1
-    T0   <- reloc(level0_link)
+    T0   <- @dict       // already relocated
 L_WORDS_top:
-    T1   <- [T0]        // T1 <- value of curr link
-    T0   <- T1 + F      // T0 <- addr of next link
-    T3   <- T0 + 1      // T3 <- addr of name string
+    T0   <- T0 + BAS    // T0 <- addr of next link
+    T1   <- T0 + 2      // T1 <- addr of name string
 
-L_char_top:
-    T4   <- [T3]        // T4 <- character
-    T5   <- T4 == 0     // T5 <- end of string ?
+L_WORDS_char_top:
+    T2   <- [T1]        // T2 <- character
+    T3   <- T2 == 0     // T3 <- end of string ?
 
-    // jnzrel(T5,L_char_bottom)
-    T6   <- f - p + (@L_char_bottom - 3)
-    T6   <- T6 & T5
-    p    <- p + T6 + 1
+    iftrue(T3,T4,L_WORDS_char_bottom)
 
-    T4   -> SERIAL      // emit character
-    T3   <- T3 + 1      // increment char addr
-    p    <- reloc(L_char_top)
-L_char_bottom:
-    T4   <- 0xa         // newline
-    T4   -> SERIAL
+    T2   -> SERIAL      // emit character
+    T1   <- T1 + 1      // increment char addr
+    P    <- reloc(L_WORDS_char_top)
+L_WORDS_char_bottom:
+    T1   <- '\n'
+    T1   -> SERIAL
 
-    T2   <- T1 <> 0     // T2 <- continue ?
-    // jnzrel(T2,L_WORDS_top)
-    T3   <- f - p + (@L_WORDS_top - 3)
-    T3   <- T3 & T2
-    p    <- p + T3 + 1
+    T0   <- [T0]
+    T1   <- T0 <> 0     // T1 <- continue ?
+
+    iftrue(T1,T2,L_WORDS_top)
 
     goto(NEXT)
 
@@ -170,25 +297,37 @@ L_char_bottom:
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
-head(ISNUMBER,?NUMBER):
-    .word @ENTER
-    .word @LIT
-    .word '0'       // load '0' onto stack
+head(ISNUMBER,?NUMBER): .word
+    @ENTER,
+    // TODO make sensitive to BASE
+    @DUP,                       // c-addr c-addr
+    @LITERAL, 1, @CHARS, @ADD,  // ca ca+1
+    @SWAP,                  // ca+1 ca
+    @FETCHR,                // ca+1 ch
+    @LITERAL, ('0' - 1),    // ca+1 ch '0'-1
+    @CMP_GT,                // ca+1 ch flag
+    @OVER,                  // ca+1 ch flag ch
+    @LITERAL, ('9' + 1),    // ca+1 ch flag ch '9'+1
+    @CMP_LT,                // ca+1 ch flag flag
+    @AND,                   // ca+1 ch flag
 
-    .word @FETCHR   // fetch character from string
+    @LITERAL, 1, @CHARS,
+    @ADD_1,     // increment character pointer
 
-    .word @LIT
-    .word 1
-    .word @CHARS
-    .word @ADD_1    // increment character pointer
+    @CMP_LT,
 
-    .word @CMP_LT
-
-    .word @LIT
-    .word '9'
     // TODO
-    .word @EXIT
+    @EXIT
+
+head(DEBUG,DEBUG): .word . + 1
+    illegal
+    //@ENTER,
+    //@ABORT,
+    //@EXIT
 
 .global level1_link
 .set level1_link, @link
+
+.global dict
+.set dict, @level1_link
 
