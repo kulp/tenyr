@@ -71,7 +71,7 @@ static int sparseram_op(struct sim_state *s, void *cookie, int op, uint32_t addr
         // Currently, a page is allocated even on a read. It is not a very
         // useful optimisation, but we could avoid allocating a page until the
         // first write.
-        struct element *node = malloc(PAGESIZE + sizeof *node);
+        struct element *node = malloc(PAGESIZE * sizeof *node->space + sizeof *node);
         if (s->conf.should_init)
             for (unsigned long i = 0; i < PAGESIZE; i++)
                 node->space[i] = s->conf.initval;
