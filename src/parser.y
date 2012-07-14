@@ -69,7 +69,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token <chr> ',' '$'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
-%token <u> INTEGER
+%token <i> INTEGER
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
@@ -83,9 +83,11 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %type <op> op signed_op unsigned_op unary_op
 %type <program> program ascii utf32 data string_or_data
 %type <s> addsub
-%type <str> symbol
+%type <str> symbol symbol_list
 %type <cstr> string
 %type <dctv> directive
+
+%expect 2
 
 %union {
     int32_t i;
@@ -188,10 +190,13 @@ data
         {   $data = make_data(pd, $reloc_expr_list); }
 
 directive
-    : GLOBAL SYMBOL
-        {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $SYMBOL); }
+    : GLOBAL symbol_list
+        {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $symbol_list); }
     | SET SYMBOL ',' reloc_expr
         {   $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL, $reloc_expr); }
+
+symbol_list
+    : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
 
 reloc_expr_list[outer]
     : reloc_expr[expr]
