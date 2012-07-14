@@ -82,7 +82,7 @@ ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
 $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
 $(GENDIR)/parser.o $(GENDIR)/lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
-$(GENDIR)/lexer.h $(GENDIR)/debugger_lexer.h: $(GENDIR)
+$(GENDIR)/lexer.h $(GENDIR)/debugger_lexer.h: | $(GENDIR)
 tas.o: $(GENDIR)/parser.h
 tsim.o: $(GENDIR)/debugger_parser.h
 
