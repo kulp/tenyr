@@ -484,7 +484,7 @@ const struct format formats[] = {
         .reloc = obj_reloc },
     { "raw" , .in = raw_in , .out = raw_out  },
     { "text", .in = text_in, .out = text_out },
-	{ "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
+    { "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
 };
 
 const size_t formats_count = countof(formats);
