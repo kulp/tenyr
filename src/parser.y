@@ -87,6 +87,8 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %type <cstr> string
 %type <dctv> directive
 
+%expect 2
+
 %union {
     int32_t i;
     uint32_t u;

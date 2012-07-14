@@ -35,7 +35,7 @@ endif
 PEDANTIC ?= -Werror -pedantic-errors
 
 FLEX  = flex
-BISON = bison
+BISON = bison -Werror
 
 CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
 GENDIR = src/gen
