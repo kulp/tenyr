@@ -213,7 +213,7 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
               next_pc   = `RESETVECTOR;
     wire[31:0] pc = new_pc;
 
-    assign insn_addr = lhalt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
+    assign insn_addr = pc;
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     // update PC on 270-degree phase, after Exec has had time to compute new P
@@ -221,9 +221,9 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
         if (!reset_n) begin
             new_pc  = `RESETVECTOR;
             next_pc = `RESETVECTOR;
-        end else begin
+        end else if (!lhalt) begin
             next_pc = pc + 1;
-            if (lhalt || jumping)
+            if (jumping)
                 new_pc = deref_lhs;
             else
                 new_pc = next_pc;
@@ -234,8 +234,8 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     always @(negedge clk0) if (en) begin
         if (reset_n) begin
             rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-            if (!lhalt && state_valid)
-                manual_invalidate = illegal;
+            //if (!lhalt && state_valid)
+            //    manual_invalidate = illegal;
         end
     end
 
