@@ -3,7 +3,6 @@
 
 `undef  VGA
 `define SEG7
-`undef  SERIAL
 
 module Tenyr(halt,
 `ifdef ISIM
@@ -83,15 +82,6 @@ module Tenyr(halt,
                       .clkb(~clk_insnmem),
                       /*.enb(1'b1),*/ .web(1'b0), .addrb(insn_addr),
                       .dinb(32'bx), .doutb(insn_data));
-
-`ifdef SERIAL
-    Serial serial(.clk(clk_datamem), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
-                  .rw(operand_rw), .addr(operand_addr),
-                  .data(operand_data), .txd(txd), .rxd(rxd));
-    Serial serial2(.clk(clk_datamem), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
-                  .rw(operand_rw), .addr(operand_addr),
-                  .data(operand_data), .rxd(txd));
-`endif
 
 `ifdef SEG7
     Seg7 #(.BASE(12'h100))

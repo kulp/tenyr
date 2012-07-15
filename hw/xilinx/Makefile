@@ -50,7 +50,6 @@ Tenyr_SRCDEPS += \
 	ramwrap.v \
 	seg7.v \
 	seglookup.v \
-	serial.v \
 	tenyr_mainclock.xco \
 	Tenyr.ucf \
 	tenyr.v \
