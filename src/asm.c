@@ -145,21 +145,21 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int op2   = !inert || (g->p ? g->imm : !opYA);
             int op1   = !(opXA && inert) || (!op2 && !op3);
             int sgnd  = op_meta[g->op].sgnd;
-            int type  = g->p;
+            int kind  = g->p;
 
             // losslessly  disambiguate these three cases :
             //  b <- a
             //  b <- 0
             //  b <- $0
             // so that assembly rountripping works more reliably
-            int rhs0  = (g->op == OP_ADD || (inert && type == 1)) && opXA && !g->imm;
-            int rhsA  = (g->op == OP_BITWISE_OR    && type == 0)  && opXA && !g->imm;
+            int rhs0  = (g->op == OP_ADD || (inert && kind == 1)) && opXA && !g->imm;
+            int rhsA  = (g->op == OP_BITWISE_OR    && kind == 0)  && opXA && !g->imm;
 
             if (rhs0) {
                 op3 = 1;
                 op2 = 0;
                 op1 = 0;
-                type = 0;
+                kind = 0;
             } else if (rhsA) {
                 op1 = 1;
                 op2 = 0;
@@ -177,9 +177,9 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             }
 
             #define C_(A,B,C,D,E) (((A) << 16) | ((B) << 12) | ((C) << 8) | ((D) << 4) | (E))
-            #define PUT(...) return fprintf(out, fmts[!!sgnd][!!type][!!op1][!!op2][!!op3], __VA_ARGS__)
+            #define PUT(...) return fprintf(out, fmts[!!sgnd][!!kind][!!op1][!!op2][!!op3], __VA_ARGS__)
 
-            switch (C_(sgnd,type,op1,op2,op3)) {
+            switch (C_(sgnd,kind,op1,op2,op3)) {
               //case C_(0,0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
                 case C_(0,0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
                 case C_(0,0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
@@ -214,7 +214,7 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                 case C_(1,1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,fa,f7,f9); break;
 
                 default:
-                    fatal(0, "Unsupported sgnd,type,op1,op2,op3 %05x",
+                    fatal(0, "Unsupported sgnd,kind,op1,op2,op3 %05x",
                             C_(sgnd,g->p,op1,op2,op3));
             }
 
@@ -490,12 +490,12 @@ const struct format formats[] = {
 const size_t formats_count = countof(formats);
 
 int make_format_list(int (*pred)(const struct format *), size_t flen,
-        const struct format formats[flen], size_t len, char buf[len],
+        const struct format fmts[flen], size_t len, char buf[len],
         const char *sep)
 {
     int pos = 0;
-    const struct format *f = formats;
-    while (pos < (signed)len && f < formats + flen) {
+    const struct format *f = fmts;
+    while (pos < (signed)len && f < fmts + flen) {
         if (pred == NULL || pred(f)) {
             if (pos > 0) {
                 pos += snprintf(&buf[pos], len - pos, "%s%s", sep, f->name);
