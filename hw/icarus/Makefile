@@ -3,6 +3,7 @@ CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I../../src
 
 TAS = ../../tas
+TLD = ../../tld
 
 ifdef DEBUG
 CFLAGS += -O0 -g
@@ -33,6 +34,9 @@ asm.o: CFLAGS += -Wno-unused-parameter
 
 vpath %.tas ../verilog
 
+run_%: tenyr %.texe
+	vvp -M. $< +LOAD=$*.texe
+
 clean:
 	$(RM) tenyr glue.vpi *.o
 
@@ -58,6 +62,14 @@ ifneq ($(MAKE_VERBOSE),)
 else
 	@echo "[ TAS ] $<"
 	@$(TAS) -o$@ $<
+endif
+
+%.texe: %.to
+ifneq ($(MAKE_VERBOSE),)
+	$(TLD) -o$@ $<
+else
+	@echo "[ TLD ] $<"
+	@$(TLD) -o$@ $<
 endif
 
 %: %.v
