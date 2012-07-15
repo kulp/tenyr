@@ -1,7 +1,8 @@
 `include "common.vh"
 `timescale 1ms/10us
 
-`define VGA
+`undef  VGA
+`define SEG7
 `undef  SERIAL
 
 module Tenyr(halt,
@@ -92,10 +93,12 @@ module Tenyr(halt,
                   .data(operand_data), .rxd(txd));
 `endif
 
+`ifdef SEG7
     Seg7 #(.BASE(12'h100))
              seg7(.clk(clk_datamem), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .seg(seg), .an(an));
+`endif
 
     Core core(.clk0(clk_core0), .clk90(clk_core90), .clk180(clk_core180), .clk270(clk_core270),
               .en(phases_valid),
