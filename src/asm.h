@@ -6,6 +6,8 @@
 enum { ASM_ASSEMBLE = 1, ASM_DISASSEMBLE = 2 };
 
 struct instruction;
+struct symbol;
+struct reloc_node;
 
 struct format {
     const char *name;
