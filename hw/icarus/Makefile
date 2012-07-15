@@ -1,4 +1,4 @@
-VPI_CFLAGS := $(shell iverilog-vpi --cflags)
+VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I../../src
 
@@ -26,20 +26,53 @@ seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 
 glue.vpi: callbacks.o serial.o load.o sim.o asm.o obj.o common.o
 
+# don't complain about unused values that we might use in asserts
+asm.o sim.o: CFLAGS += -Wno-unused-value
+# it's all right for callbacks not to use all their parameters
+asm.o: CFLAGS += -Wno-unused-parameter
+
 vpath %.tas ../verilog
-
-%.to: %.tas
-	$(TAS) -o$@ $<
-
-%: %.v
-	iverilog $(VFLAGS) -Wall -o $@ $^
-
-%.vpi: %.o
-	iverilog-vpi -o $@ $^
 
 clean:
 	$(RM) tenyr glue.vpi *.o
 
 clobber: clean
 	$(RM) *.vcd
+
+##############################################################################
+
+OUTPUT_OPTION ?= -o $@
+
+COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+%.o: %.c
+ifneq ($(MAKE_VERBOSE),)
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+else
+	@echo "[ CC ] $<"
+	@$(COMPILE.c) $(OUTPUT_OPTION) $<
+endif
+
+%.to: %.tas
+ifneq ($(MAKE_VERBOSE),)
+	$(TAS) -o$@ $<
+else
+	@echo "[ TAS ] $<"
+	@$(TAS) -o$@ $<
+endif
+
+%: %.v
+ifneq ($(MAKE_VERBOSE),)
+	iverilog $(VFLAGS) -Wall -o $@ $^
+else
+	@echo "[ IVERILOG ] $@"
+	@iverilog $(VFLAGS) -Wall -o $@ $^
+endif
+
+%.vpi: %.o
+ifneq ($(MAKE_VERBOSE),)
+	iverilog-vpi -o $@ $^
+else
+	@echo "[ VPI ] $@"
+	@iverilog-vpi -o $@ $^
+endif
 
