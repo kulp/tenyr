@@ -166,7 +166,8 @@ static int format_has_input(const struct format *f)
 static int usage(const char *me)
 {
     char format_list[256];
-    make_format_list(format_has_input, formats_count, formats, sizeof format_list, format_list, ", ");
+    make_format_list(format_has_input, tenyr_asm_formats_count,
+            tenyr_asm_formats, sizeof format_list, format_list, ", ");
 
     printf("Usage:\n"
            "  %s [ OPTIONS ] imagefile\n"
@@ -542,7 +543,7 @@ int main(int argc, char *argv[])
 
     int load_address = RAM_BASE, start_address = RAM_BASE;
 
-    const struct format *f = &formats[0];
+    const struct format *f = &tenyr_asm_formats[0];
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
@@ -551,9 +552,9 @@ int main(int argc, char *argv[])
             case 'd': s->conf.debugging = 1; break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'f': {
-                size_t sz = formats_count;
-                f = lfind(&(struct format){ .name = optarg }, formats, &sz,
-                        sizeof formats[0], find_format_by_name);
+                size_t sz = tenyr_asm_formats_count;
+                f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
+                        sizeof tenyr_asm_formats[0], find_format_by_name);
                 if (!f)
                     exit(usage(argv[0]));
 

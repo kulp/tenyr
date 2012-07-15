@@ -59,7 +59,8 @@ static int format_has_output(const struct format *f)
 static int usage(const char *me)
 {
     char format_list[256];
-    make_format_list(format_has_output, formats_count, formats, sizeof format_list, format_list, ", ");
+    make_format_list(format_has_output, tenyr_asm_formats_count, tenyr_asm_formats,
+            sizeof format_list, format_list, ", ");
 
     printf("Usage:\n"
            "  %s [ OPTIONS ] assembly-or-image-file [ assembly-or-image-file ... ] \n"
@@ -452,7 +453,7 @@ int main(int argc, char *argv[])
     int disassemble = 0;
     int flags = 0;
 
-    const struct format *f = &formats[0];
+    const struct format *f = &tenyr_asm_formats[0];
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
@@ -469,9 +470,9 @@ int main(int argc, char *argv[])
             case 'd': disassemble = 1; break;
             case 's': flags |= ASM_NO_SUGAR; break;
             case 'f': {
-                size_t sz = formats_count;
-                f = lfind(&(struct format){ .name = optarg }, formats, &sz,
-                        sizeof formats[0], find_format_by_name);
+                size_t sz = tenyr_asm_formats_count;
+                f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
+                        sizeof tenyr_asm_formats[0], find_format_by_name);
                 if (!f)
                     exit(usage(argv[0]));
 
