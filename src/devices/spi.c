@@ -12,7 +12,7 @@
 
 #define SPI_BASE    0x200
 #define SPI_LEN     (0x7 * 4) /* seven registers at four addresses each) */
-#define SPI_END     (SPI_BASE + SPI_LEN)
+#define SPI_END     (SPI_BASE + SPI_LEN - 1)
 
 struct spi_state {
     FILE *store;
