@@ -45,6 +45,10 @@ struct spi_state {
                     } bits;
                 } u;
             } ctrl;
+            unsigned DIVIDER    :16;
+            unsigned            :16;
+            unsigned SS         : 8;
+            unsigned            :24;
         } fmt;
     } regs;
 };
@@ -52,6 +56,22 @@ struct spi_state {
 static int spi_init(struct sim_state *s, void *cookie, ...)
 {
     struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
+
+    spi->regs.fmt.data.Rx.Rx0 = 0x00000000;
+    spi->regs.fmt.data.Rx.Rx1 = 0x00000000;
+    spi->regs.fmt.data.Rx.Rx2 = 0x00000000;
+    spi->regs.fmt.data.Rx.Rx3 = 0x00000000;
+
+    spi->regs.fmt.data.Tx.Tx0 = 0x00000000;
+    spi->regs.fmt.data.Tx.Tx1 = 0x00000000;
+    spi->regs.fmt.data.Tx.Tx2 = 0x00000000;
+    spi->regs.fmt.data.Tx.Tx3 = 0x00000000;
+
+    spi->regs.fmt.ctrl.u.CTRL = 0x00000000;
+
+    spi->regs.fmt.DIVIDER     = 0x0000ffff;
+
+    spi->regs.fmt.SS          = 0x00000000;
 
     return 0;
 }
