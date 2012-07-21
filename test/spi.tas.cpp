@@ -1,6 +1,7 @@
 #define nop a <- a;
 #define SPI_BASE 0x200
-a -> [(SPI_BASE + 0x14)] // set divider to zero
+b <- 0
+b -> [(SPI_BASE + 0x14)] // set divider
 b <- 1
 b -> [(SPI_BASE + 0x18)] // set SS to 1
 // data

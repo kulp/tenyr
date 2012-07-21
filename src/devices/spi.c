@@ -28,13 +28,14 @@
 
 #define NINST       8 /* number of instances connectable */
 
-#define SPI_INIT_CYCLES 2 /* why 2 ? XXX */
+#define SPI_INIT_CYCLES 3 /* TODO justify this number */
 
 struct spi_state {
     struct spi_ops impls[NINST];
     void *impl_cookies[NINST];
     enum {
         SPI_EMU_RESET,
+        SPI_EMU_STARTED,
         SPI_EMU_SELECTED,
         SPI_EMU_BUSY,
         SPI_EMU_DONE
@@ -183,7 +184,7 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
                 breakpoint("GO_BSY bit changed at the same time as other control bits");
 
             if (new_go_bit) {
-                spi->state = SPI_EMU_SELECTED;
+                spi->state = SPI_EMU_STARTED;
                 spi->remaining = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
                 if (spi->remaining == 0)
                     spi->remaining = 128;
@@ -191,30 +192,6 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
         }
 
         spi->regs.raw[offset >> 2] = *data;
-    }
-
-    return 0;
-}
-
-static int spi_step_state(struct spi_state *spi)
-{
-    switch (spi->state) {
-        case SPI_EMU_RESET:
-            break;
-        case SPI_EMU_SELECTED:
-            if (spi->cyc > SPI_INIT_CYCLES)
-                spi->state = SPI_EMU_BUSY;
-            break;
-        case SPI_EMU_BUSY:
-            if (!spi->remaining--)
-                spi->state = SPI_EMU_DONE;
-            break;
-        case SPI_EMU_DONE:
-            spi->state = SPI_EMU_RESET;
-            spi->regs.fmt.ctrl.u.bits.GO_BSY = 0;
-            break;
-        default:
-            fatal(0, "Invalid SPI master state");
     }
 
     return 0;
@@ -230,7 +207,6 @@ static int spi_slave_cycle(struct spi_state *spi)
     for (int inst = 0; inst < NINST; inst++) {
         struct spi_ops *ops = &spi->impls[inst];
         void *cookie = spi->impl_cookies[inst];
-        int pull = -1;
 
         // a device not having a clock() cb is invalid or empty
         if (!ops->clock)
@@ -238,28 +214,48 @@ static int spi_slave_cycle(struct spi_state *spi)
 
         // check if we are selected
         if (SS & (1 << inst)) {
+            int pull = -1;
+
             switch (spi->state) {
                 case SPI_EMU_RESET:
+                    break;
+                case SPI_EMU_STARTED:
                     if (ops->select)
                         ops->select(cookie, 1);
+                    spi->state = SPI_EMU_SELECTED;
                     break;
+                case SPI_EMU_SELECTED:
+                    if (spi->cyc > SPI_INIT_CYCLES)
+                        spi->state = SPI_EMU_BUSY;
+                    break;
+                case SPI_EMU_BUSY: {
+                    ops->clock(cookie, 1, push, &pull);
+                    // TODO support shifting more than 32
+                    int width = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
+                    assert(("shift width > 32 supported", width <= 32));
+                    assert(("SPI generated bit is 0 or 1", (pull == 0 || pull == 1)));
+                    uint32_t *p = &spi->regs.fmt.data.Tx.Tx0;
+                    *p = *p >> 1;
+                    *p = *p & ~(   1 << width);
+                    *p = *p |  (pull << width);
+
+                    if (!--spi->remaining)
+                        spi->state = SPI_EMU_DONE;
+                    break;
+                }
                 case SPI_EMU_DONE:
                     if (ops->select)
                         ops->select(cookie, 0);
+                    spi->state = SPI_EMU_RESET;
                     break;
-                case SPI_EMU_SELECTED:
-                case SPI_EMU_BUSY: // XXX why for both SELECTED and BUSY
-                    ops->clock(cookie, 1, push, &pull);
-                    break;
-                default:
-                    fatal(0, "Invalid SPI master state");
             }
         } else {
             switch (spi->state) {
                 case SPI_EMU_SELECTED: {
                     int pull = -1;
                     ops->clock(cookie, 0, push, &pull);
-                    assert(("Inactive SPI slave does not generate traffic", (pull == -1)));
+                    if (pull != -1)
+                        breakpoint("Inactive SPI slave generated illegal traffic");
                     break;
                 }
                 default:
@@ -267,9 +263,6 @@ static int spi_slave_cycle(struct spi_state *spi)
             }
         }
     }
-
-    spi_step_state(spi);
-    // TODO shift
 
     return 0;
 }
