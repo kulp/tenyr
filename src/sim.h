@@ -37,7 +37,8 @@ struct sim_state {
         size_t params_size;
         struct param_entry {
             char *key;
-            const char *value; ///< @c value does not get freed separately
+            char *value;
+            int free_value; ///< whether value should be free()d
         } *params;
     } conf;
 
@@ -56,6 +57,9 @@ int run_instruction(struct sim_state *s, struct instruction *i);
 int run_sim(struct sim_state *s, struct run_ops *ops);
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         FILE *in, int load_address);
+
+int param_get(struct sim_state *s, char *key, const char **val);
+int param_set(struct sim_state *s, char *key, char *val, int free_value);
 
 #endif
 

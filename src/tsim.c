@@ -533,45 +533,43 @@ int set_format(struct sim_state *s, const char *optarg, const struct format **f)
     return !*f;
 }
 
-int cmp_params(const void *_a, const void *_b)
-{
-    const struct param_entry *a = _a,
-                             *b = _b;
-
-    return strcmp(a->key, b->key);
-}
-
 void param_free(struct param_entry *p)
 {
     free(p->key);
+    if (p->free_value)
+        free(p->value);
 }
 
-int param_add(struct sim_state *s, const char *optarg)
+int param_get(struct sim_state *s, char *key, const char **val)
 {
-    // We can't use getsubopt() here because we don't know what all of our
-    // options are ahead of time.
+    struct param_entry p = { .key = key };
 
-    char *dupped = strdup(optarg);
-    char *eq = strchr(dupped, '=');
-    if (!eq) {
-        free(dupped);
+    struct param_entry *q = lfind(&p, s->conf.params, &s->conf.params_count,
+                                        sizeof *s->conf.params, (cmp*)strcmp);
+
+    if (!q)
         return 1;
-    }
 
-    *eq = '\0';
+    *val = q->value;
 
+    return 0;
+}
+
+int param_set(struct sim_state *s, char *key, char *val, int free_value)
+{
     while (s->conf.params_size <= s->conf.params_count)
         // technically there is a problem here if realloc() fails
         s->conf.params = realloc(s->conf.params,
                 (s->conf.params_size *= 2) * sizeof *s->conf.params);
 
     struct param_entry p = {
-        .key = dupped,
-        .value = ++eq,
+        .key        = key,
+        .value      = val,
+        .free_value = free_value,
     };
 
     struct param_entry *q = lsearch(&p, s->conf.params, &s->conf.params_count,
-                                        sizeof *s->conf.params, cmp_params);
+                                        sizeof *s->conf.params, (cmp*)strcmp);
 
     if (!q)
         return 1;
@@ -582,6 +580,23 @@ int param_add(struct sim_state *s, const char *optarg)
     }
 
     return 0;
+}
+
+int param_add(struct sim_state *s, const char *optarg)
+{
+    // We can't use getsubopt() here because we don't know what all of our
+    // options are ahead of time.
+    char *dupped = strdup(optarg);
+    char *eq = strchr(dupped, '=');
+    if (!eq) {
+        free(dupped);
+        return 1;
+    }
+
+    // Replace '=' with '\0' to split string in two
+    *eq = '\0';
+
+    return param_set(s, dupped, ++eq, 0);
 }
 
 int main(int argc, char *argv[])
