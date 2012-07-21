@@ -25,6 +25,7 @@ endif
 
 CFLAGS += -std=c99
 CFLAGS += -Wall -Wextra $(PEDANTIC)
+CFLAGS += -DMAY_ALIAS='__attribute__((__may_alias__))'
 
 # Optimised build
 ifeq ($(DEBUG),)

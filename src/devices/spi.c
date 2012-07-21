@@ -17,13 +17,18 @@
 
 #include "common.h"
 #include "device.h"
+#include "spi.h"
+
+#define FPTR_FROM_VPTR(Type,Expr) \
+    *(Type * MAY_ALIAS *)&(Expr)
 
 #define SPI_BASE    0x200
 #define SPI_LEN     (0x7 * 4) /* seven registers at four addresses each) */
 #define SPI_END     (SPI_BASE + SPI_LEN - 1)
 
 struct spi_state {
-    struct spi_ops *impl;
+    struct spi_ops impl;
+    void *impl_cookie;
 
     union {
         uint32_t raw[7];
@@ -80,26 +85,47 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.SS          = 0x00000000;
 }
 
-static int spi_init(struct sim_state *s, void *cookie, ...)
+static int spi_emu_init(struct sim_state *s, void *cookie, ...)
 {
     struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
 
-    spi->impl = NULL;
     spi_reset_defaults(spi);
 
     const char *implname = NULL;
     if (param_get(s, "spi.impl", &implname)) {
-        void *ptr = dlsym(RTLD_DEFAULT, implname);
+        char buf[64];
+        snprintf(buf, sizeof buf, "%s_spi_clock", implname);
+        void *ptr = dlsym(RTLD_DEFAULT, buf);
         if (!ptr)
             fatal(PRINT_ERRNO, "Failed to locate SPI impl '%s'", implname);
+
+        spi->impl.clock = FPTR_FROM_VPTR(spi_clock,ptr);
+
+        {
+            void *ptr = dlsym(RTLD_DEFAULT, buf);
+            snprintf(buf, sizeof buf, "%s_spi_init", implname);
+            spi->impl.init = FPTR_FROM_VPTR(spi_init,ptr);
+        }
+
+        {
+            void *ptr = dlsym(RTLD_DEFAULT, buf);
+            snprintf(buf, sizeof buf, "%s_spi_fini", implname);
+            spi->impl.fini = FPTR_FROM_VPTR(spi_fini,ptr);
+        }
+
+        if (spi->impl.init)
+            spi->impl.init(&spi->impl_cookie);
     }
 
     return 0;
 }
 
-static int spi_fini(struct sim_state *s, void *cookie)
+static int spi_emu_fini(struct sim_state *s, void *cookie)
 {
     struct spi_state *spi = cookie;
+
+    if (spi->impl.fini)
+        spi->impl.fini(&spi->impl_cookie);
 
     free(spi);
 
@@ -120,7 +146,7 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
     return 0;
 }
 
-static int spi_cycle(struct sim_state *s, void *cookie)
+static int spi_emu_cycle(struct sim_state *s, void *cookie)
 {
     // TODO implement SPI emulation state machine here
     return 0;
@@ -131,9 +157,9 @@ int spi_add_device(struct device **device)
     **device = (struct device){
         .bounds = { SPI_BASE, SPI_END },
         .op = spi_op,
-        .init = spi_init,
-        .fini = spi_fini,
-        .cycle = spi_cycle,
+        .init = spi_emu_init,
+        .fini = spi_emu_fini,
+        .cycle = spi_emu_cycle,
     };
 
     return 0;
