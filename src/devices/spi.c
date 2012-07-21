@@ -29,6 +29,7 @@
 struct spi_state {
     struct spi_ops impl;
     void *impl_cookie;
+    enum { SPI_EMU_RESET, SPI_EMU_BUSY } state;
 
     union {
         uint32_t raw[7];
@@ -93,31 +94,23 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
 
     const char *implname = NULL;
     if (param_get(s, "spi.impl", &implname)) {
-        char buf[64];
-        snprintf(buf, sizeof buf, "%s_spi_clock", implname);
-        void *ptr = dlsym(RTLD_DEFAULT, buf);
-        if (!ptr)
+
+#define GET_CB(Stem)                                             \
+        do {                                                     \
+            char buf[64];                                        \
+            void *ptr = dlsym(RTLD_DEFAULT, buf);                \
+            snprintf(buf, sizeof buf, "%s_spi_"#Stem, implname); \
+            spi->impl.Stem = FPTR_FROM_VPTR(spi_##Stem,ptr);     \
+        } while (0)                                              \
+        //
+
+        GET_CB(clock);
+        GET_CB(init);
+        GET_CB(select);
+        GET_CB(fini);
+
+        if (!spi->impl.clock)
             fatal(PRINT_ERRNO, "Failed to locate SPI impl '%s'", implname);
-
-        spi->impl.clock = FPTR_FROM_VPTR(spi_clock,ptr);
-
-        {
-            void *ptr = dlsym(RTLD_DEFAULT, buf);
-            snprintf(buf, sizeof buf, "%s_spi_init", implname);
-            spi->impl.init = FPTR_FROM_VPTR(spi_init,ptr);
-        }
-
-        {
-            void *ptr = dlsym(RTLD_DEFAULT, buf);
-            snprintf(buf, sizeof buf, "%s_spi_select", implname);
-            spi->impl.select = FPTR_FROM_VPTR(spi_select,ptr);
-        }
-
-        {
-            void *ptr = dlsym(RTLD_DEFAULT, buf);
-            snprintf(buf, sizeof buf, "%s_spi_fini", implname);
-            spi->impl.fini = FPTR_FROM_VPTR(spi_fini,ptr);
-        }
 
         if (spi->impl.init)
             spi->impl.init(&spi->impl_cookie);
