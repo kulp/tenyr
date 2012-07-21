@@ -173,27 +173,27 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
     // "When a transfer is in progress, writing to any register of the SPI
     // Master core has no effect."
     if (spi->state == SPI_EMU_RESET) {
-        if (offset == 0x10) { // CTRL register
-            uint32_t go_mask = 1 << 8;
-            uint32_t new_go_bit =  go_mask & *data;
-            uint32_t old_go_bit =  go_mask & spi->regs.raw[offset >> 2];
-            uint32_t new_others = ~go_mask & *data;
-            uint32_t old_others = ~go_mask & spi->regs.raw[offset >> 2];
-
-            if (!((new_go_bit == old_go_bit) || (new_others == old_others)))
-                breakpoint("GO_BSY bit changed at the same time as other control bits");
-
-            if (new_go_bit) {
-                spi->state = SPI_EMU_STARTED;
-                spi->remaining = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
-                if (spi->remaining == 0)
-                    spi->remaining = 128;
-            }
-        }
-
         if (op == OP_READ) {
             *data = spi->regs.raw[offset >> 2];
         } else if (op == OP_WRITE) {
+            if (offset == 0x10) { // CTRL register
+                uint32_t go_mask = 1 << 8;
+                uint32_t new_go_bit =  go_mask & *data;
+                uint32_t old_go_bit =  go_mask & spi->regs.raw[offset >> 2];
+                uint32_t new_others = ~go_mask & *data;
+                uint32_t old_others = ~go_mask & spi->regs.raw[offset >> 2];
+
+                if (!((new_go_bit == old_go_bit) || (new_others == old_others)))
+                    breakpoint("GO_BSY bit changed at the same time as other control bits");
+
+                if (new_go_bit) {
+                    spi->state = SPI_EMU_STARTED;
+                    spi->remaining = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
+                    if (spi->remaining == 0)
+                        spi->remaining = 128;
+                }
+            }
+
             spi->regs.raw[offset >> 2] = *data;
         }
     }
@@ -242,7 +242,7 @@ static int spi_slave_cycle(struct spi_state *spi)
                         *o >>= 1;                       // shift down this word
                         *o  &= ~(1 << 31);              // mask off top bit
                         if (i < 3)
-                            *o |= (*(o + 1) & 1) << 31; // get top bit from next word
+                            *o |= (*(o + 1) & 1) << 31; // make bottom bit from next word our top
                     }
 
                     // Insert pulled bit at appropriate place
