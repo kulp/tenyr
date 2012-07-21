@@ -92,6 +92,7 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.data.Tx.Tx2 = 0x00000000;
     spi->regs.fmt.data.Tx.Tx3 = 0x00000000;
 
+    // TODO support remaining CTRL bit behaviours
     spi->regs.fmt.ctrl.u.CTRL = 0x00000000;
 
     spi->regs.fmt.DIVIDER     = 0x0000ffff;
@@ -164,24 +165,23 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
 {
     struct spi_state *spi = cookie;
     uint32_t offset = addr - SPI_BASE;
+    int regnum = offset >> 2;
 
     assert(("Address within address space", !(addr & ~PTR_MASK)));
     assert(("Lower bits of offset are cleared", !(offset & 0x3)));
-
-    // TODO catch writes to GO_BSY
 
     // "When a transfer is in progress, writing to any register of the SPI
     // Master core has no effect."
     if (spi->state == SPI_EMU_RESET) {
         if (op == OP_READ) {
-            *data = spi->regs.raw[offset >> 2];
+            *data = spi->regs.raw[regnum];
         } else if (op == OP_WRITE) {
             if (offset == 0x10) { // CTRL register
                 uint32_t go_mask = 1 << 8;
                 uint32_t new_go_bit =  go_mask & *data;
-                uint32_t old_go_bit =  go_mask & spi->regs.raw[offset >> 2];
+                uint32_t old_go_bit =  go_mask & spi->regs.raw[regnum];
                 uint32_t new_others = ~go_mask & *data;
-                uint32_t old_others = ~go_mask & spi->regs.raw[offset >> 2];
+                uint32_t old_others = ~go_mask & spi->regs.raw[regnum];
 
                 if (!((new_go_bit == old_go_bit) || (new_others == old_others)))
                     breakpoint("GO_BSY bit changed at the same time as other control bits");
@@ -194,8 +194,42 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
                 }
             }
 
-            spi->regs.raw[offset >> 2] = *data;
+            spi->regs.raw[regnum] = *data;
         }
+    }
+
+    return 0;
+}
+
+static int do_one_shift(struct spi_state *spi, int width, int in)
+{
+    // Unconditionally shift all 128 bits for simplicity
+    if (spi->regs.fmt.ctrl.u.bits.LSB) {
+        for (int i = 0; i < 4; i++) {
+            uint32_t *o = &spi->regs.raw[i];
+            *o >>= 1;                       // shift down this word
+            *o  &= ~(1 << 31);              // mask off top bit
+            if (i < 3)
+                *o |= (*(o + 1) & 1) << 31; // make bottom bit from next word our top
+        }
+
+        // Insert pulled bit at MSB
+        uint32_t *i = &spi->regs.raw[(width - 1) / 32];
+        *i = *i & ~( 1 << ((width - 1) % 32));
+        *i = *i |  (in << ((width - 1) % 32));
+    } else {
+        for (int i = 3; i >= 0; i--) {
+            uint32_t *o = &spi->regs.raw[i];
+            *o <<= 1;                       // shift up this word
+            *o  &= ~1;                      // mask off bottom bit
+            if (i > 0)
+                *o |= (*(o - 1) & (1 << 31)) >> 31; // make top bit from next word our bottom
+        }
+
+        // Insert pulled bit at LSB
+        uint32_t *i = &spi->regs.raw[0];
+        *i = *i & ~1;
+        *i = *i | in;
     }
 
     return 0;
@@ -203,10 +237,23 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
 
 static int spi_slave_cycle(struct spi_state *spi)
 {
-    int push = spi->regs.fmt.data.Tx.Tx0 & 1;
+    int push = -1;
+    int width = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
+
     uint32_t SS = spi->regs.fmt.SS;
-    if (spi->state != SPI_EMU_RESET && !((SS & (SS - 1)) == 0))
-        breakpoint("SPI slave select is not one-hot");
+    if (spi->state != SPI_EMU_RESET) {
+        if (!((SS & (SS - 1)) == 0))
+            breakpoint("SPI slave select is not one-hot");
+
+        if (spi->regs.fmt.ctrl.u.bits.LSB) {
+            push = spi->regs.fmt.data.Tx.Tx0 & 1;
+        } else {
+            int inword = (width - 1) % 32;
+            push = (spi->regs.raw[(width - 1) / 32] & (1 << inword)) >> inword;
+        }
+
+        assert(("SPI pushed bit is 0 or 1", (push == 0 || push == 1)));
+    }
 
     for (int inst = 0; inst < NINST; inst++) {
         struct spi_ops *ops = &spi->impls[inst];
@@ -234,21 +281,8 @@ static int spi_slave_cycle(struct spi_state *spi)
                     break;
                 case SPI_EMU_BUSY: {
                     ops->clock(cookie, 1, push, &pull);
-                    int width = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
                     assert(("SPI generated bit is 0 or 1", (pull == 0 || pull == 1)));
-                    // Unconditionally shift all 128 bits for simplicity
-                    for (int i = 0; i < 4; i++) {
-                        uint32_t *o = &spi->regs.raw[i];
-                        *o >>= 1;                       // shift down this word
-                        *o  &= ~(1 << 31);              // mask off top bit
-                        if (i < 3)
-                            *o |= (*(o + 1) & 1) << 31; // make bottom bit from next word our top
-                    }
-
-                    // Insert pulled bit at appropriate place
-                    uint32_t *i = &spi->regs.raw[(width - 1) / 32];
-                    *i = *i & ~(   1 << ((width - 1) % 32));
-                    *i = *i |  (pull << ((width - 1) % 32));
+                    do_one_shift(spi, width, pull);
 
                     if (!--spi->remaining)
                         spi->state = SPI_EMU_DONE;
