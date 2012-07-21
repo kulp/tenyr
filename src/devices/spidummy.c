@@ -19,7 +19,7 @@ int spidummy_spi_select(void *cookie, int _ss)
 int spidummy_spi_clock(void *cookie, int _ss, int in, int *out)
 {
     printf("%s(cookie=%p, _ss=%i, in=%i, out=%p)\n", __func__, cookie, _ss, in, (void*)out);
-    *out = 0; // we are basically a set of disconnected wires
+    *out = in; // just echo back
     return -1;
 }
 

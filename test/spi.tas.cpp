@@ -17,4 +17,5 @@ nop nop nop nop nop nop nop nop // 8 nops
 nop nop nop nop nop nop nop nop // 8 nops
 nop nop nop nop nop nop nop nop // 8 nops
 nop nop nop nop nop nop nop nop // 8 nops
+b <- [(SPI_BASE + 0)]	// read data
 illegal

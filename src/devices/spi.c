@@ -191,7 +191,11 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
             }
         }
 
-        spi->regs.raw[offset >> 2] = *data;
+        if (op == OP_READ) {
+            *data = spi->regs.raw[offset >> 2];
+        } else if (op == OP_WRITE) {
+            spi->regs.raw[offset >> 2] = *data;
+        }
     }
 
     return 0;
@@ -230,14 +234,21 @@ static int spi_slave_cycle(struct spi_state *spi)
                     break;
                 case SPI_EMU_BUSY: {
                     ops->clock(cookie, 1, push, &pull);
-                    // TODO support shifting more than 32
                     int width = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
-                    assert(("shift width > 32 supported", width <= 32));
                     assert(("SPI generated bit is 0 or 1", (pull == 0 || pull == 1)));
-                    uint32_t *p = &spi->regs.fmt.data.Tx.Tx0;
-                    *p = *p >> 1;
-                    *p = *p & ~(   1 << width);
-                    *p = *p |  (pull << width);
+                    // Unconditionally shift all 128 bits for simplicity
+                    for (int i = 0; i < 4; i++) {
+                        uint32_t *o = &spi->regs.raw[i];
+                        *o >>= 1;                       // shift down this word
+                        *o  &= ~(1 << 31);              // mask off top bit
+                        if (i < 3)
+                            *o |= (*(o + 1) & 1) << 31; // get top bit from next word
+                    }
+
+                    // Insert pulled bit at appropriate place
+                    uint32_t *i = &spi->regs.raw[(width - 1) / 32];
+                    *i = *i & ~(   1 << (width % 32));
+                    *i = *i |  (pull << (width % 32));
 
                     if (!--spi->remaining)
                         spi->state = SPI_EMU_DONE;
@@ -255,7 +266,7 @@ static int spi_slave_cycle(struct spi_state *spi)
                     int pull = -1;
                     ops->clock(cookie, 0, push, &pull);
                     if (pull != -1)
-                        breakpoint("Inactive SPI slave generated illegal traffic");
+                        breakpoint("SPI slave generated traffic when not selected");
                     break;
                 }
                 default:
