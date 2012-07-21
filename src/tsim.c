@@ -137,14 +137,16 @@ static int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
     return (*device)->op(s, (*device)->cookie, op, addr, data);
 }
 
-static const char shortopts[] = "a:ds:f:nr:vhV";
+static const char shortopts[] = "a:df:np:r:s:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
     { "debug"      ,       no_argument, NULL, 'd' },
     { "format"     , required_argument, NULL, 'f' },
     { "scratch"    ,       no_argument, NULL, 'n' },
+    { "param"      , required_argument, NULL, 'p' },
     { "recipe"     , required_argument, NULL, 'r' },
+    { "start"      , required_argument, NULL, 's' },
     { "verbose"    ,       no_argument, NULL, 'v' },
 
     { "help"       ,       no_argument, NULL, 'h' },
@@ -172,10 +174,11 @@ static int usage(const char *me)
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -d, --debug           start the simulator in debugger mode\n"
-           "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format (%s)\n"
            "  -n, --scratch         don't run default recipes\n"
+           "  -p, --param=X=Y       set parameter X to value Y\n"
            "  -r, --recipe=R        run recipe R (see list below)\n"
+           "  -s, --start=N         start execution at word address N\n"
            "  -v, --verbose         increase verbosity of output\n"
            "\n"
            "  -h, --help            display this message\n"
@@ -521,6 +524,22 @@ static int pre_insn(struct sim_state *s, struct instruction *i)
     return 0;
 }
 
+int set_format(struct sim_state *s, const char *optarg, const struct format **f)
+{
+    size_t sz = formats_count;
+    (void)s;
+    *f = lfind(&(struct format){ .name = optarg }, formats, &sz,
+            sizeof formats[0], find_format_by_name);
+    return !*f;
+}
+
+int parse_param(struct sim_state *s, const char *optarg)
+{
+    (void)s;
+    (void)optarg;
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -549,27 +568,16 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'a': load_address = strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
-            case 's': start_address = strtol(optarg, NULL, 0); break;
-            case 'f': {
-                size_t sz = formats_count;
-                f = lfind(&(struct format){ .name = optarg }, formats, &sz,
-                        sizeof formats[0], find_format_by_name);
-                if (!f)
-                    exit(usage(argv[0]));
-
-                break;
-            }
+            case 'f': if (set_format(s, optarg, &f)) exit(usage(argv[0])); break;
             case 'n': s->conf.run_defaults = 0; break;
+            case 'p': parse_param(s, optarg); break;
             case 'r': add_recipe(s, optarg); break;
+            case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
 
             case 'V': puts(version()); return EXIT_SUCCESS;
-            case 'h':
-                usage(argv[0]);
-                return EXIT_SUCCESS;
-            default:
-                usage(argv[0]);
-                return EXIT_FAILURE;
+            case 'h': usage(argv[0]) ; return EXIT_SUCCESS;
+            default : usage(argv[0]) ; return EXIT_FAILURE;
         }
     }
 
