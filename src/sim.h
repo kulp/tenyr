@@ -63,5 +63,9 @@ int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
 int param_get(struct sim_state *s, char *key, const char **val);
 int param_set(struct sim_state *s, char *key, char *val, int free_value);
 
+// TODO convert this to an interrupt in the debugger
+#define breakpoint(...) \
+    fatal(0, __VA_ARGS__)
+
 #endif
 

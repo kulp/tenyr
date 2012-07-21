@@ -110,8 +110,10 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
         char buf[128];
         snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
         void *libhandle = dlopen(buf, RTLD_LOCAL);
-        if (!libhandle)
+        if (!libhandle) {
+            debug(1, "Could not load %s, trying default library search", buf);
             libhandle = RTLD_DEFAULT;
+        }
 
 #define GET_CB(Stem)                                                \
         do {                                                        \
@@ -169,8 +171,27 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
 
     // "When a transfer is in progress, writing to any register of the SPI
     // Master core has no effect."
-    if (spi->state == SPI_EMU_RESET)
-        spi->regs.raw[offset >> 3] = *data;
+    if (spi->state == SPI_EMU_RESET) {
+        if (offset == 0x10) { // CTRL register
+            uint32_t go_mask = 1 << 8;
+            uint32_t new_go_bit =  go_mask & *data;
+            uint32_t old_go_bit =  go_mask & spi->regs.raw[offset >> 2];
+            uint32_t new_others = ~go_mask & *data;
+            uint32_t old_others = ~go_mask & spi->regs.raw[offset >> 2];
+
+            if (!((new_go_bit == old_go_bit) || (new_others == old_others)))
+                breakpoint("GO_BSY bit changed at the same time as other control bits");
+
+            if (new_go_bit) {
+                spi->state = SPI_EMU_SELECTED;
+                spi->remaining = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
+                if (spi->remaining == 0)
+                    spi->remaining = 128;
+            }
+        }
+
+        spi->regs.raw[offset >> 2] = *data;
+    }
 
     return 0;
 }
@@ -179,16 +200,10 @@ static int spi_step_state(struct spi_state *spi)
 {
     switch (spi->state) {
         case SPI_EMU_RESET:
-            if (spi->cyc > SPI_INIT_CYCLES) {
-                spi->state = SPI_EMU_SELECTED;
-            } else {
-                spi->remaining = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
-                if (spi->remaining == 0)
-                    spi->remaining = 128;
-            }
             break;
         case SPI_EMU_SELECTED:
-            spi->state = SPI_EMU_BUSY;
+            if (spi->cyc > SPI_INIT_CYCLES)
+                spi->state = SPI_EMU_BUSY;
             break;
         case SPI_EMU_BUSY:
             if (!spi->remaining--)
@@ -196,6 +211,7 @@ static int spi_step_state(struct spi_state *spi)
             break;
         case SPI_EMU_DONE:
             spi->state = SPI_EMU_RESET;
+            spi->regs.fmt.ctrl.u.bits.GO_BSY = 0;
             break;
         default:
             fatal(0, "Invalid SPI master state");
@@ -208,7 +224,8 @@ static int spi_slave_cycle(struct spi_state *spi)
 {
     int push = spi->regs.fmt.data.Tx.Tx0 & 1;
     uint32_t SS = spi->regs.fmt.SS;
-    assert(("SPI slave select is one-hot", ((SS ^ (SS - 1)) == 0)));
+    if (spi->state != SPI_EMU_RESET && !((SS & (SS - 1)) == 0))
+        breakpoint("SPI slave select is not one-hot");
 
     for (int inst = 0; inst < NINST; inst++) {
         struct spi_ops *ops = &spi->impls[inst];
@@ -246,12 +263,13 @@ static int spi_slave_cycle(struct spi_state *spi)
                     break;
                 }
                 default:
-                    fatal(0, "Invalid SPI master state");
+                    break;
             }
         }
     }
 
     spi_step_state(spi);
+    // TODO shift
 
     return 0;
 }
