@@ -192,6 +192,17 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
                     if (spi->remaining == 0)
                         spi->remaining = 128;
                 }
+            } else if (offset == 0x18) { // SS register
+                if (!spi->regs.fmt.ctrl.u.bits.ASS) {
+                    uint32_t old_ss = spi->regs.fmt.SS;
+                    for (size_t inst = 0; inst < NINST; inst++) {
+                        int new_ss = *data;
+                        int changed = (new_ss ^ old_ss) & (1 << inst);
+                        int bit = !!(new_ss & (1 << inst));
+                        if (changed)
+                            spi->impls[inst].select(spi->impl_cookies[inst], bit);
+                    }
+                }
             }
 
             spi->regs.raw[regnum] = *data;
@@ -271,7 +282,7 @@ static int spi_slave_cycle(struct spi_state *spi)
                 case SPI_EMU_RESET:
                     break;
                 case SPI_EMU_STARTED:
-                    if (ops->select)
+                    if (ops->select && spi->regs.fmt.ctrl.u.bits.ASS)
                         ops->select(cookie, 1);
                     spi->state = SPI_EMU_SELECTED;
                     break;
@@ -289,7 +300,7 @@ static int spi_slave_cycle(struct spi_state *spi)
                     break;
                 }
                 case SPI_EMU_DONE:
-                    if (ops->select)
+                    if (ops->select && spi->regs.fmt.ctrl.u.bits.ASS)
                         ops->select(cookie, 0);
                     spi->state = SPI_EMU_RESET;
                     break;
