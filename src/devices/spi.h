@@ -7,10 +7,10 @@ typedef int spi_clock(void *cookie, int _ss, int in, int *out);
 typedef int spi_fini(void *cookie);
 
 struct spi_ops {
-	spi_init   *init;
-	spi_select *select;
-	spi_clock  *clock;
-	spi_fini   *fini;
+    spi_init   *init;
+    spi_select *select;
+    spi_clock  *clock;
+    spi_fini   *fini;
 };
 
 #endif
