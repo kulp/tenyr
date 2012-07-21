@@ -247,8 +247,8 @@ static int spi_slave_cycle(struct spi_state *spi)
 
                     // Insert pulled bit at appropriate place
                     uint32_t *i = &spi->regs.raw[(width - 1) / 32];
-                    *i = *i & ~(   1 << (width % 32));
-                    *i = *i |  (pull << (width % 32));
+                    *i = *i & ~(   1 << ((width - 1) % 32));
+                    *i = *i |  (pull << ((width - 1) % 32));
 
                     if (!--spi->remaining)
                         spi->state = SPI_EMU_DONE;
