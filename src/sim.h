@@ -58,6 +58,7 @@ int run_sim(struct sim_state *s, struct run_ops *ops);
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         FILE *in, int load_address);
 
+/// @c param_get() returns true if key is found, false otherwise
 int param_get(struct sim_state *s, char *key, const char **val);
 int param_set(struct sim_state *s, char *key, char *val, int free_value);
 

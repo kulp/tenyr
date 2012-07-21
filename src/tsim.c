@@ -34,6 +34,7 @@ struct breakpoint {
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
+    _(spi     , "enable SPI emulation") \
     _(inittrap, "initialise unused memory to the illegal instruction") \
     _(nowrap  , "stop when PC wraps around 24-bit boundary")
 
@@ -87,6 +88,14 @@ static int recipe_serial(struct sim_state *s)
     int index = next_device(s);
     s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
     return serial_add_device(&s->machine.devices[index]);
+}
+
+static int recipe_spi(struct sim_state *s)
+{
+    int spi_add_device(struct device **device);
+    int index = next_device(s);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    return spi_add_device(&s->machine.devices[index]);
 }
 
 static int recipe_nowrap(struct sim_state *s)
@@ -540,19 +549,27 @@ void param_free(struct param_entry *p)
         free(p->value);
 }
 
+int params_cmp(const void *_a, const void *_b)
+{
+    const struct param_entry *a = _a,
+                             *b = _b;
+
+    return strcmp(a->key, b->key);
+}
+
 int param_get(struct sim_state *s, char *key, const char **val)
 {
     struct param_entry p = { .key = key };
 
     struct param_entry *q = lfind(&p, s->conf.params, &s->conf.params_count,
-                                        sizeof *s->conf.params, (cmp*)strcmp);
+                                        sizeof *s->conf.params, params_cmp);
 
     if (!q)
-        return 1;
+        return 0;
 
     *val = q->value;
 
-    return 0;
+    return 1;
 }
 
 int param_set(struct sim_state *s, char *key, char *val, int free_value)
@@ -569,7 +586,7 @@ int param_set(struct sim_state *s, char *key, char *val, int free_value)
     };
 
     struct param_entry *q = lsearch(&p, s->conf.params, &s->conf.params_count,
-                                        sizeof *s->conf.params, (cmp*)strcmp);
+                                        sizeof *s->conf.params, params_cmp);
 
     if (!q)
         return 1;
