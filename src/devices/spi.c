@@ -109,6 +109,12 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
 
         {
             void *ptr = dlsym(RTLD_DEFAULT, buf);
+            snprintf(buf, sizeof buf, "%s_spi_select", implname);
+            spi->impl.select = FPTR_FROM_VPTR(spi_select,ptr);
+        }
+
+        {
+            void *ptr = dlsym(RTLD_DEFAULT, buf);
             snprintf(buf, sizeof buf, "%s_spi_fini", implname);
             spi->impl.fini = FPTR_FROM_VPTR(spi_fini,ptr);
         }
