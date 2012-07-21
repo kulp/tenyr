@@ -92,7 +92,7 @@ static int spi_init(struct sim_state *s, void *cookie, ...)
         FILE *store = fopen(filename, "r+b");
         if (!store)
             fatal(PRINT_ERRNO, "Failed to open file '%s'", filename);
-        spi_set_store(cookie, store);
+        spi_set_store(spi, store);
     }
 
     return 0;
