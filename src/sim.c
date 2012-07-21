@@ -116,7 +116,6 @@ int run_instruction(struct sim_state *s, struct instruction *i)
     return 0;
 }
 
-
 int run_sim(struct sim_state *s, struct run_ops *ops)
 {
     while (1) {
@@ -129,6 +128,9 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
 
         if (run_instruction(s, &i))
             return 1;
+
+        if (ops->post_insn)
+            ops->post_insn(s, &i);
     }
 }
 

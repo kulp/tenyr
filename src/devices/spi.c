@@ -67,10 +67,8 @@ int spi_set_store(void *cookie, FILE *store)
     return 0;
 }
 
-static int spi_init(struct sim_state *s, void *cookie, ...)
+static void spi_reset_defaults(struct spi_state *spi)
 {
-    struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
-
     spi->regs.fmt.data.Rx.Rx0 = 0x00000000;
     spi->regs.fmt.data.Rx.Rx1 = 0x00000000;
     spi->regs.fmt.data.Rx.Rx2 = 0x00000000;
@@ -86,6 +84,14 @@ static int spi_init(struct sim_state *s, void *cookie, ...)
     spi->regs.fmt.DIVIDER     = 0x0000ffff;
 
     spi->regs.fmt.SS          = 0x00000000;
+}
+
+static int spi_init(struct sim_state *s, void *cookie, ...)
+{
+    struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
+
+    spi->store = NULL;
+    spi_reset_defaults(spi);
 
     const char *filename = NULL;
     if (param_get(s, "spi.filename", &filename)) {
@@ -102,6 +108,8 @@ static int spi_fini(struct sim_state *s, void *cookie)
 {
     struct spi_state *spi = cookie;
 
+    if (spi->store)
+        fclose(spi->store);
     free(spi);
 
     return 0;
@@ -111,9 +119,19 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
         uint32_t *data)
 {
     struct spi_state *spi = cookie;
-    (void)spi;
-    assert(("Address within address space", !(addr & ~PTR_MASK)));
+    uint32_t offset = addr - SPI_BASE;
 
+    assert(("Address within address space", !(addr & ~PTR_MASK)));
+    assert(("Lower bits of offset are cleared", !(offset & 0x7)));
+
+    spi->regs.raw[offset >> 3] = *data;
+
+    return 0;
+}
+
+static int spi_cycle(struct sim_state *s, void *cookie)
+{
+    // TODO implement SPI emulation state machine here
     return 0;
 }
 
@@ -124,6 +142,7 @@ int spi_add_device(struct device **device)
         .op = spi_op,
         .init = spi_init,
         .fini = spi_fini,
+        .cycle = spi_cycle,
     };
 
     return 0;

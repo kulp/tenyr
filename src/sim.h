@@ -51,6 +51,7 @@ struct sim_state {
 
 struct run_ops {
     int (*pre_insn)(struct sim_state *s, struct instruction *i);
+    int (*post_insn)(struct sim_state *s, struct instruction *i);
 };
 
 int run_instruction(struct sim_state *s, struct instruction *i);

@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 600
+
 #include "ops.h"
 #include "common.h"
 #include "asm.h"
@@ -253,6 +255,16 @@ static int devices_teardown(struct sim_state *s)
     }
 
     free(s->machine.devices);
+
+    return 0;
+}
+
+static int devices_dispatch_cycle(struct sim_state *s)
+{
+    for (size_t i = 0; i < s->machine.devices_count; i++)
+        if (s->machine.devices[i]->cycle)
+            if (s->machine.devices[i]->cycle(s, s->machine.devices[i]->cookie))
+                return 1;
 
     return 0;
 }
@@ -533,6 +545,12 @@ static int pre_insn(struct sim_state *s, struct instruction *i)
     return 0;
 }
 
+static int post_insn(struct sim_state *s, struct instruction *i)
+{
+    (void)i;
+    return devices_dispatch_cycle(s);
+}
+
 int set_format(struct sim_state *s, const char *optarg, const struct format **f)
 {
     size_t sz = formats_count;
@@ -686,7 +704,10 @@ int main(int argc, char *argv[])
     load_sim(s->dispatch_op, s, f, in, load_address);
     s->machine.regs[15] = start_address & PTR_MASK;
 
-    struct run_ops ops = { .pre_insn = pre_insn };
+    struct run_ops ops = {
+        .pre_insn = pre_insn,
+        .post_insn = post_insn,
+    };
 
     if (s->conf.debugging)
         run_debugger(s, stdin);
