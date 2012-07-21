@@ -26,9 +26,11 @@
 #define SPI_LEN     (0x7 * 4) /* seven registers at four addresses each) */
 #define SPI_END     (SPI_BASE + SPI_LEN - 1)
 
+#define NINST       8 /* number of instances connectable */
+
 struct spi_state {
-    struct spi_ops impl;
-    void *impl_cookie;
+    struct spi_ops impls[NINST];
+    void *impl_cookies[NINST];
     enum { SPI_EMU_RESET, SPI_EMU_BUSY } state;
 
     union {
@@ -61,8 +63,8 @@ struct spi_state {
             } ctrl;
             unsigned DIVIDER    :16;
             unsigned            :16;
-            unsigned SS         : 8;
-            unsigned            :24;
+            unsigned SS         :NINST;
+            unsigned            :(32 - NINST);
         } fmt;
     } regs;
 };
@@ -94,14 +96,15 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
 
     const char *implname = NULL;
     if (param_get(s, "spi.impl", &implname)) {
+        int inst = 0; // TODO support more than one instance
 
-#define GET_CB(Stem)                                             \
-        do {                                                     \
-            char buf[64];                                        \
-            void *ptr = dlsym(RTLD_DEFAULT, buf);                \
-            snprintf(buf, sizeof buf, "%s_spi_"#Stem, implname); \
-            spi->impl.Stem = FPTR_FROM_VPTR(spi_##Stem,ptr);     \
-        } while (0)                                              \
+#define GET_CB(Stem)                                                \
+        do {                                                        \
+            char buf[64];                                           \
+            void *ptr = dlsym(RTLD_DEFAULT, buf);                   \
+            snprintf(buf, sizeof buf, "%s_spi_"#Stem, implname);    \
+            spi->impls[inst].Stem = FPTR_FROM_VPTR(spi_##Stem,ptr); \
+        } while (0)                                                 \
         //
 
         GET_CB(clock);
@@ -109,11 +112,11 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
         GET_CB(select);
         GET_CB(fini);
 
-        if (!spi->impl.clock)
+        if (!spi->impls[inst].clock)
             fatal(PRINT_ERRNO, "Failed to locate SPI impl '%s'", implname);
 
-        if (spi->impl.init)
-            spi->impl.init(&spi->impl_cookie);
+        if (spi->impls[inst].init)
+            spi->impls[inst].init(&spi->impl_cookies[inst]);
     }
 
     return 0;
@@ -123,8 +126,10 @@ static int spi_emu_fini(struct sim_state *s, void *cookie)
 {
     struct spi_state *spi = cookie;
 
-    if (spi->impl.fini)
-        spi->impl.fini(&spi->impl_cookie);
+    int inst = 0; // TODO support more than one instance
+
+    if (spi->impls[inst].fini)
+        spi->impls[inst].fini(&spi->impl_cookies[inst]);
 
     free(spi);
 
