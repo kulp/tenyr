@@ -4,10 +4,16 @@
 // simulated in any special way) to a spi_ops implementation. If param
 // "spi.impl" is set, a spi_ops implementation with that stem name is loaded
 // using dlsym(). Otherwise, acts as if nothing is attached to the SPI pins.
+
+// _GNU_SOURCE is needed for RTLD_DEFAULT on GNU/Linux, although that flag
+// works on apple-darwin as well
+#define _GNU_SOURCE 1
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 
 #include "common.h"
 #include "device.h"
@@ -80,6 +86,13 @@ static int spi_init(struct sim_state *s, void *cookie, ...)
 
     spi->impl = NULL;
     spi_reset_defaults(spi);
+
+    const char *implname = NULL;
+    if (param_get(s, "spi.impl", &implname)) {
+        void *ptr = dlsym(RTLD_DEFAULT, implname);
+        if (!ptr)
+            fatal(PRINT_ERRNO, "Failed to locate SPI impl '%s'", implname);
+    }
 
     return 0;
 }

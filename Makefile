@@ -1,5 +1,7 @@
 CC = $(CROSS_COMPILE)gcc
 
+-include Makefile.$(shell uname -s)
+
 ifndef NDEBUG
  CFLAGS  += -g
  LDFLAGS += -g
