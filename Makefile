@@ -25,7 +25,9 @@ endif
 
 CFLAGS += -std=c99
 CFLAGS += -Wall -Wextra $(PEDANTIC)
-CFLAGS += -DMAY_ALIAS='__attribute__((__may_alias__))'
+
+CPPFLAGS += -DMAY_ALIAS='__attribute__((__may_alias__))'
+CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 
 # Optimised build
 ifeq ($(DEBUG),)
@@ -52,8 +54,12 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 
 DEVICES = ram sparseram debugwrap serial spi
 DEVOBJS = $(DEVICES:%=%.o)
+# plugin devices
+PDEVICES = spidummy
+PDEVOBJS = $(PDEVICES:%=%,dy.o)
+PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
 
-all: tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+all: tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 win32: export _32BIT=1
 win32: export WIN32=1
 win32: all
@@ -68,8 +74,7 @@ tld$(EXE_SUFFIX): obj.o
 
 asm.o: CFLAGS += -Wno-override-init
 
-%$(EXE_SUFFIX): %.o
-	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+%,dy.o: CFLAGS += -fPIC
 
 # used to apply to .o only but some make versions built directly from .c
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
@@ -77,7 +82,7 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BU
 # don't complain about unused values that we might use in asserts
 tas.o asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
-ffi.o asm.o $(DEVOBJS): CFLAGS += -Wno-unused-parameter
+ffi.o asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 
 # flex-generated code we can't control warnings of as easily
 $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
@@ -120,7 +125,7 @@ endif
 
 clean:
 	$(RM) tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) \
-	*.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o
+	*.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o $(PDEVOBJS) $(PDEVLIBS)
 
 clobber: clean
 	$(RM) $(GENDIR)/debugger_parser.[ch] $(GENDIR)/debugger_lexer.[ch] $(GENDIR)/parser.[ch] $(GENDIR)/lexer.[ch]
@@ -164,5 +169,21 @@ ifneq ($(MAKE_VERBOSE),)
 else
 	@echo "[ BISON ] $<"
 	@$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
+endif
+
+$(PDEVOBJS): %,dy.o: %.c
+ifneq ($(MAKE_VERBOSE),)
+	$(COMPILE.c) -o $@ $<
+else
+	@echo "[ DYCC ] $<"
+	@$(COMPILE.c) -o $@ $<
+endif
+
+$(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
+ifneq ($(MAKE_VERBOSE),)
+	$(LINK.c) -shared -o $@ $< $(LDLIBS)
+else
+	@echo "[ DYLD ] $<"
+	@$(LINK.c) -shared -o $@ $< $(LDLIBS)
 endif
 

@@ -107,23 +107,33 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
     const char *implname = NULL;
     if (param_get(s, "spi.impl", &implname)) {
         int inst = 0; // TODO support more than one instance
+        char buf[128];
+        snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
+        void *libhandle = dlopen(buf, RTLD_LOCAL);
+        if (!libhandle)
+            libhandle = RTLD_DEFAULT;
 
 #define GET_CB(Stem)                                                \
         do {                                                        \
             char buf[64];                                           \
-            void *ptr = dlsym(RTLD_DEFAULT, buf);                   \
             snprintf(buf, sizeof buf, "%s_spi_"#Stem, implname);    \
+            void *ptr = dlsym(libhandle, buf);                      \
             spi->impls[inst].Stem = FPTR_FROM_VPTR(spi_##Stem,ptr); \
         } while (0)                                                 \
         //
 
         GET_CB(clock);
+        if (!spi->impls[inst].clock) {
+            const char *err = dlerror();
+            if (err)
+                fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implname, err);
+            else
+                fatal(0, "SPI clock cb for '%s' is NULL ? : %s", implname);
+        }
+
         GET_CB(init);
         GET_CB(select);
         GET_CB(fini);
-
-        if (!spi->impls[inst].clock)
-            fatal(PRINT_ERRNO, "Failed to locate SPI impl '%s'", implname);
 
         if (spi->impls[inst].init)
             spi->impls[inst].init(&spi->impl_cookies[inst]);
@@ -153,7 +163,7 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
     uint32_t offset = addr - SPI_BASE;
 
     assert(("Address within address space", !(addr & ~PTR_MASK)));
-    assert(("Lower bits of offset are cleared", !(offset & 0x7)));
+    assert(("Lower bits of offset are cleared", !(offset & 0x3)));
 
     // TODO catch writes to GO_BSY
 
