@@ -92,7 +92,7 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.data.Tx.Tx2 = 0x00000000;
     spi->regs.fmt.data.Tx.Tx3 = 0x00000000;
 
-    // TODO support remaining CTRL bit behaviours
+    // TODO support remaining CTRL bit behaviours (specifically IE)
     spi->regs.fmt.ctrl.u.CTRL = 0x00000000;
 
     spi->regs.fmt.DIVIDER     = 0x0000ffff;
@@ -140,7 +140,8 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
         GET_CB(fini);
 
         if (spi->impls[inst].init)
-            spi->impls[inst].init(&spi->impl_cookies[inst]);
+            if (spi->impls[inst].init(&spi->impl_cookies[inst]))
+                debug(1, "SPI attached instance %d returned nonzero from init()", inst);
     }
 
     return 0;
@@ -152,7 +153,8 @@ static int spi_emu_fini(struct sim_state *s, void *cookie)
 
     for (int inst = 0; inst < NINST; inst++) {
         if (spi->impls[inst].fini)
-            spi->impls[inst].fini(&spi->impl_cookies[inst]);
+            if (spi->impls[inst].fini(&spi->impl_cookies[inst]))
+                debug(1, "SPI attached instance %d returned nonzero from fini()", inst);
     }
 
     free(spi);
@@ -283,7 +285,8 @@ static int spi_slave_cycle(struct spi_state *spi)
                     break;
                 case SPI_EMU_STARTED:
                     if (ops->select && spi->regs.fmt.ctrl.u.bits.ASS)
-                        ops->select(cookie, 1);
+                        if (ops->select(cookie, 1))
+                            debug(1, "SPI attached instance %d returned nonzero from select()", inst);
                     spi->state = SPI_EMU_SELECTED;
                     break;
                 case SPI_EMU_SELECTED:
@@ -291,7 +294,8 @@ static int spi_slave_cycle(struct spi_state *spi)
                         spi->state = SPI_EMU_BUSY;
                     break;
                 case SPI_EMU_BUSY: {
-                    ops->clock(cookie, 1, push, &pull);
+                    if (ops->clock(cookie, 1, push, &pull))
+                        debug(1, "SPI attached instance %d returned nonzero from clock()", inst);
                     assert(("SPI generated bit is 0 or 1", (pull == 0 || pull == 1)));
                     do_one_shift(spi, width, pull);
 
@@ -301,7 +305,8 @@ static int spi_slave_cycle(struct spi_state *spi)
                 }
                 case SPI_EMU_DONE:
                     if (ops->select && spi->regs.fmt.ctrl.u.bits.ASS)
-                        ops->select(cookie, 0);
+                        if (ops->select(cookie, 0))
+                            debug(1, "SPI attached instance %d returned nonzero from select()", inst);
                     spi->state = SPI_EMU_RESET;
                     break;
             }
@@ -309,7 +314,8 @@ static int spi_slave_cycle(struct spi_state *spi)
             switch (spi->state) {
                 case SPI_EMU_SELECTED: {
                     int pull = -1;
-                    ops->clock(cookie, 0, push, &pull);
+                    if (ops->clock(cookie, 0, push, &pull))
+                        debug(1, "SPI attached but disabled instance %d returned nonzero from clock()", inst);
                     if (pull != -1)
                         breakpoint("SPI slave generated traffic when not selected");
                     break;
