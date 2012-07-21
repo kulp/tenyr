@@ -28,10 +28,16 @@
 
 #define NINST       8 /* number of instances connectable */
 
+#define SPI_INIT_CYCLES 2 /* why 2 ? XXX */
+
 struct spi_state {
     struct spi_ops impls[NINST];
     void *impl_cookies[NINST];
-    enum { SPI_EMU_RESET, SPI_EMU_BUSY } state;
+    enum {
+        SPI_EMU_RESET, SPI_EMU_SELECTED, SPI_EMU_BUSY
+    } state;
+    unsigned dividend;  // how far into division in wishbone cycles
+    unsigned cyc;       // how far into transaction in SPI cycles
 
     union {
         uint32_t raw[7];
@@ -126,10 +132,10 @@ static int spi_emu_fini(struct sim_state *s, void *cookie)
 {
     struct spi_state *spi = cookie;
 
-    int inst = 0; // TODO support more than one instance
-
-    if (spi->impls[inst].fini)
-        spi->impls[inst].fini(&spi->impl_cookies[inst]);
+    for (int inst = 0; inst < NINST; inst++) {
+        if (spi->impls[inst].fini)
+            spi->impls[inst].fini(&spi->impl_cookies[inst]);
+    }
 
     free(spi);
 
@@ -145,6 +151,8 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
     assert(("Address within address space", !(addr & ~PTR_MASK)));
     assert(("Lower bits of offset are cleared", !(offset & 0x7)));
 
+    // TODO catch writes to GO_BSY
+
     spi->regs.raw[offset >> 3] = *data;
 
     return 0;
@@ -152,7 +160,65 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
 
 static int spi_emu_cycle(struct sim_state *s, void *cookie)
 {
-    // TODO implement SPI emulation state machine here
+    struct spi_state *spi = cookie;
+    if (spi->dividend++ >= (unsigned)((spi->regs.fmt.DIVIDER + 1) * 2 - 1)) {
+        int push = spi->regs.fmt.data.Tx.Tx0 & 1;
+        uint32_t SS = spi->regs.fmt.SS;
+        assert(("SPI slave select is one-hot", ((SS ^ (SS - 1)) == 0)));
+
+        switch (spi->state) {
+            case SPI_EMU_RESET:
+                if (spi->cyc > SPI_INIT_CYCLES)
+                    spi->state = SPI_EMU_SELECTED;
+                break;
+            case SPI_EMU_SELECTED:
+                spi->state = SPI_EMU_BUSY;
+                break;
+            case SPI_EMU_BUSY:
+                // TODO don't get stuck here forever
+                break;
+            default:
+                fatal(0, "Invalid SPI master state");
+        }
+
+        for (int inst = 0; inst < NINST; inst++) {
+            struct spi_ops *ops = &spi->impls[inst];
+            void *cookie = spi->impl_cookies[inst];
+            int pull = -1;
+
+            if (!ops->clock)
+                continue; // clock() is the only required callback
+
+            if (SS & (1 << inst)) {
+                switch (spi->state) {
+                    case SPI_EMU_RESET:
+                        if (ops->select)
+                            ops->select(cookie, 1);
+                        break;
+                    case SPI_EMU_SELECTED:
+                        ops->clock(cookie, 1, push, &pull);
+                        break;
+                    default:
+                        fatal(0, "Invalid SPI master state");
+                }
+            } else {
+                switch (spi->state) {
+                    case SPI_EMU_SELECTED: {
+                        int pull = -1;
+                        ops->clock(cookie, 0, push, &pull);
+                        assert(("Inactive SPI slave does not generate traffic", (pull == -1)));
+                        break;
+                    }
+                    default:
+                        fatal(0, "Invalid SPI master state");
+                }
+            }
+        }
+
+        spi->cyc++;
+        spi->dividend = 0;
+    }
+
     return 0;
 }
 

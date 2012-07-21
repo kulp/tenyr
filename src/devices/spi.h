@@ -3,7 +3,7 @@
 
 typedef int spi_init(void *pcookie);
 typedef int spi_select(void *cookie, int _ss);
-typedef int spi_clock(void *cookie, int _ss, int bit);
+typedef int spi_clock(void *cookie, int _ss, int in, int *out);
 typedef int spi_fini(void *cookie);
 
 struct spi_ops {
