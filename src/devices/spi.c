@@ -165,78 +165,92 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
     return 0;
 }
 
+static int spi_step_state(struct spi_state *spi)
+{
+    switch (spi->state) {
+        case SPI_EMU_RESET:
+            if (spi->cyc > SPI_INIT_CYCLES) {
+                spi->state = SPI_EMU_SELECTED;
+            } else {
+                spi->remaining = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
+                if (spi->remaining == 0)
+                    spi->remaining = 128;
+            }
+            break;
+        case SPI_EMU_SELECTED:
+            spi->state = SPI_EMU_BUSY;
+            break;
+        case SPI_EMU_BUSY:
+            if (!spi->remaining--)
+                spi->state = SPI_EMU_DONE;
+            break;
+        case SPI_EMU_DONE:
+            spi->state = SPI_EMU_RESET;
+            break;
+        default:
+            fatal(0, "Invalid SPI master state");
+    }
+
+    return 0;
+}
+
+static int spi_slave_cycle(struct spi_state *spi)
+{
+    int push = spi->regs.fmt.data.Tx.Tx0 & 1;
+    uint32_t SS = spi->regs.fmt.SS;
+    assert(("SPI slave select is one-hot", ((SS ^ (SS - 1)) == 0)));
+
+    for (int inst = 0; inst < NINST; inst++) {
+        struct spi_ops *ops = &spi->impls[inst];
+        void *cookie = spi->impl_cookies[inst];
+        int pull = -1;
+
+        // a device not having a clock() cb is invalid or empty
+        if (!ops->clock)
+            continue; // clock() is the only required callback
+
+        // check if we are selected
+        if (SS & (1 << inst)) {
+            switch (spi->state) {
+                case SPI_EMU_RESET:
+                    if (ops->select)
+                        ops->select(cookie, 1);
+                    break;
+                case SPI_EMU_DONE:
+                    if (ops->select)
+                        ops->select(cookie, 0);
+                    break;
+                case SPI_EMU_SELECTED:
+                case SPI_EMU_BUSY: // XXX why for both SELECTED and BUSY
+                    ops->clock(cookie, 1, push, &pull);
+                    break;
+                default:
+                    fatal(0, "Invalid SPI master state");
+            }
+        } else {
+            switch (spi->state) {
+                case SPI_EMU_SELECTED: {
+                    int pull = -1;
+                    ops->clock(cookie, 0, push, &pull);
+                    assert(("Inactive SPI slave does not generate traffic", (pull == -1)));
+                    break;
+                }
+                default:
+                    fatal(0, "Invalid SPI master state");
+            }
+        }
+    }
+
+    spi_step_state(spi);
+
+    return 0;
+}
+
 static int spi_emu_cycle(struct sim_state *s, void *cookie)
 {
     struct spi_state *spi = cookie;
     if (spi->dividend++ >= (unsigned)((spi->regs.fmt.DIVIDER + 1) * 2 - 1)) {
-        int push = spi->regs.fmt.data.Tx.Tx0 & 1;
-        uint32_t SS = spi->regs.fmt.SS;
-        assert(("SPI slave select is one-hot", ((SS ^ (SS - 1)) == 0)));
-
-        for (int inst = 0; inst < NINST; inst++) {
-            struct spi_ops *ops = &spi->impls[inst];
-            void *cookie = spi->impl_cookies[inst];
-            int pull = -1;
-
-            // a device not having a clock() cb is invalid or empty
-            if (!ops->clock)
-                continue; // clock() is the only required callback
-
-            // check if we are selected
-            if (SS & (1 << inst)) {
-                switch (spi->state) {
-                    case SPI_EMU_RESET:
-                        if (ops->select)
-                            ops->select(cookie, 1);
-                        break;
-                    case SPI_EMU_DONE:
-                        if (ops->select)
-                            ops->select(cookie, 0);
-                        break;
-                    case SPI_EMU_SELECTED:
-                    case SPI_EMU_BUSY: // XXX why for both SELECTED and BUSY
-                        ops->clock(cookie, 1, push, &pull);
-                        break;
-                    default:
-                        fatal(0, "Invalid SPI master state");
-                }
-            } else {
-                switch (spi->state) {
-                    case SPI_EMU_SELECTED: {
-                        int pull = -1;
-                        ops->clock(cookie, 0, push, &pull);
-                        assert(("Inactive SPI slave does not generate traffic", (pull == -1)));
-                        break;
-                    }
-                    default:
-                        fatal(0, "Invalid SPI master state");
-                }
-            }
-        }
-
-        switch (spi->state) {
-            case SPI_EMU_RESET:
-                if (spi->cyc > SPI_INIT_CYCLES) {
-                    spi->state = SPI_EMU_SELECTED;
-                } else {
-                    spi->remaining = spi->regs.fmt.ctrl.u.bits.CHAR_LEN;
-                    if (spi->remaining == 0)
-                        spi->remaining = 128;
-                }
-                break;
-            case SPI_EMU_SELECTED:
-                spi->state = SPI_EMU_BUSY;
-                break;
-            case SPI_EMU_BUSY:
-                if (!spi->remaining--)
-                    spi->state = SPI_EMU_DONE;
-                break;
-            case SPI_EMU_DONE:
-                spi->state = SPI_EMU_RESET;
-                break;
-            default:
-                fatal(0, "Invalid SPI master state");
-        }
+        spi_slave_cycle(spi);
 
         spi->cyc++;
         spi->dividend = 0;
