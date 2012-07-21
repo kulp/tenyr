@@ -1,7 +1,9 @@
 // Simulated implementation of http://opencores.org/project,spi
 //  which belongs to Simon Srot <simons@opencores.org>
 // Connects tenyr wishbone (plain local bus now, since wishbone is not
-// simulated in any special way) to a seekable FILE*.
+// simulated in any special way) to a seekable FILE*. If param "spi.filename"
+// is set, that file is opened with mode "r+b" and that FILE* is used as the
+// target. Otherwise, spi_set_store() can be used to set the backing store.
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -53,6 +55,18 @@ struct spi_state {
     } regs;
 };
 
+// TODO expose this interface
+int spi_set_store(void *cookie, FILE *store)
+{
+    struct spi_state *spi = cookie;
+
+    if (spi->store)
+        fclose(spi->store);
+    spi->store = store;
+
+    return 0;
+}
+
 static int spi_init(struct sim_state *s, void *cookie, ...)
 {
     struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
@@ -72,6 +86,14 @@ static int spi_init(struct sim_state *s, void *cookie, ...)
     spi->regs.fmt.DIVIDER     = 0x0000ffff;
 
     spi->regs.fmt.SS          = 0x00000000;
+
+    const char *filename = NULL;
+    if (param_get(s, "spi.filename", &filename)) {
+        FILE *store = fopen(filename, "r+b");
+        if (!store)
+            fatal(PRINT_ERRNO, "Failed to open file '%s'", filename);
+        spi_set_store(cookie, store);
+    }
 
     return 0;
 }
