@@ -533,10 +533,54 @@ int set_format(struct sim_state *s, const char *optarg, const struct format **f)
     return !*f;
 }
 
-int parse_param(struct sim_state *s, const char *optarg)
+int cmp_params(const void *_a, const void *_b)
 {
-    (void)s;
-    (void)optarg;
+    const struct param_entry *a = _a,
+                             *b = _b;
+
+    return strcmp(a->key, b->key);
+}
+
+void param_free(struct param_entry *p)
+{
+    free(p->key);
+}
+
+int param_add(struct sim_state *s, const char *optarg)
+{
+    // We can't use getsubopt() here because we don't know what all of our
+    // options are ahead of time.
+
+    char *dupped = strdup(optarg);
+    char *eq = strchr(dupped, '=');
+    if (!eq) {
+        free(dupped);
+        return 1;
+    }
+
+    *eq = '\0';
+
+    while (s->conf.params_size <= s->conf.params_count)
+        // technically there is a problem here if realloc() fails
+        s->conf.params = realloc(s->conf.params,
+                (s->conf.params_size *= 2) * sizeof *s->conf.params);
+
+    struct param_entry p = {
+        .key = dupped,
+        .value = ++eq,
+    };
+
+    struct param_entry *q = lsearch(&p, s->conf.params, &s->conf.params_count,
+                                        sizeof *s->conf.params, cmp_params);
+
+    if (!q)
+        return 1;
+
+    if (q->key != p.key) {
+        param_free(q);
+        *q = p;
+    }
+
     return 0;
 }
 
@@ -546,9 +590,12 @@ int main(int argc, char *argv[])
 
     struct sim_state _s = {
         .conf = {
-            .verbose = 0,
+            .verbose      = 0,
             .run_defaults = 1,
-            .debugging = 0,
+            .debugging    = 0,
+            .params_size  = DEFAULT_PARAMS_COUNT,
+            .params_count = 0,
+            .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params),
         },
         .dispatch_op = dispatch_op,
     }, *s = &_s;
@@ -570,7 +617,7 @@ int main(int argc, char *argv[])
             case 'd': s->conf.debugging = 1; break;
             case 'f': if (set_format(s, optarg, &f)) exit(usage(argv[0])); break;
             case 'n': s->conf.run_defaults = 0; break;
-            case 'p': parse_param(s, optarg); break;
+            case 'p': param_add(s, optarg); break;
             case 'r': add_recipe(s, optarg); break;
             case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
@@ -618,6 +665,12 @@ int main(int argc, char *argv[])
         fclose(in);
 
     devices_teardown(s);
+
+    while (s->conf.params_count--)
+        param_free(&s->conf.params[s->conf.params_count]);
+
+    free(s->conf.params);
+    s->conf.params_size = 0;
 
     return rc;
 }

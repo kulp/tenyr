@@ -31,6 +31,14 @@ struct sim_state {
         int debugging;
         int should_init;
         uint32_t initval;
+
+#define DEFAULT_PARAMS_COUNT 16
+        size_t params_count;
+        size_t params_size;
+        struct param_entry {
+            char *key;
+            const char *value; ///< @c value does not get freed separately
+        } *params;
     } conf;
 
     op_dispatcher *dispatch_op;
