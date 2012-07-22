@@ -111,7 +111,7 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
         int inst = 0; // TODO support more than one instance
         char buf[128];
         snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
-        void *libhandle = dlopen(buf, RTLD_LOCAL);
+        void *libhandle = dlopen(buf, RTLD_LAZY | RTLD_LOCAL);
         if (!libhandle) {
             debug(1, "Could not load %s, trying default library search", buf);
             libhandle = RTLD_DEFAULT;
