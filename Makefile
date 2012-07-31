@@ -1,22 +1,14 @@
 CC = $(CROSS_COMPILE)gcc
 
--include Makefile.$(shell uname -s)
-
 ifndef NDEBUG
  CFLAGS  += -g
  LDFLAGS += -g
 endif
 
 ifeq ($(WIN32),1)
- EXE_SUFFIX = .exe
- ifeq ($(_32BIT),1)
-  CROSS_COMPILE ?= i686-w64-mingw32-
- else
-  # lfind() complains about size_t* vs. unsigned int* ; ignore for now
-  PEDANTIC =
-  CROSS_COMPILE ?= x86_64-w64-mingw32-
- endif
+ -include Makefile.Win32
 else
+ -include Makefile.$(shell uname -s)
  ifeq ($(_32BIT),1)
   CFLAGS  += -m32
   LDFLAGS += -m32
