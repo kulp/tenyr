@@ -1,2 +1,3 @@
 # this file is included by the main Makefile automatically
 DYLIB_SUFFIX = .dylib
+CPPFLAGS += -D"PATH_SEPARATOR_CHAR='/'"

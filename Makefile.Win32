@@ -1,0 +1,4 @@
+# this file is included by the main Makefile automatically
+# TODO make this makefile work on win32
+DYLIB_SUFFIX = .dll
+CPPFLAGS += -DPATH_SEPARATOR_CHAR="'\\'"

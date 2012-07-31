@@ -109,18 +109,31 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
     const char *implname = NULL;
     if (param_get(s, "spi.impl", &implname)) {
         int inst = 0; // TODO support more than one instance
-        char buf[128];
-        snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
-        void *libhandle = dlopen(buf, RTLD_LAZY | RTLD_LOCAL);
+        // If implname contains a slash, treat it as a path ; otherwise, stem
+        char buf[256];
+        const char *implpath = NULL;
+        const char *implstem = NULL;
+        param_get(s, "spi.implstem", &implstem); // may not be set ; that's OK
+        if (strchr(implname, PATH_SEPARATOR_CHAR)) {
+            implpath = implname;
+        } else {
+            snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
+            buf[sizeof buf - 1] = 0;
+            implpath = buf;
+            if (!implstem)
+                implstem = implname;
+        }
+
+        void *libhandle = dlopen(implpath, RTLD_LAZY | RTLD_LOCAL);
         if (!libhandle) {
-            debug(1, "Could not load %s, trying default library search", buf);
+            debug(1, "Could not load %s, trying default library search", implpath);
             libhandle = RTLD_DEFAULT;
         }
 
 #define GET_CB(Stem)                                                \
         do {                                                        \
             char buf[64];                                           \
-            snprintf(buf, sizeof buf, "%s_spi_"#Stem, implname);    \
+            snprintf(buf, sizeof buf, "%s_spi_"#Stem, implstem);    \
             void *ptr = dlsym(libhandle, buf);                      \
             spi->impls[inst].Stem = FPTR_FROM_VPTR(spi_##Stem,ptr); \
         } while (0)                                                 \
@@ -130,9 +143,9 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
         if (!spi->impls[inst].clock) {
             const char *err = dlerror();
             if (err)
-                fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implname, err);
+                fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implstem, err);
             else
-                fatal(0, "SPI clock cb for '%s' is NULL ? : %s", implname);
+                fatal(0, "SPI clock cb for '%s' is NULL ? : %s", implstem);
         }
 
         GET_CB(init);
