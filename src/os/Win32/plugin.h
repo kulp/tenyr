@@ -3,7 +3,8 @@
 
 #include <windows.h>
 
-#define EXPORT_CALLING __stdcall
+// TODO use __stdcall
+#define EXPORT_CALLING __cdecl
 #define EXPORT __declspec(dllexport) EXPORT_CALLING
 
 #include "common.h"
