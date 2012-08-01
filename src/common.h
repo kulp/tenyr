@@ -76,5 +76,8 @@ static void traverse_##Tag(const void *node, VISIT order, int level)           \
     }                                                                          \
 }
 
+#define ALIASING_CAST(Type,Expr) \
+    *(Type * MAY_ALIAS *)&(Expr)
+
 #endif
 
