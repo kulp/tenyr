@@ -182,7 +182,7 @@ $(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
 ifneq ($(MAKE_VERBOSE),)
 	$(LINK.c) -shared -o $@ $< $(LDLIBS)
 else
-	@echo "[ DYLD ] $<"
+	@echo "[ DYLD ] $@"
 	@$(LINK.c) -shared -o $@ $< $(LDLIBS)
 endif
 
