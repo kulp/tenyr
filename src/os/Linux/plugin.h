@@ -5,7 +5,5 @@
 #define EXPORT
 #define EXPORT_CALLING
 
-#define GENERIC
-
 #endif
 

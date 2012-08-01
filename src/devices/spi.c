@@ -13,14 +13,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dlfcn.h>
 
+#include "plugin.h"
 #include "common.h"
 #include "device.h"
 #include "spi.h"
-
-#define FPTR_FROM_VPTR(Type,Expr) \
-    *(Type * MAY_ALIAS *)&(Expr)
 
 #define SPI_BASE    0x200
 #define SPI_LEN     (0x7 * 4) /* seven registers at four addresses each) */
@@ -135,7 +132,7 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
             char buf[64];                                           \
             snprintf(buf, sizeof buf, "%s_spi_"#Stem, implstem);    \
             void *ptr = dlsym(libhandle, buf);                      \
-            spi->impls[inst].Stem = FPTR_FROM_VPTR(spi_##Stem,ptr); \
+            spi->impls[inst].Stem = ALIASING_CAST(spi_##Stem,ptr);  \
         } while (0)                                                 \
         //
 
