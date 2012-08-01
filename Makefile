@@ -8,12 +8,15 @@ endif
 ifeq ($(WIN32),1)
  -include Makefile.Win32
 else
- -include Makefile.$(shell uname -s)
+ OS = $(shell uname -s)
+ -include Makefile.$(OS)
  ifeq ($(_32BIT),1)
   CFLAGS  += -m32
   LDFLAGS += -m32
  endif
 endif
+
+INCLUDE_OS ?= src/os/$(OS)
 
 CFLAGS += -std=c99
 CFLAGS += -Wall -Wextra $(PEDANTIC)
@@ -38,7 +41,7 @@ CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
 GENDIR = src/gen
 
 VPATH += src src/devices $(GENDIR)
-INCLUDES += src $(GENDIR)
+INCLUDES += src $(GENDIR) $(INCLUDE_OS)
 
 BUILD_NAME := $(shell git describe --tags --long --always)
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
@@ -51,10 +54,14 @@ PDEVICES = spidummy
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
 PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
 
+.PHONY: all win32 win64
 all: tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 win32: export _32BIT=1
-win32: export WIN32=1
-win32: all
+win32 win64: export WIN32=1
+# reinvoke make to ensure vars are set early enough
+win32 win64:
+	$(MAKE) $^
+
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
@@ -66,7 +73,7 @@ tld$(EXE_SUFFIX): obj.o
 
 asm.o: CFLAGS += -Wno-override-init
 
-%,dy.o: CFLAGS += -fPIC
+%,dy.o: CFLAGS += $(CFLAGS_PIC)
 
 # used to apply to .o only but some make versions built directly from .c
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'

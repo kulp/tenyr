@@ -3,6 +3,7 @@
 DYLIB_SUFFIX = .dll
 CPPFLAGS += -DPATH_SEPARATOR_CHAR="'\\\\'"
 EXE_SUFFIX = .exe
+CFLAGS_PIC +=
 ifeq ($(_32BIT),1)
  CROSS_COMPILE ?= i686-w64-mingw32-
 else
@@ -10,3 +11,4 @@ else
  PEDANTIC =
  CROSS_COMPILE ?= x86_64-w64-mingw32-
 endif
+INCLUDE_OS = src/os/Win32
