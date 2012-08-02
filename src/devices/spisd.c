@@ -9,8 +9,10 @@
 #include <stdint.h>
 
 struct spisd_state {
-    uint64_t stage;
-    int bitcount;
+    uint64_t shift_in,
+             shift_out;
+    int out_shift_len;  ///< length of output shift register
+    int bitcount;       ///< bits received in this select
 };
 
 enum spisd_command_type {
@@ -166,11 +168,18 @@ int EXPORT spisd_spi_init(void *pcookie)
 {
     struct spisd_state *s = malloc(sizeof *s);
     *(void**)pcookie = s;
+    s->out_shift_len = 0;
+
     return 0;
 }
 
 int EXPORT spisd_spi_select(void *cookie, int _ss)
 {
+    struct spisd_state *s = cookie;
+
+    if (_ss)
+        s->bitcount = 0;
+
     return 0;
 }
 
@@ -181,24 +190,26 @@ int EXPORT spisd_spi_clock(void *cookie, int _ss, int in, int *out)
     if (!_ss)
         return 0;
 
-    s->stage <<= 1;
-    s->stage |= in;
+    // MSB first
+    s->shift_in <<= 1;
+    s->shift_in |= in;
     s->bitcount++;
-    *out = 0; // say nobody is home
+    *out = !!(s->shift_out & (1 << s->out_shift_len));
+    s->shift_out <<= 1;
 
     if (s->bitcount == 48) {
-        if (s->stage & (1ull << 47))
+        if (s->shift_in & (1ull << 47))
             breakpoint("forced-zero bit in SPI command at bit position 47 is nonzero");
 
-        if (!(s->stage & (1ull << 46)))
+        if (!(s->shift_in & (1ull << 46)))
             breakpoint("forced-one bit in SPI command at bit position 46 is zero");
 
-        if (!(s->stage & (1ull << 0)))
+        if (!(s->shift_in & (1ull << 0)))
             breakpoint("forced-one bit in SPI command at bit position 0 is zero");
 
-        enum spisd_command_type type = (s->stage >> 40) & 0x1f;
-        uint32_t arg = (s->stage >> 8) & 0xffffffff;
-        uint8_t crc = (s->stage >> 1) & 0x7f;
+        enum spisd_command_type type = (s->shift_in >> 40) & 0x1f;
+        uint32_t arg = (s->shift_in >> 8) & 0xffffffff;
+        uint8_t crc = (s->shift_in >> 1) & 0x7f;
 
         const struct spisd_command *c = &spisd_commands[type];
         if (c->handler)
