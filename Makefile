@@ -50,7 +50,7 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 DEVICES = ram sparseram debugwrap serial spi
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
-PDEVICES = spidummy
+PDEVICES = spidummy spisd
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
 PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
 
