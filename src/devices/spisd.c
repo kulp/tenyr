@@ -1,8 +1,14 @@
 #include "spi.h"
 #include "plugin.h"
+#include "common.h"
 
 #include <stdlib.h>
 #include <stdint.h>
+
+struct spisd_state {
+    uint64_t stage;
+    int bitcount;
+};
 
 enum spisd_command_type {
     GO_IDLE_STATE           =  0,
@@ -37,6 +43,18 @@ enum spisd_command_type {
 
     READ_OCR                = 58,
     CRC_ON_OFF              = 59,
+};
+
+enum spisd_app_command_type {
+    APP_SD_STATUS               = 13,
+
+    APP_SEND_NUM_WR_BLOCKS      = 22,
+    APP_SET_WR_BLK_ERASE_COUNT  = 23,
+
+    APP_SEND_OP_COND            = 41,
+    APP_SET_CLR_CARD_DETECT     = 42,
+
+    APP_SEND_SCR                = 51,
 };
 
 #define spisd_rsp_R1_minbytes 1
@@ -96,22 +114,39 @@ struct spisd_rsp_R2 {
     unsigned must_be_zero   :1;
 };
 
+// TODO fill in
 #define SPISD_COMMANDS(_) \
     _(GO_IDLE_STATE, R1 )
     //
 
+// TODO fill in
+#define SPISD_APP_COMMANDS(_) \
+    _(APP_SD_STATUS, R2)
+    //
+
 #define SPISD_ARRAY_ENTRY(Type,Resp) \
-    [Type] = { Type, spisd_rsp_##Resp##_minbytes, spisd_rsp_##Resp##_maxbytes },
+    [Type] = { Type, spisd_rsp_##Resp##_minbytes, spisd_rsp_##Resp##_maxbytes, NULL },
+
+#define SPISD_APP_ARRAY_ENTRY(Type,Resp) \
+    [Type] = { Type, spisd_rsp_##Resp##_minbytes, spisd_rsp_##Resp##_maxbytes, NULL },
+
+typedef int spisd_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc);
+typedef int spisd_app_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc);
 
 static const struct spisd_command {
     enum spisd_command_type type;
     int rsp_minbytes, rsp_maxbytes;
-} spisd_commands[] = {
+    spisd_handler *handler;
+} spisd_commands[64] = {
     SPISD_COMMANDS(SPISD_ARRAY_ENTRY)
 };
 
-struct spisd_state {
-    int dummy;
+static const struct spisd_app_command {
+    enum spisd_app_command_type type;
+    int rsp_minbytes, rsp_maxbytes;
+    spisd_app_handler *handler;
+} spisd_app_commands[64] = {
+    SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
 
 int EXPORT spisd_spi_init(void *pcookie)
@@ -128,7 +163,37 @@ int EXPORT spisd_spi_select(void *cookie, int _ss)
 
 int EXPORT spisd_spi_clock(void *cookie, int _ss, int in, int *out)
 {
+    struct spisd_state *s = cookie;
+
+    if (!_ss)
+        return 0;
+
+    s->stage <<= 1;
+    s->stage |= in;
+    s->bitcount++;
     *out = 0; // say nobody is home
+
+    if (s->bitcount == 48) {
+        if (s->stage & (1ull << 47))
+            fatal(0, "forced-zero bit in SPI command at bit position 47 is nonzero");
+
+        if (!(s->stage & (1ull << 46)))
+            fatal(0, "forced-one bit in SPI command at bit position 46 is zero");
+
+        if (!(s->stage & (1ull << 0)))
+            fatal(0, "forced-one bit in SPI command at bit position 0 is zero");
+
+        enum spisd_command_type type = (s->stage >> 40) & 0x1f;
+        uint32_t arg = (s->stage >> 8) & 0xffffffff;
+        uint8_t crc = (s->stage >> 1) & 0x7f;
+
+        const struct spisd_command *c = &spisd_commands[type];
+        if (c->type && c->handler)
+            c->handler(s, type, arg, crc);
+
+        s->bitcount = 0;
+    }
+
     return 0;
 }
 
