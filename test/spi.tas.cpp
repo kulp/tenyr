@@ -1,3 +1,5 @@
+#include "common.th"
+
 #define nop a <- a;
 #define SPI_BASE 0x200
 b <- 0
@@ -28,32 +30,12 @@ c -> [(SPI_BASE + 0x18)] // set SS to 1
 // GO_BSY
 b <- b | (1 << 8)
 b -> [(SPI_BASE + 0x10)]
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
 
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-
-#if 0
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-nop nop nop nop nop nop nop nop // 8 nops
-#endif
+d <- 16 # wait count
+loop:
+d <- d - 1
+e <- d <> 0
+jnzrel(e,loop)
 
 b <- [(SPI_BASE + 0x0)]	// read data
 c <- [(SPI_BASE + 0x4)]	// read data
