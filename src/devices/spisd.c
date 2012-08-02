@@ -1,6 +1,9 @@
 #include "spi.h"
 #include "plugin.h"
 #include "common.h"
+// sim.h is used for breakpoint() but this possibly should be factored
+// differently
+#include "sim.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -116,22 +119,32 @@ struct spisd_rsp_R2 {
 
 // TODO fill in
 #define SPISD_COMMANDS(_) \
-    _(GO_IDLE_STATE, R1 )
+    _(GO_IDLE_STATE, R1 , spisd_default_handler)
     //
 
 // TODO fill in
 #define SPISD_APP_COMMANDS(_) \
-    _(APP_SD_STATUS, R2)
+    _(APP_SD_STATUS, R2 , spisd_default_app_handler)
     //
 
-#define SPISD_ARRAY_ENTRY(Type,Resp) \
-    [Type] = { Type, spisd_rsp_##Resp##_minbytes, spisd_rsp_##Resp##_maxbytes, NULL },
+#define SPISD_ARRAY_ENTRY(Type,Resp,Handler) \
+    [Type] = { Type, spisd_rsp_##Resp##_minbytes, spisd_rsp_##Resp##_maxbytes, Handler },
 
-#define SPISD_APP_ARRAY_ENTRY(Type,Resp) \
-    [Type] = { Type, spisd_rsp_##Resp##_minbytes, spisd_rsp_##Resp##_maxbytes, NULL },
+#define SPISD_APP_ARRAY_ENTRY(Type,Resp,Handler) \
+    [Type] = { Type, spisd_rsp_##Resp##_minbytes, spisd_rsp_##Resp##_maxbytes, Handler },
 
 typedef int spisd_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc);
 typedef int spisd_app_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc);
+
+int spisd_default_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
+{
+    abort();
+}
+
+int spisd_default_app_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
+{
+    abort();
+}
 
 static const struct spisd_command {
     enum spisd_command_type type;
@@ -175,20 +188,20 @@ int EXPORT spisd_spi_clock(void *cookie, int _ss, int in, int *out)
 
     if (s->bitcount == 48) {
         if (s->stage & (1ull << 47))
-            fatal(0, "forced-zero bit in SPI command at bit position 47 is nonzero");
+            breakpoint("forced-zero bit in SPI command at bit position 47 is nonzero");
 
         if (!(s->stage & (1ull << 46)))
-            fatal(0, "forced-one bit in SPI command at bit position 46 is zero");
+            breakpoint("forced-one bit in SPI command at bit position 46 is zero");
 
         if (!(s->stage & (1ull << 0)))
-            fatal(0, "forced-one bit in SPI command at bit position 0 is zero");
+            breakpoint("forced-one bit in SPI command at bit position 0 is zero");
 
         enum spisd_command_type type = (s->stage >> 40) & 0x1f;
         uint32_t arg = (s->stage >> 8) & 0xffffffff;
         uint8_t crc = (s->stage >> 1) & 0x7f;
 
         const struct spisd_command *c = &spisd_commands[type];
-        if (c->type && c->handler)
+        if (c->handler)
             c->handler(s, type, arg, crc);
 
         s->bitcount = 0;
