@@ -4,22 +4,23 @@
 module SimMem(clka, wea, addra, dina, douta,
               clkb, web, addrb, dinb, doutb);
 
+    parameter ADDRBITS = 24;
+    parameter BASE = 1 << 12; // TODO pull from environmental define
+    parameter SIZE = (1 << ADDRBITS) - BASE;
+
     input clka;
     input wea;
-    input[9:0] addra;
+    input[31:0] addra;
     input[31:0] dina;
     output[31:0] douta;
     input clkb;
     input web;
-    input[9:0] addrb;
+    input[31:0] addrb;
     input[31:0] dinb;
     output[31:0] doutb;
 
     reg[31:0] rdouta;
     reg[31:0] rdoutb;
-
-    parameter BASE = 1 << 12; // TODO pull from environmental define
-    parameter SIZE = (1 << 24) - BASE;
 
     reg[31:0] store[(SIZE + BASE - 1):BASE];
 

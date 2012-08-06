@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 600
+
 #include "ops.h"
 #include "common.h"
 #include "asm.h"
@@ -34,6 +36,7 @@ struct breakpoint {
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
+    _(spi     , "enable SPI emulation") \
     _(inittrap, "initialise unused memory to the illegal instruction") \
     _(nowrap  , "stop when PC wraps around 24-bit boundary")
 
@@ -89,6 +92,14 @@ static int recipe_serial(struct sim_state *s)
     return serial_add_device(&s->machine.devices[index]);
 }
 
+static int recipe_spi(struct sim_state *s)
+{
+    int spi_add_device(struct device **device);
+    int index = next_device(s);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    return spi_add_device(&s->machine.devices[index]);
+}
+
 static int recipe_nowrap(struct sim_state *s)
 {
     s->conf.nowrap = 1;
@@ -137,14 +148,16 @@ static int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
     return (*device)->op(s, (*device)->cookie, op, addr, data);
 }
 
-static const char shortopts[] = "a:ds:f:nr:vhV";
+static const char shortopts[] = "a:df:np:r:s:vhV";
 
 static const struct option longopts[] = {
     { "address"    , required_argument, NULL, 'a' },
     { "debug"      ,       no_argument, NULL, 'd' },
     { "format"     , required_argument, NULL, 'f' },
     { "scratch"    ,       no_argument, NULL, 'n' },
+    { "param"      , required_argument, NULL, 'p' },
     { "recipe"     , required_argument, NULL, 'r' },
+    { "start"      , required_argument, NULL, 's' },
     { "verbose"    ,       no_argument, NULL, 'v' },
 
     { "help"       ,       no_argument, NULL, 'h' },
@@ -172,10 +185,11 @@ static int usage(const char *me)
            "  %s [ OPTIONS ] imagefile\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -d, --debug           start the simulator in debugger mode\n"
-           "  -s, --start=N         start execution at word address N\n"
            "  -f, --format=F        select input format (%s)\n"
            "  -n, --scratch         don't run default recipes\n"
+           "  -p, --param=X=Y       set parameter X to value Y\n"
            "  -r, --recipe=R        run recipe R (see list below)\n"
+           "  -s, --start=N         start execution at word address N\n"
            "  -v, --verbose         increase verbosity of output\n"
            "\n"
            "  -h, --help            display this message\n"
@@ -241,6 +255,16 @@ static int devices_teardown(struct sim_state *s)
     }
 
     free(s->machine.devices);
+
+    return 0;
+}
+
+static int devices_dispatch_cycle(struct sim_state *s)
+{
+    for (size_t i = 0; i < s->machine.devices_count; i++)
+        if (s->machine.devices[i]->cycle)
+            if (s->machine.devices[i]->cycle(s, s->machine.devices[i]->cookie))
+                return 1;
 
     return 0;
 }
@@ -521,15 +545,107 @@ static int pre_insn(struct sim_state *s, struct instruction *i)
     return 0;
 }
 
+static int post_insn(struct sim_state *s, struct instruction *i)
+{
+    (void)i;
+    return devices_dispatch_cycle(s);
+}
+
+int set_format(struct sim_state *s, const char *optarg, const struct format **f)
+{
+    size_t sz = formats_count;
+    (void)s;
+    *f = lfind(&(struct format){ .name = optarg }, formats, &sz,
+            sizeof formats[0], find_format_by_name);
+    return !*f;
+}
+
+void param_free(struct param_entry *p)
+{
+    free(p->key);
+    if (p->free_value)
+        free(p->value);
+}
+
+int params_cmp(const void *_a, const void *_b)
+{
+    const struct param_entry *a = _a,
+                             *b = _b;
+
+    return strcmp(a->key, b->key);
+}
+
+int param_get(struct sim_state *s, char *key, const char **val)
+{
+    struct param_entry p = { .key = key };
+
+    struct param_entry *q = lfind(&p, s->conf.params, &s->conf.params_count,
+                                        sizeof *s->conf.params, params_cmp);
+
+    if (!q)
+        return 0;
+
+    *val = q->value;
+
+    return 1;
+}
+
+int param_set(struct sim_state *s, char *key, char *val, int free_value)
+{
+    while (s->conf.params_size <= s->conf.params_count)
+        // technically there is a problem here if realloc() fails
+        s->conf.params = realloc(s->conf.params,
+                (s->conf.params_size *= 2) * sizeof *s->conf.params);
+
+    struct param_entry p = {
+        .key        = key,
+        .value      = val,
+        .free_value = free_value,
+    };
+
+    struct param_entry *q = lsearch(&p, s->conf.params, &s->conf.params_count,
+                                        sizeof *s->conf.params, params_cmp);
+
+    if (!q)
+        return 1;
+
+    if (q->key != p.key) {
+        param_free(q);
+        *q = p;
+    }
+
+    return 0;
+}
+
+int param_add(struct sim_state *s, const char *optarg)
+{
+    // We can't use getsubopt() here because we don't know what all of our
+    // options are ahead of time.
+    char *dupped = strdup(optarg);
+    char *eq = strchr(dupped, '=');
+    if (!eq) {
+        free(dupped);
+        return 1;
+    }
+
+    // Replace '=' with '\0' to split string in two
+    *eq = '\0';
+
+    return param_set(s, dupped, ++eq, 0);
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
 
     struct sim_state _s = {
         .conf = {
-            .verbose = 0,
+            .verbose      = 0,
             .run_defaults = 1,
-            .debugging = 0,
+            .debugging    = 0,
+            .params_size  = DEFAULT_PARAMS_COUNT,
+            .params_count = 0,
+            .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params),
         },
         .dispatch_op = dispatch_op,
     }, *s = &_s;
@@ -549,27 +665,16 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'a': load_address = strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
-            case 's': start_address = strtol(optarg, NULL, 0); break;
-            case 'f': {
-                size_t sz = formats_count;
-                f = lfind(&(struct format){ .name = optarg }, formats, &sz,
-                        sizeof formats[0], find_format_by_name);
-                if (!f)
-                    exit(usage(argv[0]));
-
-                break;
-            }
+            case 'f': if (set_format(s, optarg, &f)) exit(usage(argv[0])); break;
             case 'n': s->conf.run_defaults = 0; break;
+            case 'p': param_add(s, optarg); break;
             case 'r': add_recipe(s, optarg); break;
+            case 's': start_address = strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
 
             case 'V': puts(version()); return EXIT_SUCCESS;
-            case 'h':
-                usage(argv[0]);
-                return EXIT_SUCCESS;
-            default:
-                usage(argv[0]);
-                return EXIT_FAILURE;
+            case 'h': usage(argv[0]) ; return EXIT_SUCCESS;
+            default : usage(argv[0]) ; return EXIT_FAILURE;
         }
     }
 
@@ -599,7 +704,10 @@ int main(int argc, char *argv[])
     load_sim(s->dispatch_op, s, f, in, load_address);
     s->machine.regs[15] = start_address & PTR_MASK;
 
-    struct run_ops ops = { .pre_insn = pre_insn };
+    struct run_ops ops = {
+        .pre_insn = pre_insn,
+        .post_insn = post_insn,
+    };
 
     if (s->conf.debugging)
         run_debugger(s, stdin);
@@ -610,6 +718,12 @@ int main(int argc, char *argv[])
         fclose(in);
 
     devices_teardown(s);
+
+    while (s->conf.params_count--)
+        param_free(&s->conf.params[s->conf.params_count]);
+
+    free(s->conf.params);
+    s->conf.params_size = 0;
 
     return rc;
 }

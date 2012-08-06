@@ -64,3 +64,9 @@ Tenyr_SRCDEPS += \
 %.bit: $($*_SRCDEPS) GenedBlockMem.ngc
 	$(SETUP) && xtclsh $*.tcl run_process
 
+clean:
+	@echo 'Run `make clobber` to clean up generated files'
+
+clobber:
+	xargs rm -rf < .gitignore
+	git ls-files --others | xargs rm -rf

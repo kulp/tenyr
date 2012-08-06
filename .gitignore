@@ -13,3 +13,6 @@ tags
 *.texe
 *.exe
 tmp/
+*.dylib
+*.so
+*.dll
