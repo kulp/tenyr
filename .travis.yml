@@ -2,4 +2,8 @@ language: c
 compiler:
   - gcc
   - clang
-script: make
+script: ./scripts/travis-build.sh
+notifications:
+    irc: "irc.freenode.org#tenyr"
+    use_notice: true
+    skip_join: true

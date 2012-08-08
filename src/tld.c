@@ -56,8 +56,8 @@ static const struct option longopts[] = {
 
 static int usage(const char *me)
 {
-    printf("Usage:\n"
-           "  %s [ OPTIONS ] image-file [ image-file ... ] \n"
+    printf("Usage: %s [ OPTIONS ] image-file [ image-file ... ] \n"
+           "Options:\n"
            "  -o, --output=X        write output to filename X\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
