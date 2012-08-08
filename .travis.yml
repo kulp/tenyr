@@ -4,6 +4,8 @@ compiler:
   - clang
 script: ./scripts/travis-build.sh
 notifications:
-    irc: "irc.freenode.org#tenyr"
-    use_notice: true
-    skip_join: true
+    irc:
+        channels:
+          - "irc.freenode.org#tenyr"
+        use_notice: true
+        skip_join: true
