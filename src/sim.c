@@ -34,7 +34,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Ou) + As; break;
         case OP_BITWISE_OR          : *rhs =  (Xu  |  Ou) + As; break;
         case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Ou) + As; break;
-        case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Ou) + As; break;
+        case OP_XOR_INVERT_Y        : *rhs =  (Xu  ^ ~Ou) + As; break;
 
         default:
             fatal(0, "Encountered reserved opcode");
