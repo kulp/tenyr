@@ -23,6 +23,7 @@ syn keyword tenyrTodo illegal
 syn keyword tenyrTodo contained TODO FIXME XXX NOTE
 syn region tenyrComment start='#' end='$' contains=tenyrTodo
 syn region tenyrComment start='//' end='$' contains=tenyrTodo
+syn region tenyrComment start="/\*" end="\*/" contains=tenyrTodo extend
 
 syn match tenyrLabel '\w\+:'
 syn match tenyrLocal '\.L\w\+:'
