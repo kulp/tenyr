@@ -2,6 +2,7 @@
 #define COMMON_TAS_
 
 #define rel(Label)          p + (@Label - .)
+#define reloff(Label,Off)   p + (@Label - . + (Off))
 #define goto(Label)         p <- rel(Label)
 #define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
 #define jnzrel(Cond,Label)  n <- (@Label - (. + 3)) ; n <- Cond & n ; p <- p + n + 1
