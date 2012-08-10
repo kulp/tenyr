@@ -9,6 +9,7 @@
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
+static long long numberise(char *str, int base);
 static int savestr(yyscan_t yyscanner);
 static int translate_escape(int what);
 
@@ -42,10 +43,10 @@ symbol   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
 /* local symbols start with ".L" */
 local   (\.L[A-Z0-9_]{1,31})
 string  (([^"]|\\\")+)
-hexnum  ("0"[xX][0-9a-fA-F]+)
-octnum  ("0"[0-7]+)
-binnum  ("0"[bB][01]+)
-decnum  ([0-9]+)
+hexnum  ("0"[xX][0-9a-fA-F_]+)
+octnum  ("0"[0-7_]+)
+binnum  ("0"[bB][01_]+)
+decnum  ([0-9_]+)
 regnum  {hexnum}|{octnum}|{decnum}
 
 %%
@@ -77,8 +78,8 @@ regnum  {hexnum}|{octnum}|{decnum}
 "<-"                    { return TOL;  }
 "->"                    { return TOR;  }
 
-{regnum}                { yylval->i = strtoll(&yytext[0], NULL, 0); return INTEGER; }
-{binnum}                { yylval->i = strtoll(&yytext[2], NULL, 2); return INTEGER; }
+{regnum}                { yylval->i = numberise(&yytext[0], 0); return INTEGER; }
+{binnum}                { yylval->i = numberise(&yytext[2], 2); return INTEGER; }
 
 [\t\f\v\r ]+            ;
 
@@ -96,6 +97,15 @@ regnum  {hexnum}|{octnum}|{decnum}
 .                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 
 %%
+
+static long long numberise(char *str, int base)
+{
+    char *p = str;
+    while ((p = strchr(p, '_')))
+        memmove(p, p + 1, strlen(p + 1) + 1);
+
+    return strtoll(str, NULL, base);
+}
 
 static int savestr(yyscan_t yyscanner)
 {
