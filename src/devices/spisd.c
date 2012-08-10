@@ -8,11 +8,19 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define RESET_CYCLE_REQ 50  ///< arbitrary
+
 struct spisd_state {
+    enum {
+        SPISD_IDLE = 0,
+        SPISD_RESETTING,
+    } state;
     uint64_t shift_in,
              shift_out;
     int out_shift_len;  ///< length of output shift register
-    int bitcount;       ///< bits received in this select
+    int bit_count;       ///< bits received in this select
+    unsigned long cycle_count;  ///< monotonically increasing
+    unsigned long last_reset;   ///< cycle count of idle finish
 };
 
 enum spisd_command_type {
@@ -121,12 +129,12 @@ struct spisd_rsp_R2 {
 
 // TODO fill in
 #define SPISD_COMMANDS(_) \
-    _(GO_IDLE_STATE, R1 , spisd_default_handler)
+    _(GO_IDLE_STATE, R1 , spisd_idle_handler)
     //
 
 // TODO fill in
 #define SPISD_APP_COMMANDS(_) \
-    _(APP_SD_STATUS, R2 , spisd_default_app_handler)
+    _(APP_SD_STATUS, R2 , spisd_unimp_app_handler)
     //
 
 #define SPISD_ARRAY_ENTRY(Type,Resp,Handler) \
@@ -138,14 +146,32 @@ struct spisd_rsp_R2 {
 typedef int spisd_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc);
 typedef int spisd_app_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc);
 
-int spisd_default_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
+static UNUSED int spisd_unimp_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
 {
-    abort();
+    // no action
+    return 0;
 }
 
-int spisd_default_app_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
+static UNUSED int spisd_unimp_app_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
 {
-    abort();
+    // no action
+    return 0;
+}
+
+static int spisd_idle_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
+{
+    int ready = s->cycle_count - s->last_reset > RESET_CYCLE_REQ;
+    struct spisd_rsp_R1 rsp = { .idle = !ready };
+
+    s->shift_out = *(int*)&rsp;
+    s->out_shift_len = 8 * spisd_rsp_R1_minbytes;
+
+    if (s->state == SPISD_IDLE) {
+        s->state = SPISD_RESETTING;
+        s->last_reset = s->cycle_count;
+    }
+
+    return 0;
 }
 
 static const struct spisd_command {
@@ -178,7 +204,7 @@ int EXPORT spisd_spi_select(void *cookie, int _ss)
     struct spisd_state *s = cookie;
 
     if (_ss)
-        s->bitcount = 0;
+        s->bit_count = 0;
 
     return 0;
 }
@@ -186,6 +212,7 @@ int EXPORT spisd_spi_select(void *cookie, int _ss)
 int EXPORT spisd_spi_clock(void *cookie, int _ss, int in, int *out)
 {
     struct spisd_state *s = cookie;
+    s->cycle_count++;
 
     if (!_ss)
         return 0;
@@ -193,11 +220,11 @@ int EXPORT spisd_spi_clock(void *cookie, int _ss, int in, int *out)
     // MSB first
     s->shift_in <<= 1;
     s->shift_in |= in;
-    s->bitcount++;
+    s->bit_count++;
     *out = !!(s->shift_out & (1 << s->out_shift_len));
     s->shift_out <<= 1;
 
-    if (s->bitcount == 48) {
+    if (s->bit_count == 48) {
         if (s->shift_in & (1ull << 47))
             breakpoint("forced-zero bit in SPI command at bit position 47 is nonzero");
 
@@ -215,7 +242,7 @@ int EXPORT spisd_spi_clock(void *cookie, int _ss, int in, int *out)
         if (c->handler)
             c->handler(s, type, arg, crc);
 
-        s->bitcount = 0;
+        s->bit_count = 0;
     }
 
     return 0;
