@@ -331,6 +331,7 @@ static int spi_slave_cycle(struct spi_state *spi)
                         if (ops->select(cookie, 0))
                             debug(1, "SPI attached instance %d returned nonzero from select()", inst);
                     spi->state = SPI_EMU_RESET;
+                    spi->regs.fmt.ctrl.u.bits.GO_BSY = 0;
                     break;
             }
         } else {
