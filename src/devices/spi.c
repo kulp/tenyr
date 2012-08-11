@@ -224,7 +224,7 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
                         int new_ss = *data;
                         int changed = (new_ss ^ old_ss) & (1 << inst);
                         int bit = !!(new_ss & (1 << inst));
-                        if (changed)
+                        if (changed && spi->impls[inst].select)
                             spi->impls[inst].select(spi->impl_cookies[inst], bit);
                     }
                 }
