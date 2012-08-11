@@ -168,14 +168,27 @@ static UNUSED int spisd_unimp_app_handler(struct spisd_state *s, enum spisd_comm
 
 static int spisd_go_idle_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
 {
-    struct spisd_rsp_R1 rsp = { .idle = 1 };
+    struct spisd_rsp_R1 rsp = { .idle = 0 };
+
+    switch (s->state) {
+        case SPISD_UNINITIALISED:
+            if (crc == 0x4a) {
+        default:
+                s->state = SPISD_IDLE;
+                s->last_reset = s->cycle_count;
+                rsp.idle = 1;
+                break;
+            } else {
+                s->state = SPISD_UNINITIALISED;
+                rsp.idle = 0;
+                rsp.crc_error = 1;
+                break;
+            }
+    }
 
     // type punning workaround
     s->shift_out = *(int*)*(void*[]){ &rsp };
     s->out_shift_len = 8 * spisd_rsp_R1_minbytes;
-
-    s->state = SPISD_IDLE;
-    s->last_reset = s->cycle_count;
 
     return 0;
 }
@@ -244,6 +257,7 @@ int EXPORT spisd_spi_init(void *pcookie)
     struct spisd_state *s = malloc(sizeof *s);
     *(void**)pcookie = s;
     s->out_shift_len = 0;
+    s->state = SPISD_UNINITIALISED;
 
     return 0;
 }
