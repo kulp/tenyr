@@ -32,9 +32,11 @@ d <- d - 1
 e <- d <> 0
 jnzrel(e,loop)
 
-b <- [(SPI_BASE + 0x0)] // read data
-c <- [(SPI_BASE + 0x4)] // read data
+c <- [(SPI_BASE + 0x0)] // read data
+b <- [(SPI_BASE + 0x4)] // read data
 illegal
 
-IDLE_COMMAND: // includes response ones
-	.word 0x400000, 0x000001ff
+IDLE_COMMAND:
+	/*      01  |cmd-|  |cmd-argument------    ------------------|  |CRC--| 1   |rsp ---| */
+	.word 0b01__000000__0000_0000_0000_0000, 0b0000_0000_0000_0000__0000000_1___1111_1111
+
