@@ -101,8 +101,10 @@ regnum  {hexnum}|{octnum}|{decnum}
 static long long numberise(char *str, int base)
 {
     char *p = str;
+    // there are more efficient ways to strip '_' but this one is pretty clear
+    int len = strlen(p);
     while ((p = strchr(p, '_')))
-        memmove(p, p + 1, strlen(p + 1) + 1);
+        memmove(p, p + 1, len - (p - str));
 
     return strtoll(str, NULL, base);
 }

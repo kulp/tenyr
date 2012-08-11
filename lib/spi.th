@@ -1,0 +1,9 @@
+#ifndef SPI_TH_
+#define SPI_TH_
+
+#define SPI_BASE 0x200
+
+#endif
+
+/* vi:set syntax=c: */
+

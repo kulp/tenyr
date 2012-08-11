@@ -3,3 +3,5 @@ DYLIB_SUFFIX = .dylib
 CPPFLAGS += -D"PATH_SEPARATOR_CHAR='/'"
 EXE_SUFFIX =
 CFLAGS_PIC += -fPIC
+# these symbols are loaded from the hosting executable
+LDFLAGS += -Wl,-U,_fatal_

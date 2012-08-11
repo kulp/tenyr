@@ -1,6 +1,8 @@
 #ifndef PLUGIN_H_
 #define PLUGIN_H_
 
+#include "plugin_portable.h"
+
 #include <windows.h>
 
 // TODO use __stdcall

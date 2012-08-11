@@ -30,14 +30,17 @@ extern jmp_buf errbuf;
 #define fatal(Code,...) \
     fatal_(Code,__FILE__,__LINE__,__func__,__VA_ARGS__)
 
-void fatal_(int code, const char *file, int line, const char *func,
-            const char *fmt, ...);
-
 #define debug(Level,...) \
     debug_(Level,__FILE__,__LINE__,__func__,__VA_ARGS__)
 
+#if !TENYR_PLUGIN
+// tenyr plugins use their own function pointers
+void fatal_(int code, const char *file, int line, const char *func,
+            const char *fmt, ...);
+
 void debug_(int level, const char *file, int line, const char *func,
             const char *fmt, ...);
+#endif
 
 // represents a most basic linked list, used for collecting nodes with twalk
 struct todo_node  {
@@ -76,6 +79,7 @@ static void traverse_##Tag(const void *node, VISIT order, int level)           \
     }                                                                          \
 }
 
+#define UNUSED __attribute__((unused))
 #define ALIASING_CAST(Type,Expr) \
     *(Type * MAY_ALIAS *)&(Expr)
 
