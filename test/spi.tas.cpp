@@ -13,27 +13,31 @@
 
 wait_for_sd_ready:
     b <- rel(RESET_COMMAND)
+    c <- 8 // number of bits expected in response
     call(put_spi)
-    c <- [(SPI_BASE + 0x0)] // read data
-    c <- c & 1  // check bottom bit
-    c <- c <> 0
-    // if the bottom bit was one (busy), c will be true
-    jnzrel(c,wait_for_sd_ready)
+    b <- b & 1  // check bottom bit
+    b <- b <> 0
+    // if the bottom bit was one (busy), b will be true
+    jnzrel(b,wait_for_sd_ready)
 
     illegal
 
+    .global put_spi
 put_spi:
+    // argument b is address of most significant word of two 32-bit words
+    // containing 56 bits (48 command bits + 8 response bits)
+    // argument c is number of bits expected as response
+    // result b is response word
     push(d)
     push(e)
     push(k)
+
     e <- [b + 1]
     e -> [(SPI_BASE + 0x0)] // bits 0 - 31
     e <- [b + 0]
-    e -> [(SPI_BASE + 0x4)] // bits 32 - 47
+    e -> [(SPI_BASE + 0x4)] // bits 32 - 56
 
-    k <- (48 + 8) // message length +  response length
-
-    //e <- e | (1 << 11) // LSB mode
+    k <- (48 + 8) // message length + response length
 
     d <- 1
     d <- d << 13
@@ -45,10 +49,17 @@ put_spi:
     e -> [(SPI_BASE + 0x10)]
 
     d <- k # wait count
-    loop:
+L_put_spi_clock_wait:
     d <- d - 1
     e <- d <> 0
-    jnzrel(e,loop)
+    jnzrel(e,L_put_spi_clock_wait)
+
+    b <- [(SPI_BASE + 0x0)] // read data
+    // chop upper bits
+    d <- -1
+    d <- d << 8
+    d <- ~ d
+    b <- b & d
 
     pop(k)
     pop(e)
