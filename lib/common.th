@@ -10,7 +10,7 @@
 #define push(Reg)           Reg -> [o] ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
-#define prologue            f <- p - . ; o <- -1
+#define prologue            o <- -1
 #define inv(Reg)            Reg ^~ a
 
 #endif

@@ -23,10 +23,10 @@ static const struct {
     [OP_COMPARE_LT         ] = { "<" , 1 },
     [OP_COMPARE_EQ         ] = { "==", 1 },
     [OP_COMPARE_GT         ] = { ">" , 1 },
-    [OP_BITWISE_NAND       ] = { "~&", 0 },
+    [OP_BITWISE_ANDN       ] = { "&~", 0 },
     [OP_BITWISE_XOR        ] = { "^" , 0 },
-    [OP_ADD_NEGATIVE_Y     ] = { "-" , 1 },
-    [OP_XOR_INVERT_Y       ] = { "^~", 0 },
+    [OP_SUBTRACT           ] = { "-" , 1 },
+    [OP_BITWISE_XORN       ] = { "^~", 0 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
     [OP_COMPARE_NE         ] = { "<>", 0 },
 
@@ -167,11 +167,11 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             }
 
             if (!(flags & ASM_NO_SUGAR)) {
-                if (g->op == OP_XOR_INVERT_Y && g->y == 0) {
+                if (g->op == OP_BITWISE_XORN && g->y == 0) {
                     f7 = f5;    // Y slot is now X
                     f5 = ' ';   // don't print X
                     f6 = "~";   // change op to a unary not
-                } else if (g->op == OP_ADD_NEGATIVE_Y && g->x == 0) {
+                } else if (g->op == OP_SUBTRACT && g->x == 0) {
                     f5 = ' ';   // don't bring X
                 }
             }
