@@ -32,24 +32,25 @@ put_spi:
     push(d)
     push(e)
 
-    e <- [b + 1]
-    e -> [(SPI_BASE + 0x0)] // bits 0 - 31
-    e <- [b + 0]
-    e -> [(SPI_BASE + 0x4)] // bits 32 - 56
+    d <- [b + 1]
+    d -> [(SPI_BASE + 0x0)] // bits 0 - 31
+    d <- [b + 0]
+    d -> [(SPI_BASE + 0x4)] // bits 32 - 56
 
     d <- 1
     d <- d << 13 // ASS mode
-    e <- d | c + 48
-    e -> [(SPI_BASE + 0x10)]
+    d <- d | c + 48
+    d -> [(SPI_BASE + 0x10)]
 
     // GO_BSY
-    e <- e | (1 << 8)
-    e -> [(SPI_BASE + 0x10)]
+    d <- d | (1 << 8)
+    d -> [(SPI_BASE + 0x10)]
 
-    d <- c + 48 # wait count
 L_put_spi_clock_wait:
-    d <- d - 1
-    e <- d <> 0
+    // wait for GO_BSY-bit to clear
+    e <- [(SPI_BASE + 0x10)]
+    e <- e & (1 << 8)
+    e <- e <> 0
     jnzrel(e,L_put_spi_clock_wait)
 
     b <- [(SPI_BASE + 0x0)] // read data
