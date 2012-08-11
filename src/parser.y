@@ -247,6 +247,8 @@ rhs_plain
         { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $signed_greloc_expr); }
     | unary_op regname[x]
         { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
+    | unary_op unsigned_greloc_expr
+        { $rhs_plain = make_expr_type1(0, $unary_op, $unsigned_greloc_expr, 0); }
 
 unary_op
     : '~' { $unary_op = OP_XOR_INVERT_Y; }
