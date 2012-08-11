@@ -79,7 +79,7 @@ asm.o: CFLAGS += -Wno-override-init
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
 # don't complain about unused values that we might use in asserts
-tas.o asm.o tsim.o sim.o ffi.o $(DEVOBJS): CFLAGS += -Wno-unused-value
+tas.o asm.o tsim.o sim.o ffi.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
 ffi.o asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 

@@ -5,6 +5,7 @@
 // differently
 #include "sim.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -12,8 +13,10 @@
 
 struct spisd_state {
     enum {
-        SPISD_IDLE = 0,
-        SPISD_RESETTING,
+        SPISD_INVALID = 0,
+        SPISD_UNINITIALISED,
+        SPISD_IDLE,             ///< also means "in the process of initialising"
+        SPISD_READY,
     } state;
     uint64_t shift_in,
              shift_out;
@@ -129,12 +132,13 @@ struct spisd_rsp_R2 {
 
 // TODO fill in
 #define SPISD_COMMANDS(_) \
-    _(GO_IDLE_STATE, R1 , spisd_idle_handler)
+    _(GO_IDLE_STATE, R1 , spisd_go_idle_handler) \
+    _(SEND_OP_COND , R1 , spisd_send_op_handler) \
     //
 
 // TODO fill in
 #define SPISD_APP_COMMANDS(_) \
-    _(APP_SD_STATUS, R2 , spisd_unimp_app_handler)
+    _(APP_SD_STATUS, R2 , spisd_unimp_app_handler) \
     //
 
 #define SPISD_ARRAY_ENTRY(Type,Resp,Handler) \
@@ -158,17 +162,50 @@ static UNUSED int spisd_unimp_app_handler(struct spisd_state *s, enum spisd_comm
     return 0;
 }
 
-static int spisd_idle_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
+static int spisd_go_idle_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
 {
-    int ready = s->cycle_count - s->last_reset > RESET_CYCLE_REQ;
+    struct spisd_rsp_R1 rsp = { .idle = 1 };
+
+    s->shift_out = *(int*)&rsp;
+    s->out_shift_len = 8 * spisd_rsp_R1_minbytes;
+
+    s->state = SPISD_IDLE;
+    s->last_reset = s->cycle_count;
+
+    return 0;
+}
+
+static int spisd_send_op_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
+{
+    int ready = -1;
+    switch (s->state) {
+        case SPISD_READY:
+        default:
+            ready = 1;
+            break;
+
+        case SPISD_IDLE:
+        case SPISD_UNINITIALISED:
+        case SPISD_INVALID:
+            ready = 0;
+            break;
+    }
+
+    assert(("ready bit determined fully by state", ready == 0 || ready == 1));
+
     struct spisd_rsp_R1 rsp = { .idle = !ready };
 
     s->shift_out = *(int*)&rsp;
     s->out_shift_len = 8 * spisd_rsp_R1_minbytes;
 
-    if (s->state == SPISD_IDLE) {
-        s->state = SPISD_RESETTING;
-        s->last_reset = s->cycle_count;
+    return 0;
+}
+
+static int spisd_cycle_handler(struct spisd_state *s, enum spisd_command_type type, uint32_t arg, uint8_t crc)
+{
+    int ready = s->cycle_count - s->last_reset > RESET_CYCLE_REQ;
+    if (s->state == SPISD_IDLE && ready) {
+        s->state = SPISD_READY;
     }
 
     return 0;
@@ -239,6 +276,7 @@ int EXPORT spisd_spi_clock(void *cookie, int _ss, int in, int *out)
         uint8_t crc = (s->shift_in >> 1) & 0x7f;
 
         const struct spisd_command *c = &spisd_commands[type];
+        spisd_cycle_handler(s, type, arg, crc);
         if (c->handler)
             c->handler(s, type, arg, crc);
 
