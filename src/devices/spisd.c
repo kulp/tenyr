@@ -221,7 +221,7 @@ int EXPORT spisd_spi_clock(void *cookie, int _ss, int in, int *out)
     s->shift_in <<= 1;
     s->shift_in |= in;
     s->bit_count++;
-    *out = !!(s->shift_out & (1 << s->out_shift_len));
+    *out = !!(s->shift_out & (1ull << (s->out_shift_len - 1)));
     s->shift_out <<= 1;
 
     if (s->bit_count == 48) {
