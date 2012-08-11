@@ -249,7 +249,7 @@ rhs_plain
         { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
 
 unary_op
-    : '~' { $unary_op = OP_XOR_INVERT_X; }
+    : '~' { $unary_op = OP_XOR_INVERT_Y; }
     | '-' { $unary_op = OP_ADD_NEGATIVE_Y; }
 
 rhs_deref
@@ -285,7 +285,7 @@ unsigned_op
     | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
     | NAND  { $unsigned_op = OP_BITWISE_NAND       ; }
     | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
-    | XORN  { $unsigned_op = OP_XOR_INVERT_X       ; }
+    | XORN  { $unsigned_op = OP_XOR_INVERT_Y       ; }
     | RSH   { $unsigned_op = OP_SHIFT_RIGHT_LOGICAL; }
 
 signed_op
@@ -536,7 +536,7 @@ static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
             e->x = 0;
             e->y = x;
             break;
-        case OP_XOR_INVERT_X:
+        case OP_XOR_INVERT_Y:
             e->x = x;
             e->y = 0;
             break;
