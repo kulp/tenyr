@@ -170,7 +170,8 @@ static int spisd_go_idle_handler(struct spisd_state *s, enum spisd_command_type 
 {
     struct spisd_rsp_R1 rsp = { .idle = 1 };
 
-    s->shift_out = *(int*)&rsp;
+    // type punning workaround
+    s->shift_out = *(int*)*(void*[]){ &rsp };
     s->out_shift_len = 8 * spisd_rsp_R1_minbytes;
 
     s->state = SPISD_IDLE;
@@ -199,7 +200,8 @@ static int spisd_send_op_handler(struct spisd_state *s, enum spisd_command_type 
 
     struct spisd_rsp_R1 rsp = { .idle = !ready };
 
-    s->shift_out = *(int*)&rsp;
+    // type punning workaround
+    s->shift_out = *(int*)*(void*[]){ &rsp };
     s->out_shift_len = 8 * spisd_rsp_R1_minbytes;
 
     return 0;

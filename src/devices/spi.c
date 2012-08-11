@@ -107,6 +107,8 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
 
     spi_reset_defaults(spi);
 
+    memset(spi->impls, 0, sizeof spi->impls);
+
     const char *implname = NULL;
     if (param_get(s, "spi.impl", &implname)) {
         int inst = 0; // TODO support more than one instance
@@ -125,7 +127,10 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
                 implstem = implname;
         }
 
-        void *libhandle = dlopen(implpath, RTLD_LAZY | RTLD_LOCAL);
+        // TODO consider using RTLD_NODELETE here
+        // (seems to break on Mac OS X)
+        // currently we leak library handles
+        void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
         if (!libhandle) {
             debug(1, "Could not load %s, trying default library search", implpath);
             libhandle = RTLD_DEFAULT;
