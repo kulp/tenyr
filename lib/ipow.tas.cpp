@@ -1,9 +1,9 @@
 #include "common.th"
 
-.global pow
+.global ipow
 
 // Performs C^D and stores the result in B.
-pow:
+ipow:
   // Initialize the return value to 1.
   b <- 1
   
