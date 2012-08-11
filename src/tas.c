@@ -61,8 +61,8 @@ static int usage(const char *me)
     char format_list[256];
     make_format_list(format_has_output, formats_count, formats, sizeof format_list, format_list, ", ");
 
-    printf("Usage:\n"
-           "  %s [ OPTIONS ] assembly-or-image-file [ assembly-or-image-file ... ] \n"
+    printf("Usage: %s [ OPTIONS ] file [ file ... ] \n"
+           "Options:\n"
            "  -d, --disassemble     disassemble (default is to assemble)\n"
            "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"

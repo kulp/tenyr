@@ -181,8 +181,8 @@ static int usage(const char *me)
     char format_list[256];
     make_format_list(format_has_input, formats_count, formats, sizeof format_list, format_list, ", ");
 
-    printf("Usage:\n"
-           "  %s [ OPTIONS ] imagefile\n"
+    printf("Usage: %s [ OPTIONS ] image-file\n"
+           "Options:\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -d, --debug           start the simulator in debugger mode\n"
            "  -f, --format=F        select input format (%s)\n"
