@@ -23,7 +23,7 @@ static const struct {
     [OP_COMPARE_LT         ] = { "<" , 1 },
     [OP_COMPARE_EQ         ] = { "==", 1 },
     [OP_COMPARE_GT         ] = { ">" , 1 },
-    [OP_BITWISE_NAND       ] = { "~&", 0 },
+    [OP_BITWISE_ANDN       ] = { "&~", 0 },
     [OP_BITWISE_XOR        ] = { "^" , 0 },
     [OP_ADD_NEGATIVE_Y     ] = { "-" , 1 },
     [OP_XOR_INVERT_Y       ] = { "^~", 0 },

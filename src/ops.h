@@ -108,7 +108,7 @@ enum op {
     OP_COMPARE_LT          = 0x6,
     OP_COMPARE_EQ          = 0x7,
     OP_COMPARE_GT          = 0x8,
-    OP_BITWISE_NAND        = 0x9,
+    OP_BITWISE_ANDN        = 0x9,
     OP_BITWISE_XOR         = 0xa,
     OP_ADD_NEGATIVE_Y      = 0xb,
     OP_XOR_INVERT_Y        = 0xc,

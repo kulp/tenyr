@@ -61,7 +61,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %left '*'
 %left '^' XORN
 %left '|'
-%left '&' NAND
+%left '&' ANDN
 %left LSH RSH
 
 %token <chr> '[' ']' '.' '(' ')'
@@ -285,7 +285,7 @@ unsigned_op
     : '|'   { $unsigned_op = OP_BITWISE_OR         ; }
     | '&'   { $unsigned_op = OP_BITWISE_AND        ; }
     | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
-    | NAND  { $unsigned_op = OP_BITWISE_NAND       ; }
+    | ANDN  { $unsigned_op = OP_BITWISE_ANDN       ; }
     | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
     | XORN  { $unsigned_op = OP_XOR_INVERT_Y       ; }
     | RSH   { $unsigned_op = OP_SHIFT_RIGHT_LOGICAL; }
