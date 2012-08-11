@@ -43,7 +43,7 @@
 //  1000 = X bitwise nor Y
 //  1001 = X bitwise nand Y
 //  1010 = X bitwise xor Y
-//  1011 = X add two's complement Y
+//  1011 = X subtract Y
 //  1100 = X xor ones' complement Y
 //  1101 = X shift right logical Y
 //  1110 = X compare > Y
@@ -110,7 +110,7 @@ enum op {
     OP_COMPARE_GT          = 0x8,
     OP_BITWISE_ANDN        = 0x9,
     OP_BITWISE_XOR         = 0xa,
-    OP_ADD_NEGATIVE_Y      = 0xb,
+    OP_SUBTRACT            = 0xb,
     OP_BITWISE_XORN        = 0xc,
     OP_SHIFT_RIGHT_LOGICAL = 0xd,
     OP_COMPARE_NE          = 0xe,

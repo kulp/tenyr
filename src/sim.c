@@ -19,7 +19,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 
     switch (op) {
         case OP_ADD                 : *rhs =  (Xs  +  Os) + As; break;
-        case OP_ADD_NEGATIVE_Y      : *rhs =  (Xs  + -Os) + As; break;
+        case OP_SUBTRACT            : *rhs =  (Xs  -  Os) + As; break;
         case OP_MULTIPLY            : *rhs =  (Xs  *  Os) + As; break;
 
         case OP_SHIFT_LEFT          : *rhs =  (Xu  << Ou) + As; break;

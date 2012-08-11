@@ -252,7 +252,7 @@ rhs_plain
 
 unary_op
     : '~' { $unary_op = OP_BITWISE_XORN; }
-    | '-' { $unary_op = OP_ADD_NEGATIVE_Y; }
+    | '-' { $unary_op = OP_SUBTRACT; }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -291,13 +291,13 @@ unsigned_op
     | RSH   { $unsigned_op = OP_SHIFT_RIGHT_LOGICAL; }
 
 signed_op
-    : '+'   { $signed_op = OP_ADD           ; }
-    | '*'   { $signed_op = OP_MULTIPLY      ; }
-    | '<'   { $signed_op = OP_COMPARE_LT    ; }
-    | EQ    { $signed_op = OP_COMPARE_EQ    ; }
-    | '>'   { $signed_op = OP_COMPARE_GT    ; }
-    | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
-    | NEQ   { $signed_op = OP_COMPARE_NE    ; }
+    : '+'   { $signed_op = OP_ADD       ; }
+    | '*'   { $signed_op = OP_MULTIPLY  ; }
+    | '<'   { $signed_op = OP_COMPARE_LT; }
+    | EQ    { $signed_op = OP_COMPARE_EQ; }
+    | '>'   { $signed_op = OP_COMPARE_GT; }
+    | '-'   { $signed_op = OP_SUBTRACT  ; }
+    | NEQ   { $signed_op = OP_COMPARE_NE; }
 
 arrow
     : TOL { $arrow = 0; }
@@ -534,7 +534,7 @@ static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
     struct expr *e = calloc(1, sizeof *e);
 
     switch (op) {
-        case OP_ADD_NEGATIVE_Y:
+        case OP_SUBTRACT:
             e->x = 0;
             e->y = x;
             break;
