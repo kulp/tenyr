@@ -4,22 +4,20 @@
     prologue
 
     b <- 0
-    b -> [(SPI_BASE + 0x14)] // set divider
-    c <- 1
-    c -> [(SPI_BASE + 0x18)] // set SS to 1
+    b -> [(SPI_BASE + 0x14)]    // set divider
 
-    b <- rel(IDLE_COMMAND)
-    c <- 8
+    b <- rel(IDLE_COMMAND)      // address of command
+    c <- 0                      // device index 0
+    d <- 8                      // number of bits expected in response
     call(put_spi)
 
 wait_for_sd_ready:
-    b <- rel(RESET_COMMAND)
-    c <- 8 // number of bits expected in response
+    b <- rel(RESET_COMMAND)     // address of command
+    d <- 8                      // number of bits expected in response
     call(put_spi)
-    b <- b & 1  // check bottom bit
-    b <- b <> 0
-    // if the bottom bit was one (busy), b will be true
-    jnzrel(b,wait_for_sd_ready)
+    b <- b & 1                  // mask off all but idle bit
+    b <- b <> 0                 // check if set
+    jnzrel(b,wait_for_sd_ready) // loop if idle bit is set (means busy)
 
     illegal
 
@@ -28,38 +26,41 @@ wait_for_sd_ready:
 put_spi:
     // argument b is address of most significant word of two 32-bit words
     // containing 56 bits (48 command bits + 8 response bits)
-    // argument c is number of bits expected as response
+    // argument c is device number
+    // argument d is number of bits expected as response
     // result b is response word
-    push(d)
+    push(e)                     // use e as scratch
 
-    d <- [b + 1]
-    d -> [(SPI_BASE + 0x0)] // bits 0 - 31
-    d <- [b + 0]
-    d -> [(SPI_BASE + 0x4)] // bits 32 - 56
+    push(b)                     // save argument b which is clobbered by ipow2
+    call(ipow2)                 // convert index in c to mask in b
+    c <- b                      // move mask in b to c
+    pop(b)                      // restore argument b
 
-    d <- 1
-    d <- d << 13 // ASS mode
-    d <- d | c + 48
-    d -> [(SPI_BASE + 0x10)]
+    c -> [(SPI_BASE + 0x18)]    // set SS bit to appropriate device mask
 
-    // GO_BSY
-    d <- d | (1 << 8)
-    d -> [(SPI_BASE + 0x10)]
+    e <- [b + 1]
+    e -> [(SPI_BASE + 0x0)]     // bits 0 - 31
+    e <- [b + 0]
+    e -> [(SPI_BASE + 0x4)]     // bits 32 - 56
 
-L_put_spi_clock_wait:
-    // wait for GO_BSY-bit to clear
-    c <- [(SPI_BASE + 0x10)]
-    c <- c & (1 << 8)
-    c <- c <> 0
-    jnzrel(c,L_put_spi_clock_wait)
+    e <- 1
+    e <- e << 13                // automatic slave selection mode
+    e <- e | d + 48             // command length is 48 bits
+    e -> [(SPI_BASE + 0x10)]    // write control register
 
-    b <- [(SPI_BASE + 0x0)] // read data
-    // chop upper bits
-    d <- (-1 << 8)
-    d <- ~ d
-    b <- b & d
+    e <- e | (1 << 8)           // set GO_BSY bit
+    e -> [(SPI_BASE + 0x10)]    // write control register again
 
-    pop(d)
+L_put_spi_wait:                 // wait for GO_BSY-bit to clear
+    c <- [(SPI_BASE + 0x10)]    // read control register
+    c <- c & (1 << 8)           // mask off all but GO_BSY bit
+    c <- c <> 0                 // check if set
+    jnzrel(c,L_put_spi_wait)    // loop if set
+
+    b <- [(SPI_BASE + 0x0)]     // read response byte
+    b <- b & 0xff               // chop upper bits
+
+    pop(e)
 
     ret
 
