@@ -11,11 +11,21 @@
     b <- rel(IDLE_COMMAND)
     call(put_spi)
 
+wait_for_sd_ready:
+    b <- rel(RESET_COMMAND)
+    call(put_spi)
     c <- [(SPI_BASE + 0x0)] // read data
-    b <- [(SPI_BASE + 0x4)] // read data
+    c <- c & 1  // check bottom bit
+    c <- c <> 0
+    // if the bottom bit was one (busy), c will be true
+    jnzrel(c,wait_for_sd_ready)
+
     illegal
 
 put_spi:
+    push(d)
+    push(e)
+    push(k)
     e <- [b + 1]
     e -> [(SPI_BASE + 0x0)] // bits 0 - 31
     e <- [b + 0]
@@ -39,6 +49,10 @@ put_spi:
     d <- d - 1
     e <- d <> 0
     jnzrel(e,loop)
+
+    pop(k)
+    pop(e)
+    pop(d)
 
     ret
 
