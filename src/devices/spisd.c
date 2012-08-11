@@ -170,20 +170,17 @@ static int spisd_go_idle_handler(struct spisd_state *s, enum spisd_command_type 
 {
     struct spisd_rsp_R1 rsp = { .idle = 0 };
 
-    switch (s->state) {
-        case SPISD_UNINITIALISED:
-            if (crc == 0x4a) {
-        default:
-                s->state = SPISD_IDLE;
-                s->last_reset = s->cycle_count;
-                rsp.idle = 1;
-                break;
-            } else {
-                s->state = SPISD_UNINITIALISED;
-                rsp.idle = 0;
-                rsp.crc_error = 1;
-                break;
-            }
+    // Only the first command needs to have its CRC set properly, as long as
+    // the user never enables CRC. Once the SD card enters SPI mode CRC
+    // checking is off. The CRC for CMD0 is fixed at 0x4a.
+    if (crc == 0x4a || s->state != SPISD_UNINITIALISED) {
+        s->state = SPISD_IDLE;
+        s->last_reset = s->cycle_count;
+        rsp.idle = 1;
+    } else {
+        s->state = SPISD_UNINITIALISED;
+        rsp.idle = 0;
+        rsp.crc_error = 1;
     }
 
     // type punning workaround
