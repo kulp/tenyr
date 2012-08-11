@@ -23,6 +23,7 @@ wait_for_sd_ready:
 
     illegal
 
+//------------------------------------------------------------------------------
     .global put_spi
 put_spi:
     // argument b is address of most significant word of two 32-bit words
@@ -30,7 +31,6 @@ put_spi:
     // argument c is number of bits expected as response
     // result b is response word
     push(d)
-    push(e)
 
     d <- [b + 1]
     d -> [(SPI_BASE + 0x0)] // bits 0 - 31
@@ -48,19 +48,17 @@ put_spi:
 
 L_put_spi_clock_wait:
     // wait for GO_BSY-bit to clear
-    e <- [(SPI_BASE + 0x10)]
-    e <- e & (1 << 8)
-    e <- e <> 0
-    jnzrel(e,L_put_spi_clock_wait)
+    c <- [(SPI_BASE + 0x10)]
+    c <- c & (1 << 8)
+    c <- c <> 0
+    jnzrel(c,L_put_spi_clock_wait)
 
     b <- [(SPI_BASE + 0x0)] // read data
     // chop upper bits
-    d <- -1
-    d <- d << 8
+    d <- (-1 << 8)
     d <- ~ d
     b <- b & d
 
-    pop(e)
     pop(d)
 
     ret
