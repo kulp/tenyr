@@ -251,7 +251,7 @@ rhs_plain
         { $rhs_plain = make_expr_type1(0, $unary_op, $unsigned_greloc_expr, 0); }
 
 unary_op
-    : '~' { $unary_op = OP_XOR_INVERT_Y; }
+    : '~' { $unary_op = OP_BITWISE_XORN; }
     | '-' { $unary_op = OP_ADD_NEGATIVE_Y; }
 
 rhs_deref
@@ -287,7 +287,7 @@ unsigned_op
     | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
     | ANDN  { $unsigned_op = OP_BITWISE_ANDN       ; }
     | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
-    | XORN  { $unsigned_op = OP_XOR_INVERT_Y       ; }
+    | XORN  { $unsigned_op = OP_BITWISE_XORN       ; }
     | RSH   { $unsigned_op = OP_SHIFT_RIGHT_LOGICAL; }
 
 signed_op
@@ -538,7 +538,7 @@ static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
             e->x = 0;
             e->y = x;
             break;
-        case OP_XOR_INVERT_Y:
+        case OP_BITWISE_XORN:
             e->x = x;
             e->y = 0;
             break;
