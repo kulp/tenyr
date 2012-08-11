@@ -1,5 +1,6 @@
-#include "spi.h"
 #include "plugin.h"
+
+#include "spi.h"
 #include "common.h"
 // sim.h is used for breakpoint() but this possibly should be factored
 // differently
@@ -10,6 +11,9 @@
 #include <stdint.h>
 
 #define RESET_CYCLE_REQ 50  ///< arbitrary
+
+void (*fatal_)(int code, const char *file, int line, const char *func, const char *fmt, ...);
+void (*debug_)(int level, const char *file, int line, const char *func, const char *fmt, ...);
 
 struct spisd_state {
     enum {
@@ -226,6 +230,12 @@ static const struct spisd_app_command {
 } spisd_app_commands[64] = {
     SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
+
+void EXPORT tenyr_plugin_init(struct tenyr_plugin_ops *ops)
+{
+    fatal_ = ops->fatal;
+    debug_ = ops->debug;
+}
 
 int EXPORT spisd_spi_init(void *pcookie)
 {

@@ -65,7 +65,7 @@ win32 win64:
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
-tsim$(EXE_SUFFIX): asm.o obj.o ffi.o \
+tsim$(EXE_SUFFIX): asm.o obj.o ffi.o plugin.o \
                    $(GENDIR)/debugger_parser.o \
                    $(GENDIR)/debugger_lexer.o
 tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o

@@ -14,7 +14,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+// we use some plugin definitions but are not a plugin ourselves (this is
+// hacky XXX)
+#define TENYR_PLUGIN 0
 #include "plugin.h"
+
 #include "common.h"
 #include "device.h"
 #include "spi.h"
@@ -136,6 +140,8 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
         } while (0)                                                 \
         //
 
+        tenyr_plugin_host_init(libhandle);
+
         GET_CB(clock);
         if (!spi->impls[inst].clock) {
             const char *err = dlerror();
@@ -152,6 +158,8 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
         if (spi->impls[inst].init)
             if (spi->impls[inst].init(&spi->impl_cookies[inst]))
                 debug(1, "SPI attached instance %d returned nonzero from init()", inst);
+
+        // if RTLD_NODELETE worked and were standard, we would dlclose() here
     }
 
     return 0;
