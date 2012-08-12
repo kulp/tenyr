@@ -13,6 +13,7 @@
 
 wait_for_sd_ready:
     b <- rel(CMD_RESET)         // address of command
+    c <- 0                      // device index 0
     d <- 8                      // number of bits expected in response
     call(put_spi)
     b <- b & 1                  // mask off all but idle bit
@@ -30,8 +31,9 @@ put_spi:
     // argument d is number of bits expected as response
     // result b is response word
 
-    push(b)                     // save b from being clobbered by ipow2
-    call(ipow2)                 // convert index in c to mask in b
+    push(b)                     // need a scratch ; use b
+    b <- 1
+    b <- b << c
     b -> [(SPI_BASE + 0x18)]    // set SS bit to appropriate device mask
     pop(b)                      // restore argument b
 

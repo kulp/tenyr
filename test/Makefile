@@ -11,8 +11,6 @@ vpath %.tas.cpp ../lib
 
 all:
 
-spi.texe: ipow2.to
-
 %.tas: %.tas.cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
@@ -26,5 +24,5 @@ clean:
 	$(RM) $(CLEANFILES)
 
 clobber: clean
-	$(RM) *.to
+	$(RM) *.to *.texe
 
