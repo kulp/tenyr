@@ -61,7 +61,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %left '*'
 %left '^' XORN
 %left '|'
-%left '&' NAND
+%left '&' ANDN
 %left LSH RSH
 
 %token <chr> '[' ']' '.' '(' ')'
@@ -247,10 +247,12 @@ rhs_plain
         { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $signed_greloc_expr); }
     | unary_op regname[x]
         { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
+    | unary_op unsigned_greloc_expr
+        { $rhs_plain = make_expr_type1(0, $unary_op, $unsigned_greloc_expr, 0); }
 
 unary_op
-    : '~' { $unary_op = OP_XOR_INVERT_Y; }
-    | '-' { $unary_op = OP_ADD_NEGATIVE_Y; }
+    : '~' { $unary_op = OP_BITWISE_XORN; }
+    | '-' { $unary_op = OP_SUBTRACT; }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -283,19 +285,19 @@ unsigned_op
     : '|'   { $unsigned_op = OP_BITWISE_OR         ; }
     | '&'   { $unsigned_op = OP_BITWISE_AND        ; }
     | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
-    | NAND  { $unsigned_op = OP_BITWISE_NAND       ; }
+    | ANDN  { $unsigned_op = OP_BITWISE_ANDN       ; }
     | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
-    | XORN  { $unsigned_op = OP_XOR_INVERT_Y       ; }
+    | XORN  { $unsigned_op = OP_BITWISE_XORN       ; }
     | RSH   { $unsigned_op = OP_SHIFT_RIGHT_LOGICAL; }
 
 signed_op
-    : '+'   { $signed_op = OP_ADD           ; }
-    | '*'   { $signed_op = OP_MULTIPLY      ; }
-    | '<'   { $signed_op = OP_COMPARE_LT    ; }
-    | EQ    { $signed_op = OP_COMPARE_EQ    ; }
-    | '>'   { $signed_op = OP_COMPARE_GT    ; }
-    | '-'   { $signed_op = OP_ADD_NEGATIVE_Y; }
-    | NEQ   { $signed_op = OP_COMPARE_NE    ; }
+    : '+'   { $signed_op = OP_ADD       ; }
+    | '*'   { $signed_op = OP_MULTIPLY  ; }
+    | '<'   { $signed_op = OP_COMPARE_LT; }
+    | EQ    { $signed_op = OP_COMPARE_EQ; }
+    | '>'   { $signed_op = OP_COMPARE_GT; }
+    | '-'   { $signed_op = OP_SUBTRACT  ; }
+    | NEQ   { $signed_op = OP_COMPARE_NE; }
 
 arrow
     : TOL { $arrow = 0; }
@@ -532,11 +534,11 @@ static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
     struct expr *e = calloc(1, sizeof *e);
 
     switch (op) {
-        case OP_ADD_NEGATIVE_Y:
+        case OP_SUBTRACT:
             e->x = 0;
             e->y = x;
             break;
-        case OP_XOR_INVERT_Y:
+        case OP_BITWISE_XORN:
             e->x = x;
             e->y = 0;
             break;
