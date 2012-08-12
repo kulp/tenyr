@@ -31,8 +31,9 @@ put_spi:
     // argument d is number of bits expected as response
     // result b is response word
 
-    push(b)                     // save b from being clobbered by ipow2
-    call(ipow2)                 // convert index in c to mask in b
+    push(b)                     // need a scratch ; use b
+    b <- 1
+    b <- b << c
     b -> [(SPI_BASE + 0x18)]    // set SS bit to appropriate device mask
     pop(b)                      // restore argument b
 
