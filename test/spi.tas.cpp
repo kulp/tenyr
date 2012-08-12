@@ -13,6 +13,7 @@
 
 wait_for_sd_ready:
     b <- rel(CMD_RESET)         // address of command
+    c <- 0                      // device index 0
     d <- 8                      // number of bits expected in response
     call(put_spi)
     b <- b & 1                  // mask off all but idle bit
