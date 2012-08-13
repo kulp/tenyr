@@ -66,6 +66,12 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
 
     int type = i->u._xxxx.t;
     switch (type) {
+        default:
+            if (i->u.word == 0xffffffff)
+                return fprintf(out, "illegal");
+            else
+                return fprintf(out, ".word 0x%08x", i->u.word);
+
         case 0x0:
         case 0x1:
         case 0x2:
@@ -97,28 +103,6 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             if (f6[0] == 'X')   // reserved
                 return fprintf(out, ".word 0x%08x", i->u.word);
 
-            // indices : [g->p][op1][op2][op3]
-            static const char *fmts[2][2][2][2] = {
-                // args :        f0f1f2 f3 f4f5   f6 f7     f8   f9
-              //[0][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
-                [0][0][0][1] = "%c%c%c %s %c"             "%-10d%c", // [Z] <- [         -0]
-                [0][0][1][0] = "%c%c%c %s %c"      "%c"        "%c", // [Z] <- [    Y      ]
-                [0][0][1][1] = "%c%c%c %s %c"      "%c +   %-10d%c", // [Z] <- [    Y +  -0]
-                [0][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
-                [0][1][0][1] = "%c%c%c %s %c%c"      " +   %-10d%c", // [Z] <- [X     +  -0]
-                [0][1][1][0] = "%c%c%c %s %c%c %-2s %c"        "%c", // [Z] <- [X - Y      ]
-                [0][1][1][1] = "%c%c%c %s %c%c %-2s %c +   %-10d%c", // [Z] <- [X - Y +  -0]
-                //args :        f0f1f2 f3 f4f5   f6 f8        f7f9
-              //[1][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
-                [1][0][0][1] = "%c%c%c %s %c"                "%c%c", // [Z] <- [          Y]
-                [1][0][1][0] = "%c%c%c %s %c"       " %-10d"   "%c", // [Z] <- [     -0    ]
-                [1][0][1][1] = "%c%c%c %s %c"       " %-10d + %c%c", // [Z] <- [     -0 + Y]
-                [1][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
-                [1][1][0][1] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [X       + Y]
-                [1][1][1][0] = "%c%c%c %s %c%c %-2s ""%-10d"   "%c", // [Z] <- [X -  -0    ]
-                [1][1][1][1] = "%c%c%c %s %c%c %-2s ""%-10d + %c%c", // [Z] <- [X -  -0 + Y]
-            };
-
             int inert = g->op == OP_BITWISE_OR || g->op == OP_ADD;
             int opXA  = g->x == 0;
             int opYA  = g->y == 0;
@@ -127,11 +111,10 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int op1   = !(opXA && inert) || (!op2 && !op3);
             int kind  = g->p;
 
-            // losslessly  disambiguate these three cases :
+            // losslessly disambiguate these cases :
             //  b <- a
             //  b <- 0
-            //  b <- $0
-            // so that assembly rountripping works more reliably
+            // so that assembly roundtripping works more reliably
             int rhs0  = (g->op == OP_ADD || (inert && kind == 1)) && opXA && !g->imm;
             int rhsA  = (g->op == OP_BITWISE_OR    && kind == 0)  && opXA && !g->imm;
 
@@ -155,6 +138,28 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                     f5 = ' ';   // don't bring X
                 }
             }
+
+            // indices : [g->p][op1][op2][op3]
+            static const char *fmts[2][2][2][2] = {
+                // args :        f0f1f2 f3 f4f5   f6 f7     f8   f9
+              //[0][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
+                [0][0][0][1] = "%c%c%c %s %c"             "%-10d%c", // [Z] <- [         -0]
+                [0][0][1][0] = "%c%c%c %s %c"      "%c"        "%c", // [Z] <- [    Y      ]
+                [0][0][1][1] = "%c%c%c %s %c"      "%c +   %-10d%c", // [Z] <- [    Y +  -0]
+                [0][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
+                [0][1][0][1] = "%c%c%c %s %c%c"      " +   %-10d%c", // [Z] <- [X     +  -0]
+                [0][1][1][0] = "%c%c%c %s %c%c %-2s %c"        "%c", // [Z] <- [X - Y      ]
+                [0][1][1][1] = "%c%c%c %s %c%c %-2s %c +   %-10d%c", // [Z] <- [X - Y +  -0]
+                //args :        f0f1f2 f3 f4f5   f6 f8        f7f9
+              //[1][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
+                [1][0][0][1] = "%c%c%c %s %c"                "%c%c", // [Z] <- [          Y]
+                [1][0][1][0] = "%c%c%c %s %c"       " %-10d"   "%c", // [Z] <- [     -0    ]
+                [1][0][1][1] = "%c%c%c %s %c"       " %-10d + %c%c", // [Z] <- [     -0 + Y]
+                [1][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
+                [1][1][0][1] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [X       + Y]
+                [1][1][1][0] = "%c%c%c %s %c%c %-2s ""%-10d"   "%c", // [Z] <- [X -  -0    ]
+                [1][1][1][1] = "%c%c%c %s %c%c %-2s ""%-10d + %c%c", // [Z] <- [X -  -0 + Y]
+            };
 
             #define C_(D,C,B,A) (((D) << 12) | ((C) << 8) | ((B) << 4) | (A))
             #define PUT(...) return fprintf(out, fmts[!!kind][!!op1][!!op2][!!op3], __VA_ARGS__)
@@ -184,11 +189,6 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
 
             return 0;
         }
-        default:
-            if (i->u.word == 0xffffffff)
-                return fprintf(out, "illegal");
-            else
-                return fprintf(out, ".word 0x%08x", i->u.word);
     }
 
     return -1;
