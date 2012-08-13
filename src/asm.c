@@ -14,21 +14,21 @@ static const struct {
     const char *name;
     int valid;
 } op_meta[] = {
-    [OP_BITWISE_OR         ] = { "|" , 1 },
-    [OP_BITWISE_AND        ] = { "&" , 1 },
     [OP_ADD                ] = { "+" , 1 },
+    [OP_SUBTRACT           ] = { "-" , 1 },
     [OP_MULTIPLY           ] = { "*" , 1 },
 
-    [OP_SHIFT_LEFT         ] = { "<<", 1 },
     [OP_COMPARE_LT         ] = { "<" , 1 },
     [OP_COMPARE_EQ         ] = { "==", 1 },
     [OP_COMPARE_GT         ] = { ">" , 1 },
+    [OP_COMPARE_NE         ] = { "<>", 1 },
+    [OP_BITWISE_OR         ] = { "|" , 1 },
+    [OP_BITWISE_AND        ] = { "&" , 1 },
     [OP_BITWISE_ANDN       ] = { "&~", 1 },
     [OP_BITWISE_XOR        ] = { "^" , 1 },
-    [OP_SUBTRACT           ] = { "-" , 1 },
     [OP_BITWISE_XORN       ] = { "^~", 1 },
+    [OP_SHIFT_LEFT         ] = { "<<", 1 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 1 },
-    [OP_COMPARE_NE         ] = { "<>", 1 },
 
     [OP_RESERVED0          ] = { "X0", 0 },
     [OP_RESERVED1          ] = { "X1", 0 },
