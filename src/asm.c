@@ -47,7 +47,7 @@ static int is_printable(int ch, size_t len, char buf[len])
         case '\r': buf[0] = '\\'; buf[1] = 'r' ; return 1;
         case '\t': buf[0] = '\\'; buf[1] = 't' ; return 1;
         case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
-        default: buf[0] = ch; return isprint(ch);
+        default: buf[0] = ch; return isprint((unsigned char)ch);
     }
 }
 
