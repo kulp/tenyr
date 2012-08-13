@@ -12,23 +12,23 @@
 
 static const struct {
     const char *name;
-    int sgnd;
+    int valid;
 } op_meta[] = {
-    [OP_BITWISE_OR         ] = { "|" , 0 },
-    [OP_BITWISE_AND        ] = { "&" , 0 },
+    [OP_BITWISE_OR         ] = { "|" , 1 },
+    [OP_BITWISE_AND        ] = { "&" , 1 },
     [OP_ADD                ] = { "+" , 1 },
     [OP_MULTIPLY           ] = { "*" , 1 },
 
-    [OP_SHIFT_LEFT         ] = { "<<", 0 },
+    [OP_SHIFT_LEFT         ] = { "<<", 1 },
     [OP_COMPARE_LT         ] = { "<" , 1 },
     [OP_COMPARE_EQ         ] = { "==", 1 },
     [OP_COMPARE_GT         ] = { ">" , 1 },
-    [OP_BITWISE_ANDN       ] = { "&~", 0 },
-    [OP_BITWISE_XOR        ] = { "^" , 0 },
+    [OP_BITWISE_ANDN       ] = { "&~", 1 },
+    [OP_BITWISE_XOR        ] = { "^" , 1 },
     [OP_SUBTRACT           ] = { "-" , 1 },
-    [OP_BITWISE_XORN       ] = { "^~", 0 },
-    [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
-    [OP_COMPARE_NE         ] = { "<>", 0 },
+    [OP_BITWISE_XORN       ] = { "^~", 1 },
+    [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 1 },
+    [OP_COMPARE_NE         ] = { "<>", 1 },
 
     [OP_RESERVED0          ] = { "X0", 0 },
     [OP_RESERVED1          ] = { "X1", 0 },
@@ -100,7 +100,7 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                   int32_t f8 = SEXTEND(12,g->imm);    // immediate value, sign-extended
                   char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
-            if (f6[0] == 'X')   // reserved
+            if (!op_meta[g->op].valid)   // reserved
                 return fprintf(out, ".word 0x%08x", i->u.word);
 
             int inert = g->op == OP_BITWISE_OR || g->op == OP_ADD;
