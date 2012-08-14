@@ -281,18 +281,24 @@ int main(int argc, char *argv[])
         .next_obj = &_s.objs,
     }, *s = &_s;
 
+    char outfname[1024] = { 0 };
+    FILE *out = stdout;
+
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
+        if (outfname[0] && out)
+            // Technically there is a race condition here ; we would like to be
+            // able to remove a file by a stream connected to it, but there is
+            // apparently no portable way to do this.
+            remove(outfname);
         return EXIT_FAILURE;
     }
-
-    FILE *out = stdout;
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
-            case 'o': out = fopen(optarg, "wb"); break;
+            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); break;
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
                 usage(argv[0]);
@@ -320,6 +326,7 @@ int main(int argc, char *argv[])
     free(s->relocated);
 
     fclose(out);
+    out = NULL;
 
     return rc;
 }
