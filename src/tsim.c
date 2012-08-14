@@ -429,15 +429,16 @@ static int add_display(struct debugger_data *dd, struct debug_expr expr, int fmt
     disp->fmt = fmt;
     disp->next = dd->displays;
     dd->displays = disp;
+    dd->displays_count++;
 
     return 0;
 }
 
 static int show_displays(struct debugger_data *dd)
 {
-    int i = 0;
+    int i = dd->displays_count;
     list_foreach(debug_display,disp,dd->displays) {
-        printf("display %d : ", i++);
+        printf("display %d : ", i--);
         print_expr(dd->s, &disp->expr, disp->fmt);
     }
 
