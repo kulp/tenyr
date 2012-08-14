@@ -15,9 +15,11 @@
 #define RTLD_DEFAULT NULL
 #define RTLD_LOCAL   -1
 #define RTLD_LAZY    -1
+#define RTLD_NOW     -1
 
 static inline void *dlopen(const char *name, int flags)
 {
+    (void)flags;
     // TODO use LoadLibraryEx() and flags ?
     return LoadLibrary(name);
 }
