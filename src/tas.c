@@ -467,20 +467,26 @@ int main(int argc, char *argv[])
     int disassemble = 0;
     int flags = 0;
 
+    char outfname[1024] = { 0 };
+    FILE *out = stdout;
+
     const struct format *f = &formats[0];
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
+        if (outfname[0] && out)
+            // Technically there is a race condition here ; we would like to be
+            // able to remove a file by a stream connected to it, but there is
+            // apparently no portable way to do this.
+            remove(outfname);
         return EXIT_FAILURE;
     }
-
-    FILE *out = stdout;
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
-            case 'o': out = fopen(optarg, "wb"); break;
+            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); break;
             case 'd': disassemble = 1; break;
             case 's': flags |= ASM_NO_SUGAR; break;
             case 'f': {
@@ -546,6 +552,7 @@ int main(int argc, char *argv[])
     }
 
     fclose(out);
+    out = NULL;
 
     return rc;
 }
