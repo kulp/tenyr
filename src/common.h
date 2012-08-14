@@ -12,6 +12,9 @@
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define SEXTEND(Bits,X) (struct { signed i:(Bits); }){ .i = (X) }.i
 
+#define UNUSED   __attribute__((unused))
+#define NORETURN __attribute__((noreturn))
+
 #define PTR_MASK ((1 << 24) - 1)
 
 #define list_foreach(Tag,Node,Object)                                          \
@@ -35,7 +38,7 @@ extern jmp_buf errbuf;
 
 #if !TENYR_PLUGIN
 // tenyr plugins use their own function pointers
-void fatal_(int code, const char *file, int line, const char *func,
+void NORETURN fatal_(int code, const char *file, int line, const char *func,
             const char *fmt, ...);
 
 void debug_(int level, const char *file, int line, const char *func,
@@ -79,7 +82,6 @@ static void traverse_##Tag(const void *node, VISIT order, int level)           \
     }                                                                          \
 }
 
-#define UNUSED __attribute__((unused))
 #define ALIASING_CAST(Type,Expr) \
     *(Type * MAY_ALIAS *)&(Expr)
 
