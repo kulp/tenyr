@@ -1,17 +1,23 @@
 #ifndef COMMON_TAS_
 #define COMMON_TAS_
 
+// The stack-setup prologue assumes o points just above a usable stack space.
+// For bare-metal applications, this will be address zero if o has not been
+// written, so the stack will start at -1 (0xffffffff).
+#define prologue            o <- o - 1
+
 #define rel(Label)          p + (@Label - .)
 #define reloff(Label,Off)   p + (@Label - . + (Off))
 #define goto(Label)         p <- rel(Label)
 #define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
-#define jnzrel(Cond,Label)  n <- (@Label - (. + 3)) ; n <- Cond & n ; p <- p + n + 1
-#define jzrel(Cond,Label)   Cond <- Cond == 0 ; jnzrel(Cond,Label)
+// XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
+// Note that jnzrel and jzrel trash register N !
+// NOTE we could combine two instructions into one if we had "AND with signed expr"
+#define jnzrel(Cond,Label)  n <- (@Label - (. + 3)) ; n <- n &  Cond ; p <- p + n + 1
+#define jzrel(Cond,Label)   n <- (@Label - (. + 3)) ; n <- n &~ Cond ; p <- p + n + 1
 #define push(Reg)           Reg -> [o] ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
-#define prologue            o <- -1
-#define inv(Reg)            Reg ^~ a
 
 #endif
 

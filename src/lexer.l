@@ -67,7 +67,7 @@ regnum  {hexnum}|{octnum}|{decnum}
 ".global"               { return GLOBAL; }
 ".set"                  { return SET; }
 
-[][|&+*^<>.,:@()$~-]    { return yytext[0]; }
+[][|&+*^<>.,:@()~-]     { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "=="                    { return EQ;   }
