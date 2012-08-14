@@ -255,6 +255,8 @@ static void ce_free(struct const_expr *ce, int recurse)
 
 static int fixup_deferred_exprs(struct parse_data *pd)
 {
+    int rc = 0;
+
     list_foreach(deferred_expr, r, pd->defexprs) {
         struct const_expr *ce = r->ce;
 
@@ -262,6 +264,17 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         if (ce_eval(pd, ce->insn, NULL, ce, 0, sym_reloc_handler, &r->width, &result)) {
             uint32_t mask = ~(((1ULL << (r->width - 1)) << 1) - 1);
             result *= r->mult;
+
+            int hasupperbits = result & mask;
+            uint32_t semask = -1 << (r->width - 1);
+            int notsignextended = (result & semask) != semask;
+
+            if (hasupperbits && notsignextended) {
+                debug(0, "Expression resulting in value %#x is too large for "
+                        "%d-bit signed immediate field", result, r->width);
+                rc |= 1;
+            }
+
             *r->dest &= mask;
             *r->dest |= result & ~mask;
             ce_free(ce, 1);
@@ -273,7 +286,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         free(r);
     }
 
-    return 0;
+    return rc;
 }
 
 static int mark_globals(struct symbol_list *symbols, struct global_list *globals)
@@ -393,6 +406,8 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
 
         if (f->fini)
             f->fini(out, &ud);
+    } else {
+        fatal(0, "Error while fixing up deferred expressions");
     }
 
     assembly_cleanup(pd);
