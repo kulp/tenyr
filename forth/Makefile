@@ -20,10 +20,10 @@ forty.texe: main.to level0.to level1.to
 	cpp $(CPPFLAGS) $< -o $@
 
 %.to: %.tas
-	$(TAS) -o$@ $< || (rm $@ ; exit 1)
+	$(TAS) -o$@ $<
 
 %.texe: %.to
-	$(TLD) -o$@ $^ || (rm $@ ; exit 1)
+	$(TLD) -o$@ $^
 
 clean:
 	$(RM) *.to $(CLEANFILES)
