@@ -129,7 +129,10 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                 op3 = 0;
             }
 
-            if (!(flags & ASM_NO_SUGAR)) {
+            if (flags & ASM_VERBOSE)
+                op1 = op2 = op3 = 1;
+
+            if (!(flags & (ASM_NO_SUGAR | ASM_VERBOSE))) {
                 if (g->op == OP_BITWISE_XORN && g->y == 0) {
                     f7 = f5;    // Y slot is now X
                     f5 = ' ';   // don't print X

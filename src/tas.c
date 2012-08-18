@@ -25,13 +25,14 @@
 
 #define NO_NAMED_RELOC 2
 
-static const char shortopts[] = "df:o:s" "hV";
+static const char shortopts[] = "df:o:sv" "hV";
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
     { "format"      , required_argument, NULL, 'f' },
     { "output"      , required_argument, NULL, 'o' },
     { "strict"      ,       no_argument, NULL, 's' },
+    { "verbose"     ,       no_argument, NULL, 'v' },
 
     { "help"        ,       no_argument, NULL, 'h' },
     { "version"     ,       no_argument, NULL, 'V' },
@@ -67,6 +68,7 @@ static int usage(const char *me)
            "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"
            "  -s, --strict          disable syntax sugar in disassembly\n"
+           "  -v, --verbose         disable simplified disassembly output\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
            , me, format_list, version());
@@ -489,6 +491,7 @@ int main(int argc, char *argv[])
             case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); break;
             case 'd': disassemble = 1; break;
             case 's': flags |= ASM_NO_SUGAR; break;
+            case 'v': flags |= ASM_VERBOSE; break;
             case 'f': {
                 size_t sz = formats_count;
                 f = lfind(&(struct format){ .name = optarg }, formats, &sz,
