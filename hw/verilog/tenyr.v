@@ -143,7 +143,7 @@ module Exec(input clk, input en, output[31:0] rhs,
                 4'b0110: i_rhs = -(Xs  <  Os) + As; // X compare < Y
                 4'b0111: i_rhs = -(Xs  == Os) + As; // X compare == Y
                 4'b1000: i_rhs = -(Xs  >  Os) + As; // X compare > Y
-                4'b1001: i_rhs = ~(Xu  &  Ou) + As; // X bitwise nand Y
+                4'b1001: i_rhs =  (Xu  &~ Ou) + As; // X bitwise and complement Y
                 4'b1010: i_rhs =  (Xu  ^  Ou) + As; // X bitwise xor Y
                 4'b1011: i_rhs =  (Xs  -  Os) + As; // X subtract Y
                 4'b1100: i_rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
