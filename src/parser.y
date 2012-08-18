@@ -66,7 +66,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*' '~'
-%token <chr> ','
+%token <chr> ',' ';'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
 %token <i> INTEGER
@@ -128,6 +128,8 @@ program[outer]
         {   $outer = calloc(1, sizeof *$outer);
             // dummy instruction permits capturing previous instruction from $outer->prev
         }
+    | ';' program[inner]
+        {   $outer = $inner; }
     | string_or_data program[inner]
         {   struct instruction_list *p = $string_or_data, *i = $inner;
             while (p->next) p = p->next;
@@ -236,9 +238,9 @@ rhs_plain
     | regname[x] op greloc_expr
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, 0); }
     | greloc_expr
-        { $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, 0); }
+        { $rhs_plain = make_expr_type0(0, OP_BITWISE_OR, 0, 1, $greloc_expr); }
     | greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, $y); }
+        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $greloc_expr, $y); }
     | unary_op regname[x] addsub greloc_expr
         { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $greloc_expr); }
     | unary_op regname[x]
