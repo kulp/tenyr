@@ -51,7 +51,6 @@ regnum  {hexnum}|{octnum}|{decnum}
 
 %%
 
-";"                     ;
 "\t"                    { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
 "\n"                    { saveline[savecol = 0] = 0; }
 "illegal"               { return ILLEGAL; }
@@ -67,7 +66,7 @@ regnum  {hexnum}|{octnum}|{decnum}
 ".global"               { return GLOBAL; }
 ".set"                  { return SET; }
 
-[][|&+*^<>.,:@()~-]     { return yytext[0]; }
+[][|&+*^<>.,:@()~;-]    { return yytext[0]; }
 
 "<<"                    { return LSH;  }
 "=="                    { return EQ;   }

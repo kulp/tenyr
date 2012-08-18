@@ -66,7 +66,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*' '~'
-%token <chr> ','
+%token <chr> ',' ';'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
 %token <i> INTEGER
@@ -128,6 +128,8 @@ program[outer]
         {   $outer = calloc(1, sizeof *$outer);
             // dummy instruction permits capturing previous instruction from $outer->prev
         }
+    | ';' program[inner]
+        {   $outer = $inner; }
     | string_or_data program[inner]
         {   struct instruction_list *p = $string_or_data, *i = $inner;
             while (p->next) p = p->next;
