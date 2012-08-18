@@ -4,11 +4,7 @@
 `define VGA
 `define SEG7
 
-module Tenyr(halt,
-`ifdef ISIM
-        reset_n,
-`endif
-        clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync, Led);
+module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync, Led);
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, in_data, out_data, operand_data;
     wire operand_rw;
@@ -38,11 +34,7 @@ module Tenyr(halt,
     assign operand_data = !operand_rw ?     out_data : 32'bz;
 
     wire phases_valid;
-`ifdef ISIM
-    input reset_n;
-`else
     reg reset_n = 1;
-`endif
     wire clk_vga;
     `ifdef OLDCLOCK
     wire clk_core0, clk_core90, clk_core180, clk_core270;
@@ -96,7 +88,6 @@ module Tenyr(halt,
               .norm_addr(operand_addr), .norm_data(operand_data),
               .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));
 
-`ifndef SIM
 `ifdef VGA
 
     wire[7:0] crx; // 1-based ?
@@ -145,19 +136,21 @@ module Tenyr(halt,
         .clka  (clk_vga),
         .dina  ('bz),
         .addra (ram_adA),
+        .douta (ram_doA),
         .wea   (1'b0),
+`ifdef DISABLE_TEXTRAM
         .clkb  ('b0),
         .dinb  ('bz),
         .addrb ('bz),
         .web   ('b0),
         .doutb (nonce_doutb)
-        /*
+`else
         .clkb  (clk_datamem),
         .dinb  (operand_data),
         .addrb (operand_addr),
         .web   (operand_rw),
         .doutb (operand_data)
-        */
+`endif
     );
 
     fontrom font(
@@ -166,7 +159,6 @@ module Tenyr(halt,
         .douta (rom_doA)
     );
 
-`endif
 `endif
 
 endmodule
