@@ -148,7 +148,7 @@ module Exec(input clk, input en, output[31:0] rhs,
                 4'b1011: i_rhs =  (Xs  -  Os) + As; // X subtract Y
                 4'b1100: i_rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
                 4'b1101: i_rhs =  (Xu  >> Ou) + As; // X shift right logical Y
-                4'b1110: i_rhs =  (Xs  != Os) + As; // X compare <> Y
+                4'b1110: i_rhs = -(Xs  != Os) + As; // X compare <> Y
               //4'b1111:                            // reserved
 
                 default: i_rhs = 32'bx;
