@@ -236,9 +236,9 @@ rhs_plain
     | regname[x] op greloc_expr
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, 0); }
     | greloc_expr
-        { $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, 0); }
+        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $greloc_expr, 0); }
     | greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, $y); }
+        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $greloc_expr, $y); }
     | unary_op regname[x] addsub greloc_expr
         { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $greloc_expr); }
     | unary_op regname[x]
