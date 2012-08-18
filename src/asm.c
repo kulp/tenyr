@@ -85,20 +85,20 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int ld = g->dd == 2;
 
             // LHS
-                  char    f0 = ld ? '[' : ' ';        // left side dereferenced ?
-                  char    f1 = 'A' + g->z;            // register name for Z
-                  char    f2 = ld ? ']' : ' ';        // left side dereferenced ?
+                  int32_t f0 = ld ? '[' : ' ';        // left side dereferenced ?
+                  int32_t f1 = 'A' + g->z;            // register name for Z
+                  int32_t f2 = ld ? ']' : ' ';        // left side dereferenced ?
 
             // arrow
-            const char *  f3 = (g->dd == 3) ? "->" : "<-";    // arrow direction
+            const char   *f3 = (g->dd == 3) ? "->" : "<-";    // arrow direction
 
             // RHS
-                  char    f4 = rd ? '[' : ' ';        // right side dereferenced ?
-                  char    f5 = 'A' + g->x;            // register name for X
-            const char *  f6 = op_meta[g->op].name;   // operator name
-                  char    f7 = 'A' + g->y;            // register name for Y
+                  int32_t f4 = rd ? '[' : ' ';        // right side dereferenced ?
+                  int32_t f5 = 'A' + g->x;            // register name for X
+            const char   *f6 = op_meta[g->op].name;   // operator name
+                  int32_t f7 = 'A' + g->y;            // register name for Y
                   int32_t f8 = SEXTEND(12,g->imm);    // immediate value, sign-extended
-                  char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
+                  int32_t f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
             if (!op_meta[g->op].valid)   // reserved
                 return fprintf(out, ".word 0x%08x", i->u.word);
@@ -164,7 +164,14 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
 
             #define PUT(...) return fprintf(out, fmts[C_(kind,op1,op2,op3)], __VA_ARGS__)
 
-            switch (C_(kind,op1,op2,op3)) {
+            if (kind == 1) {
+                // swap f7 and f8 positions if this is a type1 instruction
+                int32_t temp = f8;
+                f8 = f7;
+                f7 = temp;
+            }
+
+            switch (C_(0,op1,op2,op3)) {
               //case C_(0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
                 case C_(0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
                 case C_(0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
@@ -173,14 +180,6 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                 case C_(0,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f8,f9); break;
                 case C_(0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
                 case C_(0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,f8,f9); break;
-              //case C_(1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-                case C_(1,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
-                case C_(1,0,1,0): PUT(f0,f1,f2,f3,f4,      f8,   f9); break;
-                case C_(1,0,1,1): PUT(f0,f1,f2,f3,f4,      f8,f7,f9); break;
-                case C_(1,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
-                case C_(1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f7,f9); break;
-                case C_(1,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f8,   f9); break;
-                case C_(1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f8,f7,f9); break;
 
                 default:
                     fatal(0, "Unsupported kind,op1,op2,op3 %05x",
