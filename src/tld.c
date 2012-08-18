@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
     }, *s = &_s;
 
     char outfname[1024] = { 0 };
-    FILE *out = stdout;
+    FILE * volatile out = stdout;
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)

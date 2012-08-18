@@ -468,7 +468,7 @@ int main(int argc, char *argv[])
     int flags = 0;
 
     char outfname[1024] = { 0 };
-    FILE *out = stdout;
+    FILE * volatile out = stdout;
 
     const struct format *f = &formats[0];
 
