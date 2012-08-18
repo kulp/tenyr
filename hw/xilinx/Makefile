@@ -1,4 +1,5 @@
 TAS = ../../tas
+TLD = ../../tld
 SHELL = /bin/bash
 SETUP = source ~/ise.sh
 TARGET = Tenyr
@@ -22,10 +23,13 @@ CPPFLAGS += -I../../lib
 %.tasd: %.to
 	$(TAS) -d $< > $@
 
-%.coe: %.tas
+%.texe: %.to
+	$(TLD) -o$@ $^
+
+%.coe: %.texe
 	echo 'memory_initialization_radix = 16;' > $@
 	echo 'memory_initialization_vector =' >> $@
-	$(TAS) -f text $< | sed 's/^0x//' >> $@
+	$(TAS) -d $< | $(TAS) -f text - | sed 's/^0x//' >> $@
 	echo ';' >> $@
 
 vpath gen_%.tcl ipcore_dir

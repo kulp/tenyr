@@ -31,6 +31,15 @@ struct sim_state {
         int debugging;
         int should_init;
         uint32_t initval;
+
+#define DEFAULT_PARAMS_COUNT 16
+        size_t params_count;
+        size_t params_size;
+        struct param_entry {
+            char *key;
+            char *value;
+            int free_value; ///< whether value should be free()d
+        } *params;
     } conf;
 
     op_dispatcher *dispatch_op;
@@ -42,12 +51,21 @@ struct sim_state {
 
 struct run_ops {
     int (*pre_insn)(struct sim_state *s, struct instruction *i);
+    int (*post_insn)(struct sim_state *s, struct instruction *i);
 };
 
 int run_instruction(struct sim_state *s, struct instruction *i);
 int run_sim(struct sim_state *s, struct run_ops *ops);
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         FILE *in, int load_address);
+
+/// @c param_get() returns true if key is found, false otherwise
+int param_get(struct sim_state *s, char *key, const char **val);
+int param_set(struct sim_state *s, char *key, char *val, int free_value);
+
+// TODO convert this to an interrupt in the debugger
+#define breakpoint(...) \
+    fatal(0, __VA_ARGS__)
 
 #endif
 

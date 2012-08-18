@@ -64,7 +64,6 @@ int obj_write(struct obj *o, FILE *out)
         case 0: return obj_v0_write(o, out);
         default:
             fatal(0, "Unhandled version while emitting object");
-            return -1; // never reached, but keeps compiler happy
     }
 }
 
@@ -122,8 +121,6 @@ int obj_read(struct obj *o, FILE *in)
         default:
             fatal(0, "Unhandled version number when loading object");
     }
-
-    return -1; // never reached, but keeps compiler happy
 }
 
 static void obj_v0_free(struct obj *o)
@@ -152,7 +149,6 @@ void obj_free(struct obj *o)
         case 0: obj_v0_free(o); break;
         default:
             fatal(0, "Unknown version number or corrupt memory while freeing object");
-            return; // never reached, but keeps compiler happy
     }
 }
 
