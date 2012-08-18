@@ -18,10 +18,10 @@ CPPFLAGS += -I../../lib
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 %.to: %.tas
-	$(TAS) $< > $@
+	$(TAS) -o$@ $<
 
 %.tasd: %.to
-	$(TAS) -d $< > $@
+	$(TAS) -d -o$@ $<
 
 %.texe: %.to
 	$(TLD) -o$@ $^
