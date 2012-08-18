@@ -1,7 +1,7 @@
 `include "common.vh"
 `timescale 1ms/10us
 
-`undef  VGA
+`define VGA
 `define SEG7
 
 module Tenyr(halt,
