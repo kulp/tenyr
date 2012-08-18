@@ -1,0 +1,82 @@
+ F  <-  P -  0
+ C  <-   1
+ O  <-   1023
+ C  -> [O]
+ O  <-  O -  1
+[O] <-  P +  3
+ O  <-  O -  1
+ P  <-  F +  22
+ O  <-  O +  1
+ C  <- [O]
+ C  -> [ 256       ]
+ C  -> [O]
+ O  <-  O -  1
+ C  <-  B
+[O] <-  P +  3
+ O  <-  O -  1
+ P  <-  F +  50
+ O  <-  O +  1
+ C  <- [O]
+ C  <-  C +  1
+ P  <-  F +  3
+illegal
+ D  <-   1
+ D  <-  C >  D
+ N  <-  F -  P + 27
+ N  <-  N &  D
+ P  <-  P +  N + 1
+ B  <-  C
+ O  <-  O +  1
+ P  <- [O]
+ C  -> [O]
+ O  <-  O -  1
+ C  <-  C -  1
+[O] <-  P +  3
+ O  <-  O -  1
+ P  <-  F +  22
+ O  <-  O +  1
+ C  <- [O]
+ B  -> [O]
+ O  <-  O -  1
+ C  <-  C -  2
+[O] <-  P +  3
+ O  <-  O -  1
+ P  <-  F +  22
+ D  <-  B
+ O  <-  O +  1
+ B  <- [O]
+ B  <-  D +  B
+ O  <-  O +  1
+ P  <- [O]
+ H  <-   256
+ H  <-  H << 8
+ K  <-   48
+ I  <-  F +  66
+ M  <-  H +  K
+ L  <-  C == 0
+ N  <-  F -  P + 61
+ N  <-  N &  L
+ P  <-  P +  N + 1
+ J  <- [C &  15         + I]
+[M] <-  J
+ K  <-  K -  1
+ C  <-  C >> 4
+ P  <-  F +  54
+ O  <-  O +  1
+ P  <- [O]
+.word   '0'
+.word   '1'
+.word   '2'
+.word   '3'
+.word   '4'
+.word   '5'
+.word   '6'
+.word   '7'
+.word   '8'
+.word   '9'
+.word   'A'
+.word   'B'
+.word   'C'
+.word   'D'
+.word   'E'
+.word   'F'
