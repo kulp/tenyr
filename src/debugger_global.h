@@ -35,6 +35,7 @@ struct debugger_data {
         struct debug_expr expr;
         int fmt;
     } *displays;
+    int displays_count;
 
     struct debug_cmd {
         enum {

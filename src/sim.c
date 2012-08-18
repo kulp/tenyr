@@ -19,7 +19,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 
     switch (op) {
         case OP_ADD                 : *rhs =  (Xs  +  Os) + As; break;
-        case OP_ADD_NEGATIVE_Y      : *rhs =  (Xs  + -Os) + As; break;
+        case OP_SUBTRACT            : *rhs =  (Xs  -  Os) + As; break;
         case OP_MULTIPLY            : *rhs =  (Xs  *  Os) + As; break;
 
         case OP_SHIFT_LEFT          : *rhs =  (Xu  << Ou) + As; break;
@@ -31,10 +31,10 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_COMPARE_NE          : *rhs = -(Xs  != Os) + As; break;
 
         case OP_BITWISE_AND         : *rhs =  (Xu  &  Ou) + As; break;
-        case OP_BITWISE_NAND        : *rhs = ~(Xu  &  Ou) + As; break;
+        case OP_BITWISE_ANDN        : *rhs =  (Xu  & ~Ou) + As; break;
         case OP_BITWISE_OR          : *rhs =  (Xu  |  Ou) + As; break;
         case OP_BITWISE_XOR         : *rhs =  (Xu  ^  Ou) + As; break;
-        case OP_XOR_INVERT_X        : *rhs =  (Xu  ^ ~Ou) + As; break;
+        case OP_BITWISE_XORN        : *rhs =  (Xu  ^ ~Ou) + As; break;
 
         default:
             fatal(0, "Encountered reserved opcode");
@@ -116,7 +116,6 @@ int run_instruction(struct sim_state *s, struct instruction *i)
     return 0;
 }
 
-
 int run_sim(struct sim_state *s, struct run_ops *ops)
 {
     while (1) {
@@ -129,6 +128,9 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
 
         if (run_instruction(s, &i))
             return 1;
+
+        if (ops->post_insn)
+            ops->post_insn(s, &i);
     }
 }
 

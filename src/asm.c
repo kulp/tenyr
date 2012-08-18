@@ -12,23 +12,23 @@
 
 static const struct {
     const char *name;
-    int sgnd;
+    int valid;
 } op_meta[] = {
-    [OP_BITWISE_OR         ] = { "|" , 0 },
-    [OP_BITWISE_AND        ] = { "&" , 0 },
     [OP_ADD                ] = { "+" , 1 },
+    [OP_SUBTRACT           ] = { "-" , 1 },
     [OP_MULTIPLY           ] = { "*" , 1 },
 
-    [OP_SHIFT_LEFT         ] = { "<<", 0 },
     [OP_COMPARE_LT         ] = { "<" , 1 },
     [OP_COMPARE_EQ         ] = { "==", 1 },
     [OP_COMPARE_GT         ] = { ">" , 1 },
-    [OP_BITWISE_NAND       ] = { "~&", 0 },
-    [OP_BITWISE_XOR        ] = { "^" , 0 },
-    [OP_ADD_NEGATIVE_Y     ] = { "-" , 1 },
-    [OP_XOR_INVERT_X       ] = { "^~", 0 },
-    [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 0 },
-    [OP_COMPARE_NE         ] = { "<>", 0 },
+    [OP_COMPARE_NE         ] = { "<>", 1 },
+    [OP_BITWISE_OR         ] = { "|" , 1 },
+    [OP_BITWISE_AND        ] = { "&" , 1 },
+    [OP_BITWISE_ANDN       ] = { "&~", 1 },
+    [OP_BITWISE_XOR        ] = { "^" , 1 },
+    [OP_BITWISE_XORN       ] = { "^~", 1 },
+    [OP_SHIFT_LEFT         ] = { "<<", 1 },
+    [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 1 },
 
     [OP_RESERVED0          ] = { "X0", 0 },
     [OP_RESERVED1          ] = { "X1", 0 },
@@ -47,7 +47,7 @@ static int is_printable(int ch, size_t len, char buf[len])
         case '\r': buf[0] = '\\'; buf[1] = 'r' ; return 1;
         case '\t': buf[0] = '\\'; buf[1] = 't' ; return 1;
         case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
-        default: buf[0] = ch; return isprint(ch);
+        default: buf[0] = ch; return isprint((unsigned char)ch);
     }
 }
 
@@ -66,6 +66,12 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
 
     int type = i->u._xxxx.t;
     switch (type) {
+        default:
+            if (i->u.word == 0xffffffff)
+                return fprintf(out, "illegal");
+            else
+                return fprintf(out, ".word 0x%08x", i->u.word);
+
         case 0x0:
         case 0x1:
         case 0x2:
@@ -91,52 +97,11 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                   char    f5 = 'A' + g->x;            // register name for X
             const char *  f6 = op_meta[g->op].name;   // operator name
                   char    f7 = 'A' + g->y;            // register name for Y
-                 uint32_t f8 = g->imm;                // immediate value, unsigned
+                  int32_t f8 = SEXTEND(12,g->imm);    // immediate value, sign-extended
                   char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
-                  int32_t fa = SEXTEND(12,g->imm);    // immediate value, signed
 
-            if (f6[0] == 'X')   // reserved
+            if (!op_meta[g->op].valid)   // reserved
                 return fprintf(out, ".word 0x%08x", i->u.word);
-
-            // indices : [sgnd][g->p][op1][op2][op3]
-            static const char *fmts[2][2][2][2][2] = {
-                // args :          f0f1f2 f3 f4f5   f6 f7      f8 f9
-              //[0][0][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
-                [0][0][0][0][1] = "%c%c%c %s %c"           "$0x%08x%c", // [Z] <- [        0x0]
-                [0][0][0][1][0] = "%c%c%c %s %c"      "%c"        "%c", // [Z] <- [    Y      ]
-                [0][0][0][1][1] = "%c%c%c %s %c"      "%c + $0x%08x%c", // [Z] <- [    Y + 0x0]
-                [0][0][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
-                [0][0][1][0][1] = "%c%c%c %s %c%c"      " + $0x%08x%c", // [Z] <- [X     + 0x0]
-                [0][0][1][1][0] = "%c%c%c %s %c%c %-2s %c"        "%c", // [Z] <- [X - Y      ]
-                [0][0][1][1][1] = "%c%c%c %s %c%c %-2s %c + $0x%08x%c", // [Z] <- [X - Y + 0x0]
-                // args :          f0f1f2 f3 f4f5   f6    f8    f7 f9
-              //[0][1][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
-                [0][1][0][0][1] = "%c%c%c %s %c"                "%c%c", // [Z] <- [          Y]
-                [0][1][0][1][0] = "%c%c%c %s %c"       "0x%08x"   "%c", // [Z] <- [    0x0    ]
-                [0][1][0][1][1] = "%c%c%c %s %c"       "0x%08x + %c%c", // [Z] <- [    0x0 + Y]
-                [0][1][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
-                [0][1][1][0][1] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [X       + Y]
-                [0][1][1][1][0] = "%c%c%c %s %c%c %-2s  0x%08x"   "%c", // [Z] <- [X - 0x0    ]
-                [0][1][1][1][1] = "%c%c%c %s %c%c %-2s  0x%08x + %c%c", // [Z] <- [X - 0x0 + Y]
-                // args :          f0f1f2 f3 f4f5   f6 f7     fa   f9
-              //[1][0][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
-                [1][0][0][0][1] = "%c%c%c %s %c"             "%-10d%c", // [Z] <- [         -0]
-                [1][0][0][1][0] = "%c%c%c %s %c"      "%c"        "%c", // [Z] <- [    Y      ]
-                [1][0][0][1][1] = "%c%c%c %s %c"      "%c +   %-10d%c", // [Z] <- [    Y +  -0]
-                [1][0][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
-                [1][0][1][0][1] = "%c%c%c %s %c%c"      " +   %-10d%c", // [Z] <- [X     +  -0]
-                [1][0][1][1][0] = "%c%c%c %s %c%c %-2s %c"        "%c", // [Z] <- [X - Y      ]
-                [1][0][1][1][1] = "%c%c%c %s %c%c %-2s %c +   %-10d%c", // [Z] <- [X - Y +  -0]
-                // args :          f0f1f2 f3 f4f5   f6 fa        f7f9
-              //[1][1][0][0][0] = "%c%c%c %s %c"                  "%c", // [Z] <- [           ]
-                [1][1][0][0][1] = "%c%c%c %s %c"                "%c%c", // [Z] <- [          Y]
-                [1][1][0][1][0] = "%c%c%c %s %c"       " %-10d"   "%c", // [Z] <- [     -0    ]
-                [1][1][0][1][1] = "%c%c%c %s %c"       " %-10d + %c%c", // [Z] <- [     -0 + Y]
-                [1][1][1][0][0] = "%c%c%c %s %c%c"                "%c", // [Z] <- [X          ]
-                [1][1][1][0][1] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [X       + Y]
-                [1][1][1][1][0] = "%c%c%c %s %c%c %-2s ""%-10d"   "%c", // [Z] <- [X -  -0    ]
-                [1][1][1][1][1] = "%c%c%c %s %c%c %-2s ""%-10d + %c%c", // [Z] <- [X -  -0 + Y]
-            };
 
             int inert = g->op == OP_BITWISE_OR || g->op == OP_ADD;
             int opXA  = g->x == 0;
@@ -144,14 +109,12 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int op3   = g->p ? !opYA : (!!g->imm);
             int op2   = !inert || (g->p ? g->imm : !opYA);
             int op1   = !(opXA && inert) || (!op2 && !op3);
-            int sgnd  = op_meta[g->op].sgnd;
             int kind  = g->p;
 
-            // losslessly  disambiguate these three cases :
+            // losslessly disambiguate these cases :
             //  b <- a
             //  b <- 0
-            //  b <- $0
-            // so that assembly rountripping works more reliably
+            // so that assembly roundtripping works more reliably
             int rhs0  = (g->op == OP_ADD || (inert && kind == 1)) && opXA && !g->imm;
             int rhsA  = (g->op == OP_BITWISE_OR    && kind == 0)  && opXA && !g->imm;
 
@@ -167,64 +130,65 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             }
 
             if (!(flags & ASM_NO_SUGAR)) {
-                if (g->op == OP_XOR_INVERT_X && g->y == 0) {
+                if (g->op == OP_BITWISE_XORN && g->y == 0) {
                     f7 = f5;    // Y slot is now X
                     f5 = ' ';   // don't print X
                     f6 = "~";   // change op to a unary not
-                } else if (g->op == OP_ADD_NEGATIVE_Y && g->x == 0) {
+                } else if (g->op == OP_SUBTRACT && g->x == 0) {
                     f5 = ' ';   // don't bring X
                 }
             }
 
-            #define C_(A,B,C,D,E) (((A) << 16) | ((B) << 12) | ((C) << 8) | ((D) << 4) | (E))
-            #define PUT(...) return fprintf(out, fmts[!!sgnd][!!kind][!!op1][!!op2][!!op3], __VA_ARGS__)
+            #define C_(D,C,B,A) (((D) << 3) | ((C) << 2) | ((B) << 1) | (A))
+            // indices : g->p, op1, op2, op3
+            static const char *fmts[] = {
+                // args :       f0f1f2 f3 f4f5   f6 f7   f8   f9
+              //[C_(0,0,0,0)] = "%c%c%c %s %c"                "%c", // [Z] <- [           ]
+                [C_(0,0,0,1)] = "%c%c%c %s %c"           "%-10d%c", // [Z] <- [         -0]
+                [C_(0,0,1,0)] = "%c%c%c %s %c"      "%c"      "%c", // [Z] <- [    Y      ]
+                [C_(0,0,1,1)] = "%c%c%c %s %c"      "%c + %-10d%c", // [Z] <- [    Y +  -0]
+                [C_(0,1,0,0)] = "%c%c%c %s %c%c"              "%c", // [Z] <- [X          ]
+                [C_(0,1,0,1)] = "%c%c%c %s %c%c"      " + %-10d%c", // [Z] <- [X     +  -0]
+                [C_(0,1,1,0)] = "%c%c%c %s %c%c %-2s %c"      "%c", // [Z] <- [X - Y      ]
+                [C_(0,1,1,1)] = "%c%c%c %s %c%c %-2s %c + %-10d%c", // [Z] <- [X - Y +  -0]
+                //args :        f0f1f2 f3 f4f5   f6 f8        f7f9
+              //[C_(1,0,0,0)] = "%c%c%c %s %c"                "%c", // [Z] <- [           ]
+                [C_(1,0,0,1)] = "%c%c%c %s %c"              "%c%c", // [Z] <- [          Y]
+                [C_(1,0,1,0)] = "%c%c%c %s %c"     " %-10d"   "%c", // [Z] <- [     -0    ]
+                [C_(1,0,1,1)] = "%c%c%c %s %c"     " %-10d + %c%c", // [Z] <- [     -0 + Y]
+                [C_(1,1,0,0)] = "%c%c%c %s %c%c"              "%c", // [Z] <- [X          ]
+                [C_(1,1,0,1)] = "%c%c%c %s %c%c"         " + %c%c", // [Z] <- [X       + Y]
+                [C_(1,1,1,0)] = "%c%c%c %s %c%c %-2s %-10d"   "%c", // [Z] <- [X -  -0    ]
+                [C_(1,1,1,1)] = "%c%c%c %s %c%c %-2s %-10d + %c%c", // [Z] <- [X -  -0 + Y]
+            };
 
-            switch (C_(sgnd,kind,op1,op2,op3)) {
-              //case C_(0,0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-                case C_(0,0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
-                case C_(0,0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
-                case C_(0,0,0,1,1): PUT(f0,f1,f2,f3,f4,      f7,f8,f9); break;
-                case C_(0,0,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
-                case C_(0,0,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f8,f9); break;
-                case C_(0,0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
-                case C_(0,0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,f8,f9); break;
-              //case C_(0,1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-                case C_(0,1,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
-                case C_(0,1,0,1,0): PUT(f0,f1,f2,f3,f4,      f8,   f9); break;
-                case C_(0,1,0,1,1): PUT(f0,f1,f2,f3,f4,      f8,f7,f9); break;
-                case C_(0,1,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
-                case C_(0,1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f7,f9); break;
-                case C_(0,1,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f8,   f9); break;
-                case C_(0,1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f8,f7,f9); break;
-              //case C_(1,0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-                case C_(1,0,0,0,1): PUT(f0,f1,f2,f3,f4,         fa,f9); break;
-                case C_(1,0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
-                case C_(1,0,0,1,1): PUT(f0,f1,f2,f3,f4,      f7,fa,f9); break;
-                case C_(1,0,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
-                case C_(1,0,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      fa,f9); break;
-                case C_(1,0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
-                case C_(1,0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,fa,f9); break;
-              //case C_(1,1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-                case C_(1,1,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
-                case C_(1,1,0,1,0): PUT(f0,f1,f2,f3,f4,      fa,   f9); break;
-                case C_(1,1,0,1,1): PUT(f0,f1,f2,f3,f4,      fa,f7,f9); break;
-                case C_(1,1,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
-                case C_(1,1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f7,f9); break;
-                case C_(1,1,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,fa,   f9); break;
-                case C_(1,1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,fa,f7,f9); break;
+            #define PUT(...) return fprintf(out, fmts[C_(kind,op1,op2,op3)], __VA_ARGS__)
+
+            switch (C_(kind,op1,op2,op3)) {
+              //case C_(0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+                case C_(0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
+                case C_(0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
+                case C_(0,0,1,1): PUT(f0,f1,f2,f3,f4,      f7,f8,f9); break;
+                case C_(0,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
+                case C_(0,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f8,f9); break;
+                case C_(0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
+                case C_(0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,f8,f9); break;
+              //case C_(1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+                case C_(1,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
+                case C_(1,0,1,0): PUT(f0,f1,f2,f3,f4,      f8,   f9); break;
+                case C_(1,0,1,1): PUT(f0,f1,f2,f3,f4,      f8,f7,f9); break;
+                case C_(1,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
+                case C_(1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f7,f9); break;
+                case C_(1,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f8,   f9); break;
+                case C_(1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f8,f7,f9); break;
 
                 default:
-                    fatal(0, "Unsupported sgnd,kind,op1,op2,op3 %05x",
-                            C_(sgnd,g->p,op1,op2,op3));
+                    fatal(0, "Unsupported kind,op1,op2,op3 %05x",
+                            C_(g->p,op1,op2,op3));
             }
 
             return 0;
         }
-        default:
-            if (i->u.word == 0xffffffff)
-                return fprintf(out, "illegal");
-            else
-                return fprintf(out, ".word 0x%08x", i->u.word);
     }
 
     return -1;
