@@ -69,7 +69,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %token <chr> ',' ';'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
-%token <i> INTEGER
+%token <i> INTEGER CHARACTER BITSTRING
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
@@ -264,6 +264,8 @@ immediate
     : INTEGER
     | '-' INTEGER
         {   $immediate = -$INTEGER; }
+    | BITSTRING
+    | CHARACTER
 
 addsub
     : '+' { $addsub =  1; }

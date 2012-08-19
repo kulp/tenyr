@@ -28,8 +28,7 @@ static const struct {
     [OP_BITWISE_OR         ] = { "|" , 1, 1, 1 },
     [OP_BITWISE_AND        ] = { "&" , 1, 1, 0 },
     [OP_BITWISE_ANDN       ] = { "&~", 1, 1, 0 },
-    // XOR is technically inert but not for the purposes of disassembly
-    [OP_BITWISE_XOR        ] = { "^" , 1, 1, 0 },
+    [OP_BITWISE_XOR        ] = { "^" , 1, 1, 1 },
     [OP_BITWISE_XORN       ] = { "^~", 1, 1, 0 },
     [OP_SHIFT_LEFT         ] = { "<<", 1, 0, 0 },
     [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 1, 0, 0 },
