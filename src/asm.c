@@ -80,100 +80,99 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
         case 0x4:
         case 0x5:
         case 0x6:
-        case 0x7: {
-            struct instruction_general *g = &i->u._0xxx;
-            int rd = g->dd &  1;
-            int ld = g->dd == 2;
+        case 0x7:
+            break;
+    }
 
-            // LHS
-                  int32_t f0 = ld ? '[' : ' ';        // left side dereferenced ?
-                  int32_t f1 = 'A' + g->z;            // register name for Z
-                  int32_t f2 = ld ? ']' : ' ';        // left side dereferenced ?
+    struct instruction_general *g = &i->u._0xxx;
+    int rd = g->dd &  1;
+    int ld = g->dd == 2;
 
-            // arrow
-            const char   *f3 = (g->dd == 3) ? "->" : "<-";    // arrow direction
+    // LHS
+          int32_t f0 = ld ? '[' : ' ';        // left side dereferenced ?
+          int32_t f1 = 'A' + g->z;            // register name for Z
+          int32_t f2 = ld ? ']' : ' ';        // left side dereferenced ?
 
-            // RHS
-                  int32_t f4 = rd ? '[' : ' ';        // right side dereferenced ?
-                  int32_t f5 = 'A' + g->x;            // register name for X
-            const char   *f6 = op_meta[g->op].name;   // operator name
-                  int32_t f7 = 'A' + g->y;            // register name for Y
-                  int32_t f8 = SEXTEND(12,g->imm);    // immediate value, sign-extended
-                  int32_t f9 = rd ? ']' : ' ';        // right side dereferenced ?
+    // arrow
+    const char   *f3 = (g->dd == 3) ? "->" : "<-";    // arrow direction
 
-            if (!op_meta[g->op].valid)   // reserved
-                return fprintf(out, ".word 0x%08x", i->u.word);
+    // RHS
+          int32_t f4 = rd ? '[' : ' ';        // right side dereferenced ?
+          int32_t f5 = 'A' + g->x;            // register name for X
+    const char   *f6 = op_meta[g->op].name;   // operator name
+          int32_t f7 = 'A' + g->y;            // register name for Y
+          int32_t f8 = SEXTEND(12,g->imm);    // immediate value, sign-extended
+          int32_t f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
-            int inert = g->op == OP_BITWISE_OR || g->op == OP_ADD;
-            int opXA  = g->x == 0;
-            int opYA  = g->y == 0;
-            int op3   = g->p ? !opYA : (!!g->imm);
-            int op2   = !inert || (g->p ? g->imm : !opYA);
-            int op1   = !(opXA && inert) || (!op2 && !op3);
-            int kind  = !!g->p;
+    if (!op_meta[g->op].valid)   // reserved
+        return fprintf(out, ".word 0x%08x", i->u.word);
 
-            // losslessly disambiguate these cases :
-            //  b <- a
-            //  b <- 0
-            // so that assembly roundtripping works more reliably
-            int rhs0  = (g->op == OP_ADD || (inert && kind == 1)) && opXA && !g->imm;
-            int rhsA  = (g->op == OP_BITWISE_OR    && kind == 0)  && opXA && !g->imm;
+    int inert = g->op == OP_BITWISE_OR || g->op == OP_ADD;
+    int opXA  = g->x == 0;
+    int opYA  = g->y == 0;
+    int op3   = g->p ? !opYA : (!!g->imm);
+    int op2   = !inert || (g->p ? g->imm : !opYA);
+    int op1   = !(opXA && inert) || (!op2 && !op3);
+    int kind  = !!g->p;
 
-            if (rhs0) {
-                op3 = 1;
-                op2 = 0;
-                op1 = 0;
-                kind = 0;
-            } else if (rhsA) {
-                op1 = 1;
-                op2 = 0;
-                op3 = 0;
-            }
+    // losslessly disambiguate these cases :
+    //  b <- a
+    //  b <- 0
+    // so that assembly roundtripping works more reliably
+    int rhs0  = (g->op == OP_ADD || (inert && kind == 1)) && opXA && !g->imm;
+    int rhsA  = (g->op == OP_BITWISE_OR    && kind == 0)  && opXA && !g->imm;
 
-            if (flags & ASM_VERBOSE)
-                op1 = op2 = op3 = 1;
+    if (rhs0) {
+        op3 = 1;
+        op2 = 0;
+        op1 = 0;
+        kind = 0;
+    } else if (rhsA) {
+        op1 = 1;
+        op2 = 0;
+        op3 = 0;
+    }
 
-            if (!(flags & (ASM_NO_SUGAR | ASM_VERBOSE))) {
-                if (g->op == OP_BITWISE_XORN && g->y == 0) {
-                    f7 = f5;    // Y slot is now X
-                    f5 = ' ';   // don't print X
-                    f6 = "~";   // change op to a unary not
-                } else if (g->op == OP_SUBTRACT && g->x == 0) {
-                    f5 = ' ';   // don't print X
-                }
-            }
+    if (flags & ASM_VERBOSE)
+        op1 = op2 = op3 = 1;
 
-            #define C_(D,C,B,A) (((D) << 3) | ((C) << 2) | ((B) << 1) | (A))
-            // indices : g->p, op1, op2, op3
-            static const char *fmts[C_(1,1,1,1)+1] = {
-              //[C_(0,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                        "%10$c", // [Z] <- [           ]
-                [C_(0,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                 "%9$-10d%10$c", // [Z] <- [         -0]
-                [C_(0,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"          "%8$c"        "%10$c", // [Z] <- [    Y      ]
-                [C_(0,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"          "%8$c + %9$-10d%10$c", // [Z] <- [    Y +  -0]
-                [C_(0,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                    "%10$c", // [Z] <- [X          ]
-                [C_(0,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"          " + %9$-10d%10$c", // [Z] <- [X     +  -0]
-                [C_(0,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %8$c"        "%10$c", // [Z] <- [X - Y      ]
-                [C_(0,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %8$c + %9$-10d%10$c", // [Z] <- [X - Y +  -0]
-              //[C_(1,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                        "%10$c", // [Z] <- [           ]
-                [C_(1,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                    "%8$c%10$c", // [Z] <- [          Y]
-                [C_(1,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"         " %9$-10d"     "%10$c", // [Z] <- [     -0    ]
-                [C_(1,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"         " %9$-10d + %8$c%10$c", // [Z] <- [     -0 + Y]
-                [C_(1,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                    "%10$c", // [Z] <- [X          ]
-                [C_(1,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"             " + %8$c%10$c", // [Z] <- [X       + Y]
-                [C_(1,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %9$-10d"     "%10$c", // [Z] <- [X -  -0    ]
-                [C_(1,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %9$-10d + %8$c%10$c", // [Z] <- [X -  -0 + Y]
-            };
-
-            const char *fmt = fmts[C_(kind,op1,op2,op3)];
-            if (!fmt)
-                fatal(0, "Unsupported kind,op1,op2,op3 %d,%d,%d,%d",
-                        g->p,op1,op2,op3);
-
-            return fprintf(out,fmt,f0,f1,f2,f3,f4,f5,f6,f7,f8,f9);
+    if (!(flags & (ASM_NO_SUGAR | ASM_VERBOSE))) {
+        if (g->op == OP_BITWISE_XORN && g->y == 0) {
+            f7 = f5;    // Y slot is now X
+            f5 = ' ';   // don't print X
+            f6 = "~";   // change op to a unary not
+        } else if (g->op == OP_SUBTRACT && g->x == 0) {
+            f5 = ' ';   // don't print X
         }
     }
 
-    return -1;
+    #define C_(D,C,B,A) (((D) << 3) | ((C) << 2) | ((B) << 1) | (A))
+    // indices : g->p, op1, op2, op3
+    static const char *fmts[C_(1,1,1,1)+1] = {
+      //[C_(0,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                        "%10$c", // [Z] <- [           ]
+        [C_(0,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                 "%9$-10d%10$c", // [Z] <- [         -0]
+        [C_(0,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"          "%8$c"        "%10$c", // [Z] <- [    Y      ]
+        [C_(0,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"          "%8$c + %9$-10d%10$c", // [Z] <- [    Y +  -0]
+        [C_(0,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                    "%10$c", // [Z] <- [X          ]
+        [C_(0,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"          " + %9$-10d%10$c", // [Z] <- [X     +  -0]
+        [C_(0,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %8$c"        "%10$c", // [Z] <- [X - Y      ]
+        [C_(0,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %8$c + %9$-10d%10$c", // [Z] <- [X - Y +  -0]
+      //[C_(1,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                        "%10$c", // [Z] <- [           ]
+        [C_(1,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                    "%8$c%10$c", // [Z] <- [          Y]
+        [C_(1,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"         " %9$-10d"     "%10$c", // [Z] <- [     -0    ]
+        [C_(1,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"         " %9$-10d + %8$c%10$c", // [Z] <- [     -0 + Y]
+        [C_(1,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                    "%10$c", // [Z] <- [X          ]
+        [C_(1,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"             " + %8$c%10$c", // [Z] <- [X       + Y]
+        [C_(1,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %9$-10d"     "%10$c", // [Z] <- [X -  -0    ]
+        [C_(1,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %9$-10d + %8$c%10$c", // [Z] <- [X -  -0 + Y]
+    };
+
+    const char *fmt = fmts[C_(kind,op1,op2,op3)];
+    if (!fmt)
+        fatal(0, "Unsupported kind,op1,op2,op3 %d,%d,%d,%d",
+                g->p,op1,op2,op3);
+
+    return fprintf(out,fmt,f0,f1,f2,f3,f4,f5,f6,f7,f8,f9);
 }
 
 int print_registers(FILE *out, int32_t regs[16])
