@@ -242,16 +242,18 @@ rhs_plain
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, $y); }
     | regname[x] op greloc_expr
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, 0); }
-    | greloc_expr
-        { $rhs_plain = make_expr_type0(0, OP_BITWISE_OR, 0, 1, $greloc_expr); }
-    | greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $greloc_expr, $y); }
     | unary_op regname[x] addsub greloc_expr
         { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $greloc_expr); }
     | unary_op regname[x]
         { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
     | unary_op greloc_expr /* responsible for a S/R conflict */
         { $rhs_plain = make_expr_type1(0, $unary_op, $greloc_expr, 0); }
+    | greloc_expr
+        {   enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
+            $rhs_plain = make_expr_type1(0, op, $greloc_expr, 0); }
+    | greloc_expr '+' regname[y]
+        {   enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
+            $rhs_plain = make_expr_type1(0, op, $greloc_expr, $y); }
 
 unary_op
     : '~' { $unary_op = OP_BITWISE_XORN; }
@@ -274,7 +276,7 @@ immediate
             $immediate.is_bits = 0; }
     | BITSTRING
         {   $immediate.i = $BITSTRING;
-            $immediate.is_bits = 0; }
+            $immediate.is_bits = 1; }
     | CHARACTER
         {   $immediate.i = $CHARACTER;
             $immediate.is_bits = 1; }
