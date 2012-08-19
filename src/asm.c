@@ -85,27 +85,28 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
     }
 
     struct instruction_general *g = &i->u._0xxx;
+
+    if (!op_meta[g->op].valid)   // reserved
+        return fprintf(out, ".word 0x%08x", i->u.word);
+
     int rd = g->dd &  1;
     int ld = g->dd == 2;
 
     // LHS
-          int32_t f0 = ld ? '[' : ' ';        // left side dereferenced ?
-          int32_t f1 = 'A' + g->z;            // register name for Z
-          int32_t f2 = ld ? ']' : ' ';        // left side dereferenced ?
+          char    f0 = ld ? '[' : ' ';        // left side dereferenced ?
+          char    f1 = 'A' + g->z;            // register name for Z
+          char    f2 = ld ? ']' : ' ';        // left side dereferenced ?
 
     // arrow
     const char   *f3 = (g->dd == 3) ? "->" : "<-";    // arrow direction
 
     // RHS
-          int32_t f4 = rd ? '[' : ' ';        // right side dereferenced ?
-          int32_t f5 = 'A' + g->x;            // register name for X
+          char    f4 = rd ? '[' : ' ';        // right side dereferenced ?
+          char    f5 = 'A' + g->x;            // register name for X
     const char   *f6 = op_meta[g->op].name;   // operator name
-          int32_t f7 = 'A' + g->y;            // register name for Y
+          char    f7 = 'A' + g->y;            // register name for Y
           int32_t f8 = SEXTEND(12,g->imm);    // immediate value, sign-extended
-          int32_t f9 = rd ? ']' : ' ';        // right side dereferenced ?
-
-    if (!op_meta[g->op].valid)   // reserved
-        return fprintf(out, ".word 0x%08x", i->u.word);
+          char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
     int inert = g->op == OP_BITWISE_OR || g->op == OP_ADD;
     int opXA  = g->x == 0;
@@ -114,13 +115,34 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
     int op2   = !inert || (g->p ? g->imm : !opYA);
     int op1   = !(opXA && inert) || (!op2 && !op3);
     int kind  = !!g->p;
+    int hex   = 0;  ///< whether to use hex digits in disassembly
+
+    switch (g->op) {
+        case OP_ADD                 : hex = 0; break;
+        case OP_COMPARE_EQ          : hex = 0; break;
+        case OP_COMPARE_GT          : hex = 0; break;
+        case OP_COMPARE_LT          : hex = 0; break;
+        case OP_COMPARE_NE          : hex = 0; break;
+        case OP_MULTIPLY            : hex = 0; break;
+        case OP_SHIFT_LEFT          : hex = 0; break;
+        case OP_SHIFT_RIGHT_LOGICAL : hex = 0; break;
+        case OP_SUBTRACT            : hex = 0; break;
+
+        case OP_BITWISE_AND         : hex = 1; break;
+        case OP_BITWISE_ANDN        : hex = 1; break;
+        case OP_BITWISE_OR          : hex = 1; break;
+        case OP_BITWISE_XOR         : hex = 1; break;
+        case OP_BITWISE_XORN        : hex = 1; break;
+
+        default                     : hex = 0; break;
+    }
 
     // losslessly disambiguate these cases :
     //  b <- a
     //  b <- 0
     // so that assembly roundtripping works more reliably
-    int rhs0  = (g->op == OP_ADD || (inert && kind == 1)) && opXA && !g->imm;
-    int rhsA  = (g->op == OP_BITWISE_OR    && kind == 0)  && opXA && !g->imm;
+    int rhs0 = (g->op == OP_ADD || (inert && kind == 1)) && opXA && !g->imm;
+    int rhsA = (g->op == OP_BITWISE_OR    && kind == 0)  && opXA && !g->imm;
 
     if (rhs0) {
         op3 = 1;
@@ -146,31 +168,47 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
         }
     }
 
-    #define C_(D,C,B,A) (((D) << 3) | ((C) << 2) | ((B) << 1) | (A))
-    // indices : g->p, op1, op2, op3
-    static const char *fmts[C_(1,1,1,1)+1] = {
-      //[C_(0,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                        "%10$c", // [Z] <- [           ]
-        [C_(0,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                 "%9$-10d%10$c", // [Z] <- [         -0]
-        [C_(0,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"          "%8$c"        "%10$c", // [Z] <- [    Y      ]
-        [C_(0,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"          "%8$c + %9$-10d%10$c", // [Z] <- [    Y +  -0]
-        [C_(0,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                    "%10$c", // [Z] <- [X          ]
-        [C_(0,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"          " + %9$-10d%10$c", // [Z] <- [X     +  -0]
-        [C_(0,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %8$c"        "%10$c", // [Z] <- [X - Y      ]
-        [C_(0,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %8$c + %9$-10d%10$c", // [Z] <- [X - Y +  -0]
-      //[C_(1,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                        "%10$c", // [Z] <- [           ]
-        [C_(1,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                    "%8$c%10$c", // [Z] <- [          Y]
-        [C_(1,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"         " %9$-10d"     "%10$c", // [Z] <- [     -0    ]
-        [C_(1,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"         " %9$-10d + %8$c%10$c", // [Z] <- [     -0 + Y]
-        [C_(1,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                    "%10$c", // [Z] <- [X          ]
-        [C_(1,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"             " + %8$c%10$c", // [Z] <- [X       + Y]
-        [C_(1,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %9$-10d"     "%10$c", // [Z] <- [X -  -0    ]
-        [C_(1,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %9$-10d + %8$c%10$c", // [Z] <- [X -  -0 + Y]
+    #define C_(E,D,C,B,A) (((E) << 4) | ((D) << 3) | ((C) << 2) | ((B) << 1) | (A))
+    // indices : hex, g->p, op1, op2, op3
+    static const char *fmts[C_(1,1,1,1,1)+1] = {
+      //[C_(0,0,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                           "%10$c", // [Z] <- [           ]
+        [C_(0,0,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                    "%9$-10d%10$c", // [Z] <- [         -0]
+        [C_(0,0,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"             "%8$c"        "%10$c", // [Z] <- [    Y      ]
+        [C_(0,0,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"             "%8$c + %9$-10d%10$c", // [Z] <- [    Y +  -0]
+        [C_(0,0,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                       "%10$c", // [Z] <- [X          ]
+        [C_(0,0,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"             " + %9$-10d%10$c", // [Z] <- [X     +  -0]
+        [C_(0,0,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s " "%8$c"        "%10$c", // [Z] <- [X - Y      ]
+        [C_(0,0,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s " "%8$c + %9$-10d%10$c", // [Z] <- [X - Y +  -0]
+      //[C_(0,1,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                           "%10$c", // [Z] <- [           ]
+        [C_(0,1,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                       "%8$c%10$c", // [Z] <- [          Y]
+        [C_(0,1,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"            " %9$-10d"     "%10$c", // [Z] <- [     -0    ]
+        [C_(0,1,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"            " %9$-10d + %8$c%10$c", // [Z] <- [     -0 + Y]
+        [C_(0,1,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                       "%10$c", // [Z] <- [X          ]
+        [C_(0,1,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                " + %8$c%10$c", // [Z] <- [X       + Y]
+        [C_(0,1,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s " "%9$-10d"     "%10$c", // [Z] <- [X -  -0    ]
+        [C_(0,1,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s " "%9$-10d + %8$c%10$c", // [Z] <- [X -  -0 + Y]
+      //[C_(1,0,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                           "%10$c", // [Z] <- [           ]
+        [C_(1,0,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                    "%9$-10d%10$c", // [Z] <- [         -0]
+        [C_(1,0,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"             "%8$c"        "%10$c", // [Z] <- [    Y      ]
+        [C_(1,0,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"             "%8$c + %9$-10d%10$c", // [Z] <- [    Y +  -0]
+        [C_(1,0,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                       "%10$c", // [Z] <- [X          ]
+        [C_(1,0,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"             " + %9$-10d%10$c", // [Z] <- [X     +  -0]
+        [C_(1,0,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s " "%8$c"        "%10$c", // [Z] <- [X - Y      ]
+        [C_(1,0,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s " "%8$c + %9$-10d%10$c", // [Z] <- [X - Y +  -0]
+      //[C_(1,1,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                           "%10$c", // [Z] <- [           ]
+        [C_(1,1,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                       "%8$c%10$c", // [Z] <- [          Y]
+        [C_(1,1,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"            "0x%9$08x"     "%10$c", // [Z] <- [     -0    ]
+        [C_(1,1,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"            "0x%9$08x + %8$c%10$c", // [Z] <- [     -0 + Y]
+        [C_(1,1,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                       "%10$c", // [Z] <- [X          ]
+        [C_(1,1,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                " + %8$c%10$c", // [Z] <- [X       + Y]
+        [C_(1,1,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s ""0x%9$08x"     "%10$c", // [Z] <- [X -  -0    ]
+        [C_(1,1,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s ""0x%9$08x + %8$c%10$c", // [Z] <- [X -  -0 + Y]
     };
 
-    const char *fmt = fmts[C_(kind,op1,op2,op3)];
+    const char *fmt = fmts[C_(hex,kind,op1,op2,op3)];
     if (!fmt)
-        fatal(0, "Unsupported kind,op1,op2,op3 %d,%d,%d,%d",
-                g->p,op1,op2,op3);
+        fatal(0, "Unsupported hex,kind,op1,op2,op3 %d,%d,%d,%d,%d",
+                hex,g->p,op1,op2,op3);
 
     return fprintf(out,fmt,f0,f1,f2,f3,f4,f5,f6,f7,f8,f9);
 }
