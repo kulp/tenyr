@@ -49,6 +49,8 @@ struct const_expr {
     int32_t i;
     char symbolname[SYMBOL_LEN];
     int op;
+    #define IMM_IS_BITS 1 ///< treat an immediate as a bitstring instead of as an integer
+    int flags;
     struct instruction *insn; // for '.'-resolving
     struct instruction_list **deferred; // for an instruction context not available to me yet
     struct symbol *symbol; // for referencing a specific version of a symbol
