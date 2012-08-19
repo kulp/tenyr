@@ -110,7 +110,7 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             int op3   = g->p ? !opYA : (!!g->imm);
             int op2   = !inert || (g->p ? g->imm : !opYA);
             int op1   = !(opXA && inert) || (!op2 && !op3);
-            int kind  = g->p;
+            int kind  = !!g->p;
 
             // losslessly disambiguate these cases :
             //  b <- a
@@ -139,58 +139,37 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
                     f5 = ' ';   // don't print X
                     f6 = "~";   // change op to a unary not
                 } else if (g->op == OP_SUBTRACT && g->x == 0) {
-                    f5 = ' ';   // don't bring X
+                    f5 = ' ';   // don't print X
                 }
             }
 
             #define C_(D,C,B,A) (((D) << 3) | ((C) << 2) | ((B) << 1) | (A))
             // indices : g->p, op1, op2, op3
-            static const char *fmts[] = {
-                // args :       f0f1f2 f3 f4f5   f6 f7   f8   f9
-              //[C_(0,0,0,0)] = "%c%c%c %s %c"                "%c", // [Z] <- [           ]
-                [C_(0,0,0,1)] = "%c%c%c %s %c"           "%-10d%c", // [Z] <- [         -0]
-                [C_(0,0,1,0)] = "%c%c%c %s %c"      "%c"      "%c", // [Z] <- [    Y      ]
-                [C_(0,0,1,1)] = "%c%c%c %s %c"      "%c + %-10d%c", // [Z] <- [    Y +  -0]
-                [C_(0,1,0,0)] = "%c%c%c %s %c%c"              "%c", // [Z] <- [X          ]
-                [C_(0,1,0,1)] = "%c%c%c %s %c%c"      " + %-10d%c", // [Z] <- [X     +  -0]
-                [C_(0,1,1,0)] = "%c%c%c %s %c%c %-2s %c"      "%c", // [Z] <- [X - Y      ]
-                [C_(0,1,1,1)] = "%c%c%c %s %c%c %-2s %c + %-10d%c", // [Z] <- [X - Y +  -0]
-                //args :        f0f1f2 f3 f4f5   f6 f8        f7f9
-              //[C_(1,0,0,0)] = "%c%c%c %s %c"                "%c", // [Z] <- [           ]
-                [C_(1,0,0,1)] = "%c%c%c %s %c"              "%c%c", // [Z] <- [          Y]
-                [C_(1,0,1,0)] = "%c%c%c %s %c"     " %-10d"   "%c", // [Z] <- [     -0    ]
-                [C_(1,0,1,1)] = "%c%c%c %s %c"     " %-10d + %c%c", // [Z] <- [     -0 + Y]
-                [C_(1,1,0,0)] = "%c%c%c %s %c%c"              "%c", // [Z] <- [X          ]
-                [C_(1,1,0,1)] = "%c%c%c %s %c%c"         " + %c%c", // [Z] <- [X       + Y]
-                [C_(1,1,1,0)] = "%c%c%c %s %c%c %-2s %-10d"   "%c", // [Z] <- [X -  -0    ]
-                [C_(1,1,1,1)] = "%c%c%c %s %c%c %-2s %-10d + %c%c", // [Z] <- [X -  -0 + Y]
+            static const char *fmts[C_(1,1,1,1)+1] = {
+              //[C_(0,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                        "%10$c", // [Z] <- [           ]
+                [C_(0,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                 "%9$-10d%10$c", // [Z] <- [         -0]
+                [C_(0,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"          "%8$c"        "%10$c", // [Z] <- [    Y      ]
+                [C_(0,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"          "%8$c + %9$-10d%10$c", // [Z] <- [    Y +  -0]
+                [C_(0,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                    "%10$c", // [Z] <- [X          ]
+                [C_(0,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"          " + %9$-10d%10$c", // [Z] <- [X     +  -0]
+                [C_(0,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %8$c"        "%10$c", // [Z] <- [X - Y      ]
+                [C_(0,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %8$c + %9$-10d%10$c", // [Z] <- [X - Y +  -0]
+              //[C_(1,0,0,0)] = "%1$c%2$c%3$c %4$s %5$c"                        "%10$c", // [Z] <- [           ]
+                [C_(1,0,0,1)] = "%1$c%2$c%3$c %4$s %5$c"                    "%8$c%10$c", // [Z] <- [          Y]
+                [C_(1,0,1,0)] = "%1$c%2$c%3$c %4$s %5$c"         " %9$-10d"     "%10$c", // [Z] <- [     -0    ]
+                [C_(1,0,1,1)] = "%1$c%2$c%3$c %4$s %5$c"         " %9$-10d + %8$c%10$c", // [Z] <- [     -0 + Y]
+                [C_(1,1,0,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c"                    "%10$c", // [Z] <- [X          ]
+                [C_(1,1,0,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c"             " + %8$c%10$c", // [Z] <- [X       + Y]
+                [C_(1,1,1,0)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %9$-10d"     "%10$c", // [Z] <- [X -  -0    ]
+                [C_(1,1,1,1)] = "%1$c%2$c%3$c %4$s %5$c%6$c %7$-2s %9$-10d + %8$c%10$c", // [Z] <- [X -  -0 + Y]
             };
 
-            #define PUT(...) return fprintf(out, fmts[C_(kind,op1,op2,op3)], __VA_ARGS__)
+            const char *fmt = fmts[C_(kind,op1,op2,op3)];
+            if (!fmt)
+                fatal(0, "Unsupported kind,op1,op2,op3 %d,%d,%d,%d",
+                        g->p,op1,op2,op3);
 
-            if (kind == 1) {
-                // swap f7 and f8 positions if this is a type1 instruction
-                int32_t temp = f8;
-                f8 = f7;
-                f7 = temp;
-            }
-
-            switch (C_(0,op1,op2,op3)) {
-              //case C_(0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-                case C_(0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
-                case C_(0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
-                case C_(0,0,1,1): PUT(f0,f1,f2,f3,f4,      f7,f8,f9); break;
-                case C_(0,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
-                case C_(0,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f8,f9); break;
-                case C_(0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
-                case C_(0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,f8,f9); break;
-
-                default:
-                    fatal(0, "Unsupported kind,op1,op2,op3 %05x",
-                            C_(g->p,op1,op2,op3));
-            }
-
-            return 0;
+            return fprintf(out,fmt,f0,f1,f2,f3,f4,f5,f6,f7,f8,f9);
         }
     }
 
