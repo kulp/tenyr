@@ -14,25 +14,28 @@
 static const struct {
     const char *name;
     int valid;
+    int hex;    ///< whether to use hex digits in disassembly
+    int inert;  ///< if equivalent to `Z <- Y + I` when when X == A
 } op_meta[] = {
-    [OP_ADD                ] = { "+" , 1 },
-    [OP_SUBTRACT           ] = { "-" , 1 },
-    [OP_MULTIPLY           ] = { "*" , 1 },
+    [OP_ADD                ] = { "+" , 1, 0, 1 },
+    [OP_SUBTRACT           ] = { "-" , 1, 0, 0 },
+    [OP_MULTIPLY           ] = { "*" , 1, 0, 0 },
 
-    [OP_COMPARE_LT         ] = { "<" , 1 },
-    [OP_COMPARE_EQ         ] = { "==", 1 },
-    [OP_COMPARE_GT         ] = { ">" , 1 },
-    [OP_COMPARE_NE         ] = { "<>", 1 },
-    [OP_BITWISE_OR         ] = { "|" , 1 },
-    [OP_BITWISE_AND        ] = { "&" , 1 },
-    [OP_BITWISE_ANDN       ] = { "&~", 1 },
-    [OP_BITWISE_XOR        ] = { "^" , 1 },
-    [OP_BITWISE_XORN       ] = { "^~", 1 },
-    [OP_SHIFT_LEFT         ] = { "<<", 1 },
-    [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 1 },
+    [OP_COMPARE_LT         ] = { "<" , 1, 0, 0 },
+    [OP_COMPARE_EQ         ] = { "==", 1, 0, 0 },
+    [OP_COMPARE_GT         ] = { ">" , 1, 0, 0 },
+    [OP_COMPARE_NE         ] = { "<>", 1, 0, 0 },
+    [OP_BITWISE_OR         ] = { "|" , 1, 1, 1 },
+    [OP_BITWISE_AND        ] = { "&" , 1, 1, 0 },
+    [OP_BITWISE_ANDN       ] = { "&~", 1, 1, 0 },
+    // XOR is technically inert but not for the purposes of disassembly
+    [OP_BITWISE_XOR        ] = { "^" , 1, 1, 0 },
+    [OP_BITWISE_XORN       ] = { "^~", 1, 1, 0 },
+    [OP_SHIFT_LEFT         ] = { "<<", 1, 0, 0 },
+    [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 1, 0, 0 },
 
-    [OP_RESERVED0          ] = { "X0", 0 },
-    [OP_RESERVED1          ] = { "X1", 0 },
+    [OP_RESERVED0          ] = { "X0", 0, 0, 0 },
+    [OP_RESERVED1          ] = { "X1", 0, 0, 0 },
 };
 
 static int is_printable(int ch, size_t len, char buf[len])
@@ -108,34 +111,14 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
           int32_t f8 = SEXTEND(12,g->imm);    // immediate value, sign-extended
           char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
-    int inert = g->op == OP_BITWISE_OR || g->op == OP_ADD;
+    int hex   = op_meta[g->op].hex;
+    int inert = op_meta[g->op].inert;
     int opXA  = g->x == 0;
     int opYA  = g->y == 0;
     int op3   = g->p ? !opYA : (!!g->imm);
     int op2   = !inert || (g->p ? g->imm : !opYA);
     int op1   = !(opXA && inert) || (!op2 && !op3);
     int kind  = !!g->p;
-    int hex   = 0;  ///< whether to use hex digits in disassembly
-
-    switch (g->op) {
-        case OP_ADD                 : hex = 0; break;
-        case OP_COMPARE_EQ          : hex = 0; break;
-        case OP_COMPARE_GT          : hex = 0; break;
-        case OP_COMPARE_LT          : hex = 0; break;
-        case OP_COMPARE_NE          : hex = 0; break;
-        case OP_MULTIPLY            : hex = 0; break;
-        case OP_SHIFT_LEFT          : hex = 0; break;
-        case OP_SHIFT_RIGHT_LOGICAL : hex = 0; break;
-        case OP_SUBTRACT            : hex = 0; break;
-
-        case OP_BITWISE_AND         : hex = 1; break;
-        case OP_BITWISE_ANDN        : hex = 1; break;
-        case OP_BITWISE_OR          : hex = 1; break;
-        case OP_BITWISE_XOR         : hex = 1; break;
-        case OP_BITWISE_XORN        : hex = 1; break;
-
-        default                     : hex = 0; break;
-    }
 
     // losslessly disambiguate these cases :
     //  b <- a
