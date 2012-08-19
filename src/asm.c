@@ -120,24 +120,6 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
     int op1   = !(opXA && inert) || (!op2 && !op3);
     int kind  = !!g->p;
 
-    // losslessly disambiguate these cases :
-    //  b <- a
-    //  b <- 0
-    // so that assembly roundtripping works more reliably
-    int rhs0 = (g->op == OP_ADD || (inert && kind == 1)) && opXA && !g->imm;
-    int rhsA = (g->op == OP_BITWISE_OR    && kind == 0)  && opXA && !g->imm;
-
-    if (rhs0) {
-        op3 = 1;
-        op2 = 0;
-        op1 = 0;
-        kind = 0;
-    } else if (rhsA) {
-        op1 = 1;
-        op2 = 0;
-        op3 = 0;
-    }
-
     if (flags & ASM_VERBOSE)
         op1 = op2 = op3 = 1;
 
