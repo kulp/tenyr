@@ -79,9 +79,9 @@ static int do_common(struct sim_state *s, int32_t *ip, int32_t *Z, int32_t
 int run_instruction(struct sim_state *s, struct instruction *i)
 {
     int32_t *ip = &s->machine.regs[15];
-    ++*ip;
-
     assert(("PC within address space", !(*ip & ~PTR_MASK)));
+
+    ++*ip;
 
     switch (i->u._xxxx.t) {
         case 0x0:
