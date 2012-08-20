@@ -190,7 +190,7 @@ head(EXECUTE,EXECUTE):
     W   <- [S]
     T0  <- [W - 1]
     T0  <- W + T0
-    T0  <- T0 - F   // unrelocate
+    T0  <- T0 - BAS
     T0  -> [reloc(execute_trampoline)]
     I   <- reloc(execute_trampoline)
     // We need to use a trampoline ; something needs to do the corresponding

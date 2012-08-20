@@ -5,6 +5,8 @@
 // should be a list of addresses of code to run, ending with EXIT.
 
 .set link, 0
+.global dummy
+dummy:
 __boot:
     BAS <- p - (. + 1)
     S   <- [reloc(_PSPinit)]
@@ -21,7 +23,7 @@ _RSPinit:   .word   0x00ffffff
     .global NEXT
 NEXT:
     W  <- [I]
-    W  <-  W + BAS
+    W  <-  rel(W)
     I  <-  I + 1
     X  <- [W]
     jmp(X)

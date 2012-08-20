@@ -119,7 +119,7 @@ L_FIND_top:
     T1   <- T0 + 2      // T1 <- addr of name string
 
 L_FIND_char_top:
-    T2   <- [T1 + BAS]  // T2 <- test-name char
+    T2   <- [rel(T1)]   // T2 <- test-name char
     T3   <- [T5]        // T3 <- find-name char
 
     T2   <- T2 & 0xdf   // uppercase test-name char
@@ -145,9 +145,10 @@ L_FIND_char_top:
     P    <- reloc(L_FIND_char_top)
 
 L_FIND_char_bottom:
-    T0   <- [T0 + BAS]  // T0 <- follow link
+    T0   <- [rel(T0)]   // T0 <- follow link
     T1   <- T0 <> 0     // T1 <- more words ? .word . + 1
-    T2   <- BAS - P + (@L_FIND_top - 2)
+    T2   <- - P + (@L_FIND_top - 2)
+    T2   <- rel(T2)
     T2   <- T2 & T1
     P    <- P + T2
 
@@ -270,7 +271,7 @@ head(WORDS,WORDS):
     .word . + 1
     T0   <- @dict       // already relocated
 L_WORDS_top:
-    T0   <- T0 + BAS    // T0 <- addr of next link
+    T0   <- rel(T0)     // T0 <- addr of next link
     T1   <- T0 + 2      // T1 <- addr of name string
 
 L_WORDS_char_top:
