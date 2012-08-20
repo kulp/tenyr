@@ -6,17 +6,13 @@
 // written, so the stack will start at -1 (0xffffffff).
 #define prologue            o <- o - 1
 
-#define rel(Label)          p + (@Label - .)
-#define reloff(Label,Off)   p + (@Label - . + (Off))
+#define rel(Label)          p + (@Label - . - 1)
+#define reloff(Label,Off)   p + (@Label - . - 1 + (Off))
 #define goto(Label)         p <- rel(Label)
-#define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
+#define call(Target)        [o] <- p + 2 ; o <- o - 1 ; goto(Target)
 // XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
-// jnzrel() and jzrel() trash the condition register. Use jnzrel_() and
-// jzrel_() if this behaviour is not desired
-#define jnzrel(Cond,Label)  jnzrel_(Cond,Cond,Label)
-#define jzrel(Cond,Label)   jzrel_(Cond,Cond,Label)
-#define jnzrel_(Q,T,W)      T <- Q &  (@W - (. + 2)); p <- p + T + 1
-#define jzrel_(Q,T,W)       T <- Q &~ (@W - (. + 2)); p <- p + T + 1
+#define jnzrel(Cond,Label)  p <- Cond &  (@Label - . - 1) + p
+#define jzrel(Cond,Label)   p <- Cond &~ (@Label - . - 1) + p
 #define push(Reg)           Reg -> [o] ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)

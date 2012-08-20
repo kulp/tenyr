@@ -41,7 +41,7 @@
                      pop(o,W)
 
 #define jmp(Reg)    p <- Reg + BAS
-#define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 3); goto(Loc) ; popregs(o)
+#define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 2); goto(Loc) ; popregs(o)
 
 #define reloc(Label)        BAS + @Label
 #define goto(Label)         p <- reloc(Label)
@@ -49,9 +49,7 @@
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
 #define iftrue(Predicate,Temporary,Target) \
-    Temporary <- BAS - P + (@Target - 3) ; \
-    Temporary <- Temporary & Predicate ; \
-    P <- P + Temporary + 1
+    P <- Predicate & (@Target - . - 1) + P
 
 // .global for L##Label_{exec,compile} is a hack to allow linking to succeed
 // for forward references

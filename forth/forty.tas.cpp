@@ -6,7 +6,7 @@
 
 .set link, 0
 __boot:
-    BAS <- p - .
+    BAS <- p - (. + 1)
     S   <- [reloc(_PSPinit)]
     R   <- [reloc(_RSPinit)]
     push(R,reloc(_done))
