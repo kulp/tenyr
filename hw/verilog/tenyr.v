@@ -35,9 +35,10 @@ module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP
     wire YisP = indexY == 15;
 
     assign pc     = rwP ? 32'bz : store[15];
-    assign valueZ = rwZ ? 32'bz : (ZisP ? pc : store[indexZ]);
-    assign valueX = XisP ? pc : store[indexX];
-    assign valueY = YisP ? pc : store[indexY];
+    wire[31:0] pcp1 = pc + 1;
+    assign valueZ = rwZ ? 32'bz : (ZisP ? pcp1 : store[indexZ]);
+    assign valueX = XisP ? pcp1 : store[indexX];
+    assign valueY = YisP ? pcp1 : store[indexY];
 
     always @(negedge clk) if (en) begin
         if (rwP)
