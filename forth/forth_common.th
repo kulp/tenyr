@@ -40,10 +40,11 @@
                      pop(o,X)   \
                      pop(o,W)
 
-#define jmp(Reg)    p <- Reg + BAS
+#define jmp(Reg)    p <- Reg - (. + 1) + p
 #define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 2); goto(Loc) ; popregs(o)
 
-#define reloc(Label)        BAS + @Label
+#define reloc(Label)        p + (@Label - . - 1)
+#define REL                 p - (. + 1)
 #define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]

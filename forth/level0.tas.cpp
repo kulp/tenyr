@@ -192,7 +192,7 @@ head(EXECUTE,EXECUTE):
     T0  <- W + T0
     T0  <- T0 - F   // unrelocate
     T0  -> [reloc(execute_trampoline)]
-    I   <- BAS + @execute_trampoline
+    I   <- reloc(execute_trampoline)
     // We need to use a trampoline ; something needs to do the corresponding
     // pop(R,I) after the EXECUTEd word finishes. The current trampoline is
     // technically non-reentrant, but we can get away with it because only one
