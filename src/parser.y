@@ -237,15 +237,15 @@ rhs_plain
         { $rhs_plain = make_expr_type0($x, $op, $y, 0, NULL); }
     | regname[x]
         { $rhs_plain = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
+    | unary_op regname[x] addsub greloc_expr
+        { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $greloc_expr); }
+    | unary_op regname[x]
+        { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
     /* type1 */
     | regname[x] op greloc_expr '+' regname[y]
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, $y); }
     | regname[x] op greloc_expr
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, 0); }
-    | unary_op regname[x] addsub greloc_expr
-        { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $greloc_expr); }
-    | unary_op regname[x]
-        { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
     | unary_op greloc_expr /* responsible for a S/R conflict */
         { $rhs_plain = make_expr_type1(0, $unary_op, $greloc_expr, 0); }
     | greloc_expr
