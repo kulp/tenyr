@@ -115,7 +115,7 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
     int opXA  = g->x == 0;
     int opYA  = g->y == 0;
     int op3   = g->p ? !opYA : (!!g->imm);
-    int op2   = !inert || (g->p ? g->imm : !opYA);
+    int op2   = !inert || (g->p ? (g->imm || opYA) : !opYA);
     int op1   = !(opXA && inert) || (!op2 && !op3);
     int kind  = !!g->p;
 
