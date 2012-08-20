@@ -7,7 +7,6 @@
 //          I   is in I
 //          S   is in D
 //          R   is in J
-// relocation offset is in F
 // alternate (C) stack is in O
 // temporaries : B C E G H L N
 
