@@ -11,10 +11,12 @@
 #define goto(Label)         p <- rel(Label)
 #define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
 // XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
-// Note that jnzrel and jzrel trash register N !
-// NOTE we could combine two instructions into one if we had "AND with signed expr"
-#define jnzrel(Cond,Label)  n <- (@Label - (. + 3)) ; n <- n &  Cond ; p <- p + n + 1
-#define jzrel(Cond,Label)   n <- (@Label - (. + 3)) ; n <- n &~ Cond ; p <- p + n + 1
+// jnzrel() and jzrel() trash the condition register. Use jnzrel_() and
+// jzrel_() if this behaviour is not desired
+#define jnzrel(Cond,Label)  jnzrel_(Cond,Cond,Label)
+#define jzrel(Cond,Label)   jzrel_(Cond,Cond,Label)
+#define jnzrel_(Q,T,W)      T <- Q &  (@W - (. + 2)); p <- p + T + 1
+#define jzrel_(Q,T,W)       T <- Q &~ (@W - (. + 2)); p <- p + T + 1
 #define push(Reg)           Reg -> [o] ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)

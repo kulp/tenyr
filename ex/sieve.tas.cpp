@@ -40,8 +40,8 @@ bottom:
 done:
     illegal
 
-    .word 0,0,0,0,0,0,0
-    .word 0,0,0,0,0,0   // align array to 0x1030
+    .word 0,0,0,0,0,0,0,0,0
+    .word 0,0,0,0,0,0,0,0   // align array to 0x1030
 array:
     .word 0
 
