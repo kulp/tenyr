@@ -8,7 +8,6 @@
 .global dummy
 dummy:
 __boot:
-    BAS <- p - (. + 1)
     S   <- [reloc(_PSPinit)]
     R   <- [reloc(_RSPinit)]
     push(R,reloc(_done))
