@@ -20,10 +20,11 @@
 #define T0  B
 #define T1  C
 #define T2  E
-#define T3  G
-#define T4  H
-#define T5  L
-#define T6  N
+#define T3  F
+#define T4  G
+#define T5  H
+#define T6  L
+#define T7  N
 
 // save and restore Forth registers on a stack, for calling other ABIs
 #define pushregs(o) push(o,W)   \
@@ -43,7 +44,7 @@
 
 #define reloc(Label)        p + (@Label - . - 1)
 #define rel(X)              X + p + (@dummy - . - 1)
-#define unrel(X)            X - p + (. - 1)
+#define unrel(X)            X - p + (. + 1)
 #define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
