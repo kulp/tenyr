@@ -77,8 +77,10 @@ regnum  {hexnum}|{octnum}|{decnum}
 "<-"                    { return TOL;  }
 "->"                    { return TOR;  }
 
-{regnum}                { yylval->i = numberise(&yytext[0], 0); return INTEGER; }
-{binnum}                { yylval->i = numberise(&yytext[2], 2); return INTEGER; }
+{binnum}                { yylval->i = numberise(&yytext[2],  2); return BITSTRING; }
+{octnum}                { yylval->i = numberise(&yytext[1],  8); return BITSTRING; }
+{decnum}                { yylval->i = numberise(&yytext[0], 10); return INTEGER; }
+{hexnum}                { yylval->i = numberise(&yytext[2], 16); return BITSTRING; }
 
 [\t\f\v\r ]+            ;
 
@@ -90,8 +92,8 @@ regnum  {hexnum}|{octnum}|{decnum}
 "'"                     BEGIN charlit;
 <charend>"'"            BEGIN INITIAL;
 <charlit>\\             BEGIN charesc;
-<charlit>.              { yylval->i = yytext[0]; BEGIN charend; return INTEGER; }
-<charesc>[nbrtfv\\]     { yylval->i = translate_escape(yytext[0]); BEGIN charend; return INTEGER; }
+<charlit>.              { yylval->i = yytext[0]; BEGIN charend; return CHARACTER; }
+<charesc>[nbrtfv\\]     { yylval->i = translate_escape(yytext[0]); BEGIN charend; return CHARACTER; }
 
 .                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 
