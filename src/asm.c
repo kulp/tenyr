@@ -120,7 +120,7 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
     int kind  = !!g->p;
 
     if (flags & ASM_VERBOSE)
-        op1 = op2 = op3 = 1;
+        op1 = op2 = op3 = hex = 1;
 
     if (!(flags & (ASM_NO_SUGAR | ASM_VERBOSE))) {
         if (g->op == OP_BITWISE_XORN && g->y == 0) {
