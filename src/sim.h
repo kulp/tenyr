@@ -4,7 +4,6 @@
 #include "ops.h"
 #include "machine.h"
 #include "asm.h"
-#define TENYR_PLUGIN 0
 #include "plugin.h"
 
 #include <stdint.h>

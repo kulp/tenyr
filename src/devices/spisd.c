@@ -243,7 +243,7 @@ static const struct spisd_app_command {
     SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
 
-void EXPORT tenyr_plugin_init(struct tenyr_plugin_ops *ops)
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
 {
     fatal_ = ops->fatal;
     debug_ = ops->debug;
