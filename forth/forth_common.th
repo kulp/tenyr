@@ -41,8 +41,8 @@
 #define jmp(Reg)    p <- Reg - (. + 1) + p
 #define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 2); goto(Loc) ; popregs(o)
 
-#define reloc(Label)        p + (@Label - . - 1)
-#define rel(X)              X + p + (@dummy - . - 1)
+#define reloc(Label)        p + (@Label - (. + 1))
+#define rel(X)              X + p + (@__zero - . - 1)
 #define unrel(X)            X - p + (. + 1)
 #define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1

@@ -5,8 +5,8 @@
 // should be a list of addresses of code to run, ending with EXIT.
 
 .set link, 0
-.global dummy
-dummy:
+.global __zero
+__zero:
 __boot:
     S   <- [reloc(_PSPinit)]
     R   <- [reloc(_RSPinit)]
