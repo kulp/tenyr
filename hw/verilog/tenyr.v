@@ -54,9 +54,10 @@ module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP
 
 endmodule
 
-module Decode(input[31:0] insn, input en, output[3:0] Z, X, Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output type, illegal,
-              valid);
+module Decode(input[31:0] insn, input en,
+              output[3:0] Z, output[3:0] X, output[3:0] Y, output[11:0] I,
+              output[3:0] op, output[1:0] deref, output type, output illegal,
+              output valid);
 
     reg[3:0] rZ = 0, rX = 0, rY = 0, rop = 0;
     reg[11:0] rI = 0;
@@ -114,41 +115,36 @@ module Decode(input[31:0] insn, input en, output[3:0] Z, X, Y, output[11:0] I,
 
 endmodule
 
-module Exec(input clk, input en, output[31:0] rhs, input[31:0] X, Y, input[11:0] I,
-            input[3:0] op, input type, valid);
+module Exec(input clk, input en, output[31:0] rhs,
+            input[31:0] X, input[31:0] Y, input[11:0] I,
+            input[3:0] op, input type, input valid);
 
     assign rhs = valid ? i_rhs : 32'b0;
     reg[31:0] i_rhs = 0;
 
-    // TODO signed net or integer support
-    wire[31:0] Xs = X;
-    wire[31:0] Xu = X;
-
-    wire[31:0] Is_ = { {20{I[11]}}, I };
-    wire[31:0] Is = Is_;
-    wire[31:0] Ou = (type == 0) ? Y   : Is_;
-    wire[31:0] Os = (type == 0) ? Y   : Is_;
-    wire[31:0] As = (type == 0) ? Is_ : Y;
+    wire[31:0] J = { {20{I[11]}}, I };
+    wire[31:0] O = (type == 0) ? Y : J;
+    wire[31:0] A = (type == 0) ? J : Y;
 
     always @(negedge clk) if (en) begin
         if (valid) begin
             case (op)
-                4'b0000: i_rhs =  (Xu  |  Ou) + As; // X bitwise or Y
-                4'b0001: i_rhs =  (Xu  &  Ou) + As; // X bitwise and Y
-                4'b0010: i_rhs =  (Xs  +  Os) + As; // X add Y
-                4'b0011: i_rhs =  (Xs  *  Os) + As; // X multiply Y
-              //4'b0100:                            // reserved
-                4'b0101: i_rhs =  (Xu  << Ou) + As; // X shift left Y
-                4'b0110: i_rhs = -(Xs  <  Os) + As; // X compare < Y
-                4'b0111: i_rhs = -(Xs  == Os) + As; // X compare == Y
-                4'b1000: i_rhs = -(Xs  >  Os) + As; // X compare > Y
-                4'b1001: i_rhs = ~(Xu  &  Ou) + As; // X bitwise nand Y
-                4'b1010: i_rhs =  (Xu  ^  Ou) + As; // X bitwise xor Y
-                4'b1011: i_rhs =  (Xs  -  Os) + As; // X subtract Y
-                4'b1100: i_rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
-                4'b1101: i_rhs =  (Xu  >> Ou) + As; // X shift right logical Y
-              //4'b1110:                            // reserved
-              //4'b1111:                            // reserved
+                4'b0000: i_rhs =  (X  |  O) + A; // X bitwise or Y
+                4'b0001: i_rhs =  (X  &  O) + A; // X bitwise and Y
+                4'b0010: i_rhs =  (X  +  O) + A; // X add Y
+                4'b0011: i_rhs =  (X  *  O) + A; // X multiply Y
+              //4'b0100:                         // reserved
+                4'b0101: i_rhs =  (X  << O) + A; // X shift left Y
+                4'b0110: i_rhs = -(X  <  O) + A; // X compare < Y
+                4'b0111: i_rhs = -(X  == O) + A; // X compare == Y
+                4'b1000: i_rhs = -(X  >  O) + A; // X compare > Y
+                4'b1001: i_rhs =  (X  &~ O) + A; // X bitwise and complement Y
+                4'b1010: i_rhs =  (X  ^  O) + A; // X bitwise xor Y
+                4'b1011: i_rhs =  (X  -  O) + A; // X subtract Y
+                4'b1100: i_rhs =  (X  ^ ~O) + A; // X xor ones' complement Y
+                4'b1101: i_rhs =  (X  >> O) + A; // X shift right logical Y
+                4'b1110: i_rhs = -(X  != O) + A; // X compare <> Y
+              //4'b1111:                         // reserved
 
                 default: i_rhs = 32'bx;
             endcase
@@ -183,16 +179,9 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     wire[3:0] op;
     wire illegal, type;
     reg insn_valid = 1; // XXX
-    reg firstcyc_ok = 0;
-    // FIXME rename manual_invalidate*
-    reg manual_invalidate_pr = 0,
-        manual_invalidate_nr = 0,
-        manual_invalidate_nc = 0;
-    wire manual_invalidate = manual_invalidate_pr | 
-                             manual_invalidate_nr |
-                             manual_invalidate_nc;
+    reg manual_invalidate = 0;
     wire decode_valid; // FIXME decode_valid never deasserts
-    wire state_valid = insn_valid && /*decode_valid &&*/ !manual_invalidate && firstcyc_ok; // && !illegal;
+    wire state_valid = insn_valid && !manual_invalidate;
     assign deref_rhs = (deref[0] && !rw) ? norm_data : rhs;
     assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
     assign reg_valueZ = reg_rw ? valueZ : 32'bz;
@@ -204,12 +193,8 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
-    //reg mem_active = 0;
     wire mem_active = (state_valid && !illegal) ? |deref : 1'b0;
-    //reg rw = 0;
     wire rw = mem_active ? deref[1] : 1'b0;
-    //reg[31:0] mem_data = 0;
-    //reg[31:0] mem_addr = 0;
     // TODO Find a safe place to use for default address
     wire[31:0] mem_addr = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
     wire[31:0] mem_data = rw         ? (deref[0] ? valueZ : rhs) : 32'b0;
@@ -223,13 +208,8 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
               next_pc   = `RESETVECTOR;
     wire[31:0] pc = new_pc;
 
-    assign insn_addr = lhalt ? `RESETVECTOR : pc; // TODO this means address `RESETVECTOR reads must be idempotent
+    assign insn_addr = /*lhalt ? `RESETVECTOR :*/ pc; // TODO this means address `RESETVECTOR reads must be idempotent
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
-
-    always @(posedge reset_n) if (en) begin
-        // XXX use manual_invalidate_pr or remove it
-        manual_invalidate_pr = 0;
-    end
 
     // update PC on 270-degree phase, after Exec has had time to compute new P
     always @(negedge clk270) if (en && state_valid) begin
@@ -238,7 +218,7 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
             next_pc = `RESETVECTOR;
         end else begin
             next_pc = pc + 1;
-            if (lhalt || jumping)
+            if (/*lhalt ||*/ jumping)
                 new_pc = deref_lhs;
             else
                 new_pc = next_pc;
@@ -248,31 +228,27 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     // FIXME synchronous reset
     always @(negedge clk0) if (en) begin
         if (reset_n) begin
-            firstcyc_ok = 1;
-            // FIXME
-            if (illegal)
-                //state_valid = 0;
-                manual_invalidate_nc = 1;
             rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-            if (!lhalt && state_valid) begin
-                manual_invalidate_nc = illegal;
-            end
+            //if (!lhalt && state_valid)
+                //manual_invalidate = illegal;
         end
     end
 
-    // registers should write last, so feed Reg a 270deg clock
-    Reg regs(.clk(clk270), .en(en && state_valid && reset_n), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
-             .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
-             .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
-
+    // Decode happens as soon as instruction is ready. Reading registers also
+    // happens at this time.
     Decode decode(.en(en && state_valid && reset_n), .insn(insn), .op(op), .deref(deref), .type(type),
                   .valid(decode_valid), .illegal(illegal),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
-    // Exec gets shifted clock
-    // TODO see if we can't use the standard clock again
+    // Execution (arithmetic operation) happens on the 90deg of the clock.
     Exec exec(.clk(clk90), .en(en && state_valid && reset_n), .op(op), .type(type), .rhs(rhs),
               .X(valueX), .Y(valueY), .I(valueI),
               .valid(state_valid));
+
+    // Registers and memory get written last, on the 270deg of the clock
+    Reg regs(.clk(clk270), .en(en && state_valid && reset_n), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+             .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
+             .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
+
 endmodule
 
