@@ -1,3 +1,6 @@
+#define TENYR_PLUGIN 0
+#include "plugin.h"
+
 #define _XOPEN_SOURCE 600
 
 #include "ops.h"
@@ -38,13 +41,16 @@ struct breakpoint {
     _(serial  , "enable simple serial device and connect to stdio") \
     _(spi     , "enable SPI emulation") \
     _(inittrap, "initialise unused memory to the illegal instruction") \
-    _(nowrap  , "stop when PC wraps around 24-bit boundary")
+    _(nowrap  , "stop when PC wraps around 24-bit boundary") \
+    _(plugin  , "load plugins specified through param mechanism") \
+    //
 
 #define DEFAULT_RECIPES(_) \
     _(sparse)   \
     _(serial)   \
     _(inittrap) \
-    _(nowrap)
+    _(nowrap)   \
+    //
 
 #define Space(X) STR(X) " "
 
@@ -65,6 +71,69 @@ static int next_device(struct sim_state *s)
 static int recipe_abort(struct sim_state *s)
 {
     s->conf.abort = 1;
+    return 0;
+}
+
+static int recipe_plugin(struct sim_state *s)
+{
+    const char *implname = NULL;
+
+    if (param_get(s, "plugin.impl[0]", &implname)) {
+        int inst = 0; // TODO support more than one instance
+        // If implname contains a slash, treat it as a path ; otherwise, stem
+        char buf[256];
+        const char *implpath = NULL;
+        const char *implstem = NULL;
+        param_get(s, "plugin.impl[0].stem", &implstem); // may not be set ; that's OK
+        if (strchr(implname, PATH_SEPARATOR_CHAR)) {
+            implpath = implname;
+        } else {
+            snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
+            buf[sizeof buf - 1] = 0;
+            implpath = buf;
+            if (!implstem)
+                implstem = implname;
+        }
+
+        // TODO consider using RTLD_NODELETE here
+        // (seems to break on Mac OS X)
+        // currently we leak library handles
+        void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
+        if (!libhandle) {
+            debug(1, "Could not load %s, trying default library search", implpath);
+            libhandle = RTLD_DEFAULT;
+        }
+
+#define GET_CB(Stem)                                                \
+        do {                                                        \
+            char buf[64];                                           \
+            snprintf(buf, sizeof buf, "%s_"#Stem, implstem);        \
+            void *ptr = dlsym(libhandle, buf);                      \
+            s->plugins->impls[inst].ops.Stem = ALIASING_CAST(plugin_##Stem,ptr);  \
+        } while (0)                                                 \
+        //
+
+        tenyr_plugin_host_init(libhandle);
+
+        GET_CB(mem_op);
+        if (!s->plugins->impls[inst].ops.mem_op) {
+            const char *err = dlerror();
+            if (err)
+                fatal(0, "Failed to locate mem_op cb for '%s' ; %s", implstem, err);
+            else
+                fatal(0, "mem_op cb for '%s' is NULL ? : %s", implstem);
+        }
+
+        GET_CB(init);
+        GET_CB(fini);
+
+        if (s->plugins->impls[inst].ops.init)
+            if (s->plugins->impls[inst].ops.init(&s->plugins->impls[inst].cookie))
+                debug(1, "SPI attached instance %d returned nonzero from init()", inst);
+
+        // if RTLD_NODELETE worked and were standard, we would dlclose() here
+    }
+
     return 0;
 }
 

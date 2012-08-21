@@ -4,6 +4,8 @@
 #include "ops.h"
 #include "machine.h"
 #include "asm.h"
+#define TENYR_PLUGIN 0
+#include "plugin.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -41,6 +43,13 @@ struct sim_state {
             int free_value; ///< whether value should be free()d
         } *params;
     } conf;
+
+    struct {
+        struct plugin {
+            void *cookie;
+            struct plugin_ops ops;
+        } *impls;
+    } *plugins;
 
     op_dispatcher *dispatch_op;
 
