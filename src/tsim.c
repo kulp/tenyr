@@ -1,8 +1,6 @@
 #define TENYR_PLUGIN 0
 #include "plugin.h"
 
-#define _XOPEN_SOURCE 600
-
 #include "ops.h"
 #include "common.h"
 #include "asm.h"
@@ -719,7 +717,10 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
     if (!p)
         return 0;
 
-    buf[strlen(buf) - 1] = '\0';
+    // trim newline
+    int len = strlen(buf);
+    if (buf[len - 1] == '\n')
+        buf[len - 1] = '\0';
 
     int oi = optind;
     optind = 0;

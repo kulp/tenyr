@@ -5,19 +5,15 @@
 // "spi.impl" is set, a spi_ops implementation with that stem name is loaded
 // using dlsym(). Otherwise, acts as if nothing is attached to the SPI pins.
 
-// _GNU_SOURCE is needed for RTLD_DEFAULT on GNU/Linux, although that flag
-// works on apple-darwin as well
-#define _GNU_SOURCE 1
+// we use some plugin definitions but are not a plugin ourselves (this is
+// hacky XXX)
+#define TENYR_PLUGIN 0
+#include "plugin.h"
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-// we use some plugin definitions but are not a plugin ourselves (this is
-// hacky XXX)
-#define TENYR_PLUGIN 0
-#include "plugin.h"
 
 #include "common.h"
 #include "device.h"
