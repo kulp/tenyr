@@ -217,9 +217,10 @@ static int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
     return (*device)->op(s, (*device)->cookie, op, addr, data);
 }
 
-static const char shortopts[] = "a:df:np:r:s:vhV";
+static const char shortopts[] = "@:a:df:np:r:s:vhV";
 
 static const struct option longopts[] = {
+    { "options"    , required_argument, NULL, '@' },
     { "address"    , required_argument, NULL, 'a' },
     { "debug"      ,       no_argument, NULL, 'd' },
     { "format"     , required_argument, NULL, 'f' },
@@ -252,6 +253,7 @@ static int usage(const char *me)
 
     printf("Usage: %s [ OPTIONS ] image-file\n"
            "Options:\n"
+           "  -@, --options=X       use options from file X\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -d, --debug           start the simulator in debugger mode\n"
            "  -f, --format=F        select input format (%s)\n"
@@ -704,7 +706,13 @@ int param_add(struct sim_state *s, const char *optarg)
     return param_set(s, dupped, ++eq, 0);
 }
 
-int parse_args(struct sim_state *s, int argc, char *argv[])
+static int parse_opts_file(struct sim_state *s, const char *filename)
+{
+    (void)(s,filename);
+    return 0;
+}
+
+static int parse_args(struct sim_state *s, int argc, char *argv[])
 {
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
@@ -712,6 +720,7 @@ int parse_args(struct sim_state *s, int argc, char *argv[])
             case 'a': s->conf.load_addr = strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
             case 'f': if (set_format(s, optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
+            case '@': parse_opts_file(s, optarg); break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(s, optarg); break;
             case 'r': add_recipe(s, optarg); break;
