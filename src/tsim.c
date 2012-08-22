@@ -706,9 +706,27 @@ int param_add(struct sim_state *s, const char *optarg)
     return param_set(s, dupped, ++eq, 0);
 }
 
+static int parse_args(struct sim_state *s, int argc, char *argv[]);
+
 static int parse_opts_file(struct sim_state *s, const char *filename)
 {
-    (void)(s,filename);
+    FILE *f = fopen(filename, "r");
+    if (!f)
+        fatal(PRINT_ERRNO, "Options file '%s' not found", filename);
+
+    char buf[1024];
+    char *p = fgets(buf, sizeof buf, f);
+    if (!p)
+        return 0;
+
+    buf[strlen(buf) - 1] = '\0';
+
+    int oi = optind;
+    optind = 0;
+    char *pbuf[] = { NULL, buf, NULL };
+    parse_args(s, 2, pbuf);
+    optind = oi;
+
     return 0;
 }
 
