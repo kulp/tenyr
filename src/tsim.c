@@ -704,6 +704,29 @@ int param_add(struct sim_state *s, const char *optarg)
     return param_set(s, dupped, ++eq, 0);
 }
 
+int parse_args(struct sim_state *s, int argc, char *argv[])
+{
+    int ch;
+    while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'a': s->conf.load_addr = strtol(optarg, NULL, 0); break;
+            case 'd': s->conf.debugging = 1; break;
+            case 'f': if (set_format(s, optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
+            case 'n': s->conf.run_defaults = 0; break;
+            case 'p': param_add(s, optarg); break;
+            case 'r': add_recipe(s, optarg); break;
+            case 's': s->conf.start_addr = strtol(optarg, NULL, 0); break;
+            case 'v': s->conf.verbose++; break;
+
+            case 'V': puts(version()); exit(EXIT_SUCCESS);
+            case 'h': usage(argv[0]) ; exit(EXIT_SUCCESS);
+            default : usage(argv[0]) ; exit(EXIT_FAILURE);
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -716,6 +739,9 @@ int main(int argc, char *argv[])
             .params_size  = DEFAULT_PARAMS_COUNT,
             .params_count = 0,
             .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params),
+            .start_addr   = RAM_BASE,
+            .load_addr    = RAM_BASE,
+            .fmt          = &formats[0],
         },
         .dispatch_op = dispatch_op,
     }, *s = &_s;
@@ -726,27 +752,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    int load_address = RAM_BASE, start_address = RAM_BASE;
-
-    const struct format *f = &formats[0];
-
-    int ch;
-    while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
-        switch (ch) {
-            case 'a': load_address = strtol(optarg, NULL, 0); break;
-            case 'd': s->conf.debugging = 1; break;
-            case 'f': if (set_format(s, optarg, &f)) exit(usage(argv[0])); break;
-            case 'n': s->conf.run_defaults = 0; break;
-            case 'p': param_add(s, optarg); break;
-            case 'r': add_recipe(s, optarg); break;
-            case 's': start_address = strtol(optarg, NULL, 0); break;
-            case 'v': s->conf.verbose++; break;
-
-            case 'V': puts(version()); return EXIT_SUCCESS;
-            case 'h': usage(argv[0]) ; return EXIT_SUCCESS;
-            default : usage(argv[0]) ; return EXIT_FAILURE;
-        }
-    }
+    parse_args(s, argc, argv);
 
     if (optind >= argc) {
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
@@ -771,8 +777,8 @@ int main(int argc, char *argv[])
     run_recipes(s);
     devices_finalise(s);
 
-    load_sim(s->dispatch_op, s, f, in, load_address);
-    s->machine.regs[15] = start_address & PTR_MASK;
+    load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr);
+    s->machine.regs[15] = s->conf.start_addr & PTR_MASK;
 
     struct run_ops ops = {
         .pre_insn = pre_insn,

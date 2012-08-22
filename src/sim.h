@@ -41,6 +41,10 @@ struct sim_state {
             char *value;
             int free_value; ///< whether value should be free()d
         } *params;
+
+        int start_addr;
+        int load_addr;
+        const struct format *fmt;
     } conf;
 
     struct {
