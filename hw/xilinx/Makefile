@@ -1,4 +1,5 @@
 TAS = ../../tas
+TLD = ../../tld
 SHELL = /bin/bash
 SETUP = source ~/ise.sh
 TARGET = Tenyr
@@ -17,15 +18,18 @@ CPPFLAGS += -I../../lib
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
 %.to: %.tas
-	$(TAS) $< > $@
+	$(TAS) -o$@ $<
 
 %.tasd: %.to
-	$(TAS) -d $< > $@
+	$(TAS) -d -o$@ $<
 
-%.coe: %.tasd
+%.texe: %.to
+	$(TLD) -o$@ $^
+
+%.coe: %.texe
 	echo 'memory_initialization_radix = 16;' > $@
 	echo 'memory_initialization_vector =' >> $@
-	$(TAS) -f text $< | sed 's/^0x//' >> $@
+	$(TAS) -d $< | $(TAS) -f text - | sed 's/^0x//' >> $@
 	echo ';' >> $@
 
 vpath gen_%.tcl ipcore_dir
@@ -50,7 +54,6 @@ Tenyr_SRCDEPS += \
 	ramwrap.v \
 	seg7.v \
 	seglookup.v \
-	serial.v \
 	tenyr_mainclock.xco \
 	Tenyr.ucf \
 	tenyr.v \

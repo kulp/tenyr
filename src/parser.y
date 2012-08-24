@@ -15,7 +15,7 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width);
 static struct const_expr *make_const_expr(enum const_expr_type type, int op,
-        struct const_expr *left, struct const_expr *right);
+        struct const_expr *left, struct const_expr *right, int flags);
 static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
         const_expr *defexpr);
 static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
@@ -66,28 +66,29 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*' '~'
-%token <chr> ',' '$'
+%token <chr> ',' ';'
 %token <arrow> TOL TOR
 %token <str> SYMBOL LOCAL STRING
-%token <i> INTEGER
+%token <i> INTEGER CHARACTER BITSTRING
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
 
-%type <ce> const_expr pconst_expr preloc_expr unsigned_greloc_expr signed_greloc_expr
-%type <ce> reloc_expr unsigned_immediate_atom const_atom signed_const_atom eref here_atom here_expr phere_expr here
+%type <ce> const_expr pconst_expr preloc_expr greloc_expr
+%type <ce> reloc_expr const_atom eref here_atom here_expr phere_expr here
 %type <cl> reloc_expr_list
+%type <cstr> string
+%type <dctv> directive
 %type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
-%type <i> arrow signed_immediate unsigned_immediate regname reloc_op
+%type <i> arrow regname reloc_op
+%type <imm> immediate
 %type <insn> insn insn_inner
-%type <op> op signed_op unsigned_op unary_op
+%type <op> op unary_op
 %type <program> program ascii utf32 data string_or_data
 %type <s> addsub
 %type <str> symbol symbol_list
-%type <cstr> string
-%type <dctv> directive
 
-%expect 2
+%expect 3
 
 %union {
     int32_t i;
@@ -100,6 +101,10 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
     struct directive *dctv;
     struct instruction *insn;
     struct instruction_list *program;
+    struct immediate {
+        int32_t i;
+        int is_bits;    ///< if this immediate should be treated as a bitstring
+    } imm;
     char str[LINE_LEN];
     char chr;
     int op;
@@ -128,6 +133,8 @@ program[outer]
         {   $outer = calloc(1, sizeof *$outer);
             // dummy instruction permits capturing previous instruction from $outer->prev
         }
+    | ';' program[inner]
+        {   $outer = $inner; }
     | string_or_data program[inner]
         {   struct instruction_list *p = $string_or_data, *i = $inner;
             while (p->next) p = p->next;
@@ -224,31 +231,29 @@ rhs
 
 rhs_plain
     /* type0 */
-    : regname[x] op regname[y] addsub signed_greloc_expr
-        { $rhs_plain = make_expr_type0($x, $op, $y, $addsub, $signed_greloc_expr); }
+    : regname[x] op regname[y] addsub greloc_expr
+        { $rhs_plain = make_expr_type0($x, $op, $y, $addsub, $greloc_expr); }
     | regname[x] op regname[y]
         { $rhs_plain = make_expr_type0($x, $op, $y, 0, NULL); }
     | regname[x]
         { $rhs_plain = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
-    /* type1 */
-    | regname[x] op signed_greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr_type1($x, $op, $signed_greloc_expr, $y); }
-    | regname[x] op signed_greloc_expr
-        { $rhs_plain = make_expr_type1($x, $op, $signed_greloc_expr, 0); }
-    | unsigned_greloc_expr
-        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $unsigned_greloc_expr, 0); }
-    | unsigned_greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr_type1(0, OP_BITWISE_OR, $unsigned_greloc_expr, $y); }
-    | signed_greloc_expr
-        { $rhs_plain = make_expr_type1(0, OP_ADD, $signed_greloc_expr, 0); }
-    | signed_greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr_type1(0, OP_ADD, $signed_greloc_expr, $y); }
-    | unary_op regname[x] addsub signed_greloc_expr
-        { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $signed_greloc_expr); }
+    | unary_op regname[x] addsub greloc_expr
+        { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $greloc_expr); }
     | unary_op regname[x]
         { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
-    | unary_op unsigned_greloc_expr
-        { $rhs_plain = make_expr_type1(0, $unary_op, $unsigned_greloc_expr, 0); }
+    /* type1 */
+    | regname[x] op greloc_expr '+' regname[y]
+        { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, $y); }
+    | regname[x] op greloc_expr
+        { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, 0); }
+    | unary_op greloc_expr /* responsible for a S/R conflict */
+        { $rhs_plain = make_expr_type1(0, $unary_op, $greloc_expr, 0); }
+    | greloc_expr
+        {   enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
+            $rhs_plain = make_expr_type1(0, op, $greloc_expr, 0); }
+    | greloc_expr '+' regname[y]
+        {   enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
+            $rhs_plain = make_expr_type1(0, op, $greloc_expr, $y); }
 
 unary_op
     : '~' { $unary_op = OP_BITWISE_XORN; }
@@ -262,42 +267,40 @@ rhs_deref
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
 
-signed_immediate
+immediate
     : INTEGER
+        {   $immediate.i = $INTEGER;
+            $immediate.is_bits = 0; }
     | '-' INTEGER
-        {   $signed_immediate = -$INTEGER; }
-
-unsigned_immediate
-    : '$' INTEGER
-        {   $unsigned_immediate = $INTEGER; }
-    | '$' '-' INTEGER
-        {   $unsigned_immediate = (-$INTEGER) & SMALL_IMMEDIATE_MASK; }
+        {   $immediate.i = -$INTEGER;
+            $immediate.is_bits = 0; }
+    | BITSTRING
+        {   $immediate.i = $BITSTRING;
+            $immediate.is_bits = 1; }
+    | CHARACTER
+        {   $immediate.i = $CHARACTER;
+            $immediate.is_bits = 1; }
 
 addsub
     : '+' { $addsub =  1; }
     | '-' { $addsub = -1; }
 
 op
-    : unsigned_op
-    | signed_op
+    : '+'   { $op = OP_ADD                ; }
+    | '-'   { $op = OP_SUBTRACT           ; }
+    | '*'   { $op = OP_MULTIPLY           ; }
+    | '<'   { $op = OP_COMPARE_LT         ; }
+    | EQ    { $op = OP_COMPARE_EQ         ; }
+    | '>'   { $op = OP_COMPARE_GT         ; }
+    | NEQ   { $op = OP_COMPARE_NE         ; }
+    | '|'   { $op = OP_BITWISE_OR         ; }
+    | '&'   { $op = OP_BITWISE_AND        ; }
+    | ANDN  { $op = OP_BITWISE_ANDN       ; }
+    | '^'   { $op = OP_BITWISE_XOR        ; }
+    | XORN  { $op = OP_BITWISE_XORN       ; }
+    | LSH   { $op = OP_SHIFT_LEFT         ; }
+    | RSH   { $op = OP_SHIFT_RIGHT_LOGICAL; }
 
-unsigned_op
-    : '|'   { $unsigned_op = OP_BITWISE_OR         ; }
-    | '&'   { $unsigned_op = OP_BITWISE_AND        ; }
-    | LSH   { $unsigned_op = OP_SHIFT_LEFT         ; }
-    | ANDN  { $unsigned_op = OP_BITWISE_ANDN       ; }
-    | '^'   { $unsigned_op = OP_BITWISE_XOR        ; }
-    | XORN  { $unsigned_op = OP_BITWISE_XORN       ; }
-    | RSH   { $unsigned_op = OP_SHIFT_RIGHT_LOGICAL; }
-
-signed_op
-    : '+'   { $signed_op = OP_ADD       ; }
-    | '*'   { $signed_op = OP_MULTIPLY  ; }
-    | '<'   { $signed_op = OP_COMPARE_LT; }
-    | EQ    { $signed_op = OP_COMPARE_EQ; }
-    | '>'   { $signed_op = OP_COMPARE_GT; }
-    | '-'   { $signed_op = OP_SUBTRACT  ; }
-    | NEQ   { $signed_op = OP_COMPARE_NE; }
 
 arrow
     : TOL { $arrow = 0; }
@@ -308,18 +311,15 @@ reloc_op
     | '-' { $$ = '-'; }
 
 /* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
-unsigned_greloc_expr
-    : unsigned_immediate_atom
-
-signed_greloc_expr
+greloc_expr
     : eref
     | here_atom
     | preloc_expr
-    | signed_const_atom
-        {   struct const_expr *c = $signed_const_atom;
+    | const_atom
+        {   struct const_expr *c = $const_atom;
             if (c->type == CE_IMM)
                 check_immediate_size(pd, &yylloc, c->i);
-            $signed_greloc_expr = c;
+            $greloc_expr = c;
         }
 
 reloc_expr[outer]
@@ -328,12 +328,12 @@ reloc_expr[outer]
     | preloc_expr
     | here_expr
     | eref reloc_op const_atom
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_atom); }
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_atom, 0); }
     | eref reloc_op here_atom
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $here_atom); }
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $here_atom, 0); }
     | eref reloc_op[lop] here_atom reloc_op[rop] const_atom
-        {   struct const_expr *inner = make_const_expr(CE_OP2, $lop, $eref, $here_atom);
-            $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom);
+        {   struct const_expr *inner = make_const_expr(CE_OP2, $lop, $eref, $here_atom, 0);
+            $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom, 0);
         }
 
 here_atom
@@ -342,16 +342,16 @@ here_atom
 
 here
     : '.'
-        {   $here = make_const_expr(CE_ICI, 0, NULL, NULL); }
+        {   $here = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS); }
 
 here_expr[outer]
     : here_atom
     | here_expr[left] reloc_op const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right, 0); }
     | here_expr[left] '*' const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, '*', $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, '*', $left, $right, 0); }
     | here_expr[left] LSH const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right, 0); }
 
 phere_expr
     : '(' here_expr ')'
@@ -360,33 +360,24 @@ phere_expr
 const_expr[outer]
     : const_atom
     | const_expr[left] reloc_op const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right, 0); }
     | const_expr[left] '*' const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, '*', $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, '*', $left, $right, 0); }
     | const_expr[left] LSH const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right); }
+        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right, 0); }
 
 const_atom
-    : unsigned_immediate_atom
-    | signed_const_atom
-
-unsigned_immediate_atom
-    : unsigned_immediate
-        {   $unsigned_immediate_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
-            $unsigned_immediate_atom->i = $unsigned_immediate; }
-
-signed_const_atom
     : pconst_expr
-    | signed_immediate
-        {   $signed_const_atom = make_const_expr(CE_IMM, 0, NULL, NULL);
-            $signed_const_atom->i = $signed_immediate; }
+    | immediate
+        {   $const_atom = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
+            $const_atom->i = $immediate.i; }
     | LOCAL
-        {   $signed_const_atom = make_const_expr(CE_SYM, 0, NULL, NULL);
+        {   $const_atom = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL))) {
-                $signed_const_atom->symbol = s;
+                $const_atom->symbol = s;
             } else {
-                strcopy($signed_const_atom->symbolname, $LOCAL, sizeof $signed_const_atom->symbolname);
+                strcopy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname);
             }
         }
 
@@ -400,7 +391,7 @@ pconst_expr
 
 eref
     : '@' SYMBOL
-        {   $eref = make_const_expr(CE_EXT, 0, NULL, NULL);
+        {   $eref = make_const_expr(CE_EXT, 0, NULL, NULL, IMM_IS_BITS);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $SYMBOL))) {
                 $eref->symbol = s;
@@ -469,7 +460,7 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
 }
 
 static struct const_expr *make_const_expr(enum const_expr_type type, int op,
-        struct const_expr *left, struct const_expr *right)
+        struct const_expr *left, struct const_expr *right, int flags)
 {
     struct const_expr *n = calloc(1, sizeof *n);
 
@@ -478,6 +469,8 @@ static struct const_expr *make_const_expr(enum const_expr_type type, int op,
     n->left  = left;
     n->right = right;
     n->insn  = NULL;    // top const_expr will have its insn filled in
+    n->flags = (left  ? left->flags  : 0) |
+               (right ? right->flags : 0) | flags;
 
     return n;
 }

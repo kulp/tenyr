@@ -38,16 +38,16 @@
 //  0011 = X multiply Y
 //  0100 = reserved
 //  0101 = X shift left Y
-//  0110 = X compare <= Y
+//  0110 = X compare < Y
 //  0111 = X compare == Y
-//  1000 = X bitwise nor Y
-//  1001 = X bitwise nand Y
+//  1000 = X compare > Y
+//  1001 = X bitwise and complement Y
 //  1010 = X bitwise xor Y
 //  1011 = X subtract Y
 //  1100 = X xor ones' complement Y
 //  1101 = X shift right logical Y
-//  1110 = X compare > Y
-//  1111 = X compare <> Y
+//  1110 = X compare != Y
+//  1111 = reserved
 
 #ifndef OPS_H_
 #define OPS_H_

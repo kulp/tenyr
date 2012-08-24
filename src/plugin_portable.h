@@ -1,11 +1,13 @@
 #ifndef PLUGIN_PORTABLE_H_
 #define PLUGIN_PORTABLE_H_
 
+#define NORETURN __attribute__((noreturn))
+
 // portable (non-OS-specific) plugin definitions
 
 struct tenyr_plugin_ops {
-    void (*fatal)(int code, const char *file, int line, const char *func, const char *fmt, ...);
-    void (*debug)(int level, const char *file, int line, const char *func, const char *fmt, ...);
+    void (* NORETURN fatal)(int code , const char *file, int line, const char *func, const char *fmt, ...);
+    void (*          debug)(int level, const char *file, int line, const char *func, const char *fmt, ...);
 };
 
 typedef void plugin_init(struct tenyr_plugin_ops *ops);
