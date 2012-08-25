@@ -213,6 +213,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
                     case '+': *result = left +  right; return 1;
                     case '-': *result = left -  right; return 1;
                     case '*': *result = left *  right; return 1;
+                    case '^': *result = left ^  right; return 1;
                     case LSH: *result = left << right; return 1;
                     default: fatal(0, "Unrecognised const_expr op '%c'", ce->op);
                 }

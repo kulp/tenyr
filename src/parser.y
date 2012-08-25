@@ -80,7 +80,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %type <cstr> string
 %type <dctv> directive
 %type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
-%type <i> arrow regname reloc_op
+%type <i> arrow regname reloc_op const_op
 %type <imm> immediate
 %type <insn> insn insn_inner
 %type <op> op unary_op
@@ -307,8 +307,8 @@ arrow
     | TOR { $arrow = 1; }
 
 reloc_op
-    : '+' { $$ = '+'; }
-    | '-' { $$ = '-'; }
+    : '+' { $reloc_op = '+'; }
+    | '-' { $reloc_op = '-'; }
 
 /* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
 greloc_expr
@@ -336,6 +336,12 @@ reloc_expr[outer]
             $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom, 0);
         }
 
+const_op
+    : reloc_op
+    | '*'   { $const_op = '*'; }
+    | LSH   { $const_op = LSH; }
+    | '^'   { $const_op = '^'; }
+
 here_atom
     : here
     | phere_expr
@@ -346,12 +352,8 @@ here
 
 here_expr[outer]
     : here_atom
-    | here_expr[left] reloc_op const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right, 0); }
-    | here_expr[left] '*' const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, '*', $left, $right, 0); }
-    | here_expr[left] LSH const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right, 0); }
+    | here_expr[left] const_op const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0); }
 
 phere_expr
     : '(' here_expr ')'
@@ -359,12 +361,8 @@ phere_expr
 
 const_expr[outer]
     : const_atom
-    | const_expr[left] reloc_op const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $left, $right, 0); }
-    | const_expr[left] '*' const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, '*', $left, $right, 0); }
-    | const_expr[left] LSH const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, LSH, $left, $right, 0); }
+    | const_expr[left] const_op const_atom[right]
+        {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0); }
 
 const_atom
     : pconst_expr
