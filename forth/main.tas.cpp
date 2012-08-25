@@ -1,26 +1,31 @@
 #include "forth_common.th"
 
-.global INBUF
-INBUF: .utf32 "words"
-.word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 # 84 long
-.global INPOS
+.global INBUF .global INPOS .global INLEN
+.L_INBUF_before:
+INBUF: .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+.L_INBUF_after:
 INPOS: .word 0
+INLEN: .word .L_INBUF_after - .L_INBUF_before
 
 .set link, 0
 head(start,start): .word
     @NOOP
 
 top: .word
+    @TIB, @DUP, @TO_IN, @SWAP, @SUB,        // tib used
+    @IN_LEN, @SWAP, @SUB,                   // tib left
+    @ACCEPT,                                // count
     @TIB, @TO_IN, @FETCH, @ADD,
     @FIND,
     IFNOT0(found,notfound)
 notfound: .word
+    // TODO complain
     @ABORT
 
 found: .word
-    @TIB, @LITERAL, 10, @ACCEPT,
-    @TIB, @LITERAL, 9, @CHARS, @ADD, @FETCHR, @EMIT,
-    @EXIT,
     //@DROP, // drop flag for now, assume found
     @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LITERAL, ':', @EMIT, @BL, @EMIT, @CR,
     @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LITERAL, ':', @EMIT, @BL, @EMIT, @CR,
@@ -28,7 +33,7 @@ found: .word
 	//@EXIT,
 
     // example of a computed branch
-    @LITERAL, 0,
+    @LITERAL, 1,
     IFNOT0(top,bottom)
 bottom: .word
     @NOOP
@@ -79,6 +84,11 @@ L_ACCEPT_done: .word
     @EXIT
 
 //------------------------------------------------------------------------------
+
+head(IN_LEN,IN_LEN): .word
+    @ENTER,
+    @LITERAL, @INLEN, @RELOC, @FETCH,
+    @EXIT
 
 head(MASK4BITS,MASK4BITS): .word
     @ENTER,
