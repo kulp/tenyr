@@ -18,7 +18,9 @@ notfound: .word
     @ABORT
 
 found: .word
-    //@LITERAL, 0, @ACCEPT,
+    @TIB, @LITERAL, 10, @ACCEPT,
+    @TIB, @LITERAL, 9, @CHARS, @ADD, @FETCHR, @EMIT,
+    @EXIT,
     //@DROP, // drop flag for now, assume found
     @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LITERAL, ':', @EMIT, @BL, @EMIT, @CR,
     @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LITERAL, ':', @EMIT, @BL, @EMIT, @CR,
@@ -50,20 +52,33 @@ linedone: .word
     @CR,
     @EXIT
 
+//------------------------------------------------------------------------------
 // TODO explicit echoing
-head(ACCEPT,ACCEPT): .word
-    @ENTER
+head(ACCEPT,ACCEPT): .word                      // ( c-addr +n1 -- +n2 )
+    @ENTER,
 
-L_ACCEPT_top: .word
-    @DUP,
-    //IFNOT0(L_ACCEPT_get_one,L_ACCEPT_done)
-    @NOOP
+    @OVER, @SWAP                                // C-addr c-addr n1
+L_ACCEPT_key: .word
+    @KEY,                                       // C-addr c-addr n1 c
+    @DUP, @LITERAL, '\n', @CMP_EQ,              // C-addr c-addr n1 c flag
+    IFNOT0(L_ACCEPT_exit,L_ACCEPT_regular)
+L_ACCEPT_regular: .word
+    @ROT,                                       // C-addr n1 c c-addr
+    @TUCK,                                      // C-addr n1 c-addr c c-addr
+    @STOCHR,                                    // C-addr n1 c-addr
+    @LITERAL, 1, @CHARS, @ADD,                  // C-addr n1 c-addr++
+    @SWAP,                                      // C-addr c-addr n1
+    @SUB_1,                                     // C-addr c-addr n1--
+    @DUP, @EQZ,                                 // C-addr c-addr n1 flag
+    IFNOT0(L_ACCEPT_done,L_ACCEPT_key)
+L_ACCEPT_exit: .word
+    @DROP                                       // C-addr c-addr n1
 L_ACCEPT_done: .word
-    @LITERAL, 'B', @EMIT, @BL, @EMIT,
-    @ABORT
-
-L_ACCEPT_get_one: .word
+    @DROP,                                      // C-addr c-addr
+    @SWAP, @SUB,                                // n2
     @EXIT
+
+//------------------------------------------------------------------------------
 
 head(MASK4BITS,MASK4BITS): .word
     @ENTER,
