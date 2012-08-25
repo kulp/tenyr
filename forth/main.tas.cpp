@@ -2,7 +2,8 @@
 
 .global INBUF .global INPOS .global INLEN
 .L_INBUF_before:
-INBUF: .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+INBUF: //.word 5 .utf32 "words"
+       .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -17,12 +18,27 @@ head(start,start): .word
 top: .word
     @TIB, @DUP, @TO_IN, @SWAP, @SUB,        // tib used
     @IN_LEN, @SWAP, @SUB,                   // tib left
-    @ACCEPT,                                // count
+    @ACCEPT                                 // count
+
+strip_spaces: .word
+    @TIB, @TO_IN, @FETCH, @ADD,
+    @FETCHR, @BL, @CMP_EQ,
+    IFNOT0(advance,done_stripping)
+advance: .word
+    @LITERAL, 1, @CHARS, @TO_IN, @ADDMEM,
+    @LITERAL, @strip_spaces, @RELOC, @SET_IP
+
+done_stripping: .word
+    @TIB, @TO_IN, @FETCH, @ADD,
+    @FETCHR, @EMIT,
+    @EXIT,
     @TIB, @TO_IN, @FETCH, @ADD,
     @FIND,
     IFNOT0(found,notfound)
 notfound: .word
     // TODO complain
+    @LITERAL, 'X', @EMIT,
+    @LITERAL, '\n', @EMIT,
     @ABORT
 
 found: .word
@@ -33,7 +49,7 @@ found: .word
 	//@EXIT,
 
     // example of a computed branch
-    @LITERAL, 1,
+    @LITERAL, 0,
     IFNOT0(top,bottom)
 bottom: .word
     @NOOP
