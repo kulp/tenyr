@@ -272,17 +272,20 @@ head(EMIT_UNSIGNED,U.): .word
 head(WORD,WORD): .word
     @ENTER,                 // c
     @WORD_TMP,              // c TMP
+//@DEBUG,//XXX
     @LITERAL, 0, @OVER,     // c TMP 0 TMP
+    //@EMIT_UNSIGNED, @CR, @ABORT,
     @STOCHR,                // c TMP
     @TIB, @TO_IN, @FETCH,   // c TMP TIB off
-    @ADD                    // c TMP tib
+    @ADD,                   // c TMP tib
+    @NOOP
 
 L_WORD_top: .word
     // c TMP tib
-    @ROT, @TWO_DUP, @SWAP,  // TMP tib c c tib
+    @ROT, @OVER,            // TMP tib c tib
     @FETCHR, @DUP, @ROT,    // TMP tib c2 c2 c1
     @CMP_EQ,                // TMP tib c2 flag
-    IFNOT0(L_WORD_advance,L_WORD_done_stripping)
+    IFNOT0(L_WORD_done_stripping,L_WORD_advance)
 
 L_WORD_advance: .word
     // tmp tib c2
@@ -291,16 +294,21 @@ L_WORD_advance: .word
     @TUCK, @STOCHR,         // TMP tib c1 tmp
     @ROT,                   // TMP c1 tmp tib
     @ADD_1CHAR,             // TMP c1 tmp tib+1
-    @TWO_SWAP, @SWAP,       // tmp tib c1 TMP
+    @TWO_SWAP, @NIP,        // tmp tib c1
+    @WORD_TMP,              // tmp tib c1 TMP
     @FETCHR, @ADD_1,        // tmp tib c1 nc+1
     @STOCHR,                // tmp tib c1
     @LITERAL, @L_WORD_top, @RELOC, @SET_IP
 
 L_WORD_done_stripping: .word
     // tmp tib c2
+    //@DUP, @EMIT_UNSIGNED, @CR,
+    //@SWAP, @DUP, @EMIT_UNSIGNED, @CR,
+    //@DROP, @DROP, @DROP, @DUP, @EMIT_UNSIGNED, @CR, @ABORT,
     @TWO_DROP,              // tmp
     @DUP,                   // tmp tmp
-    @LITERAL, @BL, @STOCHR, // tmp
+    @LITERAL, @BL,          // tmp tmp bl
+    @SWAP, @STOCHR,         // tmp
     @EXIT
 L_WORD_tmp:
     .utf32 "0123456789""0123456789""0123456789""012"
