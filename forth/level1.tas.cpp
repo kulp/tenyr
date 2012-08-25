@@ -117,11 +117,11 @@ head(FIND,FIND):
 L_FIND_top:
     T4   <- [S + 1]     // T4 <- name to look up
     T1   <- T0 + 2      // T1 <- addr of name string
-    W    <- rel(T0)     // W  <- addr of rec length
-    W    <- [W - 1]     // W  <- rec length
-    W    <- W - 2       // W  <- test-name length
+    T6   <- rel(T0)     // T6 <- addr of rec length
+    T6   <- [T6 - 1]    // T6 <- rec length
+    T6   <- T6 - 2      // T6 <- test-name length
     T2   <- [T4]        // T2 <- find-name length
-    T2   <- W <> T2     // check length match
+    T2   <- T6 <> T2    // check length match
     iftrue(T2,L_FIND_char_bottom)
     T4   <- T4 + 1      // T4 <- addr of test string
 
@@ -135,13 +135,13 @@ L_FIND_char_top:
     T3   <- T3 &~ ('a' ^ 'A')
 
     T2   <- T2 <> T3    // T2 <- char mismatch ?
-    T3   <- W  <  1     // T3 <- end of test-name ?
+    T3   <- T6 <  1     // T3 <- end of test-name ?
 
     iftrue(T3,L_FIND_match)
     iftrue(T2,L_FIND_char_bottom)
 
     T1   <- T1 + 1      // increment test-name addr
-    W    <- W  - 1      // decrement test-name length
+    T6   <- T6 - 1      // decrement test-name length
     T4   <- T4 + 1      // increment find-name addr
     P    <- reloc(L_FIND_char_top)
 
@@ -274,18 +274,18 @@ head(WORDS,WORDS):
 L_WORDS_top:
     T0   <- rel(T0)     // T0 <- addr of next link
     T1   <- T0 + 2      // T1 <- addr of name string
-    W    <- [T0 - 1]    // W  <- rec length
-    W    <- W - 2       // W  <- test-name length
+    T4   <- [T0 - 1]    // T4 <- rec length
+    T4   <- T4 - 2      // T4 <- test-name length
 
 L_WORDS_char_top:
     T2   <- [T1]        // T2 <- character
-    T3   <- W  <  1     // T3 <- end of string ?
+    T3   <- T4 <  1     // T3 <- end of string ?
 
     iftrue(T3,L_WORDS_char_bottom)
 
     T2   -> SERIAL      // emit character
     T1   <- T1 + 1      // increment char addr
-    W    <- W  - 1      // decrement string length
+    T4   <- T4 - 1      // decrement string length
     P    <- reloc(L_WORDS_char_top)
 L_WORDS_char_bottom:
     T1   <- '\n'
