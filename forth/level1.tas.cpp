@@ -115,42 +115,34 @@ head(FIND,FIND):
     .word . + 1
     T0   <- @dict       // T0 <- addr of dictionary
 L_FIND_top:
-    T5   <- [S + 1]     // T5 <- name to look up
+    T4   <- [S + 1]     // T4 <- name to look up
     T1   <- T0 + 2      // T1 <- addr of name string
     W    <- rel(T0)     // W  <- addr of rec length
     W    <- [W - 1]     // W  <- rec length
     W    <- W - 2       // W  <- test-name length
-    T7   <- [T5]        // T7 <- find-name length
-    T5   <- T5 + 1      // T5 <- addr of test string
+    T2   <- [T4]        // T2 <- find-name length
+    T2   <- W <> T2     // check length match
+    iftrue(T2,L_FIND_char_bottom)
+    T4   <- T4 + 1      // T4 <- addr of test string
 
 L_FIND_char_top:
     T2   <- [rel(T1)]   // T2 <- test-name char
-    T3   <- [T5]        // T3 <- find-name char
+    T3   <- [T4]        // T3 <- find-name char
 
     // uppercase test-name char
     T2   <- T2 &~ ('a' ^ 'A')
     // uppercase find-name char
     T3   <- T3 &~ ('a' ^ 'A')
 
-    // Right now we check for either NUL-termination
-    // or space-termination
-    T6   <- T3 == ' '   // T4 <- end of find-name ?
-    T4   <- T7 <  1     // T6 <- end of find-name ?
-    T6   <- T4 | T6     // T4 <- either ending ?
-    T4   <- W  <  1     // T4 <- end of test-name ?
-
     T2   <- T2 <> T3    // T2 <- char mismatch ?
-    T3   <- T4 &  T6    // T3 <- both names end ?
-    T4   <- T4 |  T6    // T4 <- either name ends ?
-    T2   <- T2 |  T4    // T2 <- name mismatch ?
+    T3   <- W  <  1     // T3 <- end of test-name ?
 
     iftrue(T3,L_FIND_match)
     iftrue(T2,L_FIND_char_bottom)
 
     T1   <- T1 + 1      // increment test-name addr
     W    <- W  - 1      // decrement test-name length
-    T5   <- T5 + 1      // increment find-name addr
-    T7   <- T7 - 1      // decrement find-name length
+    T4   <- T4 + 1      // increment find-name addr
     P    <- reloc(L_FIND_char_top)
 
 L_FIND_char_bottom:
