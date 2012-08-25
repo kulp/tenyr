@@ -329,7 +329,15 @@ L_WORD_advance: .word
     @WORD_TMP, @DUP,        // tmp tib c1 TMP TMP
     @FETCHR, @ADD_1,        // tmp tib c1 TMP nc+1
     @SWAP, @STOCHR,         // tmp tib c1
-    @ROT, @ROT,             // c1 tmp tib
+    @ROT, @DUP,             // tib c1 tmp tmp
+    @LITERAL, .L_WORD_tmp_end,
+    @RELOC,
+    @SWAP, @SUB,            // tib c1 tmp left
+    @LITERAL, 2, @CMP_LT,   // tib c1 tmp flag
+    IFNOT0(L_WORD_done_stripping,L_WORD_cont)
+
+L_WORD_cont: .word
+    @ROT,                   // c1 tmp tib
     @LITERAL, @L_WORD_top, @RELOC, @SET_IP
 
 L_WORD_done_stripping: .word
