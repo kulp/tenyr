@@ -270,24 +270,52 @@ head(EMIT_UNSIGNED,U.): .word
 // WHILE  -- adrs              branch for WHILE loop
 // WORD   char -- c-addr    parse word delim by char
 head(WORD,WORD): .word
-    @ENTER, // c
-    @LITERAL, @L_WORD_tmp, @RELOC,  // c tmp
-    @LITERAL, 0, @OVER,       // c tmp 0 tmp
-    @STOCHR,    // c tmp
-    @TIB, @TO_IN, @FETCH, @ADD      // c tmp tib
+    @ENTER,                 // c
+    @WORD_TMP,              // c TMP
+    @LITERAL, 0, @OVER,     // c TMP 0 TMP
+    @STOCHR,                // c TMP
+    @TIB, @TO_IN, @FETCH,   // c TMP TIB off
+    @ADD                    // c TMP tib
 
-L_WORD_strip_spaces: .word
-    // c tmp tib
-    // XXX
+L_WORD_top: .word
+    // c TMP tib
+    @ROT, @TWO_DUP, @SWAP,  // TMP tib c c tib
+    @FETCHR, @DUP, @ROT,    // TMP tib c2 c2 c1
+    @CMP_EQ,                // TMP tib c2 flag
     IFNOT0(L_WORD_advance,L_WORD_done_stripping)
+
 L_WORD_advance: .word
-    @NOOP
+    // tmp tib c2
+    @TWO_OVER, @DROP,       // TMP tib c1 c2 TMP
+    @ADD_1CHAR,             // TMP tib c1 c2 TMP+1
+    @TUCK, @STOCHR,         // TMP tib c1 tmp
+    @ROT,                   // TMP c1 tmp tib
+    @ADD_1CHAR,             // TMP c1 tmp tib+1
+    @TWO_SWAP, @SWAP,       // tmp tib c1 TMP
+    @FETCHR, @ADD_1,        // tmp tib c1 nc+1
+    @STOCHR,                // tmp tib c1
+    @LITERAL, @L_WORD_top, @RELOC, @SET_IP
 
 L_WORD_done_stripping: .word
+    // tmp tib c2
+    @TWO_DROP,              // tmp
+    @DUP,                   // tmp tmp
+    @LITERAL, @BL, @STOCHR, // tmp
     @EXIT
 L_WORD_tmp:
     .utf32 "0123456789""0123456789""0123456789""012"
 .L_WORD_tmp_end: .word 0
+
+head(ADD_1CHAR,C+1): .word
+    @ENTER,
+    // TODO we could just do ADD_1
+    @LITERAL, 1, @CHARS, @ADD,
+    @EXIT
+
+head(WORD_TMP,WORD_TMP): .word
+    @ENTER,
+    @LITERAL, @L_WORD_tmp, @RELOC,
+    @EXIT
 
 // [      --                enter interpretive state
 // [CHAR] --               compile character literal
