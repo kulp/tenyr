@@ -46,9 +46,36 @@ head(TO_IN,>IN): .word
 // >NUMBER  ud adr u -- ud' adr' u'
 //                          convert string to number
 // 2DROP  x1 x2 --                      drop 2 cells
+head(TWO_DROP,2DROP): .word
+    @ENTER,
+    @DROP, @DROP,
+    @EXIT
+
 // 2DUP   x1 x2 -- x1 x2 x1 x2       dup top 2 cells
+head(TWO_DUP,2DUP): .word
+    @ENTER,         // a b
+    @OVER, @OVER,   // a b a b
+    @EXIT
+
 // 2OVER  x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2  per diag
+head(TWO_OVER,2OVER): .word
+    @ENTER,             // a b c d
+    @TWO_SWAP,          // c d a b
+    @TWO_DUP,           // c d a b a b
+    @PUSH_R, @PUSH_R,   // c d a b  R: -- b a
+    @TWO_SWAP,          // a b c d
+    @POP_R, @POP_R,     // a b c d a b
+    @EXIT
+
 // 2SWAP  x1 x2 x3 x4 -- x3 x4 x1 x2     per diagram
+head(TWO_SWAP,2SWAP): .word
+    @ENTER,         // a b c d --
+    @PUSH_R,        // a b c    R: -- d
+    @ROT, @ROT,     // c a b
+    @POP_R,         // c a b d  R: --
+    @ROT, @ROT,     // c d a b
+    @EXIT
+
 // 2!     x1 x2 a-addr --              store 2 cells
 // 2@     a-addr -- x1 x2              fetch 2 cells
 // ABORT  i*x --   R: j*x --      clear stack & QUIT
@@ -239,10 +266,29 @@ head(EMIT_UNSIGNED,U.): .word
 
     @EXIT
 
-
 // .      n --                      display n signed
 // WHILE  -- adrs              branch for WHILE loop
-// WORD   char -- c-addr n  parse word delim by char
+// WORD   char -- c-addr    parse word delim by char
+head(WORD,WORD): .word
+    @ENTER, // c
+    @LITERAL, @L_WORD_tmp, @RELOC,  // c tmp
+    @LITERAL, 0, @OVER,       // c tmp 0 tmp
+    @STOCHR,    // c tmp
+    @TIB, @TO_IN, @FETCH, @ADD      // c tmp tib
+
+L_WORD_strip_spaces: .word
+    // c tmp tib
+    // XXX
+    IFNOT0(L_WORD_advance,L_WORD_done_stripping)
+L_WORD_advance: .word
+    @NOOP
+
+L_WORD_done_stripping: .word
+    @EXIT
+L_WORD_tmp:
+    .utf32 "0123456789""0123456789""0123456789""012"
+.L_WORD_tmp_end: .word 0
+
 // [      --                enter interpretive state
 // [CHAR] --               compile character literal
 // [']    --          find word & compile as literal
