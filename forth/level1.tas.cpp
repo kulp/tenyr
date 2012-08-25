@@ -277,6 +277,10 @@ head(WORD,WORD): .word
     @ADD_1CHAR,             // c TMP+1
     @TIB, @TO_IN, @FETCH,   // c TMP TIB off
     @ADD,                   // c TMP tib
+    @ROT, @SWAP, @TWO_DUP,  // TMP c tib c tib
+    @SKIP,                  // TMP c tib ntib
+    @NIP,                   // TMP c ntib
+    @SWAP, @ROT, @ROT,      // c TMP ntib
     @NOOP
 
 L_WORD_top: .word
@@ -312,6 +316,11 @@ L_WORD_done_stripping: .word
 L_WORD_tmp:
     .utf32 "0123456789""0123456789""0123456789""012"
 .L_WORD_tmp_end: .word 0
+
+head(SKIP,SKIP): .word
+    @ENTER,
+    @NIP,
+    @EXIT
 
 head(ADD_1CHAR,C+1): .word
     @ENTER,
