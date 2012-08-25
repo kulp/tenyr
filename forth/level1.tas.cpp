@@ -303,6 +303,7 @@ head(WORD,WORD): .word
     @TIB, @TO_IN, @FETCH,   // c TMP TIB off
     @ADD,                   // c TMP tib
     @ROT, @SWAP, @TWO_DUP,  // TMP c tib c tib
+    @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
     @SKIP,                  // TMP c tib ntib
     @NIP,                   // TMP c ntib
     @SWAP, @ROT, @ROT,      // c TMP ntib
@@ -339,30 +340,39 @@ L_WORD_done_stripping: .word
     @WORD_TMP,              // TMP
     @EXIT
 L_WORD_tmp:
-    .utf32 "0123456789""0123456789""0123456789""012"
+.L_WORD_tmp:
+    .utf32 "          ""          ""          ""  "
 .L_WORD_tmp_end: .word 0
 
-// ( char c-addr -- c-addr )    skips initial char
+// ( char c-addr u -- c-addr )    skip init char up to N
 head(SKIP,SKIP): .word
-    @ENTER                  // c addr
+    @ENTER                  // c addr u
 
 L_SKIP_top: .word
-    @SWAP, @TWO_DUP,        // addr c addr c
-    @SWAP, @FETCHR,         // addr c1 c1 c2
-    @CMP_EQ,                // addr c1 flag
+    // c addr u
+    @DUP, @EQZ,             // c addr u flag
+    IFNOT0(L_SKIP_done,L_SKIP_cont)
+
+L_SKIP_cont: .word
+    // c addr u
+    @ROT, @ROT,             // u c addr
+    @SWAP, @TWO_DUP,        // u addr c addr c
+    @SWAP, @FETCHR,         // u addr c1 c1 c2
+    @CMP_EQ,                // u addr c1 flag
     IFNOT0(L_SKIP_inc,L_SKIP_done)
 
 L_SKIP_inc: .word
-    // addr c
-    @SWAP, @ADD_1CHAR,      // c addr+1
+    // u addr c
+    @SWAP, @ADD_1CHAR,      // u c addr+1
+    @ROT,                   // c addr u
     @LITERAL, @L_SKIP_top, @RELOC, @SET_IP
 
 L_SKIP_done: .word
-    // addr c
-    @DROP,
+    // x addr x
+    @DROP, @NIP,
     @EXIT
 
-head(ADD_1CHAR,C+1): .word
+head(ADD_1CHAR,C1+): .word
     @ENTER,
     // TODO we could just do ADD_1
     @LITERAL, 1, @CHARS, @ADD,
@@ -384,6 +394,12 @@ head(WORD_TMP,WORD_TMP): .word
 //
 // .S     --                    print stack contents
 // /STRING a u n -- a+n u-n              trim string
+head(SLASH_STRING,/STRING): .word
+    @ENTER,
+    // TODO
+    @DROP,
+    @EXIT
+
 // AGAIN  adrs --           uncond'l backward branch
 // COMPILE,  xt --            append execution token
 // DABS   d1 -- +d2        absolute value, dbl.prec.
