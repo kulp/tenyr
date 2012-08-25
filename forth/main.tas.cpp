@@ -1,5 +1,5 @@
 #include "forth_common.th"
-#define TEST_LOOKUP 1
+#define TEST_LOOKUP 0
 
 .global INBUF .global INPOS .global INLEN
 .L_INBUF_before:
@@ -25,9 +25,14 @@ top: .word
     IFNOT0(found,notfound),
 #endif
 
-    @TIB, @DUP, @TO_IN, @SWAP, @SUB,        // tib used
-    @IN_LEN, @SWAP, @SUB,                   // tib left
-    @ACCEPT                                 // count
+    @TIB, @DUP, @TO_IN, @FETCH, @SWAP, @SUB,    // tib used
+    @IN_LEN, @SWAP, @SUB,                       // tib left
+    @ACCEPT,                                    // count
+    @TIB, @TO_IN, @FETCH, @ADD, @ADD, @BL, @SWAP, @STOCHR, //
+    @TIB, @TO_IN, @FETCH, @ADD,
+    @BL, @WORD,
+    @FIND,
+    IFNOT0(found,notfound)
 
 strip_spaces: .word
     @TIB, @TO_IN, @FETCH, @ADD,
@@ -59,7 +64,7 @@ found: .word
 	//@EXIT,
 
     // example of a computed branch
-    @LITERAL, 0,
+    @LITERAL, 1,
     IFNOT0(top,bottom)
 bottom: .word
     @NOOP
@@ -82,34 +87,6 @@ worddone: .word
 linedone: .word
     @CR,
     @EXIT
-
-//------------------------------------------------------------------------------
-// TODO explicit echoing
-head(ACCEPT,ACCEPT): .word                      // ( c-addr +n1 -- +n2 )
-    @ENTER,
-
-    @OVER, @SWAP                                // C-addr c-addr n1
-L_ACCEPT_key: .word
-    @KEY,                                       // C-addr c-addr n1 c
-    @DUP, @LITERAL, '\n', @CMP_EQ,              // C-addr c-addr n1 c flag
-    IFNOT0(L_ACCEPT_exit,L_ACCEPT_regular)
-L_ACCEPT_regular: .word
-    @ROT,                                       // C-addr n1 c c-addr
-    @TUCK,                                      // C-addr n1 c-addr c c-addr
-    @STOCHR,                                    // C-addr n1 c-addr
-    @LITERAL, 1, @CHARS, @ADD,                  // C-addr n1 c-addr++
-    @SWAP,                                      // C-addr c-addr n1
-    @SUB_1,                                     // C-addr c-addr n1--
-    @DUP, @EQZ,                                 // C-addr c-addr n1 flag
-    IFNOT0(L_ACCEPT_done,L_ACCEPT_key)
-L_ACCEPT_exit: .word
-    @DROP                                       // C-addr c-addr n1
-L_ACCEPT_done: .word
-    @DROP,                                      // C-addr c-addr
-    @SWAP, @SUB,                                // n2
-    @EXIT
-
-//------------------------------------------------------------------------------
 
 head(IN_LEN,IN_LEN): .word
     @ENTER,

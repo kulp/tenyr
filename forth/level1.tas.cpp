@@ -89,6 +89,31 @@ head(ABORT,ABORT):
 //        i*x x1 --       R: j*x --      abort,x1<>0
 // ABS    n1 -- +n2                   absolute value
 // ACCEPT c-addr +n -- +n'    get line from terminal
+head(ACCEPT,ACCEPT): .word                      // ( c-addr +n1 -- +n2 )
+// TODO explicit echoing
+    @ENTER,
+
+    @OVER, @SWAP                                // C-addr c-addr n1
+L_ACCEPT_key: .word
+    @KEY,                                       // C-addr c-addr n1 c
+    @DUP, @LITERAL, '\n', @CMP_EQ,              // C-addr c-addr n1 c flag
+    IFNOT0(L_ACCEPT_exit,L_ACCEPT_regular)
+L_ACCEPT_regular: .word
+    @ROT,                                       // C-addr n1 c c-addr
+    @TUCK,                                      // C-addr n1 c-addr c c-addr
+    @STOCHR,                                    // C-addr n1 c-addr
+    @LITERAL, 1, @CHARS, @ADD,                  // C-addr n1 c-addr++
+    @SWAP,                                      // C-addr c-addr n1
+    @SUB_1,                                     // C-addr c-addr n1--
+    @DUP, @EQZ,                                 // C-addr c-addr n1 flag
+    IFNOT0(L_ACCEPT_done,L_ACCEPT_key)
+L_ACCEPT_exit: .word
+    @DROP                                       // C-addr c-addr n1
+L_ACCEPT_done: .word
+    @DROP,                                      // C-addr c-addr
+    @SWAP, @SUB,                                // n2
+    @EXIT
+
 // ALIGN  --                              align HERE
 // ALIGNED addr -- a-addr           align given addr
 // ALLOT  n --              allocate n bytes in dict
