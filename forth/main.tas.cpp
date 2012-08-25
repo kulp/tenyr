@@ -5,7 +5,7 @@
 .L_INBUF_before:
 INBUF:
 #if TEST_LOOKUP
-    .utf32 "words "
+    .utf32 "  words"
 #endif
     .utf32 "                                               "
     .utf32 "                                               "

@@ -317,9 +317,24 @@ L_WORD_tmp:
     .utf32 "0123456789""0123456789""0123456789""012"
 .L_WORD_tmp_end: .word 0
 
+// ( char c-addr -- c-addr )    skips initial char
 head(SKIP,SKIP): .word
-    @ENTER,
-    @NIP,
+    @ENTER                  // c addr
+
+L_SKIP_top: .word
+    @SWAP, @TWO_DUP,        // addr c addr c
+    @SWAP, @FETCHR,         // addr c1 c1 c2
+    @CMP_EQ,                // addr c1 flag
+    IFNOT0(L_SKIP_inc,L_SKIP_done)
+
+L_SKIP_inc: .word
+    // addr c
+    @SWAP, @ADD_1CHAR,      // c addr+1
+    @LITERAL, @L_SKIP_top, @RELOC, @SET_IP
+
+L_SKIP_done: .word
+    // addr c
+    @DROP,
     @EXIT
 
 head(ADD_1CHAR,C+1): .word
