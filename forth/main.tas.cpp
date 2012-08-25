@@ -1,15 +1,14 @@
 #include "forth_common.th"
+#define TEST_LOOKUP 1
 
 .global INBUF .global INPOS .global INLEN
 .L_INBUF_before:
 INBUF:
 #if TEST_LOOKUP
-    .word 5 .utf32 "words"
+    .utf32 "words "
 #endif
-       .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    .utf32 "                                               "
+    .utf32 "                                               "
 .L_INBUF_after:
 INPOS: .word 0
 INLEN: .word .L_INBUF_after - .L_INBUF_before
@@ -21,8 +20,9 @@ head(start,start): .word
 top: .word
 #if TEST_LOOKUP
     @TIB, @TO_IN, @FETCH, @ADD,
+    @BL, @WORD,
     @FIND,
-    @LITERAL, @find_word, @RELOC, @SET_IP,
+    IFNOT0(found,notfound),
 #endif
 
     @TIB, @DUP, @TO_IN, @SWAP, @SUB,        // tib used
@@ -165,4 +165,9 @@ head(RELOC,RELOC): .word . + 1
     W   <- rel(W)
     W   -> [S + 1]
     goto(NEXT)
+
+head(SAYTOP,SAYTOP): .word
+    @ENTER,
+    @DUP, @EMIT_UNSIGNED, @CR,
+    @EXIT
 
