@@ -2,7 +2,10 @@
 
 .global INBUF .global INPOS .global INLEN
 .L_INBUF_before:
-INBUF: //.word 5 .utf32 "words"
+INBUF:
+#if TEST_LOOKUP
+    .word 5 .utf32 "words"
+#endif
        .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
              0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -16,6 +19,12 @@ head(start,start): .word
     @NOOP
 
 top: .word
+#if TEST_LOOKUP
+    @TIB, @TO_IN, @FETCH, @ADD,
+    @FIND,
+    @LITERAL, @find_word, @RELOC, @SET_IP,
+#endif
+
     @TIB, @DUP, @TO_IN, @SWAP, @SUB,        // tib used
     @IN_LEN, @SWAP, @SUB,                   // tib left
     @ACCEPT                                 // count
@@ -31,7 +40,8 @@ advance: .word
 done_stripping: .word
     @TIB, @TO_IN, @FETCH, @ADD,
     @FETCHR, @EMIT,
-    @EXIT,
+    @EXIT
+find_word: .word
     @TIB, @TO_IN, @FETCH, @ADD,
     @FIND,
     IFNOT0(found,notfound)
