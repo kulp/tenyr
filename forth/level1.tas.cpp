@@ -117,20 +117,27 @@ head(FIND,FIND):
 L_FIND_top:
     T5   <- [S + 1]     // T5 <- name to look up
     T1   <- T0 + 2      // T1 <- addr of name string
+    W    <- rel(T0)     // W  <- addr of rec length
+    W    <- [W - 1]     // W  <- rec length
+    W    <- W - 2       // W  <- test-name length
+    T7   <- [T5]        // T7 <- find-name length
+    T5   <- T5 + 1      // T5 <- addr of test string
 
 L_FIND_char_top:
     T2   <- [rel(T1)]   // T2 <- test-name char
     T3   <- [T5]        // T3 <- find-name char
 
-    T2   <- T2 & 0xdf   // uppercase test-name char
-    T3   <- T3 & 0xdf   // uppercase find-name char
+    // uppercase test-name char
+    T2   <- T2 &~ ('a' ^ 'A')
+    // uppercase find-name char
+    T3   <- T3 &~ ('a' ^ 'A')
 
     // Right now we check for either NUL-termination
     // or space-termination
     T6   <- T3 == ' '   // T4 <- end of find-name ?
-    T4   <- T3 == 0     // T6 <- end of find-name ?
+    T4   <- T7 <  1     // T6 <- end of find-name ?
     T6   <- T4 | T6     // T4 <- either ending ?
-    T4   <- T2 == 0     // T4 <- end of test-name ?
+    T4   <- W  <  1     // T4 <- end of test-name ?
 
     T2   <- T2 <> T3    // T2 <- char mismatch ?
     T3   <- T4 &  T6    // T3 <- both names end ?
@@ -141,13 +148,15 @@ L_FIND_char_top:
     iftrue(T2,L_FIND_char_bottom)
 
     T1   <- T1 + 1      // increment test-name addr
+    W    <- W  - 1      // decrement test-name length
     T5   <- T5 + 1      // increment find-name addr
+    T7   <- T7 - 1      // decrement find-name length
     P    <- reloc(L_FIND_char_top)
 
 L_FIND_char_bottom:
     T0   <- [rel(T0)]   // T0 <- follow link
     T1   <- T0 <> 0     // T1 <- more words ? .word . + 1
-    T2   <- - P + (@L_FIND_top - 2)
+    T2   <- - P + (@L_FIND_top - 3)
     T2   <- rel(T2)
     T2   <- T2 & T1
     P    <- P + T2
@@ -273,15 +282,18 @@ head(WORDS,WORDS):
 L_WORDS_top:
     T0   <- rel(T0)     // T0 <- addr of next link
     T1   <- T0 + 2      // T1 <- addr of name string
+    W    <- [T0 - 1]    // W  <- rec length
+    W    <- W - 2       // W  <- test-name length
 
 L_WORDS_char_top:
     T2   <- [T1]        // T2 <- character
-    T3   <- T2 == 0     // T3 <- end of string ?
+    T3   <- W  <  1     // T3 <- end of string ?
 
     iftrue(T3,L_WORDS_char_bottom)
 
     T2   -> SERIAL      // emit character
     T1   <- T1 + 1      // increment char addr
+    W    <- W  - 1      // decrement string length
     P    <- reloc(L_WORDS_char_top)
 L_WORDS_char_bottom:
     T1   <- '\n'
