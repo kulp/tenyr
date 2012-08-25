@@ -272,12 +272,8 @@ head(EMIT_UNSIGNED,U.): .word
 head(WORD,WORD): .word
     @ENTER,                 // c
     @WORD_TMP,              // c TMP
-//@DEBUG,//XXX
     @LITERAL, 0, @OVER,     // c TMP 0 TMP
-    //@EMIT_UNSIGNED, @CR, @ABORT,
     @STOCHR,                // c TMP
-    //@SAYTOP,
-    //@DUP, @FETCHR, @SAYTOP, @DROP,
     @ADD_1CHAR,             // c TMP+1
     @TIB, @TO_IN, @FETCH,   // c TMP TIB off
     @ADD,                   // c TMP tib
@@ -287,35 +283,28 @@ L_WORD_top: .word
     // c TMP tib
     @ROT, @OVER,            // TMP tib c tib
     @FETCHR, @DUP, @ROT,    // TMP tib c2 c2 c1
-    @CMP_EQ,                // TMP tib c2 flag
-    @LITERAL, 'X', @EMIT, @CR,
+    @TUCK,                  // TMP tib c2 c1 c2 c1
+    @CMP_EQ,                // TMP tib c2 c1 flag
     IFNOT0(L_WORD_done_stripping,L_WORD_advance)
 
 L_WORD_advance: .word
-    // tmp tib c2
-    @LITERAL, 'Y', @EMIT, @CR,
+    // tmp tib c2 c1
+    @SWAP,                  // TMP tib c1 c2
     @TWO_OVER, @DROP,       // TMP tib c1 c2 TMP
     @TUCK, @STOCHR,         // TMP tib c1 tmp
     @ADD_1CHAR,             // TMP tib c1 tmp+1
     @ROT,                   // TMP c1 tmp tib
     @ADD_1CHAR,             // TMP c1 tmp tib+1
     @TWO_SWAP, @NIP,        // tmp tib c1
-    @SAYTOP,
     @WORD_TMP, @DUP,        // tmp tib c1 TMP TMP
     @FETCHR, @ADD_1,        // tmp tib c1 TMP nc+1
-    //@SAYTOP,
     @SWAP, @STOCHR,         // tmp tib c1
-    @SAYTOP,
+    @ROT, @ROT,             // c1 tmp tib
     @LITERAL, @L_WORD_top, @RELOC, @SET_IP
 
 L_WORD_done_stripping: .word
-    // tmp tib c2
-    //@DUP, @EMIT_UNSIGNED, @CR,
-    //@SWAP, @DUP, @EMIT_UNSIGNED, @CR,
-    //@DROP, @DROP, @DROP, @DUP, @EMIT_UNSIGNED, @CR, @ABORT,
-    @LITERAL, 'Z', @EMIT, @CR,
-    @TWO_DROP,              // tmp
-    @SAYTOP,
+    // tmp tib c2 c1
+    @TWO_DROP, @DROP,       // tmp
     @LITERAL, @BL,          // tmp bl
     @SWAP, @STOCHR,         // 
     @WORD_TMP,              // TMP
