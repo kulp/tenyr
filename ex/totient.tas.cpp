@@ -18,18 +18,14 @@ loop:
   k <- d == a
   jnzrel(k, done)
 
-  push(b)
-  push(c)
-  push(d)
+  pushall(b,c,d)
 
   call(gcd)
 
   k <- b <> 1
   k <- k + 1
 
-  pop(d)
-  pop(c)
-  pop(b)
+  popall(b,c,d)
 
   b <- b + k
 
