@@ -17,6 +17,7 @@ all: $(TARGETS)
 hello.texe: puts.to
 compare.texe: strcmp.to puts.to
 maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/mul.to
+totient.texe: gcd.to
 
 %.tas: %.tas.cpp
 	mkdir -p $(*D)
@@ -24,10 +25,10 @@ maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/mul.to
 
 %.to: %.tas
 	mkdir -p $(*D)
-	$(TAS) -o$@ $< || (rm $@ ; exit 1)
+	$(TAS) -o$@ $<
 
 %.texe: %.to
-	$(TLD) -o$@ $^ || (rm $@ ; exit 1)
+	$(TLD) -o$@ $^
 
 clean:
 	$(RM) $(CLEANFILES)

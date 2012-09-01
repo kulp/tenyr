@@ -35,9 +35,10 @@ module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP
     wire YisP = indexY == 15;
 
     assign pc     = rwP ? 32'bz : store[15];
-    assign valueZ = rwZ ? 32'bz : (ZisP ? pc : store[indexZ]);
-    assign valueX = XisP ? pc : store[indexX];
-    assign valueY = YisP ? pc : store[indexY];
+    wire[31:0] pcp1 = pc + 1;
+    assign valueZ = rwZ ? 32'bz : (ZisP ? pcp1 : store[indexZ]);
+    assign valueX = XisP ? pcp1 : store[indexX];
+    assign valueY = YisP ? pcp1 : store[indexY];
 
     always @(negedge clk) if (en) begin
         if (rwP)
@@ -121,35 +122,29 @@ module Exec(input clk, input en, output[31:0] rhs,
     assign rhs = valid ? i_rhs : 32'b0;
     reg[31:0] i_rhs = 0;
 
-    // TODO signed net or integer support
-    wire[31:0] Xs = X;
-    wire[31:0] Xu = X;
-
-    wire[31:0] Is_ = { {20{I[11]}}, I };
-    wire[31:0] Is = Is_;
-    wire[31:0] Ou = (type == 0) ? Y   : Is_;
-    wire[31:0] Os = (type == 0) ? Y   : Is_;
-    wire[31:0] As = (type == 0) ? Is_ : Y;
+    wire[31:0] J = { {20{I[11]}}, I };
+    wire[31:0] O = (type == 0) ? Y : J;
+    wire[31:0] A = (type == 0) ? J : Y;
 
     always @(negedge clk) if (en) begin
         if (valid) begin
             case (op)
-                4'b0000: i_rhs =  (Xu  |  Ou) + As; // X bitwise or Y
-                4'b0001: i_rhs =  (Xu  &  Ou) + As; // X bitwise and Y
-                4'b0010: i_rhs =  (Xs  +  Os) + As; // X add Y
-                4'b0011: i_rhs =  (Xs  *  Os) + As; // X multiply Y
-              //4'b0100:                            // reserved
-                4'b0101: i_rhs =  (Xu  << Ou) + As; // X shift left Y
-                4'b0110: i_rhs = -(Xs  <  Os) + As; // X compare < Y
-                4'b0111: i_rhs = -(Xs  == Os) + As; // X compare == Y
-                4'b1000: i_rhs = -(Xs  >  Os) + As; // X compare > Y
-                4'b1001: i_rhs = ~(Xu  &  Ou) + As; // X bitwise nand Y
-                4'b1010: i_rhs =  (Xu  ^  Ou) + As; // X bitwise xor Y
-                4'b1011: i_rhs =  (Xs  + -Os) + As; // X add two's complement Y
-                4'b1100: i_rhs =  (Xu  ^ ~Ou) + As; // X xor ones' complement Y
-                4'b1101: i_rhs =  (Xu  >> Ou) + As; // X shift right logical Y
-              //4'b1110:                            // reserved
-              //4'b1111:                            // reserved
+                4'b0000: i_rhs =  (X  |  O) + A; // X bitwise or Y
+                4'b0001: i_rhs =  (X  &  O) + A; // X bitwise and Y
+                4'b0010: i_rhs =  (X  +  O) + A; // X add Y
+                4'b0011: i_rhs =  (X  *  O) + A; // X multiply Y
+              //4'b0100:                         // reserved
+                4'b0101: i_rhs =  (X  << O) + A; // X shift left Y
+                4'b0110: i_rhs = -(X  <  O) + A; // X compare < Y
+                4'b0111: i_rhs = -(X  == O) + A; // X compare == Y
+                4'b1000: i_rhs = -(X  >  O) + A; // X compare > Y
+                4'b1001: i_rhs =  (X  &~ O) + A; // X bitwise and complement Y
+                4'b1010: i_rhs =  (X  ^  O) + A; // X bitwise xor Y
+                4'b1011: i_rhs =  (X  -  O) + A; // X subtract Y
+                4'b1100: i_rhs =  (X  ^ ~O) + A; // X xor ones' complement Y
+                4'b1101: i_rhs =  (X  >> O) + A; // X shift right logical Y
+                4'b1110: i_rhs = -(X  != O) + A; // X compare <> Y
+              //4'b1111:                         // reserved
 
                 default: i_rhs = 32'bx;
             endcase
@@ -235,7 +230,7 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
         if (reset_n) begin
             rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
             //if (!lhalt && state_valid)
-            //    manual_invalidate = illegal;
+                //manual_invalidate = illegal;
         end
     end
 

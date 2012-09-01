@@ -38,16 +38,16 @@
 //  0011 = X multiply Y
 //  0100 = reserved
 //  0101 = X shift left Y
-//  0110 = X compare <= Y
+//  0110 = X compare < Y
 //  0111 = X compare == Y
-//  1000 = X bitwise nor Y
-//  1001 = X bitwise nand Y
+//  1000 = X compare > Y
+//  1001 = X bitwise and complement Y
 //  1010 = X bitwise xor Y
-//  1011 = X add two's complement Y
+//  1011 = X subtract Y
 //  1100 = X xor ones' complement Y
 //  1101 = X shift right logical Y
-//  1110 = X compare > Y
-//  1111 = X compare <> Y
+//  1110 = X compare != Y
+//  1111 = reserved
 
 #ifndef OPS_H_
 #define OPS_H_
@@ -108,10 +108,10 @@ enum op {
     OP_COMPARE_LT          = 0x6,
     OP_COMPARE_EQ          = 0x7,
     OP_COMPARE_GT          = 0x8,
-    OP_BITWISE_NAND        = 0x9,
+    OP_BITWISE_ANDN        = 0x9,
     OP_BITWISE_XOR         = 0xa,
-    OP_ADD_NEGATIVE_Y      = 0xb,
-    OP_XOR_INVERT_X        = 0xc,
+    OP_SUBTRACT            = 0xb,
+    OP_BITWISE_XORN        = 0xc,
     OP_SHIFT_RIGHT_LOGICAL = 0xd,
     OP_COMPARE_NE          = 0xe,
 

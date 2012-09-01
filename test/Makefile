@@ -24,5 +24,5 @@ clean:
 	$(RM) $(CLEANFILES)
 
 clobber: clean
-	$(RM) *.to
+	$(RM) *.to *.texe
 

@@ -5,8 +5,9 @@
 // should be a list of addresses of code to run, ending with EXIT.
 
 .set link, 0
+.global __zero
+__zero:
 __boot:
-    BAS <- p - .
     S   <- [reloc(_PSPinit)]
     R   <- [reloc(_RSPinit)]
     push(R,reloc(_done))
@@ -21,7 +22,7 @@ _RSPinit:   .word   0x00ffffff
     .global NEXT
 NEXT:
     W  <- [I]
-    W  <-  W + BAS
+    W  <-  rel(W)
     I  <-  I + 1
     X  <- [W]
     jmp(X)

@@ -1,16 +1,70 @@
 #ifndef COMMON_TAS_
 #define COMMON_TAS_
 
-#define rel(Label)          p + (@Label - .)
+// The stack-setup prologue assumes o points just above a usable stack space.
+// For bare-metal applications, this will be address zero if o has not been
+// written, so the stack will start at -1 (0xffffffff).
+#define prologue            o <- o - 1
+
+#define rel(Label)          reloff(Label,0)
+#define reloff(Label,Off)   p + (@Label - (. + 1 - (Off)))
 #define goto(Label)         p <- rel(Label)
-#define call(Target)        [o] <- p + 3 ; o <- o - 1 ; goto(Target)
-#define jnzrel(Cond,Label)  n <- (@Label - (. + 3)) ; n <- Cond & n ; p <- p + n + 1
-#define jzrel(Cond,Label)   Cond <- ~ Cond ; jnzrel(Cond,Label)
-#define push(Reg)           Reg -> [o] ; o <- o - 1
+#define call(Target)        push(p + 2); goto(Target)
+// XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
+#define jnzrel(Cond,Label)  p <- Cond &  (@Label - . - 1) + p
+#define jzrel(Cond,Label)   p <- Cond &~ (@Label - . - 1) + p
+#define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
-#define prologue            f <- p - . ; o <- -1
-#define inv(Reg)            Reg ^~ a
+
+// arguments pushed in the order specified
+#define pushall(...)        o <- o - (_narg(__VA_ARGS__)) ; _paste(_push_,_narg(__VA_ARGS__))(_narg(__VA_ARGS__),__VA_ARGS__)
+// arguments popped in the reverse of the order specified
+#define popall(...)         _paste(_pop_,_narg(__VA_ARGS__))(_narg(__VA_ARGS__),__VA_ARGS__) ; o <- o + (_narg(__VA_ARGS__))
+
+// ---
+
+#define _paste(X,Y)         _paste_(X,Y)
+#define _paste_(X,Y)        X ## Y
+
+#define _push_op(Off,Reg)       Reg -> [o + (Off)]
+#define _push_0(...)            /* no-op */
+#define _push_1(Off,Reg,...)    _push_op(Off,Reg) ; _push_0( (Off) - 1,__VA_ARGS__)
+#define _push_2(Off,Reg,...)    _push_op(Off,Reg) ; _push_1( (Off) - 1,__VA_ARGS__)
+#define _push_3(Off,Reg,...)    _push_op(Off,Reg) ; _push_2( (Off) - 1,__VA_ARGS__)
+#define _push_4(Off,Reg,...)    _push_op(Off,Reg) ; _push_3( (Off) - 1,__VA_ARGS__)
+#define _push_5(Off,Reg,...)    _push_op(Off,Reg) ; _push_4( (Off) - 1,__VA_ARGS__)
+#define _push_6(Off,Reg,...)    _push_op(Off,Reg) ; _push_5( (Off) - 1,__VA_ARGS__)
+#define _push_7(Off,Reg,...)    _push_op(Off,Reg) ; _push_6( (Off) - 1,__VA_ARGS__)
+#define _push_8(Off,Reg,...)    _push_op(Off,Reg) ; _push_7( (Off) - 1,__VA_ARGS__)
+#define _push_9(Off,Reg,...)    _push_op(Off,Reg) ; _push_8( (Off) - 1,__VA_ARGS__)
+#define _push_10(Off,Reg,...)   _push_op(Off,Reg) ; _push_9( (Off) - 1,__VA_ARGS__)
+#define _push_11(Off,Reg,...)   _push_op(Off,Reg) ; _push_10((Off) - 1,__VA_ARGS__)
+#define _push_12(Off,Reg,...)   _push_op(Off,Reg) ; _push_11((Off) - 1,__VA_ARGS__)
+#define _push_13(Off,Reg,...)   _push_op(Off,Reg) ; _push_12((Off) - 1,__VA_ARGS__)
+#define _push_14(Off,Reg,...)   _push_op(Off,Reg) ; _push_13((Off) - 1,__VA_ARGS__)
+#define _push_15(Off,Reg,...)   _push_op(Off,Reg) ; _push_14((Off) - 1,__VA_ARGS__)
+
+#define _pop_op(Off,Reg)        Reg <- [o + (Off)]
+#define _pop_0(...)             /* no-op */
+#define _pop_1(Off,Reg,...)     _pop_0( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_2(Off,Reg,...)     _pop_1( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_3(Off,Reg,...)     _pop_2( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_4(Off,Reg,...)     _pop_3( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_5(Off,Reg,...)     _pop_4( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_6(Off,Reg,...)     _pop_5( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_7(Off,Reg,...)     _pop_6( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_8(Off,Reg,...)     _pop_7( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_9(Off,Reg,...)     _pop_8( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_10(Off,Reg,...)    _pop_9( (Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_11(Off,Reg,...)    _pop_10((Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_12(Off,Reg,...)    _pop_11((Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_13(Off,Reg,...)    _pop_12((Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_14(Off,Reg,...)    _pop_13((Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+#define _pop_15(Off,Reg,...)    _pop_14((Off) - 1,__VA_ARGS__) ; _pop_op(Off,Reg)
+
+#define _narg(...) _narg_impl(__VA_ARGS__,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)
+#define _narg_impl(_0,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,...) _15
 
 #endif
 

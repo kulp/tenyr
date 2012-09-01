@@ -13,7 +13,7 @@ syn keyword tenyrRegister a b c d e f g h i j k l m n o p
 syn keyword tenyrDelim '[[]' '[]]'
 
 "syn keyword tenyrArrow <- ->
-syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|>>\|<>\|==\|^\~\|\~&\)\([[:space:]]\|$\)\@='
+syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|>>\|<>\|==\|\^\~\|&\~\)\([[:space:]]\|$\)\@='
 syn match tenyrArrow '<-\|->'
 
 syn match tenyrDirective '\.\(global\|word\|set\)'
@@ -23,6 +23,7 @@ syn keyword tenyrTodo illegal
 syn keyword tenyrTodo contained TODO FIXME XXX NOTE
 syn region tenyrComment start='#' end='$' contains=tenyrTodo
 syn region tenyrComment start='//' end='$' contains=tenyrTodo
+syn region tenyrComment start="/\*" end="\*/" contains=tenyrTodo extend
 
 syn match tenyrLabel '\w\+:'
 syn match tenyrLocal '\.L\w\+:'

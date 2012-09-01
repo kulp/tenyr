@@ -25,13 +25,14 @@
 
 #define NO_NAMED_RELOC 2
 
-static const char shortopts[] = "df:o:s" "hV";
+static const char shortopts[] = "df:o:sv" "hV";
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
     { "format"      , required_argument, NULL, 'f' },
     { "output"      , required_argument, NULL, 'o' },
     { "strict"      ,       no_argument, NULL, 's' },
+    { "verbose"     ,       no_argument, NULL, 'v' },
 
     { "help"        ,       no_argument, NULL, 'h' },
     { "version"     ,       no_argument, NULL, 'V' },
@@ -62,12 +63,13 @@ static int usage(const char *me)
     make_format_list(format_has_output, tenyr_asm_formats_count, tenyr_asm_formats,
             sizeof format_list, format_list, ", ");
 
-    printf("Usage:\n"
-           "  %s [ OPTIONS ] assembly-or-image-file [ assembly-or-image-file ... ] \n"
+    printf("Usage: %s [ OPTIONS ] file [ file ... ] \n"
+           "Options:\n"
            "  -d, --disassemble     disassemble (default is to assemble)\n"
            "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"
            "  -s, --strict          disable syntax sugar in disassembly\n"
+           "  -v, --verbose         disable simplified disassembly output\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string '%s'\n"
            , me, format_list, version());
@@ -256,6 +258,8 @@ static void ce_free(struct const_expr *ce, int recurse)
 
 static int fixup_deferred_exprs(struct parse_data *pd)
 {
+    int rc = 0;
+
     list_foreach(deferred_expr, r, pd->defexprs) {
         struct const_expr *ce = r->ce;
 
@@ -263,6 +267,17 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         if (ce_eval(pd, ce->insn, NULL, ce, 0, sym_reloc_handler, &r->width, &result)) {
             uint32_t mask = ~(((1ULL << (r->width - 1)) << 1) - 1);
             result *= r->mult;
+
+            int hasupperbits = result & mask;
+            uint32_t semask = -1 << (r->width - 1);
+            int notsignextended = (result & semask) != semask;
+
+            if (hasupperbits && notsignextended) {
+                debug(0, "Expression resulting in value %#x is too large for "
+                        "%d-bit signed immediate field", result, r->width);
+                rc |= 1;
+            }
+
             *r->dest &= mask;
             *r->dest |= result & ~mask;
             ce_free(ce, 1);
@@ -274,7 +289,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         free(r);
     }
 
-    return 0;
+    return rc;
 }
 
 static int mark_globals(struct symbol_list *symbols, struct global_list *globals)
@@ -394,6 +409,8 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
 
         if (f->fini)
             f->fini(out, &ud);
+    } else {
+        fatal(0, "Error while fixing up deferred expressions");
     }
 
     assembly_cleanup(pd);
@@ -453,22 +470,29 @@ int main(int argc, char *argv[])
     int disassemble = 0;
     int flags = 0;
 
+    char outfname[1024] = { 0 };
+    FILE * volatile out = stdout;
+
     const struct format *f = &tenyr_asm_formats[0];
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
+        if (outfname[0] && out)
+            // Technically there is a race condition here ; we would like to be
+            // able to remove a file by a stream connected to it, but there is
+            // apparently no portable way to do this.
+            remove(outfname);
         return EXIT_FAILURE;
     }
-
-    FILE *out = stdout;
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
-            case 'o': out = fopen(optarg, "wb"); break;
+            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); break;
             case 'd': disassemble = 1; break;
             case 's': flags |= ASM_NO_SUGAR; break;
+            case 'v': flags |= ASM_VERBOSE; break;
             case 'f': {
                 size_t sz = tenyr_asm_formats_count;
                 f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
@@ -532,6 +556,7 @@ int main(int argc, char *argv[])
     }
 
     fclose(out);
+    out = NULL;
 
     return rc;
 }
