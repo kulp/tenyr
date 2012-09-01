@@ -15,15 +15,6 @@ struct guest_ops {
 };
 
 typedef int EXPORT_CALLING library_init(struct guest_ops *ops);
-typedef int EXPORT_CALLING plugin_init(void *pcookie);
-typedef int EXPORT_CALLING plugin_mem_op(void *ud, int op, uint32_t addr, uint32_t *data);
-typedef int EXPORT_CALLING plugin_fini(void *cookie);
-
-struct plugin_ops {
-    plugin_init     *init;
-    plugin_mem_op   *mem_op;
-    plugin_fini     *fini;
-} ops;
 
 // this is called by plugin hosts
 int tenyr_plugin_host_init(void *libhandle);
