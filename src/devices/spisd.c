@@ -12,9 +12,6 @@
 
 #define RESET_CYCLE_REQ 50  ///< arbitrary
 
-void (*fatal_)(int code, const char *file, int line, const char *func, const char *fmt, ...);
-void (*debug_)(int level, const char *file, int line, const char *func, const char *fmt, ...);
-
 struct spisd_state {
     enum {
         SPISD_INVALID = 0,

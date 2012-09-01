@@ -82,6 +82,8 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BU
 tas.o asm.o tsim.o sim.o ffi.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
 ffi.o asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
+# link plugin-common data and functions into every plugin
+$(PDEVLIBS): pluginimpl,dy.o
 
 # flex-generated code we can't control warnings of as easily
 $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
@@ -170,7 +172,7 @@ else
 	@$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 endif
 
-$(PDEVOBJS): %,dy.o: %.c
+pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
 ifneq ($(MAKE_VERBOSE),)
 	$(COMPILE.c) -o $@ $<
 else
@@ -180,9 +182,9 @@ endif
 
 $(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
 ifneq ($(MAKE_VERBOSE),)
-	$(LINK.c) -shared -o $@ $< $(LDLIBS)
+	$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 else
 	@echo "[ DYLD ] $@"
-	@$(LINK.c) -shared -o $@ $< $(LDLIBS)
+	@$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 endif
 
