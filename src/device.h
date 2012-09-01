@@ -1,10 +1,11 @@
-#ifndef DEVICES_H_
-#define DEVICES_H_
+#ifndef DEVICE_H_
+#define DEVICE_H_
 
 #include <stdint.h>
 
+struct sim_state;
+
 #include "common.h"
-#include "sim.h"
 
 typedef int map_init(struct sim_state *s, void *cookie, ...);
 typedef int map_op(struct sim_state *s, void *cookie, int op, uint32_t addr, uint32_t *data);

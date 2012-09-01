@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "device.h"
+#include "sim.h"
 #include "ram.h"
 
 // Allocate space by roughly a page-size (although since there is overhead the

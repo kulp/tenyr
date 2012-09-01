@@ -5,6 +5,7 @@
 #include "machine.h"
 #include "asm.h"
 #include "plugin.h"
+#include "device.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -50,7 +51,7 @@ struct sim_state {
     struct {
         struct plugin {
             void *cookie;
-            struct plugin_ops ops;
+            struct device_ops ops;
         } *impls;
     } *plugins;
 

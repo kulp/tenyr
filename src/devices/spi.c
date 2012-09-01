@@ -15,6 +15,7 @@
 #include "common.h"
 #include "device.h"
 #include "spi.h"
+#include "sim.h"
 
 #define SPI_BASE    0x200
 #define SPI_LEN     (0x7 * 4) /* seven registers at four addresses each) */

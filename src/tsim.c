@@ -106,14 +106,14 @@ static int recipe_plugin(struct sim_state *s)
             char buf[64];                                           \
             snprintf(buf, sizeof buf, "%s_"#Stem, implstem);        \
             void *ptr = dlsym(libhandle, buf);                      \
-            s->plugins->impls[inst].ops.Stem = ALIASING_CAST(plugin_##Stem,ptr);  \
+            s->plugins->impls[inst].ops.Stem = ALIASING_CAST(map_##Stem,ptr);  \
         } while (0)                                                 \
         //
 
         tenyr_plugin_host_init(libhandle);
 
-        GET_CB(mem_op);
-        if (!s->plugins->impls[inst].ops.mem_op) {
+        GET_CB(op);
+        if (!s->plugins->impls[inst].ops.op) {
             const char *err = dlerror();
             if (err)
                 fatal(0, "Failed to locate mem_op cb for '%s' ; %s", implstem, err);
@@ -125,7 +125,7 @@ static int recipe_plugin(struct sim_state *s)
         GET_CB(fini);
 
         if (s->plugins->impls[inst].ops.init)
-            if (s->plugins->impls[inst].ops.init(&s->plugins->impls[inst].cookie))
+            if (s->plugins->impls[inst].ops.init(s, &s->plugins->impls[inst].cookie))
                 debug(1, "SPI attached instance %d returned nonzero from init()", inst);
 
         // if RTLD_NODELETE worked and were standard, we would dlclose() here

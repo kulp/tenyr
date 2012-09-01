@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "device.h"
+#include "sim.h"
 
 #define SERIAL_BASE (1ULL << 5)
 

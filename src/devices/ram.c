@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "device.h"
+#include "sim.h"
 #include "ram.h"
 
 struct ram_state {
