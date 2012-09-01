@@ -39,9 +39,11 @@ int serial_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { SERIAL_BASE, SERIAL_BASE + 1 },
-        .op = serial_op,
-        .init = serial_init,
-        .fini = serial_fini,
+        .ops = {
+            .op = serial_op,
+            .init = serial_init,
+            .fini = serial_fini,
+        },
     };
 
     return 0;

@@ -16,7 +16,7 @@ static int debugwrap_init(struct sim_state *s, void *cookie, ...)
     // our own init done in debugwrap_add_device ()
     struct debugwrap_state *debugwrap = *(void**)cookie;
     // TODO varargs ?
-    debugwrap->wrapped->init(s, &debugwrap->wrapped->cookie);
+    debugwrap->wrapped->ops.init(s, &debugwrap->wrapped->cookie);
     return 0;
 }
 
@@ -24,7 +24,7 @@ static int debugwrap_fini(struct sim_state *s, void *cookie)
 {
     // TODO destroy wrapped device ? or unwrap somehow ?
     struct debugwrap_state *debugwrap = cookie;
-    debugwrap->wrapped->fini(s, debugwrap->wrapped->cookie);
+    debugwrap->wrapped->ops.fini(s, debugwrap->wrapped->cookie);
     free(debugwrap);
 
     return 0;
@@ -36,7 +36,7 @@ static int debugwrap_op(struct sim_state *s, void *cookie, int op, uint32_t addr
     struct debugwrap_state *debugwrap = cookie;
     assert(("Address within address space", !(addr & ~PTR_MASK)));
 
-    debugwrap->wrapped->op(s, debugwrap->wrapped->cookie, op, addr, data);
+    debugwrap->wrapped->ops.op(s, debugwrap->wrapped->cookie, op, addr, data);
     printf("%-5s @ 0x%06x = %#x\n", op ? "write" : "read", addr, *data);
 
     return 0;
@@ -49,9 +49,11 @@ int debugwrap_add_device(struct device **device, struct device *wrap)
 
     **device = (struct device){
         .bounds = { wrap->bounds[0], wrap->bounds[1] },
-        .op = debugwrap_op,
-        .init = debugwrap_init,
-        .fini = debugwrap_fini,
+        .ops = {
+            .op = debugwrap_op,
+            .init = debugwrap_init,
+            .fini = debugwrap_fini,
+        },
         .cookie = debugwrap,
     };
 

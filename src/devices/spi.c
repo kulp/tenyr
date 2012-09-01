@@ -365,10 +365,12 @@ int spi_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { SPI_BASE, SPI_END },
-        .op = spi_op,
-        .init = spi_emu_init,
-        .fini = spi_emu_fini,
-        .cycle = spi_emu_cycle,
+        .ops = {
+            .op = spi_op,
+            .init = spi_emu_init,
+            .fini = spi_emu_fini,
+            .cycle = spi_emu_cycle,
+        },
     };
 
     return 0;

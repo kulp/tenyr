@@ -13,10 +13,12 @@ typedef int map_fini(struct sim_state *s, void *cookie);
 
 struct device {
     uint32_t bounds[2]; // lower and upper memory bounds, inclusive
-    map_init *init;
-    map_op *op;
-    map_cycle *cycle;
-    map_fini *fini;
+    struct device_ops {
+        map_init *init;
+        map_op *op;
+        map_cycle *cycle;
+        map_fini *fini;
+    } ops;
     void *cookie;
 };
 

@@ -50,9 +50,11 @@ int ram_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { RAM_BASE, RAM_END },
-        .op = ram_op,
-        .init = ram_init,
-        .fini = ram_fini,
+        .ops = {
+            .op = ram_op,
+            .init = ram_init,
+            .fini = ram_fini,
+        },
     };
 
     return 0;

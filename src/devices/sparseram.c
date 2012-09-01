@@ -97,9 +97,11 @@ int sparseram_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { RAM_BASE, RAM_END },
-        .op = sparseram_op,
-        .init = sparseram_init,
-        .fini = sparseram_fini,
+        .ops = {
+            .op = sparseram_op,
+            .init = sparseram_init,
+            .fini = sparseram_fini,
+        },
     };
 
     return 0;
