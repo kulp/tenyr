@@ -115,16 +115,16 @@ module Decode(input[31:0] insn, input en,
 
 endmodule
 
-module Exec(input clk, input en, output[31:0] rhs,
-            input[31:0] X, input[31:0] Y, input[11:0] I,
+module Exec(input clk, input en, output signed[31:0] rhs,
+            input signed[31:0] X, input signed[31:0] Y, input signed[11:0] I,
             input[3:0] op, input type, input valid);
 
     assign rhs = valid ? i_rhs : 32'b0;
-    reg[31:0] i_rhs = 0;
+    reg signed[31:0] i_rhs = 0;
 
-    wire[31:0] J = { {20{I[11]}}, I };
-    wire[31:0] O = (type == 0) ? Y : J;
-    wire[31:0] A = (type == 0) ? J : Y;
+    wire signed[31:0] J = { {20{I[11]}}, I };
+    wire signed[31:0] O = (type == 0) ? Y : J;
+    wire signed[31:0] A = (type == 0) ? J : Y;
 
     always @(negedge clk) if (en) begin
         if (valid) begin
