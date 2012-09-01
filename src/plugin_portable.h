@@ -28,10 +28,5 @@ struct plugin_ops {
 // this is called by plugin hosts
 int tenyr_plugin_host_init(void *libhandle);
 
-// signal to other includes that we are in plugin mode
-#ifndef TENYR_PLUGIN
-#define TENYR_PLUGIN 1
-#endif
-
 #endif
 

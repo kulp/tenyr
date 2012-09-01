@@ -1,4 +1,3 @@
-#define TENYR_PLUGIN 0
 #include "plugin.h"
 
 #include "ops.h"
