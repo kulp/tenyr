@@ -7,7 +7,6 @@
 //          I   is in I
 //          S   is in D
 //          R   is in J
-// relocation offset is in F
 // alternate (C) stack is in O
 // temporaries : B C E G H L N
 
@@ -20,12 +19,11 @@
 #define T0  B
 #define T1  C
 #define T2  E
-#define T3  G
-#define T4  H
-#define T5  L
-#define T6  N
-
-#define BAS F
+#define T3  F
+#define T4  G
+#define T5  H
+#define T6  L
+#define T7  N
 
 // save and restore Forth registers on a stack, for calling other ABIs
 #define pushregs(o) push(o,W)   \
@@ -40,18 +38,18 @@
                      pop(o,X)   \
                      pop(o,W)
 
-#define jmp(Reg)    p <- Reg + BAS
-#define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 3); goto(Loc) ; popregs(o)
+#define jmp(Reg)    p <- Reg - (. + 1) + p
+#define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 2); goto(Loc) ; popregs(o)
 
-#define reloc(Label)        BAS + @Label
+#define reloc(Label)        p + (@Label - (. + 1))
+#define rel(X)              X + p + (@__zero - . - 1)
+#define unrel(X)            X - p + (. + 1)
 #define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
-#define iftrue(Predicate,Temporary,Target) \
-    Temporary <- BAS - P + (@Target - 3) ; \
-    Temporary <- Temporary & Predicate ; \
-    P <- P + Temporary + 1
+#define iftrue(Predicate,Target) \
+    P <- Predicate & (@Target - . - 1) + P
 
 // .global for L##Label_{exec,compile} is a hack to allow linking to succeed
 // for forward references

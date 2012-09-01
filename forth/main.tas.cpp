@@ -111,7 +111,7 @@ head(GET_RSP,GET_RSP): .word . + 1
 
 head(RELOC,RELOC): .word . + 1
     W   <- [S + 1]
-    W   <- W + BAS
+    W   <- rel(W)
     W   -> [S + 1]
     goto(NEXT)
 

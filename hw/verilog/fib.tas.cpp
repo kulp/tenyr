@@ -12,10 +12,21 @@
 
 _start:
     f <- p - .          // base pointer
-    c <- ARGUMENT       // argument
+    c <- 1              // argument
     o <- 1023           // stack pointer
+loop:
+    push(c)
     call(fib)
-    b -> [0x100]
+    pop(c)
+    c -> [0x100]
+    //c -> [0x101]
+    //b -> d
+    push(c)
+    c <- b
+    call(say)
+    pop(c)
+    c <- c + 1
+    goto(loop)
     illegal
 
 fib:
@@ -38,4 +49,27 @@ _recurse:
     b <- d + b
 
     ret
+
+say:
+    h <- 0x100
+    h <- h << 8         // h is video base
+    k <- 0x30           // k is offset into display (32)
+    i <- rel(hexes)     // i is base of hex transform
+
+sayloop:
+    m <- h + k          // m is (k - 16) characters past start of text region
+    l <- c == 0         // shall we loop ?
+    jnzrel(l,saydone)
+    j <- [c & 0xf + i]  // j is character for bottom 4 bits of c
+    [m] <- j            // write character to display
+    k <- k - 1          // go to the left one character
+    c <- c >> 4         // shift down for next iteration
+    goto(sayloop)
+
+saydone:
+    ret
+
+hexes:
+    .word '0', '1', '2', '3', '4', '5', '6', '7'
+    .word '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
 

@@ -8,6 +8,5 @@ NET "vgaGreen<1>" LOC = T6; # Bank = 2, pin name = IO_L45P, Sch name = GRN1
 NET "vgaGreen<2>" LOC = V6; # Bank = 2, pin name = IO_L45N, Sch name = GRN2
 NET "vgaBlue<1>" LOC = R7; # Bank = 2, pin name = IO_L46P, Sch name = BLU1
 NET "vgaBlue<2>" LOC = T7; # Bank = 2, pin name = IO_L46N, Sch name = BLU2
-
 NET "hsync" LOC = "N6" ;
 NET "vsync" LOC = "P7" ;

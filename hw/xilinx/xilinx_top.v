@@ -2,13 +2,9 @@
 `timescale 1ms/10us
 
 `define VGA
-`undef  SERIAL
+`define SEG7
 
-module Tenyr(halt,
-`ifdef ISIM
-        reset_n,
-`endif
-        clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync, Led);
+module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync, Led);
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, in_data, out_data, operand_data;
     wire operand_rw;
@@ -38,15 +34,10 @@ module Tenyr(halt,
     assign operand_data = !operand_rw ?     out_data : 32'bz;
 
     wire phases_valid;
-`ifdef ISIM
-    input reset_n;
-`else
     reg reset_n = 1;
-`endif
-    wire clk_core0, clk_core90, clk_core180, clk_core270;
-	wire clk_datamem = clk_core180;
-	wire clk_insnmem = clk_core0;
     wire clk_vga;
+    `ifdef OLDCLOCK
+    wire clk_core0, clk_core90, clk_core180, clk_core270;
     tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
                            .in(clk),
                            .clk_core0(clk_core0), .clk_core0_CE(phases_valid),
@@ -54,37 +45,49 @@ module Tenyr(halt,
                            .clk_core180(clk_core180), .clk_core180_CE(phases_valid),
                            .clk_core270(clk_core270), .clk_core270_CE(phases_valid),
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
+    `else
+    tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
+                           .in(clk),
+                           .clk_core0(clk_core_base), .clk_core0_CE(phases_valid),
+                           .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
+    reg clk_core0   = 1,
+        clk_core90  = 0,
+        clk_core180 = 0,
+        clk_core270 = 0;
+    `endif
+    wire clk_datamem = clk_core180;
+    wire clk_insnmem = clk_core0;
+
+    always @(negedge clk_core_base) begin
+        {clk_core270,clk_core180,clk_core90,clk_core0} = {clk_core180,clk_core90,clk_core0,clk_core270};
+    end
 
     assign halt[`HALT_TENYR] = ~phases_valid;
     assign Led[2:0] = halt;
 
+    // TODO pull out constant or pull out RAM
+    wire ram_inrange = operand_addr < 1024;
     // active on posedge clock
-    GenedBlockMem ram(.clka(~clk_datamem), .wea(operand_rw), .addra(operand_addr),
+    GenedBlockMem ram(.clka(~clk_datamem),
+                      .ena(ram_inrange), .wea(operand_rw), .addra(operand_addr),
                       .dina(in_data), .douta(out_data),
-                      .clkb(~clk_insnmem), .web(1'b0), .addrb(insn_addr),
+                      .clkb(~clk_insnmem),
+                      /*.enb(1'b1),*/ .web(1'b0), .addrb(insn_addr),
                       .dinb(32'bx), .doutb(insn_data));
 
-`ifdef SERIAL
-    Serial serial(.clk(clk_datamem), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
-                  .rw(operand_rw), .addr(operand_addr),
-                  .data(operand_data), .txd(txd), .rxd(rxd));
-    Serial serial2(.clk(clk_datamem), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
-                  .rw(operand_rw), .addr(operand_addr),
-                  .data(operand_data), .rxd(txd));
-`endif
-
+`ifdef SEG7
     Seg7 #(.BASE(12'h100))
              seg7(.clk(clk_datamem), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .seg(seg), .an(an));
+`endif
 
     Core core(.clk0(clk_core0), .clk90(clk_core90), .clk180(clk_core180), .clk270(clk_core270),
-			  .en(phases_valid),
+              .en(phases_valid),
               .reset_n(reset_n), .rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),
               .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));
 
-`ifndef SIM
 `ifdef VGA
 
     wire[7:0] crx; // 1-based ?
@@ -133,13 +136,21 @@ module Tenyr(halt,
         .clka  (clk_vga),
         .dina  ('bz),
         .addra (ram_adA),
-        .wea   (1'b0),
         .douta (ram_doA),
+        .wea   (1'b0),
+`ifdef DISABLE_TEXTRAM
+        .clkb  ('b0),
+        .dinb  ('bz),
+        .addrb ('bz),
+        .web   ('b0),
+        .doutb (nonce_doutb)
+`else
         .clkb  (clk_datamem),
         .dinb  (operand_data),
         .addrb (operand_addr),
         .web   (operand_rw),
         .doutb (operand_data)
+`endif
     );
 
     fontrom font(
@@ -148,7 +159,6 @@ module Tenyr(halt,
         .douta (rom_doA)
     );
 
-`endif
 `endif
 
 endmodule

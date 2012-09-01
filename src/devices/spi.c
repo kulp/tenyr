@@ -284,7 +284,8 @@ static int spi_slave_cycle(struct spi_state *spi)
             push = (spi->regs.raw[(width - 1) / 32] & (1 << inword)) >> inword;
         }
 
-        assert(("SPI pushed bit is 0 or 1", (push == 0 || push == 1)));
+        if (push != 0 && push != 1)
+            breakpoint("SPI pushed bit is %d, expected 0 or 1", push);
     }
 
     for (int inst = 0; inst < NINST; inst++) {
@@ -315,7 +316,8 @@ static int spi_slave_cycle(struct spi_state *spi)
                 case SPI_EMU_BUSY: {
                     if (ops->clock(cookie, 1, push, &pull))
                         debug(1, "SPI attached instance %d returned nonzero from clock()", inst);
-                    assert(("SPI generated bit is 0 or 1", (pull == 0 || pull == 1)));
+                    if (pull != 0 && pull != 1)
+                        breakpoint("SPI generated bit is %d, expected 0 or 1", pull);
                     do_one_shift(spi, width, pull);
 
                     if (!--spi->remaining)

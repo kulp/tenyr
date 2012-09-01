@@ -17,4 +17,10 @@ fontrom/
 GenedBlockMem
 *_flist.txt
 *_xmdf.tcl
-tenyr_clocks.ejp
+*.ejp
+*.cgc
+*.bld
+*.ngd
+*.ngr
+*.stx
+*.xbcd

@@ -10,16 +10,16 @@ gcd:
   b <- d
   k <- c == 0
   jnzrel(k, done)
-  
+
   b <- c
 
 loop:
   k <- d == 0
   jnzrel(k, done)
-  
+
   k <- b > d
   jnzrel(k, else)
-  
+
   d <- d - b
   goto(loop)
 
