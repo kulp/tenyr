@@ -9,7 +9,7 @@
 
 #define SERIAL_BASE (1ULL << 5)
 
-static int serial_init(void *cookie, ...)
+static int serial_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
     return 0;
 }

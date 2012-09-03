@@ -95,7 +95,7 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.SS          = 0x00000000;
 }
 
-static int spi_emu_init(void *cookie, ...)
+static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
     struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
 
@@ -104,13 +104,13 @@ static int spi_emu_init(void *cookie, ...)
     memset(spi->impls, 0, sizeof spi->impls);
 
     const char *implname = NULL;
-    if (param_get(s, "spi.impl", &implname)) {
+    if (gops->param_get(hostcookie, "spi.impl", &implname)) {
         int inst = 0; // TODO support more than one instance
         // If implname contains a slash, treat it as a path ; otherwise, stem
         char buf[256];
         const char *implpath = NULL;
         const char *implstem = NULL;
-        param_get(s, "spi.implstem", &implstem); // may not be set ; that's OK
+        param_get(hostcookie, "spi.implstem", &implstem); // may not be set ; that's OK
         if (strchr(implname, PATH_SEPARATOR_CHAR)) {
             implpath = implname;
         } else {

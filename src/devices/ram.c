@@ -14,7 +14,7 @@ struct ram_state {
     int32_t mem[RAM_END + 1];
 };
 
-static int ram_init(void *cookie, ...)
+static int ram_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
     struct ram_state *ram = *(void**)cookie = malloc(sizeof *ram);
 //    if (s->conf.should_init)

@@ -75,13 +75,13 @@ static int recipe_plugin(struct sim_state *s)
 {
     const char *implname = NULL;
 
-    if (param_get(s, "plugin.impl[0]", &implname)) {
+    if (param_get(&s->conf.params, "plugin.impl[0]", &implname)) {
         int inst = 0; // TODO support more than one instance
         // If implname contains a slash, treat it as a path ; otherwise, stem
         char buf[256];
         const char *implpath = NULL;
         const char *implstem = NULL;
-        param_get(s, "plugin.impl[0].stem", &implstem); // may not be set ; that's OK
+        param_get(&s->conf.params, "plugin.impl[0].stem", &implstem); // may not be set ; that's OK
         if (strchr(implname, PATH_SEPARATOR_CHAR)) {
             implpath = implname;
         } else {
@@ -126,7 +126,7 @@ static int recipe_plugin(struct sim_state *s)
         GET_CB(fini);
 
         if (s->plugins->impls[inst].ops.init)
-            if (s->plugins->impls[inst].ops.init(s, &s->plugins->impls[inst].cookie))
+            if (s->plugins->impls[inst].ops.init(&s->conf.gops, &s->plugin_cookie, &s->plugins->impls[inst].cookie, 0))
                 debug(1, "SPI attached instance %d returned nonzero from init()", inst);
 
         // if RTLD_NODELETE worked and were standard, we would dlclose() here
@@ -311,7 +311,7 @@ static int devices_finalise(struct sim_state *s)
 
     for (unsigned i = 0; i < s->machine.devices_count; i++)
         if (s->machine.devices[i])
-            s->machine.devices[i]->ops.init(s, &s->machine.devices[i]->cookie);
+            s->machine.devices[i]->ops.init(&s->conf.gops, &s->plugin_cookie, &s->machine.devices[i]->cookie, 0);
 
     return 0;
 }
@@ -332,7 +332,7 @@ static int devices_dispatch_cycle(struct sim_state *s)
 {
     for (size_t i = 0; i < s->machine.devices_count; i++)
         if (s->machine.devices[i]->ops.cycle)
-            if (s->machine.devices[i]->ops.cycle(s, s->machine.devices[i]->cookie))
+            if (s->machine.devices[i]->ops.cycle(s->machine.devices[i]->cookie))
                 return 1;
 
     return 0;
@@ -630,80 +630,6 @@ int set_format(struct sim_state *s, const char *optarg, const struct format **f)
     return !*f;
 }
 
-void param_free(struct param_entry *p)
-{
-    free(p->key);
-    if (p->free_value)
-        free(p->value);
-}
-
-int params_cmp(const void *_a, const void *_b)
-{
-    const struct param_entry *a = _a,
-                             *b = _b;
-
-    return strcmp(a->key, b->key);
-}
-
-int param_get(struct sim_state *s, char *key, const char **val)
-{
-    struct param_entry p = { .key = key };
-
-    struct param_entry *q = lfind(&p, s->conf.params, &s->conf.params_count,
-                                        sizeof *s->conf.params, params_cmp);
-
-    if (!q)
-        return 0;
-
-    *val = q->value;
-
-    return 1;
-}
-
-int param_set(struct sim_state *s, char *key, char *val, int free_value)
-{
-    while (s->conf.params_size <= s->conf.params_count)
-        // technically there is a problem here if realloc() fails
-        s->conf.params = realloc(s->conf.params,
-                (s->conf.params_size *= 2) * sizeof *s->conf.params);
-
-    struct param_entry p = {
-        .key        = key,
-        .value      = val,
-        .free_value = free_value,
-    };
-
-    struct param_entry *q = lsearch(&p, s->conf.params, &s->conf.params_count,
-                                        sizeof *s->conf.params, params_cmp);
-
-    if (!q)
-        return 1;
-
-    if (q->key != p.key) {
-        param_free(q);
-        *q = p;
-    }
-
-    return 0;
-}
-
-int param_add(struct sim_state *s, const char *optarg)
-{
-    // We can't use getsubopt() here because we don't know what all of our
-    // options are ahead of time.
-    char *dupped = strdup(optarg);
-    char *eq = strchr(dupped, '=');
-    if (!eq) {
-        free(dupped);
-        return 1;
-    }
-
-    // Replace '=' with '\0' to split string in two
-    *eq = '\0';
-
-    return param_set(s, dupped, ++eq, 0);
-}
-
 static int parse_args(struct sim_state *s, int argc, char *argv[]);
 
 static int parse_opts_file(struct sim_state *s, const char *filename)
@@ -741,7 +667,7 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
             case 'f': if (set_format(s, optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
             case '@': parse_opts_file(s, optarg); break;
             case 'n': s->conf.run_defaults = 0; break;
-            case 'p': param_add(s, optarg); break;
+            case 'p': param_add(&s->conf.params, optarg); break;
             case 'r': add_recipe(s, optarg); break;
             case 's': s->conf.start_addr = strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
@@ -755,6 +681,18 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
     return 0;
 }
 
+int plugin_param_get(void *cookie, char *key, const char **val)
+{
+    struct plugin_cookie *c = cookie;
+    return param_get(c->param, key, val);
+}
+
+int plugin_param_set(void *cookie, char *key, char *val, int free_value)
+{
+    struct plugin_cookie *c = cookie;
+    return param_set(c->param, key, val, free_value);
+}
+
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -764,14 +702,25 @@ int main(int argc, char *argv[])
             .verbose      = 0,
             .run_defaults = 1,
             .debugging    = 0,
-            .params_size  = DEFAULT_PARAMS_COUNT,
-            .params_count = 0,
-            .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params),
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
             .fmt          = &formats[0],
+            .params = {
+                .params_size  = DEFAULT_PARAMS_COUNT,
+                .params_count = 0,
+                .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params.params),
+            },
+            .gops         = {
+                .fatal = fatal_,
+                .debug = debug_,
+                .param_get = plugin_param_get,
+                .param_set = plugin_param_set,
+            },
         },
         .dispatch_op = dispatch_op,
+        .plugin_cookie = {
+            .param = &_s.conf.params,
+        },
     }, *s = &_s;
 
     if ((rc = setjmp(errbuf))) {
@@ -823,11 +772,7 @@ int main(int argc, char *argv[])
 
     devices_teardown(s);
 
-    while (s->conf.params_count--)
-        param_free(&s->conf.params[s->conf.params_count]);
-
-    free(s->conf.params);
-    s->conf.params_size = 0;
+    param_destroy(&s->conf.params);
 
     return rc;
 }

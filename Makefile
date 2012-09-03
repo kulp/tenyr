@@ -68,7 +68,7 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
 tsim$(EXE_SUFFIX): asm.o obj.o ffi.o plugin.o \
                    $(GENDIR)/debugger_parser.o \
                    $(GENDIR)/debugger_lexer.o
-tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o
+tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o param.o
 tld$(EXE_SUFFIX): obj.o
 
 asm.o: CFLAGS += -Wno-override-init
