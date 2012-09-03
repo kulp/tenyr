@@ -121,6 +121,7 @@ static int recipe_plugin(struct sim_state *s)
                 fatal(0, "mem_op cb for '%s' is NULL ? : %s", implstem);
         }
 
+        GET_CB(cycle);
         GET_CB(init);
         GET_CB(fini);
 
