@@ -249,11 +249,12 @@ rhs_plain
     | unary_op greloc_expr /* responsible for a S/R conflict */
         { $rhs_plain = make_expr_type1(0, $unary_op, $greloc_expr, 0); }
     | greloc_expr
-        {   enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
+        {   /* When the RHS is just a constant, choose OR or ADD depending on
+             * what kind of constant this is likely to be. */
+            enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
             $rhs_plain = make_expr_type1(0, op, $greloc_expr, 0); }
     | greloc_expr '+' regname[y]
-        {   enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
-            $rhs_plain = make_expr_type1(0, op, $greloc_expr, $y); }
+        {   $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, $y); }
 
 unary_op
     : '~' { $unary_op = OP_BITWISE_XORN; }
