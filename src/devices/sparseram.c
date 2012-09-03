@@ -36,7 +36,7 @@ static int tree_compare(const void *_a, const void *_b)
     return b->base - a->base;
 }
 
-static int sparseram_init(struct sim_state *s, void *cookie, ...)
+static int sparseram_init(void *cookie, ...)
 {
     struct sparseram_state *sparseram = *(void**)cookie = malloc(sizeof *sparseram);
     sparseram->mem = NULL;
@@ -46,7 +46,7 @@ static int sparseram_init(struct sim_state *s, void *cookie, ...)
 
 TODO_TRAVERSE_(element)
 
-static int sparseram_fini(struct sim_state *s, void *cookie)
+static int sparseram_fini(void *cookie)
 {
     struct sparseram_state *sparseram = cookie;
     // tdestroy() is a glibc extension. Here we generate a list of nodes to
@@ -60,7 +60,7 @@ static int sparseram_fini(struct sim_state *s, void *cookie)
     return 0;
 }
 
-static int sparseram_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
+static int sparseram_op(void *cookie, int op, uint32_t addr,
         uint32_t *data)
 {
     struct sparseram_state *sparseram = cookie;
@@ -73,9 +73,9 @@ static int sparseram_op(struct sim_state *s, void *cookie, int op, uint32_t addr
         // useful optimisation, but we could avoid allocating a page until the
         // first write.
         struct element *node = malloc(PAGESIZE * sizeof *node->space + sizeof *node);
-        if (s->conf.should_init)
-            for (unsigned long i = 0; i < PAGESIZE; i++)
-                node->space[i] = s->conf.initval;
+//        if (s->conf.should_init)
+//            for (unsigned long i = 0; i < PAGESIZE; i++)
+//                node->space[i] = s->conf.initval;
 
         *node = (struct element){ addr & ~WORDMASK, cookie };
         *p = node;

@@ -212,7 +212,7 @@ static int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
     // machine.devices, but it shouldn't see the whole state
-    return (*device)->ops.op(s, (*device)->cookie, op, addr, data);
+    return (*device)->ops.op((*device)->cookie, op, addr, data);
 }
 
 static const char shortopts[] = "@:a:df:np:r:s:vhV";
@@ -319,7 +319,7 @@ static int devices_finalise(struct sim_state *s)
 static int devices_teardown(struct sim_state *s)
 {
     for (unsigned i = 0; i < s->machine.devices_count; i++) {
-        s->machine.devices[i]->ops.fini(s, s->machine.devices[i]->cookie);
+        s->machine.devices[i]->ops.fini(s->machine.devices[i]->cookie);
         free(s->machine.devices[i]);
     }
 

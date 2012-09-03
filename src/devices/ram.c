@@ -14,17 +14,17 @@ struct ram_state {
     int32_t mem[RAM_END + 1];
 };
 
-static int ram_init(struct sim_state *s, void *cookie, ...)
+static int ram_init(void *cookie, ...)
 {
     struct ram_state *ram = *(void**)cookie = malloc(sizeof *ram);
-    if (s->conf.should_init)
-        for (unsigned long i = 0; i < countof(ram->mem); i++)
-            ram->mem[i] = s->conf.initval;
+//    if (s->conf.should_init)
+//        for (unsigned long i = 0; i < countof(ram->mem); i++)
+//            ram->mem[i] = s->conf.initval;
 
     return 0;
 }
 
-static int ram_fini(struct sim_state *s, void *cookie)
+static int ram_fini(void *cookie)
 {
     struct ram_state *ram = cookie;
     free(ram);
@@ -32,7 +32,7 @@ static int ram_fini(struct sim_state *s, void *cookie)
     return 0;
 }
 
-static int ram_op(struct sim_state *s, void *cookie, int op, uint32_t addr, uint32_t *data)
+static int ram_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     struct ram_state *ram = cookie;
     assert(("Address within address space", !(addr & ~PTR_MASK)));

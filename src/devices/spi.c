@@ -95,7 +95,7 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.SS          = 0x00000000;
 }
 
-static int spi_emu_init(struct sim_state *s, void *cookie, ...)
+static int spi_emu_init(void *cookie, ...)
 {
     struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
 
@@ -164,7 +164,7 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
     return 0;
 }
 
-static int spi_emu_fini(struct sim_state *s, void *cookie)
+static int spi_emu_fini(void *cookie)
 {
     struct spi_state *spi = cookie;
 
@@ -179,7 +179,7 @@ static int spi_emu_fini(struct sim_state *s, void *cookie)
     return 0;
 }
 
-static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
+static int spi_op(void *cookie, int op, uint32_t addr,
         uint32_t *data)
 {
     struct spi_state *spi = cookie;
@@ -349,7 +349,7 @@ static int spi_slave_cycle(struct spi_state *spi)
     return 0;
 }
 
-static int spi_emu_cycle(struct sim_state *s, void *cookie)
+static int spi_emu_cycle(void *cookie)
 {
     struct spi_state *spi = cookie;
     if (spi->dividend++ >= (unsigned)((spi->regs.fmt.DIVIDER + 1) * 2 - 1)) {
