@@ -19,7 +19,6 @@ int param_get(struct param_state *pstate, char *key, const char **val);
 int param_set(struct param_state *pstate, char *key, char *val, int free_value);
 int param_add(struct param_state *pstate, const char *optarg);
 void param_destroy(struct param_state *pstate);
-void param_free(struct param_entry *p);
 
 #endif
 

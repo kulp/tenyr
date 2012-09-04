@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void param_free(struct param_entry *p);
+
 static int params_cmp(const void *_a, const void *_b)
 {
     const struct param_entry *a = _a,
@@ -82,7 +84,7 @@ void param_destroy(struct param_state *pstate)
     pstate->params_size = 0;
 }
 
-void param_free(struct param_entry *p)
+static void param_free(struct param_entry *p)
 {
     free(p->key);
     if (p->free_value)
