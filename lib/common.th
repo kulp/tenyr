@@ -11,8 +11,8 @@
 #define goto(Label)         p <- rel(Label)
 #define call(Target)        push(p + 2); goto(Target)
 // XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
-#define jnzrel(Cond,Label)  p <- Cond &  rel(Label)
-#define jzrel(Cond,Label)   p <- Cond &~ rel(Label)
+#define jnzrel(Cond,Label)  p <- Cond & rel(Label)
+#define jzrel(Cond,Label)   p <- Cond & 1 + p ; goto(Label)
 #define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
