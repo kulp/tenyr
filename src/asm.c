@@ -130,6 +130,17 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
         } else if (g->op == OP_SUBTRACT && g->x == 0) {
             f5 = ' ';   // don't print X
         }
+
+        // sugar for P update idiom ; prefer signed decimal operand
+        if (g->y == 15
+            && (    (g->op == OP_BITWISE_AND)
+                 || (g->op == OP_BITWISE_OR && g->x == 0)
+                 || (g->op == OP_ADD)
+                 || (g->op == OP_SUBTRACT)
+               )
+           ) {
+            hex = 0;
+        }
     }
 
     #define C_(E,D,C,B,A) (((E) << 4) | ((D) << 3) | ((C) << 2) | ((B) << 1) | (A))
