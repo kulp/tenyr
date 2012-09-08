@@ -76,49 +76,55 @@ static int recipe_plugin(struct sim_state *s)
 
     const char *implname = NULL;
 
-    if (param_get(&s->conf.params, "plugin.impl[0]", &implname)) {
-        //int inst = 0; // TODO support more than one instance
-        // If implname contains a slash, treat it as a path ; otherwise, stem
+    int inst = 0;
+    do {
         char buf[256];
-        const char *implpath = NULL;
-        const char *implstem = NULL;
-        param_get(&s->conf.params, "plugin.impl[0].stem", &implstem); // may not be set ; that's OK
-        if (strchr(implname, PATH_SEPARATOR_CHAR)) {
-            implpath = implname;
-        } else {
-            snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
-            buf[sizeof buf - 1] = 0;
-            implpath = buf;
-            if (!implstem)
-                implstem = implname;
-        }
-
-        // TODO consider using RTLD_NODELETE here
-        // (seems to break on Mac OS X)
-        // currently we leak library handles
-        void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
-        if (!libhandle) {
-            debug(1, "Could not load %s, trying default library search", implpath);
-            libhandle = RTLD_DEFAULT;
-        }
-
-        tenyr_plugin_host_init(libhandle);
-
-        {
-            char buf[128];
-            snprintf(buf, sizeof buf, "%s_add_device", implstem);
-            void *ptr = dlsym(libhandle, buf);
-            typedef int add_device(struct device **);
-            add_device *adder = ALIASING_CAST(add_device,ptr);
-            if (adder) {
-                int index = next_device(s);
-                s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-                rc |= adder(&s->machine.devices[index]);
+        snprintf(buf, sizeof buf, "plugin.impl[%d]", inst);
+        if (param_get(&s->conf.params, buf, &implname)) {
+            // If implname contains a slash, treat it as a path ; otherwise, stem
+            const char *implpath = NULL;
+            const char *implstem = NULL;
+            snprintf(buf, sizeof buf, "plugin.impl[%d].stem", inst);
+            param_get(&s->conf.params, buf, &implstem); // may not be set ; that's OK
+            if (strchr(implname, PATH_SEPARATOR_CHAR)) {
+                implpath = implname;
+            } else {
+                snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
+                buf[sizeof buf - 1] = 0;
+                implpath = buf;
+                if (!implstem)
+                    implstem = implname;
             }
-        }
 
-        // if RTLD_NODELETE worked and were standard, we would dlclose() here
-    }
+            // TODO consider using RTLD_NODELETE here
+            // (seems to break on Mac OS X)
+            // currently we leak library handles
+            void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
+            if (!libhandle) {
+                debug(1, "Could not load %s, trying default library search", implpath);
+                libhandle = RTLD_DEFAULT;
+            }
+
+            tenyr_plugin_host_init(libhandle);
+
+            {
+                char buf[128];
+                snprintf(buf, sizeof buf, "%s_add_device", implstem);
+                void *ptr = dlsym(libhandle, buf);
+                typedef int add_device(struct device **);
+                add_device *adder = ALIASING_CAST(add_device,ptr);
+                if (adder) {
+                    int index = next_device(s);
+                    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+                    rc |= adder(&s->machine.devices[index]);
+                }
+            }
+
+            // if RTLD_NODELETE worked and were standard, we would dlclose() here
+        } else break;
+
+        inst++;
+    } while (!rc);
 
     return rc;
 }
