@@ -76,7 +76,7 @@ static int recipe_plugin(struct sim_state *s)
     const char *implname = NULL;
 
     if (param_get(&s->conf.params, "plugin.impl[0]", &implname)) {
-        int inst = 0; // TODO support more than one instance
+        //int inst = 0; // TODO support more than one instance
         // If implname contains a slash, treat it as a path ; otherwise, stem
         char buf[256];
         const char *implpath = NULL;
@@ -112,22 +112,18 @@ static int recipe_plugin(struct sim_state *s)
 
         tenyr_plugin_host_init(libhandle);
 
-        GET_CB(op);
-        if (!s->plugins->impls[inst].ops.op) {
-            const char *err = dlerror();
-            if (err)
-                fatal(0, "Failed to locate mem_op cb for '%s' ; %s", implstem, err);
-            else
-                fatal(0, "mem_op cb for '%s' is NULL ? : %s", implstem);
+        {
+            char buf[128];
+            snprintf(buf, sizeof buf, "%s_add_device", implstem);
+            void *ptr = dlsym(libhandle, buf);
+            typedef int add_device(struct device **);
+            add_device *adder = ALIASING_CAST(add_device,ptr);
+            if (adder) {
+                int index = next_device(s);
+                s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+                return adder(&s->machine.devices[index]);
+            }
         }
-
-        GET_CB(cycle);
-        GET_CB(init);
-        GET_CB(fini);
-
-        if (s->plugins->impls[inst].ops.init)
-            if (s->plugins->impls[inst].ops.init(&s->conf.gops, &s->plugin_cookie, &s->plugins->impls[inst].cookie, 0))
-                debug(1, "SPI attached instance %d returned nonzero from init()", inst);
 
         // if RTLD_NODELETE worked and were standard, we would dlclose() here
     }

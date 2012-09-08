@@ -110,7 +110,7 @@ static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, 
         char buf[256];
         const char *implpath = NULL;
         const char *implstem = NULL;
-        param_get(hostcookie, "spi.implstem", &implstem); // may not be set ; that's OK
+        gops->param_get(hostcookie, "spi.implstem", &implstem); // may not be set ; that's OK
         if (strchr(implname, PATH_SEPARATOR_CHAR)) {
             implpath = implname;
         } else {
@@ -362,7 +362,13 @@ static int spi_emu_cycle(void *cookie)
     return 0;
 }
 
-int spi_add_device(struct device **device)
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+{
+    fatal_ = ops->fatal;
+    debug_ = ops->debug;
+}
+
+int EXPORT spi_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { SPI_BASE, SPI_END },
