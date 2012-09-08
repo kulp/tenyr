@@ -97,7 +97,7 @@ static void spi_reset_defaults(struct spi_state *spi)
 
 static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
-    struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
+    struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
 
     spi_reset_defaults(spi);
 
@@ -110,7 +110,7 @@ static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, 
         char buf[256];
         const char *implpath = NULL;
         const char *implstem = NULL;
-        param_get(hostcookie, "spi.implstem", &implstem); // may not be set ; that's OK
+        gops->param_get(hostcookie, "spi.implstem", &implstem); // may not be set ; that's OK
         if (strchr(implname, PATH_SEPARATOR_CHAR)) {
             implpath = implname;
         } else {
@@ -179,8 +179,7 @@ static int spi_emu_fini(void *cookie)
     return 0;
 }
 
-static int spi_op(void *cookie, int op, uint32_t addr,
-        uint32_t *data)
+static int spi_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     struct spi_state *spi = cookie;
     uint32_t offset = addr - SPI_BASE;
@@ -226,6 +225,9 @@ static int spi_op(void *cookie, int op, uint32_t addr,
 
             spi->regs.raw[regnum] = *data;
         }
+    } else {
+        if (op == OP_READ)
+            *data = spi->regs.raw[regnum]; // default dummy read
     }
 
     return 0;
@@ -362,7 +364,13 @@ static int spi_emu_cycle(void *cookie)
     return 0;
 }
 
-int spi_add_device(struct device **device)
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+{
+    fatal_ = ops->fatal;
+    debug_ = ops->debug;
+}
+
+int EXPORT spi_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { SPI_BASE, SPI_END },

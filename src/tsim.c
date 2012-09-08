@@ -36,7 +36,6 @@ struct breakpoint {
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
-    _(spi     , "enable SPI emulation") \
     _(inittrap, "initialise unused memory to the illegal instruction") \
     _(nowrap  , "stop when PC wraps around 24-bit boundary") \
     _(plugin  , "load plugins specified through param mechanism") \
@@ -73,66 +72,61 @@ static int recipe_abort(struct sim_state *s)
 
 static int recipe_plugin(struct sim_state *s)
 {
+    int rc = 0;
+
     const char *implname = NULL;
 
-    if (param_get(&s->conf.params, "plugin.impl[0]", &implname)) {
-        int inst = 0; // TODO support more than one instance
-        // If implname contains a slash, treat it as a path ; otherwise, stem
+    int inst = 0;
+    do {
         char buf[256];
-        const char *implpath = NULL;
-        const char *implstem = NULL;
-        param_get(&s->conf.params, "plugin.impl[0].stem", &implstem); // may not be set ; that's OK
-        if (strchr(implname, PATH_SEPARATOR_CHAR)) {
-            implpath = implname;
-        } else {
-            snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
-            buf[sizeof buf - 1] = 0;
-            implpath = buf;
-            if (!implstem)
-                implstem = implname;
-        }
+        snprintf(buf, sizeof buf, "plugin.impl[%d]", inst);
+        if (param_get(&s->conf.params, buf, &implname)) {
+            // If implname contains a slash, treat it as a path ; otherwise, stem
+            const char *implpath = NULL;
+            const char *implstem = NULL;
+            snprintf(buf, sizeof buf, "plugin.impl[%d].stem", inst);
+            param_get(&s->conf.params, buf, &implstem); // may not be set ; that's OK
+            if (strchr(implname, PATH_SEPARATOR_CHAR)) {
+                implpath = implname;
+            } else {
+                snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
+                buf[sizeof buf - 1] = 0;
+                implpath = buf;
+                if (!implstem)
+                    implstem = implname;
+            }
 
-        // TODO consider using RTLD_NODELETE here
-        // (seems to break on Mac OS X)
-        // currently we leak library handles
-        void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
-        if (!libhandle) {
-            debug(1, "Could not load %s, trying default library search", implpath);
-            libhandle = RTLD_DEFAULT;
-        }
+            // TODO consider using RTLD_NODELETE here
+            // (seems to break on Mac OS X)
+            // currently we leak library handles
+            void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
+            if (!libhandle) {
+                debug(1, "Could not load %s, trying default library search", implpath);
+                libhandle = RTLD_DEFAULT;
+            }
 
-#define GET_CB(Stem)                                                \
-        do {                                                        \
-            char buf[64];                                           \
-            snprintf(buf, sizeof buf, "%s_"#Stem, implstem);        \
-            void *ptr = dlsym(libhandle, buf);                      \
-            s->plugins->impls[inst].ops.Stem = ALIASING_CAST(map_##Stem,ptr);  \
-        } while (0)                                                 \
-        //
+            tenyr_plugin_host_init(libhandle);
 
-        tenyr_plugin_host_init(libhandle);
+            {
+                char buf[128];
+                snprintf(buf, sizeof buf, "%s_add_device", implstem);
+                void *ptr = dlsym(libhandle, buf);
+                typedef int add_device(struct device **);
+                add_device *adder = ALIASING_CAST(add_device,ptr);
+                if (adder) {
+                    int index = next_device(s);
+                    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+                    rc |= adder(&s->machine.devices[index]);
+                }
+            }
 
-        GET_CB(op);
-        if (!s->plugins->impls[inst].ops.op) {
-            const char *err = dlerror();
-            if (err)
-                fatal(0, "Failed to locate mem_op cb for '%s' ; %s", implstem, err);
-            else
-                fatal(0, "mem_op cb for '%s' is NULL ? : %s", implstem);
-        }
+            // if RTLD_NODELETE worked and were standard, we would dlclose() here
+        } else break;
 
-        GET_CB(cycle);
-        GET_CB(init);
-        GET_CB(fini);
+        inst++;
+    } while (!rc);
 
-        if (s->plugins->impls[inst].ops.init)
-            if (s->plugins->impls[inst].ops.init(&s->conf.gops, &s->plugin_cookie, &s->plugins->impls[inst].cookie, 0))
-                debug(1, "SPI attached instance %d returned nonzero from init()", inst);
-
-        // if RTLD_NODELETE worked and were standard, we would dlclose() here
-    }
-
-    return 0;
+    return rc;
 }
 
 static int recipe_prealloc(struct sim_state *s)
@@ -157,14 +151,6 @@ static int recipe_serial(struct sim_state *s)
     int index = next_device(s);
     s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
     return serial_add_device(&s->machine.devices[index]);
-}
-
-static int recipe_spi(struct sim_state *s)
-{
-    int spi_add_device(struct device **device);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    return spi_add_device(&s->machine.devices[index]);
 }
 
 static int recipe_nowrap(struct sim_state *s)

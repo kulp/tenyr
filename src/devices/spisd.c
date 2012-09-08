@@ -248,7 +248,7 @@ void EXPORT tenyr_plugin_init(struct guest_ops *ops)
 
 int EXPORT spisd_spi_init(void *pcookie)
 {
-    struct spisd_state *s = malloc(sizeof *s);
+    struct spisd_state *s = calloc(1, sizeof *s);
     *(void**)pcookie = s;
     s->out_shift_len = 0;
     s->state = SPISD_UNINITIALISED;
