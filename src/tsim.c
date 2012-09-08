@@ -625,12 +625,8 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
     if (!f)
         fatal(PRINT_ERRNO, "Options file '%s' not found", filename);
 
-    char buf[1024];
-    while (1) {
-        char *p = fgets(buf, sizeof buf, f);
-        if (!p)
-            return 0;
-
+    char buf[1024], *p;
+    while ((p = fgets(buf, sizeof buf, f))) {
         // trim newline
         int len = strlen(buf);
         if (buf[len - 1] == '\n')
@@ -643,7 +639,10 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
         optind = oi;
     }
 
-    return 0;
+    int e = ferror(f);
+    fclose(f);
+
+    return e;
 }
 
 static int parse_args(struct sim_state *s, int argc, char *argv[])
@@ -654,7 +653,7 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
             case 'a': s->conf.load_addr = strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
             case 'f': if (set_format(s, optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
-            case '@': parse_opts_file(s, optarg); break;
+            case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(&s->conf.params, optarg); break;
             case 'r': add_recipe(s, optarg); break;
