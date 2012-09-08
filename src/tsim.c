@@ -90,7 +90,8 @@ static int recipe_plugin(struct sim_state *s)
             if (strchr(implname, PATH_SEPARATOR_CHAR)) {
                 implpath = implname;
             } else {
-                snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
+                snprintf(buf, sizeof buf, ".%clib%s"DYLIB_SUFFIX,
+                        PATH_SEPARATOR_CHAR, implname);
                 buf[sizeof buf - 1] = 0;
                 implpath = buf;
                 if (!implstem)
