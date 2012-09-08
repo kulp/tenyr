@@ -30,6 +30,7 @@ ifeq ($(DEBUG),)
  CFLAGS   += -O3
 else
  CPPFLAGS += -DDEBUG=$(DEBUG)
+ CFLAGS   += -fstack-protector -Wstack-protector
 endif
 
 PEDANTIC ?= -Werror -pedantic-errors
