@@ -46,6 +46,7 @@ struct breakpoint {
     _(serial)   \
     _(inittrap) \
     _(nowrap)   \
+    _(plugin)   \
     //
 
 #define Space(X) STR(X) " "
@@ -625,20 +626,22 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
         fatal(PRINT_ERRNO, "Options file '%s' not found", filename);
 
     char buf[1024];
-    char *p = fgets(buf, sizeof buf, f);
-    if (!p)
-        return 0;
+    while (1) {
+        char *p = fgets(buf, sizeof buf, f);
+        if (!p)
+            return 0;
 
-    // trim newline
-    int len = strlen(buf);
-    if (buf[len - 1] == '\n')
-        buf[len - 1] = '\0';
+        // trim newline
+        int len = strlen(buf);
+        if (buf[len - 1] == '\n')
+            buf[len - 1] = '\0';
 
-    int oi = optind;
-    optind = 0;
-    char *pbuf[] = { NULL, buf, NULL };
-    parse_args(s, 2, pbuf);
-    optind = oi;
+        int oi = optind;
+        optind = 0;
+        char *pbuf[] = { NULL, buf, NULL };
+        parse_args(s, 2, pbuf);
+        optind = oi;
+    }
 
     return 0;
 }
