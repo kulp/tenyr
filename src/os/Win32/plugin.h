@@ -1,15 +1,11 @@
 #ifndef PLUGIN_H_
 #define PLUGIN_H_
 
-#include "plugin_portable.h"
-
 #include <windows.h>
 
 // TODO use __stdcall
 #define EXPORT_CALLING __cdecl
 #define EXPORT __declspec(dllexport) EXPORT_CALLING
-
-#include "common.h"
 
 // just defined to make compilation work ; ignored
 #define RTLD_DEFAULT NULL
@@ -51,6 +47,8 @@ static inline int dlclose(void *handle)
 {
     return !FreeLibrary(handle);
 }
+
+#include "plugin_portable.h"
 
 #endif
 

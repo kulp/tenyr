@@ -5,23 +5,17 @@
 // "spi.impl" is set, a spi_ops implementation with that stem name is loaded
 // using dlsym(). Otherwise, acts as if nothing is attached to the SPI pins.
 
-// _GNU_SOURCE is needed for RTLD_DEFAULT on GNU/Linux, although that flag
-// works on apple-darwin as well
-#define _GNU_SOURCE 1
+#include "plugin.h"
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-// we use some plugin definitions but are not a plugin ourselves (this is
-// hacky XXX)
-#define TENYR_PLUGIN 0
-#include "plugin.h"
-
 #include "common.h"
 #include "device.h"
 #include "spi.h"
+#include "sim.h"
 
 #define SPI_BASE    0x200
 #define SPI_LEN     (0x7 * 4) /* seven registers at four addresses each) */
@@ -101,22 +95,22 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.SS          = 0x00000000;
 }
 
-static int spi_emu_init(struct sim_state *s, void *cookie, ...)
+static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
-    struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
+    struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
 
     spi_reset_defaults(spi);
 
     memset(spi->impls, 0, sizeof spi->impls);
 
     const char *implname = NULL;
-    if (param_get(s, "spi.impl", &implname)) {
+    if (gops->param_get(hostcookie, "spi.impl", &implname)) {
         int inst = 0; // TODO support more than one instance
         // If implname contains a slash, treat it as a path ; otherwise, stem
         char buf[256];
         const char *implpath = NULL;
         const char *implstem = NULL;
-        param_get(s, "spi.implstem", &implstem); // may not be set ; that's OK
+        gops->param_get(hostcookie, "spi.implstem", &implstem); // may not be set ; that's OK
         if (strchr(implname, PATH_SEPARATOR_CHAR)) {
             implpath = implname;
         } else {
@@ -170,7 +164,7 @@ static int spi_emu_init(struct sim_state *s, void *cookie, ...)
     return 0;
 }
 
-static int spi_emu_fini(struct sim_state *s, void *cookie)
+static int spi_emu_fini(void *cookie)
 {
     struct spi_state *spi = cookie;
 
@@ -185,8 +179,7 @@ static int spi_emu_fini(struct sim_state *s, void *cookie)
     return 0;
 }
 
-static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
-        uint32_t *data)
+static int spi_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     struct spi_state *spi = cookie;
     uint32_t offset = addr - SPI_BASE;
@@ -232,6 +225,9 @@ static int spi_op(struct sim_state *s, void *cookie, int op, uint32_t addr,
 
             spi->regs.raw[regnum] = *data;
         }
+    } else {
+        if (op == OP_READ)
+            *data = spi->regs.raw[regnum]; // default dummy read
     }
 
     return 0;
@@ -355,7 +351,7 @@ static int spi_slave_cycle(struct spi_state *spi)
     return 0;
 }
 
-static int spi_emu_cycle(struct sim_state *s, void *cookie)
+static int spi_emu_cycle(void *cookie)
 {
     struct spi_state *spi = cookie;
     if (spi->dividend++ >= (unsigned)((spi->regs.fmt.DIVIDER + 1) * 2 - 1)) {
@@ -368,14 +364,22 @@ static int spi_emu_cycle(struct sim_state *s, void *cookie)
     return 0;
 }
 
-int spi_add_device(struct device **device)
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+{
+    fatal_ = ops->fatal;
+    debug_ = ops->debug;
+}
+
+int EXPORT spi_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { SPI_BASE, SPI_END },
-        .op = spi_op,
-        .init = spi_emu_init,
-        .fini = spi_emu_fini,
-        .cycle = spi_emu_cycle,
+        .ops = {
+            .op = spi_op,
+            .init = spi_emu_init,
+            .fini = spi_emu_fini,
+            .cycle = spi_emu_cycle,
+        },
     };
 
     return 0;

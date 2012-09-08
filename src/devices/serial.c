@@ -5,20 +5,21 @@
 
 #include "common.h"
 #include "device.h"
+#include "sim.h"
 
 #define SERIAL_BASE (1ULL << 5)
 
-static int serial_init(struct sim_state *s, void *cookie, ...)
+static int serial_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
     return 0;
 }
 
-static int serial_fini(struct sim_state *s, void *cookie)
+static int serial_fini(void *cookie)
 {
     return 0;
 }
 
-static int serial_op(struct sim_state *s, void *cookie, int op, uint32_t addr, uint32_t *data)
+static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     int tmp;
 
@@ -39,9 +40,11 @@ int serial_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { SERIAL_BASE, SERIAL_BASE + 1 },
-        .op = serial_op,
-        .init = serial_init,
-        .fini = serial_fini,
+        .ops = {
+            .op = serial_op,
+            .init = serial_init,
+            .fini = serial_fini,
+        },
     };
 
     return 0;

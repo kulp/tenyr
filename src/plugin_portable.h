@@ -1,24 +1,29 @@
 #ifndef PLUGIN_PORTABLE_H_
 #define PLUGIN_PORTABLE_H_
 
+#include "plugin.h"
+
+#include <stdint.h>
+
 #define NORETURN __attribute__((noreturn))
+
+struct plugin_cookie {
+    struct param_state *param;
+};
 
 // portable (non-OS-specific) plugin definitions
 
-struct tenyr_plugin_ops {
+struct guest_ops {
     void (* NORETURN fatal)(int code , const char *file, int line, const char *func, const char *fmt, ...);
     void (*          debug)(int level, const char *file, int line, const char *func, const char *fmt, ...);
+    int  (*      param_get)(void *cookie, char *key, const char **val);
+    int  (*      param_set)(void *cookie, char *key, char *val, int free_value);
 };
 
-typedef void plugin_init(struct tenyr_plugin_ops *ops);
+typedef int EXPORT_CALLING library_init(struct guest_ops *ops);
 
 // this is called by plugin hosts
 int tenyr_plugin_host_init(void *libhandle);
-
-// signal to other includes that we are in plugin mode
-#ifndef TENYR_PLUGIN
-#define TENYR_PLUGIN 1
-#endif
 
 #endif
 

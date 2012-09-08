@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 600
+#include "plugin.h"
 
 #include "ops.h"
 #include "common.h"
@@ -36,15 +36,17 @@ struct breakpoint {
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
-    _(spi     , "enable SPI emulation") \
     _(inittrap, "initialise unused memory to the illegal instruction") \
-    _(nowrap  , "stop when PC wraps around 24-bit boundary")
+    _(nowrap  , "stop when PC wraps around 24-bit boundary") \
+    _(plugin  , "load plugins specified through param mechanism") \
+    //
 
 #define DEFAULT_RECIPES(_) \
     _(sparse)   \
     _(serial)   \
     _(inittrap) \
-    _(nowrap)
+    _(nowrap)   \
+    //
 
 #define Space(X) STR(X) " "
 
@@ -66,6 +68,65 @@ static int recipe_abort(struct sim_state *s)
 {
     s->conf.abort = 1;
     return 0;
+}
+
+static int recipe_plugin(struct sim_state *s)
+{
+    int rc = 0;
+
+    const char *implname = NULL;
+
+    int inst = 0;
+    do {
+        char buf[256];
+        snprintf(buf, sizeof buf, "plugin.impl[%d]", inst);
+        if (param_get(&s->conf.params, buf, &implname)) {
+            // If implname contains a slash, treat it as a path ; otherwise, stem
+            const char *implpath = NULL;
+            const char *implstem = NULL;
+            snprintf(buf, sizeof buf, "plugin.impl[%d].stem", inst);
+            param_get(&s->conf.params, buf, &implstem); // may not be set ; that's OK
+            if (strchr(implname, PATH_SEPARATOR_CHAR)) {
+                implpath = implname;
+            } else {
+                snprintf(buf, sizeof buf, "lib%s"DYLIB_SUFFIX, implname);
+                buf[sizeof buf - 1] = 0;
+                implpath = buf;
+                if (!implstem)
+                    implstem = implname;
+            }
+
+            // TODO consider using RTLD_NODELETE here
+            // (seems to break on Mac OS X)
+            // currently we leak library handles
+            void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
+            if (!libhandle) {
+                debug(1, "Could not load %s, trying default library search", implpath);
+                libhandle = RTLD_DEFAULT;
+            }
+
+            tenyr_plugin_host_init(libhandle);
+
+            {
+                char buf[128];
+                snprintf(buf, sizeof buf, "%s_add_device", implstem);
+                void *ptr = dlsym(libhandle, buf);
+                typedef int add_device(struct device **);
+                add_device *adder = ALIASING_CAST(add_device,ptr);
+                if (adder) {
+                    int index = next_device(s);
+                    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+                    rc |= adder(&s->machine.devices[index]);
+                }
+            }
+
+            // if RTLD_NODELETE worked and were standard, we would dlclose() here
+        } else break;
+
+        inst++;
+    } while (!rc);
+
+    return rc;
 }
 
 static int recipe_prealloc(struct sim_state *s)
@@ -90,14 +151,6 @@ static int recipe_serial(struct sim_state *s)
     int index = next_device(s);
     s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
     return serial_add_device(&s->machine.devices[index]);
-}
-
-static int recipe_spi(struct sim_state *s)
-{
-    int spi_add_device(struct device **device);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    return spi_add_device(&s->machine.devices[index]);
 }
 
 static int recipe_nowrap(struct sim_state *s)
@@ -145,12 +198,13 @@ static int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
     // machine.devices, but it shouldn't see the whole state
-    return (*device)->op(s, (*device)->cookie, op, addr, data);
+    return (*device)->ops.op((*device)->cookie, op, addr, data);
 }
 
-static const char shortopts[] = "a:df:np:r:s:vhV";
+static const char shortopts[] = "@:a:df:np:r:s:vhV";
 
 static const struct option longopts[] = {
+    { "options"    , required_argument, NULL, '@' },
     { "address"    , required_argument, NULL, 'a' },
     { "debug"      ,       no_argument, NULL, 'd' },
     { "format"     , required_argument, NULL, 'f' },
@@ -183,6 +237,7 @@ static int usage(const char *me)
 
     printf("Usage: %s [ OPTIONS ] image-file\n"
            "Options:\n"
+           "  -@, --options=X       use options from file X\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
            "  -d, --debug           start the simulator in debugger mode\n"
            "  -f, --format=F        select input format (%s)\n"
@@ -242,7 +297,7 @@ static int devices_finalise(struct sim_state *s)
 
     for (unsigned i = 0; i < s->machine.devices_count; i++)
         if (s->machine.devices[i])
-            s->machine.devices[i]->init(s, &s->machine.devices[i]->cookie);
+            s->machine.devices[i]->ops.init(&s->conf.gops, &s->plugin_cookie, &s->machine.devices[i]->cookie, 0);
 
     return 0;
 }
@@ -250,7 +305,7 @@ static int devices_finalise(struct sim_state *s)
 static int devices_teardown(struct sim_state *s)
 {
     for (unsigned i = 0; i < s->machine.devices_count; i++) {
-        s->machine.devices[i]->fini(s, s->machine.devices[i]->cookie);
+        s->machine.devices[i]->ops.fini(s->machine.devices[i]->cookie);
         free(s->machine.devices[i]);
     }
 
@@ -262,8 +317,8 @@ static int devices_teardown(struct sim_state *s)
 static int devices_dispatch_cycle(struct sim_state *s)
 {
     for (size_t i = 0; i < s->machine.devices_count; i++)
-        if (s->machine.devices[i]->cycle)
-            if (s->machine.devices[i]->cycle(s, s->machine.devices[i]->cookie))
+        if (s->machine.devices[i]->ops.cycle)
+            if (s->machine.devices[i]->ops.cycle(s->machine.devices[i]->cookie))
                 return 1;
 
     return 0;
@@ -561,78 +616,67 @@ int set_format(struct sim_state *s, const char *optarg, const struct format **f)
     return !*f;
 }
 
-void param_free(struct param_entry *p)
+static int parse_args(struct sim_state *s, int argc, char *argv[]);
+
+static int parse_opts_file(struct sim_state *s, const char *filename)
 {
-    free(p->key);
-    if (p->free_value)
-        free(p->value);
-}
+    FILE *f = fopen(filename, "r");
+    if (!f)
+        fatal(PRINT_ERRNO, "Options file '%s' not found", filename);
 
-int params_cmp(const void *_a, const void *_b)
-{
-    const struct param_entry *a = _a,
-                             *b = _b;
-
-    return strcmp(a->key, b->key);
-}
-
-int param_get(struct sim_state *s, char *key, const char **val)
-{
-    struct param_entry p = { .key = key };
-
-    struct param_entry *q = lfind(&p, s->conf.params, &s->conf.params_count,
-                                        sizeof *s->conf.params, params_cmp);
-
-    if (!q)
+    char buf[1024];
+    char *p = fgets(buf, sizeof buf, f);
+    if (!p)
         return 0;
 
-    *val = q->value;
+    // trim newline
+    int len = strlen(buf);
+    if (buf[len - 1] == '\n')
+        buf[len - 1] = '\0';
 
-    return 1;
+    int oi = optind;
+    optind = 0;
+    char *pbuf[] = { NULL, buf, NULL };
+    parse_args(s, 2, pbuf);
+    optind = oi;
+
+    return 0;
 }
 
-int param_set(struct sim_state *s, char *key, char *val, int free_value)
+static int parse_args(struct sim_state *s, int argc, char *argv[])
 {
-    while (s->conf.params_size <= s->conf.params_count)
-        // technically there is a problem here if realloc() fails
-        s->conf.params = realloc(s->conf.params,
-                (s->conf.params_size *= 2) * sizeof *s->conf.params);
+    int ch;
+    while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
+        switch (ch) {
+            case 'a': s->conf.load_addr = strtol(optarg, NULL, 0); break;
+            case 'd': s->conf.debugging = 1; break;
+            case 'f': if (set_format(s, optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
+            case '@': parse_opts_file(s, optarg); break;
+            case 'n': s->conf.run_defaults = 0; break;
+            case 'p': param_add(&s->conf.params, optarg); break;
+            case 'r': add_recipe(s, optarg); break;
+            case 's': s->conf.start_addr = strtol(optarg, NULL, 0); break;
+            case 'v': s->conf.verbose++; break;
 
-    struct param_entry p = {
-        .key        = key,
-        .value      = val,
-        .free_value = free_value,
-    };
-
-    struct param_entry *q = lsearch(&p, s->conf.params, &s->conf.params_count,
-                                        sizeof *s->conf.params, params_cmp);
-
-    if (!q)
-        return 1;
-
-    if (q->key != p.key) {
-        param_free(q);
-        *q = p;
+            case 'V': puts(version()); exit(EXIT_SUCCESS);
+            case 'h': usage(argv[0]) ; exit(EXIT_SUCCESS);
+            default : usage(argv[0]) ; exit(EXIT_FAILURE);
+        }
     }
 
     return 0;
 }
 
-int param_add(struct sim_state *s, const char *optarg)
+int plugin_param_get(void *cookie, char *key, const char **val)
 {
-    // We can't use getsubopt() here because we don't know what all of our
-    // options are ahead of time.
-    char *dupped = strdup(optarg);
-    char *eq = strchr(dupped, '=');
-    if (!eq) {
-        free(dupped);
-        return 1;
-    }
+    struct plugin_cookie *c = cookie;
+    return param_get(c->param, key, val);
+}
 
-    // Replace '=' with '\0' to split string in two
-    *eq = '\0';
-
-    return param_set(s, dupped, ++eq, 0);
+int plugin_param_set(void *cookie, char *key, char *val, int free_value)
+{
+    struct plugin_cookie *c = cookie;
+    return param_set(c->param, key, val, free_value);
 }
 
 int main(int argc, char *argv[])
@@ -644,11 +688,25 @@ int main(int argc, char *argv[])
             .verbose      = 0,
             .run_defaults = 1,
             .debugging    = 0,
-            .params_size  = DEFAULT_PARAMS_COUNT,
-            .params_count = 0,
-            .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params),
+            .start_addr   = RAM_BASE,
+            .load_addr    = RAM_BASE,
+            .fmt          = &formats[0],
+            .params = {
+                .params_size  = DEFAULT_PARAMS_COUNT,
+                .params_count = 0,
+                .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params.params),
+            },
+            .gops         = {
+                .fatal = fatal_,
+                .debug = debug_,
+                .param_get = plugin_param_get,
+                .param_set = plugin_param_set,
+            },
         },
         .dispatch_op = dispatch_op,
+        .plugin_cookie = {
+            .param = &_s.conf.params,
+        },
     }, *s = &_s;
 
     if ((rc = setjmp(errbuf))) {
@@ -657,27 +715,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    int load_address = RAM_BASE, start_address = RAM_BASE;
-
-    const struct format *f = &formats[0];
-
-    int ch;
-    while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
-        switch (ch) {
-            case 'a': load_address = strtol(optarg, NULL, 0); break;
-            case 'd': s->conf.debugging = 1; break;
-            case 'f': if (set_format(s, optarg, &f)) exit(usage(argv[0])); break;
-            case 'n': s->conf.run_defaults = 0; break;
-            case 'p': param_add(s, optarg); break;
-            case 'r': add_recipe(s, optarg); break;
-            case 's': start_address = strtol(optarg, NULL, 0); break;
-            case 'v': s->conf.verbose++; break;
-
-            case 'V': puts(version()); return EXIT_SUCCESS;
-            case 'h': usage(argv[0]) ; return EXIT_SUCCESS;
-            default : usage(argv[0]) ; return EXIT_FAILURE;
-        }
-    }
+    parse_args(s, argc, argv);
 
     if (optind >= argc) {
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
@@ -702,8 +740,8 @@ int main(int argc, char *argv[])
     run_recipes(s);
     devices_finalise(s);
 
-    load_sim(s->dispatch_op, s, f, in, load_address);
-    s->machine.regs[15] = start_address & PTR_MASK;
+    load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr);
+    s->machine.regs[15] = s->conf.start_addr & PTR_MASK;
 
     struct run_ops ops = {
         .pre_insn = pre_insn,
@@ -720,11 +758,7 @@ int main(int argc, char *argv[])
 
     devices_teardown(s);
 
-    while (s->conf.params_count--)
-        param_free(&s->conf.params[s->conf.params_count]);
-
-    free(s->conf.params);
-    s->conf.params_size = 0;
+    param_destroy(&s->conf.params);
 
     return rc;
 }
