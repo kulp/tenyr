@@ -57,7 +57,7 @@ int plugin_load(const char *base, struct guest_ops *gops, void *hostcookie,
 
             tenyr_plugin_host_init(libhandle);
 
-            success(libhandle, implstem, ud);
+            success(libhandle, inst, implstem, ud);
 
             // if RTLD_NODELETE worked and were standard, we would dlclose() here
         } else break;

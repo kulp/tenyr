@@ -95,74 +95,46 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.SS          = 0x00000000;
 }
 
+static int plugin_success(void *libhandle, int inst, const char *implstem, void *ud)
+{
+    int rc = 0;
+
+    struct spi_state *spi = ud;
+
+#define GET_CB(Stem)                                            \
+    do {                                                        \
+        char buf[64];                                           \
+        snprintf(buf, sizeof buf, "%s_spi_"#Stem, implstem);    \
+        void *ptr = dlsym(libhandle, buf);                      \
+        spi->impls[inst].Stem = ALIASING_CAST(spi_##Stem,ptr);  \
+    } while (0)                                                 \
+    //
+
+    GET_CB(clock);
+    if (!spi->impls[inst].clock) {
+        const char *err = dlerror();
+        if (err)
+            fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implstem, err);
+        else
+            fatal(0, "SPI clock cb for '%s' is NULL ? : %s", implstem);
+    }
+
+    GET_CB(init);
+    GET_CB(select);
+    GET_CB(fini);
+
+    if (spi->impls[inst].init)
+        if (spi->impls[inst].init(&spi->impl_cookies[inst]))
+            debug(1, "SPI attached instance %d returned nonzero from init()", inst);
+
+    return rc;
+}
+
 static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
     struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
-
     spi_reset_defaults(spi);
-
-    memset(spi->impls, 0, sizeof spi->impls);
-
-    const char *implname = NULL;
-    if (gops->param_get(hostcookie, "spi.impl", &implname)) {
-        int inst = 0; // TODO support more than one instance
-        // If implname contains a slash, treat it as a path ; otherwise, stem
-        char buf[256];
-        const char *implpath = NULL;
-        const char *implstem = NULL;
-        gops->param_get(hostcookie, "spi.implstem", &implstem); // may not be set ; that's OK
-        if (strchr(implname, PATH_SEPARATOR_CHAR)) {
-            implpath = implname;
-        } else {
-            snprintf(buf, sizeof buf, ".%clib%s"DYLIB_SUFFIX,
-                    PATH_SEPARATOR_CHAR, implname);
-            buf[sizeof buf - 1] = 0;
-            implpath = buf;
-            if (!implstem)
-                implstem = implname;
-        }
-
-        // TODO consider using RTLD_NODELETE here
-        // (seems to break on Mac OS X)
-        // currently we leak library handles
-        void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
-        if (!libhandle) {
-            debug(1, "Could not load %s, trying default library search", implpath);
-            libhandle = RTLD_DEFAULT;
-        }
-
-#define GET_CB(Stem)                                                \
-        do {                                                        \
-            char buf[64];                                           \
-            snprintf(buf, sizeof buf, "%s_spi_"#Stem, implstem);    \
-            void *ptr = dlsym(libhandle, buf);                      \
-            spi->impls[inst].Stem = ALIASING_CAST(spi_##Stem,ptr);  \
-        } while (0)                                                 \
-        //
-
-        tenyr_plugin_host_init(libhandle);
-
-        GET_CB(clock);
-        if (!spi->impls[inst].clock) {
-            const char *err = dlerror();
-            if (err)
-                fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implstem, err);
-            else
-                fatal(0, "SPI clock cb for '%s' is NULL ? : %s", implstem);
-        }
-
-        GET_CB(init);
-        GET_CB(select);
-        GET_CB(fini);
-
-        if (spi->impls[inst].init)
-            if (spi->impls[inst].init(&spi->impl_cookies[inst]))
-                debug(1, "SPI attached instance %d returned nonzero from init()", inst);
-
-        // if RTLD_NODELETE worked and were standard, we would dlclose() here
-    }
-
-    return 0;
+    return plugin_load("spi", gops, hostcookie, plugin_success, spi);
 }
 
 static int spi_emu_fini(void *cookie)

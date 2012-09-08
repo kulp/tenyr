@@ -71,9 +71,10 @@ static int recipe_abort(struct sim_state *s)
     return 0;
 }
 
-static int plugin_success(void *libhandle, const char *implstem, void *ud)
+static int plugin_success(void *libhandle, int inst, const char *implstem, void *ud)
 {
     int rc = 0;
+    (void)inst;
 
     struct sim_state *s = ud;
 
