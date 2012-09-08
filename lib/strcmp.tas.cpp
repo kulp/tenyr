@@ -5,7 +5,7 @@
 
 // TODO permit compared strings to differ after the terminating \0
 
-	.global strcmp
+    .global strcmp
 strcmp:
     b <- 0              // start with matching
 _loop:
