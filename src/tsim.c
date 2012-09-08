@@ -56,7 +56,7 @@ struct breakpoint {
 
 static int next_device(struct sim_state *s)
 {
-    if (s->machine.devices_count >= s->machine.devices_max) {
+    while (s->machine.devices_count >= s->machine.devices_max) {
         s->machine.devices_max *= 2;
         s->machine.devices = realloc(s->machine.devices,
                 s->machine.devices_max * sizeof *s->machine.devices);
@@ -608,10 +608,9 @@ static int post_insn(struct sim_state *s, struct instruction *i)
     return devices_dispatch_cycle(s);
 }
 
-int set_format(struct sim_state *s, const char *optarg, const struct format **f)
+static int find_format(const char *optarg, const struct format **f)
 {
     size_t sz = formats_count;
-    (void)s;
     *f = lfind(&(struct format){ .name = optarg }, formats, &sz,
             sizeof formats[0], find_format_by_name);
     return !*f;
@@ -652,7 +651,7 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
         switch (ch) {
             case 'a': s->conf.load_addr = strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
-            case 'f': if (set_format(s, optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
+            case 'f': if (find_format(optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
             case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(&s->conf.params, optarg); break;
@@ -669,13 +668,13 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
     return 0;
 }
 
-int plugin_param_get(void *cookie, char *key, const char **val)
+static int plugin_param_get(void *cookie, char *key, const char **val)
 {
     struct plugin_cookie *c = cookie;
     return param_get(c->param, key, val);
 }
 
-int plugin_param_set(void *cookie, char *key, char *val, int free_value)
+static int plugin_param_set(void *cookie, char *key, char *val, int free_value)
 {
     struct plugin_cookie *c = cookie;
     return param_set(c->param, key, val, free_value);
