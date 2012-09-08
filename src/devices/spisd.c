@@ -12,9 +12,6 @@
 
 #define RESET_CYCLE_REQ 50  ///< arbitrary
 
-void (*fatal_)(int code, const char *file, int line, const char *func, const char *fmt, ...);
-void (*debug_)(int level, const char *file, int line, const char *func, const char *fmt, ...);
-
 struct spisd_state {
     enum {
         SPISD_INVALID = 0,
@@ -243,7 +240,7 @@ static const struct spisd_app_command {
     SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
 
-void EXPORT tenyr_plugin_init(struct tenyr_plugin_ops *ops)
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
 {
     fatal_ = ops->fatal;
     debug_ = ops->debug;
@@ -251,7 +248,7 @@ void EXPORT tenyr_plugin_init(struct tenyr_plugin_ops *ops)
 
 int EXPORT spisd_spi_init(void *pcookie)
 {
-    struct spisd_state *s = malloc(sizeof *s);
+    struct spisd_state *s = calloc(1, sizeof *s);
     *(void**)pcookie = s;
     s->out_shift_len = 0;
     s->state = SPISD_UNINITIALISED;

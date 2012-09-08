@@ -4,6 +4,9 @@
 #include "ops.h"
 #include "machine.h"
 #include "asm.h"
+#include "plugin.h"
+#include "device.h"
+#include "param.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -32,15 +35,22 @@ struct sim_state {
         int should_init;
         uint32_t initval;
 
-#define DEFAULT_PARAMS_COUNT 16
-        size_t params_count;
-        size_t params_size;
-        struct param_entry {
-            char *key;
-            char *value;
-            int free_value; ///< whether value should be free()d
-        } *params;
+        struct param_state params;
+
+        struct guest_ops gops;
+
+        int start_addr;
+        int load_addr;
+        const struct format *fmt;
     } conf;
+
+    struct {
+        struct plugin {
+            void *cookie;
+            struct device_ops ops;
+        } *impls;
+    } *plugins;
+    struct plugin_cookie plugin_cookie;
 
     op_dispatcher *dispatch_op;
 
@@ -58,10 +68,6 @@ int run_instruction(struct sim_state *s, struct instruction *i);
 int run_sim(struct sim_state *s, struct run_ops *ops);
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         FILE *in, int load_address);
-
-/// @c param_get() returns true if key is found, false otherwise
-int param_get(struct sim_state *s, char *key, const char **val);
-int param_set(struct sim_state *s, char *key, char *val, int free_value);
 
 // TODO convert this to an interrupt in the debugger
 #define breakpoint(...) \

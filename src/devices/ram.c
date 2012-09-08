@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "device.h"
+#include "sim.h"
 #include "ram.h"
 
 struct ram_state {
@@ -13,17 +14,17 @@ struct ram_state {
     int32_t mem[RAM_END + 1];
 };
 
-static int ram_init(struct sim_state *s, void *cookie, ...)
+static int ram_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
     struct ram_state *ram = *(void**)cookie = malloc(sizeof *ram);
-    if (s->conf.should_init)
-        for (unsigned long i = 0; i < countof(ram->mem); i++)
-            ram->mem[i] = s->conf.initval;
+//    if (s->conf.should_init)
+//        for (unsigned long i = 0; i < countof(ram->mem); i++)
+//            ram->mem[i] = s->conf.initval;
 
     return 0;
 }
 
-static int ram_fini(struct sim_state *s, void *cookie)
+static int ram_fini(void *cookie)
 {
     struct ram_state *ram = cookie;
     free(ram);
@@ -31,7 +32,7 @@ static int ram_fini(struct sim_state *s, void *cookie)
     return 0;
 }
 
-static int ram_op(struct sim_state *s, void *cookie, int op, uint32_t addr, uint32_t *data)
+static int ram_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     struct ram_state *ram = cookie;
     assert(("Address within address space", !(addr & ~PTR_MASK)));
@@ -50,9 +51,11 @@ int ram_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { RAM_BASE, RAM_END },
-        .op = ram_op,
-        .init = ram_init,
-        .fini = ram_fini,
+        .ops = {
+            .op = ram_op,
+            .init = ram_init,
+            .fini = ram_fini,
+        },
     };
 
     return 0;

@@ -30,6 +30,7 @@ ifeq ($(DEBUG),)
  CFLAGS   += -O3
 else
  CPPFLAGS += -DDEBUG=$(DEBUG)
+ CFLAGS   += -fstack-protector -Wstack-protector
 endif
 
 PEDANTIC ?= -Werror -pedantic-errors
@@ -50,7 +51,7 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 DEVICES = ram sparseram debugwrap serial spi
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
-PDEVICES = spidummy spisd
+PDEVICES = spidummy spisd spi
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
 PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
 
@@ -68,7 +69,7 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
 tsim$(EXE_SUFFIX): asm.o obj.o ffi.o plugin.o \
                    $(GENDIR)/debugger_parser.o \
                    $(GENDIR)/debugger_lexer.o
-tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o
+tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o param.o
 tld$(EXE_SUFFIX): obj.o
 
 asm.o: CFLAGS += -Wno-override-init
@@ -82,6 +83,9 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BU
 tas.o asm.o tsim.o sim.o ffi.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
 ffi.o asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
+# link plugin-common data and functions into every plugin
+$(PDEVLIBS): pluginimpl,dy.o
+libspi$(DYLIB_SUFFIX): plugin,dy.o
 
 # flex-generated code we can't control warnings of as easily
 $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
@@ -170,7 +174,7 @@ else
 	@$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 endif
 
-$(PDEVOBJS): %,dy.o: %.c
+plugin,dy.o pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
 ifneq ($(MAKE_VERBOSE),)
 	$(COMPILE.c) -o $@ $<
 else
@@ -180,9 +184,9 @@ endif
 
 $(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
 ifneq ($(MAKE_VERBOSE),)
-	$(LINK.c) -shared -o $@ $< $(LDLIBS)
+	$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 else
 	@echo "[ DYLD ] $@"
-	@$(LINK.c) -shared -o $@ $< $(LDLIBS)
+	@$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 endif
 

@@ -130,6 +130,17 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
         } else if (g->op == OP_SUBTRACT && g->x == 0) {
             f5 = ' ';   // don't print X
         }
+
+        // sugar for P update idiom ; prefer signed decimal operand
+        if (g->y == 15
+            && (    (g->op == OP_BITWISE_AND)
+                 || (g->op == OP_BITWISE_OR && g->x == 0)
+                 || (g->op == OP_ADD)
+                 || (g->op == OP_SUBTRACT)
+               )
+           ) {
+            hex = 0;
+        }
     }
 
     #define C_(E,D,C,B,A) (((E) << 4) | ((D) << 3) | ((C) << 2) | ((B) << 1) | (A))
@@ -138,21 +149,21 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
     // indices : hex, g->p, op1, op2, op3
     static const char *fmts[C_(1,1,1,1,1)+1] = {
       //[C_(0,0,0,0,0)] = "%c%c%c %s %c"                   "%c", // [Z] <- [           ]
-        [C_(0,0,0,0,1)] = "%c%c%c %s %c"              "%-10d%c", // [Z] <- [         -0]
+        [C_(0,0,0,0,1)] = "%c%c%c %s %c"                 "%d%c", // [Z] <- [         -0]
         [C_(0,0,0,1,0)] = "%c%c%c %s %c"         "%c"      "%c", // [Z] <- [    Y      ]
-        [C_(0,0,0,1,1)] = "%c%c%c %s %c"         "%c + %-10d%c", // [Z] <- [    Y +  -0]
+        [C_(0,0,0,1,1)] = "%c%c%c %s %c"         "%c + " "%d%c", // [Z] <- [    Y +  -0]
         [C_(0,0,1,0,0)] = "%c%c%c %s %c%c"                 "%c", // [Z] <- [X          ]
-        [C_(0,0,1,0,1)] = "%c%c%c %s %c%c"         " + %-10d%c", // [Z] <- [X     +  -0]
+        [C_(0,0,1,0,1)] = "%c%c%c %s %c%c"         " + " "%d%c", // [Z] <- [X     +  -0]
         [C_(0,0,1,1,0)] = "%c%c%c %s %c%c %-2s " "%c"      "%c", // [Z] <- [X - Y      ]
-        [C_(0,0,1,1,1)] = "%c%c%c %s %c%c %-2s " "%c + %-10d%c", // [Z] <- [X - Y +  -0]
+        [C_(0,0,1,1,1)] = "%c%c%c %s %c%c %-2s " "%c + " "%d%c", // [Z] <- [X - Y +  -0]
       //[C_(0,1,0,0,0)] = "%c%c%c %s %c"                   "%c", // [Z] <- [           ]
         [C_(0,1,0,0,1)] = "%c%c%c %s %c"                 "%c%c", // [Z] <- [          Y]
-        [C_(0,1,0,1,0)] = "%c%c%c %s %c"        " %-10d"   "%c", // [Z] <- [     -0    ]
-        [C_(0,1,0,1,1)] = "%c%c%c %s %c"        " %-10d + %c%c", // [Z] <- [     -0 + Y]
+        [C_(0,1,0,1,0)] = "%c%c%c %s %c"            "%d"   "%c", // [Z] <- [     -0    ]
+        [C_(0,1,0,1,1)] = "%c%c%c %s %c"            "%d + %c%c", // [Z] <- [     -0 + Y]
         [C_(0,1,1,0,0)] = "%c%c%c %s %c%c"                 "%c", // [Z] <- [X          ]
         [C_(0,1,1,0,1)] = "%c%c%c %s %c%c"            " + %c%c", // [Z] <- [X       + Y]
-        [C_(0,1,1,1,0)] = "%c%c%c %s %c%c %-2s " "%-10d"   "%c", // [Z] <- [X -  -0    ]
-        [C_(0,1,1,1,1)] = "%c%c%c %s %c%c %-2s " "%-10d + %c%c", // [Z] <- [X -  -0 + Y]
+        [C_(0,1,1,1,0)] = "%c%c%c %s %c%c %-2s "    "%d"   "%c", // [Z] <- [X -  -0    ]
+        [C_(0,1,1,1,1)] = "%c%c%c %s %c%c %-2s "    "%d + %c%c", // [Z] <- [X -  -0 + Y]
       //[C_(1,0,0,0,0)] = "%c%c%c %s %c"                   "%c", // [Z] <- [           ]
         [C_(1,0,0,0,1)] = "%c%c%c %s %c"             "0x%08x%c", // [Z] <- [        0x0]
         [C_(1,0,0,1,0)] = "%c%c%c %s %c"        "%c"       "%c", // [Z] <- [    Y      ]
