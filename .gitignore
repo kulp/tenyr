@@ -6,7 +6,7 @@ tld
 .sw?
 *.o
 *.d
-Session.vim
+*.vim
 src/gen
 tags
 *.to
