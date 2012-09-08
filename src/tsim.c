@@ -73,6 +73,8 @@ static int recipe_abort(struct sim_state *s)
 
 static int recipe_plugin(struct sim_state *s)
 {
+    int rc = 0;
+
     const char *implname = NULL;
 
     if (param_get(&s->conf.params, "plugin.impl[0]", &implname)) {
@@ -101,15 +103,6 @@ static int recipe_plugin(struct sim_state *s)
             libhandle = RTLD_DEFAULT;
         }
 
-#define GET_CB(Stem)                                                \
-        do {                                                        \
-            char buf[64];                                           \
-            snprintf(buf, sizeof buf, "%s_"#Stem, implstem);        \
-            void *ptr = dlsym(libhandle, buf);                      \
-            s->plugins->impls[inst].ops.Stem = ALIASING_CAST(map_##Stem,ptr);  \
-        } while (0)                                                 \
-        //
-
         tenyr_plugin_host_init(libhandle);
 
         {
@@ -121,14 +114,14 @@ static int recipe_plugin(struct sim_state *s)
             if (adder) {
                 int index = next_device(s);
                 s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-                return adder(&s->machine.devices[index]);
+                rc |= adder(&s->machine.devices[index]);
             }
         }
 
         // if RTLD_NODELETE worked and were standard, we would dlclose() here
     }
 
-    return 0;
+    return rc;
 }
 
 static int recipe_prealloc(struct sim_state *s)

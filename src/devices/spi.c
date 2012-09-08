@@ -97,7 +97,7 @@ static void spi_reset_defaults(struct spi_state *spi)
 
 static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
-    struct spi_state *spi = *(void**)cookie = malloc(sizeof *spi);
+    struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
 
     spi_reset_defaults(spi);
 
@@ -179,8 +179,7 @@ static int spi_emu_fini(void *cookie)
     return 0;
 }
 
-static int spi_op(void *cookie, int op, uint32_t addr,
-        uint32_t *data)
+static int spi_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     struct spi_state *spi = cookie;
     uint32_t offset = addr - SPI_BASE;
@@ -226,6 +225,9 @@ static int spi_op(void *cookie, int op, uint32_t addr,
 
             spi->regs.raw[regnum] = *data;
         }
+    } else {
+        if (op == OP_READ)
+            *data = spi->regs.raw[regnum]; // default dummy read
     }
 
     return 0;
