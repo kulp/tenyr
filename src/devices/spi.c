@@ -95,23 +95,29 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.SS          = 0x00000000;
 }
 
+struct success_box {
+    struct spi_state *spi;
+    struct guest_ops *gops;
+    void *hostcookie;
+};
+
 static int plugin_success(void *libhandle, int inst, const char *implstem, void *ud)
 {
     int rc = 0;
 
-    struct spi_state *spi = ud;
+    struct success_box *box = ud;
 
 #define GET_CB(Stem)                                            \
     do {                                                        \
         char buf[64];                                           \
         snprintf(buf, sizeof buf, "%s_spi_"#Stem, implstem);    \
         void *ptr = dlsym(libhandle, buf);                      \
-        spi->impls[inst].Stem = ALIASING_CAST(spi_##Stem,ptr);  \
+        box->spi->impls[inst].Stem = ALIASING_CAST(spi_##Stem,ptr);  \
     } while (0)                                                 \
     //
 
     GET_CB(clock);
-    if (!spi->impls[inst].clock) {
+    if (!box->spi->impls[inst].clock) {
         const char *err = dlerror();
         if (err)
             fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implstem, err);
@@ -123,8 +129,9 @@ static int plugin_success(void *libhandle, int inst, const char *implstem, void 
     GET_CB(select);
     GET_CB(fini);
 
-    if (spi->impls[inst].init)
-        if (spi->impls[inst].init(&spi->impl_cookies[inst]))
+    if (box->spi->impls[inst].init)
+        if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst],
+                    box->gops, box->hostcookie))
             debug(1, "SPI attached instance %d returned nonzero from init()", inst);
 
     return rc;
@@ -134,7 +141,12 @@ static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, 
 {
     struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
     spi_reset_defaults(spi);
-    return plugin_load("spi", gops, hostcookie, plugin_success, spi);
+    struct success_box box = {
+        .spi = spi,
+        .gops = gops,
+        .hostcookie = hostcookie,
+    };
+    return plugin_load("spi", gops, hostcookie, plugin_success, &box);
 }
 
 static int spi_emu_fini(void *cookie)

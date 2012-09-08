@@ -25,6 +25,9 @@ struct spisd_state {
     int bit_count;       ///< bits received in this select
     unsigned long cycle_count;  ///< monotonically increasing
     unsigned long last_reset;   ///< cycle count of idle finish
+
+	const struct guest_ops *gops;
+	void *hostcookie;
 };
 
 enum spisd_command_type {
@@ -240,18 +243,14 @@ static const struct spisd_app_command {
     SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
 
-void EXPORT tenyr_plugin_init(struct guest_ops *ops)
-{
-    fatal_ = ops->fatal;
-    debug_ = ops->debug;
-}
-
-int EXPORT spisd_spi_init(void *pcookie)
+int EXPORT spisd_spi_init(void *pcookie, const struct guest_ops *gops, void *hostcookie)
 {
     struct spisd_state *s = calloc(1, sizeof *s);
     *(void**)pcookie = s;
     s->out_shift_len = 0;
     s->state = SPISD_UNINITIALISED;
+	s->gops = gops;
+	s->hostcookie = hostcookie;
 
     return 0;
 }
@@ -313,5 +312,13 @@ int EXPORT spisd_spi_fini(void *cookie)
     *(void**)cookie = NULL;
 
     return 0;
+}
+
+// ---
+
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+{
+    fatal_ = ops->fatal;
+    debug_ = ops->debug;
 }
 
