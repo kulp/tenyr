@@ -36,7 +36,6 @@ struct breakpoint {
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
-    _(spi     , "enable SPI emulation") \
     _(inittrap, "initialise unused memory to the illegal instruction") \
     _(nowrap  , "stop when PC wraps around 24-bit boundary") \
     _(plugin  , "load plugins specified through param mechanism") \
@@ -146,14 +145,6 @@ static int recipe_serial(struct sim_state *s)
     int index = next_device(s);
     s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
     return serial_add_device(&s->machine.devices[index]);
-}
-
-static int recipe_spi(struct sim_state *s)
-{
-    int spi_add_device(struct device **device);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    return spi_add_device(&s->machine.devices[index]);
 }
 
 static int recipe_nowrap(struct sim_state *s)
