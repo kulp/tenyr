@@ -104,13 +104,25 @@ static int wrapped_param_get(const struct plugin_cookie *cookie, char *key, cons
 {
     char buf[256];
     snprintf(buf, sizeof buf, "%s%s", cookie->prefix, key);
-    return cookie->wrapped->gops.param_get(cookie->wrapped, buf, val);
+    key = buf;
+
+    return cookie->wrapped->gops.param_get(cookie->wrapped, key, val);
 }
 
 static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
 {
     char buf[256];
     snprintf(buf, sizeof buf, "%s%s", cookie->prefix, key);
+    key = buf;
+    if (!free_value) {
+        // In this case, the caller expects the param_set mechanism to dispose
+        // of the val when the key is disposed of ; since we are wrapping the
+        // key, we should dispose of the original key now and copy the val.
+        val = strdup(val);
+        free(key);
+        free_value = 1;
+    }
+
     return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, free_value);
 }
 
