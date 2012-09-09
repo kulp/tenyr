@@ -19,11 +19,11 @@ struct guest_ops {
 };
 
 struct plugin_cookie {
-    void *cookie;
     struct guest_ops gops;
     struct param_state *param;
+    char prefix[32];
 
-    struct plugin_cookie *parent;
+    struct plugin_cookie *wrapped;
 };
 
 typedef int EXPORT_CALLING library_init(struct guest_ops *ops);

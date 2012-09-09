@@ -100,10 +100,18 @@ struct success_box {
     struct plugin_cookie pcookie;
 };
 
-static int make_nested_plugin_cookie(const struct plugin_cookie *src, struct plugin_cookie *dst)
+static int wrapped_param_get(const struct plugin_cookie *cookie, char *key, const char **val)
 {
-    // XXX
-    return -1;
+    char buf[256];
+    snprintf(buf, sizeof buf, "%s%s", cookie->prefix, key);
+    return cookie->wrapped->gops.param_get(cookie->wrapped, buf, val);
+}
+
+static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
+{
+    char buf[256];
+    snprintf(buf, sizeof buf, "%s%s", cookie->prefix, key);
+    return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, free_value);
 }
 
 static int plugin_success(void *libhandle, int inst, const char *implstem, void *ud)
@@ -135,9 +143,12 @@ static int plugin_success(void *libhandle, int inst, const char *implstem, void 
     GET_CB(fini);
 
     if (box->spi->impls[inst].init) {
-        struct plugin_cookie p;
-        make_nested_plugin_cookie(&box->pcookie, &p);
-        if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst], &p))
+        struct plugin_cookie dst;
+        dst.gops = box->pcookie.gops;
+        dst.gops.param_get = wrapped_param_get;
+        dst.gops.param_set = wrapped_param_set;
+        snprintf(dst.prefix, sizeof dst.prefix, "%s.impl[%d]", implstem, inst);
+        if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst], &dst))
             debug(1, "SPI attached instance %d returned nonzero from init()", inst);
     }
 
