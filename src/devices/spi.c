@@ -127,7 +127,8 @@ static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val,
     return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, free_value);
 }
 
-static int plugin_success(void *libhandle, int inst, const char *implstem, void *ud)
+static int plugin_success(void *libhandle, int inst, const char *parent,
+    const char *implstem, void *ud)
 {
     int rc = 0;
 
@@ -161,7 +162,7 @@ static int plugin_success(void *libhandle, int inst, const char *implstem, void 
         dst.gops.param_get = wrapped_param_get;
         dst.gops.param_set = wrapped_param_set;
         dst.wrapped = box->pcookie;
-        snprintf(dst.prefix, sizeof dst.prefix, "%s[%d]", implstem, inst);
+        snprintf(dst.prefix, sizeof dst.prefix, "%s.%s", parent, implstem);
         if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst], &dst))
             debug(1, "SPI attached instance %d returned nonzero from init()", inst);
     }

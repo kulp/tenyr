@@ -27,9 +27,9 @@ int plugin_load(const char *base, const struct plugin_cookie *p,
     const char *implname = NULL;
     int inst = 0;
     do {
-        char buf[256];
-        snprintf(buf, sizeof buf, "%s[%d]", base, inst);
-        if (p->gops.param_get(p, buf, &implname)) {
+        char buf[256], parent[256];
+        snprintf(parent, sizeof parent, "%s[%d]", base, inst);
+        if (p->gops.param_get(p, parent, &implname)) {
             // If implname contains a slash, treat it as a path ; otherwise, stem
             const char *implpath = NULL;
             const char *implstem = NULL;
@@ -57,7 +57,7 @@ int plugin_load(const char *base, const struct plugin_cookie *p,
 
             tenyr_plugin_host_init(libhandle);
 
-            success(libhandle, inst, implstem, ud);
+            success(libhandle, inst, parent, implstem, ud);
 
             // if RTLD_NODELETE worked and were standard, we would dlclose() here
         } else break;

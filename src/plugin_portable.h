@@ -31,8 +31,8 @@ typedef int EXPORT_CALLING library_init(struct guest_ops *ops);
 // this is called by plugin hosts
 int tenyr_plugin_host_init(void *libhandle);
 
-typedef int plugin_success_cb(void *libhandle, int inst, const char *implstem,
-        void *ud);
+typedef int plugin_success_cb(void *libhandle, int inst, const char *parent,
+        const char *implstem, void *ud);
 
 int plugin_load(const char *base, const struct plugin_cookie *p,
         plugin_success_cb *success, void *ud);
