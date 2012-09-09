@@ -98,13 +98,13 @@ static void spi_reset_defaults(struct spi_state *spi)
 
 struct success_box {
     struct spi_state *spi;
-    struct plugin_cookie pcookie;
+    struct plugin_cookie *pcookie;
 };
 
 static int wrapped_param_get(const struct plugin_cookie *cookie, char *key, const char **val)
 {
     char buf[256];
-    snprintf(buf, sizeof buf, "%s%s", cookie->prefix, key);
+    snprintf(buf, sizeof buf, "%s.%s", cookie->prefix, key);
     key = buf;
 
     return cookie->wrapped->gops.param_get(cookie->wrapped, key, val);
@@ -113,7 +113,7 @@ static int wrapped_param_get(const struct plugin_cookie *cookie, char *key, cons
 static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
 {
     char buf[256];
-    snprintf(buf, sizeof buf, "%s%s", cookie->prefix, key);
+    snprintf(buf, sizeof buf, "%s.%s", cookie->prefix, key);
     key = buf;
     if (!free_value) {
         // In this case, the caller expects the param_set mechanism to dispose
@@ -157,9 +157,10 @@ static int plugin_success(void *libhandle, int inst, const char *implstem, void 
 
     if (box->spi->impls[inst].init) {
         struct plugin_cookie dst;
-        dst.gops = box->pcookie.gops;
+        dst.gops = box->pcookie->gops;
         dst.gops.param_get = wrapped_param_get;
         dst.gops.param_set = wrapped_param_set;
+        dst.wrapped = box->pcookie;
         snprintf(dst.prefix, sizeof dst.prefix, "%s[%d]", implstem, inst);
         if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst], &dst))
             debug(1, "SPI attached instance %d returned nonzero from init()", inst);
@@ -174,7 +175,7 @@ static int spi_emu_init(struct plugin_cookie *pcookie, void *cookie, int nargs, 
     spi_reset_defaults(spi);
     struct success_box box = {
         .spi = spi,
-		.pcookie = *pcookie,
+		.pcookie = pcookie,
     };
     return plugin_load("spi", pcookie, plugin_success, &box);
 }
