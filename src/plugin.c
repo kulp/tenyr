@@ -19,7 +19,7 @@ int tenyr_plugin_host_init(void *libhandle)
     return 0;
 }
 
-int plugin_load(const char *base, struct guest_ops *gops, void *hostcookie,
+int plugin_load(const char *base, const struct plugin_cookie *p,
         plugin_success_cb *success, void *ud)
 {
     int rc = 0;
@@ -29,12 +29,12 @@ int plugin_load(const char *base, struct guest_ops *gops, void *hostcookie,
     do {
         char buf[256];
         snprintf(buf, sizeof buf, "%s.impl[%d]", base, inst);
-        if (gops->param_get(hostcookie, buf, &implname)) {
+        if (p->gops.param_get(p->cookie, buf, &implname)) {
             // If implname contains a slash, treat it as a path ; otherwise, stem
             const char *implpath = NULL;
             const char *implstem = NULL;
             snprintf(buf, sizeof buf, "%s.impl[%d].stem", base, inst);
-            gops->param_get(hostcookie, buf, &implstem); // may not be set ; that's OK
+            p->gops.param_get(p->cookie, buf, &implstem); // may not be set ; that's OK
             if (strchr(implname, PATH_SEPARATOR_CHAR)) {
                 implpath = implname;
             } else {

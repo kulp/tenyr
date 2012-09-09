@@ -94,7 +94,7 @@ static int plugin_success(void *libhandle, int inst, const char *implstem, void 
 
 static int recipe_plugin(struct sim_state *s)
 {
-    return plugin_load("plugin", &s->conf.gops, &s->plugin_cookie, plugin_success, s);
+    return plugin_load("plugin", &s->plugin_cookie, plugin_success, s);
 }
 
 static int recipe_prealloc(struct sim_state *s)
@@ -265,7 +265,7 @@ static int devices_finalise(struct sim_state *s)
 
     for (unsigned i = 0; i < s->machine.devices_count; i++)
         if (s->machine.devices[i])
-            s->machine.devices[i]->ops.init(&s->conf.gops, &s->plugin_cookie, &s->machine.devices[i]->cookie, 0);
+            s->machine.devices[i]->ops.init(&s->plugin_cookie, &s->machine.devices[i]->cookie, 0);
 
     return 0;
 }

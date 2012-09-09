@@ -97,9 +97,14 @@ static void spi_reset_defaults(struct spi_state *spi)
 
 struct success_box {
     struct spi_state *spi;
-    struct guest_ops *gops;
-    void *hostcookie;
+    struct plugin_cookie pcookie;
 };
+
+static int make_nested_guest_ops(const struct plugin_cookie *src, struct plugin_cookie *dst)
+{
+    // XXX
+    return -1;
+}
 
 static int plugin_success(void *libhandle, int inst, const char *implstem, void *ud)
 {
@@ -129,24 +134,25 @@ static int plugin_success(void *libhandle, int inst, const char *implstem, void 
     GET_CB(select);
     GET_CB(fini);
 
-    if (box->spi->impls[inst].init)
-        if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst],
-                    box->gops, box->hostcookie))
+    if (box->spi->impls[inst].init) {
+        struct plugin_cookie p;
+        make_nested_guest_ops(&box->pcookie, &p);
+        if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst], &p))
             debug(1, "SPI attached instance %d returned nonzero from init()", inst);
+    }
 
     return rc;
 }
 
-static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
+static int spi_emu_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
 {
     struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
     spi_reset_defaults(spi);
     struct success_box box = {
         .spi = spi,
-        .gops = gops,
-        .hostcookie = hostcookie,
+		.pcookie = *pcookie,
     };
-    return plugin_load("spi", gops, hostcookie, plugin_success, &box);
+    return plugin_load("spi", pcookie, plugin_success, &box);
 }
 
 static int spi_emu_fini(void *cookie)

@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define RESET_CYCLE_REQ 50  ///< arbitrary
 
@@ -26,8 +27,9 @@ struct spisd_state {
     unsigned long cycle_count;  ///< monotonically increasing
     unsigned long last_reset;   ///< cycle count of idle finish
 
-	const struct guest_ops *gops;
-	void *hostcookie;
+	struct plugin_cookie pcookie;
+
+    FILE *store;
 };
 
 enum spisd_command_type {
@@ -243,14 +245,13 @@ static const struct spisd_app_command {
     SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
 
-int EXPORT spisd_spi_init(void *pcookie, const struct guest_ops *gops, void *hostcookie)
+int EXPORT spisd_spi_init(void *pcookie, const struct plugin_cookie *plugcook)
 {
     struct spisd_state *s = calloc(1, sizeof *s);
     *(void**)pcookie = s;
     s->out_shift_len = 0;
     s->state = SPISD_UNINITIALISED;
-	s->gops = gops;
-	s->hostcookie = hostcookie;
+	s->pcookie = *plugcook;
 
     return 0;
 }
