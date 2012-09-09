@@ -29,12 +29,12 @@ int plugin_load(const char *base, const struct plugin_cookie *p,
     do {
         char buf[256];
         snprintf(buf, sizeof buf, "%s.impl[%d]", base, inst);
-        if (p->gops.param_get(p->cookie, buf, &implname)) {
+        if (p->gops.param_get(p, buf, &implname)) {
             // If implname contains a slash, treat it as a path ; otherwise, stem
             const char *implpath = NULL;
             const char *implstem = NULL;
             snprintf(buf, sizeof buf, "%s.impl[%d].stem", base, inst);
-            p->gops.param_get(p->cookie, buf, &implstem); // may not be set ; that's OK
+            p->gops.param_get(p, buf, &implstem); // may not be set ; that's OK
             if (strchr(implname, PATH_SEPARATOR_CHAR)) {
                 implpath = implname;
             } else {

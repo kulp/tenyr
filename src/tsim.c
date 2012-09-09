@@ -635,16 +635,14 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
     return 0;
 }
 
-static int plugin_param_get(void *cookie, char *key, const char **val)
+static int plugin_param_get(const struct plugin_cookie *cookie, char *key, const char **val)
 {
-    struct plugin_cookie *c = cookie;
-    return param_get(c->param, key, val);
+    return param_get(cookie->param, key, val);
 }
 
-static int plugin_param_set(void *cookie, char *key, char *val, int free_value)
+static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
 {
-    struct plugin_cookie *c = cookie;
-    return param_set(c->param, key, val, free_value);
+    return param_set(cookie->param, key, val, free_value);
 }
 
 int main(int argc, char *argv[])
@@ -664,16 +662,16 @@ int main(int argc, char *argv[])
                 .params_count = 0,
                 .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params.params),
             },
+        },
+        .dispatch_op = dispatch_op,
+        .plugin_cookie = {
+            .param = &_s.conf.params,
             .gops         = {
                 .fatal = fatal_,
                 .debug = debug_,
                 .param_get = plugin_param_get,
                 .param_set = plugin_param_set,
             },
-        },
-        .dispatch_op = dispatch_op,
-        .plugin_cookie = {
-            .param = &_s.conf.params,
         },
     }, *s = &_s;
 

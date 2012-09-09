@@ -100,7 +100,7 @@ struct success_box {
     struct plugin_cookie pcookie;
 };
 
-static int make_nested_guest_ops(const struct plugin_cookie *src, struct plugin_cookie *dst)
+static int make_nested_plugin_cookie(const struct plugin_cookie *src, struct plugin_cookie *dst)
 {
     // XXX
     return -1;
@@ -136,7 +136,7 @@ static int plugin_success(void *libhandle, int inst, const char *implstem, void 
 
     if (box->spi->impls[inst].init) {
         struct plugin_cookie p;
-        make_nested_guest_ops(&box->pcookie, &p);
+        make_nested_plugin_cookie(&box->pcookie, &p);
         if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst], &p))
             debug(1, "SPI attached instance %d returned nonzero from init()", inst);
     }
