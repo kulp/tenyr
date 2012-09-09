@@ -2,8 +2,9 @@
 //  which belongs to Simon Srot <simons@opencores.org>
 // Connects tenyr wishbone (plain local bus now, since wishbone is not
 // simulated in any special way) to a spi_ops implementation. If param
-// "spi.impl" is set, a spi_ops implementation with that stem name is loaded
-// using dlsym(). Otherwise, acts as if nothing is attached to the SPI pins.
+// "spi[N]" is set for consecutive N starting with 0, spi_ops implementations
+// with the respective stem names are loaded using dlsym(). Otherwise, acts as
+// if nothing is attached to the SPI pins.
 
 #include "plugin.h"
 
@@ -159,7 +160,7 @@ static int plugin_success(void *libhandle, int inst, const char *implstem, void 
         dst.gops = box->pcookie.gops;
         dst.gops.param_get = wrapped_param_get;
         dst.gops.param_set = wrapped_param_set;
-        snprintf(dst.prefix, sizeof dst.prefix, "%s.impl[%d]", implstem, inst);
+        snprintf(dst.prefix, sizeof dst.prefix, "%s[%d]", implstem, inst);
         if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst], &dst))
             debug(1, "SPI attached instance %d returned nonzero from init()", inst);
     }

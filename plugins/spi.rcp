@@ -1,2 +1,2 @@
---param=plugin.impl[0]=spi
---param=spi.impl[0]=spisd
+--param=plugin[0]=spi
+--param=spi[0]=spisd
