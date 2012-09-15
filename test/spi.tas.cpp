@@ -6,6 +6,8 @@
     b <- 0
     b -> [(SPI_BASE + 0x14)]    // set divider
 
+    // There's something about 74 cycles minimum delay on init ; where does
+    // that happen ?
     b <- rel(CMD_IDLE)          // address of command
     c <- 0                      // device index 0
     d <- 8                      // number of bits expected in response
@@ -15,12 +17,24 @@ wait_for_sd_ready:
     b <- rel(CMD_RESET)         // address of command
     c <- 0                      // device index 0
     d <- 8                      // number of bits expected in response
-    call(put_spi)
-    b <- b & 1                  // mask off all but idle bit
-    b <- b <> 0                 // check if set
-    jnzrel(b,wait_for_sd_ready) // loop if idle bit is set (means busy)
+    call(put_spisd)
+
+set_blocklen:
+    b <- rel(CMD_SET_BLOCKLEN)  // address of command
+    c <- 0                      // device index 0
+    d <- 8                      // number of bits expected in response
+    call(put_spisd)
 
     illegal
+
+put_spisd:
+    pushall(b,c,d)              // command addr, device index, response bits
+    call(put_spi)
+    b <- b & 1                  // mask off all but idle bit
+    e <- b <> 0                 // check if set
+    popall(b,c,d)
+    jnzrel(e,put_spisd)         // loop if idle bit is set (means busy)
+    ret
 
 //------------------------------------------------------------------------------
     .global put_spi
@@ -61,7 +75,8 @@ L_put_spi_wait:                 // wait for GO_BSY-bit to clear
 
     ret
 
-//                  01  |cmd-|  |cmd-argument------    ------------------|  |CRC--| 1   |rsp ---|
-CMD_IDLE:   .word 0b01__000000__0000_0000_0000_0000, 0b0000_0000_0000_0000__1001010_1___1111_1111
-CMD_RESET:  .word 0b01__000001__0000_0000_0000_0000, 0b0000_0000_0000_0000__0000000_1___1111_1111
+//                          01  |cmd-|  |cmd-argument------    ------------------|  |CRC--| 1   |rsp ---|
+CMD_IDLE:           .word 0b01__000000__0000_0000_0000_0000, 0b0000_0000_0000_0000__1001010_1___1111_1111
+CMD_RESET:          .word 0b01__000001__0000_0000_0000_0000, 0b0000_0000_0000_0000__0000000_1___1111_1111
+CMD_SET_BLOCKLEN:   .word 0b01__010000__0000_0000_0000_0000, 0b0000_0000_0000_0000__0000000_1___1111_1111
 

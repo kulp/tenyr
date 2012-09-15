@@ -46,7 +46,6 @@ enum spisd_command_type {
     READ_SINGLE_BLOCK       = 17,
     READ_MULTIPLE_BLOCK     = 18,
 
-
     WRITE_BLOCK             = 24,
     WRITE_MULTIPLE_BLOCK    = 25,
 
@@ -140,6 +139,7 @@ struct spisd_rsp_R2 {
 #define SPISD_COMMANDS(_) \
     _(GO_IDLE_STATE, R1 , spisd_go_idle_handler) \
     _(SEND_OP_COND , R1 , spisd_send_op_handler) \
+    _(SET_BLOCKLEN , R1 , spisd_unimp_app_handler) \
     //
 
 // TODO fill in
