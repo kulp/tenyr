@@ -76,10 +76,10 @@ mod_loop:
     k <- b == 0
     pop(i)
     pop(c)
-    jnzrel(k, cleanup1)
 
     // Increment i and continue.
     pop(m)
+    jnzrel(k, cleanup0)
     i <- i + 1
     goto(mod_loop)
 
