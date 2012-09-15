@@ -50,6 +50,8 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %locations
 %define parse.lac full
 %lex-param { void *yyscanner }
+/* declare parse_data struct as opaque for bison 2.6 */
+%code requires { struct parse_data; }
 %parse-param { struct parse_data *pd }
 %name-prefix "tenyr_"
 
