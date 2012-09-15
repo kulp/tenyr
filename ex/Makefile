@@ -18,6 +18,7 @@ hello.texe: puts.to
 compare.texe: strcmp.to puts.to
 maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/mul.to
 totient.texe: gcd.to
+isprime.texe: umod.to isqrt.to udiv.to
 
 %.tas: %.tas.cpp
 	mkdir -p $(*D)

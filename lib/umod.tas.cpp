@@ -13,8 +13,7 @@ umod:
   pop(c)
 
   b <- b * d
-  c <- c - b
-  b <- c
+  b <- c - b
 
   ret
 
