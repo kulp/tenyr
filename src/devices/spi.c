@@ -146,9 +146,9 @@ static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, 
         if (!spi->impls[inst].clock) {
             const char *err = dlerror();
             if (err)
-                fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implstem, err);
+                fatal(0, "Failed to locate SPI clock cb for `%s' ; %s", implstem, err);
             else
-                fatal(0, "SPI clock cb for '%s' is NULL ? : %s", implstem);
+                fatal(0, "SPI clock cb for `%s' is NULL ? : %s", implstem);
         }
 
         GET_CB(init);

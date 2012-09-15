@@ -250,7 +250,7 @@ static int usage(const char *me)
            "  -v, --verbose         increase verbosity of output\n"
            "\n"
            "  -h, --help            display this message\n"
-           "  -V, --version         print the string '%s'\n"
+           "  -V, --version         print the string `%s'\n"
            "\n"
            "Available recipes:\n"
            RECIPES(UsageDesc)
@@ -623,7 +623,7 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
 {
     FILE *f = fopen(filename, "r");
     if (!f)
-        fatal(PRINT_ERRNO, "Options file '%s' not found", filename);
+        fatal(PRINT_ERRNO, "Options file `%s' not found", filename);
 
     char buf[1024], *p;
     while ((p = fgets(buf, sizeof buf, f))) {

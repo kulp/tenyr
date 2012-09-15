@@ -70,7 +70,7 @@ static int usage(const char *me)
            "  -s, --strict          disable syntax sugar in disassembly\n"
            "  -v, --verbose         disable simplified disassembly output\n"
            "  -h, --help            display this message\n"
-           "  -V, --version         print the string '%s'\n"
+           "  -V, --version         print the string `%s'\n"
            , me, format_list, version());
 
     return 0;
