@@ -245,6 +245,18 @@ static const struct spisd_app_command {
     SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
 
+static int open_storefile(struct spisd_state *s)
+{
+    const char *storefile;
+    if (s->pcookie.gops.param_get(&s->pcookie, "storefile", &storefile)) {
+        debug(2, "Opening SD store file `%s'", storefile);
+        if (!(s->store = fopen(storefile, "r+b")))
+            fatal(PRINT_ERRNO, "Failed to open SD store file `%s'", storefile);
+    }
+
+    return 0;
+}
+
 int EXPORT spisd_spi_init(void *pcookie, const struct plugin_cookie *plugcook)
 {
     struct spisd_state *s = calloc(1, sizeof *s);
@@ -252,6 +264,8 @@ int EXPORT spisd_spi_init(void *pcookie, const struct plugin_cookie *plugcook)
     s->out_shift_len = 0;
     s->state = SPISD_UNINITIALISED;
 	s->pcookie = *plugcook;
+
+    open_storefile(s);
 
     return 0;
 }
