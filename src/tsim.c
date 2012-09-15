@@ -32,7 +32,7 @@ struct breakpoint {
 #include <search.h>
 
 #define RECIPES(_) \
-    _(abort   , "call abort() when an illegal instruction is simulated") \
+    _(abort   , "abort() on illegal instruction or memory address") \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
@@ -742,7 +742,9 @@ int main(int argc, char *argv[])
     run_recipes(s);
     devices_finalise(s);
 
-    load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr);
+    if (load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr))
+        fatal(0, "Error while loading state into simulation");
+
     s->machine.regs[15] = s->conf.start_addr & PTR_MASK;
 
     struct run_ops ops = {
