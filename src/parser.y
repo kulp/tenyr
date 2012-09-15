@@ -79,7 +79,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %type <cl> reloc_expr_list
 %type <cstr> string
 %type <dctv> directive
-%type <expr> rhs rhs_plain rhs_deref lhs_plain lhs_deref
+%type <expr> rhs_plain rhs_deref lhs_plain lhs_deref
 %type <i> arrow regname reloc_op
 %type <imm> immediate
 %type <insn> insn insn_inner
@@ -164,9 +164,21 @@ insn[outer]
         }
 
 insn_inner
-    : lhs_plain arrow rhs
-        {   $insn_inner = make_insn_general(pd, $lhs_plain, $arrow, $rhs);
-            free($rhs);
+    : lhs_plain TOL rhs_plain
+        {   $insn_inner = make_insn_general(pd, $lhs_plain, 0, $rhs_plain);
+            free($rhs_plain);
+            free($lhs_plain); }
+    | lhs_plain TOR rhs_plain
+        {   struct expr *t0 = make_expr_type0($rhs_plain->x, OP_BITWISE_OR, 0, 0, NULL),
+                        *t1 = make_expr_type0($lhs_plain->x, OP_BITWISE_OR, 0, 0, NULL);
+            $insn_inner = make_insn_general(pd, t0, 0, t1);
+            free(t1);
+            free(t0);
+            free($rhs_plain);
+            free($lhs_plain); }
+    | lhs_plain arrow rhs_deref
+        {   $insn_inner = make_insn_general(pd, $lhs_plain, $arrow, $rhs_deref);
+            free($rhs_deref);
             free($lhs_plain); }
     | lhs_deref arrow rhs_plain
         {   $insn_inner = make_insn_general(pd, $lhs_deref, $arrow, $rhs_plain);
@@ -224,10 +236,6 @@ lhs_deref
     : '[' lhs_plain ']'
         {   $lhs_deref = $lhs_plain;
             $lhs_deref->deref = 1; }
-
-rhs
-    : rhs_plain
-    | rhs_deref
 
 rhs_plain
     /* type0 */
