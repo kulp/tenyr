@@ -98,28 +98,30 @@ inteq:
 data_start:
 .L_data_start:
 .L_data_elt_start:
-    .word  1, @L_1 
+    .word   1, @L_1
 .L_data_elt_end:
-    .word  2, @L_2 
-    .word  3, @L_3 
-    .word  5, @L_5 
-    .word  8, @L_8 
-    .word 13, @L_13
-    .word 21, @L_21
-    .word 34, @L_34
-    .word 55, @L_55
-    .word 89, @L_89
+    .word   2, @L_2
+    .word   3, @L_3
+    .word   5, @L_5
+    .word   8, @L_8
+    .word  13, @L_13
+    .word  21, @L_21
+    .word  34, @L_34
+    .word  55, @L_55
+    .word  89, @L_89
+    .word 144, @L_144
 .L_data_end:
     .word 0
 
-L_1  : .ascii "one"         ; .word 0
-L_2  : .ascii "two"         ; .word 0
-L_3  : .ascii "three"       ; .word 0
-L_5  : .ascii "five"        ; .word 0
-L_8  : .ascii "eight"       ; .word 0
-L_13 : .ascii "thirteen"    ; .word 0
-L_21 : .ascii "twenty-one"  ; .word 0
-L_34 : .ascii "thirty-four" ; .word 0
-L_55 : .ascii "fifty-five"  ; .word 0
-L_89 : .ascii "eighty-nine" ; .word 0
+L_1  : .ascii "one"                    ; .word 0
+L_2  : .ascii "two"                    ; .word 0
+L_3  : .ascii "three"                  ; .word 0
+L_5  : .ascii "five"                   ; .word 0
+L_8  : .ascii "eight"                  ; .word 0
+L_13 : .ascii "thirteen"               ; .word 0
+L_21 : .ascii "twenty-one"             ; .word 0
+L_34 : .ascii "thirty-four"            ; .word 0
+L_55 : .ascii "fifty-five"             ; .word 0
+L_89 : .ascii "eighty-nine"            ; .word 0
+L_144: .ascii "one hundred forty-four" ; .word 0
 
