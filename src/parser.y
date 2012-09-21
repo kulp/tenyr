@@ -87,7 +87,6 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %type <insn> insn insn_inner
 %type <op> op unary_op
 %type <program> program ascii utf32 data string_or_data
-%type <s> addsub
 %type <str> symbol symbol_list
 
 %expect 3
@@ -95,7 +94,6 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %union {
     int32_t i;
     uint32_t u;
-    signed s;
     struct const_expr *ce;
     struct const_expr_list *cl;
     struct expr *expr;
@@ -241,14 +239,14 @@ lhs_deref
 
 rhs_plain
     /* type0 */
-    : regname[x] op regname[y] addsub greloc_expr
-        { $rhs_plain = make_expr_type0($x, $op, $y, $addsub, $greloc_expr); }
+    : regname[x] op regname[y] reloc_op greloc_expr
+        { $rhs_plain = make_expr_type0($x, $op, $y, $reloc_op, $greloc_expr); }
     | regname[x] op regname[y]
         { $rhs_plain = make_expr_type0($x, $op, $y, 0, NULL); }
     | regname[x]
         { $rhs_plain = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
-    | unary_op regname[x] addsub greloc_expr
-        { $rhs_plain = make_unary_type0($x, $unary_op, $addsub, $greloc_expr); }
+    | unary_op regname[x] reloc_op greloc_expr
+        { $rhs_plain = make_unary_type0($x, $unary_op, $reloc_op, $greloc_expr); }
     | unary_op regname[x]
         { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
     /* type1 */
@@ -292,10 +290,6 @@ immediate
         {   $immediate.i = $CHARACTER;
             $immediate.is_bits = 1; }
 
-addsub
-    : '+' { $addsub =  1; }
-    | '-' { $addsub = -1; }
-
 op
     : '+'   { $op = OP_ADD                ; }
     | '-'   { $op = OP_SUBTRACT           ; }
@@ -318,8 +312,8 @@ arrow
     | TOR { $arrow = 1; }
 
 reloc_op
-    : '+' { $$ = '+'; }
-    | '-' { $$ = '-'; }
+    : '+' { $reloc_op = '+'; }
+    | '-' { $reloc_op = '-'; }
 
 /* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
 greloc_expr
