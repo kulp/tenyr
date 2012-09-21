@@ -3,23 +3,24 @@
 _start:
     prologue
 
-    c <- rel(key)           // needle
-    d <- rel(data_start)    // haystack
-    // TODO compute this from (.L_data_end - .L_data_start)
-    e <- 10                 // number of elements
-    f <- 2                  // size of each element
-    g <- rel(inteq)         // comparator
+#define DATA_LEN (.L_data_end - .L_data_start)
+#define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)
+
+    c <- rel(key)               // needle
+    d <- rel(data_start)        // haystack
+    e <- (DATA_LEN / ELT_LEN)   // number of elements
+    f <- ELT_LEN                // size of each element
+    g <- rel(inteq)             // comparator
     call(bsearch)
 
     c <- b == 0
     jnzrel(c,notfound)
     c <- [b + 1]
-    c <- c - (. + 1) + p // relocate address
+    c <- c - (. + 1) + p        // relocate string address argument
     goto(done)
 
 notfound:
     c <- rel(error_msg)
-    goto(done)
 
 done:
     call(puts)
@@ -56,10 +57,10 @@ bsearch_loop:
     i <- e >> 1
     i <- i * f
     d <- d + i
-    push(d)
+    push(d)     // save testpointer
     callr(g)
-    i <- b  // copy to temp
-    pop(b)  // restore testpointer to b in case of match
+    i <- b      // copy result to temp
+    pop(b)      // restore testpointer to b in case of match
     popall(c,d,e,f)
 
     j <- i == 0
@@ -96,7 +97,9 @@ inteq:
 
 data_start:
 .L_data_start:
+.L_data_elt_start:
     .word  1, @L_1 
+.L_data_elt_end:
     .word  2, @L_2 
     .word  3, @L_3 
     .word  5, @L_5 
