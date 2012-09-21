@@ -3,18 +3,18 @@
 _start:
     prologue
 
-    c <- rel(key)
-    d <- rel(data_start)
-    e <- 10 //(.L_data_end - .L_data_start)
-    f <- 2
-    g <- rel(inteq)
+    c <- rel(key)           // needle
+    d <- rel(data_start)    // haystack
+    // TODO compute this from (.L_data_end - .L_data_start)
+    e <- 10                 // number of elements
+    f <- 2                  // size of each element
+    g <- rel(inteq)         // comparator
     call(bsearch)
 
     c <- b == 0
     jnzrel(c,notfound)
     c <- [b + 1]
-    c <- c - (. + 1) + p
-    //illegal
+    c <- c - (. + 1) + p // relocate address
     goto(done)
 
 notfound:
@@ -63,12 +63,10 @@ bsearch_loop:
     popall(c,d,e,f)
 
     j <- i == 0
-    jnzrel(j,bsearch_found)
+    jnzrel(j,bsearch_done)
     j <- i < 0
     jnzrel(j,bsearch_less)
-    //goto(bsearch_greater)
 
-//bsearch_greater:
     e <- e + 1
     e <- e >> 1
     j <- e * f
@@ -83,7 +81,6 @@ bsearch_notfound:
     b <- 0
     goto(bsearch_done)
 
-bsearch_found:
 bsearch_done:
     popall(h,i,j)
     ret
