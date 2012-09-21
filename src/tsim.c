@@ -647,7 +647,7 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
             case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(&s->conf.params, optarg); break;
-            case 'r': add_recipe(s, optarg); break;
+            case 'r': if (add_recipe(s, optarg)) exit(usage(argv[0])); break;
             case 's': s->conf.start_addr = strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
 
