@@ -42,7 +42,7 @@ key: .word 55
 // g <- comparator
 // b -> pointer or null
 bsearch:
-    pushall(h,i,j,k)    // callee-save temps
+    pushall(h,i,j)  // callee-save temps
 
 bsearch_loop:
     // c is the key ptr
@@ -51,16 +51,16 @@ bsearch_loop:
     i <- e == 0
     jnzrel(i,bsearch_notfound)
 
-    pushall(b,c,d,e,f)
+    pushall(c,d,e,f)
     // consider element halfway between (d) and (d + e)
     i <- e >> 1
     i <- i * f
     d <- d + i
     push(d)
     callr(g)
-    pop(k)  // restore testpointer to k in case of match
     i <- b  // copy to temp
-    popall(b,c,d,e,f)
+    pop(b)  // restore testpointer to b in case of match
+    popall(c,d,e,f)
 
     j <- i == 0
     jnzrel(j,bsearch_found)
@@ -84,10 +84,8 @@ bsearch_notfound:
     goto(bsearch_done)
 
 bsearch_found:
-    b <- k
-
 bsearch_done:
-    popall(h,i,j,k)
+    popall(h,i,j)
     ret
 
 // c <- pointer to key
