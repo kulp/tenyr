@@ -17,9 +17,8 @@ struct ram_state {
 static int ram_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
 {
     struct ram_state *ram = *(void**)cookie = malloc(sizeof *ram);
-//    if (s->conf.should_init)
-//        for (unsigned long i = 0; i < countof(ram->mem); i++)
-//            ram->mem[i] = s->conf.initval;
+    for (unsigned long i = 0; i < countof(ram->mem); i++)
+        ram->mem[i] = 0xffffffff; // "illlegal" ; will trap
 
     return 0;
 }
