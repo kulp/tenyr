@@ -6,10 +6,9 @@ strtol:
     pushall(f,g,h,i)
 
     h <- e == 0
+    b <- e // in case we don't call
     callnz(h,detect_base)
     e <- b
-
-    // TODO handle base base values
 
     b <- 0
     i <- [c]
