@@ -67,7 +67,9 @@ check_input:
 
 check_input_triggered:
     c <- c + 3
-    call(parse_int)
+    d <- 0
+    e <- 10
+    call(strtol)
     c <- b + 40
     c <- c * 9
     d <- 5
@@ -81,33 +83,6 @@ check_input_done:
 
 ping: .utf32 "PING " ; .word 0
 pong: .utf32 "PONG " ; .word 0
-
-// c <- address of first character of number
-parse_int:
-    pushall(d,e,f)
-    b <- 0
-    d <- [c]
-    e <- d == '-'
-    jnzrel(e,parse_int_negative)
-    f <- 1
-parse_int_top:
-    d <- [c]
-    c <- c + 1
-    d <- d - '0'
-    e <- d > 9
-    jnzrel(e,parse_int_done)
-    e <- d < 0
-    jnzrel(e,parse_int_done)
-    b <- b * 10 + d
-    goto(parse_int_top)
-parse_int_done:
-    b <- b * f
-    popall(d,e,f)
-    ret
-parse_int_negative:
-    f <- -1
-    c <- c + 1
-    goto(parse_int_top)
 
 tmpbuf: .utf32 "0123456789abcdef"
 tmpbuf_end: .word 0
