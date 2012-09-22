@@ -4,6 +4,7 @@
 
 // Performs C / D and stores the result in B.
 udiv:
+  pushall(d,g,j,k)
   b <- 0
 
   // Check for division by zero.
@@ -51,5 +52,6 @@ shift_quotient:
   // Return result.
 done:
   b <- b >> 1
+  popall(d,g,j,k)
   ret
 

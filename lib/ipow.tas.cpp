@@ -4,6 +4,7 @@
 
 // Performs C^D and stores the result in B.
 ipow:
+  push(k)
   // Initialize the return value to 1.
   b <- 1
   
@@ -30,5 +31,6 @@ even:
   goto(mult_loop)
 
 done:
+  pop(k)
   ret
 
