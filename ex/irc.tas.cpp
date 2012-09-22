@@ -1,7 +1,7 @@
 #include "common.th"
 #include "serial.th"
 
-#define CHANNEL "##section8"
+#define CHANNEL "#tenyr"
 #define NICK    "rynet"
 
 #define do(X) c <- rel(X) ; call(puts) ; c <- rel(rn) ; call(puts)
@@ -59,7 +59,7 @@ triggered:
     d <- 5
     call(udiv)
     c <- b - 40
-    call(say_decimal)
+    call(say_fahrenheit)
     pop(c)
 
     ret
@@ -67,6 +67,10 @@ triggered:
 // c <- address of first character of number
 parse_int:
     b <- 0
+    d <- [c]
+    e <- d == '-'
+    jnzrel(e,parse_int_negative)
+    f <- 1
 parse_int_top:
     d <- [c]
     c <- c + 1
@@ -78,7 +82,12 @@ parse_int_top:
     b <- b * 10 + d
     goto(parse_int_top)
 parse_int_done:
+    b <- b * f
     ret
+parse_int_negative:
+    f <- -1
+    c <- c + 1
+    goto(parse_int_top)
 
 say_hex:
     call(say_start)
@@ -122,9 +131,25 @@ say_decimal:
     call(say_end)
     ret
 
+say_fahrenheit:
+    call(say_start)
+    call(convert_decimal)
+    c <- b
+    call(puts)
+    c <- rel(degF)
+    call(puts)
+    call(say_end)
+    ret
+
+degF: .utf32 "°F" ; .word 0
+
 convert_decimal:
     b <- rel(tmpbuf_end)
+    d <- c < 0
+    jnzrel(d,convert_decimal_negative)
+    f <- 0
 convert_decimal_top:
+    push(f)
     b <- b - 1
 
     push(b)
@@ -148,9 +173,18 @@ convert_decimal_top:
     pop(b)
 
     d <- c == 0
+    pop(f)
     jzrel(d,convert_decimal_top)
+    jzrel(f,convert_decimal_done)
+    b <- b - 1
+    [b] <- '-'
 
+convert_decimal_done:
     ret
+convert_decimal_negative:
+    c <- - c
+    f <- -1
+    goto(convert_decimal_top)
 
 say:
     call(say_start)
