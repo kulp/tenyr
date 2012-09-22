@@ -5,10 +5,12 @@
 start:
     prologue
 
-    c <- 12
+    c <- [rel(large)]
     call(isprime)
 
     illegal
+
+large: .word 8675309
 
 // Checks whether C is prime or not. Returns a truth value in B.
 isprime:
