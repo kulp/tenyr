@@ -20,7 +20,7 @@ maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/mul.to
 totient.texe: gcd.to
 isprime.texe: umod.to isqrt.to udiv.to
 bsearch.texe: puts.to
-irc.texe: puts.to strcmp.to
+irc.texe: puts.to strcmp.to udiv.to umod.to
 
 %.tas: %.tas.cpp
 	mkdir -p $(*D)

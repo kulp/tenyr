@@ -1,7 +1,7 @@
 #include "common.th"
 #include "serial.th"
 
-#define CHANNEL "#tenyr"
+#define CHANNEL "##section8"
 #define NICK    "rynet"
 
 #define do(X) c <- rel(X) ; call(puts) ; c <- rel(rn) ; call(puts)
@@ -44,7 +44,7 @@ loop_line:
 check_input:
     push(c)
     d <- rel(trigger)
-    e <- 5 // strlen(trigger)
+    e <- 3 // strlen(trigger)
     call(strncmp)
     pop(c)
     jzrel(b,triggered)
@@ -52,12 +52,15 @@ check_input:
 
 triggered:
     push(c)
-    c <- c + 5
+    c <- c + 3
     call(parse_int)
-    c <- b
-    call(say_hex)
+    c <- b + 40
+    c <- c * 9
+    d <- 5
+    call(udiv)
+    c <- b - 40
+    call(say_decimal)
     pop(c)
-    ret
 
     ret
 
@@ -110,6 +113,44 @@ hexes:
 
 tmpbuf: .utf32 "0123456789abcdef"
 tmpbuf_end: .word 0
+
+say_decimal:
+    call(say_start)
+    call(convert_decimal)
+    c <- b
+    call(puts)
+    call(say_end)
+    ret
+
+convert_decimal:
+    b <- rel(tmpbuf_end)
+convert_decimal_top:
+    b <- b - 1
+
+    push(b)
+
+    push(c)
+    d <- 10
+    call(umod)
+    pop(c)
+
+    d <- [b + rel(hexes)]
+    pop(b)
+    d -> [b]
+    push(b)
+
+    push(c)
+    d <- 10
+    call(udiv)
+    pop(c)
+    c <- b
+
+    pop(b)
+
+    d <- c == 0
+    jzrel(d,convert_decimal_top)
+
+    ret
 
 say:
     call(say_start)
@@ -199,7 +240,7 @@ join: .utf32 "JOIN " CHANNEL ; .word 0
 talk: .utf32 "PRIVMSG " CHANNEL " :" ; .word 0
 
 privmsg: .utf32 "PRIVMSG" ; .word 0
-trigger: .utf32 "!hex " ; .word 0
+trigger: .utf32 "!f " ; .word 0
 
 rn: .word '\r', '\n', 0
 
