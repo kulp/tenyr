@@ -29,7 +29,6 @@ loop_line:
     pop(c)
     push(c)
     jzrel(b,do_pong)
-resume:
     pop(c)
 
     push(c)
@@ -62,7 +61,8 @@ do_pong:
     call(puts) // respond with same identifier
     c <- rel(rn)
     call(puts)
-    goto(resume)
+    pop(c)
+    goto(loop_line)
 
 check_input:
     push(c)
