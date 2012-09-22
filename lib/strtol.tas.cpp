@@ -50,7 +50,8 @@ strtol_gt10_top:
     jzrel(h,strtol_gt10_tryhigh)
     b <- b * e
     b <- b + g
-    goto(strtol_le10_top)
+    goto(strtol_gt10_top)
+
 strtol_gt10_tryhigh:
     i <- i &~ ('a' - 'A')
     g <- i - 'A'
