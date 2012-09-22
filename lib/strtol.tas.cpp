@@ -3,10 +3,10 @@
     .global strtol
 // c,d,e <- str, endptr, base
 strtol:
-    pushall(d,f,g)
+    pushall(f,g,h,i)
     b <- 0
-    d <- [c]
-    g <- d == '-'
+    i <- [c]
+    g <- i == '-'
     jnzrel(g,strtol_negative)
     f <- 1
 strtol_top:
@@ -20,26 +20,46 @@ strtol_negative:
     goto(strtol_top)
 
 strtol_error:
-    // TODO
+    // TODO distinguish between partial conversion and no conversion
 strtol_done:
     b <- b * f
-    popall(d,f,g)
+    popall(f,g,h,i)
     ret
 
 // ----------------------------------------------------------------------------
 strtol_le10_top:
-    d <- [c]
+    i <- [c]
     c <- c + 1
-    d <- d - '0'
-    g <- d < e
-    jzrel(g,strtol_error)
-    g <- d > -1
+    i <- i - '0'
+    g <- i < e
+    jzrel(g,strtol_done)
+    g <- i > -1
     jzrel(g,strtol_done)
     b <- b * e
-    b <- b + d
+    b <- b + i
     goto(strtol_le10_top)
 
 // ----------------------------------------------------------------------------
 strtol_gt10_top:
-    illegal
+    i <- [c]
+    c <- c + 1
+    g <- i - '0'
+    h <- g > -1
+    jzrel(h,strtol_done)
+    h <- g < e
+    jzrel(h,strtol_gt10_tryhigh)
+    b <- b * e
+    b <- b + g
+    goto(strtol_le10_top)
+strtol_gt10_tryhigh:
+    i <- i &~ ('a' - 'A')
+    g <- i - 'A'
+    h <- g > -1
+    jzrel(h,strtol_done)
+    g <- g + 10
+    h <- g < e
+    jzrel(h,strtol_done)
+    b <- b * e
+    b <- b + g
+    goto(strtol_gt10_top)
 

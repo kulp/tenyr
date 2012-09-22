@@ -18,6 +18,7 @@ TARGETS = \
     isprime.texe        \
     irc.texe            \
     maths.texe          \
+    parse_hex.texe      \
     sieve.texe          \
     #
 
@@ -32,6 +33,7 @@ totient.texe: gcd.to
 isprime.texe: umod.to isqrt.to udiv.to
 bsearch.texe: puts.to
 irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
+parse_hex.texe: strtol.to
 
 %.tas: %.tas.cpp
 	mkdir -p $(*D)
