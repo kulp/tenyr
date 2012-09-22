@@ -1,4 +1,5 @@
 #include "common.th"
+#include "errno.th"
 
     .global strtol
 // c,d,e <- str, endptr, base
@@ -9,6 +10,11 @@ strtol:
     b <- e // in case we don't call
     callnz(h,detect_base)
     e <- b
+
+    h <- e > 36
+    jnzrel(h,strtol_error_EINVAL)
+    h <- e < 2
+    jnzrel(h,strtol_error_EINVAL)
 
     b <- 0
     i <- [c]
@@ -26,7 +32,7 @@ strtol_negative:
     goto(strtol_top)
 
 strtol_error:
-    // TODO add errno support here when it exists
+    h -> errno
 strtol_done:
     b <- b * f
     h <- d == 0
@@ -35,6 +41,17 @@ strtol_done:
 strtol_no_endptr:
     popall(f,g,h,i)
     ret
+
+strtol_error_ERANGE:
+    h <- ERANGE
+    goto(strtol_error)
+
+// TODO produce EINVAL
+// only way I can think to do this so far is to get ilog2(base) and check for
+// that many zero bits at the MSB end before every multiplication
+strtol_error_EINVAL:
+    h <- EINVAL
+    goto(strtol_error)
 
 // ----------------------------------------------------------------------------
 strtol_le10_top:
