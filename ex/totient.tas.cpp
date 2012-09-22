@@ -11,6 +11,7 @@ _start:
 // Computes the number of values less than C that are relatively prime to C.
 // Stores the result in B.
 totient:
+  pushall(d,k)
   b <- 0
   d <- c
 
@@ -32,4 +33,5 @@ loop:
   goto(loop)
 
 done:
+  popal(d,k)
   ret

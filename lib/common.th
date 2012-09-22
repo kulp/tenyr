@@ -9,7 +9,8 @@
 #define rel(Label)          reloff(Label,0)
 #define reloff(Label,Off)   (@Label - (. + 1 - (Off))) + p
 #define goto(Label)         p <- rel(Label)
-#define call(Target)        push(p + 2); goto(Target)
+#define callnz(Cond,Label)  p <- Cond & 1 + p ; p <- p + 2 ; push(p + 2); goto(Label)
+#define call(Label)         push(p + 2); goto(Label)
 #define callr(Reg)          push(p + 2); p <- Reg
 // XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
 #define jnzrel(Cond,Label)  p <- Cond & rel(Label)
@@ -69,3 +70,4 @@
 
 #endif
 
+/* vi:set syntax=c: */

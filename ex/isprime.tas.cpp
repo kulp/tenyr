@@ -5,45 +5,48 @@
 start:
     prologue
 
-    c <- 12
+    c <- [rel(large)]
     call(isprime)
 
     illegal
 
+large: .word 8675309
+
 // Checks whether C is prime or not. Returns a truth value in B.
 isprime:
+    pushall(d,e,g,i,j,k,m)
+    // use e as local copy of c so we don't have to constantly save and restore
+    // it when calling other functions
+    e <- c
     // 0 and 1 are not prime.
-    j <- c == 0
-    k <- c == 1
+    j <- e == 0
+    k <- e == 1
     k <- j | k
     jnzrel(k, cleanup0)
 
     // 2 and 3 are prime.
-    j <- c == 2
-    k <- c == 3
+    j <- e == 2
+    k <- e == 3
     k <- j | k
     jnzrel(k, prime)
 
     // Check for divisibility by 2.
-    push(c)
+    c <- e
     d <- 2
     call(umod)
     k <- b == 0
-    pop(c)
     jnzrel(k, cleanup0)
 
     // Check for divisibility by 3.
-    push(c)
+    c <- e
     d <- 3
     call(umod)
     k <- b == 0
-    pop(c)
     jnzrel(k, cleanup0)
 
     // Compute upper bound and store it in M.
-    push(c)
+    c <- e
     call(isqrt)
-    pop(c)
     m <- b
 
     i <- 1
@@ -54,42 +57,34 @@ mod_loop:
     k <- g > m
     jnzrel(k, prime)
 
-    // Store the upper bound until the next iteration.
-    push(m)
-
     // Check for divisibility by 6*i - 1.
-    push(c)
-    push(i)
+    c <- e
     g <- d
     call(umod)
     k <- b == 0
-    pop(i)
-    pop(c)
     jnzrel(k, cleanup1)
 
     // Check for divisibility by 6*i + 1.
-    push(c)
-    push(i)
+    c <- e
     d <- i * 6
     d <- d + 1
     call(umod)
     k <- b == 0
-    pop(i)
-    pop(c)
 
     // Increment i and continue.
-    pop(m)
     jnzrel(k, cleanup0)
     i <- i + 1
     goto(mod_loop)
 
 prime:
     b <- -1
-    ret
+    goto(done)
 
 cleanup1:
     pop(c)
 cleanup0:
 composite:
     b <- 0
+done:
+    popall(d,e,g,i,j,k,m)
     ret

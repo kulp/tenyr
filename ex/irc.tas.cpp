@@ -9,30 +9,22 @@
 _start:
     prologue
 
-#if 0
-    c <- 2
-    call(sleep)
-#endif
-
     do(nick)
     do(user)
     do(join)
 
 loop_line:
     call(getline)
-    c <- b
+    // use g as backing store for line ; c is stompable as arg
+    g <- b
 
-    push(c)
+    c <- g
     d <- rel(ping)
-    e <- 4
+    e <- 5
     call(strncmp)
-    pop(c)
-    push(c)
     jzrel(b,do_pong)
-resume:
-    pop(c)
 
-    push(c)
+    c <- g
     d <- 1
     call(skipwords)
 
@@ -40,8 +32,8 @@ resume:
     d <- rel(privmsg)
     e <- 7
     call(strncmp)
-    pop(c)
     jnzrel(b,loop_line)
+    c <- g
     d <- 3
     call(skipwords)
 
@@ -52,99 +44,45 @@ resume:
 
     illegal
 do_pong:
-    push(c)
     c <- rel(pong)
     call(puts)
-    pop(c)
+    c <- g
     d <- 1
     call(skipwords)
     c <- b
     call(puts) // respond with same identifier
     c <- rel(rn)
     call(puts)
-    goto(resume)
+    goto(loop_line)
 
 check_input:
+    pushall(d,e)
     push(c)
     d <- rel(trigger)
     e <- 3 // strlen(trigger)
     call(strncmp)
     pop(c)
-    jzrel(b,triggered)
-    ret
+    jzrel(b,check_input_triggered)
+    goto(check_input_done)
 
-triggered:
-    push(c)
+check_input_triggered:
     c <- c + 3
-    call(parse_int)
+    d <- 0
+    e <- 10
+    call(strtol)
     c <- b + 40
     c <- c * 9
     d <- 5
     call(udiv)
     c <- b - 40
     call(say_fahrenheit)
-    pop(c)
 
+check_input_done:
+    popall(d,e)
     ret
 
-ping: .utf32 "PING" ; .word 0
+ping: .utf32 "PING " ; .word 0
 pong: .utf32 "PONG " ; .word 0
-
-// c <- address of first character of number
-parse_int:
-    b <- 0
-    d <- [c]
-    e <- d == '-'
-    jnzrel(e,parse_int_negative)
-    f <- 1
-parse_int_top:
-    d <- [c]
-    c <- c + 1
-    d <- d - '0'
-    e <- d > 9
-    jnzrel(e,parse_int_done)
-    e <- d < 0
-    jnzrel(e,parse_int_done)
-    b <- b * 10 + d
-    goto(parse_int_top)
-parse_int_done:
-    b <- b * f
-    ret
-parse_int_negative:
-    f <- -1
-    c <- c + 1
-    goto(parse_int_top)
-
-say_hex:
-    call(say_start)
-    push(c)
-    c <- rel(zero_x)
-    call(puts)
-    pop(c)
-    call(convert_hex)
-    c <- b
-    call(puts)
-    call(say_end)
-    ret
-
-zero_x: .utf32 "0x" ; .word 0
-
-convert_hex:
-    b <- rel(tmpbuf_end)
-convert_hex_top:
-    b <- b - 1
-    d <- c & 0xf
-    d <- [d + rel(hexes)]
-    d -> [b]
-    c <- c >> 4
-    d <- c == 0
-    jzrel(d,convert_hex_top)
-
-    ret
-
-hexes:
-    .word '0', '1', '2', '3', '4', '5', '6', '7',
-          '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 
 tmpbuf: .utf32 "0123456789abcdef"
 tmpbuf_end: .word 0
@@ -167,48 +105,42 @@ say_fahrenheit:
     call(say_end)
     ret
 
+// TODO this is actually being encoded as UTF-8
 degF: .utf32 "°F" ; .word 0
 
 convert_decimal:
-    b <- rel(tmpbuf_end)
+    pushall(d,f,g,h)
+    g <- c
+    h <- rel(tmpbuf_end)
     d <- c < 0
     jnzrel(d,convert_decimal_negative)
     f <- 0
 convert_decimal_top:
-    push(f)
-    b <- b - 1
+    h <- h - 1
 
-    push(b)
-
-    push(c)
+    c <- g
     d <- 10
     call(umod)
-    pop(c)
 
-    d <- [b + rel(hexes)]
-    pop(b)
-    d -> [b]
-    push(b)
+    [h] <- b + '0'
 
-    push(c)
+    c <- g
     d <- 10
     call(udiv)
-    pop(c)
-    c <- b
+    g <- b
 
-    pop(b)
-
-    d <- c == 0
-    pop(f)
+    d <- g == 0
     jzrel(d,convert_decimal_top)
     jzrel(f,convert_decimal_done)
-    b <- b - 1
-    [b] <- '-'
+    h <- h - 1
+    [h] <- '-'
 
 convert_decimal_done:
+    b <- h
+    popall(d,f,g,h)
     ret
 convert_decimal_negative:
-    c <- - c
+    g <- - g
     f <- -1
     goto(convert_decimal_top)
 
@@ -233,6 +165,7 @@ say_end:
     ret
 
 skipwords:
+    pushall(e,g)
 skipwords_top:
     g <- [c]
     e <- g == 0
@@ -249,18 +182,17 @@ skipwords_foundspace:
 
 skipwords_done:
     b <- c
+    popall(e,g)
     ret
 
-//  :usermask PRIVMSG #channel :message
 getline:
-    g <- rel(buffer)
-    f <- g
+    pushall(c,d,f)
+    f <- rel(buffer)
 
 getline_top:
     getch(b)
     c <- b == '\r'
-    d <- b == '\n'
-    c <- c | d
+    c <- b == '\n' + c
     jnzrel(c,getline_eol)
     b -> [f]
     f <- f + 1
@@ -268,18 +200,8 @@ getline_top:
 
 getline_eol:
     a -> [f]
-    b <- g
-    ret
-
-sleep:
-    c <- c * 2047
-    c <- c * 2047
-sleep_loop:
-    c <- c - 1
-    d <- c == 0
-    jnzrel(d,sleep_done)
-    goto(sleep_loop)
-sleep_done:
+    b <- rel(buffer)
+    popall(c,d,f)
     ret
 
 // ----------------------------------------------------------------------------
