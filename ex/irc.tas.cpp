@@ -44,7 +44,7 @@ loop_line:
 check_input:
     push(c)
     d <- rel(trigger)
-    e <- 3 // strlen(trigger)
+    e <- 5 // strlen(trigger)
     call(strncmp)
     pop(c)
     jzrel(b,triggered)
@@ -52,10 +52,10 @@ check_input:
 
 triggered:
     push(c)
-    c <- c + 3
+    c <- c + 5
     call(parse_int)
-    c <- b * 2 // XXX
-    call(say_int)
+    c <- b
+    call(say_hex)
     pop(c)
     ret
 
@@ -77,21 +77,58 @@ parse_int_top:
 parse_int_done:
     ret
 
-say_int:
-    c <- rel(minus_forty)
-    call(say)
+say_hex:
+    call(say_start)
+    push(c)
+    c <- rel(zero_x)
+    call(puts)
+    pop(c)
+    call(convert_hex)
+    c <- b
+    call(puts)
+    call(say_end)
     ret
 
-minus_forty: .utf32 "-40C" ; .word 0
+zero_x: .utf32 "0x" ; .word 0
+
+convert_hex:
+    b <- rel(tmpbuf_end)
+convert_hex_top:
+    b <- b - 1
+    d <- c & 0xf
+    d <- [d + rel(hexes)]
+    d -> [b]
+    c <- c >> 4
+    d <- c == 0
+    jzrel(d,convert_hex_top)
+
+    ret
+
+hexes:
+    .word '0', '1', '2', '3', '4', '5', '6', '7',
+          '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+
+tmpbuf: .utf32 "0123456789abcdef"
+tmpbuf_end: .word 0
 
 say:
+    call(say_start)
+    call(puts)
+    call(say_end)
+    ret
+
+say_start:
     push(c)
     c <- rel(talk)
     call(puts)
     pop(c)
-    call(puts)
+    ret
+
+say_end:
+    push(c)
     c <- rel(rn)
     call(puts)
+    pop(c)
     ret
 
 skipwords:
@@ -162,7 +199,7 @@ join: .utf32 "JOIN " CHANNEL ; .word 0
 talk: .utf32 "PRIVMSG " CHANNEL " :" ; .word 0
 
 privmsg: .utf32 "PRIVMSG" ; .word 0
-trigger: .utf32 "!f " ; .word 0
+trigger: .utf32 "!hex " ; .word 0
 
 rn: .word '\r', '\n', 0
 
