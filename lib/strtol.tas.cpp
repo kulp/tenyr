@@ -4,6 +4,13 @@
 // c,d,e <- str, endptr, base
 strtol:
     pushall(f,g,h,i)
+
+    h <- e == 0
+    callnz(h,detect_base)
+    e <- b
+
+    // TODO handle base base values
+
     b <- 0
     i <- [c]
     g <- i == '-'
@@ -63,4 +70,28 @@ strtol_gt10_tryhigh:
     b <- b * e
     b <- b + g
     goto(strtol_gt10_top)
+
+// ----------------------------------------------------------------------------
+// modifies C upon return
+detect_base:
+    push(f)
+    f <- [c]
+    f <- f == '0'
+    jnzrel(f,detect_base_8or16)
+    b <- 10
+detect_base_done:
+    pop(f)
+    ret
+detect_base_8or16:
+    f <- [c + 1]
+    f <- f &~ ('a' - 'A')
+    f <- f == 'X'
+    jnzrel(f,detect_base_16)
+    b <- 8
+    c <- c + 1
+    goto(detect_base_done)
+detect_base_16:
+    b <- 16
+    c <- c + 2
+    goto(detect_base_done)
 
