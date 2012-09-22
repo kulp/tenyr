@@ -9,29 +9,22 @@
 _start:
     prologue
 
-#if 0
-    c <- 2
-    call(sleep)
-#endif
-
     do(nick)
     do(user)
     do(join)
 
 loop_line:
     call(getline)
-    c <- b
+    // use g as backing store for line ; c is stompable as arg
+    g <- b
 
-    push(c)
+    c <- g
     d <- rel(ping)
     e <- 4
     call(strncmp)
-    pop(c)
-    push(c)
     jzrel(b,do_pong)
-    pop(c)
 
-    push(c)
+    c <- g
     d <- 1
     call(skipwords)
 
@@ -39,8 +32,8 @@ loop_line:
     d <- rel(privmsg)
     e <- 7
     call(strncmp)
-    pop(c)
     jnzrel(b,loop_line)
+    c <- g
     d <- 3
     call(skipwords)
 
@@ -51,30 +44,28 @@ loop_line:
 
     illegal
 do_pong:
-    push(c)
     c <- rel(pong)
     call(puts)
-    pop(c)
+    c <- g
     d <- 1
     call(skipwords)
     c <- b
     call(puts) // respond with same identifier
     c <- rel(rn)
     call(puts)
-    pop(c)
     goto(loop_line)
 
 check_input:
+    pushall(d,e)
     push(c)
     d <- rel(trigger)
     e <- 3 // strlen(trigger)
     call(strncmp)
     pop(c)
-    jzrel(b,triggered)
-    ret
+    jzrel(b,check_input_triggered)
+    goto(check_input_done)
 
-triggered:
-    push(c)
+check_input_triggered:
     c <- c + 3
     call(parse_int)
     c <- b + 40
@@ -83,8 +74,9 @@ triggered:
     call(udiv)
     c <- b - 40
     call(say_fahrenheit)
-    pop(c)
 
+check_input_done:
+    popall(d,e)
     ret
 
 ping: .utf32 "PING" ; .word 0
@@ -92,6 +84,7 @@ pong: .utf32 "PONG " ; .word 0
 
 // c <- address of first character of number
 parse_int:
+    pushall(d,e,f)
     b <- 0
     d <- [c]
     e <- d == '-'
@@ -109,6 +102,7 @@ parse_int_top:
     goto(parse_int_top)
 parse_int_done:
     b <- b * f
+    popall(d,e,f)
     ret
 parse_int_negative:
     f <- -1
@@ -233,6 +227,7 @@ say_end:
     ret
 
 skipwords:
+    pushall(e,g)
 skipwords_top:
     g <- [c]
     e <- g == 0
@@ -249,6 +244,7 @@ skipwords_foundspace:
 
 skipwords_done:
     b <- c
+    popall(e,g)
     ret
 
 //  :usermask PRIVMSG #channel :message
