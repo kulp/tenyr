@@ -25,6 +25,7 @@ static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 
     if (op == OP_WRITE) {
         putchar(*data);
+        fflush(stdout);
     } else if (op == OP_READ) {
         if ((*data = tmp = getchar()) && tmp == EOF) {
             return -1;

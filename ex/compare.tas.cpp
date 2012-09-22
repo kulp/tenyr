@@ -6,10 +6,24 @@ _start:
 
     c <- rel(this)
     d <- rel(that)
+    f <- rel(strcmp)
     call(cmp)
 
     c <- rel(this)
     d <- rel(this)
+    f <- rel(strcmp)
+    call(cmp)
+
+    c <- rel(this)
+    d <- rel(that)
+    e <- 6
+    f <- rel(strncmp)
+    call(cmp)
+
+    c <- rel(this)
+    d <- rel(that)
+    e <- 50
+    f <- rel(strncmp)
     call(cmp)
 
     illegal
@@ -42,7 +56,7 @@ cmp:
     ret
 
 check:
-    call(strcmp)
+    callr(f)
     jnzrel(b,_mismatched)
     c <- rel(_match_message)
     goto(_finished)
