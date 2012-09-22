@@ -20,7 +20,7 @@ loop_line:
 
     c <- g
     d <- rel(ping)
-    e <- 4
+    e <- 5
     call(strncmp)
     jzrel(b,do_pong)
 
@@ -79,7 +79,7 @@ check_input_done:
     popall(d,e)
     ret
 
-ping: .utf32 "PING" ; .word 0
+ping: .utf32 "PING " ; .word 0
 pong: .utf32 "PONG " ; .word 0
 
 // c <- address of first character of number
@@ -109,37 +109,6 @@ parse_int_negative:
     c <- c + 1
     goto(parse_int_top)
 
-say_hex:
-    call(say_start)
-    push(c)
-    c <- rel(zero_x)
-    call(puts)
-    pop(c)
-    call(convert_hex)
-    c <- b
-    call(puts)
-    call(say_end)
-    ret
-
-zero_x: .utf32 "0x" ; .word 0
-
-convert_hex:
-    b <- rel(tmpbuf_end)
-convert_hex_top:
-    b <- b - 1
-    d <- c & 0xf
-    d <- [d + rel(hexes)]
-    d -> [b]
-    c <- c >> 4
-    d <- c == 0
-    jzrel(d,convert_hex_top)
-
-    ret
-
-hexes:
-    .word '0', '1', '2', '3', '4', '5', '6', '7',
-          '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-
 tmpbuf: .utf32 "0123456789abcdef"
 tmpbuf_end: .word 0
 
@@ -161,48 +130,42 @@ say_fahrenheit:
     call(say_end)
     ret
 
+// TODO this is actually being encoded as UTF-8
 degF: .utf32 "°F" ; .word 0
 
 convert_decimal:
-    b <- rel(tmpbuf_end)
+    pushall(d,f,g,h)
+    g <- c
+    h <- rel(tmpbuf_end)
     d <- c < 0
     jnzrel(d,convert_decimal_negative)
     f <- 0
 convert_decimal_top:
-    push(f)
-    b <- b - 1
+    h <- h - 1
 
-    push(b)
-
-    push(c)
+    c <- g
     d <- 10
     call(umod)
-    pop(c)
 
-    d <- [b + rel(hexes)]
-    pop(b)
-    d -> [b]
-    push(b)
+    [h] <- b + '0'
 
-    push(c)
+    c <- g
     d <- 10
     call(udiv)
-    pop(c)
-    c <- b
+    g <- b
 
-    pop(b)
-
-    d <- c == 0
-    pop(f)
+    d <- g == 0
     jzrel(d,convert_decimal_top)
     jzrel(f,convert_decimal_done)
-    b <- b - 1
-    [b] <- '-'
+    h <- h - 1
+    [h] <- '-'
 
 convert_decimal_done:
+    b <- h
+    popall(d,f,g,h)
     ret
 convert_decimal_negative:
-    c <- - c
+    g <- - g
     f <- -1
     goto(convert_decimal_top)
 
