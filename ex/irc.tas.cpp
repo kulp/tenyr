@@ -21,6 +21,17 @@ _start:
 loop_line:
     call(getline)
     c <- b
+
+    push(c)
+    d <- rel(ping)
+    e <- 4
+    call(strncmp)
+    pop(c)
+    push(c)
+    jzrel(b,do_pong)
+resume:
+    pop(c)
+
     push(c)
     d <- 1
     call(skipwords)
@@ -40,6 +51,18 @@ loop_line:
     goto(loop_line)
 
     illegal
+do_pong:
+    push(c)
+    c <- rel(pong)
+    call(puts)
+    pop(c)
+    d <- 1
+    call(skipwords)
+    c <- b
+    call(puts) // respond with same identifier
+    c <- rel(rn)
+    call(puts)
+    goto(resume)
 
 check_input:
     push(c)
@@ -63,6 +86,9 @@ triggered:
     pop(c)
 
     ret
+
+ping: .utf32 "PING" ; .word 0
+pong: .utf32 "PONG " ; .word 0
 
 // c <- address of first character of number
 parse_int:
