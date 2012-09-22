@@ -210,16 +210,14 @@ skipwords_done:
     popall(e,g)
     ret
 
-//  :usermask PRIVMSG #channel :message
 getline:
-    g <- rel(buffer)
-    f <- g
+    pushall(c,d,f)
+    f <- rel(buffer)
 
 getline_top:
     getch(b)
     c <- b == '\r'
-    d <- b == '\n'
-    c <- c | d
+    c <- b == '\n' + c
     jnzrel(c,getline_eol)
     b -> [f]
     f <- f + 1
@@ -227,18 +225,8 @@ getline_top:
 
 getline_eol:
     a -> [f]
-    b <- g
-    ret
-
-sleep:
-    c <- c * 2047
-    c <- c * 2047
-sleep_loop:
-    c <- c - 1
-    d <- c == 0
-    jnzrel(d,sleep_done)
-    goto(sleep_loop)
-sleep_done:
+    b <- rel(buffer)
+    popall(c,d,f)
     ret
 
 // ----------------------------------------------------------------------------
