@@ -54,15 +54,27 @@ triggered:
     push(c)
     c <- c + 3
     call(parse_int)
-    c <- b
+    c <- b * 2 // XXX
     call(say_int)
     pop(c)
     ret
 
     ret
 
+// c <- address of first character of number
 parse_int:
-    b <- -40
+    b <- 0
+parse_int_top:
+    d <- [c]
+    c <- c + 1
+    d <- d - '0'
+    e <- d > 9
+    jnzrel(e,parse_int_done)
+    e <- d < 0
+    jnzrel(e,parse_int_done)
+    b <- b * 10 + d
+    goto(parse_int_top)
+parse_int_done:
     ret
 
 say_int:
