@@ -10,6 +10,7 @@ srand:
 
 // Returns an unsigned 32-bit random number in B.
 rand:
+  push(c)
   // Grab the state value.
   b <- [rel(state)]
 
@@ -23,6 +24,7 @@ rand:
 
   // Store the new state.
   b -> [rel(state)]
+  pop(c)
   ret
 
 state:

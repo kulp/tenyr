@@ -5,6 +5,7 @@
 
     .global strcmp
 strcmp:
+    pushall(e,g,h,i,j)
     b <- 0              // start with matching
 strcmp_loop:
     j <- [c]            // load word from string
@@ -23,6 +24,7 @@ strcmp_done:
     b <- b | e          // accumulate mismatches
     e <- h <> i         // check for length mismatch
     b <- b | e          // accumulate mismatches
+    popall(e,g,h,i,j)
     ret
 
 // arguments in C, D, and E
@@ -30,6 +32,7 @@ strcmp_done:
 
     .global strncmp
 strncmp:
+    pushall(f,g,h,i,j)
     b <- 0              // start with matching
 strncmp_loop:
     h <- e < 1          // check length to go
@@ -51,7 +54,7 @@ strncmp_done:
     b <- b | f          // accumulate mismatches
     f <- h <> i         // check for length mismatch
     b <- b | f          // accumulate mismatches
-    ret
 strncmp_nreached:
+    popall(f,g,h,i,j)
     ret
 

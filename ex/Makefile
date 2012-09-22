@@ -9,7 +9,18 @@ CPPFLAGS += -I../lib -I../lib/dword
 vpath %.tas ../lib ../lib/dword
 vpath %.tas.cpp ../lib ../lib/dword
 
-TARGETS = hello.texe fib.texe fib_iter.texe compare.texe sieve.texe maths.texe bsearch.texe irc.texe
+TARGETS = \
+    bsearch.texe        \
+    compare.texe        \
+    fib.texe            \
+    fib_iter.texe       \
+    hello.texe          \
+    isprime.texe        \
+    irc.texe            \
+    maths.texe          \
+    sieve.texe          \
+    #
+
 CLEANFILES += $(TARGETS)
 
 all: $(TARGETS)
