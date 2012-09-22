@@ -35,6 +35,44 @@ loop_line:
     call(skipwords)
 
     c <- b + 1
+    call(check_input)
+
+    goto(loop_line)
+
+    illegal
+
+check_input:
+    push(c)
+    d <- rel(trigger)
+    e <- 3 // strlen(trigger)
+    call(strncmp)
+    pop(c)
+    jzrel(b,triggered)
+    ret
+
+triggered:
+    push(c)
+    c <- c + 3
+    call(parse_int)
+    c <- b
+    call(say_int)
+    pop(c)
+    ret
+
+    ret
+
+parse_int:
+    b <- -40
+    ret
+
+say_int:
+    c <- rel(minus_forty)
+    call(say)
+    ret
+
+minus_forty: .utf32 "-40C" ; .word 0
+
+say:
     push(c)
     c <- rel(talk)
     call(puts)
@@ -42,9 +80,7 @@ loop_line:
     call(puts)
     c <- rel(rn)
     call(puts)
-    goto(loop_line)
-
-    illegal
+    ret
 
 skipwords:
 skipwords_top:
@@ -114,6 +150,7 @@ join: .utf32 "JOIN " CHANNEL ; .word 0
 talk: .utf32 "PRIVMSG " CHANNEL " :" ; .word 0
 
 privmsg: .utf32 "PRIVMSG" ; .word 0
+trigger: .utf32 "!f " ; .word 0
 
 rn: .word '\r', '\n', 0
 
