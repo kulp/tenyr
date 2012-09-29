@@ -19,8 +19,7 @@ __boot:
 _PSPinit:   .word   0x007fffff
 _RSPinit:   .word   0x00ffffff
 
-    .global NEXT
-NEXT:
+head(NEXT,NEXT):
     W  <- [I]
     W  <-  rel(W)
     I  <-  I + 1

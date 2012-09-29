@@ -42,7 +42,7 @@
 #define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 2); goto(Loc) ; popregs(o)
 
 #define reloc(Label)        p + (@Label - (. + 1))
-#define rel(X)              X + p + (@__zero - . - 1)
+#define rel(X)              X + reloc(__zero)
 #define unrel(X)            X - p + (. + 1)
 #define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
@@ -80,10 +80,10 @@
 // expects to be called in a @word context
 #define IFNOT0(Then,Else)             \
     @EQZ,               /* nrmlise */ \
-    @LITERAL, @Else,        /* F a1    */ \
+    @LITERAL, @Else,    /* F a1    */ \
     @SWAP, @DUP, @ROT,  /* F F a1  */ \
     @AND,               /* F a1    */ \
-    @LITERAL, @Then,        /* F a1 a2 */ \
+    @LITERAL, @Then,    /* F a1 a2 */ \
     @ROT, @EQZ, @AND,   /* a1 a2   */ \
     @OR,                /* a       */ \
     @RELOC, @SET_IP
