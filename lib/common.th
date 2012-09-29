@@ -1,5 +1,5 @@
-#ifndef COMMON_TAS_
-#define COMMON_TAS_
+#ifndef COMMON_TH_
+#define COMMON_TH_
 
 // The stack-setup prologue assumes o points just above a usable stack space.
 // For bare-metal applications, this will be address zero if o has not been
@@ -19,12 +19,12 @@
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
 
+#include "push.th"
+
 // arguments pushed in the order specified
 #define pushall(...)        pushall_(o,__VA_ARGS__)
 // arguments popped in the reverse of the order specified
 #define popall(...)         popall_(o,__VA_ARGS__)
-
-#include "push.th"
 
 #endif
 
