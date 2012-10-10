@@ -51,12 +51,6 @@ head(HEXTABLE,HEXTABLE): .word
     @LITERAL, @hexchars, @RELOC,
     @EXIT
 
-undefined_word:
-.L_undefined_word:
-    .word (.L_undefined_word_end - .L_undefined_word - 1)
-    .utf32 "undefined word"
-.L_undefined_word_end:
-
 hexchars:
     .utf32 "0123456789ABCDEF"
 
