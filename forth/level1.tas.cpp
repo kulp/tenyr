@@ -487,6 +487,3 @@ head(DEBUG,DEBUG): .word . + 1
 .global level1_link
 .set level1_link, @link
 
-.global dict
-.set dict, @level1_link
-

@@ -13,7 +13,7 @@ INBUF:
 INPOS: .word 0
 INLEN: .word .L_INBUF_after - .L_INBUF_before
 
-.set link, 0
+.set link, @level1_link
 head(start,start): .word
     @NOOP
 
@@ -29,9 +29,8 @@ top: .word
         @IN_LEN, @SWAP, @SUB,                       // tib left
         @ACCEPT,                                    // count
         @TIB, @TO_IN, @FETCH, @ADD, @ADD, @BL, @SWAP, @STOCHR, //
-        @TIB, @TO_IN, @FETCH, @ADD,
         @BL, @WORD,
-        @FIND,
+        @FIND, // xt flag
         IFNOT0(found,notfound)
 
     strip_spaces: .word
@@ -51,18 +50,13 @@ top: .word
         @FIND,
         IFNOT0(found,notfound)
     notfound: .word
-        // TODO complain
-        @LITERAL, @undefined_word, @RELOC,
-        @PUTS,
-        @LITERAL, '\n', @EMIT,
+        // complain
+        @LITERAL, @undefined_word, @RELOC, @PUTS,
+        @CR,
         @ABORT
 
-    found: .word
-        //@DROP, // drop flag for now, assume found
-        @DUP,         @EMIT_UNSIGNED, @BL, @EMIT, @LITERAL, ':', @EMIT, @BL, @EMIT, @CR,
-        @DUP, @RELOC, @EMIT_UNSIGNED, @BL, @EMIT, @LITERAL, ':', @EMIT, @BL, @EMIT, @CR,
+    found: .word // tib xt
         @RELOC, @EXECUTE,
-        //@EXIT,
 
         // example of a computed branch
         @LITERAL, 1,
@@ -174,4 +168,15 @@ head(SAYTOP,SAYTOP): .word
     @ENTER,
     @DUP, @EMIT_UNSIGNED, @CR,
     @EXIT
+
+head(ONE,1): .word
+    @ENTER,
+    @LITERAL, 1,
+    @EXIT
+
+.global level2_link
+.set level2_link, @link
+
+.global dict
+.set dict, @level2_link
 
