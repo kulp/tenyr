@@ -338,11 +338,15 @@ L_WORD_advance: .word
 
 L_WORD_cont: .word
     @ROT,                   // c1 tmp tib
-    @LITERAL, @L_WORD_top, @RELOC, @SET_IP
+    GOTO(L_WORD_top)
 
 L_WORD_done_stripping: .word
     // tmp tib c2 c1
-    @TWO_DROP, @DROP,       // tmp
+    @TWO_DROP,              // tmp tib
+    @TIB, @SUB,             // tmp off
+    //@ADD_1CHAR,
+    @TO_IN, @STORE,         // tmp
+    //@DROP,
     @LITERAL, @BL,          // tmp bl
     @SWAP, @STOCHR,         // 
     @WORD_TMP,              // TMP
@@ -373,7 +377,7 @@ L_SKIP_inc: .word
     // u addr c
     @SWAP, @ADD_1CHAR,      // u c addr+1
     @ROT,                   // c addr u
-    @LITERAL, @L_SKIP_top, @RELOC, @SET_IP
+    GOTO(L_SKIP_top)
 
 L_SKIP_done: .word
     // x addr x

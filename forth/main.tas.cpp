@@ -18,13 +18,6 @@ head(start,start): .word
     @NOOP
 
 top: .word
-    #if TEST_LOOKUP
-        @TIB, @TO_IN, @FETCH, @ADD,
-        @BL, @WORD,
-        @FIND,
-        IFNOT0(found,notfound),
-    #endif
-
         @TIB, @DUP, @TO_IN, @FETCH, @SWAP, @SUB,    // tib used
         @IN_LEN, @SWAP, @SUB,                       // tib left
         @ACCEPT,                                    // count
@@ -33,22 +26,6 @@ top: .word
         @FIND, // xt flag
         IFNOT0(found,notfound)
 
-    strip_spaces: .word
-        @TIB, @TO_IN, @FETCH, @ADD,
-        @FETCHR, @BL, @CMP_EQ,
-        IFNOT0(advance,done_stripping)
-    advance: .word
-        @LITERAL, 1, @CHARS, @TO_IN, @ADDMEM,
-        @LITERAL, @strip_spaces, @RELOC, @SET_IP
-
-    done_stripping: .word
-        @TIB, @TO_IN, @FETCH, @ADD,
-        @FETCHR, @EMIT,
-        @EXIT
-    find_word: .word
-        @TIB, @TO_IN, @FETCH, @ADD,
-        @FIND,
-        IFNOT0(found,notfound)
     notfound: .word
         // complain
         @LITERAL, @undefined_word, @RELOC, @PUTS,
@@ -57,31 +34,7 @@ top: .word
 
     found: .word // tib xt
         @RELOC, @EXECUTE,
-
-        // example of a computed branch
-        @LITERAL, 1,
-        IFNOT0(top,bottom)
-    bottom: .word
-        @NOOP
-
-    wordstart: .word
-        @KEY,
-        @DUP, @LITERAL, '\n', @CMP_EQ,
-        IFNOT0(linedone,checkspace)
-    checkspace: .word
-        @DUP, @BL, @CMP_EQ,
-        IFNOT0(worddone,regular),
-        @NOOP
-    regular: .word
-        @EMIT,
-        @LITERAL, @wordstart, @RELOC, @SET_IP
-    worddone: .word
-        @DROP,
-        @CR,
-        @LITERAL, @wordstart, @RELOC, @SET_IP
-    linedone: .word
-        @CR,
-        @EXIT
+        GOTO(top)
 
 head(IN_LEN,IN_LEN): .word
     @ENTER,
