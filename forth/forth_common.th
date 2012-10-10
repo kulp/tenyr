@@ -80,6 +80,9 @@
     @OR,                /* a       */ \
     @RELOC, @SET_IP
 
+// expects to be called in a @word context
+#define GOTO(Where) \
+    @LITERAL, @Where, @RELOC, @SET_IP
 
 #endif
 
