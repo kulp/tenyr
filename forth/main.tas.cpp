@@ -18,10 +18,10 @@ head(start,start): .word
     @NOOP
 
 top: .word
-        @TIB, @DUP, @TO_IN, @FETCH, @SWAP, @SUB,    // tib used
-        @IN_LEN, @SWAP, @SUB,                       // tib left
-        @ACCEPT,                                    // count
-        @TIB, @TO_IN, @FETCH, @ADD, @ADD, @BL, @SWAP, @STOCHR, //
+        @TIB, @DUP, @TO_IN, @FETCH, @SUB,    // tib -used
+        @IN_LEN, @ADD,                       // tib left
+        @ACCEPT,                             // count
+        @BL, @TIB, @TO_IN, @FETCH, @ADD, @ADD, @STOCHR, //
         @BL, @WORD,
         @FIND, // xt flag
         IFNOT0(found,notfound)
@@ -71,24 +71,23 @@ head(PUTS,PUTS): .word // ( c-addr -- )
     @FETCHR,                // c-addr count
     @SWAP,                  // count c-addr
     @ADD_1CHAR,             // count string
-    @SWAP                   // string count
+    @OVER                   // count string count
 
 L_PUTS_top: .word
-    @DUP,                   // string count count
-    @EQZ,                   // string count flag
+    @EQZ,                   // count string flag
     IFNOT0(L_PUTS_done,L_PUTS_emit)
 L_PUTS_emit: .word
-    @SWAP,                  // count string
     @DUP,                   // count string string
     @FETCHR,                // count string char
     @EMIT,                  // count string
     @ADD_1CHAR,             // count STRING
     @SWAP,                  // string count
     @SUB_1,                 // string COUNT
+    @TUCK,                  // count string count
     GOTO(L_PUTS_top)
 
 L_PUTS_done: .word
-    @TWO_DROP,              // --
+    @TWO_DROP, @DROP,       // --
     @EXIT
 
 head(SET_IP,SET_IP): .word . + 1
