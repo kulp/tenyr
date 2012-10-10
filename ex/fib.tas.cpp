@@ -17,10 +17,12 @@ _start:
     illegal
 
 fib:
+    push(d)
     d <- 1
     d <- c > d          // zero or one ?
     jnzrel(d,_recurse)  // not-zero is true (c >= 2)
     b <- c
+    pop(d)
     ret
 
 _recurse:
@@ -35,5 +37,6 @@ _recurse:
     pop(b)
     b <- d + b
 
+    pop(d)
     ret
 

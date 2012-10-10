@@ -25,31 +25,24 @@
 #define T6  L
 #define T7  N
 
-// save and restore Forth registers on a stack, for calling other ABIs
-#define pushregs(o) push(o,W)   \
-                    push(o,X)   \
-                    push(o,I )  \
-                    push(o,S  ) \
-                    push(o,R  )
+#include "push.th"
 
-#define  popregs(o)  pop(o,R  ) \
-                     pop(o,S  ) \
-                     pop(o,I )  \
-                     pop(o,X)   \
-                     pop(o,W)
+// save and restore Forth registers on a stack, for calling other ABIs
+#define pushregs(o) pushall_(o,W,X,I,S,R)
+#define  popregs(o)  popall_(o,W,X,I,S,R)
 
 #define jmp(Reg)    p <- Reg - (. + 1) + p
 #define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 2); goto(Loc) ; popregs(o)
 
-#define reloc(Label)        p + (@Label - (. + 1))
-#define rel(X)              X + p + (@__zero - . - 1)
+#define reloc(Label)        (@Label - (. + 1)) + p
+#define rel(X)              X + reloc(__zero)
 #define unrel(X)            X - p + (. + 1)
 #define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
 #define iftrue(Predicate,Target) \
-    P <- Predicate & (@Target - . - 1) + P
+    p <- Predicate & reloc(Target)
 
 // .global for L##Label_{exec,compile} is a hack to allow linking to succeed
 // for forward references

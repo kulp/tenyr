@@ -60,7 +60,7 @@ static int usage(const char *me)
            "Options:\n"
            "  -o, --output=X        write output to filename X\n"
            "  -h, --help            display this message\n"
-           "  -V, --version         print the string '%s'\n"
+           "  -V, --version         print the string `%s'\n"
            , me, version());
 
     return 0;

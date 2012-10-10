@@ -6,10 +6,24 @@ _start:
 
     c <- rel(this)
     d <- rel(that)
+    f <- rel(strcmp)
     call(cmp)
 
     c <- rel(this)
     d <- rel(this)
+    f <- rel(strcmp)
+    call(cmp)
+
+    c <- rel(this)
+    d <- rel(that)
+    e <- 6
+    f <- rel(strncmp)
+    call(cmp)
+
+    c <- rel(this)
+    d <- rel(that)
+    e <- 50
+    f <- rel(strncmp)
     call(cmp)
 
     illegal
@@ -42,7 +56,7 @@ cmp:
     ret
 
 check:
-    call(strcmp)
+    callr(f)
     jnzrel(b,_mismatched)
     c <- rel(_match_message)
     goto(_finished)
@@ -53,19 +67,19 @@ _finished:
     ret
 
 _match_message:
-    .ascii "strings matched"
+    .utf32 "strings matched"
     .word 0
 _mismatch_message:
-    .ascii "strings did not match"
+    .utf32 "strings did not match"
     .word 0
 
 this:
-    .ascii "this is a longish string"
+    .utf32 "this is a longish string"
     .word 0
 that:
-    .ascii "this is a longish string2"
+    .utf32 "this is a longish string2"
     .word 0
 nl:
-    .word 0x0a   // newline
+    .word '\n'
     .word 0
 

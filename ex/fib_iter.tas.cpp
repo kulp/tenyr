@@ -12,6 +12,7 @@ _start:
 
 // Computes fib(C) and stores the result in B.
 fib:
+    pushall(d,g,k)
     b <- 0
     d <- 1
 
@@ -27,4 +28,5 @@ loop:
     goto(loop)
 
 done:
+    popall(d,g,k)
     ret

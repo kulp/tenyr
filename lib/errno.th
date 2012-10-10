@@ -1,0 +1,10 @@
+#ifndef ERRNO_TH_
+#define ERRNO_TH_
+
+#define EINVAL 22
+#define ERANGE 34
+#define errno [0x7ff]
+
+#endif
+
+/* vi:set syntax=c: */

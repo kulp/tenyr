@@ -7,6 +7,6 @@ _start:
     illegal
 
 hi:
-    .ascii "hello, world"
+    .utf32 "hello, world"
     .word 0             // mark end of string with a zero
 

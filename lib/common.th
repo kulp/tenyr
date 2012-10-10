@@ -1,21 +1,31 @@
-#ifndef COMMON_TAS_
-#define COMMON_TAS_
+#ifndef COMMON_TH_
+#define COMMON_TH_
 
 // The stack-setup prologue assumes o points just above a usable stack space.
 // For bare-metal applications, this will be address zero if o has not been
 // written, so the stack will start at -1 (0xffffffff).
 #define prologue            o <- o - 1
 
-#define rel(Label)          p + (@Label - . - 1)
-#define reloff(Label,Off)   p + (@Label - . - 1 + (Off))
+#define rel(Label)          reloff(Label,0)
+#define reloff(Label,Off)   (@Label - (. + 1 - (Off))) + p
 #define goto(Label)         p <- rel(Label)
-#define call(Target)        [o] <- p + 2 ; o <- o - 1 ; goto(Target)
+#define callnz(Cond,Label)  p <- Cond & 1 + p ; p <- p + 3 ; push(p + 2); goto(Label)
+#define call(Label)         push(p + 2); goto(Label)
+#define callr(Reg)          push(p + 2); p <- Reg
 // XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
-#define jnzrel(Cond,Label)  p <- Cond &  (@Label - . - 1) + p
-#define jzrel(Cond,Label)   p <- Cond &~ (@Label - . - 1) + p
-#define push(Reg)           Reg -> [o] ; o <- o - 1
+#define jnzrel(Cond,Label)  p <- Cond & rel(Label)
+#define jzrel(Cond,Label)   p <- Cond & 1 + p ; goto(Label)
+#define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
 
+#include "push.th"
+
+// arguments pushed in the order specified
+#define pushall(...)        pushall_(o,__VA_ARGS__)
+// arguments popped in the reverse of the order specified
+#define popall(...)         popall_(o,__VA_ARGS__)
+
 #endif
 
+/* vi:set syntax=c: */

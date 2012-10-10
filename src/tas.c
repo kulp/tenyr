@@ -70,7 +70,7 @@ static int usage(const char *me)
            "  -s, --strict          disable syntax sugar in disassembly\n"
            "  -v, --verbose         disable simplified disassembly output\n"
            "  -h, --help            display this message\n"
-           "  -V, --version         print the string '%s'\n"
+           "  -V, --version         print the string `%s'\n"
            , me, format_list, version());
 
     return 0;
@@ -214,6 +214,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
                     case '-': *result = left -  right; return 1;
                     case '*': *result = left *  right; return 1;
                     case '^': *result = left ^  right; return 1;
+                    case '/': *result = left /  right; return 1;
                     case LSH: *result = left << right; return 1;
                     default: fatal(0, "Unrecognised const_expr op '%c'", ce->op);
                 }

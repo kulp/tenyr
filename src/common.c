@@ -5,10 +5,14 @@
 #include <stdio.h>
 #include <string.h>
 
+// This file must not be linked into plugins, because of the different way
+// fatal_ and debug_ are handled in main programs vs. plugins. This file should
+// probably be renamed.
+
 jmp_buf errbuf;
 
-void fatal_(int code, const char *file, int line, const char *func,
-            const char *fmt, ...)
+static void NORETURN main_fatal_(int code, const char *file, int line,
+    const char *func, const char *fmt, ...)
 {
     va_list vl;
     va_start(vl,fmt);
@@ -24,8 +28,8 @@ void fatal_(int code, const char *file, int line, const char *func,
     longjmp(errbuf, code);
 }
 
-void debug_(int level, const char *file, int line, const char *func,
-            const char *fmt, ...)
+static void main_debug_(int level, const char *file, int line,
+    const char *func, const char *fmt, ...)
 {
 #ifndef DEBUG
 #define DEBUG 0
@@ -59,4 +63,9 @@ int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp
 
     return 0;
 }
+
+// These are the implementations of the `common` functions, main program version.
+// TODO these should probably be wrapped up in a structure
+void (* NORETURN fatal_)(int code, const char *file, int line, const char *func, const char *fmt, ...) = main_fatal_;
+void (*debug_)(int level, const char *file, int line, const char *func, const char *fmt, ...) = main_debug_;
 
