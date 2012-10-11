@@ -4,8 +4,8 @@
 #define COUNTSTRING(Stem,Val)                                                  \
     Stem:                                                                      \
     CAT(.L_,Stem):                                                             \
-        .word (CAT(CAT(.L_,Stem),_end) - CAT(.L_,undefined_word) - 1) ;        \
-        .utf32 Val                                                    ;        \
+        .word (CAT(CAT(.L_,Stem),_end) - CAT(.L_,Stem) - 1) ;                  \
+        .utf32 Val                                          ;                  \
     .global Stem ;                                                             \
     CAT(CAT(.L_,Stem),_end):                                                   \
     //
