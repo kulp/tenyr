@@ -341,6 +341,13 @@ reloc_expr[outer]
             $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom, 0);
         }
 
+const_op
+    : reloc_op
+    | '*' { $const_op = '*'; }
+    | '/' { $const_op = '/'; }
+    | '^' { $const_op = '^'; }
+    | LSH { $const_op = LSH; }
+
 here_atom
     : here
     | phere_expr
@@ -348,12 +355,6 @@ here_atom
 here
     : '.'
         {   $here = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS); }
-
-const_op
-    : reloc_op
-    | '*' { $const_op = '*'; }
-    | '/' { $const_op = '/'; }
-    | LSH { $const_op = LSH; }
 
 here_expr[outer]
     : here_atom

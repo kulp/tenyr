@@ -46,9 +46,36 @@ head(TO_IN,>IN): .word
 // >NUMBER  ud adr u -- ud' adr' u'
 //                          convert string to number
 // 2DROP  x1 x2 --                      drop 2 cells
+head(TWO_DROP,2DROP): .word
+    @ENTER,
+    @DROP, @DROP,
+    @EXIT
+
 // 2DUP   x1 x2 -- x1 x2 x1 x2       dup top 2 cells
+head(TWO_DUP,2DUP): .word
+    @ENTER,         // a b
+    @OVER, @OVER,   // a b a b
+    @EXIT
+
 // 2OVER  x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2  per diag
+head(TWO_OVER,2OVER): .word
+    @ENTER,             // a b c d
+    @TWO_SWAP,          // c d a b
+    @TWO_DUP,           // c d a b a b
+    @PUSH_R, @PUSH_R,   // c d a b  R: -- b a
+    @TWO_SWAP,          // a b c d
+    @POP_R, @POP_R,     // a b c d a b
+    @EXIT
+
 // 2SWAP  x1 x2 x3 x4 -- x3 x4 x1 x2     per diagram
+head(TWO_SWAP,2SWAP): .word
+    @ENTER,         // a b c d --
+    @PUSH_R,        // a b c    R: -- d
+    @ROT, @ROT,     // c a b
+    @POP_R,         // c a b d  R: --
+    @ROT, @ROT,     // c d a b
+    @EXIT
+
 // 2!     x1 x2 a-addr --              store 2 cells
 // 2@     a-addr -- x1 x2              fetch 2 cells
 // ABORT  i*x --   R: j*x --      clear stack & QUIT
@@ -62,10 +89,41 @@ head(ABORT,ABORT):
 //        i*x x1 --       R: j*x --      abort,x1<>0
 // ABS    n1 -- +n2                   absolute value
 // ACCEPT c-addr +n -- +n'    get line from terminal
+head(ACCEPT,ACCEPT): .word                      // ( c-addr +n1 -- +n2 )
+// TODO explicit echoing
+    @ENTER,
+
+    @OVER, @SWAP                                // C-addr c-addr n1
+L_ACCEPT_key: .word
+    @KEY,                                       // C-addr c-addr n1 c
+    @DUP, @LITERAL, '\n', @CMP_EQ,              // C-addr c-addr n1 c flag
+    IFNOT0(L_ACCEPT_exit,L_ACCEPT_regular)
+L_ACCEPT_regular: .word
+    @ROT,                                       // C-addr n1 c c-addr
+    @TUCK,                                      // C-addr n1 c-addr c c-addr
+    @STOCHR,                                    // C-addr n1 c-addr
+    @LITERAL, 1, @CHARS, @ADD,                  // C-addr n1 c-addr++
+    @SWAP,                                      // C-addr c-addr n1
+    @SUB_1,                                     // C-addr c-addr n1--
+    @DUP, @EQZ,                                 // C-addr c-addr n1 flag
+    IFNOT0(L_ACCEPT_done,L_ACCEPT_key)
+L_ACCEPT_exit: .word
+    @DROP                                       // C-addr c-addr n1
+L_ACCEPT_done: .word
+    @DROP,                                      // C-addr c-addr
+    @SWAP, @SUB,                                // n2
+    @EXIT
+
 // ALIGN  --                              align HERE
 // ALIGNED addr -- a-addr           align given addr
 // ALLOT  n --              allocate n bytes in dict
 // BASE   -- a-addr           holds conversion radix
+head(BASE,BASE): .word
+    @ENTER,
+    @LITERAL, @base, @RELOC,
+    @EXIT
+base: .word 10
+
 // BEGIN  -- adrs         target for backward branch
 // BL     -- char                     an ASCII space
 head(BL,BL): .word
@@ -115,39 +173,40 @@ head(FIND,FIND):
     .word . + 1
     T0   <- @dict       // T0 <- addr of dictionary
 L_FIND_top:
-    T5   <- [S + 1]     // T5 <- name to look up
+    T4   <- [S + 1]     // T4 <- name to look up
     T1   <- T0 + 2      // T1 <- addr of name string
+    T6   <- rel(T0)     // T6 <- addr of rec length
+    T6   <- [T6 - 1]    // T6 <- rec length
+    T6   <- T6 - 2      // T6 <- test-name length
+    T2   <- [T4]        // T2 <- find-name length
+    T2   <- T6 <> T2    // check length match
+    iftrue(T2,L_FIND_char_bottom)
+    T4   <- T4 + 1      // T4 <- addr of test string
 
 L_FIND_char_top:
     T2   <- [rel(T1)]   // T2 <- test-name char
-    T3   <- [T5]        // T3 <- find-name char
+    T3   <- [T4]        // T3 <- find-name char
 
-    T2   <- T2 & 0xdf   // uppercase test-name char
-    T3   <- T3 & 0xdf   // uppercase find-name char
-
-    // Right now we check for either NUL-termination
-    // or space-termination
-    T6   <- T3 == ' '   // T4 <- end of find-name ?
-    T4   <- T3 == 0     // T6 <- end of find-name ?
-    T6   <- T4 | T6     // T4 <- either ending ?
-    T4   <- T2 == 0     // T4 <- end of test-name ?
+    // uppercase test-name char
+    T2   <- T2 &~ ('a' ^ 'A')
+    // uppercase find-name char
+    T3   <- T3 &~ ('a' ^ 'A')
 
     T2   <- T2 <> T3    // T2 <- char mismatch ?
-    T3   <- T4 &  T6    // T3 <- both names end ?
-    T4   <- T4 |  T6    // T4 <- either name ends ?
-    T2   <- T2 |  T4    // T2 <- name mismatch ?
+    T3   <- T6 <  1     // T3 <- end of test-name ?
 
     iftrue(T3,L_FIND_match)
     iftrue(T2,L_FIND_char_bottom)
 
     T1   <- T1 + 1      // increment test-name addr
-    T5   <- T5 + 1      // increment find-name addr
+    T6   <- T6 - 1      // decrement test-name length
+    T4   <- T4 + 1      // increment find-name addr
     P    <- reloc(L_FIND_char_top)
 
 L_FIND_char_bottom:
     T0   <- [rel(T0)]   // T0 <- follow link
     T1   <- T0 <> 0     // T1 <- more words ? .word . + 1
-    T2   <- - P + (@L_FIND_top - 2)
+    T2   <- - P + (@L_FIND_top - 3)
     T2   <- rel(T2)
     T2   <- T2 & T1
     P    <- P + T2
@@ -238,10 +297,110 @@ head(EMIT_UNSIGNED,U.): .word
 
     @EXIT
 
-
 // .      n --                      display n signed
 // WHILE  -- adrs              branch for WHILE loop
-// WORD   char -- c-addr n  parse word delim by char
+// WORD   char -- c-addr    parse word delim by char
+head(WORD,WORD): .word
+    @ENTER,                 // c
+    @WORD_TMP,              // c TMP
+    @LITERAL, 0, @OVER,     // c TMP 0 TMP
+    @STOCHR,                // c TMP
+    @ADD_1CHAR,             // c TMP+1
+    @TIB, @TO_IN, @FETCH,   // c TMP TIB off
+    @ADD,                   // c TMP tib
+    @ROT, @SWAP, @TWO_DUP,  // TMP c tib c tib
+    @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
+    @SKIP,                  // TMP c tib ntib
+    @NIP,                   // TMP c ntib
+    @SWAP, @ROT, @ROT,      // c TMP ntib
+    @NOOP
+
+L_WORD_top: .word
+    // c TMP tib
+    @ROT, @OVER,            // TMP tib c tib
+    @FETCHR, @DUP, @ROT,    // TMP tib c2 c2 c1
+    @TUCK,                  // TMP tib c2 c1 c2 c1
+    @CMP_EQ,                // TMP tib c2 c1 flag
+    IFNOT0(L_WORD_done_stripping,L_WORD_advance)
+
+L_WORD_advance: .word
+    // tmp tib c2 c1
+    @SWAP,                  // TMP tib c1 c2
+    @TWO_OVER, @DROP,       // TMP tib c1 c2 TMP
+    @TUCK, @STOCHR,         // TMP tib c1 tmp
+    @ADD_1CHAR,             // TMP tib c1 tmp+1
+    @ROT,                   // TMP c1 tmp tib
+    @ADD_1CHAR,             // TMP c1 tmp tib+1
+    @TWO_SWAP, @NIP,        // tmp tib c1
+    @WORD_TMP, @DUP,        // tmp tib c1 TMP TMP
+    @FETCHR, @ADD_1,        // tmp tib c1 TMP nc+1
+    @SWAP, @STOCHR,         // tmp tib c1
+    @ROT, @DUP,             // tib c1 tmp tmp
+    @LITERAL, .L_WORD_tmp_end,
+    @RELOC,
+    @SWAP, @SUB,            // tib c1 tmp left
+    @LITERAL, 2, @CMP_LT,   // tib c1 tmp flag
+    IFNOT0(L_WORD_done_stripping,L_WORD_cont)
+
+L_WORD_cont: .word
+    @ROT,                   // c1 tmp tib
+    GOTO(L_WORD_top)
+
+L_WORD_done_stripping: .word
+    // tmp tib c2 c1
+    @TWO_DROP,              // tmp tib
+    @TIB, @SUB,             // tmp off
+    //@ADD_1CHAR,
+    @TO_IN, @STORE,         // tmp
+    //@DROP,
+    @LITERAL, @BL,          // tmp bl
+    @SWAP, @STOCHR,         // 
+    @WORD_TMP,              // TMP
+    @EXIT
+L_WORD_tmp:
+.L_WORD_tmp:
+    .utf32 "          ""          ""          ""  "
+.L_WORD_tmp_end: .word 0
+
+// ( char c-addr u -- c-addr )    skip init char up to N
+head(SKIP,SKIP): .word
+    @ENTER                  // c addr u
+
+L_SKIP_top: .word
+    // c addr u
+    @DUP, @EQZ,             // c addr u flag
+    IFNOT0(L_SKIP_done,L_SKIP_cont)
+
+L_SKIP_cont: .word
+    // c addr u
+    @ROT, @ROT,             // u c addr
+    @SWAP, @TWO_DUP,        // u addr c addr c
+    @SWAP, @FETCHR,         // u addr c1 c1 c2
+    @CMP_EQ,                // u addr c1 flag
+    IFNOT0(L_SKIP_inc,L_SKIP_done)
+
+L_SKIP_inc: .word
+    // u addr c
+    @SWAP, @ADD_1CHAR,      // u c addr+1
+    @ROT,                   // c addr u
+    GOTO(L_SKIP_top)
+
+L_SKIP_done: .word
+    // x addr x
+    @DROP, @NIP,
+    @EXIT
+
+head(ADD_1CHAR,C1+): .word
+    @ENTER,
+    // TODO we could just do ADD_1
+    @LITERAL, 1, @CHARS, @ADD,
+    @EXIT
+
+head(WORD_TMP,WORD_TMP): .word
+    @ENTER,
+    @LITERAL, @L_WORD_tmp, @RELOC,
+    @EXIT
+
 // [      --                enter interpretive state
 // [CHAR] --               compile character literal
 // [']    --          find word & compile as literal
@@ -253,6 +412,12 @@ head(EMIT_UNSIGNED,U.): .word
 //
 // .S     --                    print stack contents
 // /STRING a u n -- a+n u-n              trim string
+head(SLASH_STRING,/STRING): .word
+    @ENTER,
+    // TODO
+    @DROP,
+    @EXIT
+
 // AGAIN  adrs --           uncond'l backward branch
 // COMPILE,  xt --            append execution token
 // DABS   d1 -- +d2        absolute value, dbl.prec.
@@ -273,15 +438,18 @@ head(WORDS,WORDS):
 L_WORDS_top:
     T0   <- rel(T0)     // T0 <- addr of next link
     T1   <- T0 + 2      // T1 <- addr of name string
+    T4   <- [T0 - 1]    // T4 <- rec length
+    T4   <- T4 - 2      // T4 <- test-name length
 
 L_WORDS_char_top:
     T2   <- [T1]        // T2 <- character
-    T3   <- T2 == 0     // T3 <- end of string ?
+    T3   <- T4 <  1     // T3 <- end of string ?
 
     iftrue(T3,L_WORDS_char_bottom)
 
     T2   -> SERIAL      // emit character
     T1   <- T1 + 1      // increment char addr
+    T4   <- T4 - 1      // decrement string length
     P    <- reloc(L_WORDS_char_top)
 L_WORDS_char_bottom:
     T1   <- '\n'
@@ -298,27 +466,32 @@ L_WORDS_char_bottom:
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
-head(ISNUMBER,?NUMBER): .word
-    @ENTER,
-    // TODO make sensitive to BASE
-    @DUP,                       // c-addr c-addr
-    @LITERAL, 1, @CHARS, @ADD,  // ca ca+1
-    @SWAP,                  // ca+1 ca
-    @FETCHR,                // ca+1 ch
-    @LITERAL, ('0' - 1),    // ca+1 ch '0'-1
-    @CMP_GT,                // ca+1 ch flag
-    @OVER,                  // ca+1 ch flag ch
-    @LITERAL, ('9' + 1),    // ca+1 ch flag ch '9'+1
-    @CMP_LT,                // ca+1 ch flag flag
-    @AND,                   // ca+1 ch flag
-
-    @LITERAL, 1, @CHARS,
-    @ADD_1,     // increment character pointer
-
-    @CMP_LT,
-
-    // TODO
-    @EXIT
+head(ISNUMBER,?NUMBER): .word . + 1
+    // first, put counted string on stack as c-string
+    ccpre()             // prepare for C call
+    h <- S              // H is local copy of PSP
+    f <- [h + 1]        // F is address of counted string
+    g <- [f]            // G is count
+    d <- f + 1          // D is address of string data
+    c <- h - g - 1      // use space on param stack
+    e <- g + 1          // E is length to copy
+    ccall(memcpy)       // copy string onto stack
+    a -> [h]            // write NUL termination
+    c <- h - g - 1      // set up string for strtol
+    d <- h - g - 2      // set up endptr for strtol
+    e <- [reloc(base)]
+    ccall(strtol)
+    l <- [h - g - 2]    // load endptr value
+    e <-  h - g - 1     // E is address of string
+    l <- l > e          // check if we consumed chars
+    n <- b &  l         // E is either B or F
+    e <- f &~ l         //  ... depending on L
+    e <- e | n
+    ccpost()            // finish C call
+    S <-  S - 1
+    l -> [S + 1]
+    e -> [S + 2]
+    goto(NEXT)          // return to interpreter
 
 head(DEBUG,DEBUG): .word . + 1
     illegal
@@ -328,7 +501,4 @@ head(DEBUG,DEBUG): .word . + 1
 
 .global level1_link
 .set level1_link, @link
-
-.global dict
-.set dict, @level1_link
 

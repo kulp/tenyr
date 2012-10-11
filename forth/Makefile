@@ -14,7 +14,7 @@ CLEANFILES += $(TARGETS)
 
 all: $(TARGETS)
 
-forty.texe: main.to level0.to level1.to
+forty.texe: main.to level0.to level1.to stringtable.to strtol.to memcpy.to
 
 %.tas: %.tas.cpp forth_common.th
 	cpp $(CPPFLAGS) $< -o $@

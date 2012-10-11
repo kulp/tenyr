@@ -32,7 +32,9 @@
 #define  popregs(o)  popall_(o,W,X,I,S,R)
 
 #define jmp(Reg)    p <- Reg - (. + 1) + p
-#define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 2); goto(Loc) ; popregs(o)
+#define ccpre()     o <- R - 1 ; pushregs(o)
+#define ccall(Loc)  push(o,p + 2); goto(Loc)
+#define ccpost()    popregs(o)
 
 #define reloc(Label)        (@Label - (. + 1)) + p
 #define rel(X)              X + reloc(__zero)
@@ -59,7 +61,6 @@
     .word  @L##Label##_compile                ;                 \
     .set    L##Label##_compile, 0             ;                 \
     .utf32 Name                               ; /* offset  2 */ \
-    .word 0                                   ;                 \
 .L##Label##_end: Label
 
 #define compile(Label)                          \
@@ -81,6 +82,9 @@
     @OR,                /* a       */ \
     @RELOC, @SET_IP
 
+// expects to be called in a @word context
+#define GOTO(Where) \
+    @LITERAL, @Where, @RELOC, @SET_IP
 
 #endif
 
