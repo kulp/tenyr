@@ -118,6 +118,12 @@ L_ACCEPT_done: .word
 // ALIGNED addr -- a-addr           align given addr
 // ALLOT  n --              allocate n bytes in dict
 // BASE   -- a-addr           holds conversion radix
+head(BASE,BASE): .word
+    @ENTER,
+    @LITERAL, @base, @RELOC,
+    @EXIT
+base: .word 10
+
 // BEGIN  -- adrs         target for backward branch
 // BL     -- char                     an ASCII space
 head(BL,BL): .word
@@ -460,27 +466,32 @@ L_WORDS_char_bottom:
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
-head(ISNUMBER,?NUMBER): .word
-    @ENTER,
-    // TODO make sensitive to BASE
-    @DUP,                       // c-addr c-addr
-    @LITERAL, 1, @CHARS, @ADD,  // ca ca+1
-    @SWAP,                  // ca+1 ca
-    @FETCHR,                // ca+1 ch
-    @LITERAL, ('0' - 1),    // ca+1 ch '0'-1
-    @CMP_GT,                // ca+1 ch flag
-    @OVER,                  // ca+1 ch flag ch
-    @LITERAL, ('9' + 1),    // ca+1 ch flag ch '9'+1
-    @CMP_LT,                // ca+1 ch flag flag
-    @AND,                   // ca+1 ch flag
-
-    @LITERAL, 1, @CHARS,
-    @ADD_1,     // increment character pointer
-
-    @CMP_LT,
-
-    // TODO
-    @EXIT
+head(ISNUMBER,?NUMBER): .word . + 1
+    // first, put counted string on stack as c-string
+    ccpre()             // prepare for C call
+    h <- S              // H is local copy of PSP
+    f <- [h + 1]        // F is address of counted string
+    g <- [f]            // G is count
+    d <- f + 1          // D is address of string data
+    c <- h - g - 1      // use space on param stack
+    e <- g + 1          // E is length to copy
+    ccall(memcpy)       // copy string onto stack
+    a -> [h]            // write NUL termination
+    c <- h - g - 1      // set up string for strtol
+    d <- h - g - 2      // set up endptr for strtol
+    e <- [reloc(base)]
+    ccall(strtol)
+    l <- [h - g - 2]    // load endptr value
+    e <-  h - g - 1     // E is address of string
+    l <- l > e          // check if we consumed chars
+    n <- b &  l         // E is either B or F
+    e <- f &~ l         //  ... depending on L
+    e <- e | n
+    ccpost()            // finish C call
+    S <-  S - 1
+    l -> [S + 1]
+    e -> [S + 2]
+    goto(NEXT)          // return to interpreter
 
 head(DEBUG,DEBUG): .word . + 1
     illegal

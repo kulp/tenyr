@@ -4,9 +4,6 @@
 .global INBUF .global INPOS .global INLEN
 .L_INBUF_before:
 INBUF:
-#if TEST_LOOKUP
-    .utf32 "  words"
-#endif
     .utf32 "                                               "
     .utf32 "                                               "
 .L_INBUF_after:
@@ -25,16 +22,17 @@ top: .word
         @BL, @WORD,
         @FIND, // xt flag
         IFNOT0(found,notfound)
-
-    notfound: .word
-        // complain
-        @LITERAL, @undefined_word, @RELOC, @PUTS,
-        @CR,
-        @ABORT
-
     found: .word // tib xt
         @RELOC, @EXECUTE,
         GOTO(top)
+    notfound: .word
+        @ISNUMBER,
+        IFNOT0(top,undefined)   // eat flag and loop if number
+    undefined: .word
+        // TODO say what text we were trying to parse
+        @LITERAL, @undefined_word, @RELOC, @PUTS,
+        @CR,
+        @ABORT
 
 head(IN_LEN,IN_LEN): .word
     @ENTER,
@@ -113,11 +111,6 @@ head(RELOC,RELOC): .word . + 1
 head(SAYTOP,SAYTOP): .word
     @ENTER,
     @DUP, @EMIT_UNSIGNED, @CR,
-    @EXIT
-
-head(ONE,1): .word
-    @ENTER,
-    @LITERAL, 1,
     @EXIT
 
 .global level2_link
