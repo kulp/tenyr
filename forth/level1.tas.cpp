@@ -160,6 +160,11 @@ head(CR,CR): .word
 
 // CREATE --              create an empty definition
 // DECIMAL --             set number base to decimal
+head(DECIMAL,DECIMAL): .word
+    @ENTER,
+    @LITERAL, 10, @BASE, @STORE,
+    @EXIT
+
 // DEPTH  -- +n             number of items on stack
 // DO     -- adrs   L: -- 0        start of DO..LOOP
 // DOES>  --           change action of latest def'n
@@ -423,6 +428,11 @@ head(SLASH_STRING,/STRING): .word
 // DABS   d1 -- +d2        absolute value, dbl.prec.
 // DNEGATE d1 -- d2         negate, double precision
 // HEX    --                  set number base to hex
+head(HEX,HEX): .word
+    @ENTER,
+    @LITERAL, 16, @BASE, @STORE,
+    @EXIT
+
 // PAD    -- a-addr                  user PAD buffer
 // TIB    -- a-addr            Terminal Input Buffer
 head(TIB,TIB): .word
@@ -466,6 +476,7 @@ L_WORDS_char_bottom:
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
+// TODO change this to >NUMBER and implement ?NUMBER in terms of it
 head(ISNUMBER,?NUMBER): .word . + 1
     // first, put counted string on stack as c-string
     ccpre()             // prepare for C call
