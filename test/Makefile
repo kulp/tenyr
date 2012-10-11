@@ -11,6 +11,8 @@ vpath %.tas.cpp ../lib
 
 all:
 
+copy.texe: memcpy.to puts.to
+
 %.tas: %.tas.cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<
 
