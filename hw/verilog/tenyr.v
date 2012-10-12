@@ -115,16 +115,16 @@ module Decode(input[31:0] insn, input en,
 
 endmodule
 
-module Exec(input clk, input en, output[31:0] rhs,
-            input[31:0] X, input[31:0] Y, input[11:0] I,
+module Exec(input clk, input en, output signed[31:0] rhs,
+            input signed[31:0] X, input signed[31:0] Y, input signed[11:0] I,
             input[3:0] op, input type, input valid);
 
     assign rhs = valid ? i_rhs : 32'b0;
-    reg[31:0] i_rhs = 0;
+    reg signed[31:0] i_rhs = 0;
 
-    wire[31:0] J = { {20{I[11]}}, I };
-    wire[31:0] O = (type == 0) ? Y : J;
-    wire[31:0] A = (type == 0) ? J : Y;
+    wire signed[31:0] J = { {20{I[11]}}, I };
+    wire signed[31:0] O = (type == 0) ? Y : J;
+    wire signed[31:0] A = (type == 0) ? J : Y;
 
     always @(negedge clk) if (en) begin
         if (valid) begin
@@ -208,7 +208,7 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
               next_pc   = `RESETVECTOR;
     wire[31:0] pc = new_pc;
 
-    assign insn_addr = /*lhalt ? `RESETVECTOR :*/ pc; // TODO this means address `RESETVECTOR reads must be idempotent
+    assign insn_addr = pc;
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     // update PC on 270-degree phase, after Exec has had time to compute new P
@@ -216,9 +216,9 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
         if (!reset_n) begin
             new_pc  = `RESETVECTOR;
             next_pc = `RESETVECTOR;
-        end else begin
+        end else if (!lhalt) begin
             next_pc = pc + 1;
-            if (/*lhalt ||*/ jumping)
+            if (jumping)
                 new_pc = deref_lhs;
             else
                 new_pc = next_pc;

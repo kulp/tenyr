@@ -17,16 +17,17 @@ endmodule
 module Tenyr(output[7:0] seg, output[3:0] an);
     reg reset_n = 0;
     reg rhalt = 1;
-    reg clk_core0 = 0;
-    wire #(`CLOCKPERIOD / 4) clk_core90 = clk_core0;
-    wire clk_core180 = ~clk_core0;
-    wire clk_core270 = ~clk_core90;
 
+    reg clk_core0   = 1,
+        clk_core90  = 0,
+        clk_core180 = 0,
+        clk_core270 = 0;
     wire clk_datamem = clk_core180;
     wire clk_insnmem = clk_core0;
 
-    // TODO halt ?
-    always #(`CLOCKPERIOD / 2) clk_core0 = ~clk_core0;
+    always #(`CLOCKPERIOD / 2) begin
+        {clk_core270,clk_core180,clk_core90,clk_core0} = {clk_core180,clk_core90,clk_core0,clk_core270};
+    end
 
     wire[31:0] insn_addr, operand_addr, insn_data, out_data;
     wire[31:0] in_data      =  operand_rw ? operand_data : 32'bx;

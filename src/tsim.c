@@ -194,7 +194,8 @@ static int format_has_input(const struct format *f)
 static int usage(const char *me)
 {
     char format_list[256];
-    make_format_list(format_has_input, formats_count, formats, sizeof format_list, format_list, ", ");
+    make_format_list(format_has_input, tenyr_asm_formats_count,
+            tenyr_asm_formats, sizeof format_list, format_list, ", ");
 
     printf("Usage: %s [ OPTIONS ] image-file\n"
            "Options:\n"
@@ -570,9 +571,9 @@ static int post_insn(struct sim_state *s, struct instruction *i)
 
 static int find_format(const char *optarg, const struct format **f)
 {
-    size_t sz = formats_count;
-    *f = lfind(&(struct format){ .name = optarg }, formats, &sz,
-            sizeof formats[0], find_format_by_name);
+    size_t sz = tenyr_asm_formats_count;
+    *f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
+            sizeof tenyr_asm_formats[0], find_format_by_name);
     return !*f;
 }
 
@@ -649,7 +650,7 @@ int main(int argc, char *argv[])
             .debugging    = 0,
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
-            .fmt          = &formats[0],
+            .fmt          = &tenyr_asm_formats[0],
             .params = {
                 .params_size  = DEFAULT_PARAMS_COUNT,
                 .params_count = 0,

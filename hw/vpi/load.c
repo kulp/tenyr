@@ -74,7 +74,7 @@ int tenyr_sim_load(struct tenyr_sim_state *state)
 
     FILE *stream = fopen(filename, "rb");
     if (stream)
-        load_sim(dispatch_op, &data, &formats[0], stream, min);
+        load_sim(dispatch_op, &data, &tenyr_asm_formats[0], stream, min);
     else
         return 1;
 

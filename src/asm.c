@@ -450,7 +450,7 @@ static int verilog_fini(FILE *stream, void **ud)
     return rc;
 }
 
-const struct format formats[] = {
+const struct format tenyr_asm_formats[] = {
     // first format is default
     { "obj",
         .init  = obj_init,
@@ -464,7 +464,7 @@ const struct format formats[] = {
     { "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
 };
 
-const size_t formats_count = countof(formats);
+const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
 
 int make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format fmts[flen], size_t len, char buf[len],
