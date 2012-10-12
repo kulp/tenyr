@@ -114,7 +114,6 @@ static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val,
 {
     char buf[256];
     snprintf(buf, sizeof buf, "%s.%s", cookie->prefix, key);
-    key = buf;
     if (!free_value) {
         // In this case, the caller expects the param_set mechanism to dispose
         // of the val when the key is disposed of ; since we are wrapping the
@@ -124,6 +123,7 @@ static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val,
         free_value = 1;
     }
 
+    key = buf;
     return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, free_value);
 }
 
