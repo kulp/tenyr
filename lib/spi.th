@@ -3,6 +3,26 @@
 
 #define SPI_BASE 0x200
 
+#define CMD_GO_IDLE_STATE            0
+#define CMD_SEND_OP_COND             1
+#define CMD_SEND_CSD                 9
+#define CMD_SEND_CID                10
+#define CMD_STOP_TRANSMISSION       12
+#define CMD_SEND_STATUS             13
+#define CMD_SET_BLOCKLEN            16
+#define CMD_READ_SINGLE_BLOCK       17
+#define CMD_READ_MULTIPLE_BLOCK     18
+#define CMD_WRITE_BLOCK             24
+#define CMD_WRITE_MULTIPLE_BLOCK    25
+#define CMD_PROGRAM_CSD             27
+#define CMD_ERASE_WR_BLK_START_ADDR 32
+#define CMD_ERASE_WR_BLK_END_ADDR   33
+#define CMD_ERASE                   38
+#define CMD_APP_CMD                 55
+#define CMD_GEN_CMD                 56
+#define CMD_READ_OCR                58
+#define CMD_CRC_ON_OFF              59
+
 #endif
 
 /* vi:set syntax=c: */

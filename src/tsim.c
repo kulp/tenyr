@@ -69,64 +69,32 @@ static int recipe_abort(struct sim_state *s)
     return 0;
 }
 
-static int recipe_plugin(struct sim_state *s)
+static int plugin_success(void *libhandle, int inst, const char *parent, const
+    char *implstem, void *ud)
 {
     int rc = 0;
+    (void)inst;
+    (void)parent;
 
-    const char *implname = NULL;
+    struct sim_state *s = ud;
 
-    int inst = 0;
-    do {
-        char buf[256];
-        snprintf(buf, sizeof buf, "plugin.impl[%d]", inst);
-        if (param_get(&s->conf.params, buf, &implname)) {
-            // If implname contains a slash, treat it as a path ; otherwise, stem
-            const char *implpath = NULL;
-            const char *implstem = NULL;
-            snprintf(buf, sizeof buf, "plugin.impl[%d].stem", inst);
-            param_get(&s->conf.params, buf, &implstem); // may not be set ; that's OK
-            if (strchr(implname, PATH_SEPARATOR_CHAR)) {
-                implpath = implname;
-            } else {
-                snprintf(buf, sizeof buf, ".%clib%s"DYLIB_SUFFIX,
-                        PATH_SEPARATOR_CHAR, implname);
-                buf[sizeof buf - 1] = 0;
-                implpath = buf;
-                if (!implstem)
-                    implstem = implname;
-            }
-
-            // TODO consider using RTLD_NODELETE here
-            // (seems to break on Mac OS X)
-            // currently we leak library handles
-            void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
-            if (!libhandle) {
-                debug(1, "Could not load %s, trying default library search", implpath);
-                libhandle = RTLD_DEFAULT;
-            }
-
-            tenyr_plugin_host_init(libhandle);
-
-            {
-                char buf[128];
-                snprintf(buf, sizeof buf, "%s_add_device", implstem);
-                void *ptr = dlsym(libhandle, buf);
-                typedef int add_device(struct device **);
-                add_device *adder = ALIASING_CAST(add_device,ptr);
-                if (adder) {
-                    int index = next_device(s);
-                    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-                    rc |= adder(&s->machine.devices[index]);
-                }
-            }
-
-            // if RTLD_NODELETE worked and were standard, we would dlclose() here
-        } else break;
-
-        inst++;
-    } while (!rc);
+    char buf[128];
+    snprintf(buf, sizeof buf, "%s_add_device", implstem);
+    void *ptr = dlsym(libhandle, buf);
+    typedef int add_device(struct device **);
+    add_device *adder = ALIASING_CAST(add_device,ptr);
+    if (adder) {
+        int index = next_device(s);
+        s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+        rc |= adder(&s->machine.devices[index]);
+    }
 
     return rc;
+}
+
+static int recipe_plugin(struct sim_state *s)
+{
+    return plugin_load("plugin", &s->plugin_cookie, plugin_success, s);
 }
 
 static int recipe_prealloc(struct sim_state *s)
@@ -290,7 +258,7 @@ static int devices_finalise(struct sim_state *s)
 
     for (unsigned i = 0; i < s->machine.devices_count; i++)
         if (s->machine.devices[i])
-            s->machine.devices[i]->ops.init(&s->conf.gops, &s->plugin_cookie, &s->machine.devices[i]->cookie, 0);
+            s->machine.devices[i]->ops.init(&s->plugin_cookie, &s->machine.devices[i]->cookie, 0);
 
     return 0;
 }
@@ -660,16 +628,14 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
     return 0;
 }
 
-static int plugin_param_get(void *cookie, char *key, const char **val)
+static int plugin_param_get(const struct plugin_cookie *cookie, char *key, const char **val)
 {
-    struct plugin_cookie *c = cookie;
-    return param_get(c->param, key, val);
+    return param_get(cookie->param, key, val);
 }
 
-static int plugin_param_set(void *cookie, char *key, char *val, int free_value)
+static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
 {
-    struct plugin_cookie *c = cookie;
-    return param_set(c->param, key, val, free_value);
+    return param_set(cookie->param, key, val, free_value);
 }
 
 int main(int argc, char *argv[])
@@ -689,16 +655,16 @@ int main(int argc, char *argv[])
                 .params_count = 0,
                 .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params.params),
             },
+        },
+        .dispatch_op = dispatch_op,
+        .plugin_cookie = {
+            .param = &_s.conf.params,
             .gops         = {
                 .fatal = fatal_,
                 .debug = debug_,
                 .param_get = plugin_param_get,
                 .param_set = plugin_param_set,
             },
-        },
-        .dispatch_op = dispatch_op,
-        .plugin_cookie = {
-            .param = &_s.conf.params,
         },
     }, *s = &_s;
 

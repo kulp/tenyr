@@ -35,8 +35,6 @@ struct sim_state {
 
         struct param_state params;
 
-        struct guest_ops gops;
-
         int start_addr;
         int load_addr;
         const struct format *fmt;

@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define RESET_CYCLE_REQ 50  ///< arbitrary
 
@@ -25,6 +26,10 @@ struct spisd_state {
     int bit_count;       ///< bits received in this select
     unsigned long cycle_count;  ///< monotonically increasing
     unsigned long last_reset;   ///< cycle count of idle finish
+
+	struct plugin_cookie pcookie;
+
+    FILE *store;
 };
 
 enum spisd_command_type {
@@ -40,7 +45,6 @@ enum spisd_command_type {
     SET_BLOCKLEN            = 16,
     READ_SINGLE_BLOCK       = 17,
     READ_MULTIPLE_BLOCK     = 18,
-
 
     WRITE_BLOCK             = 24,
     WRITE_MULTIPLE_BLOCK    = 25,
@@ -135,6 +139,7 @@ struct spisd_rsp_R2 {
 #define SPISD_COMMANDS(_) \
     _(GO_IDLE_STATE, R1 , spisd_go_idle_handler) \
     _(SEND_OP_COND , R1 , spisd_send_op_handler) \
+    _(SET_BLOCKLEN , R1 , spisd_unimp_app_handler) \
     //
 
 // TODO fill in
@@ -240,18 +245,27 @@ static const struct spisd_app_command {
     SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
 
-void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+static int open_storefile(struct spisd_state *s)
 {
-    fatal_ = ops->fatal;
-    debug_ = ops->debug;
+    const char *storefile;
+    if (s->pcookie.gops.param_get(&s->pcookie, "storefile", &storefile)) {
+        debug(2, "Opening SD store file `%s'", storefile);
+        if (!(s->store = fopen(storefile, "r+b")))
+            fatal(PRINT_ERRNO, "Failed to open SD store file `%s'", storefile);
+    }
+
+    return 0;
 }
 
-int EXPORT spisd_spi_init(void *pcookie)
+int EXPORT spisd_spi_init(void *pcookie, const struct plugin_cookie *plugcook)
 {
     struct spisd_state *s = calloc(1, sizeof *s);
     *(void**)pcookie = s;
     s->out_shift_len = 0;
     s->state = SPISD_UNINITIALISED;
+	s->pcookie = *plugcook;
+
+    open_storefile(s);
 
     return 0;
 }
@@ -313,5 +327,13 @@ int EXPORT spisd_spi_fini(void *cookie)
     *(void**)cookie = NULL;
 
     return 0;
+}
+
+// ---
+
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+{
+    fatal_ = ops->fatal;
+    debug_ = ops->debug;
 }
 

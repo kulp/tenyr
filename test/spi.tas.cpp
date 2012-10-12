@@ -6,21 +6,51 @@
     b <- 0
     b -> [(SPI_BASE + 0x14)]    // set divider
 
+    // There's something about 74 cycles minimum delay on init ; where does
+    // that happen ?
     b <- rel(CMD_IDLE)          // address of command
     c <- 0                      // device index 0
     d <- 8                      // number of bits expected in response
     call(put_spi)
 
 wait_for_sd_ready:
-    b <- rel(CMD_RESET)         // address of command
+    b <- CMD_SEND_OP_COND       // index of command
     c <- 0                      // device index 0
     d <- 8                      // number of bits expected in response
-    call(put_spi)
-    b <- b & 1                  // mask off all but idle bit
-    b <- b <> 0                 // check if set
-    jnzrel(b,wait_for_sd_ready) // loop if idle bit is set (means busy)
+    e <- 0
+    call(put_spisd)
+
+set_blocklen:
+    b <- CMD_SET_BLOCKLEN       // index of command
+    c <- 0                      // device index 0
+    d <- 8                      // number of bits expected in response
+    e <- 4                      // we want four-byte (one-word) responses
+    call(put_spisd)
 
     illegal
+
+put_spisd:                      // not reentrant (due to CMD_WORK)
+    i <- [reloff(CMD_TMPL,0)]   // load first word of command template
+    i <- b << 16 + i            // assumes b is valid so that ADD = OR
+    i <- e >> 16 + i            // effectively OR in top 16 bits of E
+    i -> [reloff(CMD_WORK,0)]   // write first word of command workspace
+
+    i <- [reloff(CMD_TMPL,1)]   // load second word of command template
+    i <- e << 16 + i            // effectively OR in bottom 16 bits of E
+    i -> [reloff(CMD_WORK,1)]   // write second word of command workspace
+
+L_put_spisd_wait:
+    pushall(b,c,d,e)            // command, device, response bits, arg
+    b <- rel(CMD_WORK)
+    call(put_spi)
+    b <- b & 1                  // mask off all but idle bit
+    i <- b <> 0                 // check if set
+    popall(b,c,d,e)
+    jnzrel(i,L_put_spi_wait)    // loop if idle bit is set (means busy)
+    ret
+//                01  |cmd-|  |cmd-argument------    ------------------|  |CRC--| 1   |rsp ---|
+CMD_TMPL: .word 0b01__000000__0000_0000_0000_0000, 0b0000_0000_0000_0000__1001010_1___1111_1111
+CMD_WORK: .word 0, 0
 
 //------------------------------------------------------------------------------
     .global put_spi
@@ -61,7 +91,10 @@ L_put_spi_wait:                 // wait for GO_BSY-bit to clear
 
     ret
 
-//                  01  |cmd-|  |cmd-argument------    ------------------|  |CRC--| 1   |rsp ---|
-CMD_IDLE:   .word 0b01__000000__0000_0000_0000_0000, 0b0000_0000_0000_0000__1001010_1___1111_1111
-CMD_RESET:  .word 0b01__000001__0000_0000_0000_0000, 0b0000_0000_0000_0000__0000000_1___1111_1111
+//                          01  |cmd-|  |cmd-argument------    ------------------|  |CRC--| 1   |rsp ---|
+CMD_IDLE:           .word 0b01__000000__0000_0000_0000_0000, 0b0000_0000_0000_0000__1001010_1___1111_1111
+    /*
+CMD_RESET:          .word 0b01__000001__0000_0000_0000_0000, 0b0000_0000_0000_0000__0000000_1___1111_1111
+CMD_SET_BLOCKLEN:   .word 0b01__010000__0000_0000_0000_0000, 0b0000_0000_0000_0000__0000000_1___1111_1111
+    */
 

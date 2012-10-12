@@ -8,7 +8,7 @@ struct sim_state;
 #include "common.h"
 #include "plugin_portable.h"
 
-typedef int map_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...);
+typedef int map_init(struct plugin_cookie *pcookie, void *ud, int nargs, ...);
 typedef int map_op(void *cookie, int op, uint32_t addr, uint32_t *data);
 typedef int map_cycle(void *cookie);
 typedef int map_fini(void *cookie);
