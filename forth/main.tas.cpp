@@ -1,6 +1,8 @@
 #include "forth_common.th"
 #define TEST_LOOKUP 0
 
+.set link, @level1_link
+
 .global INBUF .global INPOS .global INLEN
 .L_INBUF_before:
 INBUF:
@@ -10,25 +12,25 @@ INBUF:
 INPOS: .word 0
 INLEN: .word .L_INBUF_after - .L_INBUF_before
 
-.set link, @level1_link
-head(start,start): .word
-    @NOOP
+head(QUIT,QUIT): .word
+    // no @ENTER for QUIT since it resets RSP anyway
+        @RESET_RSP
 
-top: .word
+    L_QUIT_top: .word
         @TIB, @DUP, @TO_IN, @FETCH, @SUB,    // tib -used
         @IN_LEN, @ADD,                       // tib left
         @ACCEPT,                             // count
         @BL, @TIB, @TO_IN, @FETCH, @ADD, @ADD, @STOCHR, //
         @BL, @WORD,
         @FIND, // xt flag
-        IFNOT0(found,notfound)
-    found: .word // tib xt
+        IFNOT0(L_QUIT_found,L_QUIT_notfound)
+    L_QUIT_found: .word // tib xt
         @RELOC, @EXECUTE,
-        GOTO(top)
-    notfound: .word
+        GOTO(L_QUIT_top)
+    L_QUIT_notfound: .word
         @ISNUMBER,
-        IFNOT0(top,undefined)   // eat flag and loop if number
-    undefined: .word
+        IFNOT0(L_QUIT_top,L_QUIT_undefined) // eat flag and loop if number
+    L_QUIT_undefined: .word
         // TODO say what text we were trying to parse
         @LITERAL, @undefined_word, @RELOC, @PUTS,
         @CR,
