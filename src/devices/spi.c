@@ -112,19 +112,19 @@ static int wrapped_param_get(const struct plugin_cookie *cookie, char *key, cons
 
 static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
 {
-    char buf[256];
-    snprintf(buf, sizeof buf, "%s.%s", cookie->prefix, key);
+    char (*buf)[256] = malloc(sizeof *buf);
+    snprintf(*buf, sizeof *buf, "%s.%s", cookie->prefix, key);
     if (!free_value) {
-        // In this case, the caller expects the param_set mechanism to dispose
-        // of the val when the key is disposed of ; since we are wrapping the
-        // key, we should dispose of the original key now and copy the val.
+        // In this case, the caller indicates that the val will be freed when
+        // the key is freed (part of the same allocation) ; since we are
+        // wrapping the key, we should dispose of the original key now and
+        // copy the val.
         val = strdup(val);
         free(key);
-        free_value = 1;
     }
 
-    key = buf;
-    return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, free_value);
+    key = *buf;
+    return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, 1);
 }
 
 static int plugin_success(void *libhandle, int inst, const char *parent,
@@ -176,7 +176,7 @@ static int spi_emu_init(struct plugin_cookie *pcookie, void *cookie, int nargs, 
     spi_reset_defaults(spi);
     struct success_box box = {
         .spi = spi,
-		.pcookie = pcookie,
+        .pcookie = pcookie,
     };
     return plugin_load("spi", pcookie, plugin_success, &box);
 }
