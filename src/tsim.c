@@ -306,18 +306,20 @@ static int run_recipes(struct sim_state *s)
     return 0;
 }
 
+struct recipe_entry {
+    const char *name;
+    recipe *recipe;
+};
+
 static int find_recipe_by_name(const void *_a, const void *_b)
 {
-    const struct format *a = _a, *b = _b;
+    const struct recipe_entry *a = _a, *b = _b;
     return strcmp(a->name, b->name);
 }
 
 static int add_recipe(struct sim_state *s, const char *name)
 {
-    static const struct recipe_entry {
-        const char *name;
-        recipe *recipe;
-    } entries[] = {
+    static const struct recipe_entry entries[] = {
         #define Entry(Name,Desc) { STR(Name), recipe_##Name },
         RECIPES(Entry)
     };
