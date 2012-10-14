@@ -23,7 +23,7 @@ head(QUIT,QUIT): .word
         @ACCEPT,                            // acount
         // bit of a hack ; write spaces to rest of TIB
         //@DUP, @CLEAR_TIB,
-        @BL, @TIB, @TO_IN, @FETCH, @ADD, @ADD, @STOCHR, //
+        @BL, @PARSE_START, @ADD, @STOCHR, //
         @BL, @WORD,
         @FIND, // xt flag
         IFNOT0(L_QUIT_found,L_QUIT_notfound)
@@ -40,23 +40,27 @@ head(QUIT,QUIT): .word
         @ABORT
 
 // points one past end of TIB
-head(END_OF_TIB,END_OF_TIB): .word  // ( -- end-of-tib )
+head(END_OF_TIB,END-OF-TIB): .word  // ( -- end-of-tib )
     @ENTER,
     @IN_LEN, @TIB, @ADD,
     @EXIT
 
-head(CLEAR_TIB,CLEAR_TIB): .word    // ( accept-count -- )
+head(PARSE_START,PARSE-START): .word // ( -- parse-start )
+    @ENTER,
+    @TO_IN, @FETCH, @TIB, @ADD,
+    @EXIT
+
+head(CLEAR_TIB,CLEAR-TIB): .word    // ( accept-count -- )
     // TIB    TO_IN          acount       IN_LEN
     // |------^--------------^------------|
     // |                     ^^^^^^^^^^^^^ clear this
     @ENTER,
-    @TO_IN, @FETCH, @ADD,               // offset
-    @END_OF_TIB, @OVER, @SUB,         // offset rest
-    @BL,                         // start rest char
-    @FILL,
+    @PARSE_START, @ADD,
+    @DUP, @END_OF_TIB, @SWAP, @SUB,
+    @BL, @FILL,
     @EXIT
 
-head(IN_LEN,IN_LEN): .word
+head(IN_LEN,IN-LEN): .word
     @ENTER,
     @LITERAL, @INLEN, @RELOC, @FETCH,
     @EXIT
@@ -104,22 +108,22 @@ L_PUTS_done: .word
     @TWO_DROP, @DROP,       // --
     @EXIT
 
-head(SET_IP,SET_IP): .word . + 1
+head(SET_IP,SET-IP): .word . + 1
     S   <- S + 1
     I   <- [S]
     goto(NEXT)
 
-head(GET_IP,GET_IP): .word . + 1
+head(GET_IP,GET-IP): .word . + 1
     I   -> [S]
     S   <- S - 1
     goto(NEXT)
 
-head(GET_PSP,GET_PSP): .word . + 1
+head(GET_PSP,GET-PSP): .word . + 1
     S   -> [S]
     S   <- S - 1
     goto(NEXT)
 
-head(GET_RSP,GET_RSP): .word . + 1
+head(GET_RSP,GET-RSP): .word . + 1
     R   -> [S]
     S   <- S - 1
     goto(NEXT)

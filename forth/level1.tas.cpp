@@ -311,8 +311,7 @@ head(WORD,WORD): .word
     @LITERAL, 0, @OVER,     // c TMP 0 TMP
     @STOCHR,                // c TMP
     @ADD_1CHAR,             // c TMP+1
-    @TIB, @TO_IN, @FETCH,   // c TMP TIB off
-    @ADD,                   // c TMP tib
+    @PARSE_START,           // c TMP tib
     @ROT, @SWAP, @TWO_DUP,  // TMP c tib c tib
     @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
     @SKIP,                  // TMP c tib ntib
