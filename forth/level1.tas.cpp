@@ -315,7 +315,11 @@ head(WORD,WORD): .word
     @PARSE_START,           // c TMP c tib
     @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
     @SKIP,                  // c TMP ntib
-    @NOOP
+    @DUP, @PARSE_START,
+    @SUB,
+    @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
+    @SUB, @EQZ,
+    IFNOT0(L_WORD_zero_len,L_WORD_top)
 
 L_WORD_top: .word
     // c TMP tib
@@ -352,7 +356,8 @@ L_WORD_done_stripping: .word
     // tmp tib c2 c1
     @TWO_DROP, @DROP,       // tmp
     @LITERAL, @BL,          // tmp bl
-    @SWAP, @STOCHR,         // 
+    @SWAP, @STOCHR          //
+L_WORD_zero_len: .word
     @WORD_TMP,              // TMP
     @EXIT
 L_WORD_tmp:
