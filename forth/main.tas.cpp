@@ -15,6 +15,7 @@ INLEN: .word .L_INBUF_after - .L_INBUF_before
 head(QUIT,QUIT): .word
         // no @ENTER for QUIT since it resets RSP anyway
         @RESET_RSP,
+        @LITERAL, 0, @SOURCE_ID, @STORE,
         @LITERAL, 0, @CLEAR_TIB             // ensure tib is empty
 
     L_QUIT_top: .word
@@ -56,7 +57,7 @@ head(CLEAR_TIB,CLEAR-TIB): .word    // ( accept-count -- )
     // |                     ^^^^^^^^^^^^^ clear this
     @ENTER,
     @PARSE_START, @ADD,
-    @DUP, @END_OF_TIB, @SWAP, @SUB,
+    @END_OF_TIB, @OVER, @SUB,
     @BL, @FILL,
     @EXIT
 
@@ -67,7 +68,7 @@ head(IN_LEN,IN-LEN): .word
 
 head(MASK4BITS,MASK4BITS): .word
     @ENTER,
-    @LITERAL, 15, @AND,
+    @LITERAL, 0xf, @AND,
     @EXIT
 
 head(HEXTABLE,HEXTABLE): .word

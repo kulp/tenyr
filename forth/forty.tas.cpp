@@ -39,6 +39,11 @@ head(EXIT,EXIT):
     pop(R,I)
     goto(NEXT)
 
+    .global source_id
+source_id: .word 0
+head(SOURCE_ID,SOURCE-ID): .word
+    @ENTER, @LITERAL, @source_id, @RELOC, @EXIT
+
 _done:
     .word @ABORT
 
