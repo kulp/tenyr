@@ -311,12 +311,10 @@ head(WORD,WORD): .word
     @LITERAL, 0, @OVER,     // c TMP 0 TMP
     @STOCHR,                // c TMP
     @ADD_1CHAR,             // c TMP+1
-    @PARSE_START,           // c TMP tib
-    @ROT, @SWAP, @TWO_DUP,  // TMP c tib c tib
+    @OVER,                  // c TMP c
+    @PARSE_START,           // c TMP c tib
     @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
-    @SKIP,                  // TMP c tib ntib
-    @NIP,                   // TMP c ntib
-    @SWAP, @ROT, @ROT,      // c TMP ntib
+    @SKIP,                  // c TMP ntib
     @NOOP
 
 L_WORD_top: .word
