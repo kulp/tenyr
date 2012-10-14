@@ -350,11 +350,7 @@ L_WORD_cont: .word
 
 L_WORD_done_stripping: .word
     // tmp tib c2 c1
-    @TWO_DROP,              // tmp tib
-    @TIB, @SUB,             // tmp off
-    //@ADD_1CHAR,
-    @TO_IN, @STORE,         // tmp
-    //@DROP,
+    @TWO_DROP, @DROP,       // tmp
     @LITERAL, @BL,          // tmp bl
     @SWAP, @STOCHR,         // 
     @WORD_TMP,              // TMP

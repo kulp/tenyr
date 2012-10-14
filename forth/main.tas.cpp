@@ -26,6 +26,7 @@ head(QUIT,QUIT): .word
         //@DUP, @CLEAR_TIB,
         @BL, @PARSE_START, @ADD, @STOCHR, //
         @BL, @WORD,
+        @DUP, @FETCH, @ADD_1CHAR, @TO_IN, @ADDMEM,      // update >IN
         @FIND, // xt flag
         IFNOT0(L_QUIT_found,L_QUIT_notfound)
     L_QUIT_found: .word // tib xt
