@@ -13,13 +13,16 @@ INPOS: .word 0
 INLEN: .word .L_INBUF_after - .L_INBUF_before
 
 head(QUIT,QUIT): .word
-    // no @ENTER for QUIT since it resets RSP anyway
-        @RESET_RSP
+        // no @ENTER for QUIT since it resets RSP anyway
+        @RESET_RSP,
+        @LITERAL, 0, @CLEAR_TIB             // ensure tib is empty
 
     L_QUIT_top: .word
-        @TIB, @DUP, @TO_IN, @FETCH, @SUB,    // tib -used
-        @IN_LEN, @ADD,                       // tib left
-        @ACCEPT,                             // count
+        @TIB, @DUP, @TO_IN, @FETCH, @SUB,   // tib -used
+        @IN_LEN, @ADD,                      // tib left
+        @ACCEPT,                            // acount
+        // bit of a hack ; write spaces to rest of TIB
+        //@DUP, @CLEAR_TIB,
         @BL, @TIB, @TO_IN, @FETCH, @ADD, @ADD, @STOCHR, //
         @BL, @WORD,
         @FIND, // xt flag
@@ -35,6 +38,23 @@ head(QUIT,QUIT): .word
         @LITERAL, @undefined_word, @RELOC, @PUTS,
         @CR,
         @ABORT
+
+// points one past end of TIB
+head(END_OF_TIB,END_OF_TIB): .word  // ( -- end-of-tib )
+    @ENTER,
+    @IN_LEN, @TIB, @ADD,
+    @EXIT
+
+head(CLEAR_TIB,CLEAR_TIB): .word    // ( accept-count -- )
+    // TIB    TO_IN          acount       IN_LEN
+    // |------^--------------^------------|
+    // |                     ^^^^^^^^^^^^^ clear this
+    @ENTER,
+    @TO_IN, @FETCH, @ADD,               // offset
+    @END_OF_TIB, @OVER, @SUB,         // offset rest
+    @BL,                         // start rest char
+    @FILL,
+    @EXIT
 
 head(IN_LEN,IN_LEN): .word
     @ENTER,
