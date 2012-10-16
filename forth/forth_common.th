@@ -76,6 +76,7 @@
     headstr(Label,#Name)
 
 // expects to be called in a @word context
+// TODO make Else implicit
 #define IFNOT0(Then,Else)             \
     @EQZ,               /* nrmlise */ \
     @LITERAL, @Else,    /* F a1    */ \

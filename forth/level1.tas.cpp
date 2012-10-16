@@ -83,7 +83,7 @@ head(ABORT,ABORT):
     .word . + 1
     S   <- [reloc(_PSPinit)]
     R   <- [reloc(_RSPinit)]
-    illegal
+    P   <- reloc(__done)
 
 // ABORT" i*x 0  -- i*x   R: j*x -- j*x  print msg &
 //        i*x x1 --       R: j*x --      abort,x1<>0
@@ -307,7 +307,7 @@ head(EMIT_UNSIGNED,U.): .word
 // WORD   char -- c-addr    parse word delim by char
 head(WORD,WORD): .word
     @ENTER,                 // c
-    @WORD_TMP,              // c TMP
+    @CLEAR_WORD_TMP,        // c TMP
     @LITERAL, 0, @OVER,     // c TMP 0 TMP
     @STOCHR,                // c TMP
     @ADD_1CHAR,             // c TMP+1
@@ -315,8 +315,7 @@ head(WORD,WORD): .word
     @PARSE_START,           // c TMP c tib
     @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
     @SKIP,                  // c TMP ntib
-    @DUP, @PARSE_START,
-    @SUB,
+    @DUP, @PARSE_START, @SUB,
     @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
     @SUB, @EQZ,
     IFNOT0(L_WORD_zero_len,L_WORD_top)
@@ -365,6 +364,12 @@ L_WORD_tmp:
     .utf32 "          ""          ""          ""  "
 .L_WORD_tmp_end: .word 0
 
+head(CLEAR_WORD_TMP,CLEAR-WORD-TMP): .word
+    @ENTER,
+    @WORD_TMP,
+    @DUP, @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp, @BL, @FILL,
+    @EXIT
+
 // ( char c-addr u -- c-addr )    skip init char up to N
 head(SKIP,SKIP): .word
     @ENTER                  // c addr u
@@ -376,7 +381,10 @@ L_SKIP_top: .word
 
 L_SKIP_cont: .word
     // c addr u
-    @ROT, @ROT,             // u c addr
+    @ROT,
+//@DUP, @LITERAL, 84, @PUTSN,
+    
+    @ROT,             // u c addr
     @SWAP, @TWO_DUP,        // u addr c addr c
     @SWAP, @FETCHR,         // u addr c1 c1 c2
     @CMP_EQ,                // u addr c1 flag

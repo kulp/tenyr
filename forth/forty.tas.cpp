@@ -44,6 +44,9 @@ source_id: .word 0
 head(SOURCE_ID,SOURCE-ID): .word
     @ENTER, @LITERAL, @source_id, @RELOC, @EXIT
 
-_done:
-    .word @ABORT
+    .global __done
+__done:
+    // return to caller of forth, abort, whatever is required
+    //p <- reloc(__boot)
+    illegal
 

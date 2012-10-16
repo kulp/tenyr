@@ -15,31 +15,37 @@ INLEN: .word .L_INBUF_after - .L_INBUF_before
 head(QUIT,QUIT): .word
         // no @ENTER for QUIT since it resets RSP anyway
         @RESET_RSP,
-        @LITERAL, 0, @SOURCE_ID, @STORE,
-        @LITERAL, 0, @CLEAR_TIB             // ensure tib is empty
+        @LITERAL, 0, @SOURCE_ID, @STORE
 
-    L_QUIT_top: .word
+    L_QUIT_line: .word
+        @LITERAL, 0, @CLEAR_TIB,            // ensure tib is empty
         @TIB, @DUP, @TO_IN, @FETCH, @SUB,   // tib -used
         @IN_LEN, @ADD,                      // tib left
         @ACCEPT,                            // acount
-        // bit of a hack ; write spaces to rest of TIB
-        //@DUP, @CLEAR_TIB,
-        @BL, @PARSE_START, @ADD, @STOCHR, //
-        @BL, @WORD,
-        @DUP, @FETCH, @ADD_1CHAR, @TO_IN, @ADDMEM,      // update >IN
+        @DUP, @EQZ, IFNOT0(L_QUIT_done,L_QUIT_accepted)
+    L_QUIT_accepted: .word
+        // write spaces to rest of TIB ; should this be required ?
+        @CLEAR_TIB
+    L_QUIT_parse: .word
+        @BL, @WORD,                         // c-addr
+        @DUP, @FETCH, @EQZ, IFNOT0(L_QUIT_line,L_QUIT_handle)
+    L_QUIT_handle: .word
+        @DUP, @FETCH, @TO_IN, @ADDMEM,      // update >IN
         @FIND, // xt flag
+        // TODO support flag == 1 for immediate words
         IFNOT0(L_QUIT_found,L_QUIT_notfound)
-    L_QUIT_found: .word // tib xt
-        @RELOC, @EXECUTE,
-        GOTO(L_QUIT_top)
     L_QUIT_notfound: .word
         @ISNUMBER,
-        IFNOT0(L_QUIT_top,L_QUIT_undefined) // eat flag and loop if number
+        IFNOT0(L_QUIT_parse,L_QUIT_undefined) // eat flag and loop if number
     L_QUIT_undefined: .word
         // TODO say what text we were trying to parse
         @LITERAL, @undefined_word, @RELOC, @PUTS,
-        @CR,
+        @CR
+    L_QUIT_done: .word
         @ABORT
+    L_QUIT_found: .word // tib xt
+        @RELOC, @EXECUTE,
+        GOTO(L_QUIT_parse)
 
 // points one past end of TIB
 head(END_OF_TIB,END-OF-TIB): .word  // ( -- end-of-tib )
@@ -56,9 +62,9 @@ head(CLEAR_TIB,CLEAR-TIB): .word    // ( accept-count -- )
     // TIB    TO_IN          acount       IN_LEN
     // |------^--------------^------------|
     // |                     ^^^^^^^^^^^^^ clear this
-    @ENTER,
-    @PARSE_START, @ADD,
-    @END_OF_TIB, @OVER, @SUB,
+    @ENTER,                     // acount
+    @PARSE_START, @ADD,         // aoffset
+    @END_OF_TIB, @OVER, @SUB,   // aoffset len
     @BL, @FILL,
     @EXIT
 
@@ -85,18 +91,15 @@ head(TOHEXCHAR,>HEXCHAR): .word
     @HEXTABLE, @ADD, @FETCHR,
     @EXIT
 
-head(PUTS,PUTS): .word // ( c-addr -- )
+head(PUTSN,PUTSN): .word // ( string count -- )
     @ENTER,
-    @DUP,                   // c-addr c-addr
-    @FETCHR,                // c-addr count
-    @SWAP,                  // count c-addr
-    @ADD_1CHAR,             // count string
-    @OVER                   // count string count
+    //@GET_PSP, @SAYTOP, @DROP,
+    @TUCK                   // count string count
 
-L_PUTS_top: .word
+L_PUTSN_top: .word
     @EQZ,                   // count string flag
-    IFNOT0(L_PUTS_done,L_PUTS_emit)
-L_PUTS_emit: .word
+    IFNOT0(L_PUTSN_done,L_PUTSN_emit)
+L_PUTSN_emit: .word
     @DUP,                   // count string string
     @FETCHR,                // count string char
     @EMIT,                  // count string
@@ -104,10 +107,23 @@ L_PUTS_emit: .word
     @SWAP,                  // string count
     @SUB_1,                 // string COUNT
     @TUCK,                  // count string count
-    GOTO(L_PUTS_top)
+    GOTO(L_PUTSN_top)
 
-L_PUTS_done: .word
-    @TWO_DROP, @DROP,       // --
+L_PUTSN_done: .word
+    @TWO_DROP,              // --
+    //@GET_PSP, @SAYTOP, @DROP,
+    @EXIT
+
+head(PUTS,PUTS): .word // ( c-addr -- )
+    @ENTER,
+    @GET_PSP, @SAYTOP, @DROP,
+    @DUP,                   // c-addr c-addr
+    @FETCHR,                // c-addr count
+    @SWAP,                  // count c-addr
+    @ADD_1CHAR,             // count string
+    @SWAP,                  // string count
+    @PUTSN,
+    @GET_PSP, @SAYTOP, @DROP,
     @EXIT
 
 head(SET_IP,SET-IP): .word . + 1
