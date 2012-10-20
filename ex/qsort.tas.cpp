@@ -59,18 +59,37 @@ print_loop:
 // f <- comparator
     .global qsort
 qsort:
-    pushall(h)
+    pushall(h,i,j,k,l,m)
     h <- d < 2                  // test for base case
-    jnzrel(h,qsort_done)
+    jnzrel(h,L_qsort_done)
     h <- d >> 1                 // H is partition index
     i <- d - 1                  // I is last index
     // partitioning
     swap(h,i)
-    j <- 0                      // J is store index
+    m <- 0                      // M is store index
+    j <- 0                      // J is i index
+
+L_qsort_partition:
+    elem(k, c, j)
+    elem(l, c, j)
+    pushall(c,d,e)
+    c <- k
+    d <- l
+    callr(f)
+    popall(c,d,e)
+    k <- b < 0
+    jzrel(k,L_qsort_noswap)
+    swap(j,m)
+    m <- m + 1
+L_qsort_noswap:
+
+    j <- j + 1
+    k <- j < i
+    jnzrel(k,L_qsort_partition)
 
     swap(j,i)
-qsort_done:
-    popall(h)
+L_qsort_done:
+    popall(h,i,j,k,l,m)
     ret
 
 // c <- pointer to key
