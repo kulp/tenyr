@@ -38,7 +38,7 @@ print_loop:
     pushall(c,d,e,f,g)        ; \
     f <- c                    ; \
     g <- e                    ; \
-    o <- o - e - 1            ; \
+    o <- o - e                ; \
     c <- o + 1                ; \
     elem(d,f,i0)              ; \
     /* E is already width */  ; \
@@ -51,7 +51,7 @@ print_loop:
     d <- o + 1                ; \
     e <- g                    ; \
     call(memcpy)              ; \
-    o <- o + g + 1            ; \
+    o <- o + g                ; \
     popall(c,d,e,f,g)         ; \
     //
 
@@ -67,7 +67,7 @@ print_loop:
 
     .global qsort
 qsort:
-    pushall(h,i,j,k,l,m)
+    pushall(h,i,j,k,m)
     h <- d < 2                  // test for base case
     jnzrel(h,L_qsort_done)
     PI <- d >> 1                // partition index
@@ -80,12 +80,12 @@ qsort:
 L_qsort_partition:
     k <- II < LI
     jzrel(k,L_qsort_partition_done)
-    pushall(c,d)
+    pushall(c)
     elem(k, BASE, II)
     elem(d, BASE, LI)
     c <- k
     callr(f)                    // call comparator
-    popall(c,d)
+    popall(c)
     k <- b < 0
     jzrel(k,L_qsort_noswap)
     swap(II,SI)
@@ -98,21 +98,29 @@ L_qsort_partition_done:
     swap(SI,LI)
     PI <- SI
 
-    // recursive cases
-    pushall(c,d,e,f)
-    /* C is already elem(c,c,0) */
+    // recursive cases --------------------
+    // save argument registers
+    m <- c
+    j <- e
+    k <- f
+    // C is already elem(c,c,0)
     d <- PI
+    // E is already width
+    // F is already callback
     call(qsort)
-    loadall(c,d,e,f)
+    // restore argument registers
+    c <- m
     d <- LI - PI
+    e <- j
+    f <- k
     PI <- PI + 1
     elem(k,BASE,PI)
     c <- k
+    // TODO tail call
     call(qsort)
-    popall(c,d,e,f)
 
 L_qsort_done:
-    popall(h,i,j,k,l,m)
+    popall(h,i,j,k,m)
     ret
 
 // c <- pointer to key
