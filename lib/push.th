@@ -4,49 +4,52 @@
 #define _paste(X,Y)         _paste_(X,Y)
 #define _paste_(X,Y)        X ## Y
 
-#define _push_op(Sp,Off,Reg)        Reg -> [Sp + (Off)]
-#define _push_0( Sp,Off,Reg,...)    /* no-op */
-#define _push_1( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_0( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_2( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_1( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_3( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_2( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_4( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_3( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_5( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_4( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_6( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_5( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_7( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_6( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_8( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_7( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_9( Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_8( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_10(Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_9( Sp,(Off) - 1,__VA_ARGS__)
-#define _push_11(Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_10(Sp,(Off) - 1,__VA_ARGS__)
-#define _push_12(Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_11(Sp,(Off) - 1,__VA_ARGS__)
-#define _push_13(Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_12(Sp,(Off) - 1,__VA_ARGS__)
-#define _push_14(Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_13(Sp,(Off) - 1,__VA_ARGS__)
-#define _push_15(Sp,Off,Reg,...)    _push_op(Sp,Off,Reg) ; _push_14(Sp,(Off) - 1,__VA_ARGS__)
+#define _pre_0( Op,Ud,Off,One,...)  /* no-op */
+#define _pre_1( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_0( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_2( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_1( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_3( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_2( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_4( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_3( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_5( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_4( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_6( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_5( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_7( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_6( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_8( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_7( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_9( Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_8( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_10(Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_9( Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_11(Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_10(Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_12(Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_11(Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_13(Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_12(Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_14(Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_13(Op,Ud,(Off) - 1,__VA_ARGS__)
+#define _pre_15(Op,Ud,Off,One,...)  Op(Ud,Off,One) ; _pre_14(Op,Ud,(Off) - 1,__VA_ARGS__)
 
-#define _pop_op(Sp,Off,Reg)         Reg <- [Sp + (Off)]
-#define _pop_0( Sp,Off,Reg,...)     /* no-op */
-#define _pop_1( Sp,Off,Reg,...)     _pop_0( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_2( Sp,Off,Reg,...)     _pop_1( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_3( Sp,Off,Reg,...)     _pop_2( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_4( Sp,Off,Reg,...)     _pop_3( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_5( Sp,Off,Reg,...)     _pop_4( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_6( Sp,Off,Reg,...)     _pop_5( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_7( Sp,Off,Reg,...)     _pop_6( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_8( Sp,Off,Reg,...)     _pop_7( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_9( Sp,Off,Reg,...)     _pop_8( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_10(Sp,Off,Reg,...)     _pop_9( Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_11(Sp,Off,Reg,...)     _pop_10(Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_12(Sp,Off,Reg,...)     _pop_11(Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_13(Sp,Off,Reg,...)     _pop_12(Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_14(Sp,Off,Reg,...)     _pop_13(Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
-#define _pop_15(Sp,Off,Reg,...)     _pop_14(Sp,(Off) - 1,__VA_ARGS__) _pop_op(Sp,Off,Reg) ;
+#define _post_0( Op,Ud,Off,One,...) /* no-op */
+#define _post_1( Op,Ud,Off,One,...) _post_0( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_2( Op,Ud,Off,One,...) _post_1( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_3( Op,Ud,Off,One,...) _post_2( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_4( Op,Ud,Off,One,...) _post_3( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_5( Op,Ud,Off,One,...) _post_4( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_6( Op,Ud,Off,One,...) _post_5( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_7( Op,Ud,Off,One,...) _post_6( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_8( Op,Ud,Off,One,...) _post_7( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_9( Op,Ud,Off,One,...) _post_8( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_10(Op,Ud,Off,One,...) _post_9( Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_11(Op,Ud,Off,One,...) _post_10(Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_12(Op,Ud,Off,One,...) _post_11(Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_13(Op,Ud,Off,One,...) _post_12(Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_14(Op,Ud,Off,One,...) _post_13(Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
+#define _post_15(Op,Ud,Off,One,...) _post_14(Op,Ud,(Off) - 1,__VA_ARGS__) Op(Ud,Off,One) ;
 
 #define _narg(...) _narg_impl(__VA_ARGS__,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)
 #define _narg_impl(_0,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,...) _15
 
+#define _push_op(Sp,Off,Reg)    Reg -> [Sp + (Off)]
+#define _pop_op(Sp,Off,Reg)     Reg <- [Sp + (Off)]
+
 // arguments pushed in the order specified
-#define pushall_(Sp,...)     Sp <- Sp - (_narg(__VA_ARGS__)) ; _paste(_push_,_narg(__VA_ARGS__))(Sp,_narg(__VA_ARGS__),__VA_ARGS__)
+#define writeall_(Sp,...)   _paste(_pre_,_narg(__VA_ARGS__))(_push_op,Sp,_narg(__VA_ARGS__),__VA_ARGS__)
+#define pushall_(Sp,...)    Sp <- Sp - (_narg(__VA_ARGS__)) ; writeall_(Sp,__VA_ARGS__)
 // arguments popped in the reverse of the order specified
-#define popall_(Sp,...)      _paste(_pop_,_narg(__VA_ARGS__))(Sp,_narg(__VA_ARGS__),__VA_ARGS__) Sp <- Sp + (_narg(__VA_ARGS__))
+#define readall_(Sp,...)    _paste(_post_,_narg(__VA_ARGS__))(_pop_op,Sp,_narg(__VA_ARGS__),__VA_ARGS__)
+#define popall_(Sp,...)     readall_(Sp,__VA_ARGS__) Sp <- Sp + (_narg(__VA_ARGS__))
 
 #endif
 
