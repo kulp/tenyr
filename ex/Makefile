@@ -32,7 +32,8 @@ compare.texe: strcmp.to puts.to
 maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/mul.to
 totient.texe: gcd.to
 isprime.texe: umod.to isqrt.to udiv.to
-bsearch.texe qsort.texe: puts.to
+bsearch.texe: puts.to
+qsort.texe: puts.to memcpy.to
 irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
 parse_hex.texe: strtol.to
 

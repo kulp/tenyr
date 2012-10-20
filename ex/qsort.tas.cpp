@@ -27,12 +27,50 @@ print_loop:
 
     illegal
 
+#define elem(Dest, Base, Index) \
+    Dest <- Index * E         ; \
+    Dest <- Dest + Base       ; \
+    //
+
+#define swap(i0, i1)            \
+    pushall(c,d,e,f,g)        ; \
+    f <- c                    ; \
+    g <- e                    ; \
+    o <- o - e - 1            ; \
+    c <- o + 1                ; \
+    elem(d,f,i0)              ; \
+    /* E is already width */  ; \
+    call(memcpy)              ; \
+    elem(c,f,i0)              ; \
+    elem(d,f,i1)              ; \
+    e <- g                    ; \
+    call(memcpy)              ; \
+    elem(c,f,i1)              ; \
+    d <- o + 1                ; \
+    e <- g                    ; \
+    call(memcpy)              ; \
+    o <- o + g + 1            ; \
+    popall(c,d,e,f,g)         ; \
+    //
+
 // c <- base
 // d <- number of elements
 // e <- size of element
 // f <- comparator
     .global qsort
 qsort:
+    pushall(h)
+    h <- d < 2                  // test for base case
+    jnzrel(h,qsort_done)
+    h <- d >> 1                 // H is partition index
+    i <- d - 1                  // I is last index
+    // partitioning
+    swap(h,i)
+    j <- 0                      // J is store index
+
+    swap(j,i)
+qsort_done:
+    popall(h)
     ret
 
 // c <- pointer to key
