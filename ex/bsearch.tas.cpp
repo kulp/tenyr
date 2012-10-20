@@ -29,13 +29,6 @@ done:
 
     illegal
 
-error_msg:
-    .utf32 "error : not found" ; .word 0
-
-nl: .word '\n', 0
-
-key: .word 55
-
 // c <- key
 // d <- base
 // e <- number of elements
@@ -94,6 +87,13 @@ inteq:
     d <- [d]
     b <- c - d
     ret
+
+error_msg:
+    .utf32 "error : not found" ; .word 0
+
+nl: .word '\n', 0
+
+key: .word 55
 
 data_start:
 .L_data_start:
