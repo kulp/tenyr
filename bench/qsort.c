@@ -49,31 +49,29 @@ int __attribute__((noinline)) cmp(const void *a, const void *b)
 #if TEST
 #include <stdio.h>
 
-static struct __attribute__((packed)) element {
+static struct element {
     int key;
     const char *str;
-    char dummy;
 } data[] = {
-    {   21, "twenty-one", 0 },
-    {   34, "thirty-four", 0 },
-    {   55, "fifty-five", 0 },
-    {  144, "one hundred forty-four", 0 },
-    {    1, "one", 0 },
-    {    2, "two", 0 },
-    {   89, "eighty-nine", 0 },
-    {    3, "three", 0 },
-    {    5, "five", 0 },
-    {    8, "eight", 0 },
-    {   13, "thirteen", 0 },
+     21, "twenty-one",
+     34, "thirty-four",
+     55, "fifty-five",
+    144, "one hundred forty-four",
+      1, "one",
+      2, "two",
+     89, "eighty-nine",
+      3, "three",
+      5, "five",
+      8, "eight",
+     13, "thirteen",
 };
 
 int main(int argc, const char *argv[])
 {
     size_t count = sizeof data / sizeof data[0];
     quicksort(data, count, sizeof data[0], cmp);
-    printf("sizeof data[0] = %zd\n", sizeof data[0]);
     for (int i = 0; i < count; i++)
-        printf("%3d = %s\n", data[i].key, data[i].str);
+        puts(data[i].str);
 
     return 0;
 }
