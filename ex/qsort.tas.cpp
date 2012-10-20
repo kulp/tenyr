@@ -28,10 +28,12 @@ print_loop:
     illegal
 
 #define elem(Dest, Base, Index) \
-    Dest <- Index * E         ; \
+    Dest <- E * Index         ; \
     Dest <- Dest + Base       ; \
     //
 
+// TODO convert swap to a function ?
+// XXX swap() macros is not param-safe
 #define swap(i0, i1)            \
     pushall(c,d,e,f,g)        ; \
     f <- c                    ; \
@@ -57,37 +59,61 @@ print_loop:
 // d <- number of elements
 // e <- size of element
 // f <- comparator
+#define SI M
+#define II J
+#define PI H
+#define LI I
+#define BASE C
+
     .global qsort
 qsort:
     pushall(h,i,j,k,l,m)
     h <- d < 2                  // test for base case
     jnzrel(h,L_qsort_done)
-    h <- d >> 1                 // H is partition index
-    i <- d - 1                  // I is last index
+    PI <- d >> 1                // partition index
+    LI <- d - 1                 // last index
     // partitioning
     swap(h,i)
-    m <- 0                      // M is store index
-    j <- 0                      // J is i index
+    SI <- 0                     // store index
+    II <- 0                     // i index
 
 L_qsort_partition:
-    elem(k, c, j)
-    elem(l, c, j)
+    k <- II < LI
+    jzrel(k,L_qsort_partition_done)
+    elem(k, BASE, II)
+    elem(l, BASE, LI)
     pushall(c,d,e)
     c <- k
     d <- l
-    callr(f)
+    callr(f)                    // call comparator
     popall(c,d,e)
     k <- b < 0
     jzrel(k,L_qsort_noswap)
-    swap(j,m)
-    m <- m + 1
+    swap(II,SI)
+    SI <- SI + 1
 L_qsort_noswap:
+    II <- II + 1
+    goto(L_qsort_partition)
 
-    j <- j + 1
-    k <- j < i
-    jnzrel(k,L_qsort_partition)
+L_qsort_partition_done:
+    swap(SI,LI)
+    PI <- SI
 
-    swap(j,i)
+    // recursive cases
+    pushall(c,d,e,f)
+    /* C is already elem(c,c,0) */
+    d <- PI
+    call(qsort)
+    popall(c,d,e,f)
+
+    pushall(c,d,e,f)
+    d <- LI - PI
+    PI <- PI + 1
+    elem(k,BASE,PI)
+    c <- k
+    call(qsort)
+    popall(c,d,e,f)
+
 L_qsort_done:
     popall(h,i,j,k,l,m)
     ret
