@@ -48,8 +48,9 @@
 #define writeall_(Sp,...)   _paste(_pre_,_narg(__VA_ARGS__))(_push_op,Sp,_narg(__VA_ARGS__),__VA_ARGS__)
 #define pushall_(Sp,...)    Sp <- Sp - (_narg(__VA_ARGS__)) ; writeall_(Sp,__VA_ARGS__)
 // arguments popped in the reverse of the order specified
-#define readall_(Sp,...)    _paste(_post_,_narg(__VA_ARGS__))(_pop_op,Sp,_narg(__VA_ARGS__),__VA_ARGS__)
-#define popall_(Sp,...)     readall_(Sp,__VA_ARGS__) Sp <- Sp + (_narg(__VA_ARGS__))
+#define loadall_(Sp,...)    _paste(_post_,_narg(__VA_ARGS__))(_pop_op,Sp,_narg(__VA_ARGS__),__VA_ARGS__)
+#define dropall_(Sp,...)    Sp <- Sp + (_narg(__VA_ARGS__))
+#define popall_(Sp,...)     loadall_(Sp,__VA_ARGS__) dropall_(Sp,__VA_ARGS__)
 
 #endif
 

@@ -25,6 +25,8 @@
 #define pushall(...)        pushall_(o,__VA_ARGS__)
 // arguments popped in the reverse of the order specified
 #define popall(...)         popall_(o,__VA_ARGS__)
+#define loadall(...)        loadall_(o,__VA_ARGS__)
+#define dropall(...)        dropall_(o,__VA_ARGS__)
 
 #endif
 

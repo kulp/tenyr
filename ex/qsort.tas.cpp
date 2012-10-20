@@ -103,9 +103,7 @@ L_qsort_partition_done:
     /* C is already elem(c,c,0) */
     d <- PI
     call(qsort)
-    popall(c,d,e,f)
-
-    pushall(c,d,e,f)
+    loadall(c,d,e,f)
     d <- LI - PI
     PI <- PI + 1
     elem(k,BASE,PI)
