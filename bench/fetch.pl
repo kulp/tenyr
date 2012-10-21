@@ -9,16 +9,16 @@ my $user = $ENV{USER};
 my $cflags = "-Os -fomit-frame-pointer -std=c99 -DTEST";
 
 my %hosts = (
-        ia64        => [ { host => "gcc66" , cflags => "" } ],
-        mips64      => [ { host => "gcc49" , cflags => "-march=mips64" } ],
+        #ia64        => [ { host => "gcc66" , cflags => "" } ],
+        #mips64      => [ { host => "gcc49" , cflags => "-march=mips64" } ],
+        #sparc64     => [ { host => "gcc54" , cflags => "-m64" } ],
+        #hppa        => [ { host => "gcc61" , cflags => "" } ],
+        #powerpc64   => [ { host => "gcc110", cflags => "-m64 -mcpu=power7" } ],
         mips32      => [ { host => "gcc49" , cflags => "-march=mips32" } ],
-        sparc64     => [ { host => "gcc54" , cflags => "-m64" } ],
-        sparc64     => [ { host => "gcc54" , cflags => "-m32" } ],
+        sparc32     => [ { host => "gcc54" , cflags => "-m32" } ],
         'x86-64'    => [ { host => "gcc12" , cflags => "-m64" } ],
         i686        => [ { host => "gcc12" , cflags => "-m32 -march=i686" } ],
-        hppa        => [ { host => "gcc61" , cflags => "" } ],
-        powerpc64   => [ { host => "gcc110", cflags => "-m64 -mcpu=power7" } ],
-        powerpc     => [ { host => "gcc110", cflags => "-m32 -mcpu=G3" } ],
+        powerpc32   => [ { host => "gcc110", cflags => "-m32 -mcpu=G3" } ],
     );
 
 print "Host\tArch\tSource\tFunc\tInsns\tBytes\n";
@@ -35,6 +35,7 @@ for my $source (@ARGV) {
             print WRITER "cd $tmpdir\n";
             (my $object = $source) =~ s/\.c$/.o/;
             print WRITER "gcc -c -o $object $cflags $rec->{cflags} $source\n";
+            # Power7 binaries show up entry points as ' D ' instead of ' T '
             print WRITER "nm -g $object | grep ' [TD] ' > syms\n";
             print WRITER "wc -l syms\n";
             my $count = (split /\s+/, scalar <READER>)[0];
