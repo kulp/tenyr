@@ -1,6 +1,7 @@
 #include "common.th"
 
-_start:
+    .global main
+main:
     prologue
 
 #define DATA_LEN (.L_data_end - .L_data_start)
