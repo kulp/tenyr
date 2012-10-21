@@ -11,7 +11,7 @@ vpath %.tas ../lib ../lib/dword
 vpath %.tas.cpp ../lib ../lib/dword
 
 TARGETS = \
-    bsearch.texe        \
+    bsearch_demo.texe   \
     compare.texe        \
     fib.texe            \
     fib_iter.texe       \
@@ -20,6 +20,7 @@ TARGETS = \
     irc.texe            \
     maths.texe          \
     parse_hex.texe      \
+    qsort_demo.texe     \
     sieve.texe          \
     #
 
@@ -32,7 +33,8 @@ compare.texe: strcmp.to puts.to
 maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/mul.to
 totient.texe: gcd.to
 isprime.texe: umod.to isqrt.to udiv.to
-bsearch.texe: puts.to
+bsearch_demo.texe: puts.to
+qsort_demo.texe: qsort.to puts.to memcpy.to
 irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
 parse_hex.texe: strtol.to
 

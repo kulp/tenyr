@@ -1,23 +1,25 @@
 #include "forth_common.th"
 
-// A little Forth kernel.
-// Expects a global symbol called `start' to be defined in another object, which
-// should be a list of addresses of code to run, ending with EXIT.
+// A little Forth.
 
 .set link, 0
 .global __zero
 __zero:
 __boot:
-    S   <- [reloc(_PSPinit)]
-    R   <- [reloc(_RSPinit)]
-    push(R,reloc(_done))
-    I   <- reloc(start)
+    S <- [reloc(_PSPinit)]
+    R <- [reloc(_RSPinit)]
+    I <- reloc(QUIT)        // enter text interpreter
     goto(NEXT)
 
     .global _PSPinit
     .global _RSPinit
 _PSPinit:   .word   0x007fffff
 _RSPinit:   .word   0x00ffffff
+
+// TODO smudge internal words
+head(RESET_RSP,RESET_RSP): .word . + 1
+    R <- [reloc(_RSPinit)]
+    goto(NEXT)
 
 head(NEXT,NEXT):
     W  <- [I]
@@ -37,6 +39,14 @@ head(EXIT,EXIT):
     pop(R,I)
     goto(NEXT)
 
-_done:
-    .word @ABORT
+    .global source_id
+source_id: .word 0
+head(SOURCE_ID,SOURCE-ID): .word
+    @ENTER, @LITERAL, @source_id, @RELOC, @EXIT
+
+    .global __done
+__done:
+    // return to caller of forth, abort, whatever is required
+    //p <- reloc(__boot)
+    illegal
 

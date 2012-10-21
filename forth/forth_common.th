@@ -46,6 +46,10 @@
 #define iftrue(Predicate,Target) \
     p <- Predicate & reloc(Target)
 
+#define iffalse(Predicate,Target) \
+    p <- Predicate & 1 + p ; \
+    goto(Target)
+
 // .global for L##Label_{exec,compile} is a hack to allow linking to succeed
 // for forward references
 // TODO reorder fields so that an execution token and a @SYMBOL are the same
@@ -72,6 +76,7 @@
     headstr(Label,#Name)
 
 // expects to be called in a @word context
+// TODO make Else implicit
 #define IFNOT0(Then,Else)             \
     @EQZ,               /* nrmlise */ \
     @LITERAL, @Else,    /* F a1    */ \

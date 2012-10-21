@@ -1,6 +1,7 @@
 #include "common.th"
 
-_start:
+    .global main
+main:
     prologue
 
 #define DATA_LEN (.L_data_end - .L_data_start)
@@ -28,13 +29,6 @@ done:
     call(puts)
 
     illegal
-
-error_msg:
-    .utf32 "error : not found" ; .word 0
-
-nl: .word '\n', 0
-
-key: .word 55
 
 // c <- key
 // d <- base
@@ -94,6 +88,13 @@ inteq:
     d <- [d]
     b <- c - d
     ret
+
+error_msg:
+    .utf32 "error : not found" ; .word 0
+
+nl: .word '\n', 0
+
+key: .word 55
 
 data_start:
 .L_data_start:

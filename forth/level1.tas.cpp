@@ -83,7 +83,7 @@ head(ABORT,ABORT):
     .word . + 1
     S   <- [reloc(_PSPinit)]
     R   <- [reloc(_RSPinit)]
-    illegal
+    P   <- reloc(__done)
 
 // ABORT" i*x 0  -- i*x   R: j*x -- j*x  print msg &
 //        i*x x1 --       R: j*x --      abort,x1<>0
@@ -160,6 +160,11 @@ head(CR,CR): .word
 
 // CREATE --              create an empty definition
 // DECIMAL --             set number base to decimal
+head(DECIMAL,DECIMAL): .word
+    @ENTER,
+    @LITERAL, 10, @BASE, @STORE,
+    @EXIT
+
 // DEPTH  -- +n             number of items on stack
 // DO     -- adrs   L: -- 0        start of DO..LOOP
 // DOES>  --           change action of latest def'n
@@ -302,18 +307,18 @@ head(EMIT_UNSIGNED,U.): .word
 // WORD   char -- c-addr    parse word delim by char
 head(WORD,WORD): .word
     @ENTER,                 // c
-    @WORD_TMP,              // c TMP
+    @CLEAR_WORD_TMP,        // c TMP
     @LITERAL, 0, @OVER,     // c TMP 0 TMP
     @STOCHR,                // c TMP
     @ADD_1CHAR,             // c TMP+1
-    @TIB, @TO_IN, @FETCH,   // c TMP TIB off
-    @ADD,                   // c TMP tib
-    @ROT, @SWAP, @TWO_DUP,  // TMP c tib c tib
+    @OVER,                  // c TMP c
+    @PARSE_START,           // c TMP c tib
     @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
-    @SKIP,                  // TMP c tib ntib
-    @NIP,                   // TMP c ntib
-    @SWAP, @ROT, @ROT,      // c TMP ntib
-    @NOOP
+    @SKIP,                  // c TMP ntib
+    @DUP, @PARSE_START, @SUB,
+    @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
+    @SUB, @EQZ,
+    IFNOT0(L_WORD_zero_len,L_WORD_top)
 
 L_WORD_top: .word
     // c TMP tib
@@ -348,19 +353,22 @@ L_WORD_cont: .word
 
 L_WORD_done_stripping: .word
     // tmp tib c2 c1
-    @TWO_DROP,              // tmp tib
-    @TIB, @SUB,             // tmp off
-    //@ADD_1CHAR,
-    @TO_IN, @STORE,         // tmp
-    //@DROP,
+    @TWO_DROP, @DROP,       // tmp
     @LITERAL, @BL,          // tmp bl
-    @SWAP, @STOCHR,         // 
+    @SWAP, @STOCHR          //
+L_WORD_zero_len: .word
     @WORD_TMP,              // TMP
     @EXIT
 L_WORD_tmp:
 .L_WORD_tmp:
     .utf32 "          ""          ""          ""  "
 .L_WORD_tmp_end: .word 0
+
+head(CLEAR_WORD_TMP,CLEAR-WORD-TMP): .word
+    @ENTER,
+    @WORD_TMP,
+    @DUP, @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp, @BL, @FILL,
+    @EXIT
 
 // ( char c-addr u -- c-addr )    skip init char up to N
 head(SKIP,SKIP): .word
@@ -373,7 +381,10 @@ L_SKIP_top: .word
 
 L_SKIP_cont: .word
     // c addr u
-    @ROT, @ROT,             // u c addr
+    @ROT,
+//@DUP, @LITERAL, 84, @PUTSN,
+    
+    @ROT,             // u c addr
     @SWAP, @TWO_DUP,        // u addr c addr c
     @SWAP, @FETCHR,         // u addr c1 c1 c2
     @CMP_EQ,                // u addr c1 flag
@@ -423,6 +434,11 @@ head(SLASH_STRING,/STRING): .word
 // DABS   d1 -- +d2        absolute value, dbl.prec.
 // DNEGATE d1 -- d2         negate, double precision
 // HEX    --                  set number base to hex
+head(HEX,HEX): .word
+    @ENTER,
+    @LITERAL, 16, @BASE, @STORE,
+    @EXIT
+
 // PAD    -- a-addr                  user PAD buffer
 // TIB    -- a-addr            Terminal Input Buffer
 head(TIB,TIB): .word
@@ -466,6 +482,7 @@ L_WORDS_char_bottom:
 // extensions (possibly borrowed from CamelForth)
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
+// TODO change this to >NUMBER and implement ?NUMBER in terms of it
 head(ISNUMBER,?NUMBER): .word . + 1
     // first, put counted string on stack as c-string
     ccpre()             // prepare for C call
