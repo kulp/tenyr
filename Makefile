@@ -63,6 +63,19 @@ win32 win64: export WIN32=1
 win32 win64:
 	$(MAKE) $^
 
+ifneq ($(DEBUG),)
+%.html %.js: EMCCFLAGS += -O2
+endif
+%.html: %.bc
+	emcc $(EMCCFLAGS) -o $@ $<
+%.js: %.bc
+	emcc $(EMCCFLAGS) -o $@ $<
+%.bc: CC = emcc
+%.bc: CPPFLAGS += -DEMSCRIPTEN
+%.bc: CFLAGS += -O0
+%.bc: %
+	mv $< $@
+
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
