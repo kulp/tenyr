@@ -21,9 +21,22 @@ function put_char(ch)
     outarea.value += String.fromCharCode(ch);
 }
 
+function nothing()
+{
+    return null;
+}
+
 function set_up_fs()
 {
-    FS.init(get_line_char, put_char, put_char);
+    var ENVIRONMENT_IS_NODE = typeof process === 'object';
+    var ENVIRONMENT_IS_WEB = typeof window === 'object';
+    var ENVIRONMENT_IS_WORKER = typeof importScripts === 'function';
+    var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
+    if (ENVIRONMENT_IS_WEB) {
+        FS.init(get_line_char, put_char, put_char);
+    } else if (ENVIRONMENT_IS_NODE) {
+        FS.init(nothing, put_char, put_char);
+    }
 }
 
 var Module = {
@@ -34,7 +47,8 @@ var Module = {
 
 function assemble()
 {
-    //outarea.value = "";
+    outarea.value = "";
+    get_line_char.i = 0;
     Module.run();
 }
 
