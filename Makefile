@@ -65,9 +65,8 @@ win32 win64:
 
 tas.bc: asmif.o asm.o common.o $(GENDIR)/parser.o $(GENDIR)/lexer.o obj.o emmain.o
 
-%.html %.js: EMCCFLAGS += --embed-file test.tas
 ifeq ($(DEBUG),)
-%.html %.js: EMCCFLAGS += -O2
+%.html %.js: EMCCFLAGS += -O1
 endif
 %.html: %.bc
 	emcc $(EMCCFLAGS) -o $@ $<
