@@ -1,3 +1,4 @@
+#include "asmif.h"
 #include "ops.h"
 // obj.h is included for RLC_* flags ; reconsider their location
 #include "obj.h"
@@ -9,7 +10,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <getopt.h>
 #include <search.h>
 #include <string.h>

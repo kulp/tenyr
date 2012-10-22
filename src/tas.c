@@ -1,4 +1,5 @@
 #include "asm.h"
+#include "asmif.h"
 #include "common.h"
 #include "parser.h"
 #include "parser_global.h"
@@ -33,10 +34,6 @@ static const struct option longopts[] = {
 };
 
 #define version() "tas version " STR(BUILD_NAME)
-
-int format_has_output(const struct format *f);
-int do_assembly(FILE *in, FILE *out, const struct format *f);
-int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags);
 
 static int usage(const char *me)
 {

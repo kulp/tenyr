@@ -13,9 +13,7 @@ int main(void)
     int rc = 0;
 
     const struct format *f = &tenyr_asm_formats[2]; // text
-    FILE *in = fopen("test.tas", "rb");
-    rc = do_assembly(in, stdout, f);
-    fclose(in);
+    rc = do_assembly(stdin, stdout, f);
 
     return rc;
 }
