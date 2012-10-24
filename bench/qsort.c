@@ -1,6 +1,17 @@
 #include <stddef.h>
 #include <string.h>
 
+#define elem(Base, Index) \
+    (((char *)Base)[(Index) * width])
+
+void swap(void *base, size_t width, size_t i0, size_t i1)
+{
+    char temp[width];
+    memcpy(&temp, &elem(base,i0), width);
+    memcpy(&elem(base,i0), &elem(base,i1), width);
+    memcpy(&elem(base,i1), &temp, width);
+}
+
 void __attribute__((noinline)) quicksort(void *base, size_t nel, size_t width, int (*compar)(const void *, const void *))
 {
     if (nel < 2)
@@ -10,30 +21,18 @@ void __attribute__((noinline)) quicksort(void *base, size_t nel, size_t width, i
     size_t pi = nel >> 1; // partition index
     const size_t li = nel - 1; // last index
 
-#define elem(Base, Index) \
-    (((char *)Base)[(Index) * width])
-
-#define swap(i0, i1)                                    \
-    do {                                                \
-        struct { char data[width]; } temp;              \
-        memcpy(&temp, &elem(base,i0), width);           \
-        memcpy(&elem(base,i0), &elem(base,i1), width);  \
-        memcpy(&elem(base,i1), &temp, width);           \
-    } while (0)                                         \
-    //
-
     // swap pivot to end
-    swap(pi, li);
+    swap(base, width, pi, li);
 
     size_t si = 0;  // si : store index
     for (size_t i = 0; i < li; i++) {
         if (compar(&elem(base,i), &elem(base,li)) < 0) {
-            swap(i, si);
+            swap(base, width, i, si);
             si++;
         }
     }
 
-    swap(si, li);
+    swap(base, width, si, li);
 
     pi = si;
 

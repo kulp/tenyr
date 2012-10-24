@@ -14,7 +14,6 @@
     //
 
 do_swap:
-    pushall(c,d,e)
     l <- c
     k <- e
     o <- o - e
@@ -31,7 +30,6 @@ do_swap:
     e <- k
     call(memcpy)
     o <- o + k
-    popall(c,d,e)
     ret
 
 // c <- base
