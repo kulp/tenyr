@@ -69,5 +69,12 @@ int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
 #define breakpoint(...) \
     fatal(0, __VA_ARGS__)
 
+int next_device(struct sim_state *s);
+int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data);
+int devices_setup(struct sim_state *s);
+int devices_finalise(struct sim_state *s);
+int devices_teardown(struct sim_state *s);
+int devices_dispatch_cycle(struct sim_state *s);
+
 #endif
 

@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+#include <stdio.h>
+
 struct debug_expr {
     enum expr_type { EXPR_NULL, EXPR_MEM, EXPR_REG } type;
     int32_t val;

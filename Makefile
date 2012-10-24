@@ -75,11 +75,12 @@ endif
 %.bc: CC = emcc
 %.bc: CPPFLAGS += -DEMSCRIPTEN
 %.bc: CFLAGS += -O0
-%.bc:
+%.bc: %
 	$(LINK.c) -o $@ $^ $(LDLIBS)
 
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX): asmif.o
+tsim$(EXE_SUFFIX): simif.o dbg.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
 tsim$(EXE_SUFFIX): asm.o obj.o ffi.o plugin.o \
