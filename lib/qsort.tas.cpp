@@ -5,28 +5,34 @@
     Dest <- Dest + Base       ; \
     //
 
-// TODO convert swap to a function ?
-// XXX swap() macros is not param-safe
-#define swap(i0, i1)            \
-    pushall(c,d,e)            ; \
-    l <- c                    ; \
-    k <- e                    ; \
-    o <- o - e                ; \
-    c <- o + 1                ; \
-    elem(d,l,i0)              ; \
-    /* E is already width */  ; \
-    call(memcpy)              ; \
-    elem(c,l,i0)              ; \
-    elem(d,l,i1)              ; \
-    e <- k                    ; \
-    call(memcpy)              ; \
-    elem(c,l,i1)              ; \
-    d <- o + 1                ; \
-    e <- k                    ; \
-    call(memcpy)              ; \
-    o <- o + k                ; \
-    popall(c,d,e)             ; \
+#define swap(i0, i1)         \
+    pushall(c,d,e,f,g)       \
+    f <- i0                  \
+    g <- i1                  \
+    call(do_swap)            \
+    popall(c,d,e,f,g)        \
     //
+
+do_swap:
+    pushall(c,d,e)
+    l <- c
+    k <- e
+    o <- o - e
+    c <- o + 1
+    elem(d,l,f)
+    /* E is already width */
+    call(memcpy)
+    elem(c,l,f)
+    elem(d,l,g)
+    e <- k
+    call(memcpy)
+    elem(c,l,g)
+    d <- o + 1
+    e <- k
+    call(memcpy)
+    o <- o + k
+    popall(c,d,e)
+    ret
 
 // c <- base
 // d <- number of elements
