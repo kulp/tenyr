@@ -8,24 +8,24 @@
 // TODO convert swap to a function ?
 // XXX swap() macros is not param-safe
 #define swap(i0, i1)            \
-    pushall(c,d,e,f,g)        ; \
-    f <- c                    ; \
-    g <- e                    ; \
+    pushall(c,d,e)            ; \
+    l <- c                    ; \
+    k <- e                    ; \
     o <- o - e                ; \
     c <- o + 1                ; \
-    elem(d,f,i0)              ; \
+    elem(d,l,i0)              ; \
     /* E is already width */  ; \
     call(memcpy)              ; \
-    elem(c,f,i0)              ; \
-    elem(d,f,i1)              ; \
-    e <- g                    ; \
+    elem(c,l,i0)              ; \
+    elem(d,l,i1)              ; \
+    e <- k                    ; \
     call(memcpy)              ; \
-    elem(c,f,i1)              ; \
+    elem(c,l,i1)              ; \
     d <- o + 1                ; \
-    e <- g                    ; \
+    e <- k                    ; \
     call(memcpy)              ; \
-    o <- o + g                ; \
-    popall(c,d,e,f,g)         ; \
+    o <- o + k                ; \
+    popall(c,d,e)             ; \
     //
 
 // c <- base
@@ -40,7 +40,7 @@
 
     .global qsort
 qsort:
-    pushall(h,i,j,k,m)
+    pushall(h,i,j,k,l,m)
     h <- d < 2                  // test for base case
     jnzrel(h,L_qsort_done)
     PI <- d >> 1                // partition index
@@ -93,6 +93,6 @@ L_qsort_partition_done:
     call(qsort)
 
 L_qsort_done:
-    popall(h,i,j,k,m)
+    popall(h,i,j,k,l,m)
     ret
 
