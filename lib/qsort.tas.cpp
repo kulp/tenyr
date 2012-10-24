@@ -6,11 +6,11 @@
     //
 
 #define swap(i0, i1)         \
-    pushall(c,d,e,f,g)       \
+    pushall(c,d,e,f)         \
     f <- i0                  \
     g <- i1                  \
     call(do_swap)            \
-    popall(c,d,e,f,g)        \
+    popall(c,d,e,f)          \
     //
 
 do_swap:
@@ -44,7 +44,7 @@ do_swap:
 
     .global qsort
 qsort:
-    pushall(h,i,j,k,l,m)
+    pushall(g,h,i,j,k,l,m)
     h <- d < 2                  // test for base case
     jnzrel(h,L_qsort_done)
     PI <- d >> 1                // partition index
@@ -97,6 +97,6 @@ L_qsort_partition_done:
     call(qsort)
 
 L_qsort_done:
-    popall(h,i,j,k,l,m)
+    popall(g,h,i,j,k,l,m)
     ret
 
