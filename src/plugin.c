@@ -50,10 +50,16 @@ int plugin_load(const char *base, const struct plugin_cookie *p,
             // (seems to break on Mac OS X)
             // currently we leak library handles
             void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
+#if EMSCRIPTEN
+            // emscripten doesn't support RTLD_DEFAULT
+            debug(1, "Could not load %s, bailing", implpath);
+            break;
+#else
             if (!libhandle) {
                 debug(1, "Could not load %s, trying default library search", implpath);
                 libhandle = RTLD_DEFAULT;
             }
+#endif
 
             tenyr_plugin_host_init(libhandle);
 

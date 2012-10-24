@@ -63,8 +63,6 @@ win32 win64: export WIN32=1
 win32 win64:
 	$(MAKE) $^
 
-tas.bc: asmif.o asm.o common.o $(GENDIR)/parser.o $(GENDIR)/lexer.o obj.o emmain.o
-
 ifeq ($(DEBUG),)
 %.html %.js: EMCCFLAGS += -O1
 endif
@@ -75,15 +73,15 @@ endif
 %.bc: CC = emcc
 %.bc: CPPFLAGS += -DEMSCRIPTEN
 %.bc: CFLAGS += -O0
-%.bc: %
+%.bc: em%.o
 	$(LINK.c) -o $@ $^ $(LDLIBS)
 
-tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): common.o
-tas$(EXE_SUFFIX): asmif.o
-tsim$(EXE_SUFFIX): simif.o dbg.o
+tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) tas.bc tsim.bc: common.o
+tas$(EXE_SUFFIX) tas.bc: asmif.o
+tsim$(EXE_SUFFIX) tsim.bc: simif.o dbg.o
 tas$(EXE_SUFFIX): $(GENDIR)/parser.o $(GENDIR)/lexer.o
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): asm.o obj.o
-tsim$(EXE_SUFFIX): asm.o obj.o ffi.o plugin.o \
+tsim$(EXE_SUFFIX) tsim.bc: asm.o obj.o ffi.o plugin.o \
                    $(GENDIR)/debugger_parser.o \
                    $(GENDIR)/debugger_lexer.o
 tsim$(EXE_SUFFIX): $(DEVOBJS) sim.o param.o
