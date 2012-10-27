@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+#include <stdint.h>
 #include <stdio.h>
 
 struct debug_expr {
