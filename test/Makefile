@@ -9,12 +9,14 @@ CPPFLAGS += -I../lib
 vpath %.tas ../lib
 vpath %.tas.cpp ../lib
 
+CPP := $(CPP) -
+
 all:
 
 copy.texe: memcpy.to puts.to
 
 %.tas: %.tas.cpp
-	$(CPP) $(CPPFLAGS) -o $@ $<
+	$(CPP) $(CPPFLAGS) < $< > $@
 
 %.to: %.tas
 	$(TAS) -o$@ $<
