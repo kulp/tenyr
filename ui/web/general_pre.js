@@ -1,8 +1,13 @@
-var mod;
+var tasdata = { };
 
-var inarea  = document.getElementById('input');
-var pparea  = document.getElementById('preprocessed');
-var outarea = document.getElementById('output');
+//document.onload = function() {
+    tasdata.inarea  = document.getElementById('input');
+    tasdata.pparea  = document.getElementById('preprocessed');
+    tasdata.outarea = document.getElementById('output');
+
+    tasdata.get_in_line_char = make_char_getter(tasdata.inarea);
+    tasdata.get_pp_line_char = make_char_getter(tasdata.pparea);
+//};
 
 function make_char_getter(area)
 {
@@ -21,7 +26,4 @@ function make_char_getter(area)
         return null;
     }
 }
-
-var get_in_line_char = make_char_getter(inarea);
-var get_pp_line_char = make_char_getter(pparea);
 
