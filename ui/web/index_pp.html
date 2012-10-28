@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>tas</title>
+    <style>
+    /*
+      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+      canvas.emscripten { border: 1px solid black; }
+      div.emscripten { text-align: center; }
+      */
+      textarea.emscripten { font-family: monospace; width: 80%; }
+    </style>
+  </head>
+  <body>
+    <p>Input tenyr assembly :</p>
+    <textarea class="emscripten" id="input" rows="10">
+#include "common.th"
+pushall(b,c,d)
+popall(b,c,d)
+</textarea>
+    <p>
+        <button onclick="preprocess()">Preprocess</button>
+    </p>
+    <p>Preprocessed input :</p>
+    <textarea class="emscripten" id="preprocessed" rows="10"></textarea>
+    <p>
+        <button onclick="assemble()">Assemble</button>
+    </p>
+    <p>Assembled output :</p>
+    <textarea class="emscripten" id="output" rows="10"></textarea>
+    <script type='text/javascript' src="general_pre.js"></script>
+    <script type='text/javascript' src="pp_pre.js"></script>
+    <script type='text/javascript' src="tcc.js"></script>
+  </body>
+</html>
