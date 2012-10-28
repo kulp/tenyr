@@ -1,3 +1,5 @@
+var mod;
+
 var inarea  = document.getElementById('input');
 var pparea  = document.getElementById('preprocessed');
 var outarea = document.getElementById('output');

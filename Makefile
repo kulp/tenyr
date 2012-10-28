@@ -65,6 +65,8 @@ win32 win64:
 
 ifeq ($(DEBUG),)
 %.html %.js: EMCCFLAGS += -O1
+else
+%.html %.js: EMCCFLAGS += -O0
 endif
 %.html: %.bc
 	emcc $(EMCCFLAGS) -o $@ $<

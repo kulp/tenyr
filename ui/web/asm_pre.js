@@ -1,7 +1,7 @@
-var tccModule = mod = (function(){
+var tasModule = mod = (function(){
     function put_char(ch)
     {
-        pparea.value += String.fromCharCode(ch);
+        outarea.value += String.fromCharCode(ch);
     }
 
     function nothing()
@@ -16,7 +16,7 @@ var tccModule = mod = (function(){
         var ENVIRONMENT_IS_WORKER = typeof importScripts === 'function';
         var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
         if (ENVIRONMENT_IS_WEB) {
-            mod._FSref.init(get_in_line_char, put_char, put_char);
+            mod._FSref.init(get_pp_line_char, put_char, put_char);
         } else if (ENVIRONMENT_IS_NODE) {
             mod._FSref.init(nothing, put_char, put_char);
         }
@@ -24,18 +24,16 @@ var tccModule = mod = (function(){
 
     var mod = {
         noInitialRun: true,
-        //preRun: [ set_up_fs ],
         preInit: [ function(){ set_up_fs(mod) } ],
-        arguments: [ "-Ilib" ],
     };
 
     return mod;
 })();
 
-function preprocess()
+function assemble()
 {
-    pparea.value = "";
-    get_in_line_char.i = 0;
-    tccModule.run();
+    outarea.value = "";
+    get_pp_line_char.i = 0;
+    tasModule.run();
 }
 
