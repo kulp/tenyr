@@ -17,8 +17,13 @@
     <p>Input tenyr assembly :</p>
     <textarea class="emscripten" id="input" rows="10">
 #include "common.th"
-pushall(b,c,d)
-popall(b,c,d)
+    pushall(b,c,d)
+    .word 12345
+    .word 0x12345
+datum:
+    illegal
+    .word @datum
+    popall(b,c,d)
 </textarea>
     <p>
         <button onclick="preprocess()">Preprocess</button>

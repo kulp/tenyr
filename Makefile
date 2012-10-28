@@ -78,6 +78,9 @@ endif
 %.bc: em%.o
 	$(LINK.c) -o $@ $^ $(LDLIBS)
 
+# compensate for missing search.h implementation in emscripten environment
+tas.bc: emtsearch.o emlsearch.o
+
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX) tas.bc tsim.bc: common.o
 tas$(EXE_SUFFIX) tas.bc: asmif.o
 tsim$(EXE_SUFFIX) tsim.bc: simif.o dbg.o
