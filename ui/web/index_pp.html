@@ -3,19 +3,40 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>tas</title>
+    <title>tenyr assembly demonstrator</title>
     <style>
-    /*
-      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
-      canvas.emscripten { border: 1px solid black; }
-      div.emscripten { text-align: center; }
-      */
-      textarea.emscripten { font-family: monospace; width: 80%; }
+      div, span { box-sizing: border-box; }
+      body { font-family: sans-serif; }
+      div.box textarea { font-family: monospace; width: 100%; height: 50%; clear: right; }
+      div.box { float: left; min-width: 15em; width: 33%; margin: auto auto; padding: 1em; height: 90%; }
+      div.box span { display: block; margin: 1ex; }
+      div.box button { margin-top: 1em; float: right; }
+      /* div.outer { min-height: 30em; height: 90%; } */
+      /* div.outer { border: 1px solid black; margin: auto auto; background-color: #333; } */
+      body { width: 90%; margin: auto auto; }
+      h1 { text-align: center; }
+      p.desc { margin: 1ex; }
+      div.desc { width: 75%; max-width: 40em; margin: auto auto; background-color: #eee; border-radius: 2ex 0 2ex 0; padding: 1em; box-shadow: 5px 5px 5px #aaa; }
     </style>
   </head>
   <body>
-    <p>Input tenyr assembly :</p>
-    <textarea class="emscripten" id="input" rows="10">
+    <h1 class="title">tenyr technology demonstrator</h1>
+    <div class="desc">
+        <p class="desc">
+            This page exists to let you experiment with tenyr tools without having
+            to download anything. For now, only an assembler is available (linker
+            and simulator will come later), largely to prove the concept of
+            emscripten-powered tenyr-in-a-browser.
+        </p>
+        <p class="desc">
+            Eventually, we hope to provide a syntax-colouring code editor, a
+            simulator with device support, and other goodies.
+        </p>
+    </div>
+    <div class="outer">
+        <div class="box">
+            <span>Input tenyr assembly :</span>
+            <textarea id="input" rows="30">
 #include "common.th"
     pushall(b,c,d)
     .word 12345
@@ -25,16 +46,19 @@ datum:
     .word @datum
     popall(b,c,d)
 </textarea>
-    <p>
-        <button onclick="preprocess()">Preprocess</button>
-    </p>
-    <p>Preprocessed input :</p>
-    <textarea class="emscripten" id="preprocessed" rows="10"></textarea>
-    <p>
-        <button onclick="assemble()">Assemble</button>
-    </p>
-    <p>Assembled output :</p>
-    <textarea class="emscripten" id="output" rows="10"></textarea>
+            <button onclick="preprocess()">Preprocess &rarr;</button>
+        </div>
+        <div class="box">
+            <span>Preprocessed input :</span>
+            <textarea id="preprocessed" rows="30"></textarea>
+            <button onclick="assemble()">Assemble &rarr;</button>
+        </div>
+        <div class="box">
+            <span>Assembled output :</span>
+            <textarea id="output" rows="30"></textarea>
+        </div>
+    </div>
+
     <script type='text/javascript' src="general_pre.js"></script>
     <script type='text/javascript' src="tcc.js"></script>
     <script type='text/javascript' src="tas.js"></script>
