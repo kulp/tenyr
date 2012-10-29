@@ -23,7 +23,11 @@ INCLUDES += $(CHECK_PATHS)
 
 ifeq ($(DEBUG),)
 %.js: EMCCFLAGS_LD += -O2
-%.js: EMCCFLAGS_LD += -s ASSERTIONS=0 -s MICRO_OPTS=1 -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0
+%.js: EMCCFLAGS_LD += -s ASSERTIONS=0 -s MICRO_OPTS=1 \
+                      -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0 \
+                      -s CLOSURE_ANNOTATIONS=1 \
+                      -s CHECK_OVERFLOWS=0 \
+                      -s CORRECT_OVERFLOWS=0 \
 else
 %.js: EMCCFLAGS_LD += -O0
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=1 -s MICRO_OPTS=0 \
@@ -58,6 +62,8 @@ tcc.bc: LDFLAGS += -O2
 
 # compensate for missing search.h implementation in emscripten environment
 tas.bc: emtsearch.o emlsearch.o
+
+param.o: CPPFLAGS += -include src/em.h
 
 CLEANFILES += *.bc
 
