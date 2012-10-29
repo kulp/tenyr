@@ -16,8 +16,13 @@ struct tree {
 
 static struct tree *null_tree_p = NULL;
 
+typedef int  cmp(const void *key1, const void *key2);
+typedef void act(const void *node, VISIT order, int level);
+typedef void freer(void *node);
+
 // guaranteed to return a non-NULL pointer (might be a pointer to NULL)
-static struct tree **traverse(const void *key, struct tree **rootp, int (*compar)(const void *, const void *), int create, struct tree **parent)
+static struct tree **traverse(const void *key, struct tree **rootp, cmp *compar,
+                              int create, struct tree **parent)
 {
     if (*rootp == NULL) {
         if (create) {
@@ -44,17 +49,17 @@ static struct tree **traverse(const void *key, struct tree **rootp, int (*compar
     }
 }
 
-void *tfind(const void *key, void *const *rootp, int (*compar)(const void *key1, const void *key2))
+void *tfind(const void *key, void *const *rootp, cmp *compar)
 {
     return *traverse(key, (void*)rootp, compar, 0, NULL);
 }
 
-void *tsearch(const void *key, void **rootp, int (*compar)(const void *key1, const void *key2))
+void *tsearch(const void *key, void **rootp, cmp *compar)
 {
     return *traverse(key, (void*)rootp, compar, 1, NULL);
 }
 
-void *tdelete(const void *restrict key, void **restrict rootp, int (*compar)(const void *key1, const void *key2))
+void *tdelete(const void *restrict key, void **restrict rootp, cmp *compar)
 {
     struct tree *parent = NULL;
     struct tree **q = traverse(key, (void*)rootp, compar, 0, &parent);
@@ -93,27 +98,28 @@ void *tdelete(const void *restrict key, void **restrict rootp, int (*compar)(con
 
 // walk(), unlike traverse(), cannot tail-recurse, and so we might want an
 // iterative implementation for large trees
-static void walk(const void *root, void (*action)(const void *node, VISIT order, int level), int level)
+static void walk(const void *root, act *action, int level)
 {
     const struct tree *p = root;
+    if (!p) return;
 
     if (!p->left && !p->right) {
         action(p, leaf, level);
     } else {
         action(p, preorder , level);
-        if (p->left ) walk(p->left , action, level + 1);
+        walk(p->left , action, level + 1);
         action(p, postorder, level);
-        if (p->right) walk(p->right, action, level + 1);
+        walk(p->right, action, level + 1);
         action(p, endorder , level);
     }
 }
 
-void twalk(const void *root, void (*action)(const void *node, VISIT order, int level))
+void twalk(const void *root, act *action)
 {
     walk(root, action, 0);
 }
 
-void tdestroy(void *root, void (*free_node)(void *))
+void tdestroy(void *root, freer *free_node)
 {
     struct tree *p = root;
     if (!p)
