@@ -17,6 +17,8 @@
       h1 { text-align: center; }
       p.desc { margin: 1ex; }
       div.desc { width: 75%; max-width: 40em; margin: auto auto; background-color: #eee; border-radius: 2ex 0 2ex 0; padding: 1em; box-shadow: 5px 5px 5px #aaa; }
+      a:link { color: #66d; }
+      a:visited { color: #b5b; }
     </style>
   </head>
   <body>
@@ -26,11 +28,20 @@
             This page exists to let you experiment with tenyr tools without having
             to download anything. For now, only an assembler is available (linker
             and simulator will come later), largely to prove the concept of
-            emscripten-powered tenyr-in-a-browser.
+            emscripten-powered tenyr-in-a-browser. To get started, read the <a
+            href="https://github.com/kulp/tenyr/wiki/Assembly-language">wiki
+            page on the tenyr assembly language</a>.
         </p>
         <p class="desc">
-            Eventually, we hope to provide a syntax-colouring code editor, a
+            Eventually, we intend to provide a <a
+            href="http://ace.ajax.org/">syntax-colouring code editor</a>, a
             simulator with device support, and other goodies.
+        </p>
+        <p class="desc">
+            The files ending in <code>.th</code> from <a
+            href="https://github.com/kulp/tenyr/tree/master/lib">the
+            <code>lib</code> directory</a> are available to be included using
+            <code>#include</code>.
         </p>
     </div>
     <div class="outer">
@@ -38,14 +49,33 @@
             <span>Input tenyr assembly :</span>
             <textarea id="input" rows="30">
 #include "common.th"
-    pushall(b,c,d)
-    .word 12345
-    .word 0x12345
-datum:
+
+    prologue
+    c &lt;- rel(hi)        // string starts at @hi
+    call(puts)
     illegal
-    .word @datum
-    popall(b,c,d)
-</textarea>
+
+hi:
+    .utf32 "hello, world"
+    .word '\n'
+    .word 0             // mark end of string with a zero
+
+#include "serial.th"
+
+// argument in C
+    .global puts
+puts:
+    push(d)
+puts_loop:
+    b &lt;- [c]            // load word from string
+    d &lt;- b == 0         // if it is zero, we are done
+    jnzrel(d,puts_done)
+    c &lt;- c + 1          // increment index for next time
+    emit(b)             // output character to serial device
+    goto(puts_loop)
+puts_done:
+    pop(d)
+    ret</textarea>
             <button onclick="preprocess()">Preprocess &rarr;</button>
         </div>
         <div class="box">
