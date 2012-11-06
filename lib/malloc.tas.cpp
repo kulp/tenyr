@@ -31,7 +31,7 @@ counts:
 // have bit 27-31 the same (i.e. we must be able to sign-extend the 28-pointer
 // to get the original 32-bit pointer).
 
-// NODE gets SZ index in C, returns NP node in B
+// NODE gets SZ index in C, returns NP node in B, clobbers C
 #define NODE(B,C)               \
     B   <- C << BPERBITS        \
     B   <- B + @nodes           \
@@ -54,7 +54,7 @@ counts:
     DIFF(B,C,TN)                \
     //
 
-// LLINK gets NP n in C, returns NP left-child in B
+// LLINK gets NP n in C, returns NP left-child in B, clobbers C
 #define LLINK(B,C)              \
     INDEX(B,C)                  \
     C   <- B << 1               \
@@ -62,7 +62,7 @@ counts:
     NODE(B,C)                   \
     //
 
-// RLINK gets NP n in C, returns NP right-child in B
+// RLINK gets NP n in C, returns NP right-child in B, clobbers C
 #define RLINK(B,C)              \
     INDEX(B,C)                  \
     C   <- B << 1               \
@@ -84,7 +84,7 @@ counts:
     B   <- B == 0               \
     //
 
-// PARENT gets NP n in C, returns NP parent in B
+// PARENT gets NP n in C, returns NP parent in B, clobbers C
 #define PARENT(B,C)             \
     INDEX(B,C)                  \
     C   <- B -  1               \
@@ -93,7 +93,7 @@ counts:
     //
 
 // TODO check SIBLING logic, not very certain of it
-// SIBLING gets NP n in C, returns NP sibling in B
+// SIBLING gets NP n in C, returns NP sibling in B, clobbers C
 #define SIBLING(B,C,T0,T1)      \
     INDEX(B,C)                  \
     T0  <- B                    \
@@ -105,8 +105,10 @@ counts:
 
 // TODO NODE2RANK
 // TODO SIZE2RANK
+#define SIZE2RANK(B,C) \
+    //
 
-// RANK2WORDS gets SZ rank in C, returns SZ word-count in B
+// RANK2WORDS gets SZ rank in C, returns SZ word-count in B, clobbers C
 #define RANK2WORDS(B,C)         \
     C   <- C + RANK_0_LOG       \
     B   <- 1                    \
@@ -115,17 +117,15 @@ counts:
 
 // GET_COUNT gets SZ rank in C, returns SZ free-count in B
 #define GET_COUNT(B,C)          \
-    B   <- rel(counts)          \
-    B   <- [B + C]              \
+    B   <- [C + rel(counts)]    \
     //
 
 // SET_COUNT gets SZ rank in C, SZ free-count in D, returns nothing
 #define SET_COUNT(C,D,T0)       \
-    T0  <- rel(counts)          \
-    D   -> [T0 + C]             \
+    D   -> [C + rel(counts)]    \
     //
 
-// GET_NODE gets NP n in C, returns SZ shifted-word in B
+// GET_NODE gets NP n in C, returns SZ shifted-word in B, clobbers C
 #define GET_NODE(B,C)           \
     B   <- C >> BPERBITS        \
     C   <- C & (BPER - 1)       \
@@ -133,14 +133,14 @@ counts:
     B   <- B >> C               \
     //
 
-// GET_LEAF gets NP n in C, returns SZ leafiness in B
+// GET_LEAF gets NP n in C, returns SZ leafiness in B, clobbers C
 #define GET_LEAF(B,C)           \
     GET_NODE(B,C)               \
     B   <- B &  1               \
     B   <- B == 0               \
     //
 
-// GET_FULL gets NP n in C, returns SZ fullness in B
+// GET_FULL gets NP n in C, returns SZ fullness in B, clobbers C
 #define GET_FULL(B,C)           \
     GET_NODE(B,C)               \
     B   <- B &  2               \
