@@ -13,8 +13,6 @@
 #define NPER (1 << NPERBITS)
 #define BPER (1 << BPERBITS)
 
-.global buddy_malloc
-
 #define TN (@nodes << BPERBITS)
 
 // TODO size `nodes' appropriately
@@ -161,4 +159,42 @@ counts:
 // TODO NODE2ADDR
 // TODO ADDR2NODE
 
+.global buddy_malloc
+buddy_malloc:
+    goto(buddy_alloc)
+
+.global buddy_calloc
+buddy_calloc:
+    C   <- C * D
+    push(C)
+    call(buddy_alloc)
+    C   <- B
+    D   <- 0
+    pop(E)
+    call(memset)
+    ret
+
+.global buddy_free
+buddy_free:
+    // TODO
+    ret
+
+.global buddy_realloc
+buddy_realloc:
+    // TODO
+    ret
+
+// -----------------------------------------------------------------------------
+
+buddy_splitnode:
+    // TODO
+    ret
+
+buddy_autosplit:
+    // TODO
+    ret
+
+buddy_alloc:
+    // TODO
+    ret
 
