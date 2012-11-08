@@ -1,6 +1,7 @@
 #ifndef ERRNO_TH_
 #define ERRNO_TH_
 
+#define ENOMEM 12
 #define EINVAL 22
 #define ERANGE 34
 #define errno [0x7ff]
