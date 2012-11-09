@@ -13,7 +13,7 @@
 #define NPER (1 << NPERBITS)
 #define BPER (1 << BPERBITS)
 
-#define TN (@nodes)
+#define TN rel(nodes)
 
 // TODO size `nodes' appropriately
 nodes:
@@ -32,7 +32,7 @@ counts:
 // NODE gets SZ index in C, returns NP node in B, clobbers C
 #define NODE(B,C)               \
     B   <- C << BPERBITS      ; \
-    B   <- B + @nodes         ; \
+    B   <- B + TN             ; \
     C   <- C & (BPER - 1)     ; \
     B   <- B | C              ; \
     //
@@ -47,7 +47,7 @@ counts:
     B   <- C - D              ; \
     //
 
-// INDEX gets NP n in C, returns SZ distance from TB in B
+// INDEX gets NP n in C, returns SZ distance from TN in B
 #define INDEX(B,C)              \
     B   <- TN                 ; \
     B   <- B << BPERBITS      ; \
@@ -94,13 +94,12 @@ counts:
 
 // TODO check SIBLING logic, not very certain of it
 // SIBLING gets NP n in C, returns NP sibling in B, clobbers C
-#define SIBLING(B,C,T0,T1)      \
+#define SIBLING(B,C)            \
     INDEX(B,C)                ; \
-    T0  <- B                  ; \
     ISLEFT(C,B)               ; \
-    T1  <- ~ C                ; \
-    B   <- B + T1             ; \
     B   <- B - C              ; \
+    C   <- ~ C                ; \
+    B   <- B + C              ; \
     //
 
 // TODO NODE2RANK
@@ -121,7 +120,7 @@ counts:
     //
 
 // SET_COUNT gets SZ rank in C, SZ free-count in D, returns nothing
-#define SET_COUNT(C,D,T0)       \
+#define SET_COUNT(C,D)          \
     D   -> [C + rel(counts)]  ; \
     //
 
@@ -158,7 +157,7 @@ counts:
 
 // TODO SET_LEAF
 // TODO SET_FULL
-#define SET_FULL(C,D,T0) \
+#define SET_FULL(C,D) \
     //
 // TODO NODE2ADDR
 // TODO ADDR2NODE
@@ -228,10 +227,10 @@ L_buddy_alloc_loop_top:
     jzrel(C,L_buddy_alloc_loop_bottom)
     GET_FULL(C,E)       // C is fullness
     jnzrel(C,L_buddy_alloc_loop_bottom)
-    SET_FULL(E,-1,G)
+    SET_FULL(E,-1)
     GET_COUNT(C,B)
     C   <- C - 1
-    SET_COUNT(E,C,G)
+    SET_COUNT(E,C)
     C   <- E
     call(ADDR2NODE)
     goto(L_buddy_alloc_done)
