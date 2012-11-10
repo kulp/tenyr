@@ -16,6 +16,7 @@
 #define TN rel(nodes)
 
 // TODO size `nodes' appropriately
+// TODO implement .lcomm and use it for this
 nodes:
     .word 0
 
@@ -25,9 +26,20 @@ counts:
 
 // Type `SZ' is a word-wide unsigned integer (some places used as a boolean).
 // Type `NP' is a word-wide struct, where the word is split into a 28-bit word
-// pointer and a 4-bit index into the word pointed to. The word pointer must
-// have bit 27-31 the same (i.e. we must be able to sign-extend the 28-pointer
-// to get the original 32-bit pointer).
+// index into `nodes` and a 4-bit index into the word indexed.
+
+ilog2:
+    B   <- 0
+    push(D)
+L_ilog2_top:
+    C   <- C >> 1
+    D   <- C == 0
+    jnzrel(D, L_ilog2_done)
+    B   <- B + 1
+    goto(L_ilog2_top)
+L_ilog2_done:
+    pop(D)
+    ret
 
 // NODE gets SZ index in C, returns NP node in B, clobbers C
 #define NODE(B,C)               \
@@ -49,9 +61,7 @@ counts:
 
 // INDEX gets NP n in C, returns SZ distance from TN in B
 #define INDEX(B,C)              \
-    B   <- TN                 ; \
-    B   <- B << BPERBITS      ; \
-    DIFF(B,C,B)               ; \
+    DIFF(B,C,0)               ; \
     //
 
 // LLINK gets NP n in C, returns NP left-child in B, clobbers C
@@ -92,7 +102,6 @@ counts:
     NODE(B,C)                 ; \
     //
 
-// TODO check SIBLING logic, not very certain of it
 // SIBLING gets NP n in C, returns NP sibling in B, clobbers C
 #define SIBLING(B,C)            \
     INDEX(B,C)                ; \
@@ -102,10 +111,40 @@ counts:
     B   <- B + C              ; \
     //
 
-// TODO NODE2RANK
-// TODO SIZE2RANK
-#define SIZE2RANK(B,C) \
+// NODE2RANK gets NP n in C, returns SZ rank in B
+#define NODE2RANK(B,C)          \
+    call(NODE2RANK_func)      ; \
     //
+
+NODE2RANK_func:
+    push(D)
+    D   <- 0
+L_NODE2RANK_top:
+    INDEX(B,C)
+    B   <- B == 0
+    jnzrel(B, L_NODE2RANK_done)
+    D   <- D + 1
+    B   <- C
+    PARENT(C,B)
+    goto(L_NODE2RANK_top)
+L_NODE2RANK_done:
+    B   <- - D + (RANKS - 1)
+    pop(D)
+    ret
+
+#define SIZE2RANK(B,C) \
+    call(SIZE2RANK_func)
+    //
+
+SIZE2RANK_func:
+    B   <- C <> 0
+    jzrel(B, L_SIZE2RANK_zero)
+    C   <- C - 1
+    C   <- C >> RANK_0_LOG
+    call(ilog2)
+    B   <- B + 1
+L_SIZE2RANK_zero:
+    ret
 
 // RANK2WORDS gets SZ rank in C, returns SZ word-count in B, clobbers C
 #define RANK2WORDS(B,C)         \
