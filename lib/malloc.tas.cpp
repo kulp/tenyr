@@ -172,8 +172,23 @@ L_SIZE2RANK_zero:
 #define GET_NODE(B,C)           \
     B   <- C >> BPERBITS      ; \
     C   <- C & (BPER - 1)     ; \
-    B   <- [B]                ; \
+    C   <- C << BPERBITS      ; \
+    B   <- [B + rel(nodes)]   ; \
     B   <- B >> C             ; \
+    //
+
+// SET_NODE gets NP n in C, SZ pre-shift-word in D, clobbers C and D
+#define SET_NODE(C,D,T0,T1)                                                 \
+    T0  <- C & (BPER - 1)       /* T0 is shift count in nodes        */   ; \
+    T0  <- T0 << BPERBITS       /* T0 is shift count in bits         */   ; \
+    D   <- D << T0              /* D  is now shifted over            */   ; \
+    T1  <- (BPER - 1)           /* T1 is mask                        */   ; \
+    T1  <- T1 << T0             /* T1 is shifted mask                */   ; \
+    T0  <- C >> BPERBITS        /* T0 is index into node array       */   ; \
+    C   <- [T0 + rel(nodes)]    /* C  is current word                */   ; \
+    C   <- C &~ T1              /* C  is word with node masked out   */   ; \
+    C   <- C | D                /* C  is word with new node included */   ; \
+    C   -> [T0 + rel(nodes)]    /* C  gets written back to node      */   ; \
     //
 
 // GET_LEAF gets NP n in C, returns SZ leafiness in B, clobbers C
@@ -200,6 +215,16 @@ L_SIZE2RANK_zero:
     //
 
 // TODO SET_LEAF
+// SET_LEAF gets NP n in C, SZ truth in D, returns nothing, clobbers C
+// We take a shortcut ; either we are setting the leaf true from false, and it
+// is therefore not full, or we are setting it false from true, and fullness
+// has no meaning. This allows us to avoid reading and rewriting the fullness
+// value.
+#define SET_LEAF(C,D,T0,T1)     \
+    D   <- D & 1              ; \
+    SET_NODE(C,D,T0,T1)       ; \
+    //
+
 // TODO SET_FULL
 #define SET_FULL(C,D) \
     //
