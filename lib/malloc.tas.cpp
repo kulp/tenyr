@@ -13,11 +13,16 @@
 #define NPER (1 << NPERBITS)
 #define BPER (1 << BPERBITS)
 
-#define TN rel(nodes)
+#define TN 0
 
 // TODO size `nodes' appropriately
 // TODO implement .lcomm and use it for this
 nodes:
+    .word 0
+
+// TODO size `pool' appropriately
+#define POOL    rel(pool)
+pool:
     .word 0
 
 // TODO initialise counts appropriately
@@ -61,7 +66,7 @@ L_ilog2_done:
 
 // INDEX gets NP n in C, returns SZ distance from TN in B
 #define INDEX(B,C)              \
-    DIFF(B,C,0)               ; \
+    DIFF(B,C,TN)              ; \
     //
 
 // LLINK gets NP n in C, returns NP left-child in B, clobbers C
@@ -199,9 +204,46 @@ L_SIZE2RANK_zero:
 #define SET_FULL(C,D) \
     //
 // TODO NODE2ADDR
-// TODO ADDR2NODE
-ADDR2NODE:
-    // TODO
+// ADDR2NODE gets SZ addr in C, returns NP node in B
+#define ADDR2NODE(B,C)          \
+    call(ADDR2NODE_func)      ; \
+    //
+
+// C is key
+ADDR2NODE_func:
+    pushall(D,E,F,G,H)
+    D   <- (RANKS - 1)  // D is current rank
+    E   <- POOL         // E is base being built
+    F   <- C            // F is a scratch register
+    G   <- TN           // G is the node being checked
+    H   <- G            // H is another scratch
+L_ADDR2NODE_looptop:
+    GET_LEAF(B,H)
+    jnzrel(B,L_ADDR2NODE_loopdone)
+    RANK2WORDS(B,F)
+    H   <- C - E        // H is (key - base)
+    F   <- H < B        // if true, then left-link
+    jnzrel(F,L_ADDR2NODE_left)
+    H   <- G
+    RLINK(G,H)          // n = RLINK(n)
+    E   <- E + B        // base += RANK2WORDS(rank)
+    goto(L_ADDR2NODE_loopbottom)
+L_ADDR2NODE_left:
+    H   <- G
+    LLINK(G,H)          // n = LLINK(n)
+    // fallthrough
+
+L_ADDR2NODE_loopbottom:
+    D   <- D - 1
+    goto(L_ADDR2NODE_looptop)
+
+L_ADDR2NODE_loopdone:
+    B   <- C == E
+    jnzrel(B,L_ADDR2NODE_done)
+    call(abort)
+
+L_ADDR2NODE_done:
+    popall(D,E,F,G,H)
     ret
 
 .global buddy_malloc
@@ -271,7 +313,7 @@ L_buddy_alloc_loop_top:
     C   <- C - 1
     SET_COUNT(E,C)
     C   <- E
-    call(ADDR2NODE)
+    ADDR2NODE(B,C)
     goto(L_buddy_alloc_done)
 
 L_buddy_alloc_loop_bottom:
