@@ -87,7 +87,7 @@ static int print_expr(struct sim_state *s, struct debug_expr *expr, int fmt)
 
     switch (fmt) {
         case DISP_INST: {
-            struct instruction i = { .u.word = val };
+            struct element i = { .insn.u.word = val };
             print_disassembly(stdout, &i, 0);
             fputc('\n', stdout);
             return 0;
@@ -177,9 +177,9 @@ static int debugger_step(struct debugger_data *dd)
             break;
         }
         case CMD_STEP_INSTRUCTION: {
-            struct instruction i;
+            struct element i;
             int32_t *ip = &dd->s->machine.regs[15];
-            dd->s->dispatch_op(dd->s, OP_INSN_READ, *ip, &i.u.word);
+            dd->s->dispatch_op(dd->s, OP_INSN_READ, *ip, &i.insn.u.word);
             printf("Stepping @ %#x ... ", *ip);
             if (run_instruction(dd->s, &i)) {
                 printf("failed (P = %#x)\n", *ip);

@@ -16,8 +16,7 @@
 #include <search.h>
 
 #define RECIPES(_) \
-    _(abort   , "abort() on illegal instruction or memory address") \
-    _(pause   , "wait for keystroke on illegal instruction or memory address, then exit") \
+    _(abort   , "abort() on illegal element or memory address") \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
@@ -102,13 +101,7 @@ static int recipe_abort(struct sim_state *s)
     return 0;
 }
 
-static int recipe_pause(struct sim_state *s)
-{
-    s->conf.pause = 1;
-    return 0;
-}
-
-static int pre_insn(struct sim_state *s, struct instruction *i)
+static int pre_insn(struct sim_state *s, struct element *i)
 {
     if (s->conf.verbose > 0)
         printf("IP = 0x%06x\t", s->machine.regs[15]);
@@ -130,7 +123,7 @@ static int pre_insn(struct sim_state *s, struct instruction *i)
     return 0;
 }
 
-static int post_insn(struct sim_state *s, struct instruction *i)
+static int post_insn(struct sim_state *s, struct element *i)
 {
     (void)i;
     return devices_dispatch_cycle(s);

@@ -44,16 +44,16 @@ static const struct option longopts[] = {
 
 #define version() "tas version " STR(BUILD_NAME)
 
-typedef int reloc_handler(struct parse_data *pd, struct instruction *evalctx,
-        struct instruction *defctx, int flags, struct const_expr *ce, void
+typedef int reloc_handler(struct parse_data *pd, struct element *evalctx,
+        struct element *defctx, int flags, struct const_expr *ce, void
         *ud);
 
-static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
-        instruction *defctx, struct const_expr *ce, int flags, reloc_handler
+static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
+        element *defctx, struct const_expr *ce, int flags, reloc_handler
         *rhandler, void *rud, uint32_t *result);
 
 static int add_relocation(struct parse_data *pd, const char *name,
-        struct instruction *insn, int width, int flags);
+        struct element *insn, int width, int flags);
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
@@ -72,8 +72,8 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
     if ((symbol = symbol_find(list, name))) {
         if (result) {
             if (symbol->ce) {
-                struct instruction_list **prev = symbol->ce->deferred;
-                struct instruction *c = (prev && *prev) ? (*prev)->insn : NULL;
+                struct element_list **prev = symbol->ce->deferred;
+                struct element *c = (prev && *prev) ? (*prev)->elem : NULL;
                 return ce_eval(pd, c, NULL, symbol->ce, 0, NULL, NULL, result);
             } else {
                 *result = symbol->reladdr;
@@ -90,7 +90,7 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 
 // add_relocation returns 1 on success
 static int add_relocation(struct parse_data *pd, const char *name,
-        struct instruction *insn, int width, int flags)
+        struct element *insn, int width, int flags)
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
@@ -108,8 +108,8 @@ static int add_relocation(struct parse_data *pd, const char *name,
     return 1;
 }
 
-static int sym_reloc_handler(struct parse_data *pd, struct instruction
-        *evalctx, struct instruction *defctx, int flags, struct const_expr *ce,
+static int sym_reloc_handler(struct parse_data *pd, struct element
+        *evalctx, struct element *defctx, int flags, struct const_expr *ce,
         void *ud)
 {
     int rc = 0;
@@ -140,8 +140,8 @@ static int sym_reloc_handler(struct parse_data *pd, struct instruction
 }
 
 // ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
-static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
-        instruction *defctx, struct const_expr *ce, int flags, reloc_handler
+static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
+        element *defctx, struct const_expr *ce, int flags, reloc_handler
         *rhandler, void *rud, uint32_t *result)
 {
     uint32_t left, right;
@@ -150,7 +150,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
         case CE_SYM:
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
-                struct instruction *dc = (*ce->symbol->ce->deferred)->insn;
+                struct element *dc = (*ce->symbol->ce->deferred)->elem;
                 return ce_eval(pd, evalctx, dc, ce->symbol->ce, flags, rhandler, rud, result)
                     || (rhandler ? rhandler(pd, evalctx, dc, flags, ce, rud) : 0);
             } else {
@@ -164,7 +164,7 @@ static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
             }
         case CE_ICI:
             // XXX explain this voodoo ; why should defctx and evalctx work this way ?
-            *result = defctx ? defctx->reladdr : evalctx ? evalctx->reladdr : 0;
+            *result = defctx ? defctx->insn.reladdr : evalctx ? evalctx->insn.reladdr : 0;
             return rhandler ? rhandler(pd, evalctx, defctx, flags, ce, rud) : !!defctx;
         case CE_IMM: *result = ce->i; return 1;
         case CE_OP2: {
@@ -300,8 +300,8 @@ static int check_symbols(struct symbol_list *symbols)
 
 static int assembly_cleanup(struct parse_data *pd)
 {
-    list_foreach(instruction_list, Node, pd->top) {
-        free(Node->insn);
+    list_foreach(element_list, Node, pd->top) {
+        free(Node->elem);
         free(Node);
     }
 
@@ -324,13 +324,13 @@ static int assembly_fixup_insns(struct parse_data *pd)
 {
     int reladdr = 0;
     // first pass, fix up addresses
-    list_foreach(instruction_list, il, pd->top) {
-        if (!il->insn)
+    list_foreach(element_list, il, pd->top) {
+        if (!il->elem)
             continue;
 
-        il->insn->reladdr = reladdr;
+        il->elem->insn.reladdr = reladdr;
 
-        list_foreach(symbol, l, il->insn->symbol) {
+        list_foreach(symbol, l, il->elem->symbol) {
             if (!l->resolved) {
                 l->reladdr = reladdr;
                 l->resolved = 1;
@@ -363,10 +363,10 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
         if (f->init)
             f->init(out, ASM_ASSEMBLE, &ud);
 
-        list_foreach(instruction_list, Node, pd->top)
-            // if !Node->insn, it's a placeholder or some kind of dummy
-            if (Node->insn)
-                f->out(out, Node->insn, ud);
+        list_foreach(element_list, Node, pd->top)
+            // if !Node->elem, it's a placeholder or some kind of dummy
+            if (Node->elem)
+                f->out(out, Node->elem, ud);
 
         if (f->sym)
             list_foreach(symbol_list, Node, pd->symbols)
@@ -412,7 +412,7 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
 {
     int rc = 0;
 
-    struct instruction i;
+    struct element i;
     void *ud = NULL;
     if (f->init)
         f->init(in, ASM_DISASSEMBLE, &ud);

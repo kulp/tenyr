@@ -12,7 +12,7 @@
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
-        const_expr *ce, int mult, uint32_t *dest, int width);
+        const_expr *ce, int mult, uint32_t *dest, int width, int flags);
 static struct const_expr *make_const_expr(enum const_expr_type type, int op,
         struct const_expr *left, struct const_expr *right, int flags);
 static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
@@ -21,20 +21,22 @@ static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
         int y);
 static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
         *defexpr);
-static struct instruction *make_insn_general(struct parse_data *pd, struct
+static struct element *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
-static struct instruction_list *make_ascii(struct cstr *cs);
-static struct instruction_list *make_utf32(struct cstr *cs);
-static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct instruction *insn,
+static struct element_list *make_ascii(struct cstr *cs);
+static struct element_list *make_utf32(struct cstr *cs);
+static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct element *insn,
         const char *symbol);
 static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
 static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
-static struct instruction_list *make_data(struct parse_data *pd, struct
+static struct element_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
+static struct element_list *make_zeros(struct parse_data *pd, struct
+        const_expr *size);
 static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
         enum directive_type type, ...);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
-        directive *d, struct instruction_list *p);
+        directive *d, struct element_list *p);
 static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
         imm);
 
@@ -80,7 +82,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token <i> INTEGER BITSTRING
 %token <chr> REGISTER
 %token ILLEGAL
-%token WORD ASCII UTF32 GLOBAL SET
+%token WORD ASCII UTF32 GLOBAL SET ZERO
 
 /* synonyms for literal string tokens */
 %token LSH "<<"
@@ -113,8 +115,8 @@ extern void tenyr_pop_state(void *yyscanner);
     struct expr *expr;
     struct cstr *cstr;
     struct directive *dctv;
-    struct instruction *insn;
-    struct instruction_list *program;
+    struct element *insn;
+    struct element_list *program;
     struct immediate {
         int32_t i;
         int is_bits;    ///< if this immediate should be treated as a bitstring
@@ -140,7 +142,7 @@ string_or_data[outer]
     | data
     | symbol ':' opt_nl string_or_data[inner]
         {   $outer = $inner;
-            struct symbol *n = add_symbol_to_insn(&yyloc, $inner->insn,
+            struct symbol *n = add_symbol_to_insn(&yyloc, $inner->elem,
                     $symbol.buf);
             if (check_add_symbol(&yyloc, pd, n))
                 YYABORT;
@@ -158,7 +160,7 @@ program[outer]
     | sep program[inner]
         {   $outer = $inner; }
     | string_or_data sep program[inner]
-        {   struct instruction_list *p = $string_or_data, *i = $inner;
+        {   struct element_list *p = $string_or_data, *i = $inner;
             if (p) {
                 while (p->next) p = p->next;
                 p->next = i;
@@ -174,7 +176,7 @@ program[outer]
         {   $outer = calloc(1, sizeof *$outer);
             $inner->prev = $outer;
             $outer->next = $inner;
-            $outer->insn = $insn; }
+            $outer->elem = $insn; }
 
 sep
     : '\n'
@@ -183,7 +185,8 @@ sep
 insn[outer]
     : ILLEGAL
         {   $outer = calloc(1, sizeof *$outer);
-            $outer->u.word = -1; }
+            $outer->insn.size = 1;
+            $outer->insn.u.word = -1; }
     | insn_inner
     | symbol ':' opt_nl insn[inner]
         {   $outer = $inner;
@@ -235,6 +238,8 @@ ascii
 data
     : WORD reloc_expr_list
         {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $reloc_expr_list); }
+    | ZERO reloc_expr
+        {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, $reloc_expr); }
 
 directive
     : GLOBAL symbol_list
@@ -449,33 +454,34 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
     return 0;
 }
 
-static struct instruction *make_insn_general(struct parse_data *pd, struct
+static struct element *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr)
 {
-    struct instruction *insn = calloc(1, sizeof *insn);
+    struct element *elem = calloc(1, sizeof *elem);
 
     int dd = ((lhs->deref | !!arrow) << 1) | expr->deref;
 
-    insn->u._0xxx.t   = 0;
-    insn->u._0xxx.p   = expr->type;
-    insn->u._0xxx.dd  = dd;
-    insn->u._0xxx.z   = lhs->x;
-    insn->u._0xxx.x   = expr->x;
-    insn->u._0xxx.op  = expr->op;
-    insn->u._0xxx.y   = expr->y;
-    insn->u._0xxx.imm = expr->i;
+    elem->insn.u._0xxx.t   = 0;
+    elem->insn.u._0xxx.p   = expr->type;
+    elem->insn.u._0xxx.dd  = dd;
+    elem->insn.u._0xxx.z   = lhs->x;
+    elem->insn.u._0xxx.x   = expr->x;
+    elem->insn.u._0xxx.op  = expr->op;
+    elem->insn.u._0xxx.y   = expr->y;
+    elem->insn.u._0xxx.imm = expr->i;
+    elem->insn.size = 1;
 
     if (expr->ce) {
-        add_deferred_expr(pd, expr->ce, expr->mult, &insn->u.word,
-                SMALL_IMMEDIATE_BITWIDTH);
-        expr->ce->insn = insn;
+        add_deferred_expr(pd, expr->ce, expr->mult, &elem->insn.u.word,
+                SMALL_IMMEDIATE_BITWIDTH, 0);
+        expr->ce->insn = elem;
     }
 
-    return insn;
+    return elem;
 }
 
 static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
-        const_expr *ce, int mult, uint32_t *dest, int width)
+        const_expr *ce, int mult, uint32_t *dest, int width, int flags)
 {
     struct deferred_expr *n = calloc(1, sizeof *n);
 
@@ -484,6 +490,7 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
     n->dest  = dest;
     n->width = width;
     n->mult  = mult;
+    n->flags = flags;
 
     pd->defexprs = n;
 
@@ -593,13 +600,13 @@ static void free_cstr(struct cstr *cs, int recurse)
     free(cs);
 }
 
-static struct instruction_list *make_utf32(struct cstr *cs)
+static struct element_list *make_utf32(struct cstr *cs)
 {
-    struct instruction_list *result = NULL, **rp = &result;
+    struct element_list *result = NULL, **rp = &result;
 
     struct cstr *p = cs;
     unsigned wpos = 0; // position in the word
-    struct instruction_list *t = *rp;
+    struct element_list *t = *rp;
 
     while (p) {
         unsigned spos = 0; // position in the string
@@ -609,9 +616,10 @@ static struct instruction_list *make_utf32(struct cstr *cs)
             (*rp)->prev = t;
             t = *rp;
             rp = &t->next;
-            t->insn = calloc(1, sizeof *t->insn);
+            t->elem = calloc(1, sizeof *t->elem);
 
-            t->insn->u.word = p->str[spos];
+            t->elem->insn.u.word = p->str[spos];
+            t->elem->insn.size = 1;
         }
 
         p = p->right;
@@ -622,13 +630,13 @@ static struct instruction_list *make_utf32(struct cstr *cs)
     return result;
 }
 
-static struct instruction_list *make_ascii(struct cstr *cs)
+static struct element_list *make_ascii(struct cstr *cs)
 {
-    struct instruction_list *result = NULL, **rp = &result;
+    struct element_list *result = NULL, **rp = &result;
 
     struct cstr *p = cs;
     unsigned wpos = 0; // position in the word
-    struct instruction_list *t = *rp;
+    struct element_list *t = *rp;
     while (p) {
         unsigned spos = 0; // position in the string
         int len = p->len;
@@ -638,10 +646,11 @@ static struct instruction_list *make_ascii(struct cstr *cs)
                 (*rp)->prev = t;
                 t = *rp;
                 rp = &t->next;
-                t->insn = calloc(1, sizeof *t->insn);
+                t->elem = calloc(1, sizeof *t->elem);
             }
 
-            t->insn->u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
+            t->elem->insn.u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
+            t->elem->insn.size = 1;
         }
 
         p = p->right;
@@ -652,7 +661,7 @@ static struct instruction_list *make_ascii(struct cstr *cs)
     return result;
 }
 
-static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct instruction *insn, const char *symbol)
+static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct element *insn, const char *symbol)
 {
     struct symbol *n = calloc(1, sizeof *n);
     n->column   = locp->first_column;
@@ -693,26 +702,35 @@ static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol 
         return add_symbol(locp, pd, n);
 }
 
-static struct instruction_list *make_data(struct parse_data *pd, struct const_expr_list *list)
+static struct element_list *make_data(struct parse_data *pd, struct const_expr_list *list)
 {
-    struct instruction_list *result = NULL, **rp = &result, *last = NULL;
+    struct element_list *result = NULL, **rp = &result, *last = NULL;
 
     struct const_expr_list *p = list;
     while (p) {
         *rp = calloc(1, sizeof **rp);
-        struct instruction_list *q = *rp;
+        struct element_list *q = *rp;
         q->prev = last;
         last = *rp;
         rp = &q->next;
 
-        q->insn = calloc(1, sizeof *q->insn);
-        add_deferred_expr(pd, p->ce, 1, &q->insn->u.word, WORD_BITWIDTH);
-        p->ce->insn = q->insn;
+        q->elem = calloc(1, sizeof *q->elem);
+        q->elem->insn.size = 1;
+        add_deferred_expr(pd, p->ce, 1, &q->elem->insn.u.word, WORD_BITWIDTH, 0);
+        p->ce->insn = q->elem;
         struct const_expr_list *temp = p;
         p = p->right;
         free(temp);
     }
 
+    return result;
+}
+
+static struct element_list *make_zeros(struct parse_data *pd, struct const_expr *size)
+{
+    struct element_list *result = calloc(1, sizeof *result);
+    result->elem = calloc(1, sizeof *result->elem);
+    add_deferred_expr(pd, size, 1, &result->elem->insn.size, WORD_BITWIDTH, CE_SIMPLE);
     return result;
 }
 
@@ -772,7 +790,7 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
 }
 
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
-        directive *d, struct instruction_list *p)
+        directive *d, struct element_list *p)
 {
     switch (d->type) {
         case D_GLOBAL: {
@@ -786,10 +804,10 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         }
         case D_SET: {
             struct datum_D_SET *data = d->data;
-            struct instruction_list **context = NULL;
+            struct element_list **context = NULL;
 
             // XXX this deferral code is broken
-            if (!p->insn)
+            if (!p->elem)
                 context = &p->prev; // dummy instruction at end ; defer to prev
             else if (p->next)
                 context = &p->next->prev; // otherwise, defer to current instruction node

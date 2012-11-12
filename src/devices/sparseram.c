@@ -11,8 +11,8 @@
 
 // Allocate space by roughly a page-size (although since there is overhead the
 // fact that it is nearly a page size is basically useless since it does not
-// fit evenly into pages). Consider allocating header elements separately from
-// storage elements and packing nicely into pages.
+// fit evenly into pages). Consider allocating header ram_elements separately from
+// storage ram_elements and packing nicely into pages.
 // TODO make sensitive to run-time page size ?
 #define PAGESIZE    4096
 #define PAGEWORDS   (PAGESIZE / sizeof(uint32_t))
@@ -23,7 +23,7 @@ struct sparseram_state {
     void *userdata; ///< transient userdata, used for twalk() support
 };
 
-struct element {
+struct ram_element {
     int32_t base : 24;
     struct sparseram_state *state;  ///< twalk() support
     uint32_t space[];
@@ -31,8 +31,8 @@ struct element {
 
 static int tree_compare(const void *_a, const void *_b)
 {
-    const struct element *a = _a;
-    const struct element *b = _b;
+    const struct ram_element *a = _a;
+    const struct ram_element *b = _b;
     return b->base - a->base;
 }
 
@@ -44,7 +44,7 @@ static int sparseram_init(struct plugin_cookie *pcookie, void *cookie, int nargs
     return 0;
 }
 
-TODO_TRAVERSE_(element)
+TODO_TRAVERSE_(ram_element)
 
 static int sparseram_fini(void *cookie)
 {
@@ -54,7 +54,7 @@ static int sparseram_fini(void *cookie)
     struct todo_node *todo = NULL;
     sparseram->userdata = &todo;
 
-    tree_destroy(&todo, &sparseram->mem, traverse_element, tree_compare);
+    tree_destroy(&todo, &sparseram->mem, traverse_ram_element, tree_compare);
     free(sparseram);
 
     return 0;
@@ -65,17 +65,17 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
 {
     struct sparseram_state *sparseram = cookie;
 
-    struct element key = (struct element){ addr & ~WORDMASK, NULL };
-    struct element **p = tsearch(&key, &sparseram->mem, tree_compare);
+    struct ram_element key = (struct ram_element){ addr & ~WORDMASK, NULL };
+    struct ram_element **p = tsearch(&key, &sparseram->mem, tree_compare);
     if (*p == &key) {
         // Currently, a page is allocated even on a read. It is not a very
         // useful optimisation, but we could avoid allocating a page until the
         // first write.
-        struct element *node = malloc(PAGESIZE * sizeof *node->space + sizeof *node);
+        struct ram_element *node = malloc(PAGESIZE * sizeof *node->space + sizeof *node);
         for (unsigned long i = 0; i < PAGESIZE; i++)
             node->space[i] = 0xffffffff; // "illlegal" ; will trap
 
-        *node = (struct element){ addr & ~WORDMASK, cookie };
+        *node = (struct ram_element){ addr & ~WORDMASK, cookie };
         *p = node;
     }
 

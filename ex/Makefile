@@ -41,15 +41,34 @@ irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
 parse_hex.texe: strtol.to
 
 %.tas: %.tas.cpp
-	mkdir -p $(*D)
-	$(CPP) $(CPPFLAGS) < $< > $@
+ifneq ($(MAKE_VERBOSE),)
+	@mkdir -p $(*D)
+	$(CPP) $(CPPFLAGS) < $< -o $@
+else
+	@echo "[ CPP ] $<"
+	@mkdir -p $(*D)
+	@$(CPP) $(CPPFLAGS) < $< -o $@
+endif
 
 %.to: %.tas
-	mkdir -p $(*D)
+ifneq ($(MAKE_VERBOSE),)
+	@mkdir -p $(*D)
 	$(TAS) -o$@ $<
+else
+	@echo "[ TAS ] $<"
+	@mkdir -p $(*D)
+	@$(TAS) -o$@ $<
+endif
 
 %.texe: %.to
+ifneq ($(MAKE_VERBOSE),)
+	@mkdir -p $(*D)
 	$(TLD) -o$@ $^
+else
+	@echo "[ TLD ] $@"
+	@mkdir -p $(*D)
+	@$(TLD) -o$@ $^
+endif
 
 clean:
 	$(RM) $(CLEANFILES)

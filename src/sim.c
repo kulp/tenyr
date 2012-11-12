@@ -67,13 +67,13 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     return 0;
 }
 
-int run_instruction(struct sim_state *s, struct instruction *i)
+int run_instruction(struct sim_state *s, struct element *i)
 {
     int32_t *ip = &s->machine.regs[15];
 
     ++*ip;
 
-    switch (i->u._xxxx.t) {
+    switch (i->insn.u._xxxx.t) {
         case 0x0:
         case 0x1:
         case 0x2:
@@ -82,7 +82,7 @@ int run_instruction(struct sim_state *s, struct instruction *i)
         case 0x5:
         case 0x6:
         case 0x7: {
-            struct instruction_general *g = &i->u._0xxx;
+            struct instruction_general *g = &i->insn.u._0xxx;
             int32_t rhs = 0;
             uint32_t value;
 
@@ -106,8 +106,8 @@ int run_instruction(struct sim_state *s, struct instruction *i)
 int run_sim(struct sim_state *s, struct run_ops *ops)
 {
     while (1) {
-        struct instruction i;
-        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.u.word)) {
+        struct element i;
+        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word)) {
             if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }
@@ -130,10 +130,10 @@ int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
     if (f->init)
         f->init(in, ASM_DISASSEMBLE, &ud);
 
-    struct instruction i;
+    struct element i;
     while (f->in(in, &i, ud) > 0) {
         // TODO stop assuming addresses are contiguous and monotonic
-        if (dispatch_op(sud, OP_WRITE, load_address++, &i.u.word))
+        if (dispatch_op(sud, OP_WRITE, load_address++, &i.insn.u.word))
             return -1;
     }
 

@@ -15,10 +15,20 @@
 #define UNUSED   __attribute__((unused))
 #define NORETURN __attribute__((noreturn))
 
-#define list_foreach(Tag,Node,Object)                                          \
-    for (struct Tag *Next = (Object), *Node = Next;                            \
-            (void)(Node && (Next = Next->next)), Node;                         \
-            Node = Next)
+#define list_foreach(Tag,Node,Object)                                           \
+    for (struct Tag *Next = (Object), *Node = Next;                             \
+            (void)(Node && (Next = Node->next)), Node;                          \
+            Node = Next)                                                        \
+    //
+
+// list_foreach_ptr also gives a pointer to the current Node pointer, where the
+// double-pointer is a pointer to a location that can be updated if the Node is
+// to be deleted (that is, in general, the ->next field of the previous Node)
+#define list_foreach_ptr(Tag,Node,NodeP,Object)                                 \
+    for (struct Tag **NodeP = &(Object), *Node = *NodeP, **NextP = &Node->next; \
+            (void)(Node && (NextP = &Node->next), Node = *NodeP), *NodeP;       \
+            NodeP = NextP)                                                      \
+    //
 
 // TODO document fixed lengths or remove the limitations
 #define SYMBOL_LEN   32

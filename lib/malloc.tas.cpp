@@ -15,19 +15,13 @@
 
 #define TN 0
 
-// TODO size `nodes' appropriately
-// TODO implement .lcomm and use it for this
-nodes:
-    .word 0
-
-// TODO size `pool' appropriately
 #define POOL    rel(pool)
-pool:
-    .word 0
+pool:  .zero (RANK_0_SIZE * (1 << (RANKS - 1)))
+nodes: .zero ((1 << RANKS) / NPER - (1 / NPER))
 
-// TODO initialise counts appropriately
 counts:
-    .word 0, 0, 1
+    .zero (RANKS - 1)
+    .word 1
 
 // Type `SZ' is a word-wide unsigned integer (some places used as a boolean).
 // Type `NP' is a word-wide struct, where the word is split into a 28-bit word
@@ -304,25 +298,41 @@ buddy_realloc:
 
 // -----------------------------------------------------------------------------
 
+// buddy_splitnode gets NP n in C, SZ rank in D, returns SZ success in B
 buddy_splitnode:
-    // TODO
+    pushall(E,F)
+    B   <- 0
+    E   <- D == 0
+    jnzrel(E,L_buddy_splitnode_done)
+    B   <- 1
+    GET_FULL(E,C)
+    E   <- E <> 0
+    jnzrel(E,L_buddy_splitnode_notempty)
+
+    GET_COUNT(E,D)
+    E   <- E - 1
+    SET_COUNT(D,E)
+
+L_buddy_splitnode_notempty:
+    D   <- D - 1
+    GET_COUNT(E,D)
+    E   <- E + 2
+    SET_COUNT(D,E)
+
+    D   <- 0
+    SET_LEAF(C,D,E,F)
+
+L_buddy_splitnode_done:
+    popall(E,F)
     ret
 
 buddy_autosplit:
     // TODO
     ret
 
-// TODO check for clobbering
-// buddy_alloc gets SZ size in C, returns address or 0 in B
-buddy_alloc:
+// buddy_nosplit gets SZ rank in C, returns address or 0 in B
+buddy_nosplit:
     pushall(D,E,F,G)
-    SIZE2RANK(B,C)
-    D   <- B < RANKS
-    jzrel(D,L_buddy_alloc_error)
-    D   <- B
-    GET_COUNT(E,D)
-    D   <- E == 0
-    jnzrel(D,L_buddy_alloc_do_split)
     // here is the main body, where we have a nonzero count of the needed
     // rank. B is rank, D is scratch, E is scratch and currently count
     D   <- B
@@ -331,36 +341,53 @@ buddy_alloc:
     F   <- F << E       // F is loop bound
     D   <- F - 1        // D is first index to check
     F   <- F + D        // F is loop bound adjust for `first'
-L_buddy_alloc_loop_top:
+L_buddy_nosplit_loop_top:
     NODE(E,D)           // E is NODE(D)
     GET_VALID(C,E,G)    // C is validity
-    jzrel(C,L_buddy_alloc_loop_bottom)
+    jzrel(C,L_buddy_nosplit_loop_bottom)
     GET_LEAF(C,E)       // C is leafiness
-    jzrel(C,L_buddy_alloc_loop_bottom)
+    jzrel(C,L_buddy_nosplit_loop_bottom)
     GET_FULL(C,E)       // C is fullness
-    jnzrel(C,L_buddy_alloc_loop_bottom)
+    jnzrel(C,L_buddy_nosplit_loop_bottom)
     SET_FULL(E,-1,D,G,C)
     GET_COUNT(C,B)
     C   <- C - 1
     SET_COUNT(E,C)
     C   <- E
     ADDR2NODE(B,C)
-    goto(L_buddy_alloc_done)
 
-L_buddy_alloc_loop_bottom:
+L_buddy_nosplit_loop_bottom:
     D   <- D + 1    // D is loop index
-    goto(L_buddy_alloc_loop_top)
+    goto(L_buddy_nosplit_loop_top)
+
+    popall(D,E,F,G)
+    ret
+
+// TODO check for clobbering
+// buddy_alloc gets SZ size in C, returns address or 0 in B
+buddy_alloc:
+    pushall(D,E)
+    SIZE2RANK(B,C)
+    D   <- B < RANKS
+    jzrel(D,L_buddy_alloc_error)
+    D   <- B
+    GET_COUNT(E,D)
+    D   <- E == 0
+    jnzrel(D,L_buddy_alloc_do_split)
+    call(buddy_nosplit)
+    goto(L_buddy_alloc_done)
 
 L_buddy_alloc_do_split:
     D   <- E
     call(buddy_autosplit)
-    goto(L_buddy_alloc_done)
+
+L_buddy_alloc_done:
+    popall(D,E)
+    ret
 
 L_buddy_alloc_error:
     D   <- ENOMEM
     D   -> errno
     B   <- 0
-L_buddy_alloc_done:
-    popall(D,E,F,G)
-    ret
+    goto(L_buddy_alloc_done)
 

@@ -57,8 +57,8 @@
 #include <stdint.h>
 
 // TODO assumes bits are filled in rightmost-first
-struct instruction {
-    union {
+struct insn_or_data {
+    union insn {
         uint32_t word;
         struct instruction_any {
             unsigned   : 28;    ///< unused
@@ -75,12 +75,19 @@ struct instruction {
             unsigned t   :  1;  ///< type bit
         } _0xxx;
     } u;
-    uint32_t reladdr;    // used for CE_ICI resolving
+    uint32_t reladdr;   ///< used for CE_ICI resolving
+    uint32_t size;      ///< unused for instruction, used for data
+};
+
+struct element {
+    struct insn_or_data insn;
+
     struct symbol {
         char name[SYMBOL_LEN];
         int column;
         int lineno;
         uint32_t reladdr;
+        uint32_t size;
 
         unsigned resolved:1;
         unsigned global:1;
@@ -93,9 +100,9 @@ struct instruction {
     struct reloc_node *reloc;
 };
 
-struct instruction_list {
-    struct instruction *insn;
-    struct instruction_list *prev, *next;
+struct element_list {
+    struct element *elem;
+    struct element_list *prev, *next;
 };
 
 enum op {

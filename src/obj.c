@@ -45,6 +45,7 @@ static int obj_v0_write(struct obj *o, FILE *out)
         PUT(sym->flags, out);
         PUT(sym->name, out);
         PUT(sym->value, out);
+        PUT(sym->size, out);
     }
 
     PUT(o->rlc_count, out);
@@ -93,6 +94,7 @@ static int obj_v0_read(struct obj *o, FILE *in)
         GET(sym->flags, in);
         GET(sym->name, in);
         GET(sym->value, in);
+        GET(sym->size, in);
     }
 
     GET(o->rlc_count, in);

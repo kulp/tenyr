@@ -6,7 +6,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
-enum { RLC_NEGATE = 1 << 0 };
+// RLC_NEGATE inverts the sign of the relocation adjustment
+#define RLC_NEGATE 1
+// SYM_BSS marks a symbol as belonging to .bss
+#define SYM_BSS    2
 
 typedef uint32_t UWord;
 typedef  int32_t SWord;
@@ -46,6 +49,7 @@ struct obj {
         UWord flags;    ///< unused so far (eventually indicate relocations ?)
         char name[SYMBOL_LEN];
         UWord value;
+		UWord size;
     } *symbols;
 
     UWord rlc_count;    ///< count of relocations

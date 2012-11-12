@@ -1,0 +1,5 @@
+.word 2
+.zero 2
+.word 5
+.zero (2 + 3)
+.word .

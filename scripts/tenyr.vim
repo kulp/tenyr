@@ -16,7 +16,7 @@ syn keyword tenyrDelim '[[]' '[]]'
 syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|>>\|<>\|==\|\^\~\|&\~\)\([[:space:]]\|$\)\@='
 syn match tenyrArrow '<-\|->'
 
-syn match tenyrDirective '\.\(global\|word\|set\)'
+syn match tenyrDirective '\.\(global\|word\|set\|zero\)'
 syn match tenyrStrDir '\.\(ascii\|utf32\)'
 
 syn keyword tenyrTodo illegal

@@ -1,0 +1,12 @@
+    e <- ((.L_data_end - .L_data_start) / (.L_data_elt_end - .L_data_elt_start))
+    illegal
+
+.L_data_start:
+.L_data_elt_start:
+    .word   1, 0
+.L_data_elt_end:
+    .word   2, 0
+    .word   3, 0
+.L_data_end:
+    .word 0
+

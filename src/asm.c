@@ -54,26 +54,26 @@ static int is_printable(int ch, size_t len, char buf[len])
     }
 }
 
-int print_disassembly(FILE *out, struct instruction *i, int flags)
+int print_disassembly(FILE *out, struct element *i, int flags)
 {
     if (flags & ASM_AS_DATA)
-        return fprintf(out, ".word 0x%08x", i->u.word);
+        return fprintf(out, ".word 0x%08x", i->insn.u.word);
 
     if (flags & ASM_AS_CHAR) {
         char buf[10];
-        if (is_printable(i->u.word, sizeof buf, buf))
+        if (is_printable(i->insn.u.word, sizeof buf, buf))
             return fprintf(out, ".word '%s'%*s", buf, (int)(2 - strlen(buf)), "");
         else
             return fprintf(out, "          ");
     }
 
-    int type = i->u._xxxx.t;
+    int type = i->insn.u._xxxx.t;
     switch (type) {
         default:
-            if (i->u.word == 0xffffffff)
+            if (i->insn.u.word == 0xffffffff)
                 return fprintf(out, "illegal");
             else
-                return fprintf(out, ".word 0x%08x", i->u.word);
+                return fprintf(out, ".word 0x%08x", i->insn.u.word);
 
         case 0x0:
         case 0x1:
@@ -86,10 +86,10 @@ int print_disassembly(FILE *out, struct instruction *i, int flags)
             break;
     }
 
-    struct instruction_general *g = &i->u._0xxx;
+    struct instruction_general *g = &i->insn.u._0xxx;
 
     if (!op_meta[g->op].valid)   // reserved
-        return fprintf(out, ".word 0x%08x", i->u.word);
+        return fprintf(out, ".word 0x%08x", i->insn.u.word);
 
     int rd = g->dd &  1;
     int ld = g->dd == 2;
@@ -277,7 +277,7 @@ static int obj_init(FILE *stream, int flags, void **ud)
     return rc;
 }
 
-static int obj_in(FILE *stream, struct instruction *i, void *ud)
+static int obj_in(FILE *stream, struct element *i, void *ud)
 {
     int rc = 1;
     struct obj_fdata *u = ud;
@@ -297,9 +297,9 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
                 u->curr_rec = rec = rec->next;
                 u->pos = 0;
             } else {
-                i->u.word = rec->data[u->pos++];
+                i->insn.u.word = rec->data[u->pos++];
                 // TODO adjust addr where ?
-                i->reladdr = rec->addr;
+                i->insn.reladdr = rec->addr;
                 i->symbol = NULL;
                 done = 1;
             }
@@ -309,13 +309,16 @@ static int obj_in(FILE *stream, struct instruction *i, void *ud)
     return rc;
 }
 
-static void obj_out_insn(struct instruction *i, struct obj_fdata *u, struct obj *o)
+static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
 {
-    o->records->data[u->insns] = i->u.word;
-    u->insns++;
+    // TODO handle i->insn.size > 1 better. It should store .zero data
+    // sparsely.
+    o->records->data[u->insns++] = i->insn.u.word;
+    for (size_t c = 1; c < i->insn.size; c++)
+        o->records->data[u->insns++] = 0;
 }
 
-static int obj_out(FILE *stream, struct instruction *i, void *ud)
+static int obj_out(FILE *stream, struct element *i, void *ud)
 {
     int rc = 1;
     struct obj_fdata *u = ud;
@@ -356,7 +359,7 @@ static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
     rlc->flags = reloc->flags;
     strcopy(rlc->name, reloc->name, sizeof rlc->name);
     rlc->name[sizeof rlc->name - 1] = 0;
-    rlc->addr = reloc->insn->reladdr;
+    rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;
 
     u->next_rlc = &rlc->next;
@@ -392,29 +395,37 @@ static int obj_fini(FILE *stream, void **ud)
 /*******************************************************************************
  * Raw format : raw binary data (host endian)
  */
-static int raw_in(FILE *stream, struct instruction *i, void *ud)
+static int raw_in(FILE *stream, struct element *i, void *ud)
 {
-    return fread(&i->u.word, 4, 1, stream) == 1;
+    return fread(&i->insn.u.word, 4, 1, stream) == 1;
 }
 
-static int raw_out(FILE *stream, struct instruction *i, void *ud)
+static int raw_out(FILE *stream, struct element *i, void *ud)
 {
-    return fwrite(&i->u.word, sizeof i->u.word, 1, stream) == 1;
+    int ok = 1;
+    ok &= fwrite(&i->insn.u.word, sizeof i->insn.u.word, 1, stream) == 1;
+    for (size_t c = 1; c < i->insn.size && ok; c++)
+        ok &= fputc(0, stream) == 0;
+    return ok;
 }
 
 /*******************************************************************************
  * Text format : hexadecimal numbers
  */
-static int text_in(FILE *stream, struct instruction *i, void *ud)
+static int text_in(FILE *stream, struct element *i, void *ud)
 {
     return
-        fscanf(stream, " %x", &i->u.word) == 1 ||
-        fscanf(stream, " 0x%x", &i->u.word) == 1;
+        fscanf(stream, " %x", &i->insn.u.word) == 1 ||
+        fscanf(stream, " 0x%x", &i->insn.u.word) == 1;
 }
 
-static int text_out(FILE *stream, struct instruction *i, void *ud)
+static int text_out(FILE *stream, struct element *i, void *ud)
 {
-    return fprintf(stream, "0x%08x\n", i->u.word) > 0;
+    int ok = 1;
+    ok &= fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
+    for (size_t c = 1; c < i->insn.size && ok; c++)
+        ok &= fputs("0x00000000\n", stream) > 0;
+    return ok;
 }
 
 /*******************************************************************************
@@ -439,14 +450,14 @@ static int memh_fini(FILE *stream, void **ud)
     return 0;
 }
 
-static int memh_out(FILE *stream, struct instruction *i, void *ud)
+static int memh_out(FILE *stream, struct element *i, void *ud)
 {
     int *last = ud;
-    int diff = i->reladdr - *last;
-    *last = i->reladdr;
+    int diff = i->insn.reladdr - *last;
+    *last = i->insn.reladdr;
     return diff > 1
-        ? (fprintf(stream, "@%x %08x\n", i->reladdr, i->u.word) > 0)
-        : (fprintf(stream,     "%08x\n",             i->u.word) > 0);
+        ? (fprintf(stream, "@%x %08x\n", i->insn.reladdr, i->insn.u.word) > 0)
+        : (fprintf(stream,     "%08x\n",                  i->insn.u.word) > 0);
 }
 
 const struct format tenyr_asm_formats[] = {

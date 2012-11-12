@@ -1,0 +1,3 @@
+.lcomm sym, 16
+.lcomm glob, 32
+.global glob
