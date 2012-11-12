@@ -237,7 +237,7 @@ L_SIZE2RANK_zero:
 // C is key
 ADDR2NODE_func:
     pushall(D,E,F,G,H)
-    D   <- (RANKS - 1)  // D is current rank
+    D   <- (RANKS - 2)  // D is next rank smaller than node under test
     E   <- POOL         // E is base being built
     F   <- C            // F is a scratch register
     G   <- TN           // G is the node being checked
