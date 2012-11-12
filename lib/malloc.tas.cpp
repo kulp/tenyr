@@ -214,7 +214,6 @@ L_SIZE2RANK_zero:
     B   <- B &~ T0            ; \
     //
 
-// TODO SET_LEAF
 // SET_LEAF gets NP n in C, SZ truth in D, returns nothing, clobbers C
 // We take a shortcut ; either we are setting the leaf true from false, and it
 // is therefore not full, or we are setting it false from true, and fullness
@@ -225,9 +224,16 @@ L_SIZE2RANK_zero:
     SET_NODE(C,D,T0,T1)       ; \
     //
 
-// TODO SET_FULL
-#define SET_FULL(C,D) \
+// SET_FULL gets NP n in C, SZ truth in D, returns nothing, clobbers C
+#define SET_FULL(C,D,T0,T1,T2)  \
+    GET_NODE(T0,C)            ; \
+    T1  <- D                  ; \
+    T1  <- T1 &  2            ; \
+    T0  <- T0 &~ 2            ; \
+    T1  <- T1 |  T0           ; \
+    SET_NODE(C,T1,T0,T2)      ; \
     //
+
 // TODO NODE2ADDR
 // ADDR2NODE gets SZ addr in C, returns NP node in B
 #define ADDR2NODE(B,C)          \
@@ -333,7 +339,7 @@ L_buddy_alloc_loop_top:
     jzrel(C,L_buddy_alloc_loop_bottom)
     GET_FULL(C,E)       // C is fullness
     jnzrel(C,L_buddy_alloc_loop_bottom)
-    SET_FULL(E,-1)
+    SET_FULL(E,-1,D,G,C)
     GET_COUNT(C,B)
     C   <- C - 1
     SET_COUNT(E,C)
