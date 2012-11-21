@@ -44,6 +44,7 @@ static int is_printable(int ch, size_t len, char buf[len])
     switch (ch) {
         case ' ' : buf[0] = ' ' ;                return 1;
         case '\\': buf[0] = '\\'; buf[1] = '\\'; return 1;
+        case '\0': buf[0] = '\\'; buf[1] = '0' ; return 1;
         case '\b': buf[0] = '\\'; buf[1] = 'b' ; return 1;
         case '\f': buf[0] = '\\'; buf[1] = 'f' ; return 1;
         case '\n': buf[0] = '\\'; buf[1] = 'n' ; return 1;
