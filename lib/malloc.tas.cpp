@@ -3,25 +3,21 @@
 
 #define RANK_0_LOG 4
 #define RANK_0_SIZE (1 << RANK_0_LOG)
-#define RANKS 3
+#define RANKS 4
 
 // NOTE there are some assumptions in the below code that NPER * BPER = 32,
 // notably in DIFF()
-#define NPERBITS 4
-#define BPERBITS 1
+#define NPERBITS    4
+#define BPERBITS    1
+#define NPER        (1 << NPERBITS)
+#define BPER        (1 << BPERBITS)
+#define TN          0
+#define POOL        rel(pool)
 
-#define NPER (1 << NPERBITS)
-#define BPER (1 << BPERBITS)
-
-#define TN 0
-
-#define POOL    rel(pool)
-pool:  .zero (RANK_0_SIZE * (1 << (RANKS - 1)))
-nodes: .zero ((1 << RANKS) / NPER - (1 / NPER))
-
-counts:
-    .zero (RANKS - 1)
-    .word 1
+// DATA ------------------------------------------------------------------------
+counts: .zero (RANKS - 1) ; .word 1
+nodes:  .zero (((1 << RANKS) / NPER) - (1 / NPER))
+pool:   .zero (RANK_0_SIZE * (1 << (RANKS - 1)))
 
 // Type `SZ' is a word-wide unsigned integer (some places used as a boolean).
 // Type `NP' is a word-wide struct, where the word is split into a 28-bit word
@@ -229,6 +225,7 @@ L_SIZE2RANK_zero:
     //
 
 // TODO NODE2ADDR
+
 // ADDR2NODE gets SZ addr in C, returns NP node in B
 #define ADDR2NODE(B,C)          \
     call(ADDR2NODE_func)      ; \
