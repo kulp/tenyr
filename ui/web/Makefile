@@ -71,6 +71,15 @@ CLEANFILES += *.bc
 
 ##############################################################################
 
+# `make -B EXE_SUFFIX=.exe` to make a command-line version of the em% code
+%.exe: em%.o
+ifneq ($(MAKE_VERBOSE),)
+	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+else
+	@echo "[ LD ] $@"
+	@$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+endif
+
 %.bc: em%.o
 ifneq ($(MAKE_VERBOSE),)
 	emcc $(LDFLAGS) $(EMCCFLAGS_CC) -o $@ $^ $(LDLIBS)
