@@ -10,6 +10,9 @@
 
 #include <stdlib.h>
 
+#define EM_RAM_BASE (1ULL << 12)
+#define EM_RAM_SIZE (4 * 1024)
+
 int do_assembly(FILE *in, FILE *out, const struct format *f);
 
 static int pre_insn(struct sim_state *s, struct instruction *i)
@@ -24,6 +27,40 @@ static int post_insn(struct sim_state *s, struct instruction *i)
     (void)s;
     (void)i;
     return -1;
+}
+
+static void em_device_setup(struct sim_state *s)
+{
+    devices_setup(s);
+    {
+        extern int serial_add_device(struct device **device);
+        int index = next_device(s);
+        struct device *dev = s->machine.devices[index] = malloc(sizeof *dev);
+        serial_add_device(&dev);
+    }
+
+    {
+        extern int ram_add_device(struct device **device);
+        int index = next_device(s);
+        struct device *dev = s->machine.devices[index] = malloc(sizeof *dev);
+        ram_add_device(&dev);
+        // manually adjust memory bounds
+        dev->bounds[0] = EM_RAM_BASE;
+        dev->bounds[1] = EM_RAM_BASE + EM_RAM_SIZE;
+        dev->ops.init(&s->plugin_cookie, &dev->cookie, 2, EM_RAM_SIZE, dev->bounds[0]);
+    }
+
+    {
+        extern int ram_add_device(struct device **device);
+        int index = next_device(s);
+        struct device *dev = s->machine.devices[index] = malloc(sizeof *dev);
+        ram_add_device(&dev);
+        // manually adjust memory bounds
+        dev->bounds[0] = (1 << 24) - EM_RAM_SIZE;
+        dev->bounds[1] = (1 << 24) - 1;
+        dev->ops.init(&s->plugin_cookie, &dev->cookie, 2, EM_RAM_SIZE, dev->bounds[0]);
+    }
+    devices_finalise(s);
 }
 
 int main(void)
@@ -57,6 +94,8 @@ int main(void)
             },
         },
     }, *s = &_s;
+
+    em_device_setup(s);
 
     if (load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr))
         fatal(0, "Error while loading state into simulation");
