@@ -39,7 +39,7 @@ int main(void)
             .debugging    = 0,
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
-            .fmt          = &tenyr_asm_formats[0],
+            .fmt          = &tenyr_asm_formats[2], // text
             .params = {
                 .params_size  = DEFAULT_PARAMS_COUNT,
                 .params_count = 0,

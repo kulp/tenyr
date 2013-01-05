@@ -4,9 +4,11 @@ var tasdata = { };
     tasdata.inarea  = document.getElementById('input');
     tasdata.pparea  = document.getElementById('preprocessed');
     tasdata.outarea = document.getElementById('output');
+    tasdata.simarea = document.getElementById('simoutput');
 
     tasdata.get_in_line_char = make_char_getter(tasdata.inarea);
     tasdata.get_pp_line_char = make_char_getter(tasdata.pparea);
+    tasdata.get_as_line_char = make_char_getter(tasdata.outarea);
 //};
 
 function make_char_getter(area)

@@ -1,5 +1,5 @@
 .PHONY: all
-BIN_TARGETS = tcc.js tas.js
+BIN_TARGETS = tcc.js tas.js tsim.js
 TARGETS = $(BIN_TARGETS)
 # get dependency information from main Makefiles
 TOP = main_build
@@ -44,6 +44,8 @@ endif
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --js-transform "perl -i -p ./fsify.pl"
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --pre-js $*_pre.js
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --post-js $*_post.js
+
+%.js: %_pre.js %_post.js
 
 tas.bc: CFLAGS =# reset CFLAGS
 
