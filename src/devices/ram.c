@@ -17,7 +17,8 @@ struct ram_state {
 
 static int ram_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
 {
-    size_t ramsize = RAM_END + 1;
+    int reset_memsize = 0;
+    size_t memsize = RAM_END + 1;
     struct ram_state *ram = *(void**)cookie;
 
     if (!ram) {
@@ -35,19 +36,22 @@ static int ram_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
         va_list vl;
         va_start(vl, nargs);
 
-        ram->memsize = ramsize = va_arg(vl, int);
+        ram->memsize = va_arg(vl, int);
+        reset_memsize = 1;
         if (nargs > 1)
             ram->base = va_arg(vl, int);
 
         va_end(vl);
     }
 
+    memsize = ram->memsize;
+
     // only reallocate if we were given an explicit size, or if we have no
     // memory yet
-    if (ram->memsize || !ram->mem)
-        ram->mem = realloc(ram->mem, ramsize * sizeof *ram->mem);
+    if (!ram->mem || reset_memsize)
+        ram->mem = realloc(ram->mem, ram->memsize * sizeof *ram->mem);
 
-    for (unsigned long i = 0; i < ramsize; i++)
+    for (unsigned long i = 0; i < memsize; i++)
         ram->mem[i] = 0xffffffff; // "illlegal" ; will trap
 
     return 0;
