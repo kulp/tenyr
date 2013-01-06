@@ -407,7 +407,7 @@ static int raw_out(FILE *stream, struct instruction *i, void *ud)
  */
 static int text_in(FILE *stream, struct instruction *i, void *ud)
 {
-    return fscanf(stream, "0x%x", &i->u.word) == 1;
+    return fscanf(stream, " 0x%x ", &i->u.word) == 1;
 }
 
 static int text_out(FILE *stream, struct instruction *i, void *ud)
