@@ -21,13 +21,19 @@ INCLUDES += $(CHECK_PATHS)
 %.bc: CC = emcc
 %.bc: CPPFLAGS += -DEMSCRIPTEN
 
+%.js: EMCCFLAGS_LD += -s SAFE_HEAP_LINES=0
+
 ifeq ($(DEBUG),)
-%.js: EMCCFLAGS_LD += -O2
+%.js: EMCCFLAGS_LD += -O1 # TODO make -O2 work again
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=0 -s MICRO_OPTS=1 \
                       -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0 \
                       -s CLOSURE_ANNOTATIONS=1 \
                       -s CHECK_OVERFLOWS=0 \
                       -s CORRECT_OVERFLOWS=0 \
+                      -s DISABLE_EXCEPTION_CATCHING=1 \
+                      # TODO make relooping work \
+                      #-s RELOOP=1 \
+                      #
 else
 %.js: EMCCFLAGS_LD += -O0
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=1 -s MICRO_OPTS=0 \
@@ -35,6 +41,7 @@ else
                       -s LIBRARY_DEBUG=0 \
                       -s WARN_ON_UNDEFINED_SYMBOLS=1 \
                       #-s CHECK_SIGNS=1 \
+                      #-s VERBOSE=1 \
                       #
 endif
 
