@@ -2,6 +2,7 @@
 #define ASM_H_
 
 #include <stdio.h>
+#include <stdint.h>
 
 enum { ASM_ASSEMBLE = 1, ASM_DISASSEMBLE = 2 };
 

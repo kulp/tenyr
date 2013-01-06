@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>tenyr assembly demonstrator</title>
+    <style>
+      div, span { box-sizing: border-box; }
+      body { font-family: sans-serif; }
+      div.box textarea { font-family: monospace; width: 100%; height: 50%; clear: right; }
+      div.box { float: left; min-width: 15em; width: 25%; margin: auto auto; padding: 1em; height: 90%; }
+      div.box span { display: block; margin: 1ex; }
+      div.box button { margin-top: 1em; float: right; }
+      /* div.outer { min-height: 30em; height: 90%; } */
+      /* div.outer { border: 1px solid black; margin: auto auto; background-color: #333; } */
+      body { width: 90%; margin: auto auto; }
+      h1 { text-align: center; }
+      p.desc { margin: 1ex; }
+      div.desc { width: 75%; max-width: 40em; margin: auto auto; background-color: #eee; border-radius: 2ex 0 2ex 0; padding: 1em; box-shadow: 5px 5px 5px #aaa; }
+      a:link { color: #66d; }
+      a:visited { color: #b5b; }
+    </style>
+  </head>
+  <body>
+    <h1 class="title">tenyr technology demonstrator</h1>
+    <div class="desc">
+        <p class="desc">
+            This page exists to let you experiment with tenyr tools without
+            having to install anything. To get started, read the <a
+            href="https://github.com/kulp/tenyr/wiki/Assembly-language">wiki
+            page on the tenyr assembly language</a>. Only a single source file
+            is supported : no linking is done.  The files ending in
+            <code>.th</code> from <a
+            href="https://github.com/kulp/tenyr/tree/master/lib">the
+            <code>lib</code> directory</a> are available to be included using
+            <code>#include</code>.
+        </p>
+        <p class="desc">
+            For now, the simulation environment available is very limited ;
+            only serial output (read and write address <code>0x20</code>) is
+            supported. Also, if you wish to run multiple simulations, you must
+            reload the page between simulations. This weakness will be
+            addressed in a future revision.
+        </p>
+        <p class="desc">
+            Eventually, we intend to provide a <a
+            href="http://ace.ajax.org/">syntax-colouring code editor</a>, a
+            simulator with device support, and other goodies.
+        </p>
+    </div>
+    <div class="outer">
+        <div class="box">
+            <span>Input tenyr assembly :</span>
+            <textarea id="input" rows="30">
+#include "common.th"
+
+    prologue
+    c &lt;- rel(hi)        // string starts at @hi
+    call(puts)
+    illegal
+
+hi:
+    .utf32 "hello, world"
+    .word '\n'
+    .word 0             // mark end of string with a zero
+
+#include "serial.th"
+
+// argument in C
+    .global puts
+puts:
+    push(d)
+puts_loop:
+    b &lt;- [c]            // load word from string
+    d &lt;- b == 0         // if it is zero, we are done
+    jnzrel(d,puts_done)
+    c &lt;- c + 1          // increment index for next time
+    emit(b)             // output character to serial device
+    goto(puts_loop)
+puts_done:
+    pop(d)
+    ret</textarea>
+            <button onclick="preprocess()">Preprocess &rarr;</button>
+        </div>
+        <div class="box">
+            <span>Preprocessed input :</span>
+            <textarea id="preprocessed" rows="30"></textarea>
+            <button onclick="assemble()">Assemble &rarr;</button>
+        </div>
+        <div class="box">
+            <span>Assembled output :</span>
+            <textarea id="output" rows="30"></textarea>
+            <button onclick="simulate()">Simulate &rarr;</button>
+        </div>
+        <div class="box">
+            <span>Simulator output :</span>
+            <textarea id="simoutput" rows="30"></textarea>
+        </div>
+    </div>
+
+    <script type='text/javascript' src="general_pre.js"></script>
+    <script type='text/javascript' src="tcc.js"></script>
+    <script type='text/javascript' src="tas.js"></script>
+    <script type='text/javascript' src="tsim.js"></script>
+  </body>
+</html>

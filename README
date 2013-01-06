@@ -1,18 +1,20 @@
+Demo : http://demo.tenyr.info/
 Documentation : https://github.com/kulp/tenyr/wiki
 Downloads : http://kulp.ch/tenyr/bin/
 
 tenyr aspires to be a complete 32-bit computing environment (simulated
 architecture, operating system, compiler, utilities). It is very much a work in
-progress. An assembler / disassembler (tas) and simulator / debugger (tsim)
-exist, a Forth implementation is in its infancy, and the toycen compiler
-project from https://github.com/kulp/toycen will probably supply the C compiler
-component when it can generate code at all.
+progress. An assembler / disassembler (tas), linker (tld), and simulator / debugger (tsim)
+exist, a Forth text interpreter is nearly complete, an implementation has been
+realised in a Spartan 6 FPGA, and the toycen compiler project from
+https://github.com/kulp/toycen is intended to eventually supply the C compiler
+component.
 
-To build tenyr, both flex and bison are required.  Bison needs to be version 2.5;
+To build tenyr, both flex and bison are required. Bison needs to be version 2.5 --
 bison 2.4.x will not work.
 
 Darren Kulp
 darren@kulp.ch
 kulp@freenode
-2012-02-25
+2013-01-05
 

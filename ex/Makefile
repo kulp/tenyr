@@ -4,8 +4,9 @@
 TAS = ../tas
 TLD = ../tld
 
-INCLUDES +=  -I../lib -I../lib/dword
-CPPFLAGS += -x c $(INCLUDES)
+INCLUDES += -I../lib -I../lib/dword
+CPPFLAGS += -xc $(INCLUDES)
+CPP := $(CPP) -
 
 vpath %.tas ../lib ../lib/dword
 vpath %.tas.cpp ../lib ../lib/dword
@@ -40,7 +41,7 @@ parse_hex.texe: strtol.to
 
 %.tas: %.tas.cpp
 	mkdir -p $(*D)
-	$(CPP) $(CPPFLAGS) $< -o $@
+	$(CPP) $(CPPFLAGS) < $< > $@
 
 %.to: %.tas
 	mkdir -p $(*D)
