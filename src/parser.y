@@ -57,14 +57,15 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 %start top
 
+/* precedence rules only matter in constant expressions */
+%left '|'
+%left '^' XORN
+%left '&' ANDN
 %left EQ NEQ
 %left '<' '>'
-%left '+' '-'
-%left '*'
-%left '^' XORN
-%left '|'
-%left '&' ANDN
 %left LSH RSH
+%left '+' '-'
+%left '*' '/'
 
 %token <chr> '[' ']' '.' '(' ')'
 %token <chr> '+' '-' '*' '~'
