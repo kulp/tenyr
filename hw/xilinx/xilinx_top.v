@@ -1,7 +1,9 @@
 `include "common.vh"
 `timescale 1ms/10us
 
+`ifndef SIM
 `define VGA
+`endif
 `define SEG7
 
 module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync, Led);
