@@ -184,3 +184,4 @@ xlnx_auto_0_xdb/cst.xbcd
 xilinxsim.ini
 *.wcfg
 ipcore_dir/coregen_lock
+*.bin
