@@ -1,9 +1,23 @@
+TOP ?= ../..
+
 VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I../../src
 
 TAS = ../../tas
 TLD = ../../tld
+
+ifeq ($(WIN32),1)
+ OS = Win32
+else
+ OS = $(shell uname -s)
+endif
+
+INCLUDE_OS ?= $(TOP)/src/os/$(OS)
+
+INCLUDES += $(INCLUDE_OS)
+CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
+            $(patsubst %,-I%,$(INCLUDES))
 
 ifdef DEBUG
 CFLAGS += -O0 -g

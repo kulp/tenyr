@@ -1,6 +1,6 @@
-A <- A # this noop is necessary and should not be XXX
-B <- 0
+B <- 0x10
 
+loop:
 B <- B + 1
 C <- B * 2
 
@@ -8,6 +8,6 @@ A <- A
 
 D <- C
 
-P <- 2
+P <- @loop
 
 illegal

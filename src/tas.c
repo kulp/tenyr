@@ -18,12 +18,13 @@
 #include <io.h>
 #endif
 
-static const char shortopts[] = "df:o:sv" "hV";
+static const char shortopts[] = "df:o:qsv" "hV";
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
     { "format"      , required_argument, NULL, 'f' },
     { "output"      , required_argument, NULL, 'o' },
+    { "quiet"       ,       no_argument, NULL, 'q' },
     { "strict"      ,       no_argument, NULL, 's' },
     { "verbose"     ,       no_argument, NULL, 'v' },
 
@@ -46,6 +47,7 @@ static int usage(const char *me)
            "  -d, --disassemble     disassemble (default is to assemble)\n"
            "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"
+           "  -q, --quiet           disable disassembly output comments\n"
            "  -s, --strict          disable syntax sugar in disassembly\n"
            "  -v, --verbose         disable simplified disassembly output\n"
            "  -h, --help            display this message\n"
@@ -83,6 +85,7 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); opened = 1; break;
             case 'd': disassemble = 1; break;
+            case 'q': flags |= ASM_QUIET; break;
             case 's': flags |= ASM_NO_SUGAR; break;
             case 'v': flags |= ASM_VERBOSE; break;
             case 'f': {
