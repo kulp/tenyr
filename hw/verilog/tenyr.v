@@ -49,59 +49,18 @@ module Decode(input[31:0] insn, input en,
               output[3:0] op, output[1:0] deref, output type, output illegal,
               output valid);
 
-    reg[3:0] rZ = 0, rX = 0, rY = 0, rop = 0;
-    reg[11:0] rI = 0;
-    reg[1:0] rderef = 0;
-    reg rtype = 0, rillegal = 0, rvalid = 0;
-
-    assign valid = rvalid;
-
-    assign Z       = rvalid ? rZ       :  4'bx,
-           X       = rvalid ? rX       :  4'bx,
-           Y       = rvalid ? rY       :  4'bx,
-           I       = rvalid ? rI       : 12'bx,
-           op      = rvalid ? rop      :  4'bx,
-           deref   = rvalid ? rderef   :  2'bx,
-           type    = rvalid ? rtype    :  1'bx,
-           illegal = rvalid ? rillegal :  1'b0;
-
-    always @(insn) if (en) begin
-        casez (insn[31:28])
-            4'b0???: begin
-                rderef <= insn[28 +: 2];
-                rtype  <= insn[30];
-
-                rZ  <= insn[24 +: 4];
-                rX  <= insn[20 +: 4];
-                rY  <= insn[16 +: 4];
-                rop <= insn[12 +: 4];
-                rI  <= insn[ 0 +:12];
-                rvalid <= 1;
-                rillegal <= 0;
-            end
-            default: begin
-                casex (insn[31:28])
-                    4'b1111: begin
-                        rillegal <= 1;
-                        rvalid   <= 1; //&insn[27:0];
-                    end
-                    default: begin
-                        rillegal <= 0;
-                        rvalid   <= 0;
-                    end
-                endcase
-                //rillegal <= &insn[31:28];
-                rderef <= 2'bx;
-                rtype  <= 1'bx;
-
-                rZ  <=  4'bx;
-                rX  <=  4'bx;
-                rY  <=  4'bx;
-                rop <=  4'bx;
-                rI  <= 12'bx;
-            end
-        endcase
-    end
+    wire dis = ~en;
+    wire iclass     = dis ? 'bz : insn[31];
+    wire except     = dis ? 'bz : &insn[31:28];
+    assign type     = dis ? 'bz : insn[30];
+    assign deref    = dis ? 'bz : insn[28 +: 2];
+    assign Z        = dis ? 'bz : insn[24 +: 4];
+    assign X        = dis ? 'bz : insn[20 +: 4];
+    assign Y        = dis ? 'bz : insn[16 +: 4];
+    assign op       = dis ? 'bz : insn[12 +: 4];
+    assign I        = dis ? 'bz : insn[ 0 +:12];
+    assign illegal  = dis ? 'bz : except | &insn[27:0];
+    assign valid    = dis ? 'bz : ~iclass | illegal;
 
 endmodule
 
