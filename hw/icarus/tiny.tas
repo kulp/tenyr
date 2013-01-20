@@ -3,11 +3,15 @@ B <- 0x10
 loop:
 B <- B + 1
 C <- B * 2
+D <- [@array]
+C <- C - D
 
 A <- A
 
 D <- C
+D -> [@array]
 
 P <- @loop
 
 illegal
+array: .word 0
