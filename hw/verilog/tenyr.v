@@ -135,6 +135,8 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
     assign reg_valueZ = reg_rw ? valueZ : 32'bz;
 
+    reg clk0_seen = 0;
+
     `HALTTYPE halt;
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
@@ -165,7 +167,7 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
         if (!reset_n) begin
             new_pc  = `RESETVECTOR;
             next_pc = `RESETVECTOR;
-        end else if (!lhalt) begin
+        end else if (!lhalt && clk0_seen) begin
             next_pc = pc + 1;
             if (jumping)
                 new_pc = deref_lhs;
@@ -174,12 +176,17 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
         end
     end
 
+    always @(posedge lhalt) clk0_seen = 0;
     // FIXME synchronous reset
-    always @(negedge clk0) if (_en) begin
-        if (reset_n) begin
-            rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-            //if (!lhalt && state_valid)
-                //manual_invalidate = illegal;
+    always @(negedge clk0) begin
+        clk0_seen = 0;
+        if (_en) begin
+            if (reset_n) begin
+                clk0_seen = 1;
+                rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
+                //if (!lhalt && state_valid)
+                    //manual_invalidate = illegal;
+            end
         end
     end
 

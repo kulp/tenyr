@@ -1,5 +1,4 @@
-#A <- A # this noop is necessary and should not be XXX
-B <- 0
+B <- 0x10
 
 loop:
 B <- B + 1

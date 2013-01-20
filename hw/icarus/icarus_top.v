@@ -49,7 +49,8 @@ module Tenyr(output[7:0] seg, output[3:0] an);
 
     wire operand_rw;
 
-    // TODO currently can't come out of halt before coming out of reset
+    // rhalt and reset_n timing should be independent of each other, and
+    // do indeed appear to be so.
     initial #(4 * `CLOCKPERIOD) rhalt = 0;
     initial #(3 * `CLOCKPERIOD) reset_n = 1;
 
