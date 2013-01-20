@@ -80,7 +80,7 @@ module Tenyr(output[7:0] seg, output[3:0] an);
                   .data(operand_data), .seg(seg), .an(an));
 
     // TODO clkL
-    Core core(.clk0(clk_core0), .clk90(clk_core90), .clk180(clk_core180), .clk270(clk_core270),
+    Core core(.clk90(clk_core90), .clk270(clk_core270),
               .en(1'b1), .reset_n(reset_n), .rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),
               .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));

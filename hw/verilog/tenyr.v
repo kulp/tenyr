@@ -153,15 +153,11 @@ module Core(input clk0, clk90, clk180, clk270, en, output[31:0] insn_addr,
     end
 
     // FIXME synchronous reset
-    always @(negedge clk0) begin
+    always @(negedge clk90) begin
         clk0_seen = 0;
-        if (_en) begin
-            if (reset_n) begin
-                clk0_seen = 1;
-                rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-                //if (!lhalt && state_valid)
-                    //manual_invalidate = illegal;
-            end
+        if (_en && reset_n) begin
+            clk0_seen = 1;
+            rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
         end
     end
 
