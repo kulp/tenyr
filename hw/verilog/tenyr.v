@@ -1,17 +1,9 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, writeP);
-
-    input clk;
-    input rwZ;
-    input en;
-    input[3:0] indexZ, indexX, indexY;
-    inout [31:0] valueZ; // Z is RW
-    output[31:0] valueX; // X is RO
-    output[31:0] valueY; // Y is RO
-    input[31:0] pc;
-    input writeP;
+module Reg(input clk, en, rwZ, input[3:0] indexZ, indexX, indexY,
+           inout[31:0] valueZ, output[31:0] valueX, valueY, input[31:0] pc,
+           input writeP);
 
     //(* KEEP = "TRUE" *)
     reg[31:0] store[1:15];
@@ -102,17 +94,11 @@ module Exec(input clk, input en, output signed[31:0] rhs,
 
 endmodule
 
-module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
-    input clk0, clk90, clk180, clk270;
-    input en;
-    input reset_n;
+module Core(input clk0, clk90, clk180, clk270, en, output[31:0] insn_addr,
+            input[31:0] insn_data, output rw, output[31:0] norm_addr,
+            inout[31:0] norm_data, input reset_n, `HALTTYPE halt);
 
     wire _en = en && reset_n;
-    output[31:0] insn_addr;
-    input[31:0] insn_data;
-    output rw;
-    output[31:0] norm_addr;
-    inout[31:0] norm_data;
 
     wire[31:0] rhs;
     wire[1:0] deref;
@@ -136,7 +122,6 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
 
     reg clk0_seen = 0;
 
-    `HALTTYPE halt;
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
     wire lhalt = |halt;
