@@ -14,31 +14,21 @@ module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP
     input rwP;
 
     //(* KEEP = "TRUE" *)
-    reg[31:0] store[0:15]
-`ifndef SIM
-        = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,`RESETVECTOR }
-`endif
-        ;
+    reg[31:0] store[0:15];
 
-`ifdef SIM
-    generate
-        genvar i;
-        for (i = 0; i < 15; i = i + 1) // P is set externally
-            initial begin:setup
-                #0 store[i] = 32'b0;
-            end
-    endgenerate
-`endif
+    wire ZisP = &indexZ;
+    wire XisP = &indexX;
+    wire YisP = &indexY;
 
-    wire ZisP = indexZ == 15;
-    wire XisP = indexX == 15;
-    wire YisP = indexY == 15;
+    wire Zis0 = ~|indexZ;
+    wire Xis0 = ~|indexX;
+    wire Yis0 = ~|indexY;
 
     assign pc     = rwP ? 32'bz : store[15];
     wire[31:0] pcp1 = pc + 1;
-    assign valueZ = rwZ ? 32'bz : (ZisP ? pcp1 : store[indexZ]);
-    assign valueX = XisP ? pcp1 : store[indexX];
-    assign valueY = YisP ? pcp1 : store[indexY];
+    assign valueZ = rwZ ? 32'bz : (Zis0 ? 0 : ZisP ? pcp1 : store[indexZ]);
+    assign valueX = Xis0 ? 0 : XisP ? pcp1 : store[indexX];
+    assign valueY = Yis0 ? 0 : YisP ? pcp1 : store[indexY];
 
     always @(negedge clk) if (en) begin
         if (rwP)
