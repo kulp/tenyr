@@ -57,7 +57,7 @@ module Decode(input[31:0] insn, input en,
     assign Y        = ~en ? 'bz : insn[16 +: 4];
     assign op       = ~en ? 'bz : insn[12 +: 4];
     assign I        = ~en ? 'bz : insn[ 0 +:12];
-    assign illegal  = ~en ? 'bz : (except | &insn[27:0]);
+    assign illegal  = ~en ? 'bz : (except & &insn[27:0]);
     assign valid    = ~en ? 'bz : (~iclass | illegal);
 
 endmodule
