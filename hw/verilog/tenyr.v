@@ -1,7 +1,7 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
+module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, writeP);
 
     input clk;
     input rwZ;
@@ -10,8 +10,8 @@ module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP
     inout [31:0] valueZ; // Z is RW
     output[31:0] valueX; // X is RO
     output[31:0] valueY; // Y is RO
-    inout[31:0] pc;
-    input rwP;
+    input[31:0] pc;
+    input writeP;
 
     //(* KEEP = "TRUE" *)
     reg[31:0] store[1:15];
@@ -24,14 +24,13 @@ module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP
     wire Xis0 = ~|indexX;
     wire Yis0 = ~|indexY;
 
-    assign pc       = ~en ? 'bz : rwP ? 32'bz : store[15];
     wire[31:0] pcp1 = ~en ?  pc : pc + 1;
     assign valueZ   = ~en ? 'bz : rwZ ? 32'bz : (Zis0 ? 0 : ZisP ? pcp1 : store[indexZ]);
     assign valueX   = ~en ? 'bz :               (Xis0 ? 0 : XisP ? pcp1 : store[indexX]);
     assign valueY   = ~en ? 'bz :               (Yis0 ? 0 : YisP ? pcp1 : store[indexY]);
 
     always @(negedge clk) if (en) begin
-        if (rwP)
+        if (writeP)
             store[15] = pc;
         if (rwZ) begin
             if (indexZ == 0)
@@ -154,20 +153,17 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
     assign reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
-    wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
-    reg[31:0] new_pc    = `RESETVECTOR;
-    // TODO fold `new_pc` and `pc` and `insn_addr` together
-    wire[31:0] pc = new_pc;
+    wire   jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
+    reg[31:0] insn_addr = `RESETVECTOR;
 
-    assign insn_addr = pc;
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     // update PC on 270-degree phase, after Exec has had time to compute new P
     always @(negedge clk270) if (_en && state_valid) begin
         if (!reset_n) begin
-            new_pc  <= `RESETVECTOR;
+            insn_addr <= `RESETVECTOR;
         end else if (!lhalt && clk0_seen) begin
-            new_pc <= jumping ? deref_lhs : pc + 1;
+            insn_addr <= jumping ? deref_lhs : insn_addr + 1;
         end
     end
 
@@ -196,7 +192,7 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
               .valid(state_valid));
 
     // Registers and memory get written last, on the 270deg of the clock
-    Reg regs(.clk(clk270), .en(_en && state_valid), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+    Reg regs(.clk(clk270), .en(_en && state_valid), .pc(insn_addr), .writeP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
