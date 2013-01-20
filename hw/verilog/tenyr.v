@@ -94,9 +94,9 @@ module Exec(input clk, input en, output signed[31:0] rhs,
 
 endmodule
 
-module Core(input clk0, clk90, clk180, clk270, en, output[31:0] insn_addr,
-            input[31:0] insn_data, output rw, output[31:0] norm_addr,
-            inout[31:0] norm_data, input reset_n, `HALTTYPE halt);
+module Core(input clk, en, output[31:0] insn_addr, input[31:0] insn_data,
+            output rw, output[31:0] norm_addr, inout[31:0] norm_data,
+            input reset_n, `HALTTYPE halt);
 
     wire _en = en && reset_n;
 
@@ -120,8 +120,6 @@ module Core(input clk0, clk90, clk180, clk270, en, output[31:0] insn_addr,
     assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
     assign reg_valueZ = reg_rw ? valueZ : 32'bz;
 
-    reg clk0_seen = 0;
-
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
     wire lhalt = |halt;
@@ -143,22 +141,26 @@ module Core(input clk0, clk90, clk180, clk270, en, output[31:0] insn_addr,
 
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
-    // update PC on 270-degree phase, after Exec has had time to compute new P
-    always @(negedge clk270) if (_en && state_valid) begin
-        if (!reset_n) begin
-            insn_addr <= `RESETVECTOR;
-        end else if (!lhalt && clk0_seen) begin
-            insn_addr <= jumping ? deref_lhs : insn_addr + 1;
-        end
-    end
+    reg[2:0] cycle_state = 1'b1;
 
-    // FIXME synchronous reset
-    always @(negedge clk90) begin
-        clk0_seen = 0;
-        if (_en && reset_n) begin
-            clk0_seen = 1;
-            rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-        end
+    always @(negedge clk) begin
+        cycle_state <= {cycle_state[1:0],cycle_state[2]};
+        case (cycle_state)
+            3'b001: begin
+                if (_en && reset_n) begin
+                    rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
+                end
+            end
+            3'b010: begin
+                if (_en && state_valid) begin
+                    if (!reset_n) begin
+                        insn_addr <= `RESETVECTOR;
+                    end else if (!lhalt) begin
+                        insn_addr <= jumping ? deref_lhs : insn_addr + 1;
+                    end
+                end
+            end
+        endcase
     end
 
     // Decode happens as soon as instruction is ready. Reading registers also
@@ -167,13 +169,16 @@ module Core(input clk0, clk90, clk180, clk270, en, output[31:0] insn_addr,
                   .valid(decode_valid), .illegal(illegal),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
-    // Execution (arithmetic operation) happens on the 90deg of the clock.
-    Exec exec(.clk(clk90), .en(_en && state_valid), .op(op), .type(type), .rhs(rhs),
+    // Execution (arithmetic operation) happen the cycle after decode
+    Exec exec(.clk(clk & cycle_state[1]), .en(_en && state_valid), .op(op), .type(type), .rhs(rhs),
               .X(valueX), .Y(valueY), .I(valueI),
               .valid(state_valid));
 
-    // Registers and memory get written last, on the 270deg of the clock
-    Reg regs(.clk(clk270), .en(_en && state_valid), .pc(insn_addr), .writeP(1'b1), .rwZ(reg_rw),
+    // Memory reads currently happen the half-cycle between execute and
+    // register write-back
+
+    // Registers and memory get written last, the cycle after execution
+    Reg regs(.clk(clk & cycle_state[2]), .en(_en && state_valid), .pc(insn_addr), .writeP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
