@@ -176,7 +176,6 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
         end
     end
 
-    always @(posedge lhalt) clk0_seen = 0;
     // FIXME synchronous reset
     always @(negedge clk0) begin
         clk0_seen = 0;
