@@ -14,7 +14,7 @@ module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP
     input rwP;
 
     //(* KEEP = "TRUE" *)
-    reg[31:0] store[0:15];
+    reg[31:0] store[1:15];
 
     wire ZisP = &indexZ;
     wire XisP = &indexX;
@@ -24,11 +24,11 @@ module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP
     wire Xis0 = ~|indexX;
     wire Yis0 = ~|indexY;
 
-    assign pc     = rwP ? 32'bz : store[15];
-    wire[31:0] pcp1 = pc + 1;
-    assign valueZ = rwZ ? 32'bz : (Zis0 ? 0 : ZisP ? pcp1 : store[indexZ]);
-    assign valueX = Xis0 ? 0 : XisP ? pcp1 : store[indexX];
-    assign valueY = Yis0 ? 0 : YisP ? pcp1 : store[indexY];
+    assign pc       = ~en ? 'bz : rwP ? 32'bz : store[15];
+    wire[31:0] pcp1 = ~en ?  pc : pc + 1;
+    assign valueZ   = ~en ? 'bz : rwZ ? 32'bz : (Zis0 ? 0 : ZisP ? pcp1 : store[indexZ]);
+    assign valueX   = ~en ? 'bz :               (Xis0 ? 0 : XisP ? pcp1 : store[indexX]);
+    assign valueY   = ~en ? 'bz :               (Yis0 ? 0 : YisP ? pcp1 : store[indexY]);
 
     always @(negedge clk) if (en) begin
         if (rwP)
@@ -49,18 +49,17 @@ module Decode(input[31:0] insn, input en,
               output[3:0] op, output[1:0] deref, output type, output illegal,
               output valid);
 
-    wire dis = ~en;
-    wire iclass     = dis ? 'bz : insn[31];
-    wire except     = dis ? 'bz : &insn[31:28];
-    assign type     = dis ? 'bz : insn[30];
-    assign deref    = dis ? 'bz : insn[28 +: 2];
-    assign Z        = dis ? 'bz : insn[24 +: 4];
-    assign X        = dis ? 'bz : insn[20 +: 4];
-    assign Y        = dis ? 'bz : insn[16 +: 4];
-    assign op       = dis ? 'bz : insn[12 +: 4];
-    assign I        = dis ? 'bz : insn[ 0 +:12];
-    assign illegal  = dis ? 'bz : except | &insn[27:0];
-    assign valid    = dis ? 'bz : ~iclass | illegal;
+    wire iclass     = ~en ? 'bz : insn[31];
+    wire except     = ~en ? 'bz : &insn[31:28];
+    assign type     = ~en ? 'bz : insn[30];
+    assign deref    = ~en ? 'bz : insn[28 +: 2];
+    assign Z        = ~en ? 'bz : insn[24 +: 4];
+    assign X        = ~en ? 'bz : insn[20 +: 4];
+    assign Y        = ~en ? 'bz : insn[16 +: 4];
+    assign op       = ~en ? 'bz : insn[12 +: 4];
+    assign I        = ~en ? 'bz : insn[ 0 +:12];
+    assign illegal  = ~en ? 'bz : (except | &insn[27:0]);
+    assign valid    = ~en ? 'bz : (~iclass | illegal);
 
 endmodule
 
@@ -106,14 +105,15 @@ endmodule
 
 module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
     input clk0, clk90, clk180, clk270;
-
     input en;
+    input reset_n;
+
+    wire _en = en && reset_n;
     output[31:0] insn_addr;
     input[31:0] insn_data;
     output rw;
     output[31:0] norm_addr;
     inout[31:0] norm_data;
-    input reset_n;
 
     wire[31:0] rhs;
     wire[1:0] deref;
@@ -161,7 +161,7 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
 
     // update PC on 270-degree phase, after Exec has had time to compute new P
-    always @(negedge clk270) if (en && state_valid) begin
+    always @(negedge clk270) if (_en && state_valid) begin
         if (!reset_n) begin
             new_pc  = `RESETVECTOR;
             next_pc = `RESETVECTOR;
@@ -175,7 +175,7 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     end
 
     // FIXME synchronous reset
-    always @(negedge clk0) if (en) begin
+    always @(negedge clk0) if (_en) begin
         if (reset_n) begin
             rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
             //if (!lhalt && state_valid)
@@ -185,17 +185,17 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
 
     // Decode happens as soon as instruction is ready. Reading registers also
     // happens at this time.
-    Decode decode(.en(en && state_valid && reset_n), .insn(insn), .op(op), .deref(deref), .type(type),
+    Decode decode(.en(_en && state_valid), .insn(insn), .op(op), .deref(deref), .type(type),
                   .valid(decode_valid), .illegal(illegal),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
     // Execution (arithmetic operation) happens on the 90deg of the clock.
-    Exec exec(.clk(clk90), .en(en && state_valid && reset_n), .op(op), .type(type), .rhs(rhs),
+    Exec exec(.clk(clk90), .en(_en && state_valid), .op(op), .type(type), .rhs(rhs),
               .X(valueX), .Y(valueY), .I(valueI),
               .valid(state_valid));
 
     // Registers and memory get written last, on the 270deg of the clock
-    Reg regs(.clk(clk270), .en(en && state_valid && reset_n), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
+    Reg regs(.clk(clk270), .en(_en && state_valid), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
