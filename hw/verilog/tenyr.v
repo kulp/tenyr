@@ -155,8 +155,8 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     //  Z  <- [...] -- deref == 01
     assign reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
     wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
-    reg[31:0] new_pc    = `RESETVECTOR,
-              next_pc   = `RESETVECTOR;
+    reg[31:0] new_pc    = `RESETVECTOR;
+    // TODO fold `new_pc` and `pc` and `insn_addr` together
     wire[31:0] pc = new_pc;
 
     assign insn_addr = pc;
@@ -165,14 +165,9 @@ module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr
     // update PC on 270-degree phase, after Exec has had time to compute new P
     always @(negedge clk270) if (_en && state_valid) begin
         if (!reset_n) begin
-            new_pc  = `RESETVECTOR;
-            next_pc = `RESETVECTOR;
+            new_pc  <= `RESETVECTOR;
         end else if (!lhalt && clk0_seen) begin
-            next_pc = pc + 1;
-            if (jumping)
-                new_pc = deref_lhs;
-            else
-                new_pc = next_pc;
+            new_pc <= jumping ? deref_lhs : pc + 1;
         end
     end
 
