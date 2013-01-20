@@ -18,15 +18,29 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     reg reset_n = 0;
     reg rhalt = 1;
 
-    reg clk_core0   = 1,
-        clk_core90  = 0,
-        clk_core180 = 0,
-        clk_core270 = 0;
+    // TODO proper clocks
+    reg _clk_core0   = 1,
+        _clk_core90  = 0,
+        _clk_core180 = 0,
+        _clk_core270 = 0;
+
+    reg en_core0   = 0,
+        en_core90  = 0,
+        en_core180 = 0,
+        en_core270 = 0;
+
+    wire clk_core0   = en_core0   & _clk_core0,
+         clk_core90  = en_core90  & _clk_core90,
+         clk_core180 = en_core180 & _clk_core180,
+         clk_core270 = en_core270 & _clk_core270;
+
     wire clk_datamem = clk_core180;
     wire clk_insnmem = clk_core0;
 
     always #(`CLOCKPERIOD / 2) begin
-        {clk_core270,clk_core180,clk_core90,clk_core0} = {clk_core180,clk_core90,clk_core0,clk_core270};
+        {_clk_core270,_clk_core180,_clk_core90,_clk_core0} = {_clk_core180,_clk_core90,_clk_core0,_clk_core270};
+        // when halt is active, let a pulse train finish riding through
+        {en_core270,en_core180,en_core90,en_core0} = {en_core180,en_core90,en_core0,~rhalt};
     end
 
     wire[31:0] insn_addr, operand_addr, insn_data, out_data;
@@ -35,9 +49,14 @@ module Tenyr(output[7:0] seg, output[3:0] an);
 
     wire operand_rw;
 
-    // TODO currently can't come out of reset before coming out of halt
-    initial #(2 * `CLOCKPERIOD) rhalt = 0;
+    // TODO currently can't come out of halt before coming out of reset
+    initial #(4 * `CLOCKPERIOD) rhalt = 0;
     initial #(3 * `CLOCKPERIOD) reset_n = 1;
+
+`ifdef DEMONSTRATE_HALT
+    initial #(21 * `CLOCKPERIOD) rhalt = 1;
+    initial #(23 * `CLOCKPERIOD) rhalt = 0;
+`endif
 
     wire[`HALTBUSWIDTH-1:0] halt;
     assign halt[`HALT_SIM] = rhalt;
