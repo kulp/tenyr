@@ -10,7 +10,7 @@ module Top();
         if ($value$plusargs("LOAD=%s", filename))
             $tenyr_load(filename);
         $dumpvars;
-        #(32 * `CLOCKPERIOD) $finish;
+        #(64 * `CLOCKPERIOD) $finish;
     end
 endmodule
 
