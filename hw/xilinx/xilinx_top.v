@@ -36,7 +36,7 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
     assign operand_data = !operand_rw ?     out_data : 32'bz;
 
     wire phases_valid;
-    reg reset_n = 1;
+
     wire clk_vga;
     `ifdef OLDCLOCK
     wire clk_core0, clk_core90, clk_core180, clk_core270;
@@ -52,19 +52,13 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
                            .in(clk),
                            .clk_core0(clk_core_base), .clk_core0_CE(phases_valid),
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
-    reg clk_core0   = 1,
-        clk_core90  = 0,
-        clk_core180 = 0,
-        clk_core270 = 0;
+    wire clk_core0 = clk_core_base;
     `endif
-    wire clk_datamem = clk_core180;
+    wire clk_datamem = ~clk_core0;
     wire clk_insnmem = clk_core0;
 
-    always @(negedge clk_core_base) begin
-        {clk_core270,clk_core180,clk_core90,clk_core0} = {clk_core180,clk_core90,clk_core0,clk_core270};
-    end
-
     assign halt[`HALT_TENYR] = ~phases_valid;
+    wire reset_n = phases_valid;
     assign Led[2:0] = halt;
 
     // TODO pull out constant or pull out RAM
@@ -84,7 +78,7 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
                   .data(operand_data), .seg(seg), .an(an));
 `endif
 
-    Core core(.clk0(clk_core0), .clk90(clk_core90), .clk180(clk_core180), .clk270(clk_core270),
+    Core core(.clk(clk_core0),
               .en(phases_valid),
               .reset_n(reset_n), .rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),

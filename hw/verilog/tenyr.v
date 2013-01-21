@@ -37,10 +37,8 @@ endmodule
 
 module Decode(input[31:0] insn, input en,
               output[3:0] Z, output[3:0] X, output[3:0] Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output type, output illegal,
-              output valid);
+              output[3:0] op, output[1:0] deref, output type, output illegal);
 
-    wire iclass     = ~en ? 'bz : insn[31];
     wire except     = ~en ? 'bz : &insn[31:28];
     assign type     = ~en ? 'bz : insn[30];
     assign deref    = ~en ? 'bz : insn[28 +: 2];
@@ -50,7 +48,6 @@ module Decode(input[31:0] insn, input en,
     assign op       = ~en ? 'bz : insn[12 +: 4];
     assign I        = ~en ? 'bz : insn[ 0 +:12];
     assign illegal  = ~en ? 'bz : (except & &insn[27:0]);
-    assign valid    = ~en ? 'bz : (~iclass | illegal);
 
 endmodule
 
@@ -94,9 +91,9 @@ module Exec(input clk, input en, output signed[31:0] rhs,
 
 endmodule
 
-module Core(input clk, en, output[31:0] insn_addr, input[31:0] insn_data,
-            output rw, output[31:0] norm_addr, inout[31:0] norm_data,
-            input reset_n, `HALTTYPE halt);
+module Core(input clk, input en, input reset_n, `HALTTYPE halt,
+            output[31:0] insn_addr, input[31:0] insn_data,
+            output rw, output[31:0] norm_addr, inout[31:0] norm_data);
 
     wire _en = en && reset_n;
 
@@ -112,10 +109,8 @@ module Core(input clk, en, output[31:0] insn_addr, input[31:0] insn_data,
     wire[11:0] valueI;
     wire[3:0] op;
     wire illegal, type;
-    reg insn_valid = 1; // XXX
     reg manual_invalidate = 0;
-    wire decode_valid; // FIXME decode_valid never deasserts
-    wire state_valid = insn_valid && !manual_invalidate;
+    wire state_valid = !manual_invalidate; // XXX simplify
     assign deref_rhs = (deref[0] && !rw) ? norm_data : rhs;
     assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
     assign reg_valueZ = reg_rw ? valueZ : 32'bz;
@@ -126,6 +121,8 @@ module Core(input clk, en, output[31:0] insn_addr, input[31:0] insn_data,
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
+    //  Z  <-  ...  -- deref == 00
+    //  Z  <- [...] -- deref == 01
     wire mem_active = (state_valid && !illegal) ? |deref : 1'b0;
     wire rw = mem_active ? deref[1] : 1'b0;
     // TODO Find a safe place to use for default address
@@ -133,29 +130,30 @@ module Core(input clk, en, output[31:0] insn_addr, input[31:0] insn_data,
     wire[31:0] mem_data = rw         ? (deref[0] ? valueZ : rhs) : 32'b0;
     assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
     assign norm_addr = mem_active ? mem_addr : 32'b0;
-    //  Z  <-  ...  -- deref == 00
-    //  Z  <- [...] -- deref == 01
     assign reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
     wire   jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
-    reg[31:0] insn_addr = `RESETVECTOR;
 
+    reg[31:0] insn_addr; // XXX = `RESETVECTOR;
     wire[31:0] insn = state_valid ? insn_data : 32'b0;
-
     reg[2:0] cycle_state = 1'b1;
 
     always @(negedge clk) begin
-        cycle_state <= {cycle_state[1:0],cycle_state[2]};
+        if (!reset_n) begin
+            insn_addr <= `RESETVECTOR;
+            rhalt <= 0;
+        end
+
+        if (_en)
+            cycle_state <= {cycle_state[1:0],cycle_state[2]};
+
         case (cycle_state)
-            3'b001: begin
-                if (_en && reset_n) begin
-                    rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-                end
-            end
             3'b010: begin
+                if (_en && reset_n)
+                    rhalt <= rhalt | illegal;
+            end
+            3'b100: begin
                 if (_en && state_valid) begin
-                    if (!reset_n) begin
-                        insn_addr <= `RESETVECTOR;
-                    end else if (!lhalt) begin
+                    if (!lhalt) begin
                         insn_addr <= jumping ? deref_lhs : insn_addr + 1;
                     end
                 end
@@ -166,8 +164,7 @@ module Core(input clk, en, output[31:0] insn_addr, input[31:0] insn_data,
     // Decode happens as soon as instruction is ready. Reading registers also
     // happens at this time.
     Decode decode(.en(_en && state_valid), .insn(insn), .op(op), .deref(deref), .type(type),
-                  .valid(decode_valid), .illegal(illegal),
-                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
+                  .illegal(illegal), .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
     // Execution (arithmetic operation) happen the cycle after decode
     Exec exec(.clk(clk & cycle_state[1]), .en(_en && state_valid), .op(op), .type(type), .rhs(rhs),
