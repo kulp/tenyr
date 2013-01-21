@@ -74,7 +74,7 @@ endmodule
 
 module Core(input clk, input en, input reset_n, `HALTTYPE halt,
             output[31:0] insn_addr, input[31:0] insn_data,
-            output writing, output[31:0] norm_addr, inout[31:0] norm_data);
+            output mem_rw, output[31:0] norm_addr, inout[31:0] norm_data);
 
     wire _en = en && reset_n;
 
@@ -85,20 +85,19 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     wire[ 3:0] op;
     wire[ 1:0] deref;
 
-    wire[31:0] deref_rhs  = (deref[0] && !writing) ? norm_data : rhs;
-    wire[31:0] deref_lhs  = (deref[1] && !writing) ? norm_data : reg_valueZ;
-    wire[31:0] mem_addr   = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
-    wire[31:0] mem_data   = writing    ? (deref[0] ? valueZ : rhs) : 32'b0;
-    wire[31:0] reg_valueZ = reg_rw ? valueZ : 32'bz;
-
+    wire reg_rw     = ~deref[1];
     wire mem_active = !illegal   && |deref;
-    wire writing    = mem_active && deref[1];
-    wire reg_rw     = ~deref[1]  && |indexZ;
+    wire mem_rw     = mem_active && deref[1];
     wire jumping    = &indexZ    && reg_rw;
 
+    wire[31:0] deref_rhs  = (deref[0] && !mem_rw) ? norm_data : rhs;
+    wire[31:0] mem_addr   = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
+    wire[31:0] mem_data   = mem_rw     ? (deref[0] ? valueZ : rhs) : 32'b0;
+    wire[31:0] reg_valueZ = reg_rw     ? valueZ : 32'bz;
+
     assign valueZ    = reg_rw     ? deref_rhs : reg_valueZ;
-    assign norm_addr = mem_active ? mem_addr  : 32'b0;
-    assign norm_data = (writing && mem_active) ? mem_data : 32'bz;
+    assign norm_addr = mem_active ? mem_addr  : 32'b0; // TODO default addr ?
+    assign norm_data = mem_rw     ? mem_data  : 32'bz;
 
     reg[31:0] insn_addr;
     reg[ 2:0] cycle_state;
@@ -122,7 +121,7 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
             end
             3'b100: begin
                 if (_en && ~|halt)
-                    insn_addr <= jumping ? deref_lhs : insn_addr + 1;
+                    insn_addr <= jumping ? reg_valueZ : insn_addr + 1;
             end
         endcase
     end

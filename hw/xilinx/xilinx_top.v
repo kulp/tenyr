@@ -75,7 +75,7 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
 
     Core core(.clk(clk_core_base),
               .en(phases_valid),
-              .reset_n(reset_n), .writing(operand_rw),
+              .reset_n(reset_n), .mem_rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),
               .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));
 
