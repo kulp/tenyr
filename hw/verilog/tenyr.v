@@ -106,8 +106,8 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     always @(negedge clk) begin
         if (!reset_n) begin
             insn_addr <= `RESETVECTOR;
-            rhalt <= 0;
-            cycle_state <= 'b1;
+            rhalt <= 1'b0;
+            cycle_state <= 3'b1;
         end
 
         if (_en)
@@ -135,9 +135,6 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     Exec exec(.clk(clk & cycle_state[1]), .en(_en), .op(op), .type(type),
               .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI), .valid(1'b1));
               // TODO only execute when "valid" (what means it ?)
-
-    // Memory reads currently happen the half-cycle between execute and
-    // register write-back
 
     // Registers and memory get written last, the cycle after execution
     Reg regs(.clk(clk & cycle_state[2]), .en(_en), .pc(insn_addr), .rwZ(reg_rw),
