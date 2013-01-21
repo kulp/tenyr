@@ -38,13 +38,19 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
     wire phases_valid;
 
     wire clk_vga;
-    wire clk_core_base;
+    wire clk_core_buf;
+    reg clk_core_base = 0;
     tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
                            .in(clk),
-                           .clk_core0(clk_core_base), .clk_core0_CE(phases_valid),
+                           .clk_core0(clk_core_buf), .clk_core0_CE(phases_valid),
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
     wire clk_datamem = ~clk_core_base;
     wire clk_insnmem = clk_core_base;
+
+    // TODO find out why the `clk_core_base` buffer is necessary, and if it
+    // implies some poor clock performance elsewhere.
+    always @(clk_core_buf)
+        clk_core_base = ~clk_core_base;
 
     assign halt[`HALT_TENYR] = ~phases_valid;
     wire reset_n = phases_valid;
