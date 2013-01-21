@@ -2,58 +2,39 @@
 `timescale 1ns/10ps
 
 module Reg(input clk, en, rwZ, input[3:0] indexZ, indexX, indexY,
-           inout[31:0] valueZ, output[31:0] valueX, valueY, input[31:0] pc,
-           input writeP);
+           inout[31:0] valueZ, output[31:0] valueX, valueY, input[31:0] pc);
 
-    //(* KEEP = "TRUE" *)
-    reg[31:0] store[1:15];
+    reg[31:0] store[1:14];
 
-    wire ZisP = &indexZ;
-    wire XisP = &indexX;
-    wire YisP = &indexY;
+    wire ZisP =  &indexZ, XisP =  &indexX, YisP =  &indexY;
+    wire Zis0 = ~|indexZ, Xis0 = ~|indexX, Yis0 = ~|indexY;
 
-    wire Zis0 = ~|indexZ;
-    wire Xis0 = ~|indexX;
-    wire Yis0 = ~|indexY;
+    assign valueZ = ~en ? 'bz : rwZ ? 32'bz : Zis0 ? 0 : ZisP ? pc + 1 : store[indexZ];
+    assign valueX = ~en ? 'bz :               Xis0 ? 0 : XisP ? pc + 1 : store[indexX];
+    assign valueY = ~en ? 'bz :               Yis0 ? 0 : YisP ? pc + 1 : store[indexY];
 
-    wire[31:0] pcp1 = ~en ?  pc : pc + 1;
-    assign valueZ   = ~en ? 'bz : rwZ ? 32'bz : (Zis0 ? 0 : ZisP ? pcp1 : store[indexZ]);
-    assign valueX   = ~en ? 'bz :               (Xis0 ? 0 : XisP ? pcp1 : store[indexX]);
-    assign valueY   = ~en ? 'bz :               (Yis0 ? 0 : YisP ? pcp1 : store[indexY]);
-
-    always @(negedge clk) if (en) begin
-        if (writeP)
-            store[15] = pc;
-        if (rwZ) begin
-            if (indexZ == 0)
-                $display("wrote to zero register");
-            else begin
-                store[indexZ] = valueZ;
-            end
-        end
-    end
+    always @(negedge clk)
+        if (en && rwZ && !Zis0 && !ZisP)
+            store[indexZ] = valueZ;
 
 endmodule
 
-module Decode(input[31:0] insn, input en,
-              output[3:0] Z, output[3:0] X, output[3:0] Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output type, output illegal);
+module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
+              output[3:0] op, output[1:0] deref, output type, illegal);
 
-    wire except     = ~en ? 'bz : &insn[31:28];
-    assign type     = ~en ? 'bz : insn[30];
-    assign deref    = ~en ? 'bz : insn[28 +: 2];
-    assign Z        = ~en ? 'bz : insn[24 +: 4];
-    assign X        = ~en ? 'bz : insn[20 +: 4];
-    assign Y        = ~en ? 'bz : insn[16 +: 4];
-    assign op       = ~en ? 'bz : insn[12 +: 4];
-    assign I        = ~en ? 'bz : insn[ 0 +:12];
-    assign illegal  = ~en ? 'bz : (except & &insn[27:0]);
+    assign type     = insn[30];
+    assign deref    = insn[28 +: 2];
+    assign Z        = insn[24 +: 4];
+    assign X        = insn[20 +: 4];
+    assign Y        = insn[16 +: 4];
+    assign op       = insn[12 +: 4];
+    assign I        = insn[ 0 +:12];
+    assign illegal  = &insn;
 
 endmodule
 
-module Exec(input clk, input en, output signed[31:0] rhs,
-            input signed[31:0] X, input signed[31:0] Y, input signed[11:0] I,
-            input[3:0] op, input type, input valid);
+module Exec(input clk, en, type, valid, output signed[31:0] rhs,
+            input signed[31:0] X, Y, input signed[11:0] I, input[3:0] op);
 
     assign rhs = valid ? i_rhs : 32'b0;
     reg signed[31:0] i_rhs = 0;
@@ -77,7 +58,7 @@ module Exec(input clk, input en, output signed[31:0] rhs,
                 4'b1001: i_rhs =  (X  &~ O) + A; // X bitwise and complement Y
                 4'b1010: i_rhs =  (X  ^  O) + A; // X bitwise xor Y
                 4'b1011: i_rhs =  (X  -  O) + A; // X subtract Y
-                4'b1100: i_rhs =  (X  ^ ~O) + A; // X xor ones' complement Y
+                4'b1100: i_rhs =  (X  ^~ O) + A; // X xor ones' complement Y
                 4'b1101: i_rhs =  (X  >> O) + A; // X shift right logical Y
                 4'b1110: i_rhs = -(X  != O) + A; // X compare <> Y
               //4'b1111:                         // reserved
@@ -159,7 +140,7 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
 
     // Decode happens as soon as instruction is ready. Reading registers also
     // happens at this time.
-    Decode decode(.en(_en), .insn(insn), .op(op), .deref(deref), .type(type),
+    Decode decode(.insn(insn), .op(op), .deref(deref), .type(type),
                   .illegal(illegal), .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
     // Execution (arithmetic operation) happen the cycle after decode
@@ -171,7 +152,7 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     // register write-back
 
     // Registers and memory get written last, the cycle after execution
-    Reg regs(.clk(clk & cycle_state[2]), .en(_en), .pc(insn_addr), .writeP(1'b1), .rwZ(reg_rw),
+    Reg regs(.clk(clk & cycle_state[2]), .en(_en), .pc(insn_addr), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
