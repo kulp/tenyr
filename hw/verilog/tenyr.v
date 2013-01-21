@@ -78,33 +78,32 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
 
     wire _en = en && reset_n;
 
-    wire reg_rw, illegal, type;
-    wire[31:0] rhs;
+    wire illegal, type;
     wire[ 3:0] indexX, indexY, indexZ;
-    wire[31:0] valueX, valueY, valueZ;
+    wire[31:0] valueX, valueY, valueZ, rhs;
     wire[11:0] valueI;
     wire[ 3:0] op;
     wire[ 1:0] deref;
 
+    wire[31:0] deref_rhs  = (deref[0] && !writing) ? norm_data : rhs;
+    wire[31:0] deref_lhs  = (deref[1] && !writing) ? norm_data : reg_valueZ;
+    wire[31:0] mem_addr   = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
+    wire[31:0] mem_data   = writing    ? (deref[0] ? valueZ : rhs) : 32'b0;
     wire[31:0] reg_valueZ = reg_rw ? valueZ : 32'bz;
-    wire[31:0] deref_rhs = (deref[0] && !writing) ? norm_data : rhs;
-    wire[31:0] deref_lhs = (deref[1] && !writing) ? norm_data : reg_valueZ;
-    assign valueZ = reg_rw ? deref_rhs : reg_valueZ;
 
-    reg rhalt;
-    assign halt[`HALT_EXEC] = rhalt;
+    wire mem_active = !illegal   && |deref;
+    wire writing    = mem_active && deref[1];
+    wire reg_rw     = ~deref[1]  && |indexZ;
+    wire jumping    = &indexZ    && reg_rw;
 
-    wire mem_active = !illegal && |deref;
-    wire writing = mem_active && deref[1];
-    wire[31:0] mem_addr = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
-    wire[31:0] mem_data = writing    ? (deref[0] ? valueZ : rhs) : 32'b0;
+    assign valueZ    = reg_rw     ? deref_rhs : reg_valueZ;
+    assign norm_addr = mem_active ? mem_addr  : 32'b0;
     assign norm_data = (writing && mem_active) ? mem_data : 32'bz;
-    assign norm_addr = mem_active ? mem_addr : 32'b0;
-    assign reg_rw  = ~deref[1] && indexZ != 0;
-    wire   jumping = indexZ == 15 && reg_rw;
 
     reg[31:0] insn_addr;
     reg[ 2:0] cycle_state;
+    reg rhalt;
+    assign halt[`HALT_EXEC] = rhalt;
 
     always @(negedge clk) begin
         if (!reset_n) begin
