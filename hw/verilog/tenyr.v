@@ -109,42 +109,41 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     wire[11:0] valueI;
     wire[3:0] op;
     wire illegal, type;
-    reg manual_invalidate = 0;
-    wire state_valid = !manual_invalidate; // XXX simplify
     assign deref_rhs = (deref[0] && !rw) ? norm_data : rhs;
     assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
     assign reg_valueZ = reg_rw ? valueZ : 32'bz;
 
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
-    wire lhalt = |halt;
+    wire all_halts = |halt;
 
     // [Z] <-  ...  -- deref == 10
     //  Z  -> [...] -- deref == 11
     //  Z  <-  ...  -- deref == 00
     //  Z  <- [...] -- deref == 01
-    wire mem_active = (state_valid && !illegal) ? |deref : 1'b0;
+    wire mem_active = illegal ? 1'b0 : |deref;
     wire rw = mem_active ? deref[1] : 1'b0;
     // TODO Find a safe place to use for default address
     wire[31:0] mem_addr = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
     wire[31:0] mem_data = rw         ? (deref[0] ? valueZ : rhs) : 32'b0;
     assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
     assign norm_addr = mem_active ? mem_addr : 32'b0;
-    assign reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
-    wire   jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
+    assign reg_rw  = ~deref[1] && indexZ != 0;
+    wire   jumping = indexZ == 15 && reg_rw;
 
     reg[31:0] insn_addr; // XXX = `RESETVECTOR;
-    wire[31:0] insn = state_valid ? insn_data : 32'b0;
-    reg[2:0] cycle_state = 1'b1;
+    wire[31:0] insn = insn_data;
+    reg[2:0] cycle_state = 'b1;
 
     always @(negedge clk) begin
         if (!reset_n) begin
             insn_addr <= `RESETVECTOR;
             rhalt <= 0;
+            cycle_state <= 'b1;
         end
 
         if (_en)
-            cycle_state <= {cycle_state[1:0],cycle_state[2]};
+            cycle_state <= {cycle_state[1:0],cycle_state[2] & ~all_halts};
 
         case (cycle_state)
             3'b010: begin
@@ -152,30 +151,27 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
                     rhalt <= rhalt | illegal;
             end
             3'b100: begin
-                if (_en && state_valid) begin
-                    if (!lhalt) begin
-                        insn_addr <= jumping ? deref_lhs : insn_addr + 1;
-                    end
-                end
+                if (_en && !all_halts)
+                    insn_addr <= jumping ? deref_lhs : insn_addr + 1;
             end
         endcase
     end
 
     // Decode happens as soon as instruction is ready. Reading registers also
     // happens at this time.
-    Decode decode(.en(_en && state_valid), .insn(insn), .op(op), .deref(deref), .type(type),
+    Decode decode(.en(_en), .insn(insn), .op(op), .deref(deref), .type(type),
                   .illegal(illegal), .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
     // Execution (arithmetic operation) happen the cycle after decode
-    Exec exec(.clk(clk & cycle_state[1]), .en(_en && state_valid), .op(op), .type(type), .rhs(rhs),
+    Exec exec(.clk(clk & cycle_state[1]), .en(_en), .op(op), .type(type), .rhs(rhs),
               .X(valueX), .Y(valueY), .I(valueI),
-              .valid(state_valid));
+              .valid(1)); // TODO only execute when "valid" (what means it ?)
 
     // Memory reads currently happen the half-cycle between execute and
     // register write-back
 
     // Registers and memory get written last, the cycle after execution
-    Reg regs(.clk(clk & cycle_state[2]), .en(_en && state_valid), .pc(insn_addr), .writeP(1'b1), .rwZ(reg_rw),
+    Reg regs(.clk(clk & cycle_state[2]), .en(_en), .pc(insn_addr), .writeP(1'b1), .rwZ(reg_rw),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
