@@ -49,7 +49,7 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
 
     // TODO find out why the `clk_core_base` buffer is necessary, and if it
     // implies some poor clock performance elsewhere.
-    always @(clk_core_buf)
+    always @(negedge clk_core_buf)
         clk_core_base = ~clk_core_base;
 
     assign halt[`HALT_TENYR] = ~phases_valid;

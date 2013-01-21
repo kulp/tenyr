@@ -73,7 +73,7 @@ module Exec(input clk, en, type, valid, output signed[31:0] rhs,
 endmodule
 
 module Core(input clk, input en, input reset_n, `HALTTYPE halt,
-            output[31:0] insn_addr, input[31:0] insn_data,
+            output reg[31:0] insn_addr, input[31:0] insn_data,
             output mem_rw, output[31:0] norm_addr, inout[31:0] norm_data);
 
     wire _en = en && reset_n;
@@ -86,9 +86,8 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     wire[ 1:0] deref;
 
     wire reg_rw     = ~deref[1];
-    wire mem_active = !illegal   && |deref;
-    wire mem_rw     = mem_active && deref[1];
-    wire jumping    = &indexZ    && reg_rw;
+    wire jumping    = &indexZ  && reg_rw;
+    wire mem_active = !illegal && |deref;
 
     wire[31:0] deref_rhs  = (deref[0] && !mem_rw) ? norm_data : rhs;
     wire[31:0] mem_addr   = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
@@ -98,8 +97,8 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     assign valueZ    = reg_rw     ? deref_rhs : reg_valueZ;
     assign norm_addr = mem_active ? mem_addr  : 32'b0; // TODO default addr ?
     assign norm_data = mem_rw     ? mem_data  : 32'bz;
+    assign mem_rw    = mem_active && deref[1];
 
-    reg[31:0] insn_addr;
     reg[ 2:0] cycle_state;
     reg rhalt;
     assign halt[`HALT_EXEC] = rhalt;
@@ -134,7 +133,7 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
 
     // Execution (arithmetic operation) happen the cycle after decode
     Exec exec(.clk(clk & cycle_state[1]), .en(_en), .op(op), .type(type),
-              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI), .valid(1));
+              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI), .valid(1'b1));
               // TODO only execute when "valid" (what means it ?)
 
     // Memory reads currently happen the half-cycle between execute and
