@@ -132,12 +132,12 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
     // Execution (arithmetic operation) happen the cycle after decode
-    Exec exec(.clk(clk & cycle_state[1]), .en(_en), .op(op), .type(type),
+    Exec exec(.clk(clk), .en(_en & cycle_state[1]), .op(op), .type(type),
               .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI), .valid(1'b1));
               // TODO only execute when "valid" (what means it ?)
 
     // Registers and memory get written last, the cycle after execution
-    Reg regs(.clk(clk & cycle_state[2]), .en(_en), .pc(insn_addr), .rwZ(reg_rw),
+    Reg regs(.clk(clk), .en(_en), .pc(insn_addr), .rwZ(reg_rw & cycle_state[2]),
              .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
              .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
 
