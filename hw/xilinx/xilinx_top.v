@@ -37,14 +37,12 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
 
     wire phases_valid;
 
-    wire clk_vga;
-    wire clk_core_base;
-    tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid),
-                           .in(clk),
-                           .clk_core0(clk_core_base), .clk_core0_CE(phases_valid),
+    wire clk_vga, clk_core;
+    tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .valid(phases_valid), .in(clk),
+                           .clk_core0(clk_core), .clk_core0_CE(phases_valid),
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
-    wire clk_datamem = clk_core_base;
-    wire clk_insnmem = clk_core_base;
+    wire clk_datamem = clk_core;
+    wire clk_insnmem = clk_core;
 
     assign halt[`HALT_TENYR] = ~phases_valid;
     wire reset_n = phases_valid;
@@ -67,7 +65,7 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
                   .data(operand_data), .seg(seg), .an(an));
 `endif
 
-    Core core(.clk(clk_core_base),
+    Core core(.clk(clk_core),
               .en(phases_valid),
               .reset_n(reset_n), .mem_rw(operand_rw),
               .norm_addr(operand_addr), .norm_data(operand_data),
