@@ -13,7 +13,7 @@ struct dispatch_userdata {
     vpiHandle array;
 };
 
-static int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
+static int vpi_dispatch(void *ud, int op, uint32_t addr, uint32_t *data)
 {
     struct dispatch_userdata *d = ud;
     struct tenyr_sim_state *s = d->state;
@@ -74,7 +74,7 @@ int tenyr_sim_load(struct tenyr_sim_state *state)
 
     FILE *stream = fopen(filename, "rb");
     if (stream)
-        load_sim(dispatch_op, &data, &formats[0], stream, min);
+        load_sim(vpi_dispatch, &data, &tenyr_asm_formats[0], stream, min);
     else
         return 1;
 

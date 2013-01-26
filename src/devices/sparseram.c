@@ -36,7 +36,7 @@ static int tree_compare(const void *_a, const void *_b)
     return b->base - a->base;
 }
 
-static int sparseram_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
+static int sparseram_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
 {
     struct sparseram_state *sparseram = *(void**)cookie = malloc(sizeof *sparseram);
     sparseram->mem = NULL;
@@ -73,9 +73,8 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
         // useful optimisation, but we could avoid allocating a page until the
         // first write.
         struct element *node = malloc(PAGESIZE * sizeof *node->space + sizeof *node);
-//        if (s->conf.should_init)
-//            for (unsigned long i = 0; i < PAGESIZE; i++)
-//                node->space[i] = s->conf.initval;
+        for (unsigned long i = 0; i < PAGESIZE; i++)
+            node->space[i] = 0xffffffff; // "illlegal" ; will trap
 
         *node = (struct element){ addr & ~WORDMASK, cookie };
         *p = node;

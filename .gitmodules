@@ -1,0 +1,3 @@
+[submodule "3rdparty/tinypp"]
+	path = 3rdparty/tinypp
+	url = https://github.com/kulp/tinypp.git

@@ -191,15 +191,15 @@ head(EXECUTE,EXECUTE):
     T0  <- [W - 1]
     T0  <- W + T0
     T0  <- unrel(T0)
-    T0  -> [reloc(execute_trampoline)]
-    I   <- reloc(execute_trampoline)
+    T0  -> [reloc(L_EXECUTE_trampoline)]
+    I   <- reloc(L_EXECUTE_trampoline)
     // We need to use a trampoline ; something needs to do the corresponding
     // pop(R,I) after the EXECUTEd word finishes. The current trampoline is
     // technically non-reentrant, but we can get away with it because only one
     // word is changed in the trampoline, which word is consumed by the time
     // reentrance could occur. This doesn't address multiprogramming properly.
     goto(NEXT)
-execute_trampoline: .word
+L_EXECUTE_trampoline: .word
     // the effect of the @ENTER is already done in EXECUTE
     @ABORT, // gets overwritten
     @EXIT
@@ -208,6 +208,23 @@ execute_trampoline: .word
 // implemented in forty.tas.cpp
 
 // FILL   c-addr u c --        fill memory with char
+head(FILL,FILL):
+    .word . + 1
+    T0 <- [S + 1]       // T0 is char
+    T1 <- [S + 2]       // T1 is count
+    T2 <- [S + 3]       // T2 is address
+    T3 <- 0             // T3 is offset
+L_FILL_top:
+    T4 <- T1 > 0        // T4 is loop condition
+    iffalse(T4, L_FILL_done)
+    T0 -> [T2 + T3]     // write char to location
+    T3 <- T3 + 1        // increment offset
+    T1 <- T1 - 1        // decrement count
+    goto(L_FILL_top)
+L_FILL_done:
+    S  <- S + 3         // eat elements from stack
+    goto(NEXT)
+
 // I      -- n   R: sys1 sys2 -- sys1 sys2
 //                      get the innermost loop index
 // INVERT x1 -- x2                 bitwise inversion

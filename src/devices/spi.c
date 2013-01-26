@@ -2,8 +2,9 @@
 //  which belongs to Simon Srot <simons@opencores.org>
 // Connects tenyr wishbone (plain local bus now, since wishbone is not
 // simulated in any special way) to a spi_ops implementation. If param
-// "spi.impl" is set, a spi_ops implementation with that stem name is loaded
-// using dlsym(). Otherwise, acts as if nothing is attached to the SPI pins.
+// "spi[N]" is set for consecutive N starting with 0, spi_ops implementations
+// with the respective stem names are loaded using dlsym(). Otherwise, acts as
+// if nothing is attached to the SPI pins.
 
 #include "plugin.h"
 
@@ -95,74 +96,89 @@ static void spi_reset_defaults(struct spi_state *spi)
     spi->regs.fmt.SS          = 0x00000000;
 }
 
-static int spi_emu_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
+struct success_box {
+    struct spi_state *spi;
+    struct plugin_cookie *pcookie;
+};
+
+static int wrapped_param_get(const struct plugin_cookie *cookie, char *key, const char **val)
 {
-    struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
+    char buf[256];
+    snprintf(buf, sizeof buf, "%s.%s", cookie->prefix, key);
+    key = buf;
 
-    spi_reset_defaults(spi);
+    return cookie->wrapped->gops.param_get(cookie->wrapped, key, val);
+}
 
-    memset(spi->impls, 0, sizeof spi->impls);
-
-    const char *implname = NULL;
-    if (gops->param_get(hostcookie, "spi.impl", &implname)) {
-        int inst = 0; // TODO support more than one instance
-        // If implname contains a slash, treat it as a path ; otherwise, stem
-        char buf[256];
-        const char *implpath = NULL;
-        const char *implstem = NULL;
-        gops->param_get(hostcookie, "spi.implstem", &implstem); // may not be set ; that's OK
-        if (strchr(implname, PATH_SEPARATOR_CHAR)) {
-            implpath = implname;
-        } else {
-            snprintf(buf, sizeof buf, ".%clib%s"DYLIB_SUFFIX,
-                    PATH_SEPARATOR_CHAR, implname);
-            buf[sizeof buf - 1] = 0;
-            implpath = buf;
-            if (!implstem)
-                implstem = implname;
-        }
-
-        // TODO consider using RTLD_NODELETE here
-        // (seems to break on Mac OS X)
-        // currently we leak library handles
-        void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
-        if (!libhandle) {
-            debug(1, "Could not load %s, trying default library search", implpath);
-            libhandle = RTLD_DEFAULT;
-        }
-
-#define GET_CB(Stem)                                                \
-        do {                                                        \
-            char buf[64];                                           \
-            snprintf(buf, sizeof buf, "%s_spi_"#Stem, implstem);    \
-            void *ptr = dlsym(libhandle, buf);                      \
-            spi->impls[inst].Stem = ALIASING_CAST(spi_##Stem,ptr);  \
-        } while (0)                                                 \
-        //
-
-        tenyr_plugin_host_init(libhandle);
-
-        GET_CB(clock);
-        if (!spi->impls[inst].clock) {
-            const char *err = dlerror();
-            if (err)
-                fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implstem, err);
-            else
-                fatal(0, "SPI clock cb for '%s' is NULL ? : %s", implstem);
-        }
-
-        GET_CB(init);
-        GET_CB(select);
-        GET_CB(fini);
-
-        if (spi->impls[inst].init)
-            if (spi->impls[inst].init(&spi->impl_cookies[inst]))
-                debug(1, "SPI attached instance %d returned nonzero from init()", inst);
-
-        // if RTLD_NODELETE worked and were standard, we would dlclose() here
+static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
+{
+    char (*buf)[256] = malloc(sizeof *buf);
+    snprintf(*buf, sizeof *buf, "%s.%s", cookie->prefix, key);
+    if (!free_value) {
+        // In this case, the caller indicates that the val will be freed when
+        // the key is freed (part of the same allocation) ; since we are
+        // wrapping the key, we should dispose of the original key now and
+        // copy the val.
+        val = strdup(val);
+        free(key);
     }
 
-    return 0;
+    key = *buf;
+    return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, 1);
+}
+
+static int plugin_success(void *libhandle, int inst, const char *parent,
+    const char *implstem, void *ud)
+{
+    int rc = 0;
+
+    struct success_box *box = ud;
+
+#define GET_CB(Stem)                                            \
+    do {                                                        \
+        char buf[64];                                           \
+        snprintf(buf, sizeof buf, "%s_spi_"#Stem, implstem);    \
+        void *ptr = dlsym(libhandle, buf);                      \
+        box->spi->impls[inst].Stem = ALIASING_CAST(spi_##Stem,ptr);  \
+    } while (0)                                                 \
+    //
+
+    GET_CB(clock);
+    if (!box->spi->impls[inst].clock) {
+        const char *err = dlerror();
+        if (err)
+            fatal(0, "Failed to locate SPI clock cb for '%s' ; %s", implstem, err);
+        else
+            fatal(0, "SPI clock cb for '%s' is NULL ? : %s", implstem);
+    }
+
+    GET_CB(init);
+    GET_CB(select);
+    GET_CB(fini);
+
+    if (box->spi->impls[inst].init) {
+        struct plugin_cookie dst;
+        dst.gops = box->pcookie->gops;
+        dst.gops.param_get = wrapped_param_get;
+        dst.gops.param_set = wrapped_param_set;
+        dst.wrapped = box->pcookie;
+        snprintf(dst.prefix, sizeof dst.prefix, "%s.%s", parent, implstem);
+        if (box->spi->impls[inst].init(&box->spi->impl_cookies[inst], &dst))
+            debug(1, "SPI attached instance %d returned nonzero from init()", inst);
+    }
+
+    return rc;
+}
+
+static int spi_emu_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
+{
+    struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
+    spi_reset_defaults(spi);
+    struct success_box box = {
+        .spi = spi,
+        .pcookie = pcookie,
+    };
+    return plugin_load("spi", pcookie, plugin_success, &box);
 }
 
 static int spi_emu_fini(void *cookie)

@@ -4,17 +4,12 @@
 
 // Performs C % D and stores the result in B.
 umod:
-  push(c)
-  push(d)
-
+  pushall(c,d)
   call(udiv)
-
-  pop(d)
-  pop(c)
+  popall(c,d)
 
   b <- b * d
-  c <- c - b
-  b <- c
+  b <- c - b
 
   ret
 

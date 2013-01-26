@@ -9,7 +9,7 @@
 
 #define SERIAL_BASE (1ULL << 5)
 
-static int serial_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
+static int serial_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
 {
     return 0;
 }
@@ -25,6 +25,7 @@ static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 
     if (op == OP_WRITE) {
         putchar(*data);
+        fflush(stdout);
     } else if (op == OP_READ) {
         if ((*data = tmp = getchar()) && tmp == EOF) {
             return -1;

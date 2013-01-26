@@ -25,31 +25,30 @@
 #define T6  L
 #define T7  N
 
-// save and restore Forth registers on a stack, for calling other ABIs
-#define pushregs(o) push(o,W)   \
-                    push(o,X)   \
-                    push(o,I )  \
-                    push(o,S  ) \
-                    push(o,R  )
+#include "push.th"
 
-#define  popregs(o)  pop(o,R  ) \
-                     pop(o,S  ) \
-                     pop(o,I )  \
-                     pop(o,X)   \
-                     pop(o,W)
+// save and restore Forth registers on a stack, for calling other ABIs
+#define pushregs(o) pushall_(o,W,X,I,S,R)
+#define  popregs(o)  popall_(o,W,X,I,S,R)
 
 #define jmp(Reg)    p <- Reg - (. + 1) + p
-#define ccall(Loc)  o <- R   - 1 ; pushregs(o) ; push(o,p + 2); goto(Loc) ; popregs(o)
+#define ccpre()     o <- R - 1 ; pushregs(o)
+#define ccall(Loc)  push(o,p + 2); goto(Loc)
+#define ccpost()    popregs(o)
 
-#define reloc(Label)        p + (@Label - (. + 1))
-#define rel(X)              X + p + (@__zero - . - 1)
+#define reloc(Label)        (@Label - (. + 1)) + p
+#define rel(X)              X + reloc(__zero)
 #define unrel(X)            X - p + (. + 1)
 #define goto(Label)         p <- reloc(Label)
 #define push(Sp,Expr)       [Sp] <- Expr ; Sp <- Sp - 1
 #define pop(Sp,Reg)         Sp <- Sp + 1 ; Reg <- [Sp]
 
 #define iftrue(Predicate,Target) \
-    P <- Predicate & (@Target - . - 1) + P
+    p <- Predicate & reloc(Target)
+
+#define iffalse(Predicate,Target) \
+    p <- Predicate & 1 + p ; \
+    goto(Target)
 
 // .global for L##Label_{exec,compile} is a hack to allow linking to succeed
 // for forward references
@@ -66,7 +65,6 @@
     .word  @L##Label##_compile                ;                 \
     .set    L##Label##_compile, 0             ;                 \
     .utf32 Name                               ; /* offset  2 */ \
-    .word 0                                   ;                 \
 .L##Label##_end: Label
 
 #define compile(Label)                          \
@@ -78,16 +76,20 @@
     headstr(Label,#Name)
 
 // expects to be called in a @word context
+// TODO make Else implicit
 #define IFNOT0(Then,Else)             \
     @EQZ,               /* nrmlise */ \
-    @LITERAL, @Else,        /* F a1    */ \
+    @LITERAL, @Else,    /* F a1    */ \
     @SWAP, @DUP, @ROT,  /* F F a1  */ \
     @AND,               /* F a1    */ \
-    @LITERAL, @Then,        /* F a1 a2 */ \
+    @LITERAL, @Then,    /* F a1 a2 */ \
     @ROT, @EQZ, @AND,   /* a1 a2   */ \
     @OR,                /* a       */ \
     @RELOC, @SET_IP
 
+// expects to be called in a @word context
+#define GOTO(Where) \
+    @LITERAL, @Where, @RELOC, @SET_IP
 
 #endif
 

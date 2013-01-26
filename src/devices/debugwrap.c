@@ -11,12 +11,12 @@ struct debugwrap_state {
     struct device *wrapped;
 };
 
-static int debugwrap_init(struct guest_ops *gops, void *hostcookie, void *cookie, int nargs, ...)
+static int debugwrap_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
 {
     // our own init done in debugwrap_add_device ()
     struct debugwrap_state *debugwrap = *(void**)cookie;
     // TODO varargs ?
-    debugwrap->wrapped->ops.init(gops, hostcookie, &debugwrap->wrapped->cookie, 0);
+    debugwrap->wrapped->ops.init(pcookie, &debugwrap->wrapped->cookie, 0);
     return 0;
 }
 

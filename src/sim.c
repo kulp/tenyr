@@ -51,14 +51,16 @@ static int do_common(struct sim_state *s, int32_t *ip, int32_t *Z, int32_t
     int32_t *r      =  reversed ? Z         : rhs;
     int32_t *w      =  reversed ? rhs       : Z;
 
-    if (read_mem)
-        s->dispatch_op(s, OP_READ, r_addr, value);
-    else
+    if (read_mem) {
+        if (s->dispatch_op(s, OP_READ, r_addr, value) && s->conf.abort)
+            abort();
+    } else
         *value = *r;
 
-    if (write_mem)
-        s->dispatch_op(s, OP_WRITE, w_addr, value);
-    else if (w != &s->machine.regs[0])  // throw away write to reg 0
+    if (write_mem) {
+        if (s->dispatch_op(s, OP_WRITE, w_addr, value) && s->conf.abort)
+            abort();
+    } else if (w != &s->machine.regs[0])  // throw away write to reg 0
         *w = *value;
 
     if (w != ip) {
@@ -119,7 +121,8 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
     while (1) {
         assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
         struct instruction i;
-        s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
+        if (s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word) && s->conf.abort)
+            abort();
 
         if (ops->pre_insn)
             ops->pre_insn(s, &i);
@@ -142,7 +145,8 @@ int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
     struct instruction i;
     while (f->in(in, &i, ud) > 0) {
         // TODO stop assuming addresses are contiguous and monotonic
-        dispatch_op(sud, OP_WRITE, load_address++, &i.u.word);
+        if (dispatch_op(sud, OP_WRITE, load_address++, &i.u.word))
+            return -1;
     }
 
     if (f->fini)

@@ -1,254 +1,131 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(clk, en, rwZ, indexZ, valueZ, indexX, valueX, indexY, valueY, pc, rwP);
+module Reg(input clk, en, rwZ, input[3:0] indexZ, indexX, indexY,
+           inout[31:0] valueZ, output[31:0] valueX, valueY, input[31:0] pc);
 
-    input clk;
-    input rwZ;
-    input en;
-    input[3:0] indexZ, indexX, indexY;
-    inout [31:0] valueZ; // Z is RW
-    output[31:0] valueX; // X is RO
-    output[31:0] valueY; // Y is RO
-    inout[31:0] pc;
-    input rwP;
+    reg[31:0] store[1:14];
 
-    //(* KEEP = "TRUE" *)
-    reg[31:0] store[0:15]
-`ifndef SIM
-        = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,`RESETVECTOR }
-`endif
-        ;
+    wire ZisP =  &indexZ, XisP =  &indexX, YisP =  &indexY;
+    wire Zis0 = ~|indexZ, Xis0 = ~|indexX, Yis0 = ~|indexY;
 
-`ifdef SIM
-    generate
-        genvar i;
-        for (i = 0; i < 15; i = i + 1) // P is set externally
-            initial begin:setup
-                #0 store[i] = 32'b0;
-            end
-    endgenerate
-`endif
+    assign valueZ = ~en ? 'bz : rwZ ? 32'bz : Zis0 ? 0 : ZisP ? pc + 1 : store[indexZ];
+    assign valueX = ~en ? 'bz :               Xis0 ? 0 : XisP ? pc + 1 : store[indexX];
+    assign valueY = ~en ? 'bz :               Yis0 ? 0 : YisP ? pc + 1 : store[indexY];
 
-    wire ZisP = indexZ == 15;
-    wire XisP = indexX == 15;
-    wire YisP = indexY == 15;
-
-    assign pc     = rwP ? 32'bz : store[15];
-    wire[31:0] pcp1 = pc + 1;
-    assign valueZ = rwZ ? 32'bz : (ZisP ? pcp1 : store[indexZ]);
-    assign valueX = XisP ? pcp1 : store[indexX];
-    assign valueY = YisP ? pcp1 : store[indexY];
-
-    always @(negedge clk) if (en) begin
-        if (rwP)
-            store[15] = pc;
-        if (rwZ) begin
-            if (indexZ == 0)
-                $display("wrote to zero register");
-            else begin
-                store[indexZ] = valueZ;
-            end
-        end
-    end
+    always @(negedge clk)
+        if (en && rwZ && !Zis0 && !ZisP)
+            store[indexZ] = valueZ;
 
 endmodule
 
-module Decode(input[31:0] insn, input en,
-              output[3:0] Z, output[3:0] X, output[3:0] Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output type, output illegal,
-              output valid);
+module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
+              output[3:0] op, output[1:0] deref, output type, illegal);
 
-    reg[3:0] rZ = 0, rX = 0, rY = 0, rop = 0;
-    reg[11:0] rI = 0;
-    reg[1:0] rderef = 0;
-    reg rtype = 0, rillegal = 0, rvalid = 0;
+    assign type     = insn[30];
+    assign deref    = insn[28 +: 2];
+    assign Z        = insn[24 +: 4];
+    assign X        = insn[20 +: 4];
+    assign Y        = insn[16 +: 4];
+    assign op       = insn[12 +: 4];
+    assign I        = insn[ 0 +:12];
+    assign illegal  = &insn;
 
-    assign valid = rvalid;
+endmodule
 
-    assign Z       = rvalid ? rZ       :  4'bx,
-           X       = rvalid ? rX       :  4'bx,
-           Y       = rvalid ? rY       :  4'bx,
-           I       = rvalid ? rI       : 12'bx,
-           op      = rvalid ? rop      :  4'bx,
-           deref   = rvalid ? rderef   :  2'bx,
-           type    = rvalid ? rtype    :  1'bx,
-           illegal = rvalid ? rillegal :  1'b0;
+module Exec(input clk, en, type, output reg[31:0] rhs,
+            input signed[31:0] X, Y, input signed[11:0] I, input[3:0] op);
 
-    always @(insn) if (en) begin
-        casez (insn[31:28])
-            4'b0???: begin
-                rderef <= insn[28 +: 2];
-                rtype  <= insn[30];
+    wire signed[31:0] J = { {20{I[11]}}, I };
+    wire signed[31:0] O = type ? J : Y;
+    wire signed[31:0] A = type ? Y : J;
 
-                rZ  <= insn[24 +: 4];
-                rX  <= insn[20 +: 4];
-                rY  <= insn[16 +: 4];
-                rop <= insn[12 +: 4];
-                rI  <= insn[ 0 +:12];
-                rvalid <= 1;
-                rillegal <= 0;
-            end
-            default: begin
-                casex (insn[31:28])
-                    4'b1111: begin
-                        rillegal <= 1;
-                        rvalid   <= 1; //&insn[27:0];
-                    end
-                    default: begin
-                        rillegal <= 0;
-                        rvalid   <= 0;
-                    end
-                endcase
-                //rillegal <= &insn[31:28];
-                rderef <= 2'bx;
-                rtype  <= 1'bx;
-
-                rZ  <=  4'bx;
-                rX  <=  4'bx;
-                rY  <=  4'bx;
-                rop <=  4'bx;
-                rI  <= 12'bx;
-            end
+    always @(negedge clk) if (en) begin
+        case (op)
+            4'b0000: rhs =  (X  |  O) + A;  // X bitwise or Y
+            4'b0001: rhs =  (X  &  O) + A;  // X bitwise and Y
+            4'b0010: rhs =  (X  +  O) + A;  // X add Y
+            4'b0011: rhs =  (X  *  O) + A;  // X multiply Y
+            4'b0100: rhs = 32'bx;           // reserved
+            4'b0101: rhs =  (X  << O) + A;  // X shift left Y
+            4'b0110: rhs = -(X  <  O) + A;  // X compare < Y
+            4'b0111: rhs = -(X  == O) + A;  // X compare == Y
+            4'b1000: rhs = -(X  >  O) + A;  // X compare > Y
+            4'b1001: rhs =  (X  &~ O) + A;  // X bitwise and complement Y
+            4'b1010: rhs =  (X  ^  O) + A;  // X bitwise xor Y
+            4'b1011: rhs =  (X  -  O) + A;  // X subtract Y
+            4'b1100: rhs =  (X  ^~ O) + A;  // X xor ones' complement Y
+            4'b1101: rhs =  (X  >> O) + A;  // X shift right logical Y
+            4'b1110: rhs = -(X  != O) + A;  // X compare <> Y
+            4'b1111: rhs = 32'bx;           // reserved
         endcase
     end
 
 endmodule
 
-module Exec(input clk, input en, output[31:0] rhs,
-            input[31:0] X, input[31:0] Y, input[11:0] I,
-            input[3:0] op, input type, input valid);
+module Core(input clk, input en, input reset_n, `HALTTYPE halt,
+            output reg[31:0] i_addr, input[31:0] i_data,
+            output mem_rw, output[31:0] d_addr, inout[31:0] d_data);
 
-    assign rhs = valid ? i_rhs : 32'b0;
-    reg[31:0] i_rhs = 0;
+    wire _en = en && reset_n;
 
-    wire[31:0] J = { {20{I[11]}}, I };
-    wire[31:0] O = (type == 0) ? Y : J;
-    wire[31:0] A = (type == 0) ? J : Y;
-
-    always @(negedge clk) if (en) begin
-        if (valid) begin
-            case (op)
-                4'b0000: i_rhs =  (X  |  O) + A; // X bitwise or Y
-                4'b0001: i_rhs =  (X  &  O) + A; // X bitwise and Y
-                4'b0010: i_rhs =  (X  +  O) + A; // X add Y
-                4'b0011: i_rhs =  (X  *  O) + A; // X multiply Y
-              //4'b0100:                         // reserved
-                4'b0101: i_rhs =  (X  << O) + A; // X shift left Y
-                4'b0110: i_rhs = -(X  <  O) + A; // X compare < Y
-                4'b0111: i_rhs = -(X  == O) + A; // X compare == Y
-                4'b1000: i_rhs = -(X  >  O) + A; // X compare > Y
-                4'b1001: i_rhs =  (X  &~ O) + A; // X bitwise and complement Y
-                4'b1010: i_rhs =  (X  ^  O) + A; // X bitwise xor Y
-                4'b1011: i_rhs =  (X  -  O) + A; // X subtract Y
-                4'b1100: i_rhs =  (X  ^ ~O) + A; // X xor ones' complement Y
-                4'b1101: i_rhs =  (X  >> O) + A; // X shift right logical Y
-                4'b1110: i_rhs = -(X  != O) + A; // X compare <> Y
-              //4'b1111:                         // reserved
-
-                default: i_rhs = 32'bx;
-            endcase
-        end else begin
-            i_rhs = 32'bx;
-        end
-    end
-
-endmodule
-
-module Core(clk0, clk90, clk180, clk270, en, insn_addr, insn_data, rw, norm_addr, norm_data, reset_n, halt);
-    input clk0, clk90, clk180, clk270;
-
-    input en;
-    output[31:0] insn_addr;
-    input[31:0] insn_data;
-    output rw;
-    output[31:0] norm_addr;
-    inout[31:0] norm_data;
-    input reset_n;
-
-    wire[31:0] rhs;
-    wire[1:0] deref;
-    wire reg_rw;
-
-    wire[3:0]  indexX, indexY, indexZ;
-    wire[31:0] valueX, valueY;
-
-    wire[31:0] deref_rhs, reg_valueZ, deref_lhs;
-    wire[31:0] valueZ = reg_rw ? deref_rhs : reg_valueZ;
-    wire[11:0] valueI;
-    wire[3:0] op;
     wire illegal, type;
-    reg insn_valid = 1; // XXX
-    reg manual_invalidate = 0;
-    wire decode_valid; // FIXME decode_valid never deasserts
-    wire state_valid = insn_valid && !manual_invalidate;
-    assign deref_rhs = (deref[0] && !rw) ? norm_data : rhs;
-    assign deref_lhs = (deref[1] && !rw) ? norm_data : reg_valueZ;
-    assign reg_valueZ = reg_rw ? valueZ : 32'bz;
+    wire[ 3:0] indexX, indexY, indexZ;
+    wire[31:0] valueX, valueY, rhs;
+    wire[11:0] valueI;
+    wire[ 3:0] op;
+    wire[ 1:0] deref;
 
-    `HALTTYPE halt;
-    reg rhalt = 0;
+    wire reg_rw     = ~deref[1];
+    wire jumping    = &indexZ  && reg_rw;
+    wire mem_active = !illegal && |deref;
+
+    wire[31:0] deref_rhs = (deref[0] && !mem_rw) ? d_data : rhs;
+    wire[31:0] mem_addr  = mem_active ? (deref[0] ? rhs : interZ) : 32'bz;
+    wire[31:0] mem_data  = mem_rw     ? (deref[0] ? interZ : rhs) : 32'b0;
+    wire[31:0] interZ    = reg_rw     ? deref_rhs : valueZ;
+    wire[31:0] valueZ    = reg_rw     ? interZ : 32'bz;
+
+    assign mem_rw = mem_active && deref[1];
+    assign d_addr = mem_active ? mem_addr  : 32'bz;
+    assign d_data = mem_rw     ? mem_data  : 32'bz;
+
+    reg [ 2:0] rcyc, rcycen;
+    wire[ 2:0] cyc = rcyc & rcycen;
+    reg rhalt;
     assign halt[`HALT_EXEC] = rhalt;
-    wire lhalt = |halt;
 
-    // [Z] <-  ...  -- deref == 10
-    //  Z  -> [...] -- deref == 11
-    wire mem_active = (state_valid && !illegal) ? |deref : 1'b0;
-    wire rw = mem_active ? deref[1] : 1'b0;
-    // TODO Find a safe place to use for default address
-    wire[31:0] mem_addr = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
-    wire[31:0] mem_data = rw         ? (deref[0] ? valueZ : rhs) : 32'b0;
-    assign norm_data = (rw && mem_active) ? mem_data : 32'bz;
-    assign norm_addr = mem_active ? mem_addr : 32'b0;
-    //  Z  <-  ...  -- deref == 00
-    //  Z  <- [...] -- deref == 01
-    assign reg_rw  = state_valid ? (~deref[1] && indexZ != 0) : 1'b0;
-    wire jumping = state_valid ? (indexZ == 15 && reg_rw)   : 1'b0 ;
-    reg[31:0] new_pc    = `RESETVECTOR,
-              next_pc   = `RESETVECTOR;
-    wire[31:0] pc = new_pc;
-
-    assign insn_addr = /*lhalt ? `RESETVECTOR :*/ pc; // TODO this means address `RESETVECTOR reads must be idempotent
-    wire[31:0] insn = state_valid ? insn_data : 32'b0;
-
-    // update PC on 270-degree phase, after Exec has had time to compute new P
-    always @(negedge clk270) if (en && state_valid) begin
+    always @(negedge clk) begin
         if (!reset_n) begin
-            new_pc  = `RESETVECTOR;
-            next_pc = `RESETVECTOR;
-        end else begin
-            next_pc = pc + 1;
-            if (/*lhalt ||*/ jumping)
-                new_pc = deref_lhs;
-            else
-                new_pc = next_pc;
+            i_addr <= `RESETVECTOR;
+            rhalt <= 1'b0;
+            rcyc <= 3'b1;
+            rcycen <= 3'b1;
+        end
+
+        if (_en) begin
+            rcyc <= {rcyc[1:0],rcyc[2]};
+            rcycen <= {rcycen[1:0],rcyc[2] & ~|halt};
+
+            case (cyc)
+                3'b010: rhalt <= rhalt | illegal;
+                3'b100: i_addr <= jumping ? valueZ : i_addr + 1;
+            endcase
         end
     end
 
-    // FIXME synchronous reset
-    always @(negedge clk0) if (en) begin
-        if (reset_n) begin
-            rhalt <= (rhalt | (insn_valid ? illegal : 1'b0));
-            //if (!lhalt && state_valid)
-                //manual_invalidate = illegal;
-        end
-    end
+    // Decode and register reads happen as soon as instruction is ready.
+    Decode decode(.insn(i_data), .op(op), .deref(deref), .illegal(illegal),
+                  .type(type), .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
-    // Decode happens as soon as instruction is ready. Reading registers also
-    // happens at this time.
-    Decode decode(.en(en && state_valid && reset_n), .insn(insn), .op(op), .deref(deref), .type(type),
-                  .valid(decode_valid), .illegal(illegal),
-                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
+    // Execution (arithmetic operation) happen the cyc after decode
+    Exec exec(.clk(clk), .en(_en & cyc[1]), .op(op), .type(type),
+              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI));
 
-    // Execution (arithmetic operation) happens on the 90deg of the clock.
-    Exec exec(.clk(clk90), .en(en && state_valid && reset_n), .op(op), .type(type), .rhs(rhs),
-              .X(valueX), .Y(valueY), .I(valueI),
-              .valid(state_valid));
-
-    // Registers and memory get written last, on the 270deg of the clock
-    Reg regs(.clk(clk270), .en(en && state_valid && reset_n), .pc(pc), .rwP(1'b1), .rwZ(reg_rw),
-             .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
-             .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
+    // Registers and memory get written last, the cyc after execution
+    Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
+             .en(_en & |cyc[2:1]),   .indexY(indexY), .valueY(valueY),
+             .rwZ(reg_rw & cyc[2]),  .indexZ(indexZ), .valueZ(valueZ));
 
 endmodule
 

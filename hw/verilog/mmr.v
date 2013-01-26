@@ -24,7 +24,7 @@ module mmr(clk, enable, rw, addr, data, reset_n, we, re, val);
 
     wire active = enable && addr == ADDR;
 
-    assign data = (active && !rw && RE) ? {'b0,store} : 'bz;
+    assign data = (active && !rw && RE) ? store : 'bz;
     assign val  = re ? store : 'bz;
 
     always @(negedge clk)

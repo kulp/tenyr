@@ -4,6 +4,7 @@
 
 // Performs B:C = B:C + D:E
 dw_add:
+  pushall(h,j,k)
   // Computes lower sum.
   h <- c + e
   
@@ -17,5 +18,6 @@ dw_add:
   b <- b + d
   c <- h
   
+  popall(h,j,k)
   ret
 
