@@ -26,11 +26,13 @@ CPPFLAGS += -I../../lib
 %.texe: %.to
 	$(TLD) -o$@ $^
 
+vpath %.coe ipcore_dir
 %.coe: %.texe
 	echo 'memory_initialization_radix = 16;' > $@
 	echo 'memory_initialization_vector =' >> $@
 	$(TAS) -d $< | $(TAS) -f text - | sed 's/^0x//' >> $@
 	echo ';' >> $@
+	mv $@ ipcore_dir
 
 vpath gen_%.tcl ipcore_dir
 vpath %.xco ipcore_dir
