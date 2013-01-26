@@ -28,6 +28,7 @@ int find_format_by_name(const void *_a, const void *_b);
 #define ASM_AS_CHAR     4
 #define ASM_NO_SUGAR    8
 #define ASM_VERBOSE    16
+#define ASM_QUIET      32
 
 // returns number of characters printed
 int print_disassembly(FILE *out, struct instruction *i, int flags);

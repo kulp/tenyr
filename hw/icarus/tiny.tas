@@ -1,13 +1,17 @@
-A <- A # this noop is necessary and should not be XXX
-B <- 0
+B <- 0x10
 
+loop:
 B <- B + 1
 C <- B * 2
+D <- [@array]
+C <- C - D
 
 A <- A
 
 D <- C
+D -> [@array]
 
-P <- 2
+P <- @loop
 
 illegal
+array: .word 0

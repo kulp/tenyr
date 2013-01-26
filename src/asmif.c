@@ -435,18 +435,26 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
     uint32_t reladdr = 0;
     while ((rc = f->in(in, &i, ud)) == 1) {
         int len = print_disassembly(out, &i, ASM_AS_INSN | flags);
-        fprintf(out, "%*s# ", 30 - len, "");
-        print_disassembly(out, &i, ASM_AS_DATA | flags);
-        fprintf(out, " ; ");
-        print_disassembly(out, &i, ASM_AS_CHAR | flags);
-        // TODO make i.reladdr correct so we can use that XXX hack
-        fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
+        if (!(flags & ASM_QUIET)) {
+            fprintf(out, "%*s# ", 30 - len, "");
+            print_disassembly(out, &i, ASM_AS_DATA | flags);
+            fprintf(out, " ; ");
+            print_disassembly(out, &i, ASM_AS_CHAR | flags);
+            // TODO make i.reladdr correct so we can use that XXX hack
+            fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
+        } else {
+            fputc('\n', out);
+            // This probably means we want line-oriented output
+            fflush(out);
+        }
     }
 
     rc = feof(in) ? 0 : -1;
 
     if (f->fini)
         rc = f->fini(in, &ud);
+
+    fflush(out);
 
     return rc;
 }

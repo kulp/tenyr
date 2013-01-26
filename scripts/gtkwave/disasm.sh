@@ -7,9 +7,9 @@ while read b ; do
     else
         # TODO rewrite to avoid having to start tas for every new line.
         # Currently we do this to avoid buffering problems.
-        out=$($tas -d -f text - <<<"$b")
+        out=$($tas --quiet --disassemble --format text - <<<$b | tr -s ' ' | sed 's/^ //')
         if [[ $? == 0 ]]; then
-            echo "$out" | cut -d'#' -f1 | tr -s ' ' | sed 's/^[[:space:]]*//'
+            echo "$out"
         else
             echo "BAD"
         fi

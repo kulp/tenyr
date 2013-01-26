@@ -11,12 +11,14 @@
 `define HALT_TENYR 0 // index of Tenyr module halt line
 `define HALT_EXEC 1 // index of exec module halt line
 `define HALT_SIM 2
+`define HALT_EXTERNAL_0 3
+`define HALT_EXTERNAL_1 4
 `define HALTBUSWIDTH `HALT_LAST + 1 // the number of devices supplying halt signals
 
 `ifdef SIM
     `define HALT_LAST `HALT_SIM
 `else
-    `define HALT_LAST `HALT_EXEC
+    `define HALT_LAST `HALT_EXTERNAL_1
 `endif
 
 `define HALTTYPE inout[`HALTBUSWIDTH-1:0]

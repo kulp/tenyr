@@ -10,7 +10,7 @@ module Top();
         if ($value$plusargs("LOAD=%s", filename))
             $tenyr_load(filename);
         $dumpvars;
-        #(32 * `CLOCKPERIOD) $finish;
+        #(64 * `CLOCKPERIOD) $finish;
     end
 endmodule
 
@@ -18,15 +18,17 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     reg reset_n = 0;
     reg rhalt = 1;
 
-    reg clk_core0   = 1,
-        clk_core90  = 0,
-        clk_core180 = 0,
-        clk_core270 = 0;
-    wire clk_datamem = clk_core180;
-    wire clk_insnmem = clk_core0;
+    reg  _clk_core = 1;
+    reg  en_core   = 0;
+    wire clk_core  = en_core & _clk_core;
+
+    // TODO proper data clock timing
+    wire clk_datamem = ~clk_core;
+    wire clk_insnmem = clk_core;
 
     always #(`CLOCKPERIOD / 2) begin
-        {clk_core270,clk_core180,clk_core90,clk_core0} = {clk_core180,clk_core90,clk_core0,clk_core270};
+        _clk_core = ~_clk_core;
+        en_core = ~rhalt;
     end
 
     wire[31:0] insn_addr, operand_addr, insn_data, out_data;
@@ -35,9 +37,15 @@ module Tenyr(output[7:0] seg, output[3:0] an);
 
     wire operand_rw;
 
-    // TODO currently can't come out of reset before coming out of halt
-    initial #(2 * `CLOCKPERIOD) rhalt = 0;
+    // rhalt and reset_n timing should be independent of each other, and
+    // do indeed appear to be so.
+    initial #(4 * `CLOCKPERIOD) rhalt = 0;
     initial #(3 * `CLOCKPERIOD) reset_n = 1;
+
+`ifdef DEMONSTRATE_HALT
+    initial #(21 * `CLOCKPERIOD) rhalt = 1;
+    initial #(23 * `CLOCKPERIOD) rhalt = 0;
+`endif
 
     wire[`HALTBUSWIDTH-1:0] halt;
     assign halt[`HALT_SIM] = rhalt;
@@ -60,9 +68,9 @@ module Tenyr(output[7:0] seg, output[3:0] an);
                   .data(operand_data), .seg(seg), .an(an));
 
     // TODO clkL
-    Core core(.clk0(clk_core0), .clk90(clk_core90), .clk180(clk_core180), .clk270(clk_core270),
-              .en(1'b1), .reset_n(reset_n), .rw(operand_rw),
-              .norm_addr(operand_addr), .norm_data(operand_data),
-              .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));
+    Core core(.clk(clk_core),
+              .en(1'b1), .reset_n(reset_n), .mem_rw(operand_rw),
+              .d_addr(operand_addr), .d_data(operand_data),
+              .i_addr(insn_addr)   , .i_data(insn_data), .halt(halt));
 endmodule
 

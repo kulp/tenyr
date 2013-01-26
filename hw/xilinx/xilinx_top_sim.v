@@ -15,9 +15,7 @@ module Top();
     assign halt[`HALT_SIM] = rhalt;
 
     Tenyr tenyr(.clk(clk),
-            `ifdef HACK
-            .reset_n(reset_n),
-            `endif
+            .reset(~reset_n),
             .halt(halt));
 endmodule
 
