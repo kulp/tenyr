@@ -90,7 +90,8 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     assign d_addr = mem_active ? mem_addr  : 32'bz;
     assign d_data = mem_rw     ? mem_data  : 32'bz;
 
-    reg[ 2:0] cyc;
+    reg [ 2:0] rcyc, rcycen;
+    wire[ 2:0] cyc = rcyc & rcycen;
     reg rhalt;
     assign halt[`HALT_EXEC] = rhalt;
 
@@ -98,11 +99,13 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
         if (!reset_n) begin
             i_addr <= `RESETVECTOR;
             rhalt <= 1'b0;
-            cyc <= 3'b1;
+            rcyc <= 3'b1;
+            rcycen <= 3'b1;
         end
 
         if (_en) begin
-            cyc <= {cyc[1:0],cyc[2] & ~|halt};
+            rcyc <= {rcyc[1:0],rcyc[2]};
+            rcycen <= {rcycen[1:0],rcyc[2] & ~|halt};
 
             case (cyc)
                 3'b010: if (reset_n) rhalt <= rhalt | illegal;
