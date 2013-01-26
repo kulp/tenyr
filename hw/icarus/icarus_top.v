@@ -70,7 +70,7 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     // TODO clkL
     Core core(.clk(clk_core),
               .en(1'b1), .reset_n(reset_n), .mem_rw(operand_rw),
-              .norm_addr(operand_addr), .norm_data(operand_data),
-              .insn_addr(insn_addr)   , .insn_data(insn_data), .halt(halt));
+              .d_addr(operand_addr), .d_data(operand_data),
+              .i_addr(insn_addr)   , .i_data(insn_data), .halt(halt));
 endmodule
 

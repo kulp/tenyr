@@ -64,14 +64,14 @@ module Exec(input clk, en, type, output reg[31:0] rhs,
 endmodule
 
 module Core(input clk, input en, input reset_n, `HALTTYPE halt,
-            output reg[31:0] insn_addr, input[31:0] insn_data,
-            output mem_rw, output[31:0] norm_addr, inout[31:0] norm_data);
+            output reg[31:0] i_addr, input[31:0] i_data,
+            output mem_rw, output[31:0] d_addr, inout[31:0] d_data);
 
     wire _en = en && reset_n;
 
     wire illegal, type;
     wire[ 3:0] indexX, indexY, indexZ;
-    wire[31:0] valueX, valueY, valueZ, rhs;
+    wire[31:0] valueX, valueY, rhs;
     wire[11:0] valueI;
     wire[ 3:0] op;
     wire[ 1:0] deref;
@@ -80,56 +80,49 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
     wire jumping    = &indexZ  && reg_rw;
     wire mem_active = !illegal && |deref;
 
-    wire[31:0] deref_rhs  = (deref[0] && !mem_rw) ? norm_data : rhs;
-    wire[31:0] mem_addr   = mem_active ? (deref[0] ? rhs : valueZ) : 32'b0;
-    wire[31:0] mem_data   = mem_rw     ? (deref[0] ? valueZ : rhs) : 32'b0;
-    wire[31:0] reg_valueZ = reg_rw     ? valueZ : 32'bz;
+    wire[31:0] deref_rhs = (deref[0] && !mem_rw) ? d_data : rhs;
+    wire[31:0] mem_addr  = mem_active ? (deref[0] ? rhs : interZ) : 32'bz;
+    wire[31:0] mem_data  = mem_rw     ? (deref[0] ? interZ : rhs) : 32'b0;
+    wire[31:0] interZ    = reg_rw     ? deref_rhs : valueZ;
+    wire[31:0] valueZ    = reg_rw     ? interZ : 32'bz;
 
-    assign valueZ    = reg_rw     ? deref_rhs : reg_valueZ;
-    assign norm_addr = mem_active ? mem_addr  : 32'b0; // TODO default addr ?
-    assign norm_data = mem_rw     ? mem_data  : 32'bz;
-    assign mem_rw    = mem_active && deref[1];
+    assign mem_rw = mem_active && deref[1];
+    assign d_addr = mem_active ? mem_addr  : 32'bz;
+    assign d_data = mem_rw     ? mem_data  : 32'bz;
 
-    reg[ 2:0] cycle_state;
+    reg[ 2:0] cyc;
     reg rhalt;
     assign halt[`HALT_EXEC] = rhalt;
 
     always @(negedge clk) begin
         if (!reset_n) begin
-            insn_addr <= `RESETVECTOR;
+            i_addr <= `RESETVECTOR;
             rhalt <= 1'b0;
-            cycle_state <= 3'b1;
+            cyc <= 3'b1;
         end
 
-        if (_en)
-            cycle_state <= {cycle_state[1:0],cycle_state[2] & ~|halt};
+        if (_en) begin
+            cyc <= {cyc[1:0],cyc[2] & ~|halt};
 
-        case (cycle_state)
-            3'b010: begin
-                if (_en && reset_n)
-                    rhalt <= rhalt | illegal;
-            end
-            3'b100: begin
-                if (_en && ~|halt)
-                    insn_addr <= jumping ? reg_valueZ : insn_addr + 1;
-            end
-        endcase
+            case (cyc)
+                3'b010: if (reset_n) rhalt <= rhalt | illegal;
+                3'b100: if (~|halt) i_addr <= jumping ? valueZ : i_addr + 1;
+            endcase
+        end
     end
 
-    // Decode happens as soon as instruction is ready. Reading registers also
-    // happens at this time.
-    Decode decode(.insn(insn_data), .op(op), .deref(deref), .type(type),
-                  .illegal(illegal),
-                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
+    // Decode and register reads happen as soon as instruction is ready.
+    Decode decode(.insn(i_data), .op(op), .deref(deref), .illegal(illegal),
+                  .type(type), .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
 
-    // Execution (arithmetic operation) happen the cycle after decode
-    Exec exec(.clk(clk), .en(_en & cycle_state[1]), .op(op), .type(type),
+    // Execution (arithmetic operation) happen the cyc after decode
+    Exec exec(.clk(clk), .en(_en & cyc[1]), .op(op), .type(type),
               .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI));
 
-    // Registers and memory get written last, the cycle after execution
-    Reg regs(.clk(clk), .en(_en), .pc(insn_addr), .rwZ(reg_rw & cycle_state[2]),
-             .indexX(indexX), .indexY(indexY), .indexZ(indexZ),
-             .valueX(valueX), .valueY(valueY), .valueZ(reg_valueZ));
+    // Registers and memory get written last, the cyc after execution
+    Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
+             .en(_en & |cyc[2:1]),   .indexY(indexY), .valueY(valueY),
+             .rwZ(reg_rw & cyc[2]),  .indexZ(indexZ), .valueZ(valueZ));
 
 endmodule
 
