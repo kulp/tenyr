@@ -14,6 +14,10 @@ _start:
     f <- p - .          // base pointer
     c <- 1              // argument
     o <- 1023           // stack pointer
+
+    call(init_display)
+    call(disable_cursor)
+
 loop:
     push(c)
     call(fib)
@@ -53,20 +57,41 @@ _recurse:
 say:
     h <- 0x100
     h <- h << 8         // h is video base
-    k <- 0x30           // k is offset into display (32)
+    k <- 0x20           // k is offset into display (32)
     i <- rel(hexes)     // i is base of hex transform
 
 sayloop:
-    m <- h + k          // m is (k - 16) characters past start of text region
-    l <- c == 0         // shall we loop ?
-    jnzrel(l,saydone)
+    m <- h + k + 0x10   // m is k characters past start of text region
     j <- [c & 0xf + i]  // j is character for bottom 4 bits of c
     [m] <- j            // write character to display
     k <- k - 1          // go to the left one character
     c <- c >> 4         // shift down for next iteration
-    goto(sayloop)
+    l <- c == 0         // shall we loop ?
+    jzrel(l,sayloop)
 
 saydone:
+    ret
+
+init_display:
+    h <- 0x100
+    h <- h << 8         // h is video base
+    k <- 0              // k is offset into text region
+
+init_display_loop:
+    m <- h + k + 0x10   // m is k characters past start of text region
+    [m] <- ' '          // write space to display
+    k <- k + 1          // go to the right one character
+    l <- k > 0x20       // shall we loop ?
+    jzrel(l,init_display_loop)
+
+init_display_done:
+    ret
+
+disable_cursor:
+    h <- 0x100
+    g <- [h << 8]
+    g <- g &~ (1 << 6)  // unset cursor-enable bit
+    g -> [h << 8]
     ret
 
 hexes:
