@@ -1,15 +1,9 @@
-
 NET "clk" TNM_NET = "clk";
 NET "clocks/in" LOC = V10;
-#NET "txd" LOC = N18;
-#NET "rxd" LOC = N17;
-#NET "vga/clk25MHz" TNM_NET = vga/clk25MHz;
-#TIMESPEC TS_vga_clk25MHz = PERIOD "vga/clk25MHz" 25 MHz HIGH 50%;
-#TIMESPEC TS_clk = PERIOD "clk" 10 MHz HIGH 50%;
-#Created by Constraints Editor (xc6slx16-csg324-3) - 2012/06/20
-TIMESPEC TS_clk = PERIOD "clk" 100 MHz HIGH 50 %;
 
-# PlanAhead Generated physical constraints 
+NET "vga/clk25MHz" TNM_NET = vga/clk25MHz;
+TIMESPEC TS_vga_clk25MHz = PERIOD "vga/clk25MHz" 25 MHz HIGH 50%;
+TIMESPEC TS_clk = PERIOD "clk" 100 MHz HIGH 50%;
 
 NET "halt[3]" LOC = C9;
 NET "halt[4]" LOC = T10;
