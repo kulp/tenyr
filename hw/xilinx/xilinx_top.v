@@ -41,8 +41,6 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
     tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .valid(phases_valid), .in(clk),
                            .clk_core0(clk_core), .clk_core0_CE(phases_valid),
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
-    wire clk_datamem = clk_core;
-    wire clk_insnmem = clk_core;
 
     assign halt[`HALT_TENYR] = ~phases_valid;
     wire reset_n = phases_valid;
@@ -50,17 +48,16 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
 
     // TODO pull out constant or pull out RAM
     wire ram_inrange = operand_addr < 1024;
-    // active on posedge clock
-    GenedBlockMem ram(.clka(~clk_datamem),
+    GenedBlockMem ram(.clka(clk_core),
                       .ena(ram_inrange), .wea(operand_rw), .addra(operand_addr),
                       .dina(in_data), .douta(out_data),
-                      .clkb(~clk_insnmem),
+                      .clkb(clk_core),
                       /*.enb(1'b1),*/ .web(1'b0), .addrb(insn_addr),
                       .dinb(32'bx), .doutb(insn_data));
 
 `ifdef SEG7
     Seg7 #(.BASE(12'h100))
-             seg7(.clk(clk_datamem), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
+             seg7(.clk(clk_core), .reset_n(reset_n), .enable(1'b1), // XXX use halt ?
                   .rw(operand_rw), .addr(operand_addr),
                   .data(operand_data), .seg(seg), .an(an));
 `endif
@@ -78,17 +75,17 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
     wire[7:0] vga_ctl;
 
     mmr #(.ADDR(`VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11110111))
-        video_ctl(.clk(clk_datamem), .reset_n(reset_n), .enable(1),
+        video_ctl(.clk(clk_core), .reset_n(reset_n), .enable(1),
                   .rw(operand_rw), .addr(operand_addr), .data(operand_data),
                   .re(1), .we(0), .val(vga_ctl));
 
     mmr #(.ADDR(`VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(1))
-        crx_mmr(.clk(clk_datamem), .reset_n(reset_n), .enable(1),
+        crx_mmr(.clk(clk_core), .reset_n(reset_n), .enable(1),
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
                 .re(1), .we(0), .val(crx));
 
     mmr #(.ADDR(`VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(0))
-        cry_mmr(.clk(clk_datamem), .reset_n(reset_n), .enable(1),
+        cry_mmr(.clk(clk_core), .reset_n(reset_n), .enable(1),
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
                 .re(1), .we(0), .val(cry));
 
@@ -128,7 +125,7 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
         .web   ('b0),
         .doutb (nonce_doutb)
 `else
-        .clkb  (clk_datamem),
+        .clkb  (clk_core),
         .dinb  (operand_data),
         .addrb (operand_addr),
         .web   (operand_rw),
