@@ -33,41 +33,32 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
 
 endmodule
 
-module Exec(input clk, en, type, valid, output signed[31:0] rhs,
+module Exec(input clk, en, type, output reg[31:0] rhs,
             input signed[31:0] X, Y, input signed[11:0] I, input[3:0] op);
 
-    assign rhs = valid ? i_rhs : 32'b0;
-    reg signed[31:0] i_rhs;
-
     wire signed[31:0] J = { {20{I[11]}}, I };
-    wire signed[31:0] O = (type == 0) ? Y : J;
-    wire signed[31:0] A = (type == 0) ? J : Y;
+    wire signed[31:0] O = type ? J : Y;
+    wire signed[31:0] A = type ? Y : J;
 
     always @(negedge clk) if (en) begin
-        if (valid) begin
-            case (op)
-                4'b0000: i_rhs =  (X  |  O) + A; // X bitwise or Y
-                4'b0001: i_rhs =  (X  &  O) + A; // X bitwise and Y
-                4'b0010: i_rhs =  (X  +  O) + A; // X add Y
-                4'b0011: i_rhs =  (X  *  O) + A; // X multiply Y
-              //4'b0100:                         // reserved
-                4'b0101: i_rhs =  (X  << O) + A; // X shift left Y
-                4'b0110: i_rhs = -(X  <  O) + A; // X compare < Y
-                4'b0111: i_rhs = -(X  == O) + A; // X compare == Y
-                4'b1000: i_rhs = -(X  >  O) + A; // X compare > Y
-                4'b1001: i_rhs =  (X  &~ O) + A; // X bitwise and complement Y
-                4'b1010: i_rhs =  (X  ^  O) + A; // X bitwise xor Y
-                4'b1011: i_rhs =  (X  -  O) + A; // X subtract Y
-                4'b1100: i_rhs =  (X  ^~ O) + A; // X xor ones' complement Y
-                4'b1101: i_rhs =  (X  >> O) + A; // X shift right logical Y
-                4'b1110: i_rhs = -(X  != O) + A; // X compare <> Y
-              //4'b1111:                         // reserved
-
-                default: i_rhs = 32'bx;
-            endcase
-        end else begin
-            i_rhs = 32'bx;
-        end
+        case (op)
+            4'b0000: rhs =  (X  |  O) + A;  // X bitwise or Y
+            4'b0001: rhs =  (X  &  O) + A;  // X bitwise and Y
+            4'b0010: rhs =  (X  +  O) + A;  // X add Y
+            4'b0011: rhs =  (X  *  O) + A;  // X multiply Y
+            4'b0100: rhs = 32'bx;           // reserved
+            4'b0101: rhs =  (X  << O) + A;  // X shift left Y
+            4'b0110: rhs = -(X  <  O) + A;  // X compare < Y
+            4'b0111: rhs = -(X  == O) + A;  // X compare == Y
+            4'b1000: rhs = -(X  >  O) + A;  // X compare > Y
+            4'b1001: rhs =  (X  &~ O) + A;  // X bitwise and complement Y
+            4'b1010: rhs =  (X  ^  O) + A;  // X bitwise xor Y
+            4'b1011: rhs =  (X  -  O) + A;  // X subtract Y
+            4'b1100: rhs =  (X  ^~ O) + A;  // X xor ones' complement Y
+            4'b1101: rhs =  (X  >> O) + A;  // X shift right logical Y
+            4'b1110: rhs = -(X  != O) + A;  // X compare <> Y
+            4'b1111: rhs = 32'bx;           // reserved
+        endcase
     end
 
 endmodule
@@ -133,8 +124,7 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
 
     // Execution (arithmetic operation) happen the cycle after decode
     Exec exec(.clk(clk), .en(_en & cycle_state[1]), .op(op), .type(type),
-              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI), .valid(1'b1));
-              // TODO only execute when "valid" (what means it ?)
+              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI));
 
     // Registers and memory get written last, the cycle after execution
     Reg regs(.clk(clk), .en(_en), .pc(insn_addr), .rwZ(reg_rw & cycle_state[2]),
