@@ -6,8 +6,13 @@
 
 #include "common.th"
 
+#define bare_metal_init() \
+    b <- a ; c <- a ; d <- a ; e <- a ; f <- a ; g <- a ; h <- a ; \
+    i <- a ; j <- a ; k <- a ; l <- a ; m <- a ; n <- a ; o <- a ; \
+    //
+
 _start:
-    f <- p - .          // base pointer
+    bare_metal_init()   // TODO this shouldn't be necessary
     c <- 1              // argument
     o <- 1023           // stack pointer
 
