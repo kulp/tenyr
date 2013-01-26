@@ -38,7 +38,7 @@ module Tenyr(halt, clk, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsy
     wire phases_valid;
 
     wire clk_vga, clk_core;
-    tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .valid(phases_valid), .in(clk),
+    tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid), .in(clk),
                            .clk_core0(clk_core), .clk_core0_CE(phases_valid),
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
 
