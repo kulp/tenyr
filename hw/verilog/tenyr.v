@@ -124,7 +124,7 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
 
     // Registers and memory get written last, the cyc after execution
     Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
-             .en(_en & |cyc[2:1]),   .indexY(indexY), .valueY(valueY),
+             .en(_en),               .indexY(indexY), .valueY(valueY),
              .rwZ(reg_rw & cyc[2]),  .indexZ(indexZ), .valueZ(valueZ));
 
 endmodule
