@@ -108,8 +108,8 @@ module Core(input clk, input en, input reset_n, `HALTTYPE halt,
             rcycen <= {rcycen[1:0],rcyc[2] & ~|halt};
 
             case (cyc)
-                3'b010: if (reset_n) rhalt <= rhalt | illegal;
-                3'b100: if (~|halt) i_addr <= jumping ? valueZ : i_addr + 1;
+                3'b010: rhalt <= rhalt | illegal;
+                3'b100: i_addr <= jumping ? valueZ : i_addr + 1;
             endcase
         end
     end
