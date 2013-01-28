@@ -1,0 +1,206 @@
+#include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "SDL.h"
+#include "SDL_image.h"
+
+#include "common.h"
+#include "device.h"
+#include "sim.h"
+
+#define SDLLED_BASE (0x100)
+
+#define DIGIT_COUNT     4
+#define DIGIT_WIDTH     38
+#define DOT_WIDTH       6
+#define DIGIT_HEIGHT    64
+#define RESOURCE_DIR    "rsrc"
+
+struct sdlled_state {
+    uint32_t data[2];
+    SDL_Surface *screen;
+    enum { RUNNING, STOPPING, STOPPED } status;
+    SDL_Surface *digits[16];
+    SDL_Surface *dots[2];
+};
+
+static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
+{
+    SDL_Rect src = { .w = DIGIT_WIDTH, .h = DIGIT_HEIGHT },
+             dst = {
+                 .x = index * (DIGIT_WIDTH + DOT_WIDTH),
+                 .w = DIGIT_WIDTH,
+                 .h = DIGIT_HEIGHT
+             };
+
+    if (digit > 15)
+        return -1;
+
+    SDL_Surface *num = state->digits[digit];
+    if (!num) {
+        char filename[1024];
+        snprintf(filename, sizeof filename, RESOURCE_DIR "/%d/%c.png",
+                DIGIT_HEIGHT, "0123456789ABCDEF"[digit]);
+
+        num = state->digits[digit] = IMG_Load(filename);
+    }
+
+    SDL_BlitSurface(num, &src, state->screen, &dst);
+    SDL_UpdateRect(state->screen, dst.x, dst.y, dst.w, dst.h);
+
+    return 0;
+}
+
+static int put_dot(struct sdlled_state *state, unsigned index, unsigned on)
+{
+    SDL_Rect src = { .w = DOT_WIDTH, .h = DIGIT_HEIGHT },
+             dst = {
+                 .x = (index + 1) * DIGIT_WIDTH + index * DOT_WIDTH,
+                 .w = DOT_WIDTH,
+                 .h = DIGIT_HEIGHT
+             };
+
+    SDL_Surface *dot = state->dots[on];
+    if (!dot) {
+        char filename[1024];
+        snprintf(filename, sizeof filename, RESOURCE_DIR "/%d/dot_%s.png",
+                DIGIT_HEIGHT, on ? "on" : "off");
+
+        dot = state->dots[on] = IMG_Load(filename);
+    }
+
+    SDL_BlitSurface(dot, &src, state->screen, &dst);
+    SDL_UpdateRect(state->screen, dst.x, dst.y, dst.w, dst.h);
+
+    return 0;
+}
+
+static void decode_led(uint32_t data, int digits[4])
+{
+    for (unsigned i = 0; i < 4; i++)
+        digits[i] = (data >> (i * 4)) & 0xf;
+}
+
+static void decode_dots(uint32_t data, int dots[4])
+{
+    for (unsigned i = 0; i < 4; i++)
+        dots[i] = (data >> i) & 1;
+}
+
+static int sdlled_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
+{
+    struct sdlled_state *state = *(void**)cookie;
+
+    if (!state)
+        state = *(void**)cookie = malloc(sizeof *state);
+
+    *state = (struct sdlled_state){ .status = RUNNING };
+
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+        fatal(0, "Unable to init SDL: %s", SDL_GetError());
+
+    if (!(state->screen = SDL_SetVideoMode(
+                    DIGIT_COUNT * (DIGIT_WIDTH + DOT_WIDTH),
+                    DIGIT_HEIGHT, 16, SDL_SWSURFACE)))
+        fatal(0, "Unable to set up LED surface : %s", SDL_GetError());
+
+    int flags = IMG_INIT_PNG;
+    if (IMG_Init(flags) != flags)
+        fatal(0, "sdlled failed to initialise SDL_Image");
+
+    return 0;
+}
+
+static int sdlled_fini(void *cookie)
+{
+    struct sdlled_state *state = cookie;
+
+    for (unsigned i = 0; i < 16; i++)
+        SDL_FreeSurface(state->digits[i]);
+
+    SDL_FreeSurface(state->dots[0]);
+    SDL_FreeSurface(state->dots[1]);
+
+    SDL_FreeSurface(state->screen);
+    free(state);
+    // Can't immediately call SDL_Quit() in case others are using it
+    atexit(SDL_Quit);
+    atexit(IMG_Quit);
+
+    return 0;
+}
+
+static int handle_update(struct sdlled_state *state)
+{
+    int digits[4];
+    int dots[4];
+
+    decode_led(state->data[0], digits);
+    decode_dots(state->data[1], dots);
+
+    debug(5, "sdlled : %x%c%x%c%x%c%x%c\n",
+             digits[3], dots[3] ? '.' : ' ',
+             digits[2], dots[2] ? '.' : ' ',
+             digits[1], dots[1] ? '.' : ' ',
+             digits[0], dots[0] ? '.' : ' ');
+
+    for (unsigned i = 0; i < 4; i++) {
+        put_digit(state, i, digits[3 - i]);
+        put_dot(state, i, dots[3 - i]);
+    }
+
+    return 0;
+}
+
+static int sdlled_op(void *cookie, int op, uint32_t addr, uint32_t *data)
+{
+    struct sdlled_state *state = cookie;
+
+    if (op == OP_WRITE) {
+        state->data[addr - SDLLED_BASE] = *data;
+        handle_update(state);
+    } else if (op == OP_READ) {
+        *data = state->data[addr - SDLLED_BASE];
+    }
+
+    return 0;
+}
+
+static int sdlled_pump(void *cookie)
+{
+    struct sdlled_state *state = cookie;
+
+    SDL_Event event;
+    if (state->status == RUNNING) {
+        if (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    state->status = STOPPED;
+                    debug(0, "sdlled requested quit");
+                    exit(0);
+                default:
+                    break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int sdlled_add_device(struct device **device)
+{
+    **device = (struct device){
+        .bounds = { SDLLED_BASE, SDLLED_BASE + 1 },
+        .ops = {
+            .op = sdlled_op,
+            .init = sdlled_init,
+            .fini = sdlled_fini,
+            .cycle = sdlled_pump,
+        },
+    };
+
+    return 0;
+}
+
