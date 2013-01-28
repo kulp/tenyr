@@ -38,27 +38,28 @@ module Exec(input clk, en, type, output reg[31:0] rhs,
 
     wire signed[31:0] J = { {20{I[11]}}, I };
     wire signed[31:0] O = type ? J : Y;
-    wire signed[31:0] A = type ? Y : J;
 
     always @(negedge clk) if (en) begin
         case (op)
-            4'b0000: rhs =  (X  |  O) + A;  // X bitwise or Y
-            4'b0001: rhs =  (X  &  O) + A;  // X bitwise and Y
-            4'b0010: rhs =  (X  +  O) + A;  // X add Y
-            4'b0011: rhs =  (X  *  O) + A;  // X multiply Y
-            4'b0100: rhs = 32'bx;           // reserved
-            4'b0101: rhs =  (X  << O) + A;  // X shift left Y
-            4'b0110: rhs = -(X  <  O) + A;  // X compare < Y
-            4'b0111: rhs = -(X  == O) + A;  // X compare == Y
-            4'b1000: rhs = -(X  >  O) + A;  // X compare > Y
-            4'b1001: rhs =  (X  &~ O) + A;  // X bitwise and complement Y
-            4'b1010: rhs =  (X  ^  O) + A;  // X bitwise xor Y
-            4'b1011: rhs =  (X  -  O) + A;  // X subtract Y
-            4'b1100: rhs =  (X  ^~ O) + A;  // X xor ones' complement Y
-            4'b1101: rhs =  (X  >> O) + A;  // X shift right logical Y
-            4'b1110: rhs = -(X  != O) + A;  // X compare <> Y
-            4'b1111: rhs = 32'bx;           // reserved
+            4'b0000: rhs =  (X  |  O);  // X bitwise or Y
+            4'b0001: rhs =  (X  &  O);  // X bitwise and Y
+            4'b0010: rhs =  (X  +  O);  // X add Y
+            4'b0011: rhs =  (X  *  O);  // X multiply Y
+            4'b0100: rhs = 32'bx;       // reserved
+            4'b0101: rhs =  (X  << O);  // X shift left Y
+            4'b0110: rhs = -(X  <  O);  // X compare < Y
+            4'b0111: rhs = -(X  == O);  // X compare == Y
+            4'b1000: rhs = -(X  >  O);  // X compare > Y
+            4'b1001: rhs =  (X  &~ O);  // X bitwise and complement Y
+            4'b1010: rhs =  (X  ^  O);  // X bitwise xor Y
+            4'b1011: rhs =  (X  -  O);  // X subtract Y
+            4'b1100: rhs =  (X  ^~ O);  // X xor ones' complement Y
+            4'b1101: rhs =  (X  >> O);  // X shift right logical Y
+            4'b1110: rhs = -(X  != O);  // X compare <> Y
+            4'b1111: rhs = 32'bx;       // reserved
         endcase
+
+        rhs = rhs + (type ? Y : J);
     end
 
 endmodule
