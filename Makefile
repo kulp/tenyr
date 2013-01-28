@@ -54,7 +54,7 @@ DEVICES = ram sparseram debugwrap serial spi
 ifneq ($(SDL),0)
 DEFINES += TSIM_SDL_ENABLED
 CPPFLAGS += $(shell sdl-config --cflags)
-DEVICES += sdlled
+DEVICES += sdlvga sdlled
 LDLIBS += -lsdl
 tsim.o: CPPFLAGS += -include SDL.h
 tsim: LDLIBS += $(shell sdl-config --libs) -lSDL_image

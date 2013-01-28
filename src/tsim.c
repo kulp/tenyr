@@ -17,6 +17,7 @@
 
 #if TSIM_SDL_ENABLED
 #define SDL_RECIPES(_) \
+    _(sdlvga  , "enable SDL VGA emulation") \
     _(sdlled  , "enable SDL 7-segment display emulation") \
     //
 #else
@@ -192,6 +193,14 @@ static int recipe_serial(struct sim_state *s)
 }
 
 #if TSIM_SDL_ENABLED
+static int recipe_sdlvga(struct sim_state *s)
+{
+    int sdlvga_add_device(struct device **device);
+    int index = next_device(s);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    return sdlvga_add_device(&s->machine.devices[index]);
+}
+
 static int recipe_sdlled(struct sim_state *s)
 {
     int sdlled_add_device(struct device **device);
