@@ -1,7 +1,7 @@
 -- Hi Emacs, this is -*- mode: vhdl; -*-
 ----------------------------------------------------------------------------------------------------
 --
--- Up Syncronous counter of N bits with a/syncronous reset
+-- Up Syncronous counter of N bits with syncronous reset
 --
 -- Copyright (c) 2007 Javier Valcarce García, javier.valcarce@gmail.com
 -- $Id$
@@ -47,11 +47,10 @@ begin
 
   process(reset, clk)
   begin
-    if reset = '1' then
-      c <= 0;
-      
-    elsif rising_edge(clk) then
-      if ce = '1' then
+    if rising_edge(clk) then
+      if reset = '1' then
+        c <= 0;
+      elsif ce = '1' then
         if rs = '1' then
           c <= 0;
         else
