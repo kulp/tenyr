@@ -1,6 +1,6 @@
 TOP ?= .
 
-CC ?= $(CROSS_COMPILE)gcc
+CC = $(CROSS_COMPILE)gcc
 
 ifndef NDEBUG
  CFLAGS  += -g
@@ -113,7 +113,7 @@ $(GENDIR):
 .PHONY: install upload
 INSTALL_STEM ?= .
 INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(shell $(CC) -dumpmachine)
-install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install -d $(INSTALL_DIR)
 	install $^ $(INSTALL_DIR)
 
