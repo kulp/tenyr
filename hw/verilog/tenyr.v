@@ -64,7 +64,7 @@ module Exec(input clk, en, type, output reg[31:0] rhs,
 
 endmodule
 
-module Core(input clk, input en, input reset_n, `HALTTYPE halt,
+module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
             output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, output[31:0] d_addr, inout[31:0] d_data);
 

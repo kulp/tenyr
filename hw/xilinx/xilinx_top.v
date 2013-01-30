@@ -6,33 +6,22 @@
 `endif
 `define SEG7
 
-module Tenyr(halt, clk, reset, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync, Led);
+module Tenyr(input clk, halt, reset,
+             output[7:0] Led, output[7:0] seg, output[3:0] an,
+             output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue,
+             output hsync, vsync);
 
     wire[31:0] insn_addr, operand_addr;
     wire[31:0] insn_data, in_data, out_data, operand_data;
     wire operand_rw;
 
-    input clk /* synthesis .ispad = 1 */;
+    wire `HALTTYPE ihalt;
 
-    `HALTTYPE halt;
-    input rxd;
-    output txd;
-    input reset;
-
-    output[2:0] vgaRed;
-    output[2:0] vgaGreen;
-    output[2:1] vgaBlue;
     assign vgaRed[1:0] = {2{vgaRed[2]}};
     assign vgaGreen[1:0] = {2{vgaGreen[2]}};
     assign vgaBlue[1] = {1{vgaBlue[2]}};
 
-    output hsync, vsync;
-
-    output[7:0] seg;
-    output[3:0] an;
-
-    output[7:0] Led;
-    assign Led[7:3] = 5'b00000;
+    assign Led[7:`HALTBUSWIDTH] = 5'b00000;
 
     assign in_data      =  operand_rw ? operand_data : 32'bx;
     assign operand_data = !operand_rw ?     out_data : 32'bz;
@@ -44,9 +33,13 @@ module Tenyr(halt, clk, reset, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsy
                            .clk_core0(clk_core), .clk_core0_CE(phases_valid),
                            .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
 
-    assign halt[`HALT_TENYR] = ~phases_valid;
+`ifdef SIM
+    assign ihalt[`HALT_SIM] = 0;
+`endif
+    assign ihalt[`HALT_TENYR] = ~phases_valid;
+    assign ihalt[`HALT_EXTERNAL] = halt;
     wire _reset_n = phases_valid & ~reset;
-    assign Led[2:0] = halt;
+    assign Led[`HALT_LAST:0] = ihalt;
 
     // TODO pull out constant or pull out RAM
     wire ram_inrange = operand_addr < 1024;
@@ -68,7 +61,7 @@ module Tenyr(halt, clk, reset, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsy
               .en(phases_valid),
               .reset_n(_reset_n), .mem_rw(operand_rw),
               .d_addr(operand_addr), .d_data(operand_data),
-              .i_addr(insn_addr)   , .i_data(insn_data), .halt(halt));
+              .i_addr(insn_addr)   , .i_data(insn_data), .halt(ihalt));
 
 `ifdef VGA
 

@@ -47,9 +47,10 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     initial #(23 * `CLOCKPERIOD) rhalt = 0;
 `endif
 
-    wire[`HALTBUSWIDTH-1:0] halt;
+    wire `HALTTYPE halt;
     assign halt[`HALT_SIM] = rhalt;
     assign halt[`HALT_TENYR] = rhalt;
+    assign halt[`HALT_EXTERNAL] = 0;
 
     // active on posedge clock
     SimMem #(.BASE(`RESETVECTOR))

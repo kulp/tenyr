@@ -5,6 +5,5 @@ NET "vga/clk25MHz" TNM_NET = vga/clk25MHz;
 TIMESPEC TS_vga_clk25MHz = PERIOD "vga/clk25MHz" 25 MHz HIGH 50%;
 TIMESPEC TS_clk = PERIOD "clk" 100 MHz HIGH 50%;
 
-NET "halt[3]" LOC = C9;
-NET "halt[4]" LOC = T10;
+NET "halt" LOC = T10;
 NET "reset" LOC = A8;
