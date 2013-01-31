@@ -22,12 +22,12 @@
 *     devices, or systems.  Use in such applications are expressly             *
 *     prohibited.                                                              *
 *                                                                              *
-*     (c) Copyright 1995-2012 Xilinx, Inc.                                     *
+*     (c) Copyright 1995-2013 Xilinx, Inc.                                     *
 *     All rights reserved.                                                     *
 *******************************************************************************/
 
 /*******************************************************************************
-*     Generated from core with identifier: xilinx.com:ip:blk_mem_gen:6.3       *
+*     Generated from core with identifier: xilinx.com:ip:blk_mem_gen:7.3       *
 *                                                                              *
 *     The Xilinx LogiCORE IP Block Memory Generator replaces the Dual Port     *
 *     Block Memory and Single Port Block Memory LogiCOREs, but is not a        *
@@ -41,14 +41,6 @@
 *     between this core and the Dual Port Block Memory and Single Port         *
 *     Block Memory LogiCOREs, please consult the data sheet.                   *
 *******************************************************************************/
-
-// Interfaces:
-//    AXI_SLAVE_S_AXI
-//    AXILite_SLAVE_S_AXI
-//    BRAM_PORTA
-//        BRAM_PORTA
-//    BRAM_PORTB
-//        BRAM_PORTB
 
 // The following must be inserted into your Verilog file for this
 // core to be instantiated. Change the instance name and port connections
