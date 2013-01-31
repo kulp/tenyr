@@ -1,7 +1,7 @@
 ##############################################################
 #
-# Xilinx Core Generator version 13.4
-# Date: Sat Jan 26 20:34:44 2013
+# Xilinx Core Generator version 14.4
+# Date: Thu Jan 31 06:35:34 2013
 #
 ##############################################################
 #
@@ -12,7 +12,7 @@
 #
 ##############################################################
 #
-#  Generated from component: xilinx.com:ip:clk_wiz:3.3
+#  Generated from component: xilinx.com:ip:clk_wiz:3.6
 #
 ##############################################################
 #
@@ -36,7 +36,7 @@ SET verilogsim = true
 SET vhdlsim = false
 # END Project Options
 # BEGIN Select
-SELECT Clocking_Wizard xilinx.com:ip:clk_wiz:3.3
+SELECT Clocking_Wizard xilinx.com:ip:clk_wiz:3.6
 # END Select
 # BEGIN Parameters
 CSET calc_done=DONE
@@ -108,13 +108,13 @@ CSET daddr_port=DADDR
 CSET dclk_port=DCLK
 CSET dcm_clk_feedback=NONE
 CSET dcm_clk_out1_port=CLKFX
-CSET dcm_clk_out2_port=CLK90
-CSET dcm_clk_out3_port=CLK180
-CSET dcm_clk_out4_port=CLK270
-CSET dcm_clk_out5_port=CLKFX
+CSET dcm_clk_out2_port=CLKFX
+CSET dcm_clk_out3_port=CLK0
+CSET dcm_clk_out4_port=CLK0
+CSET dcm_clk_out5_port=CLK0
 CSET dcm_clk_out6_port=CLK0
 CSET dcm_clkdv_divide=2.0
-CSET dcm_clkfx_divide=16
+CSET dcm_clkfx_divide=2
 CSET dcm_clkfx_multiply=2
 CSET dcm_clkgen_clk_out1_port=CLKFX
 CSET dcm_clkgen_clk_out2_port=CLKFX
@@ -206,13 +206,13 @@ CSET pll_clkout0_phase=0.000
 CSET pll_clkout1_divide=18
 CSET pll_clkout1_duty_cycle=0.500
 CSET pll_clkout1_phase=0.000
-CSET pll_clkout2_divide=32
+CSET pll_clkout2_divide=1
 CSET pll_clkout2_duty_cycle=0.500
-CSET pll_clkout2_phase=180.000
-CSET pll_clkout3_divide=32
+CSET pll_clkout2_phase=0.000
+CSET pll_clkout3_divide=1
 CSET pll_clkout3_duty_cycle=0.500
-CSET pll_clkout3_phase=270.000
-CSET pll_clkout4_divide=16
+CSET pll_clkout3_phase=0.000
+CSET pll_clkout4_divide=1
 CSET pll_clkout4_duty_cycle=0.500
 CSET pll_clkout4_phase=0.000
 CSET pll_clkout5_divide=1
@@ -239,6 +239,8 @@ CSET secondary_in_freq=100.000
 CSET secondary_in_jitter=0.010
 CSET secondary_port=CLK_IN2
 CSET secondary_source=Single_ended_clock_capable_pin
+CSET ss_mod_freq=250
+CSET ss_mode=CENTER_HIGH
 CSET status_port=STATUS
 CSET summary_strings=empty
 CSET use_clk_valid=false
@@ -257,10 +259,11 @@ CSET use_phase_alignment=false
 CSET use_power_down=false
 CSET use_reset=true
 CSET use_spread_spectrum=false
+CSET use_spread_spectrum_1=false
 CSET use_status=false
 # END Parameters
 # BEGIN Extra information
-MISC pkg_timestamp=2011-06-09T17:33:40Z
+MISC pkg_timestamp=2012-05-10T12:44:55Z
 # END Extra information
 GENERATE
-# CRC: db8eea63
+# CRC: 6a612347
