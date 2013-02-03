@@ -141,7 +141,7 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         FILE *in, int load_address)
 {
-    void *ud;
+    void *ud = NULL;
     if (f->init)
         f->init(in, ASM_DISASSEMBLE, &ud);
 
