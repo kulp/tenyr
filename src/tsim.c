@@ -26,6 +26,7 @@
 
 #define RECIPES(_) \
     _(abort   , "abort() on illegal instruction or memory address") \
+    _(pause   , "wait for keystroke on illegal instruction or memory address, then exit") \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
@@ -109,6 +110,12 @@ static int usage(const char *me)
 static int recipe_abort(struct sim_state *s)
 {
     s->conf.abort = 1;
+    return 0;
+}
+
+static int recipe_pause(struct sim_state *s)
+{
+    s->conf.pause = 1;
     return 0;
 }
 

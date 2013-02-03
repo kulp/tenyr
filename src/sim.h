@@ -28,6 +28,7 @@ typedef int op_dispatcher(void *ud, int op, uint32_t addr, uint32_t *data);
 struct sim_state {
     struct {
         int abort;
+        int pause;
         int nowrap;
         int verbose;
         int run_defaults;   ///< whether to run default recipes
