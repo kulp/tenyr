@@ -23,6 +23,9 @@ _start:
     j <- 0              // multiplier (0 -> 0x26)
     k <- 0              // multiplicand (0 -> 0x12)
 
+    c <- 0b0100         // decimal point between J and K
+    c -> [0x101]
+
     // write the top row first
 loop_top:
     f <- 4              // field width
@@ -54,11 +57,8 @@ loop_k:
     c <- k < 0x13
     jnzrel(c,loop_k)
 
-    c <- j << 8
-    c <- c | k
-    c -> [0x100]        // write {J,K} to LEDs
-    c <- 0b0100         // decimal point between J and K
-    c -> [0x101]
+    c <- 0x100          // write {J,K} to LEDs
+    [c] <- j << 8 + k
 
     j <- j + 1          // increment N
     c <- j < 0x27
@@ -70,8 +70,7 @@ putnum:
     pushall(h,i,j,k,l,m)
     h <- 0x100
     h <- h << 8         // h is video base
-    k <- d * 80
-    k <- e + k          // k is offset into display
+    k <- d * 80 + e     // k is offset into display
     k <- k + f          // start at right side of field
     i <- rel(hexes)     // i is base of hex transform
 
@@ -81,8 +80,8 @@ putnumloop:
     [m] <- j            // write character to display
     k <- k - 1          // go to the left one character
     c <- c >> 4         // shift down for next iteration
-    l <- c == 0         // shall we loop ?
-    jzrel(l,putnumloop)
+    l <- c <> 0         // shall we loop ?
+    jnzrel(l,putnumloop)
 
 putnumdone:
     popall(h,i,j,k,l,m)
@@ -99,8 +98,8 @@ init_display_loop:
     m <- h + k + 0x10   // m is k characters past start of text region
     [m] <- ' '          // write space to display
     k <- k + 1          // go to the right one character
-    l <- k > 0x20       // shall we loop ?
-    jzrel(l,init_display_loop)
+    l <- k < 0x21       // shall we loop ?
+    jnzrel(l,init_display_loop)
 
 init_display_done:
     popall(h,k,l,m);
@@ -110,9 +109,9 @@ init_display_done:
 disable_cursor:
     pushall(g,h)
     h <- 0x100
-    g <- [h << 8]
-    g <- g &~ (1 << 6)  // unset cursor-enable bit
-    g -> [h << 8]
+    h <- h << 8
+    g <- [h]
+    [h] <- g &~ (1 << 6)  // unset cursor-enable bit
     popall(g,h)
     ret
 
