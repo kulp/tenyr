@@ -24,7 +24,7 @@ struct sdlvga_state {
     uint32_t control[CELL_OFFSET];
     uint32_t data[ROWS][COLS];
     SDL_Window *window;
-    SDL_Surface *screen, *sprite;
+    SDL_Surface *sprite;
     enum { RUNNING, STOPPING, STOPPED } status;
 };
 
@@ -44,7 +44,7 @@ static int put_character(struct sdlvga_state *state, unsigned row,
                  .h = FONT_HEIGHT
              };
 
-    SDL_BlitSurface(state->sprite, &src, state->screen, &dst);
+    SDL_BlitSurface(state->sprite, &src, SDL_GetWindowSurface(state->window), &dst);
     SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
 
     return 0;
@@ -69,8 +69,6 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (!state->window)
         fatal(0, "Unable to create sdlvga window : %s", SDL_GetError());
 
-    state->screen = SDL_GetWindowSurface(state->window);
-
     int flags = IMG_INIT_PNG;
     if (IMG_Init(flags) != flags)
         fatal(0, "sdlvga failed to initialise SDL_Image : %s", IMG_GetError());
@@ -85,8 +83,8 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
         .w = COLS * FONT_WIDTH,
         .h = ROWS * FONT_HEIGHT,
     };
-    Uint32 black = SDL_MapRGB(state->screen->format,0,0,0);
-    SDL_FillRect(state->screen, &fullscreen, black);
+    Uint32 black = SDL_MapRGB(SDL_GetWindowSurface(state->window)->format,0,0,0);
+    SDL_FillRect(SDL_GetWindowSurface(state->window), &fullscreen, black);
     SDL_UpdateWindowSurfaceRects(state->window, &fullscreen, 1);
 
     return 0;
@@ -97,7 +95,7 @@ static int sdlvga_fini(void *cookie)
     struct sdlvga_state *state = cookie;
 
     SDL_FreeSurface(state->sprite);
-    SDL_FreeSurface(state->screen);
+    SDL_DestroyWindow(state->window);
 
     free(state);
     // Can't immediately call SDL_Quit() in case others are using it

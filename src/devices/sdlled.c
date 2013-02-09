@@ -21,7 +21,6 @@
 struct sdlled_state {
     uint32_t data[2];
     SDL_Window *window;
-    SDL_Surface *screen;
     enum { RUNNING, STOPPING, STOPPED } status;
     SDL_Surface *digits[16];
     SDL_Surface *dots[2];
@@ -48,7 +47,7 @@ static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
         num = state->digits[digit] = IMG_Load(filename);
     }
 
-    SDL_BlitSurface(num, &src, state->screen, &dst);
+    SDL_BlitSurface(num, &src, SDL_GetWindowSurface(state->window), &dst);
     SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
 
     return 0;
@@ -72,7 +71,7 @@ static int put_dot(struct sdlled_state *state, unsigned index, unsigned on)
         dot = state->dots[on] = IMG_Load(filename);
     }
 
-    SDL_BlitSurface(dot, &src, state->screen, &dst);
+    SDL_BlitSurface(dot, &src, SDL_GetWindowSurface(state->window), &dst);
     SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
 
     return 0;
@@ -108,8 +107,6 @@ static int sdlled_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (!state->window)
         fatal(0, "Unable to set up LED surface : %s", SDL_GetError());
 
-    state->screen = SDL_GetWindowSurface(state->window);
-
     int flags = IMG_INIT_PNG;
     if (IMG_Init(flags) != flags)
         fatal(0, "sdlled failed to initialise SDL_Image");
@@ -127,7 +124,7 @@ static int sdlled_fini(void *cookie)
     SDL_FreeSurface(state->dots[0]);
     SDL_FreeSurface(state->dots[1]);
 
-    SDL_FreeSurface(state->screen);
+    SDL_DestroyWindow(state->window);
     free(state);
     // Can't immediately call SDL_Quit() in case others are using it
     atexit(SDL_Quit);
