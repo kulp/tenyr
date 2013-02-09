@@ -23,6 +23,7 @@
 struct sdlvga_state {
     uint32_t control[CELL_OFFSET];
     uint32_t data[ROWS][COLS];
+    SDL_Window *window;
     SDL_Surface *screen, *sprite;
     enum { RUNNING, STOPPING, STOPPED } status;
 };
@@ -44,7 +45,7 @@ static int put_character(struct sdlvga_state *state, unsigned row,
              };
 
     SDL_BlitSurface(state->sprite, &src, state->screen, &dst);
-    SDL_UpdateRect(state->screen, dst.x, dst.y, dst.w, dst.h);
+    SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
 
     return 0;
 }
@@ -61,13 +62,18 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         fatal(0, "Unable to init SDL: %s", SDL_GetError());
 
-    if (!(state->screen = SDL_SetVideoMode(COLS * FONT_WIDTH,
-                    ROWS * FONT_HEIGHT, 16, SDL_SWSURFACE)))
-        fatal(0, "Unable to set VGA surface : %s", SDL_GetError());
+    state->window = SDL_CreateWindow("sdlvga",
+                        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                        COLS * FONT_WIDTH, ROWS * FONT_HEIGHT,
+                        SDL_WINDOW_SHOWN);
+    if (!state->window)
+        fatal(0, "Unable to create sdlvga window : %s", SDL_GetError());
+
+    state->screen = SDL_GetWindowSurface(state->window);
 
     int flags = IMG_INIT_PNG;
     if (IMG_Init(flags) != flags)
-        fatal(0, "sdlvga failed to initialise SDL_Image");
+        fatal(0, "sdlvga failed to initialise SDL_Image : %s", IMG_GetError());
 
     const char filename[] = RESOURCE_DIR "/font.png";
     state->sprite = IMG_Load(filename);
@@ -81,7 +87,7 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     };
     Uint32 black = SDL_MapRGB(state->screen->format,0,0,0);
     SDL_FillRect(state->screen, &fullscreen, black);
-    SDL_UpdateRect(state->screen, fullscreen.x, fullscreen.y, fullscreen.w, fullscreen.h);
+    SDL_UpdateWindowSurfaceRects(state->window, &fullscreen, 1);
 
     return 0;
 }

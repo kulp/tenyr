@@ -20,6 +20,7 @@
 
 struct sdlled_state {
     uint32_t data[2];
+    SDL_Window *window;
     SDL_Surface *screen;
     enum { RUNNING, STOPPING, STOPPED } status;
     SDL_Surface *digits[16];
@@ -48,7 +49,7 @@ static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
     }
 
     SDL_BlitSurface(num, &src, state->screen, &dst);
-    SDL_UpdateRect(state->screen, dst.x, dst.y, dst.w, dst.h);
+    SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
 
     return 0;
 }
@@ -72,7 +73,7 @@ static int put_dot(struct sdlled_state *state, unsigned index, unsigned on)
     }
 
     SDL_BlitSurface(dot, &src, state->screen, &dst);
-    SDL_UpdateRect(state->screen, dst.x, dst.y, dst.w, dst.h);
+    SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
 
     return 0;
 }
@@ -101,10 +102,13 @@ static int sdlled_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         fatal(0, "Unable to init SDL: %s", SDL_GetError());
 
-    if (!(state->screen = SDL_SetVideoMode(
-                    DIGIT_COUNT * (DIGIT_WIDTH + DOT_WIDTH),
-                    DIGIT_HEIGHT, 16, SDL_SWSURFACE)))
+    state->window = SDL_CreateWindow("sdlled",
+            0, 0, DIGIT_COUNT * (DIGIT_WIDTH + DOT_WIDTH), DIGIT_HEIGHT, SDL_WINDOW_SHOWN);
+
+    if (!state->window)
         fatal(0, "Unable to set up LED surface : %s", SDL_GetError());
+
+    state->screen = SDL_GetWindowSurface(state->window);
 
     int flags = IMG_INIT_PNG;
     if (IMG_Init(flags) != flags)
