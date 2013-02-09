@@ -29,7 +29,7 @@ struct sdlvga_state {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *sprite;
-    struct timeval last_update;
+    struct timeval last_update, deadline;
     enum { RUNNING, STOPPING, STOPPED } status;
 };
 
@@ -90,7 +90,9 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->renderer);
     SDL_RenderPresent(state->renderer);
+
     gettimeofday(&state->last_update, NULL);
+    state->deadline = state->last_update;
 
     return 0;
 }
@@ -115,13 +117,13 @@ static int handle_update(struct sdlvga_state *state)
 {
     // do periodic updates only, not as fast as we write to the display
     // (both faster to render, and more like real life)
-    struct timeval now, deadline, tick = { .tv_usec = 1000000 / SDLVGA_UPDATE_HZ };
+    struct timeval now, tick = { .tv_usec = 1000000 / SDLVGA_UPDATE_HZ };
     gettimeofday(&now, NULL);
-    timeradd(&state->last_update, &tick, &deadline);
     // TODO this could get lagged behind
-    if (timercmp(&now, &deadline, >)) {
+    if (timercmp(&now, &state->deadline, >)) {
         SDL_RenderPresent(state->renderer);
-        state->last_update = deadline;
+        state->last_update = state->deadline;
+        timeradd(&state->deadline, &tick, &state->deadline);
     }
 
     return 0;

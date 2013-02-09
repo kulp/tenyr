@@ -28,7 +28,7 @@ struct sdlled_state {
     enum { RUNNING, STOPPING, STOPPED } status;
     SDL_Texture *digits[16];
     SDL_Texture *dots[2];
-    struct timeval last_update;
+    struct timeval last_update, deadline;
 };
 
 static int handle_update(struct sdlled_state *state);
@@ -122,8 +122,9 @@ static int sdlled_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (IMG_Init(flags) != flags)
         fatal(0, "sdlled failed to initialise SDL_Image");
 
-    handle_update(state);
     gettimeofday(&state->last_update, NULL);
+    state->deadline = state->last_update;
+    handle_update(state);
 
     return 0;
 }
@@ -169,13 +170,13 @@ static int handle_update(struct sdlled_state *state)
 
     // do periodic updates only, not as fast as we write to the display
     // (both faster to render, and more like real life)
-    struct timeval now, deadline, tick = { .tv_usec = 1000000 / SDLLED_UPDATE_HZ };
+    struct timeval now, tick = { .tv_usec = 1000000 / SDLLED_UPDATE_HZ };
     gettimeofday(&now, NULL);
-    timeradd(&state->last_update, &tick, &deadline);
     // TODO this could get lagged behind
-    if (timercmp(&now, &deadline, >)) {
+    if (timercmp(&now, &state->deadline, >)) {
         SDL_RenderPresent(state->renderer);
-        state->last_update = deadline;
+        state->last_update = state->deadline;
+        timeradd(&state->deadline, &tick, &state->deadline);
     }
 
     return 0;
