@@ -51,12 +51,12 @@ GenedBlockMem your_instance_name (
   .clka(clka), // input clka
   .ena(ena), // input ena
   .wea(wea), // input [0 : 0] wea
-  .addra(addra), // input [9 : 0] addra
+  .addra(addra), // input [13 : 0] addra
   .dina(dina), // input [31 : 0] dina
   .douta(douta), // output [31 : 0] douta
   .clkb(clkb), // input clkb
   .web(web), // input [0 : 0] web
-  .addrb(addrb), // input [9 : 0] addrb
+  .addrb(addrb), // input [13 : 0] addrb
   .dinb(dinb), // input [31 : 0] dinb
   .doutb(doutb) // output [31 : 0] doutb
 );
