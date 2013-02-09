@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <sys/time.h>
+
 #include "SDL.h"
 #include "SDL_image.h"
 
@@ -10,6 +12,7 @@
 #include "device.h"
 #include "sim.h"
 
+#define SDLVGA_UPDATE_HZ 60
 #define SDLVGA_BASE (1ULL << 16)
 
 #define RESOURCE_DIR    "rsrc"
@@ -26,6 +29,7 @@ struct sdlvga_state {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *sprite;
+    struct timeval last_update;
     enum { RUNNING, STOPPING, STOPPED } status;
 };
 
@@ -46,8 +50,6 @@ static int put_character(struct sdlvga_state *state, unsigned row,
              };
 
     SDL_RenderCopy(state->renderer, state->sprite, &src, &dst);
-    // TODO do periodic updates only, not on every character necessarily
-    SDL_RenderPresent(state->renderer);
 
     return 0;
 }
@@ -88,6 +90,7 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->renderer);
     SDL_RenderPresent(state->renderer);
+    gettimeofday(&state->last_update, NULL);
 
     return 0;
 }
@@ -108,6 +111,22 @@ static int sdlvga_fini(void *cookie)
     return 0;
 }
 
+static int handle_update(struct sdlvga_state *state)
+{
+    // do periodic updates only, not as fast as we write to the display
+    // (both faster to render, and more like real life)
+    struct timeval now, deadline, tick = { .tv_usec = 1000000 / SDLVGA_UPDATE_HZ };
+    gettimeofday(&now, NULL);
+    timeradd(&state->last_update, &tick, &deadline);
+    // TODO this could get lagged behind
+    if (timercmp(&now, &deadline, >)) {
+        SDL_RenderPresent(state->renderer);
+        state->last_update = deadline;
+    }
+
+    return 0;
+}
+
 static int sdlvga_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     struct sdlvga_state *state = cookie;
@@ -121,7 +140,7 @@ static int sdlvga_op(void *cookie, int op, uint32_t addr, uint32_t *data)
         if (op == OP_WRITE) {
             state->data[row][col] = *data;
             put_character(state, row, col, *data & 0xff);
-            //handle_update(state);
+            handle_update(state);
         } else if (op == OP_READ) {
             *data = state->data[row][col];
         }

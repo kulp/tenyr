@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <sys/time.h>
+
 #include "SDL.h"
 #include "SDL_image.h"
 
@@ -10,6 +12,7 @@
 #include "device.h"
 #include "sim.h"
 
+#define SDLLED_UPDATE_HZ 30
 #define SDLLED_BASE (0x100)
 
 #define DIGIT_COUNT     4
@@ -25,7 +28,10 @@ struct sdlled_state {
     enum { RUNNING, STOPPING, STOPPED } status;
     SDL_Texture *digits[16];
     SDL_Texture *dots[2];
+    struct timeval last_update;
 };
+
+static int handle_update(struct sdlled_state *state);
 
 static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
 {
@@ -51,8 +57,6 @@ static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
     }
 
     SDL_RenderCopy(state->renderer, num, &src, &dst);
-    // TODO do periodic updates
-    SDL_RenderPresent(state->renderer);
 
     return 0;
 }
@@ -78,8 +82,6 @@ static int put_dot(struct sdlled_state *state, unsigned index, unsigned on)
     }
 
     SDL_RenderCopy(state->renderer, dot, &src, &dst);
-    // TODO do periodic updates
-    SDL_RenderPresent(state->renderer);
 
     return 0;
 }
@@ -119,6 +121,9 @@ static int sdlled_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     int flags = IMG_INIT_PNG;
     if (IMG_Init(flags) != flags)
         fatal(0, "sdlled failed to initialise SDL_Image");
+
+    handle_update(state);
+    gettimeofday(&state->last_update, NULL);
 
     return 0;
 }
@@ -160,6 +165,17 @@ static int handle_update(struct sdlled_state *state)
     for (unsigned i = 0; i < 4; i++) {
         put_digit(state, i, digits[3 - i]);
         put_dot(state, i, dots[3 - i]);
+    }
+
+    // do periodic updates only, not as fast as we write to the display
+    // (both faster to render, and more like real life)
+    struct timeval now, deadline, tick = { .tv_usec = 1000000 / SDLLED_UPDATE_HZ };
+    gettimeofday(&now, NULL);
+    timeradd(&state->last_update, &tick, &deadline);
+    // TODO this could get lagged behind
+    if (timercmp(&now, &deadline, >)) {
+        SDL_RenderPresent(state->renderer);
+        state->last_update = deadline;
     }
 
     return 0;
