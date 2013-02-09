@@ -24,7 +24,8 @@ struct sdlvga_state {
     uint32_t control[CELL_OFFSET];
     uint32_t data[ROWS][COLS];
     SDL_Window *window;
-    SDL_Surface *sprite;
+    SDL_Renderer *renderer;
+    SDL_Texture *sprite;
     enum { RUNNING, STOPPING, STOPPED } status;
 };
 
@@ -44,8 +45,8 @@ static int put_character(struct sdlvga_state *state, unsigned row,
                  .h = FONT_HEIGHT
              };
 
-    SDL_BlitSurface(state->sprite, &src, SDL_GetWindowSurface(state->window), &dst);
-    SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
+    SDL_RenderCopy(state->renderer, state->sprite, &src, &dst);
+    SDL_RenderPresent(state->renderer);
 
     return 0;
 }
@@ -69,23 +70,22 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (!state->window)
         fatal(0, "Unable to create sdlvga window : %s", SDL_GetError());
 
+    state->renderer = SDL_CreateRenderer(state->window, -1, 0);
+
     int flags = IMG_INIT_PNG;
     if (IMG_Init(flags) != flags)
         fatal(0, "sdlvga failed to initialise SDL_Image : %s", IMG_GetError());
 
     const char filename[] = RESOURCE_DIR "/font.png";
-    state->sprite = IMG_Load(filename);
-    if (!state->sprite)
+    SDL_Surface *sprite = IMG_Load(filename);
+    if (!sprite)
         fatal(0, "sdlvga failed to load font sprite `%s'", filename);
 
-    SDL_Rect fullscreen = {
-        .x = 0, .y = 0,
-        .w = COLS * FONT_WIDTH,
-        .h = ROWS * FONT_HEIGHT,
-    };
-    Uint32 black = SDL_MapRGB(SDL_GetWindowSurface(state->window)->format,0,0,0);
-    SDL_FillRect(SDL_GetWindowSurface(state->window), &fullscreen, black);
-    SDL_UpdateWindowSurfaceRects(state->window, &fullscreen, 1);
+    state->sprite = SDL_CreateTextureFromSurface(state->renderer, sprite);
+
+    SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
+    SDL_RenderClear(state->renderer);
+    SDL_RenderPresent(state->renderer);
 
     return 0;
 }
@@ -94,7 +94,8 @@ static int sdlvga_fini(void *cookie)
 {
     struct sdlvga_state *state = cookie;
 
-    SDL_FreeSurface(state->sprite);
+    SDL_DestroyRenderer(state->renderer);
+    SDL_DestroyTexture(state->sprite);
     SDL_DestroyWindow(state->window);
 
     free(state);
