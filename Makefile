@@ -21,7 +21,12 @@ endif
 INCLUDE_OS ?= $(TOP)/src/os/$(OS)
 
 CFLAGS += -std=c99
-CFLAGS += -Wall -Wextra $(PEDANTIC)
+CFLAGS += -Wall -Wextra $(PEDANTIC_FLAGS)
+ifeq ($(PEDANTIC),)
+PEDANTIC_FLAGS ?= -pedantic
+else
+PEDANTIC_FLAGS ?= -Werror -pedantic-errors
+endif
 
 CPPFLAGS += -DMAY_ALIAS='__attribute__((__may_alias__))'
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
@@ -35,8 +40,6 @@ else
  CPPFLAGS += -DDEBUG=$(DEBUG)
  CFLAGS   += -fstack-protector -Wstack-protector
 endif
-
-PEDANTIC ?= -Werror -pedantic-errors
 
 FLEX  = flex
 BISON = bison -Werror
