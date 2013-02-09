@@ -46,6 +46,7 @@ static int put_character(struct sdlvga_state *state, unsigned row,
              };
 
     SDL_RenderCopy(state->renderer, state->sprite, &src, &dst);
+    // TODO do periodic updates only, not on every character necessarily
     SDL_RenderPresent(state->renderer);
 
     return 0;
@@ -82,6 +83,7 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
         fatal(0, "sdlvga failed to load font sprite `%s'", filename);
 
     state->sprite = SDL_CreateTextureFromSurface(state->renderer, sprite);
+    SDL_FreeSurface(sprite);
 
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->renderer);
