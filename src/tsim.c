@@ -15,11 +15,22 @@
 #include <strings.h>
 #include <search.h>
 
+#if TSIM_SDL_ENABLED
+#define SDL_RECIPES(_) \
+    _(sdlvga  , "enable SDL VGA emulation") \
+    _(sdlled  , "enable SDL 7-segment display emulation") \
+    //
+#else
+#define SDL_RECIPES(_)
+#endif
+
 #define RECIPES(_) \
     _(abort   , "abort() on illegal instruction or memory address") \
+    _(pause   , "wait for keystroke on illegal instruction or memory address, then exit") \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
+    SDL_RECIPES(_) \
     _(nowrap  , "stop when PC wraps around 24-bit boundary") \
     _(plugin  , "load plugins specified through param mechanism") \
     //
@@ -102,6 +113,12 @@ static int recipe_abort(struct sim_state *s)
     return 0;
 }
 
+static int recipe_pause(struct sim_state *s)
+{
+    s->conf.pause = 1;
+    return 0;
+}
+
 static int pre_insn(struct sim_state *s, struct instruction *i)
 {
     if (s->conf.verbose > 0)
@@ -181,6 +198,24 @@ static int recipe_serial(struct sim_state *s)
     s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
     return serial_add_device(&s->machine.devices[index]);
 }
+
+#if TSIM_SDL_ENABLED
+static int recipe_sdlvga(struct sim_state *s)
+{
+    int sdlvga_add_device(struct device **device);
+    int index = next_device(s);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    return sdlvga_add_device(&s->machine.devices[index]);
+}
+
+static int recipe_sdlled(struct sim_state *s)
+{
+    int sdlled_add_device(struct device **device);
+    int index = next_device(s);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    return sdlled_add_device(&s->machine.devices[index]);
+}
+#endif
 
 static int recipe_nowrap(struct sim_state *s)
 {
