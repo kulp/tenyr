@@ -21,9 +21,10 @@
 struct sdlled_state {
     uint32_t data[2];
     SDL_Window *window;
+    SDL_Renderer *renderer;
     enum { RUNNING, STOPPING, STOPPED } status;
-    SDL_Surface *digits[16];
-    SDL_Surface *dots[2];
+    SDL_Texture *digits[16];
+    SDL_Texture *dots[2];
 };
 
 static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
@@ -38,17 +39,20 @@ static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
     if (digit > 15)
         return -1;
 
-    SDL_Surface *num = state->digits[digit];
+    SDL_Texture *num = state->digits[digit];
     if (!num) {
         char filename[1024];
         snprintf(filename, sizeof filename, RESOURCE_DIR "/%d/%c.png",
                 DIGIT_HEIGHT, "0123456789ABCDEF"[digit]);
 
-        num = state->digits[digit] = IMG_Load(filename);
+        SDL_Surface *surf = IMG_Load(filename);
+        num = state->digits[digit] = SDL_CreateTextureFromSurface(state->renderer, surf);
+        SDL_FreeSurface(surf);
     }
 
-    SDL_BlitSurface(num, &src, SDL_GetWindowSurface(state->window), &dst);
-    SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
+    SDL_RenderCopy(state->renderer, num, &src, &dst);
+    // TODO do periodic updates
+    SDL_RenderPresent(state->renderer);
 
     return 0;
 }
@@ -62,17 +66,20 @@ static int put_dot(struct sdlled_state *state, unsigned index, unsigned on)
                  .h = DIGIT_HEIGHT
              };
 
-    SDL_Surface *dot = state->dots[on];
+    SDL_Texture *dot = state->dots[on];
     if (!dot) {
         char filename[1024];
         snprintf(filename, sizeof filename, RESOURCE_DIR "/%d/dot_%s.png",
                 DIGIT_HEIGHT, on ? "on" : "off");
 
-        dot = state->dots[on] = IMG_Load(filename);
+        SDL_Surface *surf = IMG_Load(filename);
+        dot = state->dots[on] = SDL_CreateTextureFromSurface(state->renderer, surf);
+        SDL_FreeSurface(surf);
     }
 
-    SDL_BlitSurface(dot, &src, SDL_GetWindowSurface(state->window), &dst);
-    SDL_UpdateWindowSurfaceRects(state->window, &dst, 1);
+    SDL_RenderCopy(state->renderer, dot, &src, &dst);
+    // TODO do periodic updates
+    SDL_RenderPresent(state->renderer);
 
     return 0;
 }
@@ -107,6 +114,8 @@ static int sdlled_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (!state->window)
         fatal(0, "Unable to set up LED surface : %s", SDL_GetError());
 
+    state->renderer = SDL_CreateRenderer(state->window, -1, 0);
+
     int flags = IMG_INIT_PNG;
     if (IMG_Init(flags) != flags)
         fatal(0, "sdlled failed to initialise SDL_Image");
@@ -119,11 +128,12 @@ static int sdlled_fini(void *cookie)
     struct sdlled_state *state = cookie;
 
     for (unsigned i = 0; i < 16; i++)
-        SDL_FreeSurface(state->digits[i]);
+        SDL_DestroyTexture(state->digits[i]);
 
-    SDL_FreeSurface(state->dots[0]);
-    SDL_FreeSurface(state->dots[1]);
+    SDL_DestroyTexture(state->dots[0]);
+    SDL_DestroyTexture(state->dots[1]);
 
+    SDL_DestroyRenderer(state->renderer);
     SDL_DestroyWindow(state->window);
     free(state);
     // Can't immediately call SDL_Quit() in case others are using it
