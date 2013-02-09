@@ -53,12 +53,11 @@ loop_k:
     d <- j + 1
     c <- j * k
     call(putnum)
+    c <- 0x100          // write {J,K} to LEDs
+    [c] <- j << 8 + k
     k <- k + 1
     c <- k < 0x13
     jnzrel(c,loop_k)
-
-    c <- 0x100          // write {J,K} to LEDs
-    [c] <- j << 8 + k
 
     j <- j + 1          // increment N
     c <- j < 0x27
