@@ -25,6 +25,7 @@ CFLAGS += -Wall -Wextra $(PEDANTIC)
 
 CPPFLAGS += -DMAY_ALIAS='__attribute__((__may_alias__))'
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
+CPPFLAGS += -Wno-unknown-warning-option
 
 # Optimised build
 ifeq ($(DEBUG),)
@@ -53,7 +54,7 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 DEVICES = ram sparseram debugwrap serial spi
 ifneq ($(SDL),0)
 DEFINES += TSIM_SDL_ENABLED
-CPPFLAGS += $(shell sdl2-config --cflags)
+CPPFLAGS += $(shell sdl2-config --cflags) -Wno-c11-extensions
 DEVICES += sdlvga sdlled
 tsim.o: CPPFLAGS += -include SDL.h
 tsim: LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
