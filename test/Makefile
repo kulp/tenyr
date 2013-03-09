@@ -13,7 +13,7 @@ CPP := $(CPP) -
 
 all:
 
-test_imul.texe: imul.to
+test_imul.texe: imul.to puts.to print_hex.to
 copy.texe: memcpy.to puts.to
 
 %.tas: %.tas.cpp
