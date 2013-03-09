@@ -5,16 +5,16 @@
 // b -> product
 .global imul
 imul:
+#if IMUL_EARLY_EXITS
+    b <- c == 0
+    d <- d &~ b     // d = (c == 0) ? 0 : d
+    b <- d <> 0
+    jzrel(b, L_done)
+#endif
+
     pushall(h,i,j)
 
     b <- 0
-#if IMUL_EARLY_EXITS
-    i <- d == 0
-    i <- c == 0 + i
-    i <- i <> 0
-    jnzrel(i, L_done)
-#endif
-
     h <- 1
 
     j <- d >> 31    // save sign bit in j
@@ -35,7 +35,7 @@ L_top:
     b <- b ^ j      // adjust product for signed math
     b <- b - j
 
-L_done:
     popall(h,i,j)
+L_done:
     ret
 
