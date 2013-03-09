@@ -8,10 +8,12 @@ imul:
     pushall(h,i,j)
 
     b <- 0
+#if IMUL_EARLY_EXITS
     i <- d == 0
     i <- c == 0 + i
     i <- i <> 0
     jnzrel(i, L_done)
+#endif
 
     h <- 1
 
