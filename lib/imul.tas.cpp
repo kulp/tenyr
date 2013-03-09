@@ -7,10 +7,13 @@
 imul:
     pushall(h,i,j)
 
-    i <- d == 0
-    jnzrel(i, L_done)
-    h <- 1
     b <- 0
+    i <- d == 0
+    i <- c == 0 + i
+    i <- i <> 0
+    jnzrel(i, L_done)
+
+    h <- 1
 
     j <- d >> 31    // save sign bit in j
     j <- -j         // convert sign to flag
@@ -27,10 +30,10 @@ L_top:
     i <- d <> 0
     jnzrel(i, L_top)
 
-L_done:
     b <- b ^ j      // adjust product for signed math
     b <- b - j
 
+L_done:
     popall(h,i,j)
     ret
 

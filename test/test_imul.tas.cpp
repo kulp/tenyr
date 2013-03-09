@@ -6,6 +6,26 @@ _start:
     prologue
 
 #if 1
+    c <- 0
+    d <- 0x234
+    call(imul)
+    // 0x0 * 0x234 = 0x0
+#if PRINT
+    c <- b ; call(print_hex)
+#endif
+#endif
+
+#if 1
+    c <- 0x7ed
+    d <- 0
+    call(imul)
+    // 0x7ed * 0x0 = 0x0
+#if PRINT
+    c <- b ; call(print_hex)
+#endif
+#endif
+
+#if 1
     c <- 0x7ed
     d <- 0x234
     call(imul)
