@@ -20,16 +20,19 @@ module Reg(input clk, en, rwZ, input[3:0] indexZ, indexX, indexY,
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
-              output[3:0] op, output[1:0] deref, output type, illegal);
+              output[3:0] op, output type, illegal, storing, deref_right, jumping);
 
-    assign type     = insn[30];
-    assign deref    = insn[28 +: 2];
-    assign Z        = insn[24 +: 4];
-    assign X        = insn[20 +: 4];
-    assign Y        = insn[16 +: 4];
-    assign op       = insn[12 +: 4];
-    assign I        = insn[ 0 +:12];
-    assign illegal  = &insn;
+    assign type        = insn[30 +: 1];
+    assign storing     = insn[29 +: 1];
+    assign deref_right = insn[28 +: 1];
+    assign Z           = insn[24 +: 4];
+    assign X           = insn[20 +: 4];
+    assign Y           = insn[16 +: 4];
+    assign op          = insn[12 +: 4];
+    assign I           = insn[ 0 +:12];
+
+    assign illegal     = &insn;
+    assign jumping     = &Z && !storing;
 
 endmodule
 
@@ -68,20 +71,16 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
             output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, output[31:0] d_addr, inout[31:0] d_data);
 
-    wire _en = en && reset_n;
-
-    wire illegal, type;
+    wire illegal, type, storing, drhs;
     wire[ 3:0] indexX, indexY, indexZ;
     wire[31:0] valueX, valueY, irhs;
     wire[11:0] valueI;
     wire[ 3:0] op;
-    wire[ 1:0] deref;
 
-    wire storing = deref[1];
-    wire drhs    = deref[0];
-    wire loading = drhs && !storing;
-    wire right   = drhs &&  storing;
+    wire _en     = en && reset_n;
     wire writing = !storing;
+    wire loading = !storing && drhs;
+    wire right   =  storing && drhs;
     wire jumping = &indexZ && writing;
 
     wire[31:0] ilhs    = valueZ;
@@ -90,8 +89,8 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     wire[31:0] storand = drhs    ? ilhs   : irhs;
     wire[31:0] valueZ  = writing ? rhs    : 32'bz;
 
-    assign d_data = storing  ? storand : 32'bz;
-    assign d_addr = deref[0] ? irhs    : ilhs;
+    assign d_data = storing ? storand : 32'bz;
+    assign d_addr = drhs    ? irhs    : ilhs;
     assign mem_rw = storing;
 
     reg [ 2:0] rcyc, rcycen;
@@ -102,8 +101,8 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     always @(negedge clk) begin
         if (!reset_n) begin
             i_addr <= `RESETVECTOR;
-            rhalt <= 1'b0;
-            rcyc <= 3'b1;
+            rhalt  <= 1'b0;
+            rcyc   <= 3'b1;
             rcycen <= 3'b1;
         end
 
@@ -119,8 +118,9 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     end
 
     // Decode and register reads happen as soon as instruction is ready.
-    Decode decode(.insn(i_data), .op(op), .deref(deref), .illegal(illegal),
-                  .type(type), .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI));
+    Decode decode(.insn(i_data), .op(op), .illegal(illegal), .type(type),
+                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI),
+                  .storing(storing), .deref_right(drhs));
 
     // Execution (arithmetic operation) happen the cyc after decode
     Exec exec(.clk(clk), .en(_en & cyc[1]), .op(op), .type(type),
