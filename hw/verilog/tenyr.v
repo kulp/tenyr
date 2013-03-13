@@ -72,24 +72,27 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
 
     wire illegal, type;
     wire[ 3:0] indexX, indexY, indexZ;
-    wire[31:0] valueX, valueY, rhs;
+    wire[31:0] valueX, valueY, irhs;
     wire[11:0] valueI;
     wire[ 3:0] op;
     wire[ 1:0] deref;
 
-    wire reg_rw     = ~deref[1];
-    wire jumping    = &indexZ  && reg_rw;
-    wire mem_active = !illegal && |deref;
+    wire storing = deref[1];
+    wire drhs    = deref[0];
+    wire loading = drhs && !storing;
+    wire right   = drhs &&  storing;
+    wire writing = !storing;
+    wire jumping = &indexZ && writing;
 
-    wire[31:0] deref_rhs = (deref[0] && !mem_rw) ? d_data : rhs;
-    wire[31:0] mem_addr  = mem_active ? (deref[0] ? rhs : interZ) : 32'bz;
-    wire[31:0] mem_data  = mem_rw     ? (deref[0] ? interZ : rhs) : 32'b0;
-    wire[31:0] interZ    = reg_rw     ? deref_rhs : valueZ;
-    wire[31:0] valueZ    = reg_rw     ? interZ : 32'bz;
+    wire[31:0] ilhs    = valueZ;
+    wire[31:0] orhs    = loading ? d_data : 32'bx;
+    wire[31:0] rhs     = drhs    ? orhs   : irhs;
+    wire[31:0] storand = drhs    ? ilhs   : irhs;
+    wire[31:0] valueZ  = writing ? rhs    : 32'bz;
 
-    assign mem_rw = mem_active && deref[1];
-    assign d_addr = mem_active ? mem_addr  : 32'bz;
-    assign d_data = mem_rw     ? mem_data  : 32'bz;
+    assign d_data = storing  ? storand : 32'bz;
+    assign d_addr = deref[0] ? irhs    : ilhs;
+    assign mem_rw = storing;
 
     reg [ 2:0] rcyc, rcycen;
     wire[ 2:0] cyc = rcyc & rcycen;
@@ -121,12 +124,12 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
 
     // Execution (arithmetic operation) happen the cyc after decode
     Exec exec(.clk(clk), .en(_en & cyc[1]), .op(op), .type(type),
-              .rhs(rhs), .X(valueX), .Y(valueY), .I(valueI));
+              .rhs(irhs), .X(valueX), .Y(valueY), .I(valueI));
 
     // Registers and memory get written last, the cyc after execution
     Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
              .en(_en),               .indexY(indexY), .valueY(valueY),
-             .rwZ(reg_rw & cyc[2]),  .indexZ(indexZ), .valueZ(valueZ));
+             .rwZ(writing & cyc[2]), .indexZ(indexZ), .valueZ(valueZ));
 
 endmodule
 
