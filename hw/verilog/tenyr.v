@@ -19,7 +19,7 @@ module Reg(input clk, en, upZ,      input[ 3:0] indexZ, indexX, indexY,
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
+module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
               output[3:0] op, output type, illegal, storing, deref_rhs, branch);
 
     assign type      = insn[30 +: 1];
@@ -29,7 +29,8 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
     assign X         = insn[20 +: 4];
     assign Y         = insn[16 +: 4];
     assign op        = insn[12 +: 4];
-    assign I         = insn[ 0 +:12];
+    wire[11:0] J     = insn[ 0 +:12];
+    assign I         = { {20{J[11]}}, J };
 
     assign illegal   = &insn;
     assign branch    = &Z && !storing;
@@ -37,10 +38,9 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
 endmodule
 
 module Exec(input clk, en, type, output reg[31:0] rhs,
-            input signed[31:0] X, Y, input signed[11:0] I, input[3:0] op);
+            input signed[31:0] X, Y, I, input[3:0] op);
 
-    wire signed[31:0] J = { {20{I[11]}}, I };
-    wire signed[31:0] O = type ? J : Y;
+    wire signed[31:0] O = type ? I : Y;
 
     always @(negedge clk) if (en) begin
         case (op)
@@ -62,7 +62,7 @@ module Exec(input clk, en, type, output reg[31:0] rhs,
             4'b1111: rhs = 32'bx;       // reserved
         endcase
 
-        rhs = rhs + (type ? Y : J);
+        rhs = rhs + (type ? Y : I);
     end
 
 endmodule
@@ -73,8 +73,7 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
 
     wire illegal, type, storing, drhs, jumping;
     wire[ 3:0] indexX, indexY, indexZ;
-    wire[31:0] valueX, valueY, valueZ, irhs;
-    wire[11:0] valueI;
+    wire[31:0] valueX, valueY, valueZ, valueI, irhs;
     wire[ 3:0] op;
 
     wire _en     = en && reset_n;
