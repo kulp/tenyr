@@ -1,38 +1,38 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(input clk, en, rwZ, input[3:0] indexZ, indexX, indexY,
-           inout[31:0] valueZ, output[31:0] valueX, valueY, input[31:0] pc);
+module Reg(input clk, en, upZ,      input[ 3:0] indexZ, indexX, indexY,
+           input[31:0] writeZ, pc, output[31:0] valueZ, valueX, valueY);
 
     reg[31:0] store[1:14];
 
     wire ZisP =  &indexZ, XisP =  &indexX, YisP =  &indexY;
     wire Zis0 = ~|indexZ, Xis0 = ~|indexX, Yis0 = ~|indexY;
 
-    assign valueZ = ~en ? 'bz : rwZ ? 32'bz : Zis0 ? 0 : ZisP ? pc + 1 : store[indexZ];
-    assign valueX = ~en ? 'bz :               Xis0 ? 0 : XisP ? pc + 1 : store[indexX];
-    assign valueY = ~en ? 'bz :               Yis0 ? 0 : YisP ? pc + 1 : store[indexY];
+    assign valueZ = ~en ? 'bz : Zis0 ? 0 : ZisP ? pc + 1 : store[indexZ];
+    assign valueX = ~en ? 'bz : Xis0 ? 0 : XisP ? pc + 1 : store[indexX];
+    assign valueY = ~en ? 'bz : Yis0 ? 0 : YisP ? pc + 1 : store[indexY];
 
     always @(negedge clk)
-        if (en && rwZ && !Zis0 && !ZisP)
-            store[indexZ] = valueZ;
+        if (en && upZ && !Zis0 && !ZisP)
+            store[indexZ] = writeZ;
 
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
-              output[3:0] op, output type, illegal, storing, deref_right, jumping);
+              output[3:0] op, output type, illegal, storing, deref_rhs, branch);
 
-    assign type        = insn[30 +: 1];
-    assign storing     = insn[29 +: 1];
-    assign deref_right = insn[28 +: 1];
-    assign Z           = insn[24 +: 4];
-    assign X           = insn[20 +: 4];
-    assign Y           = insn[16 +: 4];
-    assign op          = insn[12 +: 4];
-    assign I           = insn[ 0 +:12];
+    assign type      = insn[30 +: 1];
+    assign storing   = insn[29 +: 1];
+    assign deref_rhs = insn[28 +: 1];
+    assign Z         = insn[24 +: 4];
+    assign X         = insn[20 +: 4];
+    assign Y         = insn[16 +: 4];
+    assign op        = insn[12 +: 4];
+    assign I         = insn[ 0 +:12];
 
-    assign illegal     = &insn;
-    assign jumping     = &Z && !storing;
+    assign illegal   = &insn;
+    assign branch    = &Z && !storing;
 
 endmodule
 
@@ -71,9 +71,9 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
             output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, output[31:0] d_addr, inout[31:0] d_data);
 
-    wire illegal, type, storing, drhs;
+    wire illegal, type, storing, drhs, jumping;
     wire[ 3:0] indexX, indexY, indexZ;
-    wire[31:0] valueX, valueY, irhs;
+    wire[31:0] valueX, valueY, valueZ, irhs;
     wire[11:0] valueI;
     wire[ 3:0] op;
 
@@ -81,13 +81,11 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     wire writing = !storing;
     wire loading = !storing && drhs;
     wire right   =  storing && drhs;
-    wire jumping = &indexZ && writing;
 
     wire[31:0] ilhs    = valueZ;
     wire[31:0] orhs    = loading ? d_data : 32'bx;
     wire[31:0] rhs     = drhs    ? orhs   : irhs;
     wire[31:0] storand = drhs    ? ilhs   : irhs;
-    wire[31:0] valueZ  = writing ? rhs    : 32'bz;
 
     assign d_data = storing ? storand : 32'bz;
     assign d_addr = drhs    ? irhs    : ilhs;
@@ -112,7 +110,7 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
 
             case (cyc)
                 3'b010: rhalt <= rhalt | illegal;
-                3'b100: i_addr <= jumping ? valueZ : i_addr + 1;
+                3'b100: i_addr <= jumping ? rhs : i_addr + 1;
             endcase
         end
     end
@@ -120,7 +118,7 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     // Decode and register reads happen as soon as instruction is ready.
     Decode decode(.insn(i_data), .op(op), .illegal(illegal), .type(type),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI),
-                  .storing(storing), .deref_right(drhs));
+                  .storing(storing), .deref_rhs(drhs), .branch(jumping));
 
     // Execution (arithmetic operation) happen the cyc after decode
     Exec exec(.clk(clk), .en(_en & cyc[1]), .op(op), .type(type),
@@ -128,8 +126,8 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
 
     // Registers and memory get written last, the cyc after execution
     Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
-             .en(_en),               .indexY(indexY), .valueY(valueY),
-             .rwZ(writing & cyc[2]), .indexZ(indexZ), .valueZ(valueZ));
+             .en(_en), .writeZ(rhs), .indexY(indexY), .valueY(valueY),
+             .upZ(writing & cyc[2]), .indexZ(indexZ), .valueZ(valueZ));
 
 endmodule
 
