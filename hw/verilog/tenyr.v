@@ -82,13 +82,11 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     wire loading = !storing && drhs;
     wire right   =  storing && drhs;
 
-    wire[31:0] ilhs    = valueZ;
-    wire[31:0] orhs    = loading ? d_data : 32'bx;
-    wire[31:0] rhs     = drhs    ? orhs   : irhs;
-    wire[31:0] storand = drhs    ? ilhs   : irhs;
+    wire[31:0] rhs     = drhs ? d_data : irhs;
+    wire[31:0] storand = drhs ? valueZ : irhs;
 
     assign d_data = storing ? storand : 32'bz;
-    assign d_addr = drhs    ? irhs    : ilhs;
+    assign d_addr = drhs    ? irhs    : valueZ;
     assign mem_rw = storing;
 
     reg [ 2:0] rcyc, rcycen;
