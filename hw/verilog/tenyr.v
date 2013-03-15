@@ -9,9 +9,9 @@ module Reg(input clk, en, upZ,      input[ 3:0] indexZ, indexX, indexY,
     wire ZisP =  &indexZ, XisP =  &indexX, YisP =  &indexY;
     wire Zis0 = ~|indexZ, Xis0 = ~|indexX, Yis0 = ~|indexY;
 
-    assign valueZ = ~en ? 'bz : Zis0 ? 0 : ZisP ? pc + 1 : store[indexZ];
-    assign valueX = ~en ? 'bz : Xis0 ? 0 : XisP ? pc + 1 : store[indexX];
-    assign valueY = ~en ? 'bz : Yis0 ? 0 : YisP ? pc + 1 : store[indexY];
+    assign valueZ = Zis0 ? 0 : ZisP ? pc + 1 : store[indexZ];
+    assign valueX = Xis0 ? 0 : XisP ? pc + 1 : store[indexX];
+    assign valueY = Yis0 ? 0 : YisP ? pc + 1 : store[indexY];
 
     always @(negedge clk)
         if (en && upZ && !Zis0 && !ZisP)
