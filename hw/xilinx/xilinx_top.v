@@ -65,9 +65,8 @@ module Tenyr(input clk, halt, reset,
 
 `ifdef VGA
 
-    wire[7:0] crx; // 1-based ?
-    wire[7:0] cry; // 0-based ?
-    wire[7:0] vga_ctl;
+    wire[11:0] ram_adA, rom_adA;
+    wire[ 7:0] crx, cry, vga_ctl, ram_doA, rom_doA;
 
     mmr #(.ADDR(`VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11110111))
         video_ctl(.clk(clk_core), .reset_n(_reset_n), .enable(1),
@@ -77,18 +76,12 @@ module Tenyr(input clk, halt, reset,
     mmr #(.ADDR(`VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(1))
         crx_mmr(.clk(clk_core), .reset_n(_reset_n), .enable(1),
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
-                .re(1), .we(0), .val(crx));
+                .re(1), .we(0), .val(crx)); // crx is 1-based ?
 
     mmr #(.ADDR(`VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(0))
         cry_mmr(.clk(clk_core), .reset_n(_reset_n), .enable(1),
                 .rw(operand_rw), .addr(operand_addr), .data(operand_data),
-                .re(1), .we(0), .val(cry));
-
-    wire[ 7:0] ram_doA;
-    wire[11:0] ram_adA;
-
-    wire[11:0] rom_adA;
-    wire[ 7:0] rom_doA;
+                .re(1), .we(0), .val(cry)); // cry is 0-based ?
 
     vga80x40 vga(
         .reset       (~_reset_n),
