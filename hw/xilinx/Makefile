@@ -4,15 +4,30 @@ SHELL = /bin/bash
 SETUP = source ~/ise.sh
 TARGET = Tenyr
 
-all: $(TARGET).bit
+BURNER = fpgalink
+FLCLI = flcli
 
-burn: $(TARGET).bit
+all: $(BURNTARGET)
+
+ifeq ($(BURNER),fpgalink)
+BURNTARGET = $(TARGET).xsvf
+burn: $(BURNTARGET)
+	$(FLCLI) -v 1443:0007 -i 1443:0007 -x $<
+else
+BURNTARGET = $(TARGET).bit
+burn: $(BURNTARGET)
 	djtgcfg -d Nexys3 -i 0 -f $< prog
+endif
 
 vpath %.tas ../verilog
 vpath %.tas.cpp ../verilog
 
 CPPFLAGS += -I../../lib
+
+%.xsvf: %.bit burn.batch.tmpl
+	sed -e 's/{TOP_LEVEL}/$*/g' burn.batch.tmpl > $@.batch.$$$$ ; \
+	$(SETUP) && impact -batch $@.batch.$$$$ ;\
+	rm $@.batch.$$$$
 
 %.tas: %.tas.cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<
