@@ -88,8 +88,8 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     assign d_addr = drhs    ? irhs    : valueZ;
     assign mem_rw = storing;
 
-    reg [ 2:0] rcyc, rcycen;
-    wire[ 2:0] cyc = rcyc & rcycen;
+    reg [1:0] rcyc, rcycen;
+    wire[1:0] cyc = rcyc & rcycen;
     reg rhalt;
     assign halt[`HALT_EXEC] = rhalt;
 
@@ -97,17 +97,17 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
         if (!reset_n) begin
             i_addr <= `RESETVECTOR;
             rhalt  <= 1'b0;
-            rcyc   <= 3'b1;
-            rcycen <= 3'b1;
+            rcyc   <= 2'b1;
+            rcycen <= 2'b1;
         end
 
         if (_en) begin
-            rcyc <= {rcyc[1:0],rcyc[2]};
-            rcycen <= {rcycen[1:0],rcyc[2] & ~|halt};
+            rcyc <= {rcyc[0],rcyc[1]};
+            rcycen <= {rcycen[0],rcyc[1] & ~|halt};
 
             case (cyc)
-                3'b010: rhalt <= rhalt | illegal;
-                3'b100: i_addr <= jumping ? rhs : i_addr + 1;
+                1: rhalt  <= rhalt | illegal;
+                2: i_addr <= jumping ? rhs : i_addr + 1;
             endcase
         end
     end
@@ -118,13 +118,13 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
                   .storing(storing), .deref_rhs(drhs), .branch(jumping));
 
     // Execution (arithmetic operation) happen the cyc after decode
-    Exec exec(.clk(clk), .en(_en & cyc[1]), .op(op), .type(type),
+    Exec exec(.clk(clk), .en(_en & cyc[0]), .op(op), .type(type),
               .rhs(irhs), .X(valueX), .Y(valueY), .I(valueI));
 
     // Registers and memory get written last, the cyc after execution
     Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
              .en(_en), .writeZ(rhs), .indexY(indexY), .valueY(valueY),
-             .upZ(writing & cyc[2]), .indexZ(indexZ), .valueZ(valueZ));
+             .upZ(writing & cyc[1]), .indexZ(indexZ), .valueZ(valueZ));
 
 endmodule
 
