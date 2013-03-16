@@ -59,7 +59,7 @@ TIMESPEC "TS_CLK_IN1" = PERIOD "CLK_IN1" 10.000 ns HIGH 50% INPUT_JITTER 100.0ps
 #   can copy them into your module level timing checks
 #-----------------------------------------------------------------
 # NET "clk_int[1]" TNM_NET = "CLK_OUT1";
-# TIMESPEC "TS_CLK_OUT1" = PERIOD "CLK_OUT1" 15.000 MHz;
+# TIMESPEC "TS_CLK_OUT1" = PERIOD "CLK_OUT1" 33.333 MHz;
 
 # NET "clk_int[2]" TNM_NET = "CLK_OUT2";
 # TIMESPEC "TS_CLK_OUT2" = PERIOD "CLK_OUT2" 25.000 MHz;
