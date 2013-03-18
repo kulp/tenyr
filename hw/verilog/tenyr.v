@@ -96,9 +96,9 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     always @(`EDGE clk) begin
         if (!reset_n) begin
             i_addr <= `RESETVECTOR;
-            rhalt  <= 1'b0;
-            rcyc   <= 2'b1;
-            rcycen <= 2'b1;
+            rhalt  <= 0;
+            rcyc   <= 1;
+            rcycen <= 0; // out of phase with rcyc ; 1-cycle delay on startup
         end
 
         if (_en) begin
