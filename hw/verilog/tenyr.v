@@ -37,32 +37,30 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
 
 endmodule
 
-module Exec(input clk, en, type, output reg[31:0] rhs,
-            input signed[31:0] X, Y, I, input[3:0] op);
-
-    wire signed[31:0] O = type ? I : Y;
+module Exec(input clk, en, output reg[31:0] rhs, input[3:0] op,
+            input signed[31:0] X, Y, A);
 
     always @(`EDGE clk) if (en) begin
         case (op)
-            4'b0000: rhs =  (X  |  O);  // X bitwise or Y
-            4'b0001: rhs =  (X  &  O);  // X bitwise and Y
-            4'b0010: rhs =  (X  +  O);  // X add Y
-            4'b0011: rhs =  (X  *  O);  // X multiply Y
+            4'b0000: rhs =  (X  |  Y);  // X bitwise or Y
+            4'b0001: rhs =  (X  &  Y);  // X bitwise and Y
+            4'b0010: rhs =  (X  +  Y);  // X add Y
+            4'b0011: rhs =  (X  *  Y);  // X multiply Y
             4'b0100: rhs = 32'bx;       // reserved
-            4'b0101: rhs =  (X  << O);  // X shift left Y
-            4'b0110: rhs = -(X  <  O);  // X compare < Y
-            4'b0111: rhs = -(X  == O);  // X compare == Y
-            4'b1000: rhs = -(X  >  O);  // X compare > Y
-            4'b1001: rhs =  (X  &~ O);  // X bitwise and complement Y
-            4'b1010: rhs =  (X  ^  O);  // X bitwise xor Y
-            4'b1011: rhs =  (X  -  O);  // X subtract Y
-            4'b1100: rhs =  (X  ^~ O);  // X xor ones' complement Y
-            4'b1101: rhs =  (X  >> O);  // X shift right logical Y
-            4'b1110: rhs = -(X  != O);  // X compare <> Y
+            4'b0101: rhs =  (X  << Y);  // X shift left Y
+            4'b0110: rhs = -(X  <  Y);  // X compare < Y
+            4'b0111: rhs = -(X  == Y);  // X compare == Y
+            4'b1000: rhs = -(X  >  Y);  // X compare > Y
+            4'b1001: rhs =  (X  &~ Y);  // X bitwise and complement Y
+            4'b1010: rhs =  (X  ^  Y);  // X bitwise xor Y
+            4'b1011: rhs =  (X  -  Y);  // X subtract Y
+            4'b1100: rhs =  (X  ^~ Y);  // X xor ones' complement Y
+            4'b1101: rhs =  (X  >> Y);  // X shift right logical Y
+            4'b1110: rhs = -(X  != Y);  // X compare <> Y
             4'b1111: rhs = 32'bx;       // reserved
         endcase
 
-        rhs = rhs + (type ? Y : I);
+        rhs = rhs + A;
     end
 
 endmodule
@@ -71,26 +69,25 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
             output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, output[31:0] d_addr, inout[31:0] d_data);
 
-    wire illegal, type, storing, drhs, jumping;
+    wire illegal, type, drhs, jumping;
     wire[ 3:0] indexX, indexY, indexZ;
     wire[31:0] valueX, valueY, valueZ, valueI, irhs;
     wire[ 3:0] op;
 
     wire _en     = en && reset_n;
-    wire writing = !storing;
-    wire loading = !storing && drhs;
-    wire right   =  storing && drhs;
+    wire writing = !mem_rw;
+    wire loading = !mem_rw && drhs;
+    wire right   =  mem_rw && drhs;
 
     wire[31:0] rhs     = drhs ? d_data : irhs;
     wire[31:0] storand = drhs ? valueZ : irhs;
 
-    assign d_data = storing ? storand : 32'bz;
-    assign d_addr = drhs    ? irhs    : valueZ;
-    assign mem_rw = storing;
+    assign d_data = mem_rw ? storand : 32'bz;
+    assign d_addr = drhs   ? irhs    : valueZ;
 
-    reg [1:0] rcyc, rcycen;
+    reg [1:0] rcyc = 1, rcycen = 0;
     wire[1:0] cyc = rcyc & rcycen;
-    reg rhalt;
+    reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
 
     always @(`EDGE clk) begin
@@ -99,10 +96,8 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
             rhalt  <= 0;
             rcyc   <= 1;
             rcycen <= 0; // out of phase with rcyc ; 1-cycle delay on startup
-        end
-
-        if (_en) begin
-            rcyc <= {rcyc[0],rcyc[1]};
+        end else if (_en) begin
+            rcyc   <= {rcyc[0],rcyc[1]};
             rcycen <= {rcycen[0],rcyc[1] & ~|halt};
 
             case (cyc)
@@ -112,16 +107,16 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
         end
     end
 
-    // Decode and register reads happen as soon as instruction is ready.
+    // Decode and register reads happen as soon as instruction is ready
     Decode decode(.insn(i_data), .op(op), .illegal(illegal), .type(type),
                   .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI),
-                  .storing(storing), .deref_rhs(drhs), .branch(jumping));
+                  .storing(mem_rw), .deref_rhs(drhs), .branch(jumping));
 
-    // Execution (arithmetic operation) happen the cyc after decode
-    Exec exec(.clk(clk), .en(_en & cyc[0]), .op(op), .type(type),
-              .rhs(irhs), .X(valueX), .Y(valueY), .I(valueI));
+    // Execution (arithmetic operation)
+    Exec exec(.clk(clk), .en(_en & cyc[0]), .op(op), .rhs(irhs), .X(valueX),
+              .Y(type ? valueI : valueY), .A(type ? valueY : valueI));
 
-    // Registers and memory get written last, the cyc after execution
+    // Registers commit after execution
     Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
              .en(_en), .writeZ(rhs), .indexY(indexY), .valueY(valueY),
              .upZ(writing & cyc[1]), .indexZ(indexZ), .valueZ(valueZ));
