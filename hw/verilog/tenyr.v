@@ -65,20 +65,14 @@ module Exec(input clk, en, output reg[31:0] rhs, input[3:0] op,
 
 endmodule
 
-module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
-            output reg[31:0] i_addr, input[31:0] i_data,
-            output mem_rw, output[31:0] d_addr, inout[31:0] d_data);
+module Core(input clk, en, reset_n, inout `HALTTYPE halt,
+                           output reg[31:0] i_addr, input[31:0] i_data,
+            output mem_rw, output    [31:0] d_addr, inout[31:0] d_data);
 
     wire illegal, type, drhs, jumping;
-    wire[ 3:0] indexX, indexY, indexZ;
+    wire _en = en && reset_n;
+    wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, valueI, irhs;
-    wire[ 3:0] op;
-
-    wire _en     = en && reset_n;
-    wire writing = !mem_rw;
-    wire loading = !mem_rw && drhs;
-    wire right   =  mem_rw && drhs;
-
     wire[31:0] rhs     = drhs ? d_data : irhs;
     wire[31:0] storand = drhs ? valueZ : irhs;
 
@@ -86,7 +80,7 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     assign d_addr = drhs   ? irhs    : valueZ;
 
     reg [1:0] rcyc = 1, rcycen = 0;
-    wire[1:0] cyc = rcyc & rcycen;
+    wire[1:0] cyc  = rcyc & rcycen;
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
 
@@ -119,7 +113,7 @@ module Core(input clk, input en, input reset_n, inout `HALTTYPE halt,
     // Registers commit after execution
     Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
              .en(_en), .writeZ(rhs), .indexY(indexY), .valueY(valueY),
-             .upZ(writing & cyc[1]), .indexZ(indexZ), .valueZ(valueZ));
+             .upZ(!mem_rw & cyc[1]), .indexZ(indexZ), .valueZ(valueZ));
 
 endmodule
 
