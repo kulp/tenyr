@@ -48,8 +48,10 @@ asm.o: CFLAGS += -Wno-unused-parameter
 
 vpath %.tas ../verilog
 
+run_fib: PERIODS=32
+
 run_%: tenyr %.texe
-	vvp -M. $< +LOAD=$*.texe
+	vvp -M. $< +LOAD=$*.texe +PERIODS=$(PERIODS)
 
 clean:
 	$(RM) tenyr glue.vpi *.o

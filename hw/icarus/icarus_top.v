@@ -5,12 +5,16 @@ module Top();
     Tenyr tenyr();
 
     reg [100:0] filename;
+    integer periods = 64;
+    integer temp;
     initial #0 begin
         $dumpfile("Top.vcd");
         if ($value$plusargs("LOAD=%s", filename))
             $tenyr_load(filename);
+        if ($value$plusargs("PERIODS=%d", temp))
+            periods = temp;
         $dumpvars;
-        #(64 * `CLOCKPERIOD) $finish;
+        #(periods * `CLOCKPERIOD) $finish;
     end
 endmodule
 
