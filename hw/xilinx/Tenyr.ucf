@@ -1,14 +1,14 @@
 NET "clk" TNM_NET = "clk";
 NET "clocks/in" LOC = V10;
 
-NET "vga/clk25MHz" TNM_NET = "vga/clk25MHz";
+NET "vga/vga/clk25MHz" TNM_NET = "vga/vga/clk25MHz";
 NET "core/clk" TNM_NET = "core/clk";
-TIMESPEC TS_vga_clk25MHz = PERIOD "vga/clk25MHz" 25 MHz HIGH 50%;
+TIMESPEC TS_vga_clk25MHz = PERIOD "vga/vga/clk25MHz" 25 MHz HIGH 50%;
 TIMESPEC TS_clk = PERIOD "clk" 100 MHz HIGH 50%;
 
 NET "halt" LOC = T10;
 NET "reset" LOC = A8;
 
 # False path specification
-TIMESPEC "TS_00" = FROM "vga/clk25MHz" TO "core/clk" TIG;
-TIMESPEC "TS_01" = FROM "core/clk" TO "vga/clk25MHz" TIG;
+TIMESPEC "TS_00" = FROM "vga/vga/clk25MHz" TO "core/clk" TIG;
+TIMESPEC "TS_01" = FROM "core/clk" TO "vga/vga/clk25MHz" TIG;
