@@ -102,18 +102,24 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     end
 
     // Decode and register reads happen as soon as instruction is ready
-    Decode decode(.insn(i_data), .op(op), .illegal(illegal), .type(type),
-                  .Z(indexZ), .X(indexX), .Y(indexY), .I(valueI),
-                  .storing(mem_rw), .deref_rhs(drhs), .branch(jumping));
+    Decode decode(.Z ( indexZ ), .insn    ( i_data  ), .storing   ( mem_rw  ),
+                  .X ( indexX ), .type    ( type    ), .deref_rhs ( drhs    ),
+                  .Y ( indexY ), .op      ( op      ), .branch    ( jumping ),
+                  .I ( valueI ), .illegal ( illegal ));
 
     // Execution (arithmetic operation)
-    Exec exec(.clk(clk), .en(_en & cyc[0]), .op(op), .rhs(irhs), .X(valueX),
-              .Y(type ? valueI : valueY), .A(type ? valueY : valueI));
+    wire[31:0] right  = type ? valueI : valueY;
+    wire[31:0] addend = type ? valueY : valueI;
+    Exec exec(.clk ( clk          ), .X ( valueX ), .rhs ( irhs ),
+              .en  ( _en & cyc[0] ), .Y ( right  ),
+              .op  ( op           ), .A ( addend ));
 
     // Registers commit after execution
-    Reg regs(.clk(clk), .pc(i_addr), .indexX(indexX), .valueX(valueX),
-             .en(_en), .writeZ(rhs), .indexY(indexY), .valueY(valueY),
-             .upZ(!mem_rw & cyc[1]), .indexZ(indexZ), .valueZ(valueZ));
+    Reg regs(.clk    ( clk    ), .en     ( _en              ), .pc ( i_addr ),
+             .indexX ( indexX ), .valueX ( valueX           ),
+             .indexY ( indexY ), .valueY ( valueY           ),
+             .indexZ ( indexZ ), .valueZ ( valueZ           ),
+             .writeZ ( rhs    ), .upZ    ( !mem_rw & cyc[1] ));
 
 endmodule
 
