@@ -45,7 +45,7 @@ vpath %.coe ipcore_dir
 %.coe: %.texe
 	echo 'memory_initialization_radix = 16;' > $@
 	echo 'memory_initialization_vector =' >> $@
-	$(TAS) -d $< | $(TAS) -f text - | sed 's/^0x//' >> $@
+	$(TAS) -d $< | sed 's/.*# \.word //; s/ ;.*//; s/^0x//' >> $@
 	echo ';' >> $@
 	mv $@ ipcore_dir
 
