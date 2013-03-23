@@ -97,13 +97,12 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
             rcyc   <= {rcyc[0],rcyc[1]};
             rcycen <= {rcycen[0],rcyc[1] & ~|halt};
 
-            case (cyc)
-                1: rhalt <= rhalt | illegal;
-                2: begin
-                    i_addr   = jumping ? rhs : next_pc;
-                    next_pc <= i_addr + 1;
-                end
-            endcase
+            if (cyc[0])
+                rhalt <= rhalt | illegal;
+            if (cyc[1]) begin
+                i_addr   = jumping ? rhs : next_pc;
+                next_pc <= i_addr + 1;
+            end
         end
     end
 
