@@ -1,17 +1,17 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(input clk, en, upZ,      input[ 3:0] indexZ, indexX, indexY,
-           input[31:0] writeZ, pc, output[31:0] valueZ, valueX, valueY);
+module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
+           input[31:0] writeZ, next_pc, output[31:0] valueZ, valueX, valueY);
 
     reg[31:0] store[1:14];
 
     wire ZisP =  &indexZ, XisP =  &indexX, YisP =  &indexY;
     wire Zis0 = ~|indexZ, Xis0 = ~|indexX, Yis0 = ~|indexY;
 
-    assign valueZ = Zis0 ? 0 : ZisP ? pc + 1 : store[indexZ];
-    assign valueX = Xis0 ? 0 : XisP ? pc + 1 : store[indexX];
-    assign valueY = Yis0 ? 0 : YisP ? pc + 1 : store[indexY];
+    assign valueZ = Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
+    assign valueX = Xis0 ? 0 : XisP ? next_pc : store[indexX];
+    assign valueY = Yis0 ? 0 : YisP ? next_pc : store[indexY];
 
     always @(`EDGE clk)
         if (en && upZ && !Zis0 && !ZisP)
@@ -115,11 +115,11 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
               .op  ( op           ), .A ( addend ));
 
     // Registers commit after execution
-    Reg regs(.clk    ( clk    ), .en     ( _en              ), .pc ( i_addr ),
-             .indexX ( indexX ), .valueX ( valueX           ),
-             .indexY ( indexY ), .valueY ( valueY           ),
-             .indexZ ( indexZ ), .valueZ ( valueZ           ),
-             .writeZ ( rhs    ), .upZ    ( !mem_rw & cyc[1] ));
+    Reg regs(.clk    ( clk    ), .next_pc ( i_addr + 1       ), .en ( _en ),
+             .indexX ( indexX ), .valueX  ( valueX           ),
+             .indexY ( indexY ), .valueY  ( valueY           ),
+             .indexZ ( indexZ ), .valueZ  ( valueZ           ),
+             .writeZ ( rhs    ), .upZ     ( !mem_rw & cyc[1] ));
 
 endmodule
 
