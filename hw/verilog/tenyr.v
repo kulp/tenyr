@@ -79,6 +79,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     assign d_data = mem_rw ? storand : 32'bz;
     assign d_addr = drhs   ? irhs    : valueZ;
 
+    reg [31:0] next_pc = `RESETVECTOR + 1;
     reg [1:0] rcyc = 1, rcycen = 0;
     wire[1:0] cyc  = rcyc & rcycen;
     reg rhalt = 0;
@@ -86,17 +87,21 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
 
     always @(`EDGE clk) begin
         if (!reset_n) begin
-            i_addr <= `RESETVECTOR;
-            rhalt  <= 0;
-            rcyc   <= 1;
-            rcycen <= 0; // out of phase with rcyc ; 1-cycle delay on startup
+            i_addr   = `RESETVECTOR;
+            next_pc <= `RESETVECTOR + 1;
+            rhalt   <= 0;
+            rcyc    <= 1;
+            rcycen  <= 0; // out of phase with rcyc ; 1-cycle delay on startup
         end else if (_en) begin
             rcyc   <= {rcyc[0],rcyc[1]};
             rcycen <= {rcycen[0],rcyc[1] & ~|halt};
 
             case (cyc)
-                1: rhalt  <= rhalt | illegal;
-                2: i_addr <= jumping ? rhs : i_addr + 1;
+                1: rhalt <= rhalt | illegal;
+                2: begin
+                    i_addr   = jumping ? rhs : next_pc;
+                    next_pc <= i_addr + 1;
+                end
             endcase
         end
     end
@@ -115,7 +120,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
               .op  ( op           ), .A ( addend ));
 
     // Registers commit after execution
-    Reg regs(.clk    ( clk    ), .next_pc ( i_addr + 1       ), .en ( _en ),
+    Reg regs(.clk    ( clk    ), .next_pc ( next_pc          ), .en ( _en ),
              .indexX ( indexX ), .valueX  ( valueX           ),
              .indexY ( indexY ), .valueY  ( valueY           ),
              .indexZ ( indexZ ), .valueZ  ( valueZ           ),
