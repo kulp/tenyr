@@ -1,4 +1,5 @@
 TOP ?= ../..
+PERIODS ?= 32
 
 VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
@@ -47,8 +48,6 @@ asm.o sim.o: CFLAGS += -Wno-unused-value
 asm.o: CFLAGS += -Wno-unused-parameter
 
 vpath %.tas ../verilog
-
-run_fib: PERIODS=32
 
 run_%: tenyr %.texe
 	vvp -M. $< +LOAD=$*.texe +PERIODS=$(PERIODS)
