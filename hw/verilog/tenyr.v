@@ -6,12 +6,13 @@ module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
 
     reg[31:0] store[1:14];
 
-    wire ZisP =  &indexZ, XisP =  &indexX, YisP =  &indexY;
-    wire Zis0 = ~|indexZ, Xis0 = ~|indexX, Yis0 = ~|indexY;
+    wire XisP = &indexX, Xis0 = ~|indexX,
+         YisP = &indexY, Yis0 = ~|indexY,
+         ZisP = &indexZ, Zis0 = ~|indexZ;
 
-    assign valueZ = Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
     assign valueX = Xis0 ? 0 : XisP ? next_pc : store[indexX];
     assign valueY = Yis0 ? 0 : YisP ? next_pc : store[indexY];
+    assign valueZ = Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
 
     always @(`EDGE clk)
         if (en && upZ && !Zis0 && !ZisP)
