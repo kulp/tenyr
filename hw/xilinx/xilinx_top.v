@@ -27,15 +27,16 @@ module Tenyr(
     assign Led[7:0] = {'b0,ihalt};
 
     tenyr_mainclock clocks(
-        .reset     ( 1'b0     ), .locked       ( valid_clk ), .in ( clk ),
-        .clk_core0 ( clk_core ), .clk_core0_CE ( valid_clk ),
-        .clk_vga   ( clk_vga  ), .clk_vga_CE   ( valid_clk )
+        .in     ( clk       ), .clk_core0    ( clk_core  ),
+        .reset  ( 1'b0      ), .clk_core0_CE ( valid_clk ),
+        .locked ( valid_clk ), .clk_vga      ( clk_vga   ),
+                               .clk_vga_CE   ( valid_clk )
     );
 
     Core core(
-        .clk    ( clk_core ), .en     ( valid_clk ), .reset_n ( _reset_n  ),
-        .halt   ( ihalt    ), .i_addr ( insn_addr ), .i_data  ( insn_data ),
-        .mem_rw ( oper_rw  ), .d_addr ( oper_addr ), .d_data  ( oper_data )
+        .clk  ( clk_core  ), .reset_n ( _reset_n  ), .mem_rw ( oper_rw   ),
+        .en   ( valid_clk ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
+        .halt ( ihalt     ), .i_data  ( insn_data ), .d_data ( oper_data )
     );
 
 // -----------------------------------------------------------------------------
@@ -46,10 +47,10 @@ module Tenyr(
     GenedBlockMem ram(
         .clka  ( clk_core    ),  .clkb  ( clk_core  ),
         .ena   ( ram_inrange ),/*.enb   ( 1'b1      ),*/
+        .wea   ( oper_rw     ),  .web   ( 1'b0      ),
         .addra ( oper_addr   ),  .addrb ( insn_addr ),
         .dina  ( oper_data   ),  .dinb  ( 'bx       ),
-        .douta ( out_data    ),  .doutb ( insn_data ),
-        .wea   ( oper_rw     ),  .web   ( 1'b0      )
+        .douta ( out_data    ),  .doutb ( insn_data )
     );
 
 // -----------------------------------------------------------------------------
@@ -57,19 +58,19 @@ module Tenyr(
 
 `ifdef SEG7
     Seg7 #(.BASE(12'h100)) seg7(
-        .clk ( clk_core ), .reset_n ( _reset_n  ), .enable ( 1'b1      ),
-        .rw  ( oper_rw  ), .addr    ( oper_addr ), .data   ( oper_data ),
-        .seg ( seg      ), .an      ( an        )
+        .clk     ( clk_core ), .rw   ( oper_rw   ), .seg ( seg ),
+        .reset_n ( _reset_n ), .addr ( oper_addr ), .an  ( an  ),
+        .enable  ( 1'b1     ), .data ( oper_data )
     );
 `endif
 
 `ifdef VGA
     VGAwrap vga(
-        .clk_core ( clk_core ), .clk_vga  ( clk_vga   ),
-        .enable   ( 1        ), .reset_n  ( _reset_n  ),
-        .rw       ( oper_rw  ), .addr     ( oper_addr ), .data    ( oper_data ),
-        .vgaRed   ( vgaRed   ), .vgaGreen ( vgaGreen  ), .vgaBlue ( vgaBlue   ),
-        .hsync    ( hsync    ), .vsync    ( vsync     )
+        .clk_core ( clk_core ), .rw   ( oper_rw   ), .vgaRed   ( vgaRed   ),
+        .clk_vga  ( clk_vga  ), .addr ( oper_addr ), .vgaGreen ( vgaGreen ),
+        .enable   ( 1        ), .data ( oper_data ), .vgaBlue  ( vgaBlue  ),
+        .reset_n  ( _reset_n ),                      .hsync    ( hsync    ),
+                                                     .vsync    ( vsync    )
     );
 `endif
 
