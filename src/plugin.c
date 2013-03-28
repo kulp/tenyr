@@ -29,7 +29,8 @@ int plugin_load(const char *base, const struct plugin_cookie *p,
     do {
         char buf[256], parent[256];
         snprintf(parent, sizeof parent, "%s[%d]", base, inst);
-        if (p->gops.param_get(p, parent, 1, &implname)) {
+        int count = p->gops.param_get(p, parent, 1, &implname);
+        if (count > 0) {
             // If implname contains a slash, treat it as a path ; otherwise, stem
             const char *implpath = NULL;
             const char *implstem = NULL;

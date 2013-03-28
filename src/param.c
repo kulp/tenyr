@@ -41,12 +41,18 @@ int param_get(struct param_state *pstate, char *key, size_t count, const char *v
         return 0;
 
     struct string_list *r = q->list;
-    for (size_t i = 0; i < count; i++) {
+    size_t i = 0;
+    for (; i < count && r; i++) {
         val[i] = r->value;
         r = r->next;
     }
+    
+    while (r) {
+        r = r->next;
+        i++;
+    }
 
-    return 1;
+    return i;
 }
 
 int param_set(struct param_state *pstate, char *key, char *val, int replace, int free_value)
