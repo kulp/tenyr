@@ -56,12 +56,10 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 
 DEVICES = ram sparseram debugwrap serial spi
 ifneq ($(SDL),0)
-DEFINES += TSIM_SDL_ENABLED
-CPPFLAGS += $(shell sdl2-config --cflags) -Wno-c11-extensions
-DEVICES += sdlvga
-tsim.o: CPPFLAGS += -include SDL.h
-tsim libsdlled$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
-PDEVICES += sdlled
+libsdl%$(DYLIB_SUFFIX): DEFINES += TSIM_SDL_ENABLED
+libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) -Wno-c11-extensions
+libsdl%$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
+PDEVICES += sdlled sdlvga
 endif
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
