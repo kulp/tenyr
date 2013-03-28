@@ -108,7 +108,9 @@ int param_add(struct param_state *pstate, const char *optarg)
     // Replace '=' with '\0' to split string in two
     *eq = '\0';
 
-    int replace = 0; // XXX
+    int replace = eq[-1] != '+';
+    if (!replace)
+        eq[-1] = '\0';
 
     return param_set(pstate, dupped, ++eq, replace, 0);
 }
