@@ -58,13 +58,14 @@ DEVICES = ram sparseram debugwrap serial spi
 ifneq ($(SDL),0)
 DEFINES += TSIM_SDL_ENABLED
 CPPFLAGS += $(shell sdl2-config --cflags) -Wno-c11-extensions
-DEVICES += sdlvga sdlled
+DEVICES += sdlvga
 tsim.o: CPPFLAGS += -include SDL.h
-tsim: LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
+tsim libsdlled$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
+PDEVICES += sdlled
 endif
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
-PDEVICES = spidummy spisd spi
+PDEVICES += spidummy spisd spi
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
 PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
 
@@ -102,8 +103,7 @@ tas.o asm.o tsim.o sim.o simif.o dbg.o ffi.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -
 # don't complain about unused state
 ffi.o asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
-$(PDEVLIBS): pluginimpl,dy.o
-libspi$(DYLIB_SUFFIX): plugin,dy.o
+$(PDEVLIBS): lib%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o
 
 # flex-generated code we can't control warnings of as easily
 $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
