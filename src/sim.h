@@ -47,6 +47,7 @@ struct sim_state {
             struct device_ops ops;
         } *impls;
     } *plugins;
+    int plugins_loaded;
     struct plugin_cookie plugin_cookie;
 
     op_dispatcher *dispatch_op;

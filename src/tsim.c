@@ -162,7 +162,8 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
 
 static int recipe_plugin(struct sim_state *s)
 {
-    return plugin_load("plugin", &s->plugin_cookie, plugin_success, s);
+    return s->plugins_loaded ||
+        (s->plugins_loaded = !plugin_load("plugin", &s->plugin_cookie, plugin_success, s));
 }
 
 static int recipe_prealloc(struct sim_state *s)
