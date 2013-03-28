@@ -251,14 +251,14 @@ static int add_recipe(struct sim_state *s, const char *name)
     }
 }
 
-static int plugin_param_get(const struct plugin_cookie *cookie, char *key, const char **val)
+static int plugin_param_get(const struct plugin_cookie *cookie, char *key, size_t count, const char *val[count])
 {
-    return param_get(cookie->param, key, 1, val);
+    return param_get(cookie->param, key, count, val);
 }
 
-static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
+static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_value)
 {
-    return param_set(cookie->param, key, val, 1, free_value);
+    return param_set(cookie->param, key, val, replace, free_value);
 }
 
 static int find_format(const char *optarg, const struct format **f)
