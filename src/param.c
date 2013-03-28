@@ -6,6 +6,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct param_state {
+#define DEFAULT_PARAMS_COUNT 16
+    size_t params_count;
+    size_t params_size;
+    struct param_entry {
+        char *key;
+        struct string_list {
+            struct string_list *next;
+            int free_value; ///< whether value should be free()d
+            char *value;
+        } *list;
+    } *params;
+};
+
 static void param_free(struct param_entry *p);
 
 static int params_cmp(const void *_a, const void *_b)
@@ -16,7 +30,7 @@ static int params_cmp(const void *_a, const void *_b)
     return strcmp(a->key, b->key);
 }
 
-int param_get(struct param_state *pstate, char *key, const char **val)
+int param_get(struct param_state *pstate, char *key, size_t count, const char *val[count])
 {
     struct param_entry p = { .key = key };
 
@@ -26,33 +40,49 @@ int param_get(struct param_state *pstate, char *key, const char **val)
     if (!q)
         return 0;
 
-    *val = q->value;
+    struct string_list *r = q->list;
+    for (size_t i = 0; i < count; i++) {
+        val[i] = r->value;
+        r = r->next;
+    }
 
     return 1;
 }
 
-int param_set(struct param_state *pstate, char *key, char *val, int free_value)
+int param_set(struct param_state *pstate, char *key, char *val, int replace, int free_value)
 {
     while (pstate->params_size <= pstate->params_count)
         // technically there is a problem here if realloc() fails
         pstate->params = realloc(pstate->params,
                 (pstate->params_size *= 2) * sizeof *pstate->params);
 
-    struct param_entry p = {
-        .key        = key,
-        .value      = val,
-        .free_value = free_value,
-    };
-
+    struct param_entry p = { .key  = key }; // doesn't have a list yet
     struct param_entry *q = lsearch(&p, pstate->params, &pstate->params_count,
                                         sizeof *pstate->params, params_cmp);
 
     if (!q)
-        return 1;
+        return 1; // errno will be set
 
-    if (q->key != p.key) {
-        param_free(q);
-        *q = p;
+    struct string_list *list = calloc(1, sizeof *list);
+    list->next = NULL;
+    list->value = val;
+    list->free_value = free_value;
+
+    if (replace) {
+        if (q->key != p.key) {
+            param_free(q);
+            *q = p;
+        }
+        q->list = list;
+    } else {
+        if (!q->list) {
+            q->list = list;
+        } else {
+            struct string_list *r = q->list;
+            while (r->next)
+                r = r->next;
+            r->next = list;
+        }
     }
 
     return 0;
@@ -72,7 +102,17 @@ int param_add(struct param_state *pstate, const char *optarg)
     // Replace '=' with '\0' to split string in two
     *eq = '\0';
 
-    return param_set(pstate, dupped, ++eq, 0);
+    int replace = 0; // XXX
+
+    return param_set(pstate, dupped, ++eq, replace, 0);
+}
+
+void param_init(struct param_state **pstate)
+{
+    struct param_state *p = *pstate = calloc(1, sizeof **pstate);
+    p->params_size  = DEFAULT_PARAMS_COUNT;
+    p->params_count = 0;
+    p->params       = calloc(p->params_size, sizeof *p->params);
 }
 
 void param_destroy(struct param_state *pstate)
@@ -87,7 +127,11 @@ void param_destroy(struct param_state *pstate)
 static void param_free(struct param_entry *p)
 {
     free(p->key);
-    if (p->free_value)
-        free(p->value);
+    struct string_list *q = p->list;
+    while (q) {
+        if (q->free_value)
+            free(q->value);
+        q = q->next;
+    }
 }
 

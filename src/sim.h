@@ -34,7 +34,7 @@ struct sim_state {
         int run_defaults;   ///< whether to run default recipes
         int debugging;
 
-        struct param_state params;
+        struct param_state *params;
 
         int start_addr;
         int load_addr;
