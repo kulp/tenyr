@@ -1,3 +1,3 @@
 -rplugin
---param=plugin[0]=sdlled
---param=plugin[1]=sdlvga
+--param=plugin[0]+=sdlled
+--param=plugin[0]+=sdlvga
