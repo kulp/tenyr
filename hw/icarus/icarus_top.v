@@ -76,7 +76,7 @@ module Tenyr(output[7:0] seg, output[3:0] an);
 // -----------------------------------------------------------------------------
 // DEVICES ---------------------------------------------------------------------
 
-    SimSerial serial(
+    SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
         .clk ( clk_datamem ), .reset_n ( reset_n   ), .enable ( !halt     ),
         .rw  ( oper_rw     ), .addr    ( oper_addr ), .data   ( oper_data )
     );

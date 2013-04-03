@@ -54,13 +54,14 @@ BUILD_NAME := $(shell git describe --tags --long --always)
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
-DEVICES = ram sparseram debugwrap serial spi
-ifneq ($(SDL),0)
-libsdl%$(DYLIB_SUFFIX): DEFINES += TSIM_SDL_ENABLED
 libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) -Wno-c11-extensions
-libsdl%$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
-PDEVICES += sdlled sdlvga
+libsdl%$(DYLIB_SUFFIX): LDLIBS   += $(shell sdl2-config --libs) -lSDL2_image
+PDEVICES_SDL += sdlled sdlvga
+ifneq ($(SDL),0)
+PDEVICES += $(PDEVICES_SDL)
 endif
+
+DEVICES = ram sparseram debugwrap serial spi
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
 PDEVICES += spidummy spisd spi

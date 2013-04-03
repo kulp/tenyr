@@ -19,7 +19,7 @@ module Seg7(input clk, enable, rw, reset_n, input[31:0] addr, data,
 
     reg[NIS:0] ena = 1'b1;
     reg[NI4:0] mydata[SIZE - 1:0]
-`ifndef ICARUS
+`ifndef __ICARUS__
 `ifndef ISIM
     = { 0 }
 `endif
