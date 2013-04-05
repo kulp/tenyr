@@ -38,6 +38,9 @@ CPPFLAGS += -I../../lib
 %.tasd: %.to
 	$(TAS) -d -o$@ $<
 
+%.tasd: %.mif
+	perl -nle 'printf "0x%08x\n", unpack("N", pack("B32", $$_))' < $< | $(TAS) -ftext -d -o $@ -
+
 %.texe: %.to
 	$(TLD) -o$@ $^
 
