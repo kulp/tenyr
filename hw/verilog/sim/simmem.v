@@ -19,8 +19,8 @@ module SimMem(input clka, wea, input[31:0] addra, dina, output[31:0] douta,
     assign douta = (!wea) ? rdouta : 32'bz;
     assign doutb = (!web) ? rdoutb : 32'bz;
 
-    // Xilinx generated block RAMs use posedge ; we use nege
-    always @(`EDGE clka) begin
+    // Xilinx generated block RAMs use posedge
+    always @(posedge clka) begin
         if (a_inrange)
             if (wea)
                 store[addra] = dina;
@@ -28,7 +28,7 @@ module SimMem(input clka, wea, input[31:0] addra, dina, output[31:0] douta,
                 rdouta = store[addra];
     end
 
-    always @(`EDGE clkb) begin
+    always @(posedge clkb) begin
         if (b_inrange)
             if (web)
                 store[addrb] = dinb;

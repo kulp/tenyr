@@ -22,16 +22,11 @@ module Tenyr(output[7:0] seg, output[3:0] an);
     reg reset_n = 0;
     reg rhalt = 1;
 
-    reg  _clk_core = 1;
-    reg  en_core   = 0;
-    wire clk_core  = en_core & _clk_core;
-
-    // TODO proper data clock timing
-    wire clk_datamem = ~clk_core;
-    wire clk_insnmem =  clk_core;
+    reg clk_core = 1;
+    reg en_core  = 0;
 
     always #(`CLOCKPERIOD / 2) begin
-        _clk_core = ~_clk_core;
+        clk_core = ~clk_core;
         en_core   = ~rhalt;
     end
 
@@ -66,25 +61,25 @@ module Tenyr(output[7:0] seg, output[3:0] an);
 
     // active on posedge clock
     SimMem #(.BASE(`RESETVECTOR)) ram(
-        .clka  ( ~clk_datamem ), .clkb  ( ~clk_insnmem ),
-        .addra ( oper_addr    ), .addrb ( insn_addr    ),
-        .dina  ( oper_data    ), .dinb  ( 32'bx        ),
-        .douta ( out_data     ), .doutb ( insn_data    ),
-        .wea   ( oper_rw      ), .web   ( 1'b0         )
+        .clka  ( clk_core  ), .clkb  ( clk_core  ),
+        .addra ( oper_addr ), .addrb ( insn_addr ),
+        .dina  ( oper_data ), .dinb  ( 32'bx     ),
+        .douta ( out_data  ), .doutb ( insn_data ),
+        .wea   ( oper_rw   ), .web   ( 1'b0      )
     );
 
 // -----------------------------------------------------------------------------
 // DEVICES ---------------------------------------------------------------------
 
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
-        .clk ( clk_datamem ), .reset_n ( reset_n   ), .enable ( !halt     ),
-        .rw  ( oper_rw     ), .addr    ( oper_addr ), .data   ( oper_data )
+        .clk ( clk_core ), .reset_n ( reset_n   ), .enable ( !halt     ),
+        .rw  ( oper_rw  ), .addr    ( oper_addr ), .data   ( oper_data )
     );
 
     Seg7 #(.BASE(12'h100)) seg7(
-        .clk ( clk_datamem ), .reset_n ( reset_n   ), .enable ( 1'b1      ),
-        .rw  ( oper_rw     ), .addr    ( oper_addr ), .data   ( oper_data ),
-        .seg ( seg         ), .an      ( an        )
+        .clk ( clk_core ), .reset_n ( reset_n   ), .enable ( 1'b1      ),
+        .rw  ( oper_rw  ), .addr    ( oper_addr ), .data   ( oper_data ),
+        .seg ( seg      ), .an      ( an        )
     );
 
 endmodule
