@@ -46,7 +46,6 @@ module Tenyr(output[7:0] seg, output[3:0] an);
 `endif
 
     wire `HALTTYPE halt;
-    assign halt[`HALT_SIM] = rhalt;
     assign halt[`HALT_TENYR] = rhalt;
     assign halt[`HALT_EXTERNAL] = 0;
 

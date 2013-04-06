@@ -21,9 +21,6 @@ module Tenyr(
     wire `HALTTYPE ihalt;
     assign ihalt[`HALT_TENYR   ] = ~valid_clk;
     assign ihalt[`HALT_EXTERNAL] = halt;
-`ifdef SIM
-    assign ihalt[`HALT_SIM     ] = 0;
-`endif
     assign Led[7:0] = {'b0,ihalt};
 
     tenyr_mainclock clocks(
