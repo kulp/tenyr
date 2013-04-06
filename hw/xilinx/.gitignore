@@ -184,3 +184,6 @@ xilinxsim.ini
 *.wcfg
 ipcore_dir/coregen_lock
 *.bin
+*.svf
+*.xsvf
+ipcore_dir/tenyr_mainclock/

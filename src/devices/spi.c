@@ -101,16 +101,16 @@ struct success_box {
     struct plugin_cookie *pcookie;
 };
 
-static int wrapped_param_get(const struct plugin_cookie *cookie, char *key, const char **val)
+static int wrapped_param_get(const struct plugin_cookie *cookie, char *key, size_t count, const char *val[count])
 {
     char buf[256];
     snprintf(buf, sizeof buf, "%s.%s", cookie->prefix, key);
     key = buf;
 
-    return cookie->wrapped->gops.param_get(cookie->wrapped, key, val);
+    return cookie->wrapped->gops.param_get(cookie->wrapped, key, count, val);
 }
 
-static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
+static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_value)
 {
     char (*buf)[256] = malloc(sizeof *buf);
     snprintf(*buf, sizeof *buf, "%s.%s", cookie->prefix, key);
@@ -124,7 +124,7 @@ static int wrapped_param_set(struct plugin_cookie *cookie, char *key, char *val,
     }
 
     key = *buf;
-    return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, 1);
+    return cookie->wrapped->gops.param_set(cookie->wrapped, key, val, replace, 1);
 }
 
 static int plugin_success(void *libhandle, int inst, const char *parent,

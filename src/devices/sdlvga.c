@@ -5,6 +5,8 @@
 
 #include <sys/time.h>
 
+#include "plugin.h"
+
 #include "SDL.h"
 #include "SDL_image.h"
 
@@ -172,7 +174,13 @@ static int sdlvga_pump(void *cookie)
     return 0;
 }
 
-int sdlvga_add_device(struct device **device)
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+{
+    fatal_ = ops->fatal;
+    debug_ = ops->debug;
+}
+
+int EXPORT sdlvga_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { SDLVGA_BASE, SDLVGA_BASE + CELL_OFFSET + (COLS * ROWS) - 1 },

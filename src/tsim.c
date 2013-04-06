@@ -15,22 +15,12 @@
 #include <strings.h>
 #include <search.h>
 
-#if TSIM_SDL_ENABLED
-#define SDL_RECIPES(_) \
-    _(sdlvga  , "enable SDL VGA emulation") \
-    _(sdlled  , "enable SDL 7-segment display emulation") \
-    //
-#else
-#define SDL_RECIPES(_)
-#endif
-
 #define RECIPES(_) \
     _(abort   , "abort() on illegal instruction or memory address") \
     _(pause   , "wait for keystroke on illegal instruction or memory address, then exit") \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
-    SDL_RECIPES(_) \
     _(nowrap  , "stop when PC wraps around 24-bit boundary") \
     _(plugin  , "load plugins specified through param mechanism") \
     //
@@ -172,7 +162,8 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
 
 static int recipe_plugin(struct sim_state *s)
 {
-    return plugin_load("plugin", &s->plugin_cookie, plugin_success, s);
+    return s->plugins_loaded ||
+        (s->plugins_loaded = !plugin_load("plugin", &s->plugin_cookie, plugin_success, s));
 }
 
 static int recipe_prealloc(struct sim_state *s)
@@ -198,24 +189,6 @@ static int recipe_serial(struct sim_state *s)
     s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
     return serial_add_device(&s->machine.devices[index]);
 }
-
-#if TSIM_SDL_ENABLED
-static int recipe_sdlvga(struct sim_state *s)
-{
-    int sdlvga_add_device(struct device **device);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    return sdlvga_add_device(&s->machine.devices[index]);
-}
-
-static int recipe_sdlled(struct sim_state *s)
-{
-    int sdlled_add_device(struct device **device);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    return sdlled_add_device(&s->machine.devices[index]);
-}
-#endif
 
 static int recipe_nowrap(struct sim_state *s)
 {
@@ -278,14 +251,14 @@ static int add_recipe(struct sim_state *s, const char *name)
     }
 }
 
-static int plugin_param_get(const struct plugin_cookie *cookie, char *key, const char **val)
+static int plugin_param_get(const struct plugin_cookie *cookie, char *key, size_t count, const char *val[count])
 {
-    return param_get(cookie->param, key, val);
+    return param_get(cookie->param, key, count, val);
 }
 
-static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int free_value)
+static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_value)
 {
-    return param_set(cookie->param, key, val, free_value);
+    return param_set(cookie->param, key, val, replace, free_value);
 }
 
 static int find_format(const char *optarg, const struct format **f)
@@ -334,7 +307,7 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
             case 'f': if (find_format(optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
             case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
             case 'n': s->conf.run_defaults = 0; break;
-            case 'p': param_add(&s->conf.params, optarg); break;
+            case 'p': param_add(s->conf.params, optarg); break;
             case 'r': if (add_recipe(s, optarg)) exit(usage(argv[0])); break;
             case 's': s->conf.start_addr = strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
@@ -360,15 +333,9 @@ int main(int argc, char *argv[])
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
             .fmt          = &tenyr_asm_formats[0],
-            .params = {
-                .params_size  = DEFAULT_PARAMS_COUNT,
-                .params_count = 0,
-                .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params.params),
-            },
         },
         .dispatch_op = dispatch_op,
         .plugin_cookie = {
-            .param = &_s.conf.params,
             .gops         = {
                 .fatal = fatal_,
                 .debug = debug_,
@@ -377,6 +344,9 @@ int main(int argc, char *argv[])
             },
         },
     }, *s = &_s;
+
+    param_init(&s->conf.params);
+    s->plugin_cookie.param = s->conf.params;
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
@@ -432,7 +402,7 @@ int main(int argc, char *argv[])
 
     devices_teardown(s);
 
-    param_destroy(&s->conf.params);
+    param_destroy(s->conf.params);
 
     return rc;
 }

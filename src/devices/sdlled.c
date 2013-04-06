@@ -5,6 +5,8 @@
 
 #include <sys/time.h>
 
+#include "plugin.h"
+
 #include "SDL.h"
 #include "SDL_image.h"
 
@@ -217,7 +219,13 @@ static int sdlled_pump(void *cookie)
     return 0;
 }
 
-int sdlled_add_device(struct device **device)
+void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+{
+    fatal_ = ops->fatal;
+    debug_ = ops->debug;
+}
+
+int EXPORT sdlled_add_device(struct device **device)
 {
     **device = (struct device){
         .bounds = { SDLLED_BASE, SDLLED_BASE + 1 },

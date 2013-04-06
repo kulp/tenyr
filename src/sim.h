@@ -34,7 +34,7 @@ struct sim_state {
         int run_defaults;   ///< whether to run default recipes
         int debugging;
 
-        struct param_state params;
+        struct param_state *params;
 
         int start_addr;
         int load_addr;
@@ -47,6 +47,7 @@ struct sim_state {
             struct device_ops ops;
         } *impls;
     } *plugins;
+    int plugins_loaded;
     struct plugin_cookie plugin_cookie;
 
     op_dispatcher *dispatch_op;

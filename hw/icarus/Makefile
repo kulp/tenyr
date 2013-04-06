@@ -1,4 +1,5 @@
 TOP ?= ../..
+PERIODS ?= 32
 
 VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
@@ -32,10 +33,14 @@ vpath %.c ../vpi ../../src
 vpath %.v ../verilog ../verilog/sim .
 
 VFLAGS += -I../verilog
-VFLAGS += -DICARUS -DSIM
+VFLAGS += -DSIM
+
+GEN_V += simserial.v
+SIM_GET_simserial = tenyr_getchar
+SIM_PUT_simserial = tenyr_putchar
 
 tenyr: VFLAGS += -m glue
-tenyr: simserial.v icarus_top.v simmem.v seg7.v seglookup.v hex2ascii.v jcounter.v | glue.vpi
+tenyr: simserial.v icarus_top.v simtop.v simmem.v seg7.v seglookup.v hex2ascii.v jcounter.v | glue.vpi
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 
@@ -49,7 +54,7 @@ asm.o: CFLAGS += -Wno-unused-parameter
 vpath %.tas ../verilog
 
 run_%: tenyr %.texe
-	vvp -M. $< +LOAD=$*.texe
+	vvp -M. $< +LOAD=$*.texe +PERIODS=$(PERIODS)
 
 clean:
 	$(RM) tenyr glue.vpi *.o
@@ -60,6 +65,16 @@ clobber: clean
 ##############################################################################
 
 OUTPUT_OPTION ?= -o $@
+
+$(GEN_V): VFLAGS += -DPUT='$$$(SIM_PUT_$*)' -DGET='$$$(SIM_GET_$*)' -DSTEM='$*'
+$(GEN_V): VFLAGS += -E
+$(GEN_V): %.v: ../verilog/sim/simwrap.v
+ifneq ($(MAKE_VERBOSE),)
+	iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+else
+	@echo "[ IVERILOG -E ] $@"
+	@iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+endif
 
 COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 %.o: %.c
@@ -88,17 +103,17 @@ endif
 
 %: %.v
 ifneq ($(MAKE_VERBOSE),)
-	iverilog $(VFLAGS) -Wall -o $@ $^
+	iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 else
 	@echo "[ IVERILOG ] $@"
-	@iverilog $(VFLAGS) -Wall -o $@ $^
+	@iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 endif
 
 %.vpi: %.o
 ifneq ($(MAKE_VERBOSE),)
-	iverilog-vpi -o $@ $^
+	iverilog-vpi $(OUTPUT_OPTION) $^
 else
 	@echo "[ VPI ] $@"
-	@iverilog-vpi -o $@ $^
+	@iverilog-vpi $(OUTPUT_OPTION) $^
 endif
 
