@@ -7,7 +7,7 @@
 `define SEG7
 
 module Tenyr(
-    input clk, halt, reset,
+    input clk, reset, inout `HALTTYPE halt,
     output[7:0] Led, output[7:0] seg, output[3:0] an,
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
@@ -18,10 +18,8 @@ module Tenyr(
     wire[31:0] insn_addr, oper_addr, insn_data, out_data;
     wire[31:0] oper_data = !oper_rw ? out_data : 32'bz;
 
-    wire `HALTTYPE ihalt;
-    assign ihalt[`HALT_TENYR   ] = ~valid_clk;
-    assign ihalt[`HALT_EXTERNAL] = halt;
-    assign Led[7:0] = {'b0,ihalt};
+    assign halt[`HALT_TENYR] = ~valid_clk;
+    assign Led[7:0] = halt;
 
     tenyr_mainclock clocks(
         .in     ( clk       ), .clk_core0    ( clk_core  ),
@@ -33,7 +31,7 @@ module Tenyr(
     Core core(
         .clk  ( clk_core  ), .reset_n ( _reset_n  ), .mem_rw ( oper_rw   ),
         .en   ( valid_clk ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
-        .halt ( ihalt     ), .i_data  ( insn_data ), .d_data ( oper_data )
+        .halt ( halt      ), .i_data  ( insn_data ), .d_data ( oper_data )
     );
 
 // -----------------------------------------------------------------------------

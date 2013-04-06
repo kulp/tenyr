@@ -1,12 +1,16 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Tenyr(input clk, reset_n, inout `HALTTYPE halt,
+module Tenyr(input clk, reset, inout `HALTTYPE halt,
              output[7:0] seg, output[3:0] an);
 
     wire[31:0] insn_addr, oper_addr, insn_data, out_data;
     wire[31:0] oper_data = !oper_rw ? out_data : 32'bz;
     wire oper_rw;
+    wire reset_n = ~reset;
+
+    reg rhalt = 0;
+    assign halt[`HALT_TENYR] = rhalt;
 
     Core core(
         .clk    ( clk     ), .en     ( 1'b1      ), .reset_n ( reset_n   ),
