@@ -53,8 +53,10 @@ asm.o: CFLAGS += -Wno-unused-parameter
 
 vpath %.tas ../verilog
 
+LOGFILE = Top.vcd
+run_%: PLUSARGS += +LOAD=$*.texe +PERIODS=$(PERIODS) +LOGFILE=$(LOGFILE)
 run_%: tenyr %.texe
-	vvp -M. $< +LOAD=$*.texe +PERIODS=$(PERIODS)
+	vvp -M. $< $(PLUSARGS)
 
 clean:
 	$(RM) tenyr glue.vpi *.o

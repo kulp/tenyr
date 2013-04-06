@@ -22,14 +22,17 @@ module Top();
 `ifdef __ICARUS__
     // TODO The `ifdef guard should really be controlling for VPI availability
     reg [100:0] filename;
+    reg [100:0] logfile = "Top.vcd";
     integer periods = 64;
     integer temp;
     initial #0 begin
-        $dumpfile("Top.vcd");
         if ($value$plusargs("LOAD=%s", filename))
             $tenyr_load(filename);
         if ($value$plusargs("PERIODS=%d", temp))
             periods = temp;
+        if ($value$plusargs("LOGFILE=%s", logfile))
+            $tenyr_load(filename);
+        $dumpfile(logfile);
         $dumpvars;
         #(periods * `CLOCKPERIOD) $finish;
     end
