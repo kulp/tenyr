@@ -93,7 +93,7 @@ output [31 : 0] doutb;
     .C_HAS_SOFTECC_INPUT_REGS_A(0),
     .C_HAS_SOFTECC_OUTPUT_REGS_B(0),
     .C_INIT_FILE("BlankString"),
-    .C_INIT_FILE_NAME("GenedBlockMem.mif"),
+    .C_INIT_FILE_NAME("./ipcore_dir/GenedBlockMem.mif"),
     .C_INITA_VAL("0"),
     .C_INITB_VAL("0"),
     .C_INTERFACE_TYPE(0),
