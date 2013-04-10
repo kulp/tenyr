@@ -81,8 +81,9 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     assign d_addr = drhs   ? irhs    : valueZ;
 
     reg [31:0] next_pc = `RESETVECTOR + 1;
-    reg [1:0] rcyc = 1, rcycen = 0;
-    wire[1:0] cyc  = rcyc & rcycen;
+    reg [31:0] insn = 0;
+    reg [3:0] rcyc = 1, rcycen = 0;
+    wire[3:0] cyc  = rcyc & rcycen;
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
 
@@ -93,13 +94,15 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
             rhalt   <= 0;
             rcyc    <= 1;
             rcycen  <= 0; // out of phase with rcyc ; 1-cycle delay on startup
+            insn     = 0;
         end else if (_en) begin
-            rcyc   <= {rcyc[0],rcyc[1]};
-            rcycen <= {rcycen[0],rcyc[1] & ~|halt};
+            rcyc   <= {rcyc[2:0],rcyc[3]};
+            rcycen <= {rcycen[2:0],rcyc[3] & ~|halt};
+            insn    = i_data;
 
-            if (cyc[0])
+            if (cyc[1])
                 rhalt <= rhalt | illegal;
-            if (cyc[1]) begin
+            if (cyc[2] && ~|halt) begin
                 i_addr   = jumping ? rhs : next_pc;
                 next_pc <= i_addr + 1;
             end
@@ -107,7 +110,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     end
 
     // Decode and register reads happen as soon as instruction is ready
-    Decode decode(.Z ( indexZ ), .insn    ( i_data  ), .storing   ( mem_rw  ),
+    Decode decode(.Z ( indexZ ), .insn    ( insn    ), .storing   ( mem_rw  ),
                   .X ( indexX ), .type    ( type    ), .deref_rhs ( drhs    ),
                   .Y ( indexY ), .op      ( op      ), .branch    ( jumping ),
                   .I ( valueI ), .illegal ( illegal ));
@@ -116,7 +119,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     wire[31:0] right  = type ? valueI : valueY;
     wire[31:0] addend = type ? valueY : valueI;
     Exec exec(.clk ( clk          ), .X ( valueX ), .rhs ( irhs ),
-              .en  ( _en & cyc[0] ), .Y ( right  ),
+              .en  ( _en & cyc[1] ), .Y ( right  ),
               .op  ( op           ), .A ( addend ));
 
     // Registers commit after execution
@@ -124,7 +127,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
              .indexX ( indexX ), .valueX  ( valueX           ),
              .indexY ( indexY ), .valueY  ( valueY           ),
              .indexZ ( indexZ ), .valueZ  ( valueZ           ),
-             .writeZ ( rhs    ), .upZ     ( !mem_rw & cyc[1] ));
+             .writeZ ( rhs    ), .upZ     ( !mem_rw & cyc[3] ));
 
 endmodule
 
