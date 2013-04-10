@@ -13,7 +13,7 @@
 `define HALTTYPE [`HALTBUSWIDTH-1:0]
 
 `define VIDEO_ADDR 'h10000
-`define EDGE negedge
+`define EDGE posedge
 
 /* vi: set ts=4 sw=4 et syntax=verilog: */
 
