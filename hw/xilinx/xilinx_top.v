@@ -6,143 +6,71 @@
 `endif
 `define SEG7
 
-module Tenyr(halt, clk, reset, txd, rxd, seg, an, vgaRed, vgaGreen, vgaBlue, hsync, vsync, Led);
+module Tenyr(
+    input clk, reset, inout `HALTTYPE halt,
+    output[7:0] Led, output[7:0] seg, output[3:0] an,
+    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
+);
 
-    wire[31:0] insn_addr, operand_addr;
-    wire[31:0] insn_data, in_data, out_data, operand_data;
-    wire operand_rw;
+    wire oper_rw;
+    wire valid_clk, clk_vga, clk_core;
+    wire[31:0] insn_addr, oper_addr, insn_data, out_data;
+    wire[31:0] oper_data = !oper_rw ? out_data : 32'bz;
 
-    input clk /* synthesis .ispad = 1 */;
+    reg[3:0] startup = 0; // delay startup for a few clocks
+    wire _reset_n = startup[3] & ~reset;
+    always @(posedge clk_core) startup = {startup,valid_clk};
 
-    `HALTTYPE halt;
-    input rxd;
-    output txd;
-    input reset;
+    assign halt[`HALT_TENYR] = ~startup[3];
+    assign Led[7:0] = halt;
 
-    output[2:0] vgaRed;
-    output[2:0] vgaGreen;
-    output[2:1] vgaBlue;
-    assign vgaRed[1:0] = {2{vgaRed[2]}};
-    assign vgaGreen[1:0] = {2{vgaGreen[2]}};
-    assign vgaBlue[1] = {1{vgaBlue[2]}};
+    tenyr_mainclock clocks(
+        .in     ( clk       ), .clk_core0    ( clk_core  ),
+        .reset  ( 1'b0      ), .clk_core0_CE ( valid_clk ),
+        .locked ( valid_clk ), .clk_vga      ( clk_vga   ),
+                               .clk_vga_CE   ( valid_clk )
+    );
 
-    output hsync, vsync;
+    Core core(
+        .clk  ( clk_core  ), .reset_n ( _reset_n  ), .mem_rw ( oper_rw   ),
+        .en   ( valid_clk ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
+        .halt ( halt      ), .i_data  ( insn_data ), .d_data ( oper_data )
+    );
 
-    output[7:0] seg;
-    output[3:0] an;
-
-    output[7:0] Led;
-    assign Led[7:3] = 5'b00000;
-
-    assign in_data      =  operand_rw ? operand_data : 32'bx;
-    assign operand_data = !operand_rw ?     out_data : 32'bz;
-
-    wire phases_valid;
-
-    wire clk_vga, clk_core;
-    tenyr_mainclock clocks(.reset(/*~reset_n*/1'b0), .locked(phases_valid), .in(clk),
-                           .clk_core0(clk_core), .clk_core0_CE(phases_valid),
-                           .clk_vga(clk_vga), .clk_vga_CE(phases_valid));
-
-    assign halt[`HALT_TENYR] = ~phases_valid;
-    wire _reset_n = phases_valid & ~reset;
-    assign Led[2:0] = halt;
+// -----------------------------------------------------------------------------
+// MEMORY ----------------------------------------------------------------------
 
     // TODO pull out constant or pull out RAM
-    wire ram_inrange = operand_addr < 1024;
-    GenedBlockMem ram(.clka(clk_core),
-                      .ena(ram_inrange), .wea(operand_rw), .addra(operand_addr),
-                      .dina(in_data), .douta(out_data),
-                      .clkb(clk_core),
-                      /*.enb(1'b1),*/ .web(1'b0), .addrb(insn_addr),
-                      .dinb(32'bx), .doutb(insn_data));
+    wire ram_inrange = oper_addr < 1024;
+    GenedBlockMem ram(
+        .clka  ( clk_core    ),  .clkb  ( clk_core  ),
+        .ena   ( ram_inrange ),/*.enb   ( 1'b1      ),*/
+        .wea   ( oper_rw     ),  .web   ( 1'b0      ),
+        .addra ( oper_addr   ),  .addrb ( insn_addr ),
+        .dina  ( oper_data   ),  .dinb  ( 'bx       ),
+        .douta ( out_data    ),  .doutb ( insn_data )
+    );
+
+// -----------------------------------------------------------------------------
+// DEVICES ---------------------------------------------------------------------
 
 `ifdef SEG7
-    Seg7 #(.BASE(12'h100))
-             seg7(.clk(clk_core), .reset_n(_reset_n), .enable(1'b1), // XXX use halt ?
-                  .rw(operand_rw), .addr(operand_addr),
-                  .data(operand_data), .seg(seg), .an(an));
+    Seg7 #(.BASE(12'h100)) seg7(
+        .clk     ( clk_core ), .rw   ( oper_rw   ), .seg ( seg ),
+        .reset_n ( _reset_n ), .addr ( oper_addr ), .an  ( an  ),
+        .enable  ( 1'b1     ), .data ( oper_data )
+    );
 `endif
-
-    Core core(.clk(clk_core),
-              .en(phases_valid),
-              .reset_n(_reset_n), .mem_rw(operand_rw),
-              .d_addr(operand_addr), .d_data(operand_data),
-              .i_addr(insn_addr)   , .i_data(insn_data), .halt(halt));
 
 `ifdef VGA
-
-    wire[7:0] crx; // 1-based ?
-    wire[7:0] cry; // 0-based ?
-    wire[7:0] vga_ctl;
-
-    mmr #(.ADDR(`VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11110111))
-        video_ctl(.clk(clk_core), .reset_n(_reset_n), .enable(1),
-                  .rw(operand_rw), .addr(operand_addr), .data(operand_data),
-                  .re(1), .we(0), .val(vga_ctl));
-
-    mmr #(.ADDR(`VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(1))
-        crx_mmr(.clk(clk_core), .reset_n(_reset_n), .enable(1),
-                .rw(operand_rw), .addr(operand_addr), .data(operand_data),
-                .re(1), .we(0), .val(crx));
-
-    mmr #(.ADDR(`VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(0))
-        cry_mmr(.clk(clk_core), .reset_n(_reset_n), .enable(1),
-                .rw(operand_rw), .addr(operand_addr), .data(operand_data),
-                .re(1), .we(0), .val(cry));
-
-    wire[ 7:0] ram_doA;
-    wire[11:0] ram_adA;
-
-    wire[11:0] rom_adA;
-    wire[ 7:0] rom_doA;
-
-    vga80x40 vga(
-        .reset       (~_reset_n),
-        .clk25MHz    (clk_vga),
-        .R           (vgaRed[2]),
-        .G           (vgaGreen[2]),
-        .B           (vgaBlue[2]),
-        .hsync       (hsync),
-        .vsync       (vsync),
-        .TEXT_A      (ram_adA),
-        .TEXT_D      (ram_doA),
-        .FONT_A      (rom_adA),
-        .FONT_D      (rom_doA),
-        .ocrx        (crx),
-        .ocry        (cry),
-        .octl        (vga_ctl)
+    VGAwrap vga(
+        .clk_core ( clk_core ), .rw   ( oper_rw   ), .vgaRed   ( vgaRed   ),
+        .clk_vga  ( clk_vga  ), .addr ( oper_addr ), .vgaGreen ( vgaGreen ),
+        .enable   ( 1        ), .data ( oper_data ), .vgaBlue  ( vgaBlue  ),
+        .reset_n  ( _reset_n ),                      .hsync    ( hsync    ),
+                                                     .vsync    ( vsync    )
     );
-
-    ramwrap #(.BASE(`VIDEO_ADDR + 'h10), .SIZE(80 * 40)) text(
-        .clka  (clk_vga),
-        .dina  ('bz),
-        .addra (ram_adA),
-        .douta (ram_doA),
-        .wea   (1'b0),
-`ifdef DISABLE_TEXTRAM
-        .clkb  ('b0),
-        .dinb  ('bz),
-        .addrb ('bz),
-        .web   ('b0),
-        .doutb (nonce_doutb)
-`else
-        .clkb  (clk_core),
-        .dinb  (operand_data),
-        .addrb (operand_addr),
-        .web   (operand_rw),
-        .doutb (operand_data)
-`endif
-    );
-
-    fontrom font(
-        .clka  (clk_vga),
-        .addra (rom_adA),
-        .douta (rom_doA)
-    );
-
 `endif
 
 endmodule
-
 

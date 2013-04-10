@@ -1,0 +1,3 @@
+-rplugin
+--param=plugin[0]+=sdlled
+--param=plugin[0]+=sdlvga

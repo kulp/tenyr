@@ -1,3 +1,4 @@
 tenyr
 *.vcd
 *.vpi
+simserial.v

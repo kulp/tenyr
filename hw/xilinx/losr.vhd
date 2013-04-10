@@ -47,10 +47,10 @@ begin
   process(reset, clk)
     variable data : std_logic_vector(N-1 downto 0);
   begin
-    if reset = '1' then
-      data := (others => '0');
-    elsif rising_edge(clk) then
-      if load = '1' then
+    if rising_edge(clk) then
+      if reset = '1' then
+        data := (others => '0');
+      elsif load = '1' then
         data := di;
       elsif ce = '1' then
         data := data(N-2 downto 0) & "0";

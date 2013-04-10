@@ -1,4 +1,8 @@
 b <- a - b
 c <- -c
+d <- -0x100
+e <- e + -0x100 // this currently fails
 b <- b ^~ a
 c <- ~b
+d <- ~0x100
+e <- e + ~0x100 // this currently fails

@@ -33,10 +33,10 @@ entity vga80x40 is
     clk25MHz    : in  std_logic;
     TEXT_A      : out std_logic_vector(11 downto 0); -- text buffer
     TEXT_D      : in  std_logic_vector(07 downto 0);
-	 FONT_A      : out std_logic_vector(11 downto 0); -- font buffer
-	 FONT_D      : in  std_logic_vector(07 downto 0);
-	 --
-	 ocrx        : in  std_logic_vector(07 downto 0); -- OUTPUT regs
+    FONT_A      : out std_logic_vector(11 downto 0); -- font buffer
+    FONT_D      : in  std_logic_vector(07 downto 0);
+    --
+    ocrx        : in  std_logic_vector(07 downto 0); -- OUTPUT regs
     ocry        : in  std_logic_vector(07 downto 0);
     octl        : in  std_logic_vector(07 downto 0);
     --
@@ -181,8 +181,8 @@ begin
   ctl_g     <= octl(1);
   ctl_b     <= octl(0);
 
-	-- counters, hctr, vctr, srcx, srcy, chrx, chry
-	-- TODO: OPTIMIZE THIS
+  -- counters, hctr, vctr, srcx, srcy, chrx, chry
+  -- TODO: OPTIMIZE THIS
   counters : block
     signal hctr_ce : std_logic;
     signal hctr_rs : std_logic;
@@ -211,8 +211,8 @@ begin
   begin
     
     U_HCTR : ctrm generic map (M => 794) port map (
-	 reset =>reset, clk=>clk25MHz, ce =>hctr_ce, rs =>hctr_rs, do => hctr);
-	 
+      reset =>reset, clk=>clk25MHz, ce =>hctr_ce, rs =>hctr_rs, do => hctr);
+
     U_VCTR : ctrm generic map (M => 525) port map (reset, clk25MHz, vctr_ce, vctr_rs, vctr);
 
     hctr_ce <= '1';
@@ -292,7 +292,7 @@ begin
 
     -- slowclk for blink hardware cursor
     counter <= counter + 1 when rising_edge(clk25MHz);
-	 slowclk <= counter(22); --2.98Hz
+    slowclk <= counter(22); --2.98Hz
 
     crx <= TO_INTEGER(unsigned(ocrx(6 downto 0)));
     cry <= TO_INTEGER(unsigned(ocry(5 downto 0)));

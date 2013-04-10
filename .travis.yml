@@ -2,7 +2,7 @@ language: c
 compiler:
   - gcc
   - clang
-script: ./scripts/travis-build.sh
+script: "make MAKE_VERBOSE=1 SDL=0"
 notifications:
     irc:
         channels:

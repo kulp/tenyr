@@ -2,7 +2,8 @@
 `timescale 1ns/10ps
 
 // basic 7-segment driver
-module Seg7(clk, enable, rw, addr, data, reset_n, seg, an); 
+module Seg7(input clk, enable, rw, reset_n, input[31:0] addr, data,
+            output[7:0] seg, output[NI:0] an);
 
     parameter STATES = 4;
     parameter BASE = 1 << 4;
@@ -12,35 +13,32 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
     localparam NI4 = NDIGITS * 4 - 1;
     localparam NIS = NDIGITS * STATES - 1;
 
-    input clk;
-    input enable;
-    input rw;
-    input[31:0] addr;
-    inout[31:0] data;
-    input reset_n;
-    output[7:0] seg;
-    output[NI:0] an;
-
     wire downclk;
     JCounter #(.STAGES(2), .SHIFTS(10))
         downclocker(.clk(clk), .ce(1'b1), .tick(downclk));
 
     reg[NIS:0] ena = 1'b1;
-`ifndef SIM
-    reg[NI4:0] mydata[SIZE - 1:0] = { 0, 0 };
-`else
-    reg[NI4:0] mydata[SIZE - 1:0];
-    generate
-        genvar q;
-        for (q = 0; q < SIZE; q = q + 1)
-            initial begin:setup mydata[q] = 0; end
-    endgenerate
+    reg[NI4:0] mydata[SIZE - 1:0]
+`ifndef __ICARUS__
+`ifndef ISIM
+    = { 0 }
 `endif
+`endif
+    ;
 
     wire in_range = (addr >= BASE && addr < SIZE + BASE);
 
     generate
         genvar i, j;
+        // XXX reset state with reset_n
+        /*
+        for (i = 0; i < SIZE; i = i + 1) begin:reset
+            always @(`EDGE clk)
+                if (!reset_n)
+                    mydata[i] = 0;
+        end
+        */
+
         wire[8 * NDIGITS - 1:0] bits;
 
         for (i = 0; i < NDIGITS; i = i + 1) begin:digit
@@ -66,11 +64,11 @@ module Seg7(clk, enable, rw, addr, data, reset_n, seg, an);
         end
     endgenerate
 
-    always @(negedge downclk)
+    always @(`EDGE downclk)
         ena = {ena[NIS - 1:0],ena[NIS]};
 
-    always @(negedge clk)
-        if (in_range && enable && rw)
+    always @(`EDGE clk)
+        if (in_range && enable && rw && reset_n)
             mydata[addr - BASE] = data[NI4:0];
 
 endmodule

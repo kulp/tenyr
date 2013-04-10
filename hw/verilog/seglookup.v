@@ -7,7 +7,7 @@ module lookup7(clk, char, out);
     input[6:0] char;
     output reg[7:0] out = 0;
 
-    always @(negedge clk) begin
+    always @(`EDGE clk) begin
         case (char)
            7'd032 /* ' ' */: out = 8'b11111111;
            7'd045 /* '-' */: out = 8'b10111111;

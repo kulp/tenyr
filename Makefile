@@ -1,6 +1,6 @@
 TOP ?= .
 
-CC ?= $(CROSS_COMPILE)gcc
+CC = $(CROSS_COMPILE)gcc
 
 ifndef NDEBUG
  CFLAGS  += -g
@@ -21,10 +21,16 @@ endif
 INCLUDE_OS ?= $(TOP)/src/os/$(OS)
 
 CFLAGS += -std=c99
-CFLAGS += -Wall -Wextra $(PEDANTIC)
+CFLAGS += -Wall -Wextra $(PEDANTIC_FLAGS)
+ifeq ($(PEDANTIC),)
+PEDANTIC_FLAGS ?= -pedantic
+else
+PEDANTIC_FLAGS ?= -Werror -pedantic-errors
+endif
 
 CPPFLAGS += -DMAY_ALIAS='__attribute__((__may_alias__))'
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
+CPPFLAGS += -Wno-unknown-warning-option
 
 # Optimised build
 ifeq ($(DEBUG),)
@@ -34,8 +40,6 @@ else
  CPPFLAGS += -DDEBUG=$(DEBUG)
  CFLAGS   += -fstack-protector -Wstack-protector
 endif
-
-PEDANTIC ?= -Werror -pedantic-errors
 
 FLEX  = flex
 BISON = bison -Werror
@@ -50,10 +54,17 @@ BUILD_NAME := $(shell git describe --tags --long --always)
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
+libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) -Wno-c11-extensions
+libsdl%$(DYLIB_SUFFIX): LDLIBS   += $(shell sdl2-config --libs) -lSDL2_image
+PDEVICES_SDL += sdlled sdlvga
+ifneq ($(SDL),0)
+PDEVICES += $(PDEVICES_SDL)
+endif
+
 DEVICES = ram sparseram debugwrap serial spi
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
-PDEVICES = spidummy spisd spi
+PDEVICES += spidummy spisd spi
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
 PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
 
@@ -91,8 +102,7 @@ tas.o asm.o tsim.o sim.o simif.o dbg.o ffi.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -
 # don't complain about unused state
 ffi.o asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
-$(PDEVLIBS): pluginimpl,dy.o
-libspi$(DYLIB_SUFFIX): plugin,dy.o
+$(PDEVLIBS): lib%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o
 
 # flex-generated code we can't control warnings of as easily
 $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
@@ -113,7 +123,7 @@ $(GENDIR):
 .PHONY: install upload
 INSTALL_STEM ?= .
 INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(shell $(CC) -dumpmachine)
-install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install -d $(INSTALL_DIR)
 	install $^ $(INSTALL_DIR)
 

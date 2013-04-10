@@ -1,10 +1,8 @@
 #ifndef COMMON_TH_
 #define COMMON_TH_
 
-// The stack-setup prologue assumes o points just above a usable stack space.
-// For bare-metal applications, this will be address zero if o has not been
-// written, so the stack will start at -1 (0xffffffff).
-#define prologue            o <- o - 1
+// The stack-setup prologue sets up a stack at the top of 16K
+#define prologue            o <- 1 ; o <- o << 14 ; o <- o - 1
 
 #define rel(Label)          reloff(Label,0)
 #define reloff(Label,Off)   (@Label - (. + 1 - (Off))) + p

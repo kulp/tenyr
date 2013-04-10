@@ -52,24 +52,26 @@ static int do_common(struct sim_state *s, int32_t *ip, int32_t *Z, int32_t
     int32_t *w      =  reversed ? rhs       : Z;
 
     if (read_mem) {
-        if (s->dispatch_op(s, OP_READ, r_addr, value) && s->conf.abort)
-            abort();
+        if (s->dispatch_op(s, OP_READ, r_addr, value)) {
+            if (s->conf.pause) getchar();
+            if (s->conf.abort) abort();
+        }
     } else
         *value = *r;
 
     if (write_mem) {
-        if (s->dispatch_op(s, OP_WRITE, w_addr, value) && s->conf.abort)
-            abort();
+        if (s->dispatch_op(s, OP_WRITE, w_addr, value)) {
+            if (s->conf.pause) getchar();
+            if (s->conf.abort) abort();
+        }
     } else if (w != &s->machine.regs[0])  // throw away write to reg 0
         *w = *value;
 
     if (w != ip) {
         if (*ip & ~PTR_MASK && s->conf.nowrap) {
-            if (s->conf.abort) {
-                abort();
-            } else {
-                return 1;
-            }
+            if (s->conf.pause) getchar();
+            if (s->conf.abort) abort();
+            return 1;
         }
 
         *ip &= PTR_MASK;
@@ -107,10 +109,9 @@ int run_instruction(struct sim_state *s, struct instruction *i)
             break;
         }
         default:
-            if (s->conf.abort)
-                abort();
-            else
-                return 1;
+            if (s->conf.pause) getchar();
+            if (s->conf.abort) abort();
+            return 1;
     }
 
     return 0;
@@ -121,8 +122,10 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
     while (1) {
         assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
         struct instruction i;
-        if (s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word) && s->conf.abort)
-            abort();
+        if (s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word)) {
+            if (s->conf.pause) getchar();
+            if (s->conf.abort) abort();
+        }
 
         if (ops->pre_insn)
             ops->pre_insn(s, &i);
@@ -138,7 +141,7 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         FILE *in, int load_address)
 {
-    void *ud;
+    void *ud = NULL;
     if (f->init)
         f->init(in, ASM_DISASSEMBLE, &ud);
 

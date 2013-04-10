@@ -248,7 +248,7 @@ static const struct spisd_app_command {
 static int open_storefile(struct spisd_state *s)
 {
     const char *storefile;
-    if (s->pcookie.gops.param_get(&s->pcookie, "storefile", &storefile)) {
+    if (s->pcookie.gops.param_get(&s->pcookie, "storefile", 1, &storefile)) {
         debug(2, "Opening SD store file `%s'", storefile);
         if (!(s->store = fopen(storefile, "r+b")))
             fatal(PRINT_ERRNO, "Failed to open SD store file `%s'", storefile);

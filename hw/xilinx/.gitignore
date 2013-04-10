@@ -46,7 +46,6 @@ Tenyr.tfi
 xst/
 *.rpt
 default.wcfg
-auto_project.ipf
 GenedBlockMem.mif
 Top_isim_beh1.wdb
 fuse.xmsgs
@@ -185,3 +184,6 @@ xilinxsim.ini
 *.wcfg
 ipcore_dir/coregen_lock
 *.bin
+*.svf
+*.xsvf
+ipcore_dir/tenyr_mainclock/

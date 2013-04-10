@@ -428,7 +428,7 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
     int rc = 0;
 
     struct instruction i;
-    void *ud;
+    void *ud = NULL;
     if (f->init)
         f->init(in, ASM_DISASSEMBLE, &ud);
 

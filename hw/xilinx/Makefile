@@ -4,15 +4,30 @@ SHELL = /bin/bash
 SETUP = source ~/ise.sh
 TARGET = Tenyr
 
-all: $(TARGET).bit
+BURNER = fpgalink
+FLCLI = flcli
 
-burn: $(TARGET).bit
+all: $(BURNTARGET)
+
+ifeq ($(BURNER),fpgalink)
+BURNTARGET = $(TARGET).xsvf
+burn: $(BURNTARGET)
+	$(FLCLI) -v 1443:0007 -i 1443:0007 -x $<
+else
+BURNTARGET = $(TARGET).bit
+burn: $(BURNTARGET)
 	djtgcfg -d Nexys3 -i 0 -f $< prog
+endif
 
 vpath %.tas ../verilog
 vpath %.tas.cpp ../verilog
 
 CPPFLAGS += -I../../lib
+
+%.xsvf: %.bit burn.batch.tmpl
+	sed -e 's/{TOP_LEVEL}/$*/g' burn.batch.tmpl > $@.batch.$$$$ ; \
+	$(SETUP) && impact -batch $@.batch.$$$$ ;\
+	rm $@.batch.$$$$
 
 %.tas: %.tas.cpp
 	$(CPP) $(CPPFLAGS) -o $@ $<
@@ -23,14 +38,19 @@ CPPFLAGS += -I../../lib
 %.tasd: %.to
 	$(TAS) -d -o$@ $<
 
+%.tasd: %.mif
+	perl -nle 'printf "0x%08x\n", unpack("N", pack("B32", $$_))' < $< | $(TAS) -ftext -d -o $@ -
+
 %.texe: %.to
 	$(TLD) -o$@ $^
 
+vpath %.coe ipcore_dir
 %.coe: %.texe
 	echo 'memory_initialization_radix = 16;' > $@
 	echo 'memory_initialization_vector =' >> $@
-	$(TAS) -d $< | $(TAS) -f text - | sed 's/^0x//' >> $@
+	$(TAS) -d $< | sed 's/.*# \.word //; s/ ;.*//; s/^0x//' >> $@
 	echo ';' >> $@
+	mv $@ ipcore_dir
 
 vpath gen_%.tcl ipcore_dir
 vpath %.xco ipcore_dir
