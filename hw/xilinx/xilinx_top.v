@@ -14,11 +14,14 @@ module Tenyr(
 
     wire oper_rw;
     wire valid_clk, clk_vga, clk_core;
-    wire _reset_n = valid_clk & ~reset;
     wire[31:0] insn_addr, oper_addr, insn_data, out_data;
     wire[31:0] oper_data = !oper_rw ? out_data : 32'bz;
 
-    assign halt[`HALT_TENYR] = ~valid_clk;
+    reg[3:0] startup = 0; // delay startup for a few clocks
+    wire _reset_n = startup[3] & ~reset;
+    always @(posedge clk_core) startup = {startup,valid_clk};
+
+    assign halt[`HALT_TENYR] = ~startup[3];
     assign Led[7:0] = halt;
 
     tenyr_mainclock clocks(

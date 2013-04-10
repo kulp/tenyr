@@ -14,8 +14,8 @@ module Top();
 
     // rhalt and reset timing should be independent of each other, and
     // do indeed appear to be so.
-    initial #(11 * 4 * `CLOCKPERIOD) rhalt = 0;
-    initial #(11 * 3 * `CLOCKPERIOD) reset = 0;
+    initial #(1 * 4 * `CLOCKPERIOD) rhalt = 0;
+    initial #(1 * 3 * `CLOCKPERIOD) reset = 0;
 
     Tenyr tenyr(.clk(clk), .reset(reset), .halt(halt));
 
