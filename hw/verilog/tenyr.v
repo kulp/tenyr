@@ -87,19 +87,19 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     always @(`EDGE clk) begin
         if (!reset_n) begin
             i_addr   = `RESETVECTOR;
+            insn    <= `INSN_NOOP;
             next_pc <= `RESETVECTOR + 1;
             rhalt   <= 0;
             rcyc    <= 1;
             rcycen  <= 0; // out of phase with rcyc ; 1-cycle delay on startup
-            insn     = `INSN_NOOP;
         end else if (_en) begin
-            rcyc   <= {rcyc[2:0],rcyc[3]};
-            rcycen <= {rcycen[2:0],rcyc[3] & ~|halt};
-            insn    = i_data;
+            rcyc    <= {rcyc[2:0],rcyc[3]};
+            rcycen  <= {rcycen[2:0],rcyc[3] & ~|halt};
+            insn    <= i_data;
 
             if (cyc[1])
-                rhalt <= rhalt | illegal;
-            if (cyc[2] && ~|halt) begin
+                rhalt   <= rhalt | illegal;
+            if (cyc[2]) begin
                 i_addr   = jumping ? rhs : next_pc;
                 next_pc <= i_addr + 1;
             end
@@ -112,19 +112,19 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     Decode decode(.Z ( indexZ ), .insn    ( insn    ), .storing   ( storing ),
                   .X ( indexX ), .type    ( type    ), .deref_rhs ( drhs    ),
                   .Y ( indexY ), .op      ( op      ), .branch    ( jumping ),
-                  .I ( valueI ), .illegal ( illegal ));
+                  .I ( valueI ),                       .illegal   ( illegal ));
 
     // Execution (arithmetic operation) occurs on cyc[1]
+    wire en_ex = _en && cyc[1];
     wire[31:0] right  = type ? valueI : valueY;
     wire[31:0] addend = type ? valueY : valueI;
-    Exec exec(.clk ( clk          ), .X ( valueX ), .rhs ( irhs ),
-              .en  ( _en & cyc[1] ), .Y ( right  ),
-              .op  ( op           ), .A ( addend ));
+    Exec exec(.clk ( clk    ), .en ( en_ex ), .op ( op     ),
+              .X   ( valueX ), .Y  ( right ), .A  ( addend ), .rhs ( irhs ));
 
     // Memory commits on cyc[2]
+    assign mem_rw  = storing && cyc[2];
     assign d_data  = storing ? storand : 32'bz;
     assign d_addr  = drhs    ? irhs    : valueZ;
-    assign mem_rw  = storing && cyc[2];
     assign loading = drhs && !storing;
     assign strobe  = (loading || storing) && |cyc[3:1]; // why not cyc[2]
 
