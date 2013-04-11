@@ -1,8 +1,10 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module SimMem(input clka, wea, input[31:0] addra, dina, output[31:0] douta,
-              input clkb, web, input[31:0] addrb, dinb, output[31:0] doutb);
+module SimMem(
+    input clka, ena, wea, input[31:0] addra, dina, output[31:0] douta,
+    input clkb, enb, web, input[31:0] addrb, dinb, output[31:0] doutb
+);
 
     parameter ADDRBITS = 24;
     parameter BASE = 1 << 12; // TODO pull from environmental define
@@ -21,7 +23,7 @@ module SimMem(input clka, wea, input[31:0] addra, dina, output[31:0] douta,
 
     // Xilinx generated block RAMs use posedge
     always @(posedge clka) begin
-        if (a_inrange)
+        if (ena && a_inrange)
             if (wea)
                 store[addra] = dina;
             else
@@ -29,7 +31,7 @@ module SimMem(input clka, wea, input[31:0] addra, dina, output[31:0] douta,
     end
 
     always @(posedge clkb) begin
-        if (b_inrange)
+        if (enb && b_inrange)
             if (web)
                 store[addrb] = dinb;
             else

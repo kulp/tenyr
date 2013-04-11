@@ -2,6 +2,7 @@
 `timescale 1ns/10ps
 
 // basic 7-segment driver
+// TODO distinguish enable and strobe
 module Seg7(input clk, enable, rw, reset_n, input[31:0] addr, data,
             output[7:0] seg, output[NI:0] an);
 

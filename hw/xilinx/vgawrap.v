@@ -2,7 +2,7 @@
 `timescale 1ns/10ps
 
 module VGAwrap(
-	input clk_core, clk_vga, enable, rw, reset_n, input[31:0] addr, data,
+	input clk_core, clk_vga, en, rw, reset_n, strobe, input[31:0] addr, data,
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
 
@@ -16,21 +16,21 @@ module VGAwrap(
     assign vgaBlue [1  ] = {1{vgaBlue [2]}};
 
     mmr #(.ADDR(VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11110111)) video_ctl(
-        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( 1       ),
+        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe  ),
         .rw  ( rw       ), .addr    ( addr    ), .data   ( data    ),
         .re  ( 1        ), .we      ( 0       ), .val    ( vga_ctl )
     );
 
     mmr #(.ADDR(VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(1)) crx_mmr(
-        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( 1    ),
-        .rw  ( rw       ), .addr    ( addr    ), .data   ( data ),
-        .re  ( 1        ), .we      ( 0       ), .val    ( crx  )
+        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe ),
+        .rw  ( rw       ), .addr    ( addr    ), .data   ( data   ),
+        .re  ( 1        ), .we      ( 0       ), .val    ( crx    )
     ); // crx is 1-based ?
 
     mmr #(.ADDR(VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(0)) cry_mmr(
-        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( 1    ),
-        .rw  ( rw       ), .addr    ( addr    ), .data   ( data ),
-        .re  ( 1        ), .we      ( 0       ), .val    ( cry  )
+        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe ),
+        .rw  ( rw       ), .addr    ( addr    ), .data   ( data   ),
+        .re  ( 1        ), .we      ( 0       ), .val    ( cry    )
     ); // cry is 0-based ?
 
     vga80x40 vga(

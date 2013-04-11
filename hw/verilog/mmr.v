@@ -12,7 +12,7 @@ module mmr(clk, enable, rw, addr, data, reset_n, we, re, val);
     parameter MMR_WIDTH = BUS_DATA_WIDTH;
 
     input clk;
-    input enable;
+    input enable; // TODO convert to / add a proper strobe
     input rw;
     input[BUS_ADDR_WIDTH - 1:0] addr;
     inout[BUS_DATA_WIDTH - 1:0] data;
