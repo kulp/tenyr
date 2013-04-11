@@ -129,11 +129,11 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     assign strobe  = (loading || storing) && |cyc[3:1]; // why not cyc[2]
 
     // Registers commit after execution, on cyc[3]
-    Reg regs(.clk    ( clk    ), .next_pc ( next_pc           ), .en ( _en ),
-             .indexX ( indexX ), .valueX  ( valueX            ),
-             .indexY ( indexY ), .valueY  ( valueY            ),
-             .indexZ ( indexZ ), .valueZ  ( valueZ            ),
-             .writeZ ( rhs    ), .upZ     ( !storing & cyc[3] ));
+    wire upZ = !storing && cyc[3];
+    Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX ),
+             .en      ( _en     ), .indexY ( indexY ), .valueY ( valueY ),
+             .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ ),
+                                   .writeZ ( rhs    ), .upZ    ( upZ    ));
 
 endmodule
 
