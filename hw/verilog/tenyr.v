@@ -78,7 +78,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     wire[31:0] storand = drhs ? valueZ : irhs;
 
     reg [31:0] next_pc = `RESETVECTOR + 1;
-    reg [31:0] insn = 0;
+    reg [31:0] insn = `INSN_NOOP;
     reg [3:0] rcyc = 1, rcycen = 0;
     wire[3:0] cyc  = rcyc & rcycen;
     reg rhalt = 0;
@@ -91,7 +91,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
             rhalt   <= 0;
             rcyc    <= 1;
             rcycen  <= 0; // out of phase with rcyc ; 1-cycle delay on startup
-            insn     = 0;
+            insn     = `INSN_NOOP;
         end else if (_en) begin
             rcyc   <= {rcyc[2:0],rcyc[3]};
             rcycen <= {rcycen[2:0],rcyc[3] & ~|halt};

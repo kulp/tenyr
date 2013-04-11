@@ -15,5 +15,7 @@
 `define VIDEO_ADDR 'h10000
 `define EDGE posedge
 
+`define INSN_NOOP 32'b0
+
 /* vi: set ts=4 sw=4 et syntax=verilog: */
 
