@@ -40,7 +40,13 @@ SIM_GET_simserial = tenyr_getchar
 SIM_PUT_simserial = tenyr_putchar
 
 tenyr: VFLAGS += -m glue
-tenyr: simserial.v icarus_top.v simtop.v simmem.v seg7.v seglookup.v hex2ascii.v jcounter.v | glue.vpi
+tenyr: VFLAGS += -DSIMMEM=GenedBlockMem -DSIMCLK=tenyr_mainclock
+tenyr: VFLAGS += -DSERIAL
+tenyr: simtop.v top.v                               \
+       simserial.v simmem.v simclocks.v             \
+       seg7.v seglookup.v                           \
+       hex2ascii.v jcounter.v                       \
+       | glue.vpi
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 

@@ -55,6 +55,7 @@ GenedBlockMem your_instance_name (
   .dina(dina), // input [31 : 0] dina
   .douta(douta), // output [31 : 0] douta
   .clkb(clkb), // input clkb
+  .enb(enb), // input enb
   .web(web), // input [0 : 0] web
   .addrb(addrb), // input [13 : 0] addrb
   .dinb(dinb), // input [31 : 0] dinb

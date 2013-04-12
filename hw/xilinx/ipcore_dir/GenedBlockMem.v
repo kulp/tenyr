@@ -44,6 +44,7 @@ module GenedBlockMem(
   dina,
   douta,
   clkb,
+  enb,
   web,
   addrb,
   dinb,
@@ -57,6 +58,7 @@ input [13 : 0] addra;
 input [31 : 0] dina;
 output [31 : 0] douta;
 input clkb;
+input enb;
 input [0 : 0] web;
 input [13 : 0] addrb;
 input [31 : 0] dinb;
@@ -80,7 +82,7 @@ output [31 : 0] doutb;
     .C_FAMILY("spartan6"),
     .C_HAS_AXI_ID(0),
     .C_HAS_ENA(1),
-    .C_HAS_ENB(0),
+    .C_HAS_ENB(1),
     .C_HAS_INJECTERR(0),
     .C_HAS_MEM_OUTPUT_REGS_A(0),
     .C_HAS_MEM_OUTPUT_REGS_B(0),
@@ -135,6 +137,7 @@ output [31 : 0] doutb;
     .DINA(dina),
     .DOUTA(douta),
     .CLKB(clkb),
+    .ENB(enb),
     .WEB(web),
     .ADDRB(addrb),
     .DINB(dinb),
@@ -142,7 +145,6 @@ output [31 : 0] doutb;
     .RSTA(),
     .REGCEA(),
     .RSTB(),
-    .ENB(),
     .REGCEB(),
     .INJECTSBITERR(),
     .INJECTDBITERR(),

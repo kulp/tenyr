@@ -1,13 +1,13 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module SimMem(
+module `SIMMEM(
     input clka, ena, wea, input[31:0] addra, dina, output[31:0] douta,
     input clkb, enb, web, input[31:0] addrb, dinb, output[31:0] doutb
 );
 
     parameter ADDRBITS = 24;
-    parameter BASE = 1 << 12; // TODO pull from environmental define
+    parameter BASE = `RESETVECTOR; // TODO pull from environmental define
     parameter SIZE = (1 << ADDRBITS) - BASE;
 
     reg[31:0] rdouta;

@@ -2,9 +2,10 @@
 `timescale 1ms/10us
 
 `ifndef SIM
-`define VGA
+  `define VGA
 `endif
 `define SEG7
+`undef SERIAL
 
 module Tenyr(
     input clk, reset, inout `HALTTYPE halt,
@@ -44,16 +45,24 @@ module Tenyr(
     // TODO pull out constant or pull out RAM
     wire ram_inrange = oper_strobe && oper_addr < 1024;
     GenedBlockMem ram(
-        .clka  ( clk_core    ),  .clkb  ( clk_core  ),
-        .ena   ( ram_inrange ),/*.enb   ( 1'b1      ),*/
-        .wea   ( oper_rw     ),  .web   ( 1'b0      ),
-        .addra ( oper_addr   ),  .addrb ( insn_addr ),
-        .dina  ( oper_data   ),  .dinb  ( 'bx       ),
-        .douta ( out_data    ),  .doutb ( insn_data )
+        .clka  ( clk_core    ), .clkb  ( clk_core  ),
+        .ena   ( ram_inrange ), .enb   ( 1'b1      ),
+        .wea   ( oper_rw     ), .web   ( 1'b0      ),
+        .addra ( oper_addr   ), .addrb ( insn_addr ),
+        .dina  ( oper_data   ), .dinb  ( 'bx       ),
+        .douta ( out_data    ), .doutb ( insn_data )
     );
 
 // -----------------------------------------------------------------------------
 // DEVICES ---------------------------------------------------------------------
+
+`ifdef SERIAL
+    // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
+    SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
+        .clk ( clk     ), .reset_n ( reset_n   ), .enable ( oper_strobe ),
+        .rw  ( oper_rw ), .addr    ( oper_addr ), .data   ( oper_data   )
+    );
+`endif
 
 `ifdef SEG7
     Seg7 #(.BASE(12'h100)) seg7(
