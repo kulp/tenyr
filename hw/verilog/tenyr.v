@@ -14,7 +14,7 @@ module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
     assign valueY = Yis0 ? 0 : YisP ? next_pc : store[indexY];
     assign valueZ = Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
 
-    always @(`EDGE clk)
+    always @(posedge clk)
         if (en && upZ && !Zis0 && !ZisP)
             store[indexZ] = writeZ;
 
@@ -41,7 +41,7 @@ endmodule
 module Exec(input clk, en, output reg[31:0] rhs, input[3:0] op,
             input signed[31:0] X, Y, A);
 
-    always @(`EDGE clk) if (en) begin
+    always @(posedge clk) if (en) begin
         case (op)
             4'b0000: rhs =  (X  |  Y);  // X bitwise or Y
             4'b0001: rhs =  (X  &  Y);  // X bitwise and Y
@@ -84,7 +84,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
 
-    always @(`EDGE clk) begin
+    always @(posedge clk) begin
         if (!reset_n) begin
             i_addr   = `RESETVECTOR;
             insn    <= `INSN_NOOP;

@@ -7,7 +7,7 @@ module Hex2AsciiDigit(clk, hex, digit);
     input[3:0] hex;
     output reg[6:0] digit;
 
-    always @(`EDGE clk) begin
+    always @(posedge clk) begin
         case (hex)
             4'h0: digit = 8'd048 /* '0' */;
             4'h1: digit = 8'd049 /* '1' */;

@@ -13,7 +13,6 @@
 `define HALTTYPE [`HALTBUSWIDTH-1:0]
 
 `define VIDEO_ADDR 'h10000
-`define EDGE posedge
 
 `define INSN_NOOP 32'b0
 

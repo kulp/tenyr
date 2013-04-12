@@ -27,7 +27,7 @@ module mmr(clk, enable, rw, addr, data, reset_n, we, re, val);
     assign data = (active && !rw && RE) ? store : 'bz;
     assign val  = re ? store : 'bz;
 
-    always @(`EDGE clk)
+    always @(posedge clk)
         if (active) begin
             if (rw && WE) begin
                 store <= data;

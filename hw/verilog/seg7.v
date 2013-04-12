@@ -34,7 +34,7 @@ module Seg7(input clk, enable, rw, reset_n, input[31:0] addr, data,
         // XXX reset state with reset_n
         /*
         for (i = 0; i < SIZE; i = i + 1) begin:reset
-            always @(`EDGE clk)
+            always @(posedge clk)
                 if (!reset_n)
                     mydata[i] = 0;
         end
@@ -65,10 +65,10 @@ module Seg7(input clk, enable, rw, reset_n, input[31:0] addr, data,
         end
     endgenerate
 
-    always @(`EDGE downclk)
+    always @(posedge downclk)
         ena = {ena[NIS - 1:0],ena[NIS]};
 
-    always @(`EDGE clk)
+    always @(posedge clk)
         if (in_range && enable && rw && reset_n)
             mydata[addr - BASE] = data[NI4:0];
 

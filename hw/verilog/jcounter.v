@@ -14,11 +14,11 @@ module JCounter(input clk, input ce, output tick);
             reg[SHIFTS-1:0] s = 1;
 
             if (i == 0) begin:zero
-                always @(`EDGE clk)
+                always @(posedge clk)
                     if (ce)
                         stage[i].s <= { stage[i].s, stage[i].s[SHIFTS - 1] };
             end else begin:nonzero
-                always @(`EDGE clk)
+                always @(posedge clk)
                     if (stage[i - 1].s[SHIFTS - 1] | stage[i].s[SHIFTS - 1])
                         if (ce)
                             stage[i].s <= { stage[i].s, stage[i].s[SHIFTS - 1] };
