@@ -1,27 +1,31 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module `SIMMEM(
-    input clka, ena, wea, input[31:0] addra, dina, output[31:0] douta,
-    input clkb, enb, web, input[31:0] addrb, dinb, output[31:0] doutb
+module BlockRAM(
+    input clka, ena, wea, input[ADDRBITS-1:0] addra, dina, output[31:0] douta,
+    input clkb, enb, web, input[ADDRBITS-1:0] addrb, dinb, output[31:0] doutb
 );
 
-    parameter ADDRBITS = 24;
-    parameter BASE = `RESETVECTOR; // TODO pull from environmental define
-    parameter SIZE = (1 << ADDRBITS) - BASE;
+    parameter LOAD = 0;
+    parameter LOADFILE = "default.memh";
+    parameter ADDRBITS = 32;
+    parameter BASE = 0; // TODO pull from environmental define
+    parameter SIZE = 1024;
 
     reg[31:0] rdouta;
     reg[31:0] rdoutb;
 
     reg[31:0] store[(SIZE + BASE - 1):BASE];
 
+    initial if (LOAD) $readmemh(LOADFILE, store, BASE);
+
+    // TODO don't use comparators, use bitmasks
     wire a_inrange = (addra >= BASE && addra < SIZE + BASE);
     wire b_inrange = (addrb >= BASE && addrb < SIZE + BASE);
 
     assign douta = (!wea) ? rdouta : 32'bz;
     assign doutb = (!web) ? rdoutb : 32'bz;
 
-    // Xilinx generated block RAMs use posedge
     always @(posedge clka) begin
         if (ena && a_inrange)
             if (wea)
@@ -37,6 +41,6 @@ module `SIMMEM(
             else
                 rdoutb = store[addrb];
     end
-
+    
 endmodule
 

@@ -13,10 +13,12 @@ module Tenyr(
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
 
+    parameter LOADFILE = "default.memh";
+
     wire oper_rw, oper_strobe;
     wire valid_clk, clk_vga, clk_core;
     wire[31:0] insn_addr, oper_addr, insn_data, out_data;
-    wire[31:0] oper_data = !oper_rw ? out_data : 32'bz;
+    wire[31:0] oper_data = (!oper_rw && oper_strobe) ? out_data : 32'bz;
 
     reg[3:0] startup = 0; // delay startup for a few clocks
     wire _reset_n = startup[3] & ~reset;
@@ -42,15 +44,13 @@ module Tenyr(
 // -----------------------------------------------------------------------------
 // MEMORY ----------------------------------------------------------------------
 
-    // TODO pull out constant or pull out RAM
-    wire ram_inrange = oper_strobe && oper_addr < 1024;
-    GenedBlockMem ram(
-        .clka  ( clk_core    ), .clkb  ( clk_core  ),
-        .ena   ( ram_inrange ), .enb   ( 1'b1      ),
-        .wea   ( oper_rw     ), .web   ( 1'b0      ),
-        .addra ( oper_addr   ), .addrb ( insn_addr ),
-        .dina  ( oper_data   ), .dinb  ( 'bx       ),
-        .douta ( out_data    ), .doutb ( insn_data )
+    BlockRAM #(.LOAD(1), .LOADFILE(LOADFILE), .BASE(0), .SIZE(1024)) ram(
+        .clka  ( clk_core    ), .clkb  ( clk_core   ),
+        .ena   ( oper_strobe ), .enb   ( startup[2] ),
+        .wea   ( oper_rw     ), .web   ( 1'b0       ),
+        .addra ( oper_addr   ), .addrb ( insn_addr  ),
+        .dina  ( oper_data   ), .dinb  ( 32'bz      ),
+        .douta ( out_data    ), .doutb ( insn_data  )
     );
 
 // -----------------------------------------------------------------------------

@@ -3,6 +3,8 @@
 
 module Top();
 
+    parameter LOADFILE = "default.memh";
+
     reg clk = 1;
     reg rhalt = 1;
     reg reset = 1;
@@ -17,7 +19,7 @@ module Top();
     initial #(1 * 4 * `CLOCKPERIOD) rhalt = 0;
     initial #(1 * 3 * `CLOCKPERIOD) reset = 0;
 
-    Tenyr tenyr(.clk(clk), .reset(reset), .halt(halt));
+    Tenyr #(.LOADFILE(LOADFILE)) tenyr(.clk(clk), .reset(reset), .halt(halt));
 
 `ifdef __ICARUS__
     // TODO The `ifdef guard should really be controlling for VPI availability

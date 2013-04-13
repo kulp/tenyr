@@ -70,17 +70,18 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
+    localparam IPC = 4; // must be at least 4
+`define CYC(n) cyc[(IPC / 4 * (n))]
+
     wire illegal, type, drhs, jumping, storing, loading;
     wire _en = en && reset_n;
     wire[ 3:0] indexX, indexY, indexZ, op;
-    wire[31:0] valueX, valueY, valueZ, valueI, irhs;
-    wire[31:0] rhs     = drhs ? d_data : irhs;
-    wire[31:0] storand = drhs ? valueZ : irhs;
+    wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
 
     reg [31:0] next_pc = `RESETVECTOR + 1;
     reg [31:0] insn = `INSN_NOOP;
-    reg [3:0] rcyc = 1, rcycen = 0;
-    wire[3:0] cyc  = rcyc & rcycen;
+    reg [IPC-1:0] rcyc = 1, rcycen = 0;
+    wire[IPC-1:0] cyc  = rcyc & rcycen;
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
 
@@ -93,20 +94,20 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
             rcyc    <= 1;
             rcycen  <= 0; // out of phase with rcyc ; 1-cycle delay on startup
         end else if (_en) begin
-            rcyc    <= {rcyc[2:0],rcyc[3]};
-            rcycen  <= {rcycen[2:0],rcyc[3] & ~|halt};
+            rcyc    <= {rcyc,rcyc[IPC-1]};
+            rcycen  <= {rcycen,rcyc[IPC-1] & ~|halt};
             insn    <= i_data;
 
-            if (cyc[1])
+            if (`CYC(1))
                 rhalt   <= rhalt | illegal;
-            if (cyc[2]) begin
+            if (`CYC(2)) begin
                 i_addr   = jumping ? rhs : next_pc;
                 next_pc <= i_addr + 1;
             end
         end
     end
 
-    // Instruction fetch happens on cyc[0]
+    // Instruction fetch happens on `CYC(0)
 
     // Decode and register reads happen as soon as instruction is ready
     Decode decode(.Z ( indexZ ), .insn    ( insn    ), .storing   ( storing ),
@@ -114,22 +115,24 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
                   .Y ( indexY ), .op      ( op      ), .branch    ( jumping ),
                   .I ( valueI ),                       .illegal   ( illegal ));
 
-    // Execution (arithmetic operation) occurs on cyc[1]
-    wire en_ex = _en && cyc[1];
+    // Execution (arithmetic operation) occurs on `CYC(1)
+    wire en_ex = _en && `CYC(1);
     wire[31:0] right  = type ? valueI : valueY;
     wire[31:0] addend = type ? valueY : valueI;
     Exec exec(.clk ( clk    ), .en ( en_ex ), .op ( op     ),
               .X   ( valueX ), .Y  ( right ), .A  ( addend ), .rhs ( irhs ));
 
-    // Memory commits on cyc[2]
-    assign mem_rw  = storing && cyc[2];
-    assign d_data  = storing ? storand : 32'bz;
-    assign d_addr  = drhs    ? irhs    : valueZ;
+    // Memory commits on `CYC(2)
     assign loading = drhs && !storing;
-    assign strobe  = (loading || storing) && |cyc[3:1]; // why not cyc[2]
+    assign strobe  = (loading || storing) && `CYC(2);
+    assign mem_rw  = storing && strobe;
+    assign rhs     = drhs    ? d_data  : irhs;
+    assign storand = drhs    ? valueZ  : irhs;
+    assign d_addr  = drhs    ? irhs    : valueZ;
+    assign d_data  = storing ? storand : 32'bz;
 
-    // Registers commit after execution, on cyc[3]
-    wire upZ = !storing && cyc[3];
+    // Registers commit after execution, on `CYC(3)
+    wire upZ = !storing && `CYC(3);
     Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX ),
              .en      ( _en     ), .indexY ( indexY ), .valueY ( valueY ),
              .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ ),
