@@ -29,11 +29,11 @@ module Top();
     integer temp;
     initial #0 begin
         if ($value$plusargs("LOAD=%s", filename))
-            $tenyr_load(filename);
+            $tenyr_load(filename); // replace with $readmemh ?
         if ($value$plusargs("PERIODS=%d", temp))
             periods = temp;
-        if ($value$plusargs("LOGFILE=%s", logfile))
-            $tenyr_load(filename);
+        if ($value$plusargs("LOGFILE=%s", filename))
+            logfile = filename;
         $dumpfile(logfile);
         $dumpvars;
         #(periods * `CLOCKPERIOD) $finish;
