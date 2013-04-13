@@ -5,8 +5,8 @@ VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I../../src
 
-TAS = ../../tas
-TLD = ../../tld
+TAS = $(TOP)/tas
+TLD = $(TOP)/tld
 
 ifeq ($(WIN32),1)
  OS = Win32
