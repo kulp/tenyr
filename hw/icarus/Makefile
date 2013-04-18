@@ -58,11 +58,12 @@ asm.o sim.o: CFLAGS += -Wno-unused-value
 asm.o: CFLAGS += -Wno-unused-parameter
 
 vpath %.tas ../verilog
+vpath %.texe ../../ex
 
 LOGFILE = Top.vcd
-run_%: PLUSARGS += +LOAD=$*.texe +PERIODS=$(PERIODS) +LOGFILE=$(LOGFILE)
-run_%: tenyr %.texe
-	vvp -M. $< $(PLUSARGS)
+run_%: PLUSARGS += +PERIODS=$(PERIODS) +LOGFILE=$(LOGFILE)
+run_%: %.texe tenyr
+	vvp -M. tenyr +LOAD=$< $(PLUSARGS)
 
 clean:
 	$(RM) tenyr glue.vpi *.o
