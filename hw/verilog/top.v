@@ -2,7 +2,9 @@
 `timescale 1ms/10us
 
 `ifndef SIM
+`ifndef __QUARTUS__
   `define VGA
+`endif
 `endif
 `define SEG7
 `undef SERIAL

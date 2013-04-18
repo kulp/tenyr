@@ -22,7 +22,9 @@ module Seg7(input clk, enable, rw, reset_n, input[31:0] addr, data,
     reg[NI4:0] mydata[SIZE - 1:0]
 `ifndef __ICARUS__
 `ifndef ISIM
+`ifndef __QUARTUS__
     = { 0 }
+`endif
 `endif
 `endif
     ;
