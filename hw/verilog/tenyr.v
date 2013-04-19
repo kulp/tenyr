@@ -98,8 +98,9 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
             rcycen  <= {rcycen,rcyc[IPC-1] & ~|halt};
             insn    <= i_data;
 
-            if (`CYC(1))
+            if (`CYC(1)) begin
                 rhalt   <= rhalt | illegal;
+            end
             if (`CYC(2)) begin
                 i_addr   = jumping ? rhs : next_pc;
                 next_pc <= i_addr + 1;
@@ -124,7 +125,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
 
     // Memory commits on `CYC(2)
     assign loading = drhs && !storing;
-    assign strobe  = (loading || storing) && `CYC(2);
+    assign strobe  = loading && `CYC(1) || storing && `CYC(2);
     assign mem_rw  = storing && strobe;
     assign rhs     = drhs    ? d_data  : irhs;
     assign storand = drhs    ? valueZ  : irhs;
