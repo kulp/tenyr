@@ -24,7 +24,7 @@ module Tenyr(
 
     reg[3:0] startup = 0; // delay startup for a few clocks
     wire _reset_n = startup[3] & ~reset;
-    always @(posedge clk_core) startup = {startup,valid_clk};
+    always @(posedge clk_core) startup <= {startup,valid_clk};
 
     assign halt[`HALT_TENYR] = ~startup[3];
     assign Led[7:0] = halt;

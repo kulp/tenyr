@@ -16,7 +16,7 @@ module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
 
     always @(posedge clk)
         if (en && upZ && !Zis0 && !ZisP)
-            store[indexZ] = writeZ;
+            store[indexZ] <= writeZ;
 
 endmodule
 
