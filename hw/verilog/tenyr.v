@@ -70,8 +70,8 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam IPC = 4; // must be at least 4
-`define CYC(n) cyc[(IPC / 4 * (n))]
+    localparam CPI = 4; // must be at least 4
+`define CYC(n) cyc[(CPI / 4 * (n))]
 
     wire illegal, type, drhs, jumping, storing, loading;
     wire _en = en && reset_n;
@@ -80,8 +80,8 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
 
     reg [31:0] next_pc = `RESETVECTOR + 1;
     reg [31:0] insn = `INSN_NOOP;
-    reg [IPC-1:0] rcyc = 1, rcycen = 0;
-    wire[IPC-1:0] cyc  = rcyc & rcycen;
+    reg [CPI-1:0] rcyc = 1, rcycen = 0;
+    wire[CPI-1:0] cyc  = rcyc & rcycen;
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
 
@@ -94,8 +94,8 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
             rcyc    <= 1;
             rcycen  <= 0; // out of phase with rcyc ; 1-cycle delay on startup
         end else if (_en) begin
-            rcyc    <= {rcyc,rcyc[IPC-1]};
-            rcycen  <= {rcycen,rcyc[IPC-1] & ~|halt};
+            rcyc    <= {rcyc,rcyc[CPI-1]};
+            rcycen  <= {rcycen,rcyc[CPI-1] & ~|halt};
             insn    <= i_data;
 
             if (`CYC(1)) begin
