@@ -38,13 +38,13 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
 
 endmodule
 
-module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
+module Exec(input clk, swap, output reg[31:0] rhs, input[3:0] op,
             input signed[31:0] X, Y, I);
 
     wire[31:0] O = swap ? I : Y;
     wire[31:0] A = swap ? Y : I;
     reg[31:0] tmp;
-    always @(posedge clk) if (en) begin
+    always @(posedge clk) begin
         case (op)
             4'b0000: tmp <=  (X  |  O); // X bitwise or Y
             4'b0001: tmp <=  (X  &  O); // X bitwise and Y
@@ -122,10 +122,10 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
                   .Y ( indexY ), .op      ( op      ), .branch    ( jumping ),
                   .I ( valueI ),                       .illegal   ( illegal ));
 
-    // Execution (arithmetic operation) occurs on `CYC(1)
-    wire en_ex = _en && `CYC(1);
-    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ), .swap ( type ),
-              .X   ( valueX ), .Y  ( valueY ), .I  ( valueI ), .rhs  ( irhs ));
+    // Execution (arithmetic operation) occurs continuously, is ready after
+    // two cycles
+    Exec exec(.clk ( clk    ), .op ( op     ), .swap ( type   ),
+              .X   ( valueX ), .Y  ( valueY ), .I    ( valueI ), .rhs ( irhs ));
 
     // Memory commits on `CYC(2)
     assign loading = drhs && !storing;
