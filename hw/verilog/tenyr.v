@@ -88,7 +88,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
 
     always @(posedge clk) begin
         if (!reset_n) begin
-            i_addr   = `RESETVECTOR;
+            i_addr  <= `RESETVECTOR;
             insn    <= `INSN_NOOP;
             next_pc <= `RESETVECTOR + 1;
             rhalt   <= 0;
@@ -104,7 +104,9 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
                 r_data  <= d_data;
             end
             if (`CYC(2)) begin
-                i_addr   = jumping ? rhs : next_pc;
+                i_addr  <= jumping ? rhs : next_pc;
+            end
+            if (`CYC(3)) begin
                 next_pc <= i_addr + 1;
             end
         end
