@@ -80,8 +80,8 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
 
     reg [31:0] r_irhs, r_data;
     reg [31:0] next_pc = `RESETVECTOR + 1, insn = `INSN_NOOP;
-    reg rhalt = 0;
-    assign halt[`HALT_EXEC] = rhalt;
+    reg r_halt = 0;
+    assign halt[`HALT_EXEC] = r_halt;
     reg [3:0] state = sI0;
 
     always @(posedge clk) begin
@@ -93,14 +93,13 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
                 i_addr  <= `RESETVECTOR;
                 insn    <= `INSN_NOOP;
                 next_pc <= `RESETVECTOR + 1;
-                rhalt   <= 0;
+                r_halt  <= 0;
             end
             sI1: state <= sI2;
             sI2: state <= sI3;
             sI3: state <= s0;
-            s0: begin state <= |halt ? s0 : s1; insn <= i_data; end
-            s1: state <= s2;
-            s2: begin state <= s3; rhalt   <= rhalt | illegal;         end
+            s0: begin state <= |halt ? s0 : s2; insn <= i_data; end
+            s2: begin state <= s3; r_halt  <= r_halt | illegal;        end
             s3: begin state <= s4; r_irhs  <= irhs;                    end
             s4: begin state <= s5;                                     end
             s5: begin state <= s6; r_data  <= d_data;                  end
