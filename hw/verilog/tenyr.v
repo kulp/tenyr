@@ -38,28 +38,30 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
 
 endmodule
 
-module Exec(input clk, en, output[31:0] rhs, input[3:0] op,
-            input signed[31:0] X, Y, A);
+module Exec(input clk, en, swap, output[31:0] rhs, input[3:0] op,
+            input signed[31:0] X, Y, I);
 
+    wire[31:0] O = swap ? I : Y;
+    wire[31:0] A = swap ? Y : I;
     reg[31:0] tmp;
     assign rhs = tmp + A;
     always @(posedge clk) if (en) begin
         case (op)
-            4'b0000: tmp <=  (X  |  Y); // X bitwise or Y
-            4'b0001: tmp <=  (X  &  Y); // X bitwise and Y
-            4'b0010: tmp <=  (X  +  Y); // X add Y
-            4'b0011: tmp <=  (X  *  Y); // X multiply Y
+            4'b0000: tmp <=  (X  |  O); // X bitwise or Y
+            4'b0001: tmp <=  (X  &  O); // X bitwise and Y
+            4'b0010: tmp <=  (X  +  O); // X add Y
+            4'b0011: tmp <=  (X  *  O); // X multiply Y
             4'b0100: tmp <= 32'bx;      // reserved
-            4'b0101: tmp <=  (X  << Y); // X shift left Y
-            4'b0110: tmp <= -(X  <  Y); // X compare < Y
-            4'b0111: tmp <= -(X  == Y); // X compare == Y
-            4'b1000: tmp <= -(X  >  Y); // X compare > Y
-            4'b1001: tmp <=  (X  &~ Y); // X bitwise and complement Y
-            4'b1010: tmp <=  (X  ^  Y); // X bitwise xor Y
-            4'b1011: tmp <=  (X  -  Y); // X subtract Y
-            4'b1100: tmp <=  (X  ^~ Y); // X xor ones' complement Y
-            4'b1101: tmp <=  (X  >> Y); // X shift right logical Y
-            4'b1110: tmp <= -(X  != Y); // X compare <> Y
+            4'b0101: tmp <=  (X  << O); // X shift left Y
+            4'b0110: tmp <= -(X  <  O); // X compare < Y
+            4'b0111: tmp <= -(X  == O); // X compare == Y
+            4'b1000: tmp <= -(X  >  O); // X compare > Y
+            4'b1001: tmp <=  (X  &~ O); // X bitwise and complement Y
+            4'b1010: tmp <=  (X  ^  O); // X bitwise xor Y
+            4'b1011: tmp <=  (X  -  O); // X subtract Y
+            4'b1100: tmp <=  (X  ^~ O); // X xor ones' complement Y
+            4'b1101: tmp <=  (X  >> O); // X shift right logical Y
+            4'b1110: tmp <= -(X  != O); // X compare <> Y
             4'b1111: tmp <= 32'bx;      // reserved
         endcase
     end
@@ -122,10 +124,8 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
 
     // Execution (arithmetic operation) occurs on `CYC(1)
     wire en_ex = _en && `CYC(1);
-    wire[31:0] right  = type ? valueI : valueY;
-    wire[31:0] addend = type ? valueY : valueI;
-    Exec exec(.clk ( clk    ), .en ( en_ex ), .op ( op     ),
-              .X   ( valueX ), .Y  ( right ), .A  ( addend ), .rhs ( irhs ));
+    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ), .swap ( type ),
+              .X   ( valueX ), .Y  ( valueY ), .I  ( valueI ), .rhs  ( irhs ));
 
     // Memory commits on `CYC(2)
     assign loading = drhs && !storing;
