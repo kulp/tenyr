@@ -117,17 +117,17 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     // Instruction fetch happens on `CYC(0)
 
     // Decode and register reads happen as soon as instruction is ready
-    Decode decode(.Z ( indexZ ), .insn    ( insn    ), .storing   ( storing ),
-                  .X ( indexX ), .type    ( type    ), .deref_rhs ( drhs    ),
-                  .Y ( indexY ), .op      ( op      ), .branch    ( jumping ),
-                  .I ( valueI ),                       .illegal   ( illegal ));
+    Decode decode(.Z ( indexZ ), .insn ( insn ), .storing   ( storing ),
+                  .X ( indexX ), .type ( type ), .deref_rhs ( drhs    ),
+                  .Y ( indexY ), .op   ( op   ), .branch    ( jumping ),
+                  .I ( valueI ),                 .illegal   ( illegal ));
 
     // Execution (arithmetic operation) occurs continuously, is ready after
     // two cycles
     Exec exec(.clk ( clk    ), .op ( op     ), .swap ( type   ),
               .X   ( valueX ), .Y  ( valueY ), .I    ( valueI ), .rhs ( irhs ));
 
-    // Memory commits on `CYC(2)
+    // Memory loads on `CYC(1) and stores on `CYC(2)
     assign loading = drhs && !storing;
     assign strobe  = loading && `CYC(1) || storing && `CYC(2);
     assign mem_rw  = storing && strobe;
