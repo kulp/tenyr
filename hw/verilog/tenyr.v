@@ -38,83 +38,78 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
 
 endmodule
 
-module Exec(input clk, swap, output reg[31:0] rhs, input[3:0] op,
+module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
             input signed[31:0] X, Y, I);
 
     wire[31:0] O = swap ? I : Y;
     wire[31:0] A = swap ? Y : I;
-    reg[31:0] tmp;
-    always @(posedge clk) begin
+    always @(posedge clk) if (en) begin
         case (op)
-            4'b0000: tmp <=  (X  |  O); // X bitwise or Y
-            4'b0001: tmp <=  (X  &  O); // X bitwise and Y
-            4'b0010: tmp <=  (X  +  O); // X add Y
-            4'b0011: tmp <=  (X  *  O); // X multiply Y
-            4'b0100: tmp <= 32'bx;      // reserved
-            4'b0101: tmp <=  (X  << O); // X shift left Y
-            4'b0110: tmp <= -(X  <  O); // X compare < Y
-            4'b0111: tmp <= -(X  == O); // X compare == Y
-            4'b1000: tmp <= -(X  >  O); // X compare > Y
-            4'b1001: tmp <=  (X  &~ O); // X bitwise and complement Y
-            4'b1010: tmp <=  (X  ^  O); // X bitwise xor Y
-            4'b1011: tmp <=  (X  -  O); // X subtract Y
-            4'b1100: tmp <=  (X  ^~ O); // X xor ones' complement Y
-            4'b1101: tmp <=  (X  >> O); // X shift right logical Y
-            4'b1110: tmp <= -(X  != O); // X compare <> Y
-            4'b1111: tmp <= 32'bx;      // reserved
+            4'b0000: rhs <=  (X  |  O) + A; // X bitwise or Y
+            4'b0001: rhs <=  (X  &  O) + A; // X bitwise and Y
+            4'b0010: rhs <=  (X  +  O) + A; // X add Y
+            4'b0011: rhs <=  (X  *  O) + A; // X multiply Y
+            4'b0100: rhs <= 32'bx;          // reserved
+            4'b0101: rhs <=  (X  << O) + A; // X shift left Y
+            4'b0110: rhs <= -(X  <  O) + A; // X compare < Y
+            4'b0111: rhs <= -(X  == O) + A; // X compare == Y
+            4'b1000: rhs <= -(X  >  O) + A; // X compare > Y
+            4'b1001: rhs <=  (X  &~ O) + A; // X bitwise and complement Y
+            4'b1010: rhs <=  (X  ^  O) + A; // X bitwise xor Y
+            4'b1011: rhs <=  (X  -  O) + A; // X subtract Y
+            4'b1100: rhs <=  (X  ^~ O) + A; // X xor ones' complement Y
+            4'b1101: rhs <=  (X  >> O) + A; // X shift right logical Y
+            4'b1110: rhs <= -(X  != O) + A; // X compare <> Y
+            4'b1111: rhs <= 32'bx;          // reserved
         endcase
-        rhs <= tmp + A;
     end
 
 endmodule
 
-module Core(input clk, en, reset_n, inout `HALTTYPE halt,
+module Core(input clk, reset_n, inout `HALTTYPE halt,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam CPI = 8; // must be at least 4
-`define CYC(n) cyc[(CPI / 4 * (n))]
+    localparam sI0 = 4'hc, sI1 = 4'hd, sI2 = 4'he, sI3 = 4'hf,
+        s0 = 4'h1, s1 = 4'h2, s2 = 4'h3, s3 = 4'h4,
+        s4 = 4'h5, s5 = 4'h6, s6 = 4'h7, s7 = 4'h8;
 
     wire illegal, type, drhs, jumping, storing, loading;
-    wire _en = en && reset_n;
     wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
 
-    reg [31:0] r_data; // latches read data
-    reg [31:0] next_pc = `RESETVECTOR + 1;
-    reg [31:0] insn = `INSN_NOOP;
-    reg [CPI-1:0] rcyc = 1, rcycen = 0;
-    wire[CPI-1:0] cyc  = rcyc & rcycen;
+    reg [31:0] r_irhs, r_data;
+    reg [31:0] next_pc = `RESETVECTOR + 1, insn = `INSN_NOOP;
     reg rhalt = 0;
     assign halt[`HALT_EXEC] = rhalt;
+    reg [3:0] state = sI0;
 
     always @(posedge clk) begin
-        if (!reset_n) begin
-            i_addr  <= `RESETVECTOR;
-            insn    <= `INSN_NOOP;
-            next_pc <= `RESETVECTOR + 1;
-            rhalt   <= 0;
-            rcyc    <= 1;
-            rcycen  <= 0; // out of phase with rcyc ; 1-cycle delay on startup
-        end else if (_en) begin
-            rcyc    <= {rcyc,rcyc[CPI-1]};
-            rcycen  <= {rcycen,rcyc[CPI-1] & ~|halt};
-            insn    <= i_data;
-
-            if (`CYC(1)) begin
-                rhalt   <= rhalt | illegal;
-                r_data  <= d_data;
+        if (!reset_n)
+            state <= sI0;
+        else case (state)
+            sI0: begin
+                state   <= |halt ? sI0 : sI1;
+                i_addr  <= `RESETVECTOR;
+                insn    <= `INSN_NOOP;
+                next_pc <= `RESETVECTOR + 1;
+                rhalt   <= 0;
             end
-            if (`CYC(2)) begin
-                i_addr  <= jumping ? rhs : next_pc;
-            end
-            if (`CYC(3)) begin
-                next_pc <= i_addr + 1;
-            end
-        end
+            sI1: state <= sI2;
+            sI2: state <= sI3;
+            sI3: state <= s0;
+            s0: begin state <= |halt ? s0 : s1; insn <= i_data; end
+            s1: state <= s2;
+            s2: begin state <= s3; rhalt   <= rhalt | illegal;         end
+            s3: begin state <= s4; r_irhs  <= irhs;                    end
+            s4: begin state <= s5;                                     end
+            s5: begin state <= s6; r_data  <= d_data;                  end
+            s6: begin state <= s7; i_addr  <= jumping ? rhs : next_pc; end
+            s7: begin state <= s0; next_pc <= i_addr + 1;              end
+        endcase
     end
 
-    // Instruction fetch happens on `CYC(0)
+    // Instruction fetch happens on cycle 0
 
     // Decode and register reads happen as soon as instruction is ready
     Decode decode(.Z ( indexZ ), .insn ( insn ), .storing   ( storing ),
@@ -123,23 +118,24 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
                   .I ( valueI ),                 .illegal   ( illegal ));
 
     // Execution (arithmetic operation) occurs continuously, is ready after
-    // two cycles
-    Exec exec(.clk ( clk    ), .op ( op     ), .swap ( type   ),
-              .X   ( valueX ), .Y  ( valueY ), .I    ( valueI ), .rhs ( irhs ));
+    // one cycle
+    wire en_ex = state == s2;
+    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ), .swap ( type ),
+              .X   ( valueX ), .Y  ( valueY ), .I  ( valueI ), .rhs  ( irhs ));
 
-    // Memory loads on `CYC(1) and stores on `CYC(2)
+    // Memory loads or stores on cycle 5
     assign loading = drhs && !storing;
-    assign strobe  = loading && `CYC(1) || storing && `CYC(2);
+    assign strobe  = state == s5 && (loading || storing);
     assign mem_rw  = storing && strobe;
-    assign rhs     = drhs    ? r_data  : irhs;
-    assign storand = drhs    ? valueZ  : irhs;
-    assign d_addr  = drhs    ? irhs    : valueZ;
+    assign rhs     = drhs    ? r_data  : r_irhs;
+    assign storand = drhs    ? valueZ  : r_irhs;
+    assign d_addr  = drhs    ? r_irhs  : valueZ;
     assign d_data  = storing ? storand : 32'bz;
 
-    // Registers commit after execution, on `CYC(3)
-    wire upZ = !storing && `CYC(3);
+    // Registers commit after execution, on cycle 7
+    wire upZ = !storing && state == s7;
     Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX ),
-             .en      ( _en     ), .indexY ( indexY ), .valueY ( valueY ),
+             .en      ( 1       ), .indexY ( indexY ), .valueY ( valueY ),
              .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ ),
                                    .writeZ ( rhs    ), .upZ    ( upZ    ));
 
