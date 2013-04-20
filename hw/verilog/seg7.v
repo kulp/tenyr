@@ -9,25 +9,22 @@ module Seg7(input clk, enable, rw, reset_n, input[31:0] addr, data,
     parameter STATES = 4;
     parameter BASE = 1 << 4;
     parameter NDIGITS = 4;
+    parameter DOWNCTRBITS = 6;
     localparam SIZE = 2; // TODO compute based on NDIGITS ?
     localparam NI = NDIGITS - 1;
     localparam NI4 = NDIGITS * 4 - 1;
     localparam NIS = NDIGITS * STATES - 1;
 
-    wire downclk;
-    JCounter #(.STAGES(2), .SHIFTS(10))
-        downclocker(.clk(clk), .ce(1'b1), .tick(downclk));
+    reg downclk = 0;
+    reg[DOWNCTRBITS-1:0] downctr = 0;
+    always @(posedge clk) begin
+        downctr <= downctr + 1;
+        if (downctr == 0)
+            downclk <= ~downclk;
+    end
 
     reg[NIS:0] ena = 1'b1;
-    reg[NI4:0] mydata[SIZE - 1:0]
-`ifndef __ICARUS__
-`ifndef ISIM
-`ifndef __QUARTUS__
-    = { 0 }
-`endif
-`endif
-`endif
-    ;
+    reg[NI4:0] mydata[SIZE - 1:0];
 
     wire in_range = (addr >= BASE && addr < SIZE + BASE);
 
