@@ -38,30 +38,30 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
 
 endmodule
 
-module Exec(input clk, en, output reg[31:0] rhs, input[3:0] op,
+module Exec(input clk, en, output[31:0] rhs, input[3:0] op,
             input signed[31:0] X, Y, A);
 
+    reg[31:0] tmp;
+    assign rhs = tmp + A;
     always @(posedge clk) if (en) begin
         case (op)
-            4'b0000: rhs =  (X  |  Y);  // X bitwise or Y
-            4'b0001: rhs =  (X  &  Y);  // X bitwise and Y
-            4'b0010: rhs =  (X  +  Y);  // X add Y
-            4'b0011: rhs =  (X  *  Y);  // X multiply Y
-            4'b0100: rhs = 32'bx;       // reserved
-            4'b0101: rhs =  (X  << Y);  // X shift left Y
-            4'b0110: rhs = -(X  <  Y);  // X compare < Y
-            4'b0111: rhs = -(X  == Y);  // X compare == Y
-            4'b1000: rhs = -(X  >  Y);  // X compare > Y
-            4'b1001: rhs =  (X  &~ Y);  // X bitwise and complement Y
-            4'b1010: rhs =  (X  ^  Y);  // X bitwise xor Y
-            4'b1011: rhs =  (X  -  Y);  // X subtract Y
-            4'b1100: rhs =  (X  ^~ Y);  // X xor ones' complement Y
-            4'b1101: rhs =  (X  >> Y);  // X shift right logical Y
-            4'b1110: rhs = -(X  != Y);  // X compare <> Y
-            4'b1111: rhs = 32'bx;       // reserved
+            4'b0000: tmp <=  (X  |  Y); // X bitwise or Y
+            4'b0001: tmp <=  (X  &  Y); // X bitwise and Y
+            4'b0010: tmp <=  (X  +  Y); // X add Y
+            4'b0011: tmp <=  (X  *  Y); // X multiply Y
+            4'b0100: tmp <= 32'bx;      // reserved
+            4'b0101: tmp <=  (X  << Y); // X shift left Y
+            4'b0110: tmp <= -(X  <  Y); // X compare < Y
+            4'b0111: tmp <= -(X  == Y); // X compare == Y
+            4'b1000: tmp <= -(X  >  Y); // X compare > Y
+            4'b1001: tmp <=  (X  &~ Y); // X bitwise and complement Y
+            4'b1010: tmp <=  (X  ^  Y); // X bitwise xor Y
+            4'b1011: tmp <=  (X  -  Y); // X subtract Y
+            4'b1100: tmp <=  (X  ^~ Y); // X xor ones' complement Y
+            4'b1101: tmp <=  (X  >> Y); // X shift right logical Y
+            4'b1110: tmp <= -(X  != Y); // X compare <> Y
+            4'b1111: tmp <= 32'bx;      // reserved
         endcase
-
-        rhs = rhs + A;
     end
 
 endmodule
