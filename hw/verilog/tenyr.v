@@ -70,7 +70,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam CPI = 4; // must be at least 4
+    localparam CPI = 8; // must be at least 4
 `define CYC(n) cyc[(CPI / 4 * (n))]
 
     wire illegal, type, drhs, jumping, storing, loading;
