@@ -78,6 +78,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
 
+    reg [31:0] r_data; // latches read data
     reg [31:0] next_pc = `RESETVECTOR + 1;
     reg [31:0] insn = `INSN_NOOP;
     reg [CPI-1:0] rcyc = 1, rcycen = 0;
@@ -100,6 +101,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
 
             if (`CYC(1)) begin
                 rhalt   <= rhalt | illegal;
+                r_data  <= d_data;
             end
             if (`CYC(2)) begin
                 i_addr   = jumping ? rhs : next_pc;
@@ -127,7 +129,7 @@ module Core(input clk, en, reset_n, inout `HALTTYPE halt,
     assign loading = drhs && !storing;
     assign strobe  = loading && `CYC(1) || storing && `CYC(2);
     assign mem_rw  = storing && strobe;
-    assign rhs     = drhs    ? d_data  : irhs;
+    assign rhs     = drhs    ? r_data  : irhs;
     assign storand = drhs    ? valueZ  : irhs;
     assign d_addr  = drhs    ? irhs    : valueZ;
     assign d_data  = storing ? storand : 32'bz;
