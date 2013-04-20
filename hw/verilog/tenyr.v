@@ -38,13 +38,12 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
 
 endmodule
 
-module Exec(input clk, en, swap, output[31:0] rhs, input[3:0] op,
+module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
             input signed[31:0] X, Y, I);
 
     wire[31:0] O = swap ? I : Y;
     wire[31:0] A = swap ? Y : I;
     reg[31:0] tmp;
-    assign rhs = tmp + A;
     always @(posedge clk) if (en) begin
         case (op)
             4'b0000: tmp <=  (X  |  O); // X bitwise or Y
@@ -64,6 +63,7 @@ module Exec(input clk, en, swap, output[31:0] rhs, input[3:0] op,
             4'b1110: tmp <= -(X  != O); // X compare <> Y
             4'b1111: tmp <= 32'bx;      // reserved
         endcase
+        rhs <= tmp + A;
     end
 
 endmodule
