@@ -8,6 +8,8 @@ module BlockRAM(
     input[ABITS-1:0] addrb, input[DBITS-1:0] dinb, output[DBITS-1:0] doutb
 );
 
+    parameter INIT     = 1;
+    parameter ZERO     = 0;
     parameter LOAD     = 0;
     parameter LOADFILE = "default.memh";
     parameter ABITS    = 32;
@@ -20,7 +22,11 @@ module BlockRAM(
     reg[DBITS-1:0] raddra, raddrb;
     reg[DBITS-1:0] store[(SIZE + BASE_A - 1):BASE_A];
 
-    initial if (LOAD) $readmemh(LOADFILE, store, BASE_A);
+    integer i;
+    initial begin
+        if (INIT) for (i = 0; i < SIZE; i = i + 1) store[BASE_A + i] = ZERO;
+        if (LOAD) $readmemh(LOADFILE, store, BASE_A);
+    end
 
     // TODO don't use comparators, use bitmasks
     wire a_inrange = (addra >= BASE_A && addra < SIZE + BASE_A);
