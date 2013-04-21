@@ -84,7 +84,7 @@
     <property xil_pn:name="Enable Multi-Threading par spartan6" xil_pn:value="2" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Extra Effort (Highest PAR level only)" xil_pn:value="Normal" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Generate Detailed MAP Report" xil_pn:value="true" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Generics, Parameters" xil_pn:value="LOADFILE=&quot;../verilog/baremetal.memh&quot;" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Generics, Parameters" xil_pn:value="LOADFILE=&quot;./verilog/baremetal.memh&quot;" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top" xil_pn:value="Module|Tenyr" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top File" xil_pn:value="../verilog/top.v" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top Instance Path" xil_pn:value="/Tenyr" xil_pn:valueState="non-default"/>
