@@ -91,7 +91,6 @@
     <property xil_pn:name="Keep Hierarchy" xil_pn:value="Yes" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Last Applied Goal" xil_pn:value="Timing Performance" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Last Applied Strategy" xil_pn:value="Performance with Physical Synthesis;E:/Xilinx/13.4/ISE_DS/ISE/spartan6/data/spartan6_performance_with_physicalsynthesis.xds" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Last Selected UCF File" xil_pn:value="Z:/Documents/Code/C/tenyr/hw/xilinx/Tenyr.ucf" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Netlist Hierarchy" xil_pn:value="Rebuilt" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Optimization Effort spartan6" xil_pn:value="High" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Other Compiler Options" xil_pn:value="--generic_top LOADFILE=&quot;../verilog/baremetal.memh&quot;" xil_pn:valueState="non-default"/>
