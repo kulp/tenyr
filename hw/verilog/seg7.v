@@ -47,14 +47,14 @@ module Seg7(input clk, enable, rw, reset_n, input[31:0] addr, data,
             lookup7 lookup(downclk, char, line);
 
             // digit segments
-            for (j = 0; j < 7; j = j + 1) begin:bit
+            for (j = 0; j < 7; j = j + 1) begin:abit
                 assign bits[j * NDIGITS + i] = ena[i * STATES] ? line[j] : 1'b1;
             end
             // decimal points
             assign bits[7 * NDIGITS + i] = ena[i * STATES] ? ~mydata[1][i] : 1'b1;
         end
 
-        for (j = 0; j < 8; j = j + 1) begin:bit
+        for (j = 0; j < 8; j = j + 1) begin:abit
             assign seg[j] = &bits[j * NDIGITS +: NDIGITS];
         end
 

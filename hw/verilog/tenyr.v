@@ -21,9 +21,9 @@ module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
-              output[3:0] op, output type, illegal, storing, deref_rhs, branch);
+              output[3:0] op, output kind, illegal, storing, deref_rhs, branch);
 
-    assign type      = insn[30 +: 1];
+    assign kind      = insn[30 +: 1];
     assign storing   = insn[29 +: 1];
     assign deref_rhs = insn[28 +: 1];
     assign Z         = insn[24 +: 4];
@@ -71,10 +71,10 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
     localparam sI0 = 4'hc, sI1 = 4'hd, sI2 = 4'he, sI3 = 4'hf,
-        s0 = 4'h1, s1 = 4'h2, s2 = 4'h3, s3 = 4'h4,
-        s4 = 4'h5, s5 = 4'h6, s6 = 4'h7, s7 = 4'h8;
+        s0 = 4'h0, s1 = 4'h1, s2 = 4'h2, s3 = 4'h3,
+        s4 = 4'h4, s5 = 4'h5, s6 = 4'h6, s7 = 4'h7;
 
-    wire illegal, type, drhs, jumping, storing, loading;
+    wire illegal, kind, drhs, jumping, storing, loading;
     wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
 
@@ -112,14 +112,14 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
 
     // Decode and register reads happen as soon as instruction is ready
     Decode decode(.Z ( indexZ ), .insn ( insn ), .storing   ( storing ),
-                  .X ( indexX ), .type ( type ), .deref_rhs ( drhs    ),
+                  .X ( indexX ), .kind ( kind ), .deref_rhs ( drhs    ),
                   .Y ( indexY ), .op   ( op   ), .branch    ( jumping ),
                   .I ( valueI ),                 .illegal   ( illegal ));
 
     // Execution (arithmetic operation) occurs continuously, is ready after
     // one cycle
     wire en_ex = state == s2;
-    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ), .swap ( type ),
+    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ), .swap ( kind ),
               .X   ( valueX ), .Y  ( valueY ), .I  ( valueI ), .rhs  ( irhs ));
 
     // Memory loads or stores on cycle 5
