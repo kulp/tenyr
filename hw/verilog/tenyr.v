@@ -105,6 +105,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
             s5: begin state <= s6; r_data  <= d_data;                  end
             s6: begin state <= s7; i_addr  <= jumping ? rhs : next_pc; end
             s7: begin state <= s0; next_pc <= i_addr + 1;              end
+            default: state <= sI0;
         endcase
     end
 
@@ -134,7 +135,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     // Registers commit after execution, on cycle 7
     wire upZ = !storing && state == s7;
     Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX ),
-             .en      ( 1       ), .indexY ( indexY ), .valueY ( valueY ),
+             .en      ( 1'b1    ), .indexY ( indexY ), .valueY ( valueY ),
              .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ ),
                                    .writeZ ( rhs    ), .upZ    ( upZ    ));
 
