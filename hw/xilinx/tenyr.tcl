@@ -1,7 +1,7 @@
 # 
 # Project automation script for tenyr 
 # 
-# Created for ISE version 13.4
+# Created for ISE version 14.4
 # 
 # This file contains several Tcl procedures (procs) that you can use to automate
 # your project by running from xtclsh or the Project Navigator Tcl console.
@@ -232,26 +232,21 @@ proc add_source_files {} {
    puts "$myScript: Adding sources to project..."
 
    xfile add "../verilog/hex2ascii.v"
-   xfile add "../verilog/jcounter.v"
    xfile add "../verilog/mmr.v"
+   xfile add "../verilog/ram.v"
    xfile add "../verilog/ramwrap.v"
    xfile add "../verilog/seg7.v"
    xfile add "../verilog/seglookup.v"
-   xfile add "../verilog/serial.v"
-   xfile add "../verilog/sim/simserial.v"
+   xfile add "../verilog/sim/simtop.v"
    xfile add "../verilog/tenyr.v"
+   xfile add "../verilog/top.v"
    xfile add "Nexys3_Master.ucf"
    xfile add "Tenyr.ucf"
    xfile add "ctrm.vhd"
-   xfile add "ipcore_dir/GenedBlockMem.xco"
-   xfile add "ipcore_dir/fontrom.xco"
    xfile add "ipcore_dir/tenyr_mainclock.xco"
-   xfile add "ipcore_dir/textram.xco"
    xfile add "losr.vhd"
-   xfile add "vga80x40.ucf"
    xfile add "vga80x40_col1fixed.vhd"
-   xfile add "xilinx_top.v"
-   xfile add "xilinx_top_sim.v"
+   xfile add "vgawrap.v"
    puts ""
    puts "WARNING: project contains IP cores, synthesis will fail if any of the cores require regenerating."
    puts ""
@@ -305,19 +300,26 @@ proc set_process_props {} {
    project set "Pack I/O Registers/Latches into IOBs" "For Inputs and Outputs" -process "Map"
    project set "Last Applied Goal" "Timing Performance"
    project set "Last Applied Strategy" "Performance with Physical Synthesis;E:/Xilinx/13.4/ISE_DS/ISE/spartan6/data/spartan6_performance_with_physicalsynthesis.xds"
+   project set "Placer Effort Level" "Standard" -process "Map"
    project set "Combinatorial Logic Optimization" "true" -process "Map"
    project set "Property Specification in Project File" "Store non-default values only"
    project set "Optimization Effort" "High" -process "Synthesize - XST"
    project set "User Browsed Strategy Files" "/opt/eda/Xilinx/13.4/ISE_DS/ISE/data/default.xds"
    project set "Target UCF File Name" "Tenyr.ucf" -process "Back-annotate Pin Locations"
    project set "Use DSP Block" "Automax" -process "Synthesize - XST"
+   project set "Generate Detailed MAP Report" "true" -process "Map"
    project set "Keep Hierarchy" "Yes" -process "Synthesize - XST"
    project set "Register Balancing" "Yes" -process "Synthesize - XST"
+   project set "Generics, Parameters" "LOADFILE=\"./verilog/baremetal.memh\"" -process "Synthesize - XST"
    project set "Netlist Hierarchy" "Rebuilt" -process "Synthesize - XST"
    project set "Pack I/O Registers into IOBs" "Yes" -process "Synthesize - XST"
    project set "Verilog Include Directories" "../verilog" -process "Synthesize - XST"
+   project set "Read Cores" "false" -process "Synthesize - XST"
+   project set "Place & Route Effort Level (Overall)" "Standard" -process "Place & Route"
    project set "Placer Extra Effort" "Normal" -process "Map"
+   project set "Enable Multi-Threading" "2" -process "Map"
    project set "Extra Effort (Highest PAR level only)" "Normal" -process "Place & Route"
+   project set "Enable Multi-Threading" "2" -process "Place & Route"
 
    puts "$myScript: project property values set."
 
