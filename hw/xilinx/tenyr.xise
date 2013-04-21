@@ -84,7 +84,7 @@
     <property xil_pn:name="Enable Multi-Threading par spartan6" xil_pn:value="2" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Extra Effort (Highest PAR level only)" xil_pn:value="Normal" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Generate Detailed MAP Report" xil_pn:value="true" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Generics, Parameters" xil_pn:value="LOADFILE=&quot;baremetal.memh&quot;" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Generics, Parameters" xil_pn:value="LOADFILE=&quot;../verilog/baremetal.memh&quot;" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top" xil_pn:value="Module|Tenyr" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top File" xil_pn:value="../verilog/top.v" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top Instance Path" xil_pn:value="/Tenyr" xil_pn:valueState="non-default"/>
@@ -94,7 +94,7 @@
     <property xil_pn:name="Last Selected UCF File" xil_pn:value="Z:/Documents/Code/C/tenyr/hw/xilinx/Tenyr.ucf" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Netlist Hierarchy" xil_pn:value="Rebuilt" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Optimization Effort spartan6" xil_pn:value="High" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Other Compiler Options" xil_pn:value="--generic_top LOADFILE=&quot;baremetal.memh&quot;" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Other Compiler Options" xil_pn:value="--generic_top LOADFILE=&quot;../verilog/baremetal.memh&quot;" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Pack I/O Registers into IOBs" xil_pn:value="Yes" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Pack I/O Registers/Latches into IOBs" xil_pn:value="For Inputs and Outputs" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Package" xil_pn:value="csg324" xil_pn:valueState="default"/>
