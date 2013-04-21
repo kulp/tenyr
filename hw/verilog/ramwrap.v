@@ -30,12 +30,12 @@ module ramwrap(
         .INIT(INIT), .ZERO(ZERO), .LOAD(LOAD), .LOADFILE(LOADFILE),
         .ABITS(ABITS), .DBITS(DBITS), .SIZE(SIZE)
     ) wrapped(
-        .clka  ( clka             ), .clkb  ( clkb            ),
-        .ena   ( ena              ), .enb   ( enb             ),
-        .dina  ( dina             ), .dinb  ( dinb            ),
-        .addra ( addra - BASE_A   ), .addrb ( addrb - BASE_B  ),
-        .wea   ( wea && a_inrange ), .web   ( web & b_inrange ),
-        .douta ( douta_internal   ), .doutb ( doutb_internal  )
+        .clka  ( clka            ), .clkb  ( clkb            ),
+        .ena   ( ena & a_inrange ), .enb   ( enb & b_inrange ),
+        .addra ( addra - BASE_A  ), .addrb ( addrb - BASE_B  ),
+        .dina  ( dina            ), .dinb  ( dinb            ),
+        .douta ( douta_internal  ), .doutb ( doutb_internal  ),
+        .wea   ( wea & a_inrange ), .web   ( web & b_inrange )
     );
 
 endmodule
