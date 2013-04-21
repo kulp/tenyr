@@ -187,3 +187,4 @@ ipcore_dir/coregen_lock
 *.svf
 *.xsvf
 ipcore_dir/tenyr_mainclock/
+*.wdb
