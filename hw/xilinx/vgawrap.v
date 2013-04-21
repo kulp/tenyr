@@ -2,7 +2,8 @@
 `timescale 1ns/10ps
 
 module VGAwrap(
-	input clk_core, clk_vga, en, rw, reset_n, strobe, input[31:0] addr, data,
+	input clk_core, clk_vga, en, rw, reset_n,
+	input strobe, input[31:0] addr, input[31:0] data, // TODO allow reads
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
 
@@ -42,14 +43,20 @@ module VGAwrap(
         .ocrx     ( crx       ), .ocry   ( cry         )
     );
 
-    ramwrap #(.BASE(VIDEO_ADDR + 'h10), .SIZE(80 * 40)) text(
+    BlockRAM #(.BASE_B(VIDEO_ADDR + 'h10), .SIZE(80 * 40), .DBITS(8)) text(
         .clka  ( clk_vga ), .clkb  ( clk_core ),
+        .ena   ( 1       ), .enb   ( 1        ),
         .addra ( ram_adA ), .addrb ( addr     ),
         .dina  ( 'bx     ), .dinb  ( data     ),
-        .douta ( ram_doA ), .doutb ( data     ),
+        .douta ( ram_doA ), //.doutb ( data     ),
         .wea   ( 1'b0    ), .web   ( rw       )
     );
 
-    fontrom font( .clka ( clk_vga ), .addra ( rom_adA ), .douta ( rom_doA ) );
+    BlockRAM #(.LOAD(1), .LOADFILE("../verilog/lat0-12.memh"),
+               .SIZE(256 * 12), .DBITS(8))
+    font(
+		.clka  ( clk_vga ), .ena   ( 1       ), .wea ( 0 ),
+		.addra ( rom_adA ), .douta ( rom_doA )
+	);
 
 endmodule

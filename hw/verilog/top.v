@@ -45,7 +45,7 @@ module Tenyr(
 // -----------------------------------------------------------------------------
 // MEMORY ----------------------------------------------------------------------
 
-    BlockRAM #(.LOAD(1), .LOADFILE(LOADFILE), .BASE(0), .SIZE(1024)) ram(
+    BlockRAM #(.LOAD(1), .LOADFILE(LOADFILE), .SIZE(1024)) ram(
         .clka  ( clk_core    ), .clkb  ( clk_core   ),
         .ena   ( oper_strobe ), .enb   ( startup[2] ),
         .wea   ( oper_rw     ), .web   ( 1'b0       ),

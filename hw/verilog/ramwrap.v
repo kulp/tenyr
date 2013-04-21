@@ -24,7 +24,7 @@ module ramwrap(clka, dina, addra, wea, douta, clkb, dinb, addrb, web, doutb);
     wire in_range = (addrb >= BASE && addrb < BASE + SIZE);
     assign doutb = in_range && !web ? doutb_internal : 32'bz;
 
-    textram wrapped(
+    BlockRAM wrapped(
         .clka  (clka),
         .dina  (dina),
         .addra (addra),
