@@ -43,9 +43,10 @@ module VGAwrap(
         .ocrx     ( crx       ), .ocry   ( cry         )
     );
 
-    BlockRAM #(.BASE_B(VIDEO_ADDR + 'h10), .SIZE(80 * 40), .DBITS(8),
-               .INIT(1), .ZERO('h20))
-    text(
+    ramwrap #(
+        .BASE_B(VIDEO_ADDR + 'h10), .SIZE(80 * 40), .DBITS(8),
+        .INIT(1), .ZERO('h20)
+    ) text(
         .clka  ( clk_vga ), .clkb  ( clk_core ),
         .ena   ( 1       ), .enb   ( 1        ),
         .addra ( ram_adA ), .addrb ( addr     ),
