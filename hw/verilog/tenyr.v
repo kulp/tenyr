@@ -79,7 +79,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
 
     reg [31:0] r_irhs, r_data;
-    reg [31:0] next_pc = `RESETVECTOR + 1, insn = `INSN_NOOP;
+    reg [31:0] next_pc = `RESETVECTOR + 1;
     reg r_halt = 0;
     assign halt[`HALT_EXEC] = r_halt;
     reg [3:0] state = sI0;
@@ -91,33 +91,31 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
             sI0: begin
                 state   <= |halt ? sI0 : sI1;
                 i_addr  <= `RESETVECTOR;
-                insn    <= `INSN_NOOP;
                 next_pc <= `RESETVECTOR + 1;
                 r_halt  <= 0;
             end
             sI1:       state <= s0;
-            s0 : begin state <= |halt ? s0 : s2; insn <= i_data;        end
-            s2 : begin state <= s3; r_halt  <= r_halt | illegal;        end
+            s0 : begin state <= |halt ? s0 : s3;                        end
             s3 : begin state <= s4; r_irhs  <= irhs;                    end
-            s4 :       state <= s5;
+            s4 : begin state <= s5; r_halt  <= r_halt | illegal;        end
             s5 : begin state <= s6; r_data  <= d_data;                  end
             s6 : begin state <= s7; i_addr  <= jumping ? rhs : next_pc; end
             s7 : begin state <= s0; next_pc <= i_addr + 1;              end
-            default: state <= sI0;
+            default:   state <= sI0;
         endcase
     end
 
     // Instruction fetch happens on cycle 0
 
     // Decode and register reads happen as soon as instruction is ready
-    Decode decode(.Z ( indexZ ), .insn ( insn ), .storing   ( storing ),
-                  .X ( indexX ), .kind ( kind ), .deref_rhs ( drhs    ),
-                  .Y ( indexY ), .op   ( op   ), .branch    ( jumping ),
-                  .I ( valueI ),                 .illegal   ( illegal ));
+    Decode decode(.Z ( indexZ ), .insn ( i_data ), .storing   ( storing ),
+                  .X ( indexX ), .kind ( kind   ), .deref_rhs ( drhs    ),
+                  .Y ( indexY ), .op   ( op     ), .branch    ( jumping ),
+                  .I ( valueI ),                   .illegal   ( illegal ));
 
     // Execution (arithmetic operation) occurs continuously, is ready after
     // one cycle
-    wire en_ex = state == s2;
+    wire en_ex = state == s0;
     Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ), .swap ( kind ),
               .X   ( valueX ), .Y  ( valueY ), .I  ( valueI ), .rhs  ( irhs ));
 
