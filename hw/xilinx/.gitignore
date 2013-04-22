@@ -153,3 +153,4 @@ ipcore_dir/coregen_lock
 *.xsvf
 ipcore_dir/tenyr_mainclock/
 *.wdb
+*.psr
