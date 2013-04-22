@@ -70,7 +70,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam sI0 = 4'hc, sI1 = 4'hd, sI2 = 4'he, sI3 = 4'hf,
+    localparam sI0 = 4'he, sI1 = 4'hf,
         s0 = 4'h0, s1 = 4'h1, s2 = 4'h2, s3 = 4'h3,
         s4 = 4'h4, s5 = 4'h5, s6 = 4'h6, s7 = 4'h7;
 
@@ -95,16 +95,14 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
                 next_pc <= `RESETVECTOR + 1;
                 r_halt  <= 0;
             end
-            sI1: state <= sI2;
-            sI2: state <= sI3;
-            sI3: state <= s0;
-            s0: begin state <= |halt ? s0 : s2; insn <= i_data; end
-            s2: begin state <= s3; r_halt  <= r_halt | illegal;        end
-            s3: begin state <= s4; r_irhs  <= irhs;                    end
-            s4: begin state <= s5;                                     end
-            s5: begin state <= s6; r_data  <= d_data;                  end
-            s6: begin state <= s7; i_addr  <= jumping ? rhs : next_pc; end
-            s7: begin state <= s0; next_pc <= i_addr + 1;              end
+            sI1:       state <= s0;
+            s0 : begin state <= |halt ? s0 : s2; insn <= i_data;        end
+            s2 : begin state <= s3; r_halt  <= r_halt | illegal;        end
+            s3 : begin state <= s4; r_irhs  <= irhs;                    end
+            s4 :       state <= s5;
+            s5 : begin state <= s6; r_data  <= d_data;                  end
+            s6 : begin state <= s7; i_addr  <= jumping ? rhs : next_pc; end
+            s7 : begin state <= s0; next_pc <= i_addr + 1;              end
             default: state <= sI0;
         endcase
     end
