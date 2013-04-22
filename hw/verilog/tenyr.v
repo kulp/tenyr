@@ -95,12 +95,12 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
                 r_halt  <= 0;
             end
             sI1:       state <= s0;
-            s0 : begin state <= |halt ? s0 : s3;                        end
-            s3 : begin state <= s4; r_irhs  <= irhs;                    end
-            s4 : begin state <= s5; r_halt  <= r_halt | illegal;        end
-            s5 : begin state <= s6; r_data  <= d_data;                  end
-            s6 : begin state <= s7; i_addr  <= jumping ? rhs : next_pc; end
-            s7 : begin state <= s0; next_pc <= i_addr + 1;              end
+            s0 : begin state <= |halt ? s0 : s1;                        end
+            s1 : begin state <= s2; r_irhs  <= irhs;                    end
+            s2 : begin state <= s3; r_halt  <= r_halt | illegal;        end
+            s3 : begin state <= s4; r_data  <= d_data;                  end
+            s4 : begin state <= s5; i_addr  <= jumping ? rhs : next_pc; end
+            s5 : begin state <= s0; next_pc <= i_addr + 1;              end
             default:   state <= sI0;
         endcase
     end
@@ -119,17 +119,17 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ), .swap ( kind ),
               .X   ( valueX ), .Y  ( valueY ), .I  ( valueI ), .rhs  ( irhs ));
 
-    // Memory loads or stores on cycle 5
+    // Memory loads or stores on cycle 3
     assign loading = drhs && !storing;
-    assign strobe  = state == s5 && (loading || storing);
+    assign strobe  = state == s3 && (loading || storing);
     assign mem_rw  = storing && strobe;
     assign rhs     = drhs    ? r_data  : r_irhs;
     assign storand = drhs    ? valueZ  : r_irhs;
     assign d_addr  = drhs    ? r_irhs  : valueZ;
     assign d_data  = storing ? storand : 32'bz;
 
-    // Registers commit after execution, on cycle 7
-    wire upZ = !storing && state == s7;
+    // Registers commit after execution, on cycle 5
+    wire upZ = !storing && state == s5;
     Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX ),
              .en      ( 1'b1    ), .indexY ( indexY ), .valueY ( valueY ),
              .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ ),
