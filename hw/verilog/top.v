@@ -45,7 +45,8 @@ module Tenyr(
 // -----------------------------------------------------------------------------
 // MEMORY ----------------------------------------------------------------------
 
-    ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0), .SIZE(1024)) ram(
+    ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0), .SIZE(16384))
+    ram(
         .clka  ( clk_core    ), .clkb  ( clk_core   ),
         .ena   ( oper_strobe ), .enb   ( startup[2] ),
         .wea   ( oper_rw     ), .web   ( 1'b0       ),

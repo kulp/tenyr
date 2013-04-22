@@ -7,7 +7,7 @@ module BlockRAM(
     input[ABITS-1:0] addrb, input[DBITS-1:0] dinb, output reg[DBITS-1:0] doutb
 );
 
-    parameter INIT     = 1;
+    parameter INIT     = 0;
     parameter ZERO     = 0;
     parameter LOAD     = 0;
     parameter LOADFILE = "default.memh";
@@ -17,9 +17,12 @@ module BlockRAM(
 
     reg[DBITS-1:0] store[(SIZE - 1):0];
 
-    integer i;
+    integer i, j;
     initial begin
-        if (INIT) for (i = 0; i < SIZE; i = i + 1) store[i] = ZERO;
+        if (INIT)
+            for (i = 0; i < (SIZE + 7) / 8; i = i + 1)
+                for (j = 0; j < 8 && i * 8 + j < SIZE; j = j + 1)
+                    store[i * 8 + j] = ZERO;
         if (LOAD) $readmemh(LOADFILE, store);
     end
 
