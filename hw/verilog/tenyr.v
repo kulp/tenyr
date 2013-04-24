@@ -14,27 +14,16 @@ module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
     assign valueY = Yis0 ? 0 : YisP ? next_pc : store[indexY];
     assign valueZ = Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
 
-    always @(posedge clk)
-        if (en && upZ && !Zis0 && !ZisP)
-            store[indexZ] <= writeZ;
+    always @(posedge clk) if (en & upZ & ~Zis0 & ~ZisP) store[indexZ] <= writeZ;
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
+module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
               output[3:0] op, output kind, illegal, storing, deref_rhs, branch);
 
-    assign kind      = insn[30 +: 1];
-    assign storing   = insn[29 +: 1];
-    assign deref_rhs = insn[28 +: 1];
-    assign Z         = insn[24 +: 4];
-    assign X         = insn[20 +: 4];
-    assign Y         = insn[16 +: 4];
-    assign op        = insn[12 +: 4];
-    wire[11:0] J     = insn[ 0 +:12];
-    assign I         = { {20{J[11]}}, J };
-
-    assign illegal   = &insn;
-    assign branch    = &Z && !storing;
+    assign {kind, storing, deref_rhs, Z, X, Y, op, I} = insn;
+    assign illegal = &insn;
+    assign branch  = &Z && !storing;
 
 endmodule
 
@@ -84,7 +73,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     assign halt[`HALT_EXEC] = r_halt;
     reg [3:0] state = sI0;
 
-    always @(posedge clk) begin
+    always @(posedge clk)
         if (!reset_n)
             state <= sI0;
         else case (state)
@@ -103,7 +92,6 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
             s5 : begin state <= s0; next_pc <= i_addr + 1;              end
             default:   state <= sI0;
         endcase
-    end
 
     // Instruction fetch happens on cycle 0
 
@@ -116,8 +104,9 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     // Execution (arithmetic operation) occurs continuously, is ready after
     // one cycle
     wire en_ex = state == s0;
-    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ), .swap ( kind ),
-              .X   ( valueX ), .Y  ( valueY ), .I  ( valueI ), .rhs  ( irhs ));
+    wire[31:0] extI = { {20{valueI[11]}}, valueI[11:0] };
+    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op   ), .swap ( kind ),
+              .X   ( valueX ), .Y  ( valueY ), .I  ( extI ), .rhs  ( irhs ));
 
     // Memory loads or stores on cycle 3
     assign loading = drhs && !storing;
