@@ -59,19 +59,16 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam sI0 = 4'he, sI1 = 4'hf,
-        s0 = 4'h0, s1 = 4'h1, s2 = 4'h2, s3 = 4'h3,
-        s4 = 4'h4, s5 = 4'h5, s6 = 4'h6, s7 = 4'h7;
+    localparam sI0 = 4'he, sI1 = 4'hf, s0 = 4'h0, s1 = 4'h1, s2 = 4'h2,
+               sH  = 4'hd,             s3 = 4'h3, s4 = 4'h4, s5 = 4'h5;
 
     wire illegal, kind, drhs, jumping, storing, loading;
     wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
 
-    reg [31:0] r_irhs, r_data;
-    reg [31:0] next_pc = `RESETVECTOR + 1;
-    reg r_halt = 0;
-    assign halt[`HALT_EXEC] = r_halt;
+    reg [31:0] r_irhs = 0, r_data = 0, next_pc = `RESETVECTOR + 1;
     reg [3:0] state = sI0;
+    assign halt[`HALT_EXEC] = state == sH;
 
     always @(posedge clk)
         if (!reset_n)
@@ -81,16 +78,15 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
                 state   <= |halt ? sI0 : sI1;
                 i_addr  <= `RESETVECTOR;
                 next_pc <= `RESETVECTOR + 1;
-                r_halt  <= 0;
             end
             sI1:       state <= s0;
-            s0 : begin state <= |halt ? s0 : s1;                        end
+            s0 : begin state <= |halt ? sI0 : illegal ? sH : s1;        end
             s1 : begin state <= s2; r_irhs  <= irhs;                    end
-            s2 : begin state <= s3; r_halt  <= r_halt | illegal;        end
+            s2 :       state <= s3;
             s3 : begin state <= s4; r_data  <= d_data;                  end
             s4 : begin state <= s5; i_addr  <= jumping ? rhs : next_pc; end
             s5 : begin state <= s0; next_pc <= i_addr + 1;              end
-            default:   state <= sI0;
+            default:   state <= sH;
         endcase
 
     // Instruction fetch happens on cycle 0
