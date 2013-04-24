@@ -101,8 +101,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
                   .Y ( indexY ), .op   ( op     ), .branch    ( jumping ),
                   .I ( valueI ),                   .illegal   ( illegal ));
 
-    // Execution (arithmetic operation) occurs continuously, is ready after
-    // one cycle
+    // Execution (arithmetic operation) occurs on cycle 0
     wire en_ex = state == s0;
     wire[31:0] extI = { {20{valueI[11]}}, valueI[11:0] };
     Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op   ), .swap ( kind ),
@@ -117,7 +116,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     assign d_addr  = drhs    ? r_irhs  : valueZ;
     assign d_data  = storing ? storand : 32'bz;
 
-    // Registers commit after execution, on cycle 5
+    // Registers commit on cycle 5
     wire upZ = !storing && state == s5;
     Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX ),
              .en      ( 1'b1    ), .indexY ( indexY ), .valueY ( valueY ),
