@@ -65,23 +65,20 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
 
     reg [31:0] r_irhs, r_data, next_pc;
-    reg [3:0] state = sI;
+    reg [2:0] state = sI;
     assign halt[`HALT_EXEC] = state == sH;
 
     always @(posedge clk)
         if (!reset_n)
             state <= sI;
         else case (state)
-            sI: begin
-                state   <= |halt ? sI : s5;
-                i_addr  <= `RESETVECTOR;
-            end
-            s0: begin state <= |halt ? sI : illegal ? sH : s1;         end
-            s1: begin state <= s2; r_irhs  <= irhs;                    end
-            s2:       state <= s3;
-            s3: begin state <= s4; r_data  <= d_data;                  end
-            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc; end
-            s5: begin state <= s0; next_pc <= i_addr + 1;              end
+            sI: begin state <= |halt ? sI : s5; i_addr <= `RESETVECTOR; end
+            s0: begin state <= |halt ? sI : illegal ? sH : s1;          end
+            s1: begin state <= s2; r_irhs  <= irhs;                     end
+            s2: begin state <= s3; /* compensate for pipelined mult */  end
+            s3: begin state <= s4; r_data  <= d_data;                   end
+            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;  end
+            s5: begin state <= s0; next_pc <= i_addr + 1;               end
             default:  state <= sH;
         endcase
 
