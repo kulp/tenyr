@@ -106,11 +106,11 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     assign d_data  = storing ? storand : 32'bz;
 
     // Registers commit on cycle 4
-    wire upZ = !storing && state == s4;
-    Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX ),
-             .en      ( 1'b1    ), .indexY ( indexY ), .valueY ( valueY ),
-             .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ ),
-                                   .writeZ ( rhs    ), .upZ    ( upZ    ));
+    wire updateZ = !storing && state == s4;
+    Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX  ),
+             .en      ( 1'b1    ), .indexY ( indexY ), .valueY ( valueY  ),
+             .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ  ),
+                                   .writeZ ( rhs    ), .upZ    ( updateZ ));
 
 endmodule
 
