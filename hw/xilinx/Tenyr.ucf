@@ -1,5 +1,5 @@
 NET "clk" TNM_NET = "clk";
-NET "clocks/in" LOC = V10;
+NET "clk" LOC = V10;
 
 NET "vga/vga/clk25MHz" TNM_NET = "vga/vga/clk25MHz";
 NET "core/clk" TNM_NET = "core/clk";
