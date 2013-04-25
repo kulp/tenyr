@@ -32,7 +32,7 @@ module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
 
     wire[31:0] O = swap ? I : Y;
     wire[31:0] A = swap ? Y : I;
-    always @(posedge clk) if (en) begin
+    always @(posedge clk) if (en)
         case (op)
             4'b0000: rhs <=  (X  |  O) + A; // X bitwise or Y
             4'b0001: rhs <=  (X  &  O) + A; // X bitwise and Y
@@ -51,7 +51,6 @@ module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
             4'b1110: rhs <= -(X  != O) + A; // X compare <> Y
             4'b1111: rhs <= 32'bx;          // reserved
         endcase
-    end
 
 endmodule
 
@@ -59,34 +58,31 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam sI0 = 4'he, sI1 = 4'hf, s0 = 4'h0, s1 = 4'h1, s2 = 4'h2,
-               sH  = 4'hd,             s3 = 4'h3, s4 = 4'h4, s5 = 4'h5;
+    localparam[2:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, sH=7;
 
     wire illegal, kind, drhs, jumping, storing, loading;
     wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
 
-    reg [31:0] r_irhs = 0, r_data = 0, next_pc = `RESETVECTOR + 1;
-    reg [3:0] state = sI0;
+    reg [31:0] r_irhs, r_data, next_pc;
+    reg [3:0] state = sI;
     assign halt[`HALT_EXEC] = state == sH;
 
     always @(posedge clk)
         if (!reset_n)
-            state <= sI0;
+            state <= sI;
         else case (state)
-            sI0: begin
-                state   <= |halt ? sI0 : sI1;
+            sI: begin
+                state   <= |halt ? sI : s5;
                 i_addr  <= `RESETVECTOR;
-                next_pc <= `RESETVECTOR + 1;
             end
-            sI1:       state <= s0;
-            s0 : begin state <= |halt ? sI0 : illegal ? sH : s1;        end
-            s1 : begin state <= s2; r_irhs  <= irhs;                    end
-            s2 :       state <= s3;
-            s3 : begin state <= s4; r_data  <= d_data;                  end
-            s4 : begin state <= s5; i_addr  <= jumping ? rhs : next_pc; end
-            s5 : begin state <= s0; next_pc <= i_addr + 1;              end
-            default:   state <= sH;
+            s0: begin state <= |halt ? sI : illegal ? sH : s1;         end
+            s1: begin state <= s2; r_irhs  <= irhs;                    end
+            s2:       state <= s3;
+            s3: begin state <= s4; r_data  <= d_data;                  end
+            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc; end
+            s5: begin state <= s0; next_pc <= i_addr + 1;              end
+            default:  state <= sH;
         endcase
 
     // Instruction fetch happens on cycle 0
@@ -112,8 +108,8 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
     assign d_addr  = drhs    ? r_irhs  : valueZ;
     assign d_data  = storing ? storand : 32'bz;
 
-    // Registers commit on cycle 5
-    wire upZ = !storing && state == s5;
+    // Registers commit on cycle 4
+    wire upZ = !storing && state == s4;
     Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX ),
              .en      ( 1'b1    ), .indexY ( indexY ), .valueY ( valueY ),
              .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ ),
