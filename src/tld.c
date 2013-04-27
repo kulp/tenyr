@@ -113,9 +113,9 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
         struct objmeta *meta = calloc(1, sizeof *meta);
         meta->state = s;
         meta->obj = i;
-        meta->size = i->records->size;
+        meta->size = i->records[0].size;
         meta->offset = running;
-        running += i->records->size;
+        running += i->records[0].size;
         struct objmeta **look = tsearch(meta, objtree, ptrcmp);
         if (*look != meta)
             fatal(0, "Duplicate object `%p'", (*look)->obj);
@@ -166,7 +166,7 @@ static int do_link_relocate(struct link_state *s, void **objtree, void **defns)
             // here we actually add the found-symbol's value to the relocation
             // slot, being careful to trim to the right width
             // XXX stop assuming there is only one record per object
-            UWord *dest = &i->records->data[rlc->addr - i->records->addr] ;
+            UWord *dest = &i->records[0].data[rlc->addr - i->records[0].addr] ;
             UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
             UWord updated = (*dest + reladdr) & mask;
             *dest = (*dest & ~mask) | updated;
