@@ -12,9 +12,6 @@ gen_*.tcl
 example_design/
 edit_*.tcl
 tenyr_clocks/
-textram/
-fontrom/
-GenedBlockMem
 *_flist.txt
 *_xmdf.tcl
 *.ejp

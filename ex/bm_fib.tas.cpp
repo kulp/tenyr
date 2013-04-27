@@ -16,8 +16,8 @@ _start:
     c <- 1              // argument
     o <- 1023           // stack pointer
 
-    call(init_display)
-    call(disable_cursor)
+    //call(init_display)
+    //call(disable_cursor)
 
     j <- 0              // row (0 - 39)
     k <- 0              // column (0 - 3)

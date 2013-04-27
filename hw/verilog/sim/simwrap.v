@@ -10,7 +10,7 @@ module SimWrap_`STEM(
 
     wire in_range = (addr >= BASE && addr < SIZE + BASE);
 
-    always @(`EDGE clk) begin
+    always @(posedge clk) begin
         if (enable && in_range) begin
             if (rw)
                 `PUT(data);

@@ -5,8 +5,8 @@ VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I../../src
 
-TAS = ../../tas
-TLD = ../../tld
+TAS = $(TOP)/tas
+TLD = $(TOP)/tld
 
 ifeq ($(WIN32),1)
  OS = Win32
@@ -40,7 +40,13 @@ SIM_GET_simserial = tenyr_getchar
 SIM_PUT_simserial = tenyr_putchar
 
 tenyr: VFLAGS += -m glue
-tenyr: simserial.v icarus_top.v simtop.v simmem.v seg7.v seglookup.v hex2ascii.v jcounter.v | glue.vpi
+tenyr: VFLAGS += -DSIMMEM=GenedBlockMem -DSIMCLK=tenyr_mainclock
+tenyr: VFLAGS += -DSERIAL
+tenyr: simtop.v top.v                               \
+       simserial.v ram.v simclocks.v                \
+       seg7.v seglookup.v                           \
+       hex2ascii.v ramwrap.v                        \
+       | glue.vpi
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 
@@ -52,11 +58,12 @@ asm.o sim.o: CFLAGS += -Wno-unused-value
 asm.o: CFLAGS += -Wno-unused-parameter
 
 vpath %.tas ../verilog
+vpath %.texe ../../ex
 
 LOGFILE = Top.vcd
-run_%: PLUSARGS += +LOAD=$*.texe +PERIODS=$(PERIODS) +LOGFILE=$(LOGFILE)
-run_%: tenyr %.texe
-	vvp -M. $< $(PLUSARGS)
+run_%: PLUSARGS += +PERIODS=$(PERIODS) +LOGFILE=$(LOGFILE)
+run_%: %.texe tenyr
+	vvp -M. tenyr +LOAD=$< $(PLUSARGS)
 
 clean:
 	$(RM) tenyr glue.vpi *.o

@@ -3,11 +3,13 @@
 
 module Top();
 
+    parameter LOADFILE = "default.memh";
+
     reg clk = 1;
     reg rhalt = 1;
     reg reset = 1;
 
-    always #(`CLOCKPERIOD / 2) clk = ~clk;
+    always #(`CLOCKPERIOD / 2) clk <= ~clk;
 
     wire `HALTTYPE halt;
     assign halt[`HALT_EXTERNAL] = 0;
@@ -17,7 +19,7 @@ module Top();
     initial #(1 * 4 * `CLOCKPERIOD) rhalt = 0;
     initial #(1 * 3 * `CLOCKPERIOD) reset = 0;
 
-    Tenyr tenyr(.clk(clk), .reset(reset), .halt(halt));
+    Tenyr #(.LOADFILE(LOADFILE)) tenyr(.clk(clk), .reset(reset), .halt(halt));
 
 `ifdef __ICARUS__
     // TODO The `ifdef guard should really be controlling for VPI availability
@@ -27,11 +29,11 @@ module Top();
     integer temp;
     initial #0 begin
         if ($value$plusargs("LOAD=%s", filename))
-            $tenyr_load(filename);
+            $tenyr_load(filename); // replace with $readmemh ?
         if ($value$plusargs("PERIODS=%d", temp))
             periods = temp;
-        if ($value$plusargs("LOGFILE=%s", logfile))
-            $tenyr_load(filename);
+        if ($value$plusargs("LOGFILE=%s", filename))
+            logfile = filename;
         $dumpfile(logfile);
         $dumpvars;
         #(periods * `CLOCKPERIOD) $finish;

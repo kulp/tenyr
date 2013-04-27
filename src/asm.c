@@ -418,6 +418,14 @@ static int text_out(FILE *stream, struct instruction *i, void *ud)
 }
 
 /*******************************************************************************
+ * memh format : suitable for use with $readmemh() in Verilog
+ */
+static int memh_out(FILE *stream, struct instruction *i, void *ud)
+{
+    return fprintf(stream, "@%x %08x\n", i->reladdr, i->u.word) > 0;
+}
+
+/*******************************************************************************
  * Verilog format : behavioural assignment statements
  */
 struct verilog_data {
@@ -463,6 +471,7 @@ const struct format tenyr_asm_formats[] = {
         .reloc = obj_reloc },
     { "raw" , .in = raw_in , .out = raw_out  },
     { "text", .in = text_in, .out = text_out },
+    { "memh", .out = memh_out },
     { "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
 };
 
