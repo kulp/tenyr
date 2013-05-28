@@ -57,11 +57,6 @@ static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
 
 static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width, int flags);
 
-int format_has_output(const struct format *f)
-{
-    return !!f->out;
-}
-
 struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
     list_foreach(symbol_list, elt, list)
