@@ -25,13 +25,9 @@
 void *lfind(const void *key, const void *base, size_t *nmemb, size_t size, int(*compar)(const void *, const void *));
 #endif
 
-// flag to mark flipping value of relocations after a '-'
-#define RHS_FLIP 1
-
-#define NO_NAMED_RELOC 2
+enum { RHS_FLIP = 1 << 0, NO_NAMED_RELOC = 1 << 1 };
 
 static const char shortopts[] = "df:o:sv" "hV";
-
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
     { "format"      , required_argument, NULL, 'f' },
