@@ -5,7 +5,6 @@
 
 struct format;
 
-int format_has_output(const struct format *f);
 int do_assembly(FILE *in, FILE *out, const struct format *f);
 int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags);
 
