@@ -100,20 +100,7 @@ static int add_relocation(struct parse_data *pd, const char *name, struct instru
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
-    if (name && name[0]) {
-        if (insn)
-            debug(5, "Adding relocation for `%s' of width %d @ 0x%08x with flags %#x", name, width, insn->reladdr, flags);
-        else
-            debug(5, "Adding relocation for `%s' of width %d for NULL with flags %#x", name, width, flags);
-        strcopy(node->reloc.name, name, sizeof node->reloc.name);
-    } else {
-        if (insn)
-            debug(5, "Adding null relocation of width %d @ 0x%08x with flags %#x", width, insn->reladdr, flags);
-        else
-            // XXX what does a relocation with (insn == NULL) mean ?
-            debug(5, "Adding null relocation of width %d for NULL with flags %#x", width, flags);
-        node->reloc.name[0] = 0;
-    }
+    strcopy(node->reloc.name, name ? name : "", sizeof node->reloc.name);
     node->reloc.insn  = insn;
     node->reloc.width = width;
     node->reloc.flags = flags;
