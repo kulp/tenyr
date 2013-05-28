@@ -166,29 +166,19 @@ static int recipe_plugin(struct sim_state *s)
         (s->plugins_loaded = !plugin_load("plugin", &s->plugin_cookie, plugin_success, s));
 }
 
-static int recipe_prealloc(struct sim_state *s)
-{
-    int ram_add_device(struct device **device);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    return ram_add_device(&s->machine.devices[index]);
-}
+#define DEVICE_RECIPE_TMPL(Name,Func)                                          \
+    static int recipe_##Name(struct sim_state *s)                              \
+    {                                                                          \
+        int Func(struct device **device);                                      \
+        int index = next_device(s);                                            \
+        s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]); \
+        return Func(&s->machine.devices[index]);                               \
+    }                                                                          \
+    //
 
-static int recipe_sparse(struct sim_state *s)
-{
-    int sparseram_add_device(struct device **device);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    return sparseram_add_device(&s->machine.devices[index]);
-}
-
-static int recipe_serial(struct sim_state *s)
-{
-    int serial_add_device(struct device **device);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    return serial_add_device(&s->machine.devices[index]);
-}
+DEVICE_RECIPE_TMPL(prealloc,      ram_add_device)
+DEVICE_RECIPE_TMPL(sparse  ,sparseram_add_device)
+DEVICE_RECIPE_TMPL(serial  ,   serial_add_device)
 
 static int recipe_nowrap(struct sim_state *s)
 {
