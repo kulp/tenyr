@@ -120,7 +120,7 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
         if (*look != meta)
             fatal(0, "Duplicate object `%p'", (*look)->obj);
 
-        if (i->sym_count) list_foreach(objsym, sym, i->symbols) {
+        list_foreach(objsym, sym, i->symbols) {
             struct defn *def = calloc(1, sizeof *def);
             def->state = s;
             strcopy(def->name, sym->name, sizeof def->name);
@@ -136,44 +136,48 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
     return 0;
 }
 
-static int do_link_relocate(struct link_state *s, void **objtree, void **defns)
+static void do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
+                                       void **objtree, void **defns)
 {
-    // iterate over relocs
-    list_foreach(obj_list, Node, s->objs) {
-        struct obj *i = Node->obj;
+    UWord reladdr = 0;
 
-        if (i->rlc_count) list_foreach(objrlc, rlc, i->relocs) {
-            UWord reladdr = 0;
+    struct objmeta **me = tfind(&i, objtree, ptrcmp);
+    if (rlc->name[0]) {
+        struct defn def;
+        strcopy(def.name, rlc->name, sizeof def.name);
+        struct defn **look = tfind(&def, defns, (cmp*)strcmp);
+        if (!look)
+            fatal(0, "Missing definition for symbol `%s'", rlc->name);
+        struct objmeta **it = tfind(&(*look)->obj, objtree, ptrcmp);
 
-            struct objmeta **me = tfind(&i, objtree, ptrcmp);
-            if (rlc->name[0]) {
-                struct defn def;
-                strcopy(def.name, rlc->name, sizeof def.name);
-                struct defn **look = tfind(&def, defns, (cmp*)strcmp);
-                if (!look)
-                    fatal(0, "Missing definition for symbol `%s'", rlc->name);
-                struct objmeta **it = tfind(&(*look)->obj, objtree, ptrcmp);
-
-                reladdr = (*it)->offset + (*look)->reladdr;
-            } else {
-                // this is a null relocation ; it just wants us to update the
-                // offset
-                reladdr = (*me)->offset;
-                // negative null relocations invert the value of the offset
-                if (rlc->flags & RLC_NEGATE)
-                    reladdr = -reladdr;
-            }
-            // here we actually add the found-symbol's value to the relocation
-            // slot, being careful to trim to the right width
-            // XXX stop assuming there is only one record per object
-            UWord *dest = &i->records[0].data[rlc->addr - i->records[0].addr] ;
-            UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
-            UWord updated = (*dest + reladdr) & mask;
-            *dest = (*dest & ~mask) | updated;
-        }
+        reladdr = (*it)->offset + (*look)->reladdr;
+    } else {
+        // this is a null relocation ; it just wants us to update the
+        // offset
+        reladdr = (*me)->offset;
+        // negative null relocations invert the value of the offset
+        if (rlc->flags & RLC_NEGATE)
+            reladdr = -reladdr;
     }
+    // here we actually add the found-symbol's value to the relocation
+    // slot, being careful to trim to the right width
+    // XXX stop assuming there is only one record per object
+    UWord *dest = &i->records[0].data[rlc->addr - i->records[0].addr] ;
+    UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
+    UWord updated = (*dest + reladdr) & mask;
+    *dest = (*dest & ~mask) | updated;
+}
 
-    return 0;
+static void do_link_relocate_obj(struct obj *i, void **objtree, void **defns)
+{
+    list_foreach(objrlc, rlc, i->relocs)
+        do_link_relocate_obj_reloc(i, rlc, objtree, defns);
+}
+
+static void do_link_relocate(struct obj_list *ol, void **objtree, void **defns)
+{
+    list_foreach(obj_list, Node, ol)
+        do_link_relocate_obj(Node->obj, objtree, defns);
 }
 
 static int do_link_process(struct link_state *s)
@@ -182,7 +186,7 @@ static int do_link_process(struct link_state *s)
     void *defns   = NULL;   ///< tsearch tree of `struct defns'
 
     do_link_build_state(s, &objtree, &defns);
-    do_link_relocate(s, &objtree, &defns);
+    do_link_relocate(s->objs, &objtree, &defns);
 
     struct todo_node *todo;
     s->userdata = &todo;
