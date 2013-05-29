@@ -6,6 +6,7 @@
 
 #define rel(Label)          reloff(Label,0)
 #define reloff(Label,Off)   (@Label - (. + 1 - (Off))) + p
+#define offsetpc(Reg)       Reg + p - (. + 1)
 #define goto(Label)         p <- rel(Label)
 #define callnz(Cond,Label)  p <- Cond & 1 + p ; p <- p + 3 ; push(p + 2); goto(Label)
 #define call(Label)         push(p + 2); goto(Label)
