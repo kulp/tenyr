@@ -5,8 +5,6 @@
 #define IMR_ADDR        rel(IMR) //-3
 #define SAVE_ADDR(Idx)  reloff(SAVE_END,Idx) //-4 - Idx
 
-#define iret            P   <- [IRR_ADDR] 
-
 // TODO rewrite save_registers() to reduce arithmetic on stack pointer (O is
 // updated twice consecutively due to the pushall_() macro where if handwritten
 // it could be updated only once)
@@ -56,7 +54,7 @@ ready8:
 
     // now D + I has the bit index of the lowest set bit in B
     C   <- D + I
-    C   <- [C + rel(jumptable)]
+    C   <- [C + rel(irqtable)]
 
     push(rel(after))
     P   <- offsetpc(C)
@@ -68,7 +66,7 @@ after:
 // any free registers except C (which contains the interrupt number)
     popall(C,B,D,I)
     restore_user_stack()
-    iret
+    P   <- [IRR_ADDR]
 
 // The IRR is written by the CPU, before irq_handler is called, with the address
 // of the next userspace PC to be executed
@@ -79,71 +77,40 @@ IMR: .word -1
 SAVE: .word 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
 SAVE_END:
 
-jumptable:
-    .word @jump00
-    .word @jump01
-    .word @jump02
-    .word @jump03
-    .word @jump04
-    .word @jump05
-    .word @jump06
-    .word @jump07
-    .word @jump08
-    .word @jump09
-    .word @jump10
-    .word @jump11
-    .word @jump12
-    .word @jump13
-    .word @jump14
-    .word @jump15
-    .word @jump16
-    .word @jump17
-    .word @jump18
-    .word @jump19
-    .word @jump20
-    .word @jump21
-    .word @jump22
-    .word @jump23
-    .word @jump24
-    .word @jump25
-    .word @jump26
-    .word @jump27
-    .word @jump28
-    .word @jump29
-    .word @jump30
-    .word @jump31
+irq_unhandled: .word 0x00ffdead ; illegal
 
-jump00: .word  0; ret
-jump01: .word  1; ret
-jump02: .word  2; ret
-jump03: .word  3; ret
-jump04: .word  4; ret
-jump05: .word  5; ret
-jump06: .word  6; ret
-jump07: .word  7; ret
-jump08: .word  8; ret
-jump09: .word  9; ret
-jump10: .word 10; ret
-jump11: .word 11; ret
-jump12: .word 12; ret
-jump13: .word 13; ret
-jump14: .word 14; ret
-jump15: .word 15; ret
-jump16: .word 16; ret
-jump17: .word 17; ret
-jump18: .word 18; ret
-jump19: .word 19; ret
-jump20: .word 20; ret
-jump21: .word 21; ret
-jump22: .word 22; ret
-jump23: .word 23; ret
-jump24: .word 24; ret
-jump25: .word 25; ret
-jump26: .word 26; ret
-jump27: .word 27; ret
-jump28: .word 28; ret
-jump29: .word 29; ret
-jump30: .word 30; ret
-jump31: .word 31; ret
+.set irq00, @irq_unhandled ; .set irq01, @irq_unhandled ;
+.set irq02, @irq_unhandled ; .set irq03, @irq_unhandled ;
+.set irq04, @irq_unhandled ; .set irq05, @irq_unhandled ;
+.set irq06, @irq_unhandled ; .set irq07, @irq_unhandled ;
+.set irq08, @irq_unhandled ; .set irq09, @irq_unhandled ;
+.set irq10, @irq_unhandled ; .set irq11, @irq_unhandled ;
+.set irq12, @irq_unhandled ; .set irq13, @irq_unhandled ;
+.set irq14, @irq_unhandled ; .set irq15, @irq_unhandled ;
+.set irq16, @irq_unhandled ; .set irq17, @irq_unhandled ;
+.set irq18, @irq_unhandled ; .set irq19, @irq_unhandled ;
+.set irq20, @irq_unhandled ; .set irq21, @irq_unhandled ;
+.set irq22, @irq_unhandled ; .set irq23, @irq_unhandled ;
+.set irq24, @irq_unhandled ; .set irq25, @irq_unhandled ;
+.set irq26, @irq_unhandled ; .set irq27, @irq_unhandled ;
+.set irq28, @irq_unhandled ; .set irq29, @irq_unhandled ;
+.set irq30, @irq_unhandled ; .set irq31, @irq_unhandled ;
+
+.global irq00 ; .global irq01 ; .global irq02 ; .global irq03 ;
+.global irq04 ; .global irq05 ; .global irq06 ; .global irq07 ;
+.global irq08 ; .global irq09 ; .global irq10 ; .global irq11 ;
+.global irq12 ; .global irq13 ; .global irq14 ; .global irq15 ;
+.global irq16 ; .global irq17 ; .global irq18 ; .global irq19 ;
+.global irq20 ; .global irq21 ; .global irq22 ; .global irq23 ;
+.global irq24 ; .global irq25 ; .global irq26 ; .global irq27 ;
+.global irq28 ; .global irq29 ; .global irq30 ; .global irq31 ;
+
+irq07: .word  7; ret
+
+irqtable:
+    .word @irq00, @irq01, @irq02, @irq03, @irq04, @irq05, @irq06, @irq07,
+          @irq08, @irq09, @irq10, @irq11, @irq12, @irq13, @irq14, @irq15,
+          @irq16, @irq17, @irq18, @irq19, @irq20, @irq21, @irq22, @irq23,
+          @irq24, @irq25, @irq26, @irq27, @irq28, @irq29, @irq30, @irq31
 
 abort: .word 0x00aadead; illegal
