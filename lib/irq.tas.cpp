@@ -20,7 +20,7 @@
 .global irq_handler
 irq_handler:
     get_interrupt_stack()
-    pushall(C,B,D,E)
+    pushall(C,B,D)
 
     B   <- [ISR_ADDR]
 
@@ -29,11 +29,11 @@ irq_handler:
     C   <- B ^ C
     B   <- B & C
 
-    E   <- 0            // base, for checking 8 bits at a time
+    D   <- 0            // base, for checking 8 bits at a time
     goto(check8)
 
 top8:
-    E   <- C & 8 + E
+    D   <- C & 1 + D
     B   <- B >> 8
 check8:
     C   <- B & 0xff     // 0000000011111111
@@ -43,6 +43,7 @@ check8:
 ready8:
     C   <- B & 0x0f     // 00001111
     C   <- C <> A + 1
+    C   <- D << 1 + C
 
     D   <- B & 0x33     // 00110011
     D   <- D <> A + 1
@@ -52,11 +53,10 @@ ready8:
     C   <- C <> A + 1
     D   <- D << 1 + C
 
-    // now D + E has the bit index of the lowest set bit in B
-    C   <- D + E
-    C   <- [C + rel(irqtable)]
+    // now D has the bit index of the lowest set bit in B
+    C   <- [D + rel(irqtable)]
 
-    popall(B,D,E)
+    popall(B,D)
     push(rel(after))
     // At vector dispatch, only O and C are saved. O is usable as the vector's
     // stack pointer ; C is the vector number and can be used as scratch.
