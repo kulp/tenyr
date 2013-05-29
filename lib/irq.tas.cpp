@@ -51,15 +51,21 @@ ready8:
 
     C   <- B & 0x55     // 01010101
     C   <- C <> A + 1
-    D   <- D << 1 + C
-
-    // now D has the bit index of the lowest set bit in B
-    C   <- [D + rel(irqtable)]
+    C   <- D << 1 + C
 
     popall(B,D)
     push(rel(after))
+    // now C has the bit index of the lowest set bit in B
+    C   <- [C + rel(irqtable)]
     // At vector dispatch, only O and C are saved. O is usable as the vector's
     // stack pointer ; C is the vector number and can be used as scratch.
+    // XXX C does not contain the vector number as it should !
+    // This is because we are using position-independent code, when in the case
+    // of the real vector table, both the table itself and its contents will be
+    // effectively relocated (their addresses will be fixed in high memory).
+    // Thus we will be able to turn load-jump instruction pair into a single
+    // load-jump instruction. TODO support an .org or similar directive to put
+    // things at known addresses.
     P   <- offsetpc(C)
 
 after:
