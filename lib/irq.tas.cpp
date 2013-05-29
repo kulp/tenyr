@@ -20,25 +20,25 @@
 .global irq_handler
 irq_handler:
     get_interrupt_stack()
-    pushall(C,B,D,I)
+    pushall(C,B,D,E)
 
     B   <- [ISR_ADDR]
 
     // get lowest set bit in B
     C   <- B - 1
-    D   <- B ^ C
-    B   <- B & D
+    C   <- B ^ C
+    B   <- B & C
 
-    I   <- 0            // base, for checking 8 bits at a time
+    E   <- 0            // base, for checking 8 bits at a time
+    goto(check8)
 
+top8:
+    E   <- C & 8 + E
+    B   <- B >> 8
 check8:
     C   <- B & 0xff     // 0000000011111111
     C   <- C == A
-    jzrel(C,ready8)
-    D   <- C & 8
-    I   <- I + D
-    B   <- B >> D
-    goto(check8)
+    jnzrel(C,top8)
 
 ready8:
     C   <- B & 0x0f     // 00001111
@@ -52,19 +52,18 @@ ready8:
     C   <- C <> A + 1
     D   <- D << 1 + C
 
-    // now D + I has the bit index of the lowest set bit in B
-    C   <- D + I
+    // now D + E has the bit index of the lowest set bit in B
+    C   <- D + E
     C   <- [C + rel(irqtable)]
 
+    popall(B,D,E)
     push(rel(after))
+    // At vector dispatch, only O and C are saved. O is usable as the vector's
+    // stack pointer ; C is the vector number and can be used as scratch.
     P   <- offsetpc(C)
 
 after:
-// TODO if we are very constrained for space we could popall(B,D,I) before
-// calling the interrupt vector, in case the vector needs stack space more than
-// free registers ; or we could just do it so that we don't have to guarantee
-// any free registers except C (which contains the interrupt number)
-    popall(C,B,D,I)
+    popall(C)
     restore_user_stack()
     P   <- [IRR_ADDR]
 
