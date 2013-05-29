@@ -1,18 +1,28 @@
 #include "common.th"
 
+#define IRR_ADDR        rel(IRR) //-1
 #define ISR_ADDR        rel(ISR) //-2
 #define IMR_ADDR        rel(IMR) //-3
 #define SAVE_ADDR(Idx)  reloff(SAVE_END,Idx) //-4 - Idx
 
-#define save_registers(...)   \
+#define iret            P   <- [IRR_ADDR] 
+
+// TODO rewrite save_registers() to reduce arithmetic on stack pointer (O is
+// updated twice consecutively due to the pushall_() macro where if handwritten
+// it could be updated only once)
+#define get_interrupt_stack() \
     O   -> [SAVE_ADDR(0)]   ; \
     O   <- SAVE_ADDR(1)     ; \
-    pushall_(O,__VA_ARGS__) ; \
+    //
+
+#define restore_user_stack()  \
+    O   <- [SAVE_ADDR(0)]   ; \
     //
 
 .global irq_handler
 irq_handler:
-    save_registers(B,C,D,I)
+    get_interrupt_stack()
+    pushall(C,B,D,I)
 
     B   <- [ISR_ADDR]
 
@@ -25,15 +35,14 @@ irq_handler:
 
 check8:
     C   <- B & 0xff     // 0000000011111111
-    // TODO this could be rewritten to save a few instructions in the case
-    // where the backward branch does not occur, at the expense of speed in the
-    // other case
     C   <- C == A
+    jzrel(C,ready8)
     D   <- C & 8
     I   <- I + D
     B   <- B >> D
-    jnzrel(C,check8)
+    goto(check8)
 
+ready8:
     C   <- B & 0x0f     // 00001111
     C   <- C <> A + 1
 
@@ -48,10 +57,22 @@ check8:
     // now D + I has the bit index of the lowest set bit in B
     C   <- D + I
     C   <- [C + rel(jumptable)]
+
+    push(rel(after))
     P   <- offsetpc(C)
 
-    illegal
+after:
+// TODO if we are very constrained for space we could popall(B,D,I) before
+// calling the interrupt vector, in case the vector needs stack space more than
+// free registers ; or we could just do it so that we don't have to guarantee
+// any free registers except C (which contains the interrupt number)
+    popall(C,B,D,I)
+    restore_user_stack()
+    iret
 
+// The IRR is written by the CPU, before irq_handler is called, with the address
+// of the next userspace PC to be executed
+IRR: .word @abort + 0x1000 // XXX hand-relocated address
 ISR: .word -1 << 7
 IMR: .word -1
 
@@ -92,36 +113,37 @@ jumptable:
     .word @jump30
     .word @jump31
 
-jump00: .word  0; illegal
-jump01: .word  1; illegal
-jump02: .word  2; illegal
-jump03: .word  3; illegal
-jump04: .word  4; illegal
-jump05: .word  5; illegal
-jump06: .word  6; illegal
-jump07: .word  7; illegal
-jump08: .word  8; illegal
-jump09: .word  9; illegal
-jump10: .word 10; illegal
-jump11: .word 11; illegal
-jump12: .word 12; illegal
-jump13: .word 13; illegal
-jump14: .word 14; illegal
-jump15: .word 15; illegal
-jump16: .word 16; illegal
-jump17: .word 17; illegal
-jump18: .word 18; illegal
-jump19: .word 19; illegal
-jump20: .word 20; illegal
-jump21: .word 21; illegal
-jump22: .word 22; illegal
-jump23: .word 23; illegal
-jump24: .word 24; illegal
-jump25: .word 25; illegal
-jump26: .word 26; illegal
-jump27: .word 27; illegal
-jump28: .word 28; illegal
-jump29: .word 29; illegal
-jump30: .word 30; illegal
-jump31: .word 31; illegal
+jump00: .word  0; ret
+jump01: .word  1; ret
+jump02: .word  2; ret
+jump03: .word  3; ret
+jump04: .word  4; ret
+jump05: .word  5; ret
+jump06: .word  6; ret
+jump07: .word  7; ret
+jump08: .word  8; ret
+jump09: .word  9; ret
+jump10: .word 10; ret
+jump11: .word 11; ret
+jump12: .word 12; ret
+jump13: .word 13; ret
+jump14: .word 14; ret
+jump15: .word 15; ret
+jump16: .word 16; ret
+jump17: .word 17; ret
+jump18: .word 18; ret
+jump19: .word 19; ret
+jump20: .word 20; ret
+jump21: .word 21; ret
+jump22: .word 22; ret
+jump23: .word 23; ret
+jump24: .word 24; ret
+jump25: .word 25; ret
+jump26: .word 26; ret
+jump27: .word 27; ret
+jump28: .word 28; ret
+jump29: .word 29; ret
+jump30: .word 30; ret
+jump31: .word 31; ret
 
+abort: .word 0x00aadead; illegal
