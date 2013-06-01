@@ -12,9 +12,6 @@ module Eib(input clk, reset_n, strobe, rw,
     localparam MAX_DEPTH = 32;                  // maximum depth of stacks
     localparam STACK_ENTRIES = (MAX_DEPTH << STACK_BITS) - 1;
 
-    localparam[2:0] s0 = 0;                     // state definitions
-
-    reg [ 2:0] state = s0;                      // state variable
     // stack position 0 is never popped to
     // this permits us in the future to refer to the next-higher frame reliably
     reg [ 4:0] depth = 1;                       // stack pointer
@@ -72,10 +69,6 @@ module Eib(input clk, reset_n, strobe, rw,
                             rdata <= stacks[`STACK_ADDR];
                 endcase
             end
-
-            case (state)
-                s0: state <= s0;
-            endcase
         end
     end
 
