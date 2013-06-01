@@ -36,9 +36,10 @@ module Eib(input clk, reset_n, strobe, rw,
         imrs[0] = 32'hffffffff;
     end
 
-`define IS_STACK(X) (STACK_TOP - (X) < STACK_SIZE)
+`define IS_STACK(X) ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
 `define IS_TRAMP(X) (TRAMP_BOTTOM <= (X) && (X) < TRAMP_BOTTOM + TRAMP_SIZE)
 `define STACK_ADDR  ((depth << STACK_BITS) | (STACK_TOP - addr))
+`define TRAMP_ADDR  (addr[TRAMP_BITS-1:0] - TRAMP_BOTTOM)
 
     always @(posedge clk) begin
         if (!reset_n) begin
@@ -56,9 +57,9 @@ module Eib(input clk, reset_n, strobe, rw,
                         if (depth == MAX_DEPTH - 1) begin
                             $display("Tried to push too many interrupt frames");
                             $stop;
-                        end
+                        end else
+                            depth <= depth + 1;
 
-                        depth           <= depth + 1;
                         rets[depth + 1] <= data;
                         imrs[depth + 1] <= 'b0;     // disable interrupts
                     end
@@ -68,7 +69,7 @@ module Eib(input clk, reset_n, strobe, rw,
                         if (`IS_STACK(addr))
                             stacks[`STACK_ADDR] <= data;
                         else if (`IS_TRAMP(addr))
-                            tramp[ addr[TRAMP_BITS-1:0] - TRAMP_BOTTOM ] <= data;
+                            tramp[`TRAMP_ADDR] <= data;
                 endcase
             end else if (bus_active && !rw) begin   // reading
                 casex (addr[11:0])
@@ -76,9 +77,9 @@ module Eib(input clk, reset_n, strobe, rw,
                         if (depth == 1) begin
                             $display("Tried to pop too many interrupt frames");
                             $stop;
-                        end
+                        end else
+                            depth <= depth - 1;
 
-                        depth <= depth - 1;
                         rdata <= rets[depth];       // RA  read
                     end
                     12'hffe: rdata <= isr;          // ISR read
@@ -87,7 +88,7 @@ module Eib(input clk, reset_n, strobe, rw,
                         if (`IS_STACK(addr))
                             rdata <= stacks[`STACK_ADDR];
                         else if (`IS_TRAMP(addr))
-                            rdata <= tramp[ addr[TRAMP_BITS-1:0] - TRAMP_BOTTOM ];
+                            rdata <= tramp[`TRAMP_ADDR];
                 endcase
             end
         end
