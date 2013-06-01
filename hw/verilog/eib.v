@@ -56,7 +56,7 @@ module Eib(input clk, reset_n, strobe, rw,
             trap <= |(imrs[depth] & isr);
 
             if (bus_active && rw) begin // writing
-                casez (addr[11:0])
+                case (addr[11:0])
                     12'hfff: begin
                         if (depth == MAX_DEPTH - 1) begin
                             $display("Tried to push too many interrupt frames");
@@ -76,7 +76,7 @@ module Eib(input clk, reset_n, strobe, rw,
                             tramp[`TRAMP_ADDR] <= data;
                 endcase
             end else if (bus_active && !rw) begin   // reading
-                casex (addr[11:0])
+                case (addr[11:0])
                     12'hfff: begin
                         if (depth == 1) begin
                             $display("Tried to pop too many interrupt frames");

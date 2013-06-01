@@ -39,19 +39,28 @@ module Eib_test();
         end
     endtask
 
-    task put_pc(input [31:0] pc);
-        trans_write(32'hffffffff, pc);
+    task trans_read(input [31:0] where, output reg [31:0] what);
+        begin
+            `CYC(0) begin
+                addr    = where;
+                writing = 0;
+                strobe  = 1;
+            end
+            `CYC(1) begin
+                what    = data;
+                strobe  = 0;
+                writing = 0;
+            end
+        end
     endtask
 
-    task clear_int(input [31:0] mask);
-        trans_write(32'hfffffffe, mask);
-    endtask
-
-    task set_imr(input [31:0] mask);
-        trans_write(32'hfffffffd, mask);
-    endtask
+    task put_pc (input [31:0] pc     ); trans_write(32'hffffffff, pc  ); endtask
+    task get_pc (output reg [31:0] pc); trans_read (32'hffffffff, pc  ); endtask
+    task clr_int(input [31:0] mask   ); trans_write(32'hfffffffe, mask); endtask
+    task set_imr(input [31:0] mask   ); trans_write(32'hfffffffd, mask); endtask
 
     initial `CYC(5) reset = 0;
+    reg [31:0] scratch;
     initial begin
         `CYC( 8) set_imr(32'hffffffff);
 
@@ -59,9 +68,12 @@ module Eib_test();
         `CYC( 1) irqs = irqs & ~5;
 
         `CYC(5) put_pc(32'hdeadbeef);
+        `CYC(3) clr_int(1);
+        `CYC(5) get_pc(scratch);
 
-//        `CYC(3) clear_int(1);
-//        `CYC(3) clear_int(4);
+        `CYC(5) put_pc(32'hf00dbaaf);
+        `CYC(3) clr_int(4);
+        `CYC(5) get_pc(scratch);
     end
     initial `CYC(100) $finish;
 
