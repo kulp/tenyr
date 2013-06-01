@@ -33,7 +33,8 @@ module Eib(input clk, reset_n, strobe, rw,
     assign data = (bus_active & ~rw) ? rdata : 32'bz;
 
     initial begin
-        imrs[0] = 32'hffffffff;
+        imrs[0] = 0;
+        imrs[1] = 0;
     end
 
 `define IS_STACK(X) ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
@@ -45,7 +46,8 @@ module Eib(input clk, reset_n, strobe, rw,
         if (!reset_n) begin
             isr     <= 0;
             depth   <= 1;
-            imrs[0] <= 32'hffffffff;
+            imrs[0] <= 0;
+            imrs[1] <= 0;
         end else begin
             isr  <= isr | irq;  // accumulate until cleared
             // For now, trap follows irq by one cycle
