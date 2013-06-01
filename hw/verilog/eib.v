@@ -1,3 +1,5 @@
+`timescale 1ns/10ps
+
 // External Interrupt Block
 // contains its own RAMs and presents a simple interrupt handler interface
 // to the tenyr Core
