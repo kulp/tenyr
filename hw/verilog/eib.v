@@ -2,10 +2,12 @@
 // contains its own RAMs and presents a simple interrupt handler interface
 // to the tenyr Core
 module Eib(input clk, reset_n, strobe, rw,
-           input[IRQ_COUNT-1:0] irq, output trap,
+           input[IRQ_COUNT-1:0] irq, output reg trap,
            input[31:0] addr, inout[31:0] data);
 
-    parameter STACK_SIZE = 32;                  // interrupt stack size in words
+    parameter STACK_BITS = 5;                   // interrupt stack size in bits
+    localparam STACK_SIZE = 1 << STACK_BITS;    // interrupt stack size in words
+    localparam STACK_TOP = 32'hffffffdf;
 
     localparam IRQ_COUNT = 32;                  // total count of interrupts
     localparam MAX_DEPTH = 32;                  // maximum depth of stacks
@@ -13,23 +15,22 @@ module Eib(input clk, reset_n, strobe, rw,
 
     reg [ 2:0] state = s0;                      // state variable
     reg [ 4:0] depth = 0;                       // stack pointer
-    reg [31:0] stacks[MAX_DEPTH][STACK_SIZE];   // HW stack of interrupt stacks
+    // TODO use multidimensional array when tools support them
+    reg [31:0] stacks[(MAX_DEPTH * STACK_SIZE)-1:0];   // stack of int. stacks
     reg [31:0] rdata;                           // output on bus data lines
 
     reg [IRQ_COUNT-1:0] isr = 0;                // Interrupt Status Register
-    reg [IRQ_COUNT-1:0] imrs[MAX_DEPTH];        // Interrupt Mask Register stack
-    reg [IRQ_COUNT-1:0] rets[MAX_DEPTH];        // Return Address stack
+    reg [IRQ_COUNT-1:0] imrs[MAX_DEPTH-1:0];    // Interrupt Mask Register stack
+    reg [IRQ_COUNT-1:0] rets[MAX_DEPTH-1:0];    // Return Address stack
 
-    wire[IRQ_COUNT-1:0] imr = imrs[depth];      // IMR top-of-stack
-    wire[IRQ_COUNT-1:0] ret = rets[depth];      // RA  top-of-stack
-
-    assign trap = &(imr & isr);                 // TODO clarify update semantics
-    assign data = (strobe & ~rw) ? rdata : 32'bz;
-    wire bus_active = strobe && addr[31:16] == 16'hffff;
+    wire bus_active = strobe && addr[31:12] == 20'hfffff;
+    assign data = (bus_active & ~rw) ? rdata : 32'bz;
 
     initial begin
         imrs[0] = 32'hffffffff;
     end
+
+`define STACK_ADDR ((depth << STACK_BITS) | addr[STACK_BITS-1:0])
 
     always @(posedge clk) begin
         if (!reset_n) begin
@@ -37,14 +38,33 @@ module Eib(input clk, reset_n, strobe, rw,
             depth   <= 0;
             imrs[0] <= 32'hffffffff;
         end else begin
-            isr <= irq;
+            isr  <= irq;
+            // For now, trap follows irq by one cycle
+            trap <= |(imrs[depth] & isr);
+
             if (bus_active && rw) begin // writing
-                case (addr[15:0])
-                    16'hffff: begin depth <= depth+1; rets[depth+1] <= data; end
+                casez (addr[11:0])
+                    12'hfff: begin
+                        depth           <= depth + 1;
+                        rets[depth + 1] <= data;
+                    end
+                    12'hffe: isr         <= data;   // ISR write
+                    12'hffd: imrs[depth] <= data;   // IMR write
+                    default:
+                        if (STACK_TOP - addr < STACK_SIZE)
+                            stacks[`STACK_ADDR] <= data;
                 endcase
-            end else if (bus_active && !rw) begin // reading
-                case (addr[15:0])
-                    16'hffff: rdata <= ret;
+            end else if (bus_active && !rw) begin   // reading
+                casex (addr[11:0])
+                    12'hfff: begin
+                        depth <= depth - 1;
+                        rdata <= rets[depth];       // RA  read
+                    end
+                    12'hffe: rdata <= isr;          // ISR read
+                    12'hffd: rdata <= imrs[depth];  // IMR read
+                    default:
+                        if (STACK_TOP - addr < STACK_SIZE)
+                            rdata <= stacks[`STACK_ADDR];
                 endcase
             end
 
@@ -55,3 +75,4 @@ module Eib(input clk, reset_n, strobe, rw,
     end
 
 endmodule
+
