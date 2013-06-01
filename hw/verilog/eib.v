@@ -38,7 +38,7 @@ module Eib(input clk, reset_n, strobe, rw,
             depth   <= 0;
             imrs[0] <= 32'hffffffff;
         end else begin
-            isr  <= irq;
+            isr  <= isr | irq;  // accumulate until cleared
             // For now, trap follows irq by one cycle
             trap <= |(imrs[depth] & isr);
 
@@ -47,8 +47,9 @@ module Eib(input clk, reset_n, strobe, rw,
                     12'hfff: begin
                         depth           <= depth + 1;
                         rets[depth + 1] <= data;
+                        imrs[depth + 1] <= 'b0;     // disable interrupts
                     end
-                    12'hffe: isr         <= data;   // ISR write
+                    12'hffe: isr <= isr & ~data;    // ISR clear bits
                     12'hffd: imrs[depth] <= data;   // IMR write
                     default:
                         if (STACK_TOP - addr < STACK_SIZE)
