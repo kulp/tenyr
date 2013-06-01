@@ -8,15 +8,18 @@ module Eib(input clk, reset_n, strobe, rw,
     parameter STACK_BITS = 5;                   // interrupt stack size in bits
     localparam STACK_SIZE = 1 << STACK_BITS;    // interrupt stack size in words
     localparam STACK_TOP = 32'hffffffdf;
-
     localparam IRQ_COUNT = 32;                  // total count of interrupts
     localparam MAX_DEPTH = 32;                  // maximum depth of stacks
+    localparam STACK_ENTRIES = (MAX_DEPTH << STACK_BITS) - 1;
+
     localparam[2:0] s0 = 0;                     // state definitions
 
     reg [ 2:0] state = s0;                      // state variable
-    reg [ 4:0] depth = 0;                       // stack pointer
+    // stack position 0 is never popped to
+    // this permits us in the future to refer to the next-higher frame reliably
+    reg [ 4:0] depth = 1;                       // stack pointer
     // TODO use multidimensional array when tools support them
-    reg [31:0] stacks[(MAX_DEPTH * STACK_SIZE)-1:0];   // stack of int. stacks
+    reg [31:0] stacks[STACK_ENTRIES:0];         // HW stack of interrupt stacks
     reg [31:0] rdata;                           // output on bus data lines
 
     reg [IRQ_COUNT-1:0] isr = 0;                // Interrupt Status Register
@@ -35,7 +38,7 @@ module Eib(input clk, reset_n, strobe, rw,
     always @(posedge clk) begin
         if (!reset_n) begin
             isr     <= 0;
-            depth   <= 0;
+            depth   <= 1;
             imrs[0] <= 32'hffffffff;
         end else begin
             isr  <= isr | irq;  // accumulate until cleared
@@ -58,7 +61,8 @@ module Eib(input clk, reset_n, strobe, rw,
             end else if (bus_active && !rw) begin   // reading
                 casex (addr[11:0])
                     12'hfff: begin
-                        depth <= depth - 1;
+                        if (depth != 1)
+                            depth <= depth - 1;
                         rdata <= rets[depth];       // RA  read
                     end
                     12'hffe: rdata <= isr;          // ISR read
