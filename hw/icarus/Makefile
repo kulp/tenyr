@@ -46,6 +46,7 @@ tenyr: simtop.v top.v                               \
        simserial.v ram.v simclocks.v                \
        seg7.v seglookup.v                           \
        hex2ascii.v ramwrap.v                        \
+       eib.v                                        \
        | glue.vpi
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v

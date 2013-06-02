@@ -8,17 +8,19 @@
 `endif
 `define SEG7
 `undef SERIAL
+`define INTERRUPTS
 
 module Tenyr(
     input clk, reset, inout `HALTTYPE halt,
     output[7:0] Led, output[7:0] seg, output[3:0] an,
-    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
+    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync,
+    input[31:0] irqs
 );
 
     parameter LOADFILE = "default.memh";
     parameter RAMWORDS = 8192;
 
-    wire oper_rw, oper_strobe;
+    wire oper_rw, oper_strobe, trap;
     wire valid_clk, clk_vga, clk_core;
     wire[31:0] insn_addr, oper_addr, insn_data, out_data;
     wire[31:0] oper_data = (!oper_rw && oper_strobe) ? out_data : 32'bz;
@@ -41,8 +43,19 @@ module Tenyr(
         .clk    ( clk_core    ), .reset_n ( _reset_n  ), .mem_rw ( oper_rw   ),
         .strobe ( oper_strobe ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
         .halt   ( halt        ), .i_data  ( insn_data ), .d_data ( oper_data ),
-        .trap   ( 1'b0        )
+        .trap   ( trap        )
     );
+
+`ifdef INTERRUPTS
+    Eib eib(
+        .clk     ( clk      ), .strobe ( oper_strobe ),
+        .reset_n ( _reset_n ), .rw     ( oper_rw     ),
+        .irq     ( irqs     ), .addr   ( oper_addr   ),
+        .trap    ( trap     ), .data   ( oper_data   )
+    );
+`else
+    assign trap = 0;
+`endif
 
 // -----------------------------------------------------------------------------
 // MEMORY ----------------------------------------------------------------------
