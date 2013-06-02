@@ -6,7 +6,7 @@ module Eib_test();
 
     parameter CLOCKPERIOD = 10;
 
-    reg clk = 0;
+    reg clk = 0; // XXX EIB does not work when clk starts at 1
     always #(CLOCKPERIOD / 2) clk = ~clk;
     initial begin
         $dumpfile("eib_tb.vcd");
@@ -21,8 +21,10 @@ module Eib_test();
     reg [31:0] addr, rdata;
     wire[31:0] data = writing ? rdata : 32'bz;
 
-    Eib eib(.clk(clk), .reset_n(~reset), .strobe(strobe), .rw(writing),
-            .irq(irqs), .trap(trap), .addr(addr), .data(data));
+    Eib eib(
+        .clk ( clk  ), .reset_n ( ~reset  ), .trap ( trap ), .strobe ( strobe ),
+        .irq ( irqs ), .rw      ( writing ), .addr ( addr ), .data   ( data   )
+    );
 
     task trans_write(input [31:0] where, what);
         begin
