@@ -40,7 +40,8 @@ module Tenyr(
     Core core(
         .clk    ( clk_core    ), .reset_n ( _reset_n  ), .mem_rw ( oper_rw   ),
         .strobe ( oper_strobe ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
-        .halt   ( halt        ), .i_data  ( insn_data ), .d_data ( oper_data )
+        .halt   ( halt        ), .i_data  ( insn_data ), .d_data ( oper_data ),
+        .trap   ( 1'b0        )
     );
 
 // -----------------------------------------------------------------------------

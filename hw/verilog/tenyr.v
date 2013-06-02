@@ -54,32 +54,33 @@ module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
 
 endmodule
 
-module Core(input clk, reset_n, inout `HALTTYPE halt,
+module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam[2:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, sH=7;
+    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, sH=7, sT0=8;
 
-    wire illegal, kind, drhs, jumping, storing, loading;
+    wire illegal, kind, drhs, jumping, storing, loading, deref;
     wire[ 3:0] indexX, indexY, indexZ, op;
-    wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand;
+    wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand, tostore;
 
     reg [31:0] r_irhs, r_data, next_pc;
-    reg [2:0] state = sI;
+    reg [3:0] state = sI;
     assign halt[`HALT_EXEC] = state == sH;
 
     always @(posedge clk)
         if (!reset_n)
             state <= sI;
         else case (state)
-            sI: begin state <= |halt ? sI : s5; i_addr <= `RESETVECTOR; end
-            s0: begin state <= |halt ? sI : illegal ? sH : s1;          end
-            s1: begin state <= s2; r_irhs  <= irhs;                     end
-            s2: begin state <= s3; /* compensate for pipelined mult */  end
-            s3: begin state <= s4; r_data  <= d_data;                   end
-            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;  end
-            s5: begin state <= s0; next_pc <= i_addr + 1;               end
-            default:  state <= sH;
+            sI:  begin state <= |halt ? sI : s5; i_addr <= `RESETVECTOR;     end
+            s0:  begin state <= |halt ? sI : illegal ? sH : trap ? sT0 : s1; end
+            s1:  begin state <= s2; r_irhs  <= irhs;                         end
+            s2:  begin state <= s3; /* compensate for pipelined mult */      end
+            s3:  begin state <= s4; r_data  <= d_data;                       end
+            s4:  begin state <= s5; i_addr  <= jumping ? rhs : next_pc;      end
+            s5:  begin state <= s0; next_pc <= i_addr + 1;                   end
+            sT0: begin state <= s0; r_irhs <= next_pc; next_pc <= `TRAPJUMP; end
+            default:   state <= sH;
         endcase
 
     // Instruction fetch happens on cycle 0
@@ -97,13 +98,15 @@ module Core(input clk, reset_n, inout `HALTTYPE halt,
               .X   ( valueX ), .Y  ( valueY ), .I  ( extI ), .rhs  ( irhs ));
 
     // Memory loads or stores on cycle 3
-    assign loading = drhs && !storing;
-    assign strobe  = state == s3 && (loading || storing);
-    assign mem_rw  = storing && strobe;
-    assign rhs     = drhs    ? r_data  : r_irhs;
-    assign storand = drhs    ? valueZ  : r_irhs;
-    assign d_addr  = drhs    ? r_irhs  : valueZ;
-    assign d_data  = storing ? storand : 32'bz;
+    assign loading = drhs && !mem_rw;
+    assign strobe  = (state == s3 && (loading || storing)) || state == sT0;
+    assign mem_rw  = (storing && strobe) || state == sT0;
+    assign tostore = state == sT0 ? `TRAP_PC : valueZ;
+    assign deref   = drhs || (state == sT0);
+    assign rhs     = deref   ? r_data  : r_irhs;
+    assign storand = deref   ? valueZ  : r_irhs;
+    assign d_addr  = deref   ? r_irhs  : tostore;
+    assign d_data  = mem_rw  ? storand : 32'bz;
 
     // Registers commit on cycle 4
     wire updateZ = !storing && state == s4;

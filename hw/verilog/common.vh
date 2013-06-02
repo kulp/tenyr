@@ -14,5 +14,8 @@
 
 `define INSN_NOOP 32'b0
 
+`define TRAP_PC     32'hffffffff
+`define TRAPJUMP    32'hfffff800
+
 /* vi: set ts=4 sw=4 et syntax=verilog: */
 
