@@ -19,9 +19,7 @@ module Eib(input clk, reset_n, strobe, rw,
     localparam TRAMP_SIZE = 1 << TRAMP_BITS;    // trampoline size in words
     localparam TRAMP_BOTTOM = 32'hfffff800;
 
-    // stack position 0 is never popped to
-    // this permits us in the future to refer to the next-higher frame reliably
-    reg [ 4:0] depth = 1;                       // stack pointer
+    reg [ 4:0] depth = 0;                       // stack pointer
     // TODO use multidimensional array when tools support them
     reg [31:0] stacks[STACK_ENTRIES:0];         // HW stack of interrupt stacks
     reg [31:0] tramp[TRAMP_SIZE-1:0];           // single interrupt trampoline
@@ -34,10 +32,7 @@ module Eib(input clk, reset_n, strobe, rw,
     wire bus_active = strobe && addr[31:12] == 20'hfffff;
     assign data = (bus_active & ~rw) ? rdata : 32'bz;
 
-    initial begin
-        imrs[0] = 0;
-        imrs[1] = 0;
-    end
+    initial imrs[0] = 0;
 
 `define IS_STACK(X) ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
 `define IS_TRAMP(X) (TRAMP_BOTTOM <= (X) && (X) < TRAMP_BOTTOM + TRAMP_SIZE)
@@ -47,9 +42,8 @@ module Eib(input clk, reset_n, strobe, rw,
     always @(posedge clk) begin
         if (!reset_n) begin
             isr     <= 0;
-            depth   <= 1;
+            depth   <= 0;
             imrs[0] <= 0;
-            imrs[1] <= 0;
         end else begin
             isr  <= isr | irq;  // accumulate until cleared
             // For now, trap follows irq by one cycle
@@ -78,7 +72,7 @@ module Eib(input clk, reset_n, strobe, rw,
             end else if (bus_active && !rw) begin   // reading
                 case (addr[11:0])
                     12'hfff: begin
-                        if (depth == 1) begin
+                        if (depth == 0) begin
                             $display("Tried to pop too many interrupt frames");
                             $stop;
                         end else
