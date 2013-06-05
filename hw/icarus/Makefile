@@ -31,6 +31,7 @@ all: tenyr glue.vpi
 
 vpath %.c ../vpi ../../src
 vpath %.v ../verilog ../verilog/sim .
+vpath %.memh ../verilog
 
 VFLAGS += -I../verilog
 VFLAGS += -DSIM
@@ -47,7 +48,7 @@ tenyr: simtop.v top.v                               \
        seg7.v seglookup.v                           \
        hex2ascii.v ramwrap.v                        \
        eib.v                                        \
-       | glue.vpi
+       | glue.vpi trampoline.memh
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 
@@ -57,6 +58,9 @@ glue.vpi: callbacks.o serial.o load.o sim.o asm.o obj.o common.o
 asm.o sim.o: CFLAGS += -Wno-unused-value
 # it's all right for callbacks not to use all their parameters
 asm.o: CFLAGS += -Wno-unused-parameter
+
+%.memh:
+	$(MAKE) -C ../verilog $@
 
 vpath %.tas ../verilog
 vpath %.texe ../../ex
