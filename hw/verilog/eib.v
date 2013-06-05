@@ -7,17 +7,17 @@ module Eib(input clk, reset_n, strobe, rw,
            input[IRQ_COUNT-1:0] irq, output reg trap,
            input[31:0] addr, inout[31:0] data);
 
-    localparam IRQ_COUNT = 32;                  // total count of interrupts
-    localparam MAX_DEPTH = 32;                  // maximum depth of stacks
+    localparam IRQ_COUNT     = 32;              // total count of interrupts
+    localparam MAX_DEPTH     = 32;              // maximum depth of stacks
 
-    parameter STACK_BITS = 5;                   // interrupt stack size in bits
-    localparam STACK_SIZE = 1 << STACK_BITS;    // interrupt stack size in words
-    localparam STACK_TOP = 32'hffffffdf;
+    parameter  STACK_TOP     = 32'hffffffdf;
+    parameter  STACK_BITS    = 5;               // interrupt stack size in bits
+    localparam STACK_SIZE    = 1 << STACK_BITS; // interrupt stack size in words
     localparam STACK_ENTRIES = (MAX_DEPTH << STACK_BITS) - 1;
 
-    parameter TRAMP_BITS = 8;                   // trampoline size in bits
-    localparam TRAMP_SIZE = 1 << TRAMP_BITS;    // trampoline size in words
-    localparam TRAMP_BOTTOM = 32'hfffff800;
+    parameter  TRAMP_BOTTOM  = 32'hfffff800;
+    parameter  TRAMP_BITS    = 8;               // trampoline size in bits
+    localparam TRAMP_SIZE    = 1 << TRAMP_BITS; // trampoline size in words
 
     reg [ 4:0] depth = 0;                       // stack pointer
     // TODO use multidimensional array when tools support them
