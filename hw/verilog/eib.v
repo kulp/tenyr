@@ -40,7 +40,7 @@ module Eib(input clk, reset_n, strobe, rw,
 
     initial begin
         imrs[0] = 0;
-        $readmemh("trampoline.memh", tramp);
+        $readmemh("../verilog/trampoline.memh", tramp);
     end
 
 `define IS_STACK(X) ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
@@ -77,6 +77,7 @@ module Eib(input clk, reset_n, strobe, rw,
                     end
                     12'hffe: isr <= isr & ~data;    // ISR clear bits
                     12'hffd: imrs[depth] <= data;   // IMR write
+                    default: $display("Unhandled write of %x @ %x", data, addr);
                 endcase
             end else if (bus_active && !rw) begin   // reading
                      if (`IS_STACK(addr)) rdata <= stacks[`STACK_ADDR];
@@ -94,6 +95,7 @@ module Eib(input clk, reset_n, strobe, rw,
                     end
                     12'hffe: rdata <= isr;          // ISR read
                     12'hffd: rdata <= imrs[depth];  // IMR read
+                    default: $display("Unhandled read @ %x", addr);
                 endcase
             end
         end
