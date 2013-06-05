@@ -1,26 +1,29 @@
 #include "common.th"
 
-#define IRR_ADDR        rel(IRR) //-1
-#define ISR_ADDR        rel(ISR) //-2
-#define IMR_ADDR        rel(IMR) //-3
-#define SAVE_ADDR(Idx)  reloff(SAVE_END,Idx) //-4 - Idx
+#define IRR_ADDR        (-1)
+#define ISR_ADDR        (-2)
+#define IMR_ADDR        (-3)
+#define SAVE_ADDR(Idx)  (-4 - (Idx))
 
-// TODO rewrite save_registers() to reduce arithmetic on stack pointer (O is
-// updated twice consecutively due to the pushall_() macro where if handwritten
-// it could be updated only once)
-#define get_interrupt_stack() \
-    O   -> [SAVE_ADDR(0)]   ; \
-    O   <- SAVE_ADDR(1)     ; \
+#define TRAP_ADDR       0xffffffff
+#define VECTOR_ADDR     0xffffffc0
+#define ISTACK_TOP      0xffffffbf
+#define TRAPJUMP        0xfffff800
+
+// get_interrupt_stack takes a parameter of an initial number of slots to
+// reserve
+#define get_interrupt_stack(N) \
+    O   -> [SAVE_ADDR(0)]    ; \
+    O   <- SAVE_ADDR(1 + N)  ; \
     //
 
 #define restore_user_stack()  \
     O   <- [SAVE_ADDR(0)]   ; \
     //
 
-.global irq_handler
-irq_handler:
-    get_interrupt_stack()
-    pushall(C,B,D)
+trampoline:
+    get_interrupt_stack(3)
+    writeall_(O, C,B,D)
 
     B   <- [ISR_ADDR]
 
@@ -56,66 +59,12 @@ ready8:
     popall(B,D)
     push(rel(after))
     // now C has the bit index of the lowest set bit in B
-    C   <- [C + rel(irqtable)]
     // At vector dispatch, only O and C are saved. O is usable as the vector's
     // stack pointer ; C is the vector number and can be used as scratch.
-    // XXX C does not contain the vector number as it should !
-    // This is because we are using position-independent code, when in the case
-    // of the real vector table, both the table itself and its contents will be
-    // effectively relocated (their addresses will be fixed in high memory).
-    // Thus we will be able to turn load-jump instruction pair into a single
-    // load-jump instruction. TODO support an .org or similar directive to put
-    // things at known addresses.
-    P   <- offsetpc(C)
+    P   <- [VECTOR_ADDR + C]
 
 after:
     popall(C)
     restore_user_stack()
     P   <- [IRR_ADDR]
 
-// The IRR is written by the CPU, before irq_handler is called, with the address
-// of the next userspace PC to be executed
-IRR: .word @abort + 0x1000 // XXX hand-relocated address
-ISR: .word -1 << 7
-IMR: .word -1
-
-SAVE: .word 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
-SAVE_END:
-
-irq_unhandled: .word 0x00ffdead ; illegal
-
-.set irq00, @irq_unhandled ; .set irq01, @irq_unhandled ;
-.set irq02, @irq_unhandled ; .set irq03, @irq_unhandled ;
-.set irq04, @irq_unhandled ; .set irq05, @irq_unhandled ;
-.set irq06, @irq_unhandled ; .set irq07, @irq_unhandled ;
-.set irq08, @irq_unhandled ; .set irq09, @irq_unhandled ;
-.set irq10, @irq_unhandled ; .set irq11, @irq_unhandled ;
-.set irq12, @irq_unhandled ; .set irq13, @irq_unhandled ;
-.set irq14, @irq_unhandled ; .set irq15, @irq_unhandled ;
-.set irq16, @irq_unhandled ; .set irq17, @irq_unhandled ;
-.set irq18, @irq_unhandled ; .set irq19, @irq_unhandled ;
-.set irq20, @irq_unhandled ; .set irq21, @irq_unhandled ;
-.set irq22, @irq_unhandled ; .set irq23, @irq_unhandled ;
-.set irq24, @irq_unhandled ; .set irq25, @irq_unhandled ;
-.set irq26, @irq_unhandled ; .set irq27, @irq_unhandled ;
-.set irq28, @irq_unhandled ; .set irq29, @irq_unhandled ;
-.set irq30, @irq_unhandled ; .set irq31, @irq_unhandled ;
-
-.global irq00 ; .global irq01 ; .global irq02 ; .global irq03 ;
-.global irq04 ; .global irq05 ; .global irq06 ; .global irq07 ;
-.global irq08 ; .global irq09 ; .global irq10 ; .global irq11 ;
-.global irq12 ; .global irq13 ; .global irq14 ; .global irq15 ;
-.global irq16 ; .global irq17 ; .global irq18 ; .global irq19 ;
-.global irq20 ; .global irq21 ; .global irq22 ; .global irq23 ;
-.global irq24 ; .global irq25 ; .global irq26 ; .global irq27 ;
-.global irq28 ; .global irq29 ; .global irq30 ; .global irq31 ;
-
-irq07: .word  7; ret
-
-irqtable:
-    .word @irq00, @irq01, @irq02, @irq03, @irq04, @irq05, @irq06, @irq07,
-          @irq08, @irq09, @irq10, @irq11, @irq12, @irq13, @irq14, @irq15,
-          @irq16, @irq17, @irq18, @irq19, @irq20, @irq21, @irq22, @irq23,
-          @irq24, @irq25, @irq26, @irq27, @irq28, @irq29, @irq30, @irq31
-
-abort: .word 0x00aadead; illegal
