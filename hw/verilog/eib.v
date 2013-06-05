@@ -37,7 +37,7 @@ module Eib(input clk, reset_n, strobe, rw,
 `define IS_STACK(X) ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
 `define IS_TRAMP(X) (TRAMP_BOTTOM <= (X) && (X) < TRAMP_BOTTOM + TRAMP_SIZE)
 `define STACK_ADDR  ((depth << STACK_BITS) | (STACK_TOP - addr))
-`define TRAMP_ADDR  (addr[TRAMP_BITS-1:0] - TRAMP_BOTTOM)
+`define TRAMP_ADDR  (addr - TRAMP_BOTTOM)
 
     always @(posedge clk) begin
         if (!reset_n) begin
