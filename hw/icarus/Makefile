@@ -66,7 +66,10 @@ vpath %.tas ../verilog
 vpath %.texe ../../ex
 
 LOGFILE = Top.vcd
-run_%: PLUSARGS += +PERIODS=$(PERIODS) +LOGFILE=$(LOGFILE)
+run_%: PLUSARGS += +PERIODS=$(PERIODS) \
+                   +LOGFILE=$(LOGFILE) \
+                   $(if $(INTERRUPTS),+INTERRUPT_TIMES=$(INTERRUPTS).times \
+                                      +INTERRUPT_SIGNALS=$(INTERRUPTS).signals)
 run_%: %.texe tenyr
 	vvp -M. tenyr +LOAD=$< $(PLUSARGS)
 
