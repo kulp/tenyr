@@ -15,8 +15,6 @@
 #define UNUSED   __attribute__((unused))
 #define NORETURN __attribute__((noreturn))
 
-#define PTR_MASK ((1 << 24) - 1)
-
 #define list_foreach(Tag,Node,Object)                                          \
     for (struct Tag *Next = (Object), *Node = Next;                            \
             (void)(Node && (Next = Next->next)), Node;                         \

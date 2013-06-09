@@ -202,7 +202,6 @@ static int spi_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     uint32_t offset = addr - SPI_BASE;
     int regnum = offset >> 2;
 
-    assert(("Address within address space", !(addr & ~PTR_MASK)));
     assert(("Lower bits of offset are cleared", !(offset & 0x3)));
 
     // "When a transfer is in progress, writing to any register of the SPI

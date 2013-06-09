@@ -29,7 +29,6 @@ struct sim_state {
     struct {
         int abort;
         int pause;
-        int nowrap;
         int verbose;
         int run_defaults;   ///< whether to run default recipes
         int debugging;

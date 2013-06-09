@@ -34,7 +34,6 @@ static int debugwrap_op(void *cookie, int op, uint32_t addr,
         uint32_t *data)
 {
     struct debugwrap_state *debugwrap = cookie;
-    assert(("Address within address space", !(addr & ~PTR_MASK)));
 
     debugwrap->wrapped->ops.op(debugwrap->wrapped->cookie, op, addr, data);
     printf("%-5s @ 0x%06x = %#x\n", op ? "write" : "read", addr, *data);
