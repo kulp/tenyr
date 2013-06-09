@@ -1,14 +1,5 @@
 #include "common.th"
-
-#define IRR_ADDR        (-1)
-#define ISR_ADDR        (-2)
-#define IMR_ADDR        (-3)
-#define SAVE_ADDR(Idx)  (-4 - (Idx))
-
-#define TRAP_ADDR       0xffffffff
-#define VECTOR_ADDR     0xffffffc0
-#define ISTACK_TOP      0xffffffbf
-#define TRAPJUMP        0xfffff800
+#include "irq.th"
 
 // get_interrupt_stack takes a parameter of an initial number of slots to
 // reserve

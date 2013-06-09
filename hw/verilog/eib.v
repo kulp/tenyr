@@ -6,7 +6,8 @@
 // to the tenyr Core
 module Eib(input clk, reset_n, strobe, rw,
            input[IRQ_COUNT-1:0] irq, output reg trap,
-           input[31:0] addr, inout[31:0] data);
+           input[31:0] i_addr, output [31:0] i_data,
+           input[31:0] d_addr, inout  [31:0] d_data);
 
     localparam IRQ_COUNT    = 32;               // total count of interrupts
     localparam DEPTH_BITS   =  5;               // maximum depth of stacks
@@ -28,27 +29,29 @@ module Eib(input clk, reset_n, strobe, rw,
     reg [31:0] stacks[STACK_WORDS:0];           // HW stack of interrupt stacks
     reg [31:0] tramp[TRAMP_SIZE-1:0];           // single interrupt trampoline
     reg [31:0] vecs[VEC_SIZE-1:0];              // interrupt vector table
-    reg [31:0] rdata;                           // output on bus data lines
+    reg [31:0] rdata, i_rdata;                  // output on bus data lines
+    reg i_active;                               // enable for I-bus
 
     reg [DEPTH_BITS-1:0] depth = 0;             // stack pointer
     reg [ IRQ_COUNT-1:0] isr = 0;               // Interrupt Status Register
     reg [ IRQ_COUNT-1:0] imrs[MAX_DEPTH-1:0];   // Interrupt Mask Register stack
     reg [ IRQ_COUNT-1:0] rets[MAX_DEPTH-1:0];   // Return Address stack
 
-    wire bus_active = strobe && addr[31:12] == 20'hfffff;
-    assign data = (bus_active & ~rw) ? rdata : 32'bz;
+    wire d_active = strobe && d_addr[31:12] == 20'hfffff;
+    assign d_data = (d_active & ~rw) ? rdata : 32'bz;
+    assign i_data = i_active ? i_rdata : 32'bz;
 
     initial begin
         imrs[0] = 0;
         $readmemh("../verilog/trampoline.memh", tramp);
     end
 
-`define IS_STACK(X) ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
-`define IS_TRAMP(X) (TRAMP_BOTTOM <= (X) && (X) < TRAMP_BOTTOM + TRAMP_SIZE)
-`define IS_VEC(X)   (  VEC_BOTTOM <= (X) && (X) <   VEC_BOTTOM +   VEC_SIZE)
-`define STACK_ADDR  ((depth << STACK_BITS) | (STACK_TOP - addr))
-`define TRAMP_ADDR  (addr - TRAMP_BOTTOM)
-`define VEC_ADDR    (addr -   VEC_BOTTOM)
+`define IS_STACK(X)     ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
+`define IS_TRAMP(X)     (TRAMP_BOTTOM <= (X) && (X) < TRAMP_BOTTOM + TRAMP_SIZE)
+`define IS_VEC(X)       (  VEC_BOTTOM <= (X) && (X) <   VEC_BOTTOM +   VEC_SIZE)
+`define STACK_ADDR(X)   ((depth << STACK_BITS) | (STACK_TOP - (X)))
+`define TRAMP_ADDR(X)   ((X) - TRAMP_BOTTOM)
+`define VEC_ADDR(X)     ((X) -   VEC_BOTTOM)
 
     always @(posedge clk) begin
         if (!reset_n) begin
@@ -60,11 +63,23 @@ module Eib(input clk, reset_n, strobe, rw,
             // For now, trap follows irq by one cycle
             trap <= |(imrs[depth] & isr);
 
-            if (bus_active && rw) begin // writing
-                     if (`IS_STACK(addr)) stacks[`STACK_ADDR] <= data;
-                else if (`IS_TRAMP(addr)) tramp [`TRAMP_ADDR] <= data;
-                else if (`IS_VEC  (addr)) vecs  [`VEC_ADDR  ] <= data;
-                else case (addr[11:0])
+            if (`IS_STACK(i_addr)) begin
+                i_rdata  <= stacks[`STACK_ADDR(i_addr)];
+                i_active <= 1;
+            end else if (`IS_TRAMP(i_addr)) begin
+                i_rdata  <= tramp [`TRAMP_ADDR(i_addr)];
+                i_active <= 1;
+            end else if (`IS_VEC  (i_addr)) begin
+                i_rdata  <= vecs  [`VEC_ADDR(i_addr)  ];
+                i_active <= 1;
+            end else
+                i_active <= 0;
+
+            if (d_active && rw) begin // writing
+                     if (`IS_STACK(d_addr)) stacks[`STACK_ADDR(d_addr)] <= d_data;
+                else if (`IS_TRAMP(d_addr)) tramp [`TRAMP_ADDR(d_addr)] <= d_data;
+                else if (`IS_VEC  (d_addr)) vecs  [`VEC_ADDR(d_addr)  ] <= d_data;
+                else case (d_addr[11:0])
                     12'hfff: begin
                         if (depth == MAX_DEPTH - 1) begin
                             $display("Tried to push too many interrupt frames");
@@ -72,18 +87,18 @@ module Eib(input clk, reset_n, strobe, rw,
                         end else
                             depth <= depth + 1;
 
-                        rets[depth + 1] <= data;
+                        rets[depth + 1] <= d_data;
                         imrs[depth + 1] <= 'b0;     // disable interrupts
                     end
-                    12'hffe: isr <= isr & ~data;    // ISR clear bits
-                    12'hffd: imrs[depth] <= data;   // IMR write
-                    default: $display("Unhandled write of %x @ %x", data, addr);
+                    12'hffe: isr <= isr & ~d_data;    // ISR clear bits
+                    12'hffd: imrs[depth] <= d_data;   // IMR write
+                    default: $display("Unhandled write of %x @ %x", d_data, d_addr);
                 endcase
-            end else if (bus_active && !rw) begin   // reading
-                     if (`IS_STACK(addr)) rdata <= stacks[`STACK_ADDR];
-                else if (`IS_TRAMP(addr)) rdata <= tramp [`TRAMP_ADDR];
-                else if (`IS_VEC  (addr)) rdata <= vecs  [`VEC_ADDR  ];
-                else case (addr[11:0])
+            end else if (d_active && !rw) begin   // reading
+                     if (`IS_STACK(d_addr)) rdata <= stacks[`STACK_ADDR(d_addr)];
+                else if (`IS_TRAMP(d_addr)) rdata <= tramp [`TRAMP_ADDR(d_addr)];
+                else if (`IS_VEC  (d_addr)) rdata <= vecs  [`VEC_ADDR(d_addr)  ];
+                else case (d_addr[11:0])
                     12'hfff: begin
                         if (depth == 0) begin
                             $display("Tried to pop too many interrupt frames");
@@ -95,7 +110,7 @@ module Eib(input clk, reset_n, strobe, rw,
                     end
                     12'hffe: rdata <= isr;          // ISR read
                     12'hffd: rdata <= imrs[depth];  // IMR read
-                    default: $display("Unhandled read @ %x", addr);
+                    default: $display("Unhandled read @ %x", d_addr);
                 endcase
             end
         end

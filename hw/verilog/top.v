@@ -48,10 +48,10 @@ module Tenyr(
 
 `ifdef INTERRUPTS
     Eib eib(
-        .clk     ( clk      ), .strobe ( oper_strobe ),
-        .reset_n ( _reset_n ), .rw     ( oper_rw     ),
-        .irq     ( irqs     ), .addr   ( oper_addr   ),
-        .trap    ( trap     ), .data   ( oper_data   )
+        .clk    ( clk_core    ), .reset_n ( _reset_n  ), .rw     ( oper_rw   ),
+        .strobe ( oper_strobe ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
+        .irq    ( irqs        ), .i_data  ( insn_data ), .d_data ( oper_data ),
+        .trap   ( trap        )
     );
 `else
     assign trap = 0;

@@ -80,7 +80,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
             s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;       end
             s5: begin state <= s0; next_pc <= i_addr + 1;                    end
             sT: begin state <= sW; r_irhs  <= next_pc; /* delay a cycle : */ end
-            sW: begin state <= s0; next_pc <= `TRAPJUMP; /* trap goes low */ end
+            sW: begin state <= s5; i_addr  <= `TRAPJUMP; /* trap goes low */ end
             default:  state <= sH;
         endcase
 
@@ -103,7 +103,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
     assign strobe  = (state == s3 && (loading || storing)) || state == sT;
     assign mem_rw  = (storing && strobe) || state == sT;
     assign tostore = state == sT ? `TRAP_ADDR : valueZ;
-    assign deref   = drhs || (state == sT);
+    assign deref   = drhs && (state != sT);
     assign rhs     = deref   ? r_data  : r_irhs;
     assign storand = deref   ? valueZ  : r_irhs;
     assign d_addr  = deref   ? r_irhs  : tostore;
