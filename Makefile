@@ -61,7 +61,7 @@ ifneq ($(SDL),0)
 PDEVICES += $(PDEVICES_SDL)
 endif
 
-DEVICES = ram sparseram debugwrap serial spi
+DEVICES = ram sparseram debugwrap serial spi eib
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
 PDEVICES += spidummy spisd spi

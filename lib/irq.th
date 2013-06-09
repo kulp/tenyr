@@ -1,6 +1,7 @@
 #ifndef IRQ_TH_
 #define IRQ_TH_
 
+// TODO make naming convention more consistent (underscore usage at least)
 #define TRAP_ADDR       0xffffffff
 #define VECTOR_ADDR     0xffffffc0
 #define ISTACK_TOP      0xffffffbf
