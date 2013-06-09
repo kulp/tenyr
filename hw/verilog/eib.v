@@ -66,10 +66,12 @@ module Eib(input clk, reset_n, strobe, rw,
             // For now, trap follows irq by one cycle
             trap <= |(imrs[depth] & isr);
 
-                 if (`IS_STACK(i_addr)) i_rdata <= stacks[`STACK_ADDR(i_addr)];
-            else if (`IS_TRAMP(i_addr)) i_rdata <= tramp [`TRAMP_ADDR(i_addr)];
-            else if (`IS_VEC  (i_addr)) i_rdata <= vecs  [  `VEC_ADDR(i_addr)];
-            else i_rdata <= 32'bx;
+            if (i_inrange) begin
+                     if (`IS_STACK(i_addr)) i_rdata <= stacks[`STACK_ADDR(i_addr)];
+                else if (`IS_TRAMP(i_addr)) i_rdata <= tramp [`TRAMP_ADDR(i_addr)];
+                else if (`IS_VEC  (i_addr)) i_rdata <= vecs  [  `VEC_ADDR(i_addr)];
+                else i_rdata <= 32'bx;
+            end
 
             if (d_active && rw) begin // writing
                      if (`IS_STACK(d_addr)) stacks[`STACK_ADDR(d_addr)] <= d_data;

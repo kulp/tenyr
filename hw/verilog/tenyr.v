@@ -67,6 +67,9 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
     reg [31:0] r_irhs, r_data, next_pc;
     reg [3:0] state = sI;
     assign halt[`HALT_EXEC] = state == sH;
+    // `insn` is a bit of a hack to prevent undefined data from being loaded
+    // when mode-switching between normal and interrupt modes
+    wire[31:0] insn = (state == s5) ? `INSN_NOOP : i_data;
 
     always @(posedge clk)
         if (!reset_n)
@@ -87,10 +90,10 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
     // Instruction fetch happens on cycle 0
 
     // Decode and register reads happen as soon as instruction is ready
-    Decode decode(.Z ( indexZ ), .insn ( i_data ), .storing   ( storing ),
-                  .X ( indexX ), .kind ( kind   ), .deref_rhs ( drhs    ),
-                  .Y ( indexY ), .op   ( op     ), .branch    ( jumping ),
-                  .I ( valueI ),                   .illegal   ( illegal ));
+    Decode decode(.Z ( indexZ ), .insn ( insn ), .storing   ( storing ),
+                  .X ( indexX ), .kind ( kind ), .deref_rhs ( drhs    ),
+                  .Y ( indexY ), .op   ( op   ), .branch    ( jumping ),
+                  .I ( valueI ),                 .illegal   ( illegal ));
 
     // Execution (arithmetic operation) occurs on cycle 0
     wire en_ex = state == s0;
