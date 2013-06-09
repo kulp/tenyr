@@ -30,14 +30,14 @@ module Eib(input clk, reset_n, strobe, rw,
     reg [31:0] tramp[TRAMP_SIZE-1:0];           // single interrupt trampoline
     reg [31:0] vecs[VEC_SIZE-1:0];              // interrupt vector table
     reg [31:0] rdata, i_rdata;                  // output on bus data lines
-    reg i_active;                               // enable for I-bus
 
     reg [DEPTH_BITS-1:0] depth = 0;             // stack pointer
     reg [ IRQ_COUNT-1:0] isr = 0;               // Interrupt Status Register
     reg [ IRQ_COUNT-1:0] imrs[MAX_DEPTH-1:0];   // Interrupt Mask Register stack
     reg [ IRQ_COUNT-1:0] rets[MAX_DEPTH-1:0];   // Return Address stack
 
-    wire d_active = strobe && d_addr[31:12] == 20'hfffff;
+    wire d_active = d_addr[31:12] == 20'hfffff && strobe;
+    wire i_active = i_addr[31:12] == 20'hfffff;
     assign d_data = (d_active & ~rw) ? rdata : 32'bz;
     assign i_data = i_active ? i_rdata : 32'bz;
 
@@ -63,17 +63,10 @@ module Eib(input clk, reset_n, strobe, rw,
             // For now, trap follows irq by one cycle
             trap <= |(imrs[depth] & isr);
 
-            if (`IS_STACK(i_addr)) begin
-                i_rdata  <= stacks[`STACK_ADDR(i_addr)];
-                i_active <= 1;
-            end else if (`IS_TRAMP(i_addr)) begin
-                i_rdata  <= tramp [`TRAMP_ADDR(i_addr)];
-                i_active <= 1;
-            end else if (`IS_VEC  (i_addr)) begin
-                i_rdata  <= vecs  [`VEC_ADDR(i_addr)  ];
-                i_active <= 1;
-            end else
-                i_active <= 0;
+                 if (`IS_STACK(i_addr)) i_rdata <= stacks[`STACK_ADDR(i_addr)];
+            else if (`IS_TRAMP(i_addr)) i_rdata <= tramp [`TRAMP_ADDR(i_addr)];
+            else if (`IS_VEC  (i_addr)) i_rdata <= vecs  [  `VEC_ADDR(i_addr)];
+            else i_rdata <= 32'bx;
 
             if (d_active && rw) begin // writing
                      if (`IS_STACK(d_addr)) stacks[`STACK_ADDR(d_addr)] <= d_data;
