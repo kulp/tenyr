@@ -35,6 +35,9 @@ module Top();
     integer clk_count = 0;
     integer temp;
     initial #0 begin
+        for (temp = 0; temp < 1024; temp = temp + 1)
+            irq_times[temp] = 0;
+
         if ($value$plusargs("LOAD=%s", filename))
             $tenyr_load(filename); // replace with $readmemh ?
         if ($value$plusargs("PERIODS=%d", temp))
@@ -42,9 +45,6 @@ module Top();
         if ($value$plusargs("LOGFILE=%s", filename))
             logfile = filename;
         if ($value$plusargs("INTERRUPT_TIMES=%s", filename)) begin
-            for (temp = 0; temp < 1024; temp = temp + 1)
-                irq_times[temp] = 0;
-
             $readmemh(filename, irq_times);
 
             if ($value$plusargs("INTERRUPT_FIRST=%d", temp))
@@ -62,10 +62,10 @@ module Top();
         #(periods * `CLOCKPERIOD) $finish;
     end
 
-    task do_irq(input integer which);
+    task do_irq(input integer which, clocks);
         begin
             irqs[which] = 1;
-            irqs[which] = #`CLOCKPERIOD 0;
+            irqs[which] = #(clocks * `CLOCKPERIOD) 0;
         end
     endtask
 
@@ -73,7 +73,7 @@ module Top();
 
     always #`CLOCKPERIOD begin
         if (irq_ptr < irq_size && irq_times[irq_ptr] == clk_count) begin
-            do_irq(irq_signals[irq_ptr]);
+            do_irq(irq_signals[irq_ptr], 2);
             irq_ptr = irq_ptr + 1;
         end
     end
