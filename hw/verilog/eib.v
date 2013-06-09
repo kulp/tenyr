@@ -45,6 +45,7 @@ module Eib(input clk, reset_n, strobe, rw,
     initial begin
         imrs[0] = 0;
         $readmemh("../verilog/trampoline.memh", tramp);
+        $readmemh("../verilog/vectors.memh", vecs);
     end
 
 `define IS_STACK(X)     ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)

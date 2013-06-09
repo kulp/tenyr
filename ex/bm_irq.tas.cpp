@@ -6,3 +6,9 @@
 
 #include "fib.tas.cpp"
 
+irq_00:
+    A   <- 0xeee
+    C   <- 1
+    C   -> [ISR_ADDR]
+    ret
+
