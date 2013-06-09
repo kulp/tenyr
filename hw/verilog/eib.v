@@ -36,10 +36,11 @@ module Eib(input clk, reset_n, strobe, rw,
     reg [ IRQ_COUNT-1:0] imrs[MAX_DEPTH-1:0];   // Interrupt Mask Register stack
     reg [ IRQ_COUNT-1:0] rets[MAX_DEPTH-1:0];   // Return Address stack
 
-    wire d_active = d_addr[31:12] == 20'hfffff && strobe;
-    wire i_active = i_addr[31:12] == 20'hfffff;
-    assign d_data = (d_active & ~rw) ? rdata : 32'bz;
-    assign i_data = i_active ? i_rdata : 32'bz;
+    wire d_inrange = d_addr[31:12] == 20'hfffff;
+    wire i_inrange = i_addr[31:12] == 20'hfffff;
+    wire d_active  = d_inrange && strobe;
+    assign d_data  = (d_active & ~rw) ? rdata : 32'bz;
+    assign i_data  = i_inrange ? i_rdata : 32'bz;
 
     initial begin
         imrs[0] = 0;
@@ -87,23 +88,25 @@ module Eib(input clk, reset_n, strobe, rw,
                     12'hffd: imrs[depth] <= d_data;   // IMR write
                     default: $display("Unhandled write of %x @ %x", d_data, d_addr);
                 endcase
-            end else if (d_active && !rw) begin   // reading
+            end else if (d_inrange) begin   // reading
                      if (`IS_STACK(d_addr)) rdata <= stacks[`STACK_ADDR(d_addr)];
                 else if (`IS_TRAMP(d_addr)) rdata <= tramp [`TRAMP_ADDR(d_addr)];
                 else if (`IS_VEC  (d_addr)) rdata <= vecs  [`VEC_ADDR(d_addr)  ];
                 else case (d_addr[11:0])
                     12'hfff: begin
-                        if (depth == 0) begin
-                            $display("Tried to pop too many interrupt frames");
-                            $stop;
-                        end else
-                            depth <= depth - 1;
+                        if (d_active) begin
+                            if (depth == 0) begin
+                                $display("Tried to pop too many interrupt frames");
+                                $stop;
+                            end else
+                                depth <= depth - 1;
+                        end
 
                         rdata <= rets[depth];       // RA  read
                     end
                     12'hffe: rdata <= isr;          // ISR read
                     12'hffd: rdata <= imrs[depth];  // IMR read
-                    default: $display("Unhandled read @ %x", d_addr);
+                    default: if (d_active) $display("Unhandled read @ %x", d_addr);
                 endcase
             end
         end
