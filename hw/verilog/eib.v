@@ -15,6 +15,7 @@ module Eib(input clk, reset_n, strobe, rw,
 
     parameter  VEC_BOTTOM   = `VECTOR_ADDR;
     localparam VEC_SIZE     = 32;               // vector table size in words
+    parameter  VECTORFILE   = "vectors.memh";
 
     parameter  STACK_TOP    = `ISTACK_TOP;
     parameter  STACK_BITS   = 5;                // interrupt stack size in bits
@@ -45,7 +46,7 @@ module Eib(input clk, reset_n, strobe, rw,
     initial begin
         imrs[0] = 0;
         $readmemh("../verilog/trampoline.memh", tramp);
-        $readmemh("../verilog/vectors.memh", vecs);
+        $readmemh(VECTORFILE, vecs);
     end
 
 `define IS_STACK(X)     ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)

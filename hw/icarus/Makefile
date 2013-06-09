@@ -68,8 +68,12 @@ vpath %.texe ../../ex
 LOGFILE = Top.vcd
 run_%: PLUSARGS += +PERIODS=$(PERIODS) \
                    +LOGFILE=$(LOGFILE) \
+                   +VECTORS=$(VECTORS) \
                    $(if $(INTERRUPTS),+INTERRUPT_TIMES=$(INTERRUPTS).times \
-                                      +INTERRUPT_SIGNALS=$(INTERRUPTS).signals)
+                                      +INTERRUPT_SIGNALS=$(INTERRUPTS).signals) \
+                   #
+
+run_%: VECTORS = ../../ex/$*.vectors.memh
 run_%: %.texe tenyr
 	vvp -M. tenyr +LOAD=$< $(PLUSARGS)
 
