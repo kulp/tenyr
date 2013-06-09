@@ -100,9 +100,9 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
 
     // Memory loads or stores on cycle 3
     assign loading = drhs && !mem_rw;
-    assign strobe  = (state == s3 && (loading || storing)) || state == sT;
-    assign mem_rw  = (storing && strobe) || state == sT;
-    assign tostore = state == sT ? `TRAP_ADDR : valueZ;
+    assign strobe  = (state == s3 && (loading || storing)) || state == sW;
+    assign mem_rw  = (storing && strobe) || state == sW;
+    assign tostore = state == sW ? `TRAP_ADDR : valueZ;
     assign deref   = drhs && (state != sT);
     assign rhs     = deref   ? r_data  : r_irhs;
     assign storand = deref   ? valueZ  : r_irhs;
