@@ -59,6 +59,8 @@ static inline char *strcopy(char *dest, const char *src, size_t sz)
     return result;
 }
 
+long long numberise(char *str, int base);
+
 // defines a function that traverses a tsearch tree, adding todo nodes
 // assumes struct Tag has a reference to an aggregate named `state' that has a
 // pointer named `userdata' that contains our todo-list. See `struct

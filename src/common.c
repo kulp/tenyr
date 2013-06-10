@@ -64,6 +64,17 @@ int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp
     return 0;
 }
 
+long long numberise(char *str, int base)
+{
+    char *p = str;
+    // there are more efficient ways to strip '_' but this one is pretty clear
+    int len = strlen(p);
+    while ((p = strchr(p, '_')))
+        memmove(p, p + 1, len - (p - str));
+
+    return strtoll(str, NULL, base);
+}
+
 // These are the implementations of the `common` functions, main program version.
 // TODO these should probably be wrapped up in a structure
 void (* NORETURN fatal_)(int code, const char *file, int line, const char *func, const char *fmt, ...) = main_fatal_;

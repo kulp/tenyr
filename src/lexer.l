@@ -9,7 +9,6 @@
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
-static long long numberise(char *str, int base);
 static int savestr(yyscan_t yyscanner);
 static int translate_escape(int what);
 
@@ -98,17 +97,6 @@ regnum  {hexnum}|{octnum}|{decnum}
 .                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 
 %%
-
-static long long numberise(char *str, int base)
-{
-    char *p = str;
-    // there are more efficient ways to strip '_' but this one is pretty clear
-    int len = strlen(p);
-    while ((p = strchr(p, '_')))
-        memmove(p, p + 1, len - (p - str));
-
-    return strtoll(str, NULL, base);
-}
 
 static int savestr(yyscan_t yyscanner)
 {
