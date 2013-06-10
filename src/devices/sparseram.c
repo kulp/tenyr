@@ -84,7 +84,7 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
 
     if (op == OP_WRITE)
         *where = *data;
-    else if (op == OP_READ)
+	else if (op == OP_INSN_READ || op == OP_DATA_READ)
         *data = *where;
     else
         return 1;

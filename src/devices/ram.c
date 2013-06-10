@@ -72,7 +72,7 @@ static int ram_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 
     if (op == OP_WRITE)
         ram->mem[addr - ram->base] = *data;
-    else if (op == OP_READ)
+    else if (op == OP_INSN_READ || op == OP_DATA_READ)
         *data = ram->mem[addr - ram->base];
     else
         return 1;

@@ -28,7 +28,7 @@ int tf_run_until(struct sim_state *s, uint32_t start_address, int flags, cont_pr
 
     do {
         struct instruction i;
-        s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word);
+        s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.u.word);
 
         if (run_instruction(s, &i))
             return -1;

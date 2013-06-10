@@ -49,7 +49,7 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     int32_t *w    = reversed ? rhs       : Z;
 
     if (read_mem) {
-        if (s->dispatch_op(s, OP_READ, *r, value)) {
+        if (s->dispatch_op(s, OP_DATA_READ, *r, value)) {
             if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }
@@ -107,7 +107,7 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
 {
     while (1) {
         struct instruction i;
-        if (s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word)) {
+        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.u.word)) {
             if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }

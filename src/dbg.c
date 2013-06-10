@@ -72,7 +72,7 @@ static int print_expr(struct sim_state *s, struct debug_expr *expr, int fmt)
 
     switch (expr->type) {
         case EXPR_MEM: {
-            if (s->dispatch_op(s, OP_READ, expr->val, &val))
+            if (s->dispatch_op(s, OP_DATA_READ, expr->val, &val))
                 return -1;
             break;
         }
@@ -179,7 +179,7 @@ static int debugger_step(struct debugger_data *dd)
         case CMD_STEP_INSTRUCTION: {
             struct instruction i;
             int32_t *ip = &dd->s->machine.regs[15];
-            dd->s->dispatch_op(dd->s, OP_READ, *ip, &i.u.word);
+            dd->s->dispatch_op(dd->s, OP_INSN_READ, *ip, &i.u.word);
             printf("Stepping @ %#x ... ", *ip);
             if (run_instruction(dd->s, &i)) {
                 printf("failed (P = %#x)\n", *ip);

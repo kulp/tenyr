@@ -207,7 +207,7 @@ static int spi_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     // "When a transfer is in progress, writing to any register of the SPI
     // Master core has no effect."
     if (spi->state == SPI_EMU_RESET) {
-        if (op == OP_READ) {
+        if (op == OP_DATA_READ || op == OP_INSN_READ) {
             *data = spi->regs.raw[regnum];
         } else if (op == OP_WRITE) {
             if (offset == 0x10) { // CTRL register
@@ -242,7 +242,7 @@ static int spi_op(void *cookie, int op, uint32_t addr, uint32_t *data)
             spi->regs.raw[regnum] = *data;
         }
     } else {
-        if (op == OP_READ)
+        if (op == OP_DATA_READ || op == OP_INSN_READ)
             *data = spi->regs.raw[regnum]; // default dummy read
     }
 
