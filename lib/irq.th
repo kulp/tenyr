@@ -1,13 +1,12 @@
 #ifndef IRQ_TH_
 #define IRQ_TH_
 
-// TODO make naming convention more consistent (underscore usage at least)
 #define EIB_TOP         0xffffffff
 #define EIB_BOTTOM      0xfffff000
 #define TRAP_ADDR       0xffffffff
-#define VECTOR_ADDR     0xffffffc0
+#define VEC_BOTTOM      0xffffffc0
 #define ISTACK_TOP      0xffffffbf
-#define TRAPJUMP        0xfffff800
+#define TRAMP_BOTTOM    0xfffff800
 
 #define IRR_ADDR        (TRAP_ADDR)
 #define ISR_ADDR        (-2)

@@ -22,6 +22,13 @@
 #define TRAMP_BITS  8
 #define TRAMP_SIZE  (1 << TRAMP_BITS)
 
+#define IS_STACK(X)     ((ISTACK_TOP - STACK_SIZE) < (X) && (X) <= ISTACK_TOP)
+#define IS_TRAMP(X)     (TRAMP_BOTTOM <= (X) && (X) < TRAMP_BOTTOM + TRAMP_SIZE)
+#define IS_VEC(X)       (  VEC_BOTTOM <= (X) && (X) <   VEC_BOTTOM +   VEC_SIZE)
+#define STACK_ADDR(X)   ((ISTACK_TOP - (X)))
+#define TRAMP_ADDR(X)   ((X) - TRAMP_BOTTOM)
+#define VEC_ADDR(X)     ((X) -   VEC_BOTTOM)
+
 struct eib_state {
     int depth;
     struct eib_stack {
@@ -130,7 +137,48 @@ static int eib_fini(void *cookie)
 
 static int eib_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
-    struct eib_state *state = cookie;
+    struct eib_state *s = cookie;
+
+    struct eib_stack *u = &s->stack[s->depth];
+    if (op == OP_INSN_READ || op == OP_DATA_READ) {
+             if (IS_STACK(addr)) *data = u->istack[STACK_ADDR(addr)];
+        else if (IS_TRAMP(addr)) *data = s->tramp [TRAMP_ADDR(addr)];
+        else if (IS_VEC  (addr)) *data = s->vecs  [  VEC_ADDR(addr)];
+
+        if (op == OP_DATA_READ) {
+            switch (addr & 0xfff) {
+                case 0xffd: *data = u->imr; break;
+                case 0xffe: *data = s->isr; break;
+                case 0xfff:
+                    if (s->depth == 0)
+                        debug(1, "Tried to pop too many interrupt frames");
+                    else
+                        s->depth--;
+
+                    *data = u->ret;
+                    break;
+                default: debug(1, "Unhandled read @ %#x", addr);
+            }
+        }
+    } else if (op == OP_WRITE) {
+             if (IS_STACK(addr)) u->istack[STACK_ADDR(addr)] = *data;
+        else if (IS_TRAMP(addr)) s->tramp [TRAMP_ADDR(addr)] = *data;
+        else if (IS_VEC  (addr)) s->vecs  [  VEC_ADDR(addr)] = *data;
+
+        switch (addr & 0xfff) {
+            case 0xffd: u->imr = *data; break;
+            case 0xffe: s->isr = *data; break;
+            case 0xfff:
+                if (s->depth == MAX_DEPTH - 1)
+                    debug(1, "Tried to push too many interrupt frames");
+                else
+                    s->depth++;
+
+                u->ret = *data;
+                break;
+            default: debug(1, "Unhandled write @ %#x", addr);
+        }
+    }
 
     return 0;
 }

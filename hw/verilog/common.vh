@@ -14,10 +14,11 @@
 
 `define INSN_NOOP 32'b0
 
-`define TRAP_ADDR   32'hffffffff
-`define VECTOR_ADDR 32'hffffffc0
-`define ISTACK_TOP  32'hffffffbf
-`define TRAPJUMP    32'hfffff800
+`define TRAP_ADDR       32'hffffffff
+`define VECTOR_ADDR     32'hffffffc0
+`define ISTACK_TOP      32'hffffffbf
+`define TRAPJUMP        32'hfffff800
+`define TRAMP_BOTTOM    32'hfffff800
 
 /* vi: set ts=4 sw=4 et syntax=verilog: */
 

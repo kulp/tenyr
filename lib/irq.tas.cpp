@@ -52,7 +52,7 @@ ready8:
     // now C has the bit index of the lowest set bit in B
     // At vector dispatch, only O and C are saved. O is usable as the vector's
     // stack pointer ; C is the vector number and can be used as scratch.
-    P   <- [VECTOR_ADDR + C]
+    P   <- [VEC_BOTTOM + C]
 
 after:
     popall(C)

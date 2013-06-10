@@ -22,7 +22,7 @@ module Eib(input clk, reset_n, strobe, rw,
     localparam STACK_SIZE   = 1 << STACK_BITS;  // interrupt stack size in words
     localparam STACK_WORDS  = (MAX_DEPTH << STACK_BITS) - 1;
 
-    parameter  TRAMP_BOTTOM = 32'hfffff800;
+    parameter  TRAMP_BOTTOM = `TRAMP_BOTTOM;
     parameter  TRAMP_BITS   = 8;                // trampoline size in bits
     localparam TRAMP_SIZE   = 1 << TRAMP_BITS;  // trampoline size in words
 
