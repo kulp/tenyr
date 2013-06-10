@@ -22,12 +22,14 @@
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
     _(plugin  , "load plugins specified through param mechanism") \
+    _(eib     , "enable the External Interrupt Block") \
     //
 
 #define DEFAULT_RECIPES(_) \
     _(sparse)   \
     _(serial)   \
     _(plugin)   \
+    _(eib)      \
     //
 
 #define Space(X) STR(X) " "
@@ -177,6 +179,7 @@ static int recipe_plugin(struct sim_state *s)
 DEVICE_RECIPE_TMPL(prealloc,      ram_add_device)
 DEVICE_RECIPE_TMPL(sparse  ,sparseram_add_device)
 DEVICE_RECIPE_TMPL(serial  ,   serial_add_device)
+DEVICE_RECIPE_TMPL(eib     ,      eib_add_device)
 
 static int run_recipe(struct sim_state *s, recipe r)
 {
