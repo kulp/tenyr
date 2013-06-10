@@ -2,6 +2,8 @@
 #define IRQ_TH_
 
 // TODO make naming convention more consistent (underscore usage at least)
+#define EIB_TOP         0xffffffff
+#define EIB_BOTTOM      0xfffff000
 #define TRAP_ADDR       0xffffffff
 #define VECTOR_ADDR     0xffffffc0
 #define ISTACK_TOP      0xffffffbf
