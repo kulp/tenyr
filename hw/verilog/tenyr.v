@@ -10,9 +10,9 @@ module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
          YisP = &indexY, Yis0 = ~|indexY,
          ZisP = &indexZ, Zis0 = ~|indexZ;
 
-    assign valueX = Xis0 ? 0 : XisP ? next_pc : store[indexX];
-    assign valueY = Yis0 ? 0 : YisP ? next_pc : store[indexY];
-    assign valueZ = Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
+    assign valueX = ~en ? 32'bz : Xis0 ? 0 : XisP ? next_pc : store[indexX];
+    assign valueY = ~en ? 32'bz : Yis0 ? 0 : YisP ? next_pc : store[indexY];
+    assign valueZ = ~en ? 32'bz : Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
 
     always @(posedge clk) if (en & upZ & ~Zis0 & ~ZisP) store[indexZ] <= writeZ;
 
@@ -114,10 +114,10 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
 
     // Registers commit on cycle 4
     wire updateZ = !storing && state == s4;
-    Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX  ),
-             .en      ( 1'b1    ), .indexY ( indexY ), .valueY ( valueY  ),
-             .next_pc ( next_pc ), .indexZ ( indexZ ), .valueZ ( valueZ  ),
-                                   .writeZ ( rhs    ), .upZ    ( updateZ ));
+    Reg regs(.clk     ( clk         ), .indexX ( indexX ), .valueX ( valueX  ),
+             .en      ( state != s5 ), .indexY ( indexY ), .valueY ( valueY  ),
+             .next_pc ( next_pc     ), .indexZ ( indexZ ), .valueZ ( valueZ  ),
+                                       .writeZ ( rhs    ), .upZ    ( updateZ ));
 
 endmodule
 
