@@ -10,11 +10,12 @@ module Eib(input clk, reset_n, strobe, rw,
            input[31:0] d_addr, inout  [31:0] d_data);
 
     localparam IRQ_COUNT    = 32;               // total count of interrupts
-    localparam DEPTH_BITS   =  5;               // maximum depth of stacks
+    localparam DEPTH_BITS   = 2;                // maximum depth of stacks
     localparam MAX_DEPTH    = 1 << DEPTH_BITS;  // depth of stacks in words
 
     parameter  VEC_BOTTOM   = `VECTOR_ADDR;
-    localparam VEC_SIZE     = 32;               // vector table size in words
+    localparam VEC_BITS     = 5;                // vector table size in bits
+    localparam VEC_SIZE     = 1 << VEC_BITS;    // vector table size in words
     parameter  VECTORFILE   = "vectors.memh";
 
     parameter  STACK_TOP    = `ISTACK_TOP;
@@ -23,14 +24,19 @@ module Eib(input clk, reset_n, strobe, rw,
     localparam STACK_WORDS  = (MAX_DEPTH << STACK_BITS) - 1;
 
     parameter  TRAMP_BOTTOM = `TRAMP_BOTTOM;
-    parameter  TRAMP_BITS   = 8;                // trampoline size in bits
+    parameter  TRAMP_BITS   = 6;                // trampoline size in bits
     localparam TRAMP_SIZE   = 1 << TRAMP_BITS;  // trampoline size in words
 
     // TODO use multidimensional array when tools support them
-    reg [31:0] stacks[STACK_WORDS:0];           // HW stack of interrupt stacks
-    reg [31:0] tramp[TRAMP_SIZE-1:0];           // single interrupt trampoline
-    reg [31:0] vecs[VEC_SIZE-1:0];              // interrupt vector table
+    //reg [31:0] stacks[STACK_WORDS:0];           // HW stack of interrupt stacks
+    //reg [31:0] tramp[TRAMP_SIZE-1:0];           // single interrupt trampoline
+    //reg [31:0] vecs[VEC_SIZE-1:0];              // interrupt vector table
     reg [31:0] rdata, i_rdata;                  // output on bus data lines
+    //reg [31:0] stack_rdata, tramp_rdata, vecs_rdata;
+    reg [31:0] stack_i_rdata, tramp_i_rdata, vecs_i_rdata;
+    reg [31:0] stack_d_rdata, tramp_d_rdata, vecs_d_rdata;
+    reg [31:0] stack_d_addr, tramp_d_addr, vecs_d_addr;
+    reg [31:0] stack_i_addr, tramp_i_addr, vecs_i_addr;
 
     reg [DEPTH_BITS-1:0] depth = 0;             // stack pointer
     reg [ IRQ_COUNT-1:0] isr = 0;               // Interrupt Status Register
@@ -45,16 +51,57 @@ module Eib(input clk, reset_n, strobe, rw,
 
     initial begin
         imrs[0] = 0;
-        $readmemh("../verilog/trampoline.memh", tramp);
-        $readmemh(VECTORFILE, vecs);
+        //$readmemh("../verilog/trampoline.memh", tramp.wrapped.store);
+        //$readmemh(VECTORFILE, vecs.wrapped.store);
     end
 
 `define IS_STACK(X)     ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
 `define IS_TRAMP(X)     (TRAMP_BOTTOM <= (X) && (X) < TRAMP_BOTTOM + TRAMP_SIZE)
 `define IS_VEC(X)       (  VEC_BOTTOM <= (X) && (X) <   VEC_BOTTOM +   VEC_SIZE)
-`define STACK_ADDR(X)   ((depth << STACK_BITS) | (STACK_TOP - (X)))
-`define TRAMP_ADDR(X)   ((X) - TRAMP_BOTTOM)
-`define VEC_ADDR(X)     ((X) -   VEC_BOTTOM)
+`define STACK_ADDR(X)   ((depth << STACK_BITS) | X[(STACK_BITS - 1):0])
+`define TRAMP_ADDR(X)   (X[(TRAMP_BITS - 1):0])
+`define VEC_ADDR(X)     (X[(VEC_BITS - 1):0])
+
+    wire [31:0] vec_dout_d, vec_dout_i;
+    wire [31:0] stack_dout_d, stack_dout_i;
+    wire [31:0] tramp_dout_d, tramp_dout_i;
+
+    wire [31:0]   vec_ad =   `VEC_ADDR(d_addr),   vec_ai =   `VEC_ADDR(i_addr);
+    wire [31:0] stack_ad = `STACK_ADDR(d_addr), stack_ai = `STACK_ADDR(i_addr);
+    wire [31:0] tramp_ad = `TRAMP_ADDR(d_addr), tramp_ai = `TRAMP_ADDR(i_addr);
+
+    wire d_is_vec   = d_active && `IS_VEC  (d_addr), i_is_vec   = i_inrange && `IS_VEC  (i_addr);
+    wire d_is_tramp = d_active && `IS_TRAMP(d_addr), i_is_tramp = i_inrange && `IS_TRAMP(i_addr);
+    wire d_is_stack = d_active && `IS_STACK(d_addr), i_is_stack = i_inrange && `IS_STACK(i_addr);
+
+    ramwrap #( // TODO vecs doesn't need to be accessible to instruction port
+        .LOAD(1), .LOADFILE(VECTORFILE), .ABITS(VEC_BITS), .SIZE(VEC_SIZE)
+    ) vecs(
+        .clka  ( clk            ), .clkb  ( clk        ),
+        .ena   ( d_is_vec       ), .enb   ( i_is_vec   ),
+        .wea   ( d_active && rw ), .web   ( 1'b0       ),
+        .addra ( vec_ad         ), .addrb ( vec_ai     ),
+        .dina  ( d_data         ), .dinb  ( 32'bx      ),
+        .douta ( vec_dout_d     ), .doutb ( vec_dout_i )
+    );
+
+    ramwrap #(.ABITS(STACK_BITS), .SIZE(STACK_SIZE)) stack(
+        .clka  ( clk            ), .clkb  ( clk          ),
+        .ena   ( d_is_stack     ), .enb   ( i_is_stack   ),
+        .wea   ( d_active && rw ), .web   ( 1'b0         ),
+        .addra ( stack_ad       ), .addrb ( stack_ai     ),
+        .dina  ( d_data         ), .dinb  ( 32'bx        ),
+        .douta ( stack_dout_d   ), .doutb ( stack_dout_i )
+    );
+
+    ramwrap #(.ABITS(TRAMP_BITS), .SIZE(TRAMP_SIZE)) tramp(
+        .clka  ( clk            ), .clkb  ( clk          ),
+        .ena   ( d_is_tramp     ), .enb   ( i_is_tramp   ),
+        .wea   ( d_active && rw ), .web   ( 1'b0         ),
+        .addra ( tramp_ad       ), .addrb ( tramp_ai     ),
+        .dina  ( d_data         ), .dinb  ( 32'bx        ),
+        .douta ( tramp_dout_d   ), .doutb ( tramp_dout_i )
+    );
 
     always @(posedge clk) begin
         if (!reset_n) begin
@@ -66,18 +113,8 @@ module Eib(input clk, reset_n, strobe, rw,
             // For now, trap follows irq by one cycle
             trap <= |(imrs[depth] & isr);
 
-            if (i_inrange) begin
-                     if (`IS_STACK(i_addr)) i_rdata <= stacks[`STACK_ADDR(i_addr)];
-                else if (`IS_TRAMP(i_addr)) i_rdata <= tramp [`TRAMP_ADDR(i_addr)];
-                else if (`IS_VEC  (i_addr)) i_rdata <= vecs  [  `VEC_ADDR(i_addr)];
-                else i_rdata <= 32'bx;
-            end
-
             if (d_active && rw) begin // writing
-                     if (`IS_STACK(d_addr)) stacks[`STACK_ADDR(d_addr)] <= d_data;
-                else if (`IS_TRAMP(d_addr)) tramp [`TRAMP_ADDR(d_addr)] <= d_data;
-                else if (`IS_VEC  (d_addr)) vecs  [`VEC_ADDR(d_addr)  ] <= d_data;
-                else case (d_addr[11:0])
+                if (!(d_is_vec | d_is_tramp | d_is_stack)) case (d_addr[11:0])
                     12'hfff: begin
                         if (depth == MAX_DEPTH - 1) begin
                             $display("Tried to push too many interrupt frames");
@@ -93,9 +130,9 @@ module Eib(input clk, reset_n, strobe, rw,
                     default: $display("Unhandled write of %x @ %x", d_data, d_addr);
                 endcase
             end else if (d_inrange) begin   // reading
-                     if (`IS_STACK(d_addr)) rdata <= stacks[`STACK_ADDR(d_addr)];
-                else if (`IS_TRAMP(d_addr)) rdata <= tramp [`TRAMP_ADDR(d_addr)];
-                else if (`IS_VEC  (d_addr)) rdata <= vecs  [`VEC_ADDR(d_addr)  ];
+                     if (d_is_stack) rdata <= stack_dout_d;
+                else if (d_is_tramp) rdata <= tramp_dout_d;
+                else if (d_is_vec  ) rdata <= vec_dout_d;
                 else case (d_addr[11:0])
                     12'hfff: begin
                         if (d_active) begin

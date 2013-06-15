@@ -45,7 +45,7 @@ module Top();
         if ($value$plusargs("LOGFILE=%s", filename))
             logfile = filename;
         if ($value$plusargs("VECTORS=%s", filename))
-            $readmemh(filename, tenyr.eib.vecs);
+            $readmemh(filename, tenyr.eib.vecs.wrapped.store);
         if ($value$plusargs("INTERRUPT_TIMES=%s", filename)) begin
             $readmemh(filename, irq_times);
 
