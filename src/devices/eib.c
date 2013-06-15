@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -77,7 +78,7 @@ static int load_tramp(struct eib_state *state, struct plugin_cookie *pcookie)
 {
     int rc = 0;
 
-    char *filename;
+    const char *filename;
     PARAM_GET(pcookie, "eib.trampoline", 1, &filename);
     if (!filename)
         return 0;
@@ -95,7 +96,7 @@ static int load_vecs(struct eib_state *state, struct plugin_cookie *pcookie)
 {
     int rc = 0;
 
-    char *filename;
+    const char *filename;
     PARAM_GET(pcookie, "eib.vectors", 1, &filename);
     if (!filename)
         return 0;
@@ -123,6 +124,8 @@ static int eib_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
     load_vecs(state, pcookie);
     load_tramp(state, pcookie);
 
+    (void)nargs;
+
     return rc;
 }
 
@@ -138,8 +141,8 @@ static int eib_fini(void *cookie)
 static int eib_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
     struct eib_state *s = cookie;
-
     struct eib_stack *u = &s->stack[s->depth];
+
     if (op == OP_INSN_READ || op == OP_DATA_READ) {
              if (IS_STACK(addr)) *data = u->istack[STACK_ADDR(addr)];
         else if (IS_TRAMP(addr)) *data = s->tramp [TRAMP_ADDR(addr)];
@@ -187,6 +190,8 @@ static int eib_pump(void *cookie)
 {
     struct eib_state *state = cookie;
 
+    (void)state;
+
     return 0;
 }
 
@@ -213,3 +218,4 @@ int EXPORT eib_add_device(struct device **device)
     return 0;
 }
 
+/* vi: set ts=4 sw=4 et: */
