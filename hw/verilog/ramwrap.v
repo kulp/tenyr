@@ -23,8 +23,12 @@ module ramwrap(
     assign douta = (a_inrange && !wea) ? douta_internal : 32'bz;
     assign doutb = (b_inrange && !web) ? doutb_internal : 32'bz;
 
-    wire a_inrange = (addra >= BASE_A && addra < SIZE + BASE_A);
-    wire b_inrange = (addrb >= BASE_B && addrb < SIZE + BASE_B);
+    reg a_inrange = 0,
+        b_inrange = 0;
+    always @(posedge clka)
+        a_inrange <= addra >= BASE_A && addra < SIZE + BASE_A;
+    always @(posedge clkb)
+        b_inrange <= addrb >= BASE_B && addrb < SIZE + BASE_B;
 
     BlockRAM #(
         .INIT(INIT), .ZERO(ZERO), .LOAD(LOAD), .LOADFILE(LOADFILE),
@@ -32,10 +36,10 @@ module ramwrap(
     ) wrapped(
         .clka  ( clka            ), .clkb  ( clkb            ),
         .ena   ( ena & a_inrange ), .enb   ( enb & b_inrange ),
+        .wea   ( wea & a_inrange ), .web   ( web & b_inrange ),
         .addra ( addra - BASE_A  ), .addrb ( addrb - BASE_B  ),
         .dina  ( dina            ), .dinb  ( dinb            ),
-        .douta ( douta_internal  ), .doutb ( doutb_internal  ),
-        .wea   ( wea & a_inrange ), .web   ( web & b_inrange )
+        .douta ( douta_internal  ), .doutb ( doutb_internal  )
     );
 
 endmodule
