@@ -10,7 +10,7 @@ module Eib(input clk, reset_n, strobe, rw,
            input[31:0] d_addr, inout  [31:0] d_data);
 
     localparam IRQ_COUNT    = 32;               // total count of interrupts
-    localparam DEPTH_BITS   = 2;                // maximum depth of stacks
+    localparam DEPTH_BITS   = 5;                // maximum depth of stacks
     localparam MAX_DEPTH    = 1 << DEPTH_BITS;  // depth of stacks in words
 
     parameter  VECTS_BOTTOM = `VECTOR_ADDR;
