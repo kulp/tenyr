@@ -31,7 +31,6 @@ module Eib(input clk, reset_n, strobe, rw,
 
     reg [DEPTH_BITS-1:0] depth = 0;             // stack pointer
     reg [ IRQ_COUNT-1:0] isr = 0;               // Interrupt Status Register
-    reg [ IRQ_COUNT-1:0] imrs[MAX_DEPTH-1:0];   // Interrupt Mask Register stack
     reg [ IRQ_COUNT-1:0] rets[MAX_DEPTH-1:0];   // Return Address stack
 
     wire d_inrange = d_addr[31:12] == 20'hfffff;
@@ -67,7 +66,6 @@ module Eib(input clk, reset_n, strobe, rw,
     wire i_is_cntrl = !(i_is_vects | i_is_tramp | i_is_stack);
 
     initial begin
-        imrs[0] <= 0;
         isr     <= 0;
     end
 
@@ -103,6 +101,18 @@ module Eib(input clk, reset_n, strobe, rw,
         .douta ( stack_dout_d ), .doutb ( stack_dout_i )
     );
 
+    wire       pushing     = (d_addr[11:0] == 12'hfff) && d_active;
+    wire       imrs_rw     = (d_addr[11:0] == 12'hffd) || pushing;
+    wire[31:0] imrs_addr   = pushing ? depth + 1 : depth;
+    wire[31:0] imrs_din    = pushing ? 32'b0     : d_data;
+    wire[31:0] imrs_dout;
+
+    BlockRAM #(.ABITS(DEPTH_BITS), .SIZE(MAX_DEPTH), .INIT(1)) imrs(
+        .clka  ( clk      ), .addra ( imrs_addr ),
+        .ena   ( d_active ), .dina  ( imrs_din  ),
+        .wea   ( imrs_rw  ), .douta ( imrs_dout )
+    );
+
     always @*
         case ({i_is_stack,i_is_tramp,i_is_vects,i_is_cntrl})
             4'b1000: i_rdata = stack_dout_i;
@@ -125,11 +135,10 @@ module Eib(input clk, reset_n, strobe, rw,
         if (!reset_n) begin
             isr     <= 0;
             depth   <= 0;
-            imrs[0] <= 0;
         end else begin
             isr  <= isr | irq;  // accumulate until cleared
             // For now, trap follows irq by one cycle
-            trap <= |(imrs[depth] & isr);
+            trap <= |(imrs_dout & isr);
 
             if (d_active && rw) begin // writing
                 if (d_is_cntrl) case (d_addr[11:0])
@@ -141,14 +150,14 @@ module Eib(input clk, reset_n, strobe, rw,
                             depth <= depth + 1;
 
                         rets[depth + 1] <= d_data;
-                        imrs[depth + 1] <= 'b0;     // disable interrupts
+                        // disabling interrupts for depth + 1 handled above
                     end
-                    12'hffe: isr <= isr & ~d_data;  // ISR clear bits
-                    12'hffd: imrs[depth] <= d_data; // IMR write
+                    12'hffe: isr <= isr & ~d_data;      // ISR clear bits
+                    12'hffd: /* write handled above */; // IMR write
                     default:
                         $display("Unhandled write of %x @ %x", d_data, d_addr);
                 endcase
-            end else if (d_inrange) begin   // reading
+            end else if (d_inrange) begin   // reading // XXX why not d_active
                 if (d_is_cntrl) case (d_addr[11:0])
                     12'hfff: begin
                         if (d_active) begin
@@ -162,7 +171,8 @@ module Eib(input clk, reset_n, strobe, rw,
                         cntrl_dout_d <= rets[depth];        // RA  read
                     end
                     12'hffe: cntrl_dout_d <= isr;           // ISR read
-                    12'hffd: cntrl_dout_d <= imrs[depth];   // IMR read
+                    // XXX is there too much delay in this IMR read ?
+                    12'hffd: cntrl_dout_d <= imrs_dout;     // IMR read
                     default:
                         if (d_active) $display("Unhandled read @ %x", d_addr);
                 endcase
