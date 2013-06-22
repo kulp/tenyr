@@ -23,8 +23,7 @@ module ramwrap(
     assign douta = (a_inrange && !wea) ? douta_internal : 32'bz;
     assign doutb = (b_inrange && !web) ? doutb_internal : 32'bz;
 
-    reg a_inrange = 0,
-        b_inrange = 0;
+    reg a_inrange, b_inrange;
     always @(posedge clka)
         a_inrange <= addra >= BASE_A && addra < SIZE + BASE_A;
     always @(posedge clkb)
