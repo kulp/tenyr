@@ -27,8 +27,7 @@ module Eib(input clk, reset_n, strobe, rw,
     parameter  TRAMP_BITS   = 8;                // trampoline size in bits
     localparam TRAMP_SIZE   = 1 << TRAMP_BITS;  // trampoline size in words
 
-    reg [31:0] rdata, i_rdata;                  // output on bus data lines
-    wire[31:0] cdata;
+    reg [31:0] d_rdata, i_rdata;                // output on bus data lines
 
     reg [DEPTH_BITS-1:0] depth = 0;             // stack pointer
     reg [ IRQ_COUNT-1:0] isr = 0;               // Interrupt Status Register
@@ -38,7 +37,7 @@ module Eib(input clk, reset_n, strobe, rw,
     wire d_inrange = d_addr[31:12] == 20'hfffff;
     wire i_inrange = i_addr[31:12] == 20'hfffff;
     wire d_active  = d_inrange && strobe;
-    assign d_data  = (d_active & ~rw) ? cdata : 32'bz;
+    assign d_data  = (d_active & ~rw) ? d_rdata : 32'bz;
     assign i_data  = i_inrange ? i_rdata : 32'bz;
 
 `define IS_STACK(X)     ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
@@ -51,7 +50,7 @@ module Eib(input clk, reset_n, strobe, rw,
     wire[31:0] vects_dout_d, vects_dout_i;
     wire[31:0] stack_dout_d, stack_dout_i;
     wire[31:0] tramp_dout_d, tramp_dout_i;
-    reg [31:0] cntrl_dout_d;
+    reg [31:0] cntrl_dout_d, cntrl_dout_i; // XXX cntrl_dout_i is never set
 
     wire[31:0] vects_ad = `VECTS_ADDR(d_addr), vects_ai = `VECTS_ADDR(i_addr);
     wire[31:0] stack_ad = `STACK_ADDR(d_addr), stack_ai = `STACK_ADDR(i_addr);
@@ -65,6 +64,7 @@ module Eib(input clk, reset_n, strobe, rw,
          i_is_stack = i_inrange && `IS_STACK(i_addr);
      
     wire d_is_cntrl = !(d_is_vects | d_is_tramp | d_is_stack);
+    wire i_is_cntrl = !(i_is_vects | i_is_tramp | i_is_stack);
 
     initial begin
         imrs[0] <= 0;
@@ -103,10 +103,23 @@ module Eib(input clk, reset_n, strobe, rw,
         .douta ( stack_dout_d ), .doutb ( stack_dout_i )
     );
 
-    assign cdata = d_is_stack ? stack_dout_d :
-                   d_is_tramp ? tramp_dout_d :
-                   d_is_vects ? vects_dout_d :
-                   d_is_cntrl ? cntrl_dout_d : 32'bx;
+    always @*
+        case ({i_is_stack,i_is_tramp,i_is_vects,i_is_cntrl})
+            4'b1000: i_rdata = stack_dout_i;
+            4'b0100: i_rdata = tramp_dout_i;
+            4'b0010: i_rdata = vects_dout_i;
+            4'b0001: i_rdata = cntrl_dout_i;
+            default: i_rdata = 32'bx;
+        endcase
+
+    always @*
+        case ({d_is_stack,d_is_tramp,d_is_vects,d_is_cntrl})
+            4'b1000: d_rdata = stack_dout_d;
+            4'b0100: d_rdata = tramp_dout_d;
+            4'b0010: d_rdata = vects_dout_d;
+            4'b0001: d_rdata = cntrl_dout_d;
+            default: d_rdata = 32'bx;
+        endcase
 
     always @(posedge clk) begin
         if (!reset_n) begin
@@ -130,8 +143,8 @@ module Eib(input clk, reset_n, strobe, rw,
                         rets[depth + 1] <= d_data;
                         imrs[depth + 1] <= 'b0;     // disable interrupts
                     end
-                    12'hffe: isr <= isr & ~d_data;    // ISR clear bits
-                    12'hffd: imrs[depth] <= d_data;   // IMR write
+                    12'hffe: isr <= isr & ~d_data;  // ISR clear bits
+                    12'hffd: imrs[depth] <= d_data; // IMR write
                     default:
                         $display("Unhandled write of %x @ %x", d_data, d_addr);
                 endcase
