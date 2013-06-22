@@ -22,8 +22,11 @@ module Eib_test();
     wire[31:0] data = writing ? rdata : 32'bz;
 
     Eib eib(
-        .clk ( clk  ), .reset_n ( ~reset  ), .trap ( trap ), .strobe ( strobe ),
-        .irq ( irqs ), .rw      ( writing ), .addr ( addr ), .data   ( data   )
+        .clk    ( clk    ), .reset_n ( ~reset  ),
+        .trap   ( trap   ), .irq     ( irqs    ),
+        .strobe ( strobe ), .rw      ( writing ),
+        .d_addr ( addr   ), .i_addr  ( 32'b0   ),
+        .d_data ( data   )//, .i_data  ( 32'bz   )
     );
 
     task trans_write(input [31:0] where, what);
