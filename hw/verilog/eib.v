@@ -68,9 +68,9 @@ module Eib(input clk, reset_n, strobe, rw,
         isr     <= 0;
     end
 
-    ramwrap #( // TODO vecs doesn't need to be accessible to instruction port
+    ramwrap #( // TODO vects doesn't need to be accessible to instruction port
         .LOAD(1), .LOADFILE(VECTORFILE), .ABITS(VECTS_BITS), .SIZE(VECTS_SIZE)
-    ) vecs(
+    ) vects(
         .clka  ( clk          ), .clkb  ( clk          ),
         .ena   ( d_is_vects   ), .enb   ( i_is_vects   ),
         .wea   ( rw           ), .web   ( 1'b0         ),
