@@ -31,7 +31,6 @@ module Eib(input clk, reset_n, strobe, rw,
 
     reg [DEPTH_BITS-1:0] depth = 0;             // stack pointer
     reg [ IRQ_COUNT-1:0] isr = 0;               // Interrupt Status Register
-    reg [ IRQ_COUNT-1:0] rets[MAX_DEPTH-1:0];   // Return Address stack
 
     wire d_inrange = d_addr[31:12] == 20'hfffff;
     wire i_inrange = i_addr[31:12] == 20'hfffff;
@@ -101,16 +100,27 @@ module Eib(input clk, reset_n, strobe, rw,
         .douta ( stack_dout_d ), .doutb ( stack_dout_i )
     );
 
-    wire       pushing     = (d_addr[11:0] == 12'hfff) && d_active;
-    wire       imrs_rw     = (d_addr[11:0] == 12'hffd) || pushing;
-    wire[31:0] imrs_addr   = pushing ? depth + 1 : depth;
-    wire[31:0] imrs_din    = pushing ? 32'b0     : d_data;
+    wire       pushing   = (d_addr[11:0] == 12'hfff) && d_active && rw;
+    wire       imrs_rw   = (d_addr[11:0] == 12'hffd) || pushing;
+    wire[31:0] imrs_addr = pushing ? depth + 1 : depth;
+    wire[31:0] imrs_din  = pushing ? 32'b0     : d_data;
     wire[31:0] imrs_dout;
 
     BlockRAM #(.ABITS(DEPTH_BITS), .SIZE(MAX_DEPTH), .INIT(1)) imrs(
         .clka  ( clk      ), .addra ( imrs_addr ),
         .ena   ( d_active ), .dina  ( imrs_din  ),
         .wea   ( imrs_rw  ), .douta ( imrs_dout )
+    );
+
+    wire       rets_rw   = d_addr[11:0] == 12'hfff;
+    wire[31:0] rets_addr = rets_rw ? depth + 1 : depth;
+    wire[31:0] rets_din  = d_data;
+    wire[31:0] rets_dout;
+
+    BlockRAM #(.ABITS(DEPTH_BITS), .SIZE(MAX_DEPTH), .INIT(1)) rets(
+        .clka  ( clk      ), .addra ( rets_addr ),
+        .ena   ( d_active ), .dina  ( rets_din  ),
+        .wea   ( rets_rw  ), .douta ( rets_dout )
     );
 
     always @*
@@ -149,7 +159,6 @@ module Eib(input clk, reset_n, strobe, rw,
                         end else
                             depth <= depth + 1;
 
-                        rets[depth + 1] <= d_data;
                         // disabling interrupts for depth + 1 handled above
                     end
                     12'hffe: isr <= isr & ~d_data;      // ISR clear bits
@@ -168,7 +177,7 @@ module Eib(input clk, reset_n, strobe, rw,
                                 depth <= depth - 1;
                         end
 
-                        cntrl_dout_d <= rets[depth];        // RA  read
+                        cntrl_dout_d <= rets_dout;          // RA  read
                     end
                     12'hffe: cntrl_dout_d <= isr;           // ISR read
                     // XXX is there too much delay in this IMR read ?
