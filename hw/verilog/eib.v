@@ -64,10 +64,6 @@ module Eib(input clk, reset_n, strobe, rw,
     wire d_is_cntrl = !(d_is_vects | d_is_tramp | d_is_stack);
     wire i_is_cntrl = !(i_is_vects | i_is_tramp | i_is_stack);
 
-    initial begin
-        isr     <= 0;
-    end
-
     ramwrap #( // TODO vects doesn't need to be accessible to instruction port
         .LOAD(1), .LOADFILE(VECTORFILE), .ABITS(VECTS_BITS), .SIZE(VECTS_SIZE)
     ) vects(
@@ -100,7 +96,8 @@ module Eib(input clk, reset_n, strobe, rw,
         .douta ( stack_dout_d ), .doutb ( stack_dout_i )
     );
 
-    wire       pushing   = (d_addr[11:0] == 12'hfff) && d_active && rw;
+    wire       ra_active = d_addr[11:0] == 12'hfff;
+    wire       pushing   = ra_active && d_active && rw;
     wire       imrs_rw   = (d_addr[11:0] == 12'hffd) || pushing;
     wire[31:0] imrs_addr = pushing ? depth + 1 : depth;
     wire[31:0] imrs_din  = pushing ? 32'b0     : d_data;
@@ -124,59 +121,44 @@ module Eib(input clk, reset_n, strobe, rw,
     );
 
     always @*
-        case ({i_is_stack,i_is_tramp,i_is_vects,i_is_cntrl})
-            4'b1000: i_rdata = stack_dout_i;
-            4'b0100: i_rdata = tramp_dout_i;
-            4'b0010: i_rdata = vects_dout_i;
-            4'b0001: i_rdata = cntrl_dout_i;
+        case ({1'b0,i_is_stack,i_is_tramp,i_is_vects})
+            4'b0100: i_rdata = stack_dout_i;
+            4'b0010: i_rdata = tramp_dout_i;
+            4'b0001: i_rdata = vects_dout_i;
             default: i_rdata = 32'bx;
         endcase
 
     always @*
-        case ({d_is_stack,d_is_tramp,d_is_vects,d_is_cntrl})
-            4'b1000: d_rdata = stack_dout_d;
-            4'b0100: d_rdata = tramp_dout_d;
-            4'b0010: d_rdata = vects_dout_d;
-            4'b0001: d_rdata = cntrl_dout_d;
+        case ({d_is_cntrl,d_is_stack,d_is_tramp,d_is_vects})
+            4'b1000: d_rdata = cntrl_dout_d;
+            4'b0100: d_rdata = stack_dout_d;
+            4'b0010: d_rdata = tramp_dout_d;
+            4'b0001: d_rdata = vects_dout_d;
             default: d_rdata = 32'bx;
         endcase
 
-    always @(posedge clk) begin
+    always @(posedge clk)
         if (!reset_n) begin
-            isr     <= 0;
-            depth   <= 0;
+            isr   <= 0;
+            depth <= 0;
         end else begin
             isr  <= isr | irq;  // accumulate until cleared
             // For now, trap follows irq by one cycle
             trap <= |(imrs_dout & isr);
 
-            if (d_active && rw) begin // writing
-                if (d_is_cntrl) case (d_addr[11:0])
-                    12'hfff: begin
-                        if (depth == MAX_DEPTH - 1) begin
-                            $display("Tried to push too many interrupt frames");
-                            $stop;
-                        end else
-                            depth <= depth + 1;
-
-                        // disabling interrupts for depth + 1 handled above
-                    end
-                    12'hffe: isr <= isr & ~d_data;      // ISR clear bits
-                    12'hffd: /* write handled above */; // IMR write
+            if (d_active && rw && d_is_cntrl)   // writing
+                case (d_addr[11:0])
+                    12'hfff: depth <= depth + 1;
+                    12'hffe: isr <= (isr | irq) & ~d_data;  // ISR clear bits
+                    12'hffd: /* write handled above */;     // IMR write
                     default:
                         $display("Unhandled write of %x @ %x", d_data, d_addr);
                 endcase
-            end else if (d_inrange) begin   // reading // XXX why not d_active
-                if (d_is_cntrl) case (d_addr[11:0])
+            else if (d_inrange && d_is_cntrl)   // reading
+                case (d_addr[11:0])
                     12'hfff: begin
-                        if (d_active) begin
-                            if (depth == 0) begin
-                                $display("Tried to pop interrupt when empty");
-                                $stop;
-                            end else
-                                depth <= depth - 1;
-                        end
-
+                        if (d_active)
+                            depth <= depth - 1;
                         cntrl_dout_d <= rets_dout;          // RA  read
                     end
                     12'hffe: cntrl_dout_d <= isr;           // ISR read
@@ -185,9 +167,17 @@ module Eib(input clk, reset_n, strobe, rw,
                     default:
                         if (d_active) $display("Unhandled read @ %x", d_addr);
                 endcase
-            end
         end
-    end
+
+    always @(posedge clk)   // Simulation self-checking
+        if (d_active && d_is_cntrl && ra_active)
+            if (rw && depth == MAX_DEPTH - 1) begin
+                $display("Tried to push too many interrupt frames");
+                $stop;
+            end else if (!rw && depth == 0) begin
+                $display("Tried to pop interrupt when empty");
+                $stop;
+            end
 
 endmodule
 
