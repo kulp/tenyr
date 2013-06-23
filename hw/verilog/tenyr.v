@@ -79,8 +79,8 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
             s3: begin state <= s4; r_data  <= d_data;                        end
             s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;       end
             s5: begin state <= s0; next_pc <= i_addr + 1;                    end
-            sT: begin state <= sW; r_irhs  <= i_addr;  /* delay a cycle : */ end
-            sW: begin state <= s5; i_addr  <= `TRAPJUMP; /* trap goes low */ end
+            sT: begin state <= sW; r_irhs  <= i_addr;  /* delay for trap */  end
+            sW: begin state <= s5; i_addr  <= `TRAMP_BOTTOM; /* to fall */   end
             default:  state <= sH;
         endcase
 

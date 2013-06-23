@@ -16,7 +16,6 @@
 
 `define TRAP_ADDR       32'hffffffff
 `define VECTOR_ADDR     32'hffffffc0
-`define TRAPJUMP        32'hfffff800
 `define ISTACK_BOTTOM   32'hffffffa0
 `define TRAMP_BOTTOM    32'hfffff800
 
