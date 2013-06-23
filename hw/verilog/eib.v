@@ -18,7 +18,7 @@ module Eib(input clk, reset_n, strobe, rw,
     localparam VECTS_SIZE   = 1 << VECTS_BITS;  // vector table size in words
     parameter  VECTORFILE   = "vectors.memh";
 
-    parameter  STACK_TOP    = `ISTACK_TOP;
+    parameter  STACK_BOTTOM = `ISTACK_BOTTOM;
     parameter  STACK_BITS   = 5;                // interrupt stack size in bits
     localparam STACK_SIZE   = 1 << STACK_BITS;  // interrupt stack size in words
     localparam STACK_WORDS  = (MAX_DEPTH << STACK_BITS) - 1;
@@ -38,9 +38,9 @@ module Eib(input clk, reset_n, strobe, rw,
     assign d_data  = (d_active & ~rw) ? d_rdata : 32'bz;
     assign i_data  = i_inrange ? i_rdata : 32'bz;
 
-`define IS_STACK(X)     ((STACK_TOP - STACK_SIZE) < (X) && (X) <= STACK_TOP)
-`define IS_TRAMP(X)     (TRAMP_BOTTOM <= (X) && (X) < TRAMP_BOTTOM + TRAMP_SIZE)
-`define IS_VECTS(X)     (VECTS_BOTTOM <= (X) && (X) < VECTS_BOTTOM + VECTS_SIZE)
+`define IS_STACK(X)     (X[31:STACK_BITS] == STACK_BOTTOM[31:STACK_BITS])
+`define IS_TRAMP(X)     (X[31:TRAMP_BITS] == TRAMP_BOTTOM[31:TRAMP_BITS])
+`define IS_VECTS(X)     (X[31:VECTS_BITS] == VECTS_BOTTOM[31:VECTS_BITS])
 `define STACK_ADDR(X)   ((depth << STACK_BITS) | X[(STACK_BITS - 1):0])
 `define TRAMP_ADDR(X)   (X[(TRAMP_BITS - 1):0])
 `define VECTS_ADDR(X)   (X[(VECTS_BITS - 1):0])
