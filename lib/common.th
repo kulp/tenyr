@@ -1,7 +1,7 @@
 #ifndef COMMON_TH_
 #define COMMON_TH_
 
-// The stack-setup prologue sets up a stack at the top of 16K
+// The stack-setup prologue sets up a stack at the top of 8K
 #define prologue            o <- 1 ; o <- o << 13 ; o <- o - 1
 
 #define rel(Label)          reloff(Label,0)
