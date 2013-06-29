@@ -50,7 +50,7 @@ GENDIR = $(TOP)/src/gen
 VPATH += $(TOP)/src $(TOP)/src/devices $(GENDIR)
 INCLUDES += $(TOP)/src $(GENDIR) $(INCLUDE_OS)
 
-BUILD_NAME := $(shell git describe --tags --long --always)
+BUILD_NAME := $(shell git describe --tags --match 'v?.?.?*')
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
