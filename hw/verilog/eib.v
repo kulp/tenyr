@@ -97,12 +97,11 @@ module Eib(input clk, reset_n, strobe, rw,
     );
 
     wire       ra_active = d_addr[11:0] == 12'hfff;
-    wire       ir_active = d_addr[11:0] == 12'hffe;
     wire       im_active = d_addr[11:0] == 12'hffd;
     wire       pushing   = ra_active && d_active && rw;
     wire       imrs_rw   = im_active || pushing;
-    wire[31:0] imrs_addr = pushing ? depth + 1 : depth;
-    wire[31:0] imrs_din  = pushing ? 32'b0     : d_data;
+    wire[31:0] imrs_addr = depth + pushing;
+    wire[31:0] imrs_din  = pushing ? 32'b0 : d_data;
     wire[31:0] imrs_dout;
 
     BlockRAM #(.ABITS(DEPTH_BITS), .SIZE(MAX_DEPTH), .INIT(1)) imrs(
