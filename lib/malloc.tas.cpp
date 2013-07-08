@@ -5,8 +5,7 @@
 #define RANK_0_SIZE (1 << RANK_0_LOG)
 #define RANKS 4
 
-// NOTE there are some assumptions in the below code that NPER * BPER = 32,
-// notably in DIFF()
+// NOTE it is assumed in the below code that NPER * BPER = 32
 #define NPERBITS    4
 #define BPERBITS    1
 #define NPER        (1 << NPERBITS)
@@ -36,101 +35,74 @@ L_ilog2_done:
     pop(D)
     ret
 
-// NODE gets SZ index in C, returns NP node in B, clobbers C
-#define NODE(B,C)               \
-    B   <- C << BPERBITS      ; \
-    B   <- B + TN             ; \
-    C   <- C & (BPER - 1)     ; \
-    B   <- B | C              ; \
-    //
-
 // IRANK gets SZ rank in C, returns SZ inverted-rank in B
 #define IRANK(B,C)              \
     B   <- - C + (RANKS - 1)  ; \
     //
 
-// DIFF gets NP a in C, NP b in D, returns SZ distance in B
-#define DIFF(B,C,D)             \
-    B   <- C - D              ; \
-    //
-
-// INDEX gets NP n in C, returns SZ distance from TN in B
-#define INDEX(B,C)              \
-    DIFF(B,C,TN)              ; \
-    //
-
-// LLINK gets NP n in C, returns NP left-child in B, clobbers C
+// LLINK gets NP n in C, returns NP left-child in B
 #define LLINK(B,C)              \
-    INDEX(B,C)                ; \
-    C   <- B << 1             ; \
-    C   <- C +  1             ; \
-    NODE(B,C)                 ; \
+    B   <- C << 1             ; \
+    B   <- B +  1             ; \
     //
 
-// RLINK gets NP n in C, returns NP right-child in B, clobbers C
+// RLINK gets NP n in C, returns NP right-child in B
 #define RLINK(B,C)              \
-    INDEX(B,C)                ; \
-    C   <- B << 1             ; \
-    C   <- C +  2             ; \
-    NODE(B,C)                 ; \
+    B   <- C << 1             ; \
+    B   <- B +  2             ; \
     //
 
 // ISLEFT gets NP n in C, returns SZ leftness in B
 #define ISLEFT(B,C)             \
-    INDEX(B,C)                ; \
-    B   <- B & 1              ; \
+    B   <- C &  1             ; \
     B   <- B == 1             ; \
     //
 
 // ISRIGHT gets NP n in C, returns SZ rightness in B
 #define ISRIGHT(B,C)            \
-    INDEX(B,C)                ; \
-    B   <- B & 1              ; \
+    B   <- C &  1             ; \
     B   <- B == 0             ; \
     //
 
-// PARENT gets NP n in C, returns NP parent in B, clobbers C
+// PARENT gets NP n in C, returns NP parent in B
 #define PARENT(B,C)             \
-    INDEX(B,C)                ; \
-    C   <- B -  1             ; \
-    C   <- C >> 1             ; \
-    NODE(B,C)                 ; \
+    B   <- C -  1             ; \
+    B   <- B >> 1             ; \
     //
 
-// SIBLING gets NP n in C, returns NP sibling in B, clobbers C
-#define SIBLING(B,C)            \
-    INDEX(B,C)                ; \
-    ISLEFT(C,B)               ; \
-    B   <- B - C              ; \
-    C   <- ~ C                ; \
-    B   <- B + C              ; \
+// SIBLING gets NP n in C, returns NP sibling in B, T may be C
+#define SIBLING(B,C,T)          \
+    ISLEFT(T,C)               ; \
+    B   <- B - T              ; \
+    T   <- ~ T                ; \
+    B   <- B + T              ; \
+    //
+
+#define FUNCIFY2(Stem,B,C)      \
+    push(c)                   ; \
+    c   <- C                  ; \
+    call(Stem##_func)         ; \
+    pop(c)                    ; \
+    B   <- b                  ; \
     //
 
 // NODE2RANK gets NP n in C, returns SZ rank in B
-#define NODE2RANK(B,C)          \
-    call(NODE2RANK_func)      ; \
-    //
-
+#define NODE2RANK(B,C)  FUNCIFY2(NODE2RANK,B,C)
 NODE2RANK_func:
     push(D)
     D   <- 0
 L_NODE2RANK_top:
-    INDEX(B,C)
-    B   <- B == 0
+    B   <- C == 0
     jnzrel(B, L_NODE2RANK_done)
     D   <- D + 1
-    B   <- C
-    PARENT(C,B)
+    PARENT(C,C)
     goto(L_NODE2RANK_top)
 L_NODE2RANK_done:
     B   <- - D + (RANKS - 1)
     pop(D)
     ret
 
-#define SIZE2RANK(B,C) \
-    call(SIZE2RANK_func)
-    //
-
+#define SIZE2RANK(B,C)  FUNCIFY2(SIZE2RANK,B,C)
 SIZE2RANK_func:
     B   <- C <> 0
     jzrel(B, L_SIZE2RANK_zero)
@@ -141,11 +113,13 @@ SIZE2RANK_func:
 L_SIZE2RANK_zero:
     ret
 
-// RANK2WORDS gets SZ rank in C, returns SZ word-count in B, clobbers C
-#define RANK2WORDS(B,C)         \
-    C   <- C + RANK_0_LOG     ; \
+// RANK2WORDS gets SZ rank in C, returns SZ word-count in B, T may be C
+// TODO update grammar to permit expressions without parens to save insns
+#define RANK2WORDS(B,X,T)       \
+    T   <- X                  ; \
+    T   <- T + RANK_0_LOG     ; \
     B   <- 1                  ; \
-    B   <- B << C             ; \
+    B   <- B << T             ; \
     //
 
 // GET_COUNT gets SZ rank in C, returns SZ free-count in B
@@ -158,129 +132,143 @@ L_SIZE2RANK_zero:
     D   -> [C + rel(counts)]  ; \
     //
 
-// GET_NODE gets NP n in C, returns SZ shifted-word in B, clobbers C
-#define GET_NODE(B,C)           \
+// GET_NODE gets NP n in C, returns SZ shifted-word in B, T may be C
+#define GET_NODE(B,C,T)         \
     B   <- C >> BPERBITS      ; \
-    C   <- C & (BPER - 1)     ; \
-    C   <- C << BPERBITS      ; \
+    T   <- C & (BPER - 1)     ; \
+    T   <- T << BPERBITS      ; \
     B   <- [B + rel(nodes)]   ; \
-    B   <- B >> C             ; \
+    B   <- B >> T             ; \
     //
 
-// SET_NODE gets NP n in C, SZ pre-shift-word in D, clobbers C and D
-#define SET_NODE(C,D,T0,T1)                                                 \
-    T0  <- C & (BPER - 1)       /* T0 is shift count in nodes        */   ; \
-    T0  <- T0 << BPERBITS       /* T0 is shift count in bits         */   ; \
-    D   <- D << T0              /* D  is now shifted over            */   ; \
-    T1  <- (BPER - 1)           /* T1 is mask                        */   ; \
-    T1  <- T1 << T0             /* T1 is shifted mask                */   ; \
-    T0  <- C >> BPERBITS        /* T0 is index into node array       */   ; \
-    C   <- [T0 + rel(nodes)]    /* C  is current word                */   ; \
-    C   <- C &~ T1              /* C  is word with node masked out   */   ; \
-    C   <- C | D                /* C  is word with new node included */   ; \
-    C   -> [T0 + rel(nodes)]    /* C  gets written back to node      */   ; \
+// SET_NODE gets NP n in C, SZ pre-shift-word in D, V can be D
+#define SET_NODE(C,D,T,U,V)                                              \
+    T   <- C & (BPER - 1)       /* T is shift count in nodes        */ ; \
+    T   <- T << BPERBITS        /* T is shift count in bits         */ ; \
+    U   <- (BPER - 1)           /* U is mask                        */ ; \
+    U   <- U << T               /* U is shifted mask                */ ; \
+    V   <- C >> BPERBITS        /* V is index into node array       */ ; \
+    C   <- [V + rel(nodes)]     /* C is current word                */ ; \
+    C   <- C &~ U               /* C is word with node masked out   */ ; \
+    U   <- D << T               /* U is now D shifted over          */ ; \
+    C   <- C | U                /* C is word with new node included */ ; \
+    C   -> [V + rel(nodes)]     /* C gets written back to node      */ ; \
     //
 
-// GET_LEAF gets NP n in C, returns SZ leafiness in B, clobbers C
-#define GET_LEAF(B,C)           \
-    GET_NODE(B,C)             ; \
+// GET_LEAF gets NP n in C, returns SZ leafiness in B, T may be C
+#define GET_LEAF(B,C,T)         \
+    GET_NODE(B,C,T)           ; \
     B   <- B &  1             ; \
     B   <- B == 0             ; \
     //
 
-// GET_FULL gets NP n in C, returns SZ fullness in B, clobbers C
-#define GET_FULL(B,C)           \
-    GET_NODE(B,C)             ; \
+// GET_FULL gets NP n in C, returns SZ fullness in B, T may be C
+#define GET_FULL(B,C,T)         \
+    GET_NODE(B,C,T)           ; \
     B   <- B &  2             ; \
     B   <- B == 2             ; \
     //
 
 // GET_VALID gets NP n in C, returns SZ validity in B
-#define GET_VALID(B,C,T0)       \
-    T0  <- C                  ; \
-    INDEX(B,C)                ; \
-    PARENT(C,T0)              ; \
-    GET_LEAF(T0,C)            ; \
-    B   <- B &~ T0            ; \
+#define GET_VALID(B,C,T,U)     \
+    PARENT(C,C)              ; \
+    GET_LEAF(T,C,U)          ; \
+    B   <- C &~ T            ; \
     //
 
-// SET_LEAF gets NP n in C, SZ truth in D, returns nothing, clobbers C
+// SET_LEAF gets NP n in C, SZ truth in D, returns nothing
+// T,W can be D, clobbers C
 // We take a shortcut ; either we are setting the leaf true from false, and it
 // is therefore not full, or we are setting it false from true, and fullness
 // has no meaning. This allows us to avoid reading and rewriting the fullness
 // value.
-#define SET_LEAF(C,D,T0,T1)     \
-    D   <- D & 1              ; \
-    SET_NODE(C,D,T0,T1)       ; \
+#define SET_LEAF(C,D,T,U,V,W)   \
+    T   <- D & 1              ; \
+    SET_NODE(C,T,U,V,W)       ; \
     //
 
-// SET_FULL gets NP n in C, SZ truth in D, returns nothing, clobbers C
-#define SET_FULL(C,D,T0,T1,T2)  \
-    GET_NODE(T0,C)            ; \
-    T1  <- D                  ; \
-    T1  <- T1 &  2            ; \
-    T0  <- T0 &~ 2            ; \
-    T1  <- T1 |  T0           ; \
-    SET_NODE(C,T1,T0,T2)      ; \
+// SET_FULL gets NP n in C, SZ truth in X, returns nothing, clobbers C
+#define SET_FULL(C,X,T,U,V,W) \
+    GET_NODE(T,C,U)         ; \
+    U   <- X                ; \
+    U   <- U &  2           ; \
+    T   <- T &~ 2           ; \
+    U   <- U | T            ; \
+    SET_NODE(C,U,T,V,W)     ; \
     //
 
-// TODO NODE2ADDR
+// NODE2ADDR gets NP n in C, returns address in B
+#define NODE2ADDR(B,C)  FUNCIFY2(NODE2ADDR,B,C)
+NODE2ADDR_func:
+    pushall(D,E)
+    B   <- 0
+    NODE2RANK(E,C)
+    E   <- RANK_0_LOG + E   // i = RANK_0_LOG + NODE2RANK(n)
+NODE2ADDR_looptop:
+    D   <- C == TN          // while (n != TN) {
+    jnzrel(D,NODE2ADDR_loopbottom)
+    ISRIGHT(D,C)            // ISRIGHT(n)
+    D   <- - D              // -1 -> 1, 0 -> 0
+    D   <- D << E           // ISRIGHT(n) << i
+    B   <- B | D            // base |= ISRIGHT(n) << i
+    PARENT(C,C)             // n = PARENT(n)
+    E   <- E + 1            // i++
+    goto(NODE2ADDR_looptop) // }
+NODE2ADDR_loopbottom:
+    B   <- B + rel(pool)
+    ret
 
 // ADDR2NODE gets SZ addr in C, returns NP node in B
-#define ADDR2NODE(B,C)          \
-    call(ADDR2NODE_func)      ; \
-    //
-
-// C is key
+#define ADDR2NODE(B,C)  FUNCIFY2(ADDR2NODE,B,C)
 ADDR2NODE_func:
-    pushall(D,E,F,G,H)
-    D   <- (RANKS - 2)  // D is next rank smaller than node under test
+    pushall(D,E,F,G)    // F, G are scratch
+    RANK2WORDS(D,(RANKS - 2),F)
     E   <- POOL         // E is base being built
-    F   <- C            // F is a scratch register
-    G   <- TN           // G is the node being checked
-    H   <- G            // H is another scratch
+    B   <- TN           // B is the node being checked
 L_ADDR2NODE_looptop:
-    GET_LEAF(B,H)
-    jnzrel(B,L_ADDR2NODE_loopdone)
-    RANK2WORDS(B,F)
-    H   <- C - E        // H is (key - base)
-    F   <- H < B        // if true, then left-link
+    GET_LEAF(G,B,F)
+    jnzrel(G,L_ADDR2NODE_loopdone)
+    F   <- C - E        // F is (key - base)
+    F   <- F < D        // if true, then left-link
     jnzrel(F,L_ADDR2NODE_left)
-    H   <- G
-    RLINK(G,H)          // n = RLINK(n)
-    E   <- E + B        // base += RANK2WORDS(rank)
+    RLINK(B,B)          // n = RLINK(n)
+    E   <- E + D        // base += RANK2WORDS(rank)
     goto(L_ADDR2NODE_loopbottom)
 L_ADDR2NODE_left:
-    H   <- G
-    LLINK(G,H)          // n = LLINK(n)
+    LLINK(B,B)          // n = LLINK(n)
     // fallthrough
 
 L_ADDR2NODE_loopbottom:
-    D   <- D - 1
+    D   <- D >> 1       // drop to next smaller rank
     goto(L_ADDR2NODE_looptop)
 
 L_ADDR2NODE_loopdone:
-    B   <- C == E
-    jnzrel(B,L_ADDR2NODE_done)
+#if DEBUG
+    D   <- C == E
+    jnzrel(D,L_ADDR2NODE_done)
     call(abort)
 
 L_ADDR2NODE_done:
-    popall(D,E,F,G,H)
+#endif
+    popall(D,E,F,G)
     ret
 
 .global buddy_malloc
 buddy_malloc:
+    SIZE2RANK(C,C)
     goto(buddy_alloc)
 
 .global buddy_calloc
 buddy_calloc:
+    push(E)             // save E which we will use below
     C   <- C * D
     push(C)
     call(buddy_alloc)
     C   <- B
     D   <- 0
-    pop(E)
+    pop(E)              // pop size from C into third memset param slot
     call(memset)
+    pop(E)
     ret
 
 .global buddy_free
@@ -302,7 +290,7 @@ buddy_splitnode:
     E   <- D == 0
     jnzrel(E,L_buddy_splitnode_done)
     B   <- 1
-    GET_FULL(E,C)
+    GET_FULL(E,C,F)
     E   <- E <> 0
     jnzrel(E,L_buddy_splitnode_notempty)
 
@@ -317,36 +305,35 @@ L_buddy_splitnode_notempty:
     SET_COUNT(D,E)
 
     D   <- 0
-    SET_LEAF(C,D,E,F)
+    SET_LEAF(C,D,D,E,F,D)
 
 L_buddy_splitnode_done:
     popall(E,F)
     ret
 
-buddy_autosplit:
-    // TODO
-    ret
-
+// XXX buddy_nosplit has been modified without sufficient care and appears to
+// be internally inconsistent
+// TODO move buddy_nosplit into buddy_alloc as in the C version
 // buddy_nosplit gets SZ rank in C, returns address or 0 in B
 buddy_nosplit:
     pushall(D,E,F,G)
-    // here is the main body, where we have a nonzero count of the needed
-    // rank. B is rank, D is scratch, E is scratch and currently count
-    D   <- B
-    IRANK(E,D)
+    B   <- C
+    IRANK(E,C)
     F   <- 1
     F   <- F << E       // F is loop bound
     D   <- F - 1        // D is first index to check
     F   <- F + D        // F is loop bound adjust for `first'
 L_buddy_nosplit_loop_top:
-    NODE(E,D)           // E is NODE(D)
-    GET_VALID(C,E,G)    // C is validity
+    // here is the main body, where we have a nonzero count of the needed
+    // rank. B is rank, D is scratch, E is scratch and currently count
+    E   <- D
+    GET_VALID(C,E,F,G)  // C is validity
     jzrel(C,L_buddy_nosplit_loop_bottom)
-    GET_LEAF(C,E)       // C is leafiness
+    GET_LEAF(C,E,G)     // C is leafiness
     jzrel(C,L_buddy_nosplit_loop_bottom)
-    GET_FULL(C,E)       // C is fullness
+    GET_FULL(C,E,G)     // C is fullness
     jnzrel(C,L_buddy_nosplit_loop_bottom)
-    SET_FULL(E,-1,D,G,C)
+    SET_FULL(E,-1,D,G,C,D)
     GET_COUNT(C,B)
     C   <- C - 1
     SET_COUNT(E,C)
@@ -360,17 +347,21 @@ L_buddy_nosplit_loop_bottom:
     popall(D,E,F,G)
     ret
 
-// TODO check for clobbering
-// buddy_alloc gets SZ size in C, returns address or 0 in B
+// buddy_alloc gets SZ rank in C, returns address or 0 in B
 buddy_alloc:
-    pushall(D,E)
-    SIZE2RANK(B,C)
-    D   <- B < RANKS
-    jzrel(D,L_buddy_alloc_error)
-    D   <- B
-    GET_COUNT(E,D)
-    D   <- E == 0
-    jnzrel(D,L_buddy_alloc_do_split)
+    pushall(D,E,F)                  // D,E are scratch, F is rank
+    D   <- C < RANKS
+    jzrel(D,L_buddy_alloc_error)    // bail if need is too large
+L_buddy_alloc_rankplus:
+    D   <- C < RANKS
+    jzrel(D,L_buddy_alloc_rankdone)
+    GET_COUNT(E,C)
+    E   <- E <> 0
+    jnzrel(E,L_buddy_alloc_rankdone)
+    F   <- F + 1
+    goto(L_buddy_alloc_rankplus)
+
+L_buddy_alloc_rankdone:
     call(buddy_nosplit)
     goto(L_buddy_alloc_done)
 
@@ -379,7 +370,7 @@ L_buddy_alloc_do_split:
     call(buddy_autosplit)
 
 L_buddy_alloc_done:
-    popall(D,E)
+    popall(D,E,F)
     ret
 
 L_buddy_alloc_error:
