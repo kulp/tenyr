@@ -4,7 +4,7 @@
     B   <- -1
     B   -> [IMR_ADDR]
 
-#include "fib.tas.cpp"
+#include "bm_fib.tas.cpp"
 
 irq_00:
     A   <- 0xeee
@@ -12,9 +12,36 @@ irq_00:
     C   -> [ISR_ADDR]
     ret
 
+counter_02: .word 0
 irq_02:
-    A   <- 0xfff
     C   <- (1 << 2)
     C   -> [ISR_ADDR]
+    pushall(d,e,f)
+    d <- 30
+    e <- 30
+    f <- [rel(counter_02)]
+    push(f)
+    call(putnum)
+    pop(f)
+    f <- f + 1
+    f -> [rel(counter_02)]
+    popall(d,e,f)
+
+    ret
+
+irq_03:
+    C   <- (1 << 3)
+    C   -> [ISR_ADDR]
+    pushall(d,e,f)
+    d <- 30
+    e <- 30
+    f <- [rel(counter_02)]
+    push(f)
+    call(putnum)
+    pop(f)
+    f <- f + 16
+    f -> [rel(counter_02)]
+    popall(d,e,f)
+
     ret
 
