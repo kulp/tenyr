@@ -65,10 +65,11 @@ module Eib(input clk, reset_n, strobe, rw,
     wire i_is_cntrl = !(i_is_vects | i_is_tramp | i_is_stack);
 
     ramwrap #( // TODO vects doesn't need to be accessible to instruction port
-        .LOAD(1), .LOADFILE(VECTORFILE), .ABITS(VECTS_BITS), .SIZE(VECTS_SIZE)
+        .LOAD(1), .LOADFILE(VECTORFILE), .ABITS(VECTS_BITS), .SIZE(VECTS_SIZE),
+        .BASE_A(VECTS_BOTTOM)
     ) vects(
         .clka  ( clk          ), .clkb  ( clk          ),
-        .ena   ( d_is_vects   ), .enb   ( i_is_vects   ),
+        .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( vects_ad     ), .addrb ( vects_ai     ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
@@ -77,19 +78,21 @@ module Eib(input clk, reset_n, strobe, rw,
 
     ramwrap #(
         .LOAD(1), .LOADFILE("../verilog/trampoline.memh"),
-        .ABITS(TRAMP_BITS), .SIZE(TRAMP_SIZE)
+        .ABITS(TRAMP_BITS), .SIZE(TRAMP_SIZE), .BASE_A(TRAMP_BOTTOM)
     ) tramp(
         .clka  ( clk          ), .clkb  ( clk          ),
-        .ena   ( d_is_tramp   ), .enb   ( i_is_tramp   ),
+        .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( tramp_ad     ), .addrb ( tramp_ai     ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
         .douta ( tramp_dout_d ), .doutb ( tramp_dout_i )
     );
 
-    ramwrap #(.ABITS(STACK_BITS), .SIZE(STACK_SIZE)) stack(
+    ramwrap #(
+        .ABITS(STACK_BITS), .SIZE(STACK_SIZE), .BASE_A(STACK_BOTTOM)
+    ) stack(
         .clka  ( clk          ), .clkb  ( clk          ),
-        .ena   ( d_is_stack   ), .enb   ( i_is_stack   ),
+        .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( stack_ad     ), .addrb ( stack_ai     ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),

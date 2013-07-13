@@ -18,7 +18,7 @@ module Tenyr(
 );
 
     parameter LOADFILE = "default.memh";
-    parameter RAMWORDS = 8192;
+    parameter RAMABITS = 13;
 
     wire oper_rw, oper_strobe, trap;
     wire valid_clk, clk_vga, clk_core;
@@ -60,8 +60,8 @@ module Tenyr(
 // -----------------------------------------------------------------------------
 // MEMORY ----------------------------------------------------------------------
 
-    ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0), .SIZE(RAMWORDS),
-        .BASE_A(`RESETVECTOR)
+    ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0),
+        .PBITS(32), .ABITS(RAMABITS), .BASE_A(`RESETVECTOR)
     ) ram(
         .clka  ( clk_core    ), .clkb  ( clk_core   ),
         .ena   ( oper_strobe ), .enb   ( startup[2] ),
