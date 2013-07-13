@@ -21,9 +21,9 @@ endmodule
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I, input en,
               output[3:0] op, output kind, illegal, storing, deref_rhs, branch);
 
-    assign {kind, storing, deref_rhs, Z, X, Y, op, I} = en ? insn : 32'bz;
-    assign illegal = en ? &insn : 32'bz;
-    assign branch  = en ? &Z && !storing : 32'bz;
+    assign {kind, storing, deref_rhs, Z, X, Y, op, I} = en ? insn : 32'b0;
+    assign illegal = en & &insn;
+    assign branch  = en & &Z & ~storing;
 
 endmodule
 
