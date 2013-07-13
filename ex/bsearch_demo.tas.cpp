@@ -50,44 +50,36 @@ loop_exit:
 // b -> pointer or null
 bsearch:
     pushall(h,i,j)  // callee-save temps
+    h <- d          // base in h
 
 bsearch_loop:
     // c is the key ptr
-    // d is the first element to consider
+    // h is the first element to consider
     // e is the number of elements to consider after d
     i <- e == 0
     jnzrel(i,bsearch_notfound)
 
-    pushall(c,d,e,f)
-    // consider element halfway between (d) and (d + e)
-    i <- e >> 1
-    i <- i * f
-    d <- d + i
-    push(d)     // save testpointer
+    e <- e >> 1 // consider element halfway between (d) and (d + e)
+    pushall(c,d)
+    i <- e * f  // count * width
+    j <- h + i  // ptr = base + count * width
+    d <- j
     callr(g)
     i <- b      // copy result to temp
-    pop(b)      // restore testpointer to b in case of match
-    popall(c,d,e,f)
+    b <- j      // restore test ptr
+    popall(c,d)
 
     j <- i == 0
     jnzrel(j,bsearch_done)
     j <- i < 0
-    jnzrel(j,bsearch_less)
+    jnzrel(j,bsearch_loop)
 
-    e <- e + 1
-    e <- e >> 1
-    j <- e * f
-    d <- d + j
-    goto(bsearch_loop)
-
-bsearch_less:
-    e <- e >> 1
+    // i > 0 :
+    h <- b + f  // base = ptr + width
     goto(bsearch_loop)
 
 bsearch_notfound:
     b <- 0
-    goto(bsearch_done)
-
 bsearch_done:
     popall(h,i,j)
     ret
@@ -106,8 +98,6 @@ error_msg:
 
 nl: .word '\n', 0
 
-key: .word 0
-
 data_start:
 .L_data_start:
 .L_data_elt_start:
@@ -124,6 +114,8 @@ data_start:
     .word  89, @L_89
     .word 144, @L_144
 .L_data_end:
+    .word 0 // TODO why can't key overlap this word ? XXX bug
+key:
     .word 0
 
 L_1  : .utf32 "one"                    ; .word 0
