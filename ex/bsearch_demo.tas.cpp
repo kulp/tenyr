@@ -7,13 +7,20 @@ main:
 #define DATA_LEN (.L_data_end - .L_data_start)
 #define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)
 
-    c <- rel(key)               // needle
+    c <- 0                      // needle
+loop_top:
+    h <- c > 149
+    jnzrel(h, loop_exit)
+
+    c -> [rel(key)]             // update key value
+    c <- rel(key)               // pointer to value
     d <- rel(data_start)        // haystack
     e <- (DATA_LEN / ELT_LEN)   // number of elements
     f <- ELT_LEN                // size of each element
     g <- rel(inteq)             // comparator
     call(bsearch)
 
+    push(c)
     c <- b == 0
     jnzrel(c,notfound)
     c <- [b + 1]
@@ -27,6 +34,11 @@ done:
     call(puts)
     c <- rel(nl)
     call(puts)
+    pop(c)
+    c <- [rel(key)]
+    c <- c + 1                  // increment loop counter
+    goto(loop_top)
+loop_exit:
 
     illegal
 
@@ -94,7 +106,7 @@ error_msg:
 
 nl: .word '\n', 0
 
-key: .word 55
+key: .word 0
 
 data_start:
 .L_data_start:

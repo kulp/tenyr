@@ -48,12 +48,13 @@ static const struct element {
 
 int main(int argc, const char *argv[])
 {
-    int key = 55;//strtol(argv[1], 0, 0);
-    struct element *d = (struct element*)search(&key, data, sizeof data / sizeof data[0], sizeof data[0], cmp);
-    if (d)
-        puts(d->str);
-    else
-        puts("error : not found");
+    for (int key = 0; key < 150; key++) {
+        struct element *d = (struct element*)search(&key, data, sizeof data / sizeof data[0], sizeof data[0], cmp);
+        if (d)
+            printf("%d is %s ---\n", key, d->str);
+        else
+            printf("%d not found\n", key);
+    }
 
     return 0;
 }
