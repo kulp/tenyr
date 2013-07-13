@@ -1,21 +1,15 @@
 #include <stddef.h>
 
-void __attribute__((noinline)) *search(const void *key, const void *base, size_t nel, size_t width, int (*compar)(const void *, const void *))
+void __attribute__((noinline)) *search(const void *key, const void *base, size_t count, size_t width, int (*compar)(const void *, const void *))
 {
-    int count = nel >> 1;
-    const char *start = (const char*)base, *end = (const char*)base + nel * width;
-    while (end > start) {
-        const char *ptr = start + count * width;
+    while (count) {
+        count >>= 1;
+        const char *ptr = base + count * width;
         int val = compar(key, ptr);
-        if (val < 0) {
-            count = count >> 1;
-            end = ptr;
-        } else if (val > 0) {
-            count = (count + 1) >> 1;
-            start = ptr;
-        } else {
+        if (val == 0)
             return (void*)ptr;
-        }
+        else if (val > 0)
+            base = ptr + width;
     }
 
     return NULL;
