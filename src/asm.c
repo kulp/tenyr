@@ -425,41 +425,6 @@ static int memh_out(FILE *stream, struct instruction *i, void *ud)
     return fprintf(stream, "@%x %08x\n", i->reladdr, i->u.word) > 0;
 }
 
-/*******************************************************************************
- * Verilog format : behavioural assignment statements
- */
-struct verilog_data {
-    char storename[32];
-};
-
-static int verilog_init(FILE *stream, int flags, void **ud)
-{
-    int rc = 0;
-    struct verilog_data *v = *ud = calloc(1, sizeof *v);
-
-    // TODO make configurable
-    snprintf(v->storename, sizeof v->storename, "store");
-
-    return rc;
-}
-
-static int verilog_out(FILE *stream, struct instruction *i, void *ud)
-{
-    struct verilog_data *v = ud;
-    return fprintf(stream, "%s[32'h%08x + BASE] = 32'h%08x;\n", v->storename, i->reladdr, i->u.word);
-}
-
-static int verilog_fini(FILE *stream, void **ud)
-{
-    int rc = 0;
-
-    struct verilog_data *v = *ud;
-    free(v);
-    *ud = NULL;
-
-    return rc;
-}
-
 const struct format tenyr_asm_formats[] = {
     // first format is default
     { "obj",
@@ -472,7 +437,6 @@ const struct format tenyr_asm_formats[] = {
     { "raw" , .in = raw_in , .out = raw_out  },
     { "text", .in = text_in, .out = text_out },
     { "memh", .out = memh_out },
-    { "verilog", .init = verilog_init, .out = verilog_out, .fini = verilog_fini },
 };
 
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
