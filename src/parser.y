@@ -250,6 +250,11 @@ rhs_plain
         { $rhs_plain = make_unary_type0($x, $unary_op, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
     | unary_op regname[x]
         { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
+    | greloc_expr
+        {   /* When the RHS is just a constant, choose OR or ADD depending on
+             * what kind of constant this is likely to be. */
+            enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
+            $rhs_plain = make_expr_type0(0, op, 0, 1, $greloc_expr); }
     /* type1 */
     | regname[x] op greloc_expr '+' regname[y]
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, $y); }
@@ -257,11 +262,6 @@ rhs_plain
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, 0); }
     | unary_op greloc_expr /* responsible for a S/R conflict */
         { $rhs_plain = make_expr_type1(0, $unary_op, $greloc_expr, 0); }
-    | greloc_expr
-        {   /* When the RHS is just a constant, choose OR or ADD depending on
-             * what kind of constant this is likely to be. */
-            enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
-            $rhs_plain = make_expr_type1(0, op, $greloc_expr, 0); }
     | greloc_expr '+' regname[y]
         {   $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, $y); }
 
