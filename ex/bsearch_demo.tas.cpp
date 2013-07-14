@@ -8,8 +8,9 @@ main:
 #define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)
 
     c <- 0                      // needle
+    i <- [rel(largest)]
 loop_top:
-    h <- c > 149
+    h <- c > i
     jnzrel(h, loop_exit)
 
     c -> [rel(key)]             // update key value
@@ -49,8 +50,9 @@ loop_exit:
 // g <- comparator
 // b -> pointer or null
 bsearch:
-    pushall(h,i,j)  // callee-save temps
+    pushall(h,i,j,k)  // callee-save temps
     h <- d          // base in h
+    k <- c          // save argument to reduce stack traffic
 
 bsearch_loop:
     // c is the key ptr
@@ -60,14 +62,13 @@ bsearch_loop:
     jnzrel(i,bsearch_notfound)
 
     e <- e >> 1 // consider element halfway between (d) and (d + e)
-    pushall(c,d)
     i <- e * f  // count * width
     j <- h + i  // ptr = base + count * width
     d <- j
     callr(g)
     i <- b      // copy result to temp
     b <- j      // restore test ptr
-    popall(c,d)
+    c <- k      // restore argument
 
     j <- i == 0
     jnzrel(j,bsearch_done)
@@ -81,7 +82,7 @@ bsearch_loop:
 bsearch_notfound:
     b <- 0
 bsearch_done:
-    popall(h,i,j)
+    popall(h,i,j,k)
     ret
 
 // c <- pointer to key
@@ -112,6 +113,7 @@ data_start:
     .word  34, @L_34
     .word  55, @L_55
     .word  89, @L_89
+largest:
     .word 144, @L_144
 .L_data_end:
     .word 0 // TODO why can't key overlap this word ? XXX bug
