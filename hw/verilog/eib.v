@@ -38,9 +38,6 @@ module Eib(input clk, reset_n, strobe, rw,
     assign d_data  = (d_active & ~rw) ? d_rdata : 32'bz;
     assign i_data  = i_inrange ? i_rdata : 32'bz;
 
-`define IS_STACK(X)     (X[31:STACK_BITS] == STACK_BOTTOM[31:STACK_BITS])
-`define IS_TRAMP(X)     (X[31:TRAMP_BITS] == TRAMP_BOTTOM[31:TRAMP_BITS])
-`define IS_VECTS(X)     (X[31:VECTS_BITS] == VECTS_BOTTOM[31:VECTS_BITS])
 `define STACK_ADDR(X)   ((depth << STACK_BITS) | X[(STACK_BITS - 1):0])
 `define TRAMP_ADDR(X)   (X[(TRAMP_BITS - 1):0])
 `define VECTS_ADDR(X)   (X[(VECTS_BITS - 1):0])
@@ -54,13 +51,9 @@ module Eib(input clk, reset_n, strobe, rw,
     wire[31:0] stack_ad = `STACK_ADDR(d_addr), stack_ai = `STACK_ADDR(i_addr);
     wire[31:0] tramp_ad = `TRAMP_ADDR(d_addr), tramp_ai = `TRAMP_ADDR(i_addr);
 
-    wire d_is_vects = d_active  && `IS_VECTS(d_addr),
-         i_is_vects = i_inrange && `IS_VECTS(i_addr),
-         d_is_tramp = d_active  && `IS_TRAMP(d_addr),
-         i_is_tramp = i_inrange && `IS_TRAMP(i_addr),
-         d_is_stack = d_active  && `IS_STACK(d_addr),
-         i_is_stack = i_inrange && `IS_STACK(i_addr);
-     
+    wire d_is_vects, d_is_tramp, d_is_stack,
+         i_is_vects, i_is_tramp, i_is_stack;
+
     wire d_is_cntrl = !(d_is_vects | d_is_tramp | d_is_stack);
     wire i_is_cntrl = !(i_is_vects | i_is_tramp | i_is_stack);
 
@@ -73,7 +66,8 @@ module Eib(input clk, reset_n, strobe, rw,
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( vects_ad     ), .addrb ( vects_ai     ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
-        .douta ( vects_dout_d ), .doutb ( vects_dout_i )
+        .douta ( vects_dout_d ), .doutb ( vects_dout_i ),
+        .acta  ( d_is_vects   ), .actb  ( i_is_vects   )
     );
 
     ramwrap #(
@@ -85,7 +79,8 @@ module Eib(input clk, reset_n, strobe, rw,
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( tramp_ad     ), .addrb ( tramp_ai     ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
-        .douta ( tramp_dout_d ), .doutb ( tramp_dout_i )
+        .douta ( tramp_dout_d ), .doutb ( tramp_dout_i ),
+        .acta  ( d_is_tramp   ), .actb  ( i_is_tramp   )
     );
 
     ramwrap #(
@@ -96,7 +91,8 @@ module Eib(input clk, reset_n, strobe, rw,
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( stack_ad     ), .addrb ( stack_ai     ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
-        .douta ( stack_dout_d ), .doutb ( stack_dout_i )
+        .douta ( stack_dout_d ), .doutb ( stack_dout_i ),
+        .acta  ( d_is_stack   ), .actb  ( i_is_stack   )
     );
 
     wire       ra_active = d_addr[11:0] == 12'hfff;
