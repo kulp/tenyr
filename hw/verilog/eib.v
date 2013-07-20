@@ -120,20 +120,19 @@ module Eib(input clk, reset_n, strobe, rw,
     );
 
     always @*
-        case ({1'b0,i_is_stack,i_is_tramp,i_is_vects})
-            4'b0100: i_rdata = stack_dout_i;
-            4'b0010: i_rdata = tramp_dout_i;
-            4'b0001: i_rdata = vects_dout_i;
+        case ({i_is_stack,i_is_tramp,i_is_vects})
+            3'b100 : i_rdata = stack_dout_i;
+            3'b010 : i_rdata = tramp_dout_i;
+            3'b001 : i_rdata = vects_dout_i;
             default: i_rdata = 32'bx;
         endcase
 
     always @*
-        case ({d_is_cntrl,d_is_stack,d_is_tramp,d_is_vects})
-            4'b1000: d_rdata = cntrl_dout_d;
-            4'b0100: d_rdata = stack_dout_d;
-            4'b0010: d_rdata = tramp_dout_d;
-            4'b0001: d_rdata = vects_dout_d;
-            default: d_rdata = 32'bx;
+        case ({d_is_stack,d_is_tramp,d_is_vects})
+            3'b100 : d_rdata = stack_dout_d;
+            3'b010 : d_rdata = tramp_dout_d;
+            3'b001 : d_rdata = vects_dout_d;
+            default: d_rdata = cntrl_dout_d;
         endcase
 
     always @(posedge clk)
