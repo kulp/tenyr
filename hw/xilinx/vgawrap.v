@@ -44,8 +44,8 @@ module VGAwrap(
     );
 
     ramwrap #(
-        .BASE_B(VIDEO_ADDR + 'h10), .SIZE(80 * 40), .DBITS(8),
-        .INIT(1), .ZERO('h20)
+        .BASE_B(VIDEO_ADDR + 'h10), .SIZE(80 * 40), .ABITS(12),
+        .DBITS(8), .INIT(1), .ZERO('h20)
     ) text(
         .clka  ( clk_vga ), .clkb  ( clk_core ),
         .ena   ( 1       ), .enb   ( 1        ),
