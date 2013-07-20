@@ -62,7 +62,8 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
 
     wire illegal, kind, drhs, jumping, storing, loading, deref;
     wire[ 3:0] indexX, indexY, indexZ, op;
-    wire[31:0] valueX, valueY, valueZ, valueI, irhs, rhs, storand, tostore;
+    wire[31:0] valueX, valueY, valueZ, irhs, rhs, storand, tostore;
+    wire[11:0] valueI;
 
     reg [31:0] r_irhs, r_data, next_pc;
     reg [3:0] state = sI;
