@@ -45,7 +45,8 @@ module Eib(input clk, reset_n, strobe, rw,
     wire[31:0] stack_dout_d, stack_dout_i;
     wire[31:0] tramp_dout_d, tramp_dout_i;
     wire[31:0] vects_dout_d, vects_dout_i;
-    reg [31:0] cntrl_dout_d; // cntrl_dout_i is not implemented : not sensible
+    // cntrl_dout_i is not very sensible but is implemented for orthogonality
+    reg [31:0] cntrl_dout_d, cntrl_dout_i;
 
     wire[31:0] stack_ad = `STACK_ADDR(d_addr), stack_ai = `STACK_ADDR(i_addr);
     wire[31:0] tramp_ad = `TRAMP_ADDR(d_addr), tramp_ai = `TRAMP_ADDR(i_addr);
@@ -61,9 +62,9 @@ module Eib(input clk, reset_n, strobe, rw,
         .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( stack_ad     ), .addrb ( stack_ai     ),
+        .acta  ( d_is_stack   ), .actb  ( i_is_stack   ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
-        .douta ( stack_dout_d ), .doutb ( stack_dout_i ),
-        .acta  ( d_is_stack   ), .actb  ( i_is_stack   )
+        .douta ( stack_dout_d ), .doutb ( stack_dout_i )
     );
 
     ramwrap #(
@@ -74,12 +75,12 @@ module Eib(input clk, reset_n, strobe, rw,
         .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( tramp_ad     ), .addrb ( tramp_ai     ),
+        .acta  ( d_is_tramp   ), .actb  ( i_is_tramp   ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
-        .douta ( tramp_dout_d ), .doutb ( tramp_dout_i ),
-        .acta  ( d_is_tramp   ), .actb  ( i_is_tramp   )
+        .douta ( tramp_dout_d ), .doutb ( tramp_dout_i )
     );
 
-    ramwrap #( // TODO vects doesn't need to be accessible to instruction port
+    ramwrap #(
         .LOAD(1), .LOADFILE(VECTORFILE), .ABITS(VECTS_BITS), .SIZE(VECTS_SIZE),
         .BASE_A(VECTS_BOTTOM)
     ) vects(
@@ -87,9 +88,9 @@ module Eib(input clk, reset_n, strobe, rw,
         .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( vects_ad     ), .addrb ( vects_ai     ),
+        .acta  ( d_is_vects   ), .actb  ( i_is_vects   ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
-        .douta ( vects_dout_d ), .doutb ( vects_dout_i ),
-        .acta  ( d_is_vects   ), .actb  ( i_is_vects   )
+        .douta ( vects_dout_d ), .doutb ( vects_dout_i )
     );
 
     wire       ra_active = d_addr[11:0] == 12'hfff;
@@ -116,29 +117,35 @@ module Eib(input clk, reset_n, strobe, rw,
         .wea  ( ra_active ), .douta ( rets_dout ), .web  ( 0 )
     );
 
-    always @*
-        case ({i_is_stack,i_is_tramp,i_is_vects})
-            3'b100 : i_rdata = stack_dout_i;
-            3'b010 : i_rdata = tramp_dout_i;
-            3'b001 : i_rdata = vects_dout_i;
-            default: i_rdata = 32'bx;
-        endcase
-
-    always @*
+    always @* begin
         case ({d_is_stack,d_is_tramp,d_is_vects})
             3'b100 : d_rdata = stack_dout_d;
             3'b010 : d_rdata = tramp_dout_d;
             3'b001 : d_rdata = vects_dout_d;
             default: d_rdata = cntrl_dout_d;
         endcase
+        case ({i_is_stack,i_is_tramp,i_is_vects})
+            3'b100 : i_rdata = stack_dout_i;
+            3'b010 : i_rdata = tramp_dout_i;
+            3'b001 : i_rdata = vects_dout_i;
+            default: i_rdata = cntrl_dout_i;
+        endcase
+    end
 
-    always @(posedge clk)
-        if (reset_n) case (d_addr[11:0])
+    always @(posedge clk) if (reset_n) begin
+        case (d_addr[11:0])
             12'hfff: cntrl_dout_d <= rets_dout;  // RA  read
             12'hffe: cntrl_dout_d <= isr;        // ISR read
             12'hffd: cntrl_dout_d <= imrs_dout;  // IMR read
             default: cntrl_dout_d <= 32'bx;
         endcase
+        case (i_addr[11:0])
+            12'hfff: cntrl_dout_i <= rets_dout;  // RA  read
+            12'hffe: cntrl_dout_i <= isr;        // ISR read
+            12'hffd: cntrl_dout_i <= imrs_dout;  // IMR read
+            default: cntrl_dout_i <= 32'bx;
+        endcase
+    end
 
     always @(posedge clk)
         if (!reset_n) begin
