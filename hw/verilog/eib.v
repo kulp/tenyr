@@ -13,11 +13,6 @@ module Eib(input clk, reset_n, strobe, rw,
     localparam DEPTH_BITS   = 5;                // maximum depth of stacks
     localparam MAX_DEPTH    = 1 << DEPTH_BITS;  // depth of stacks in words
 
-    parameter  VECTS_BOTTOM = `VECTOR_ADDR;
-    localparam VECTS_BITS   = 5;                // vector table size in bits
-    localparam VECTS_SIZE   = 1 << VECTS_BITS;  // vector table size in words
-    parameter  VECTORFILE   = "vectors.memh";
-
     parameter  STACK_BOTTOM = `ISTACK_BOTTOM;
     parameter  STACK_BITS   = 5;                // interrupt stack size in bits
     localparam STACK_SIZE   = 1 << STACK_BITS;  // interrupt stack size in words
@@ -26,6 +21,11 @@ module Eib(input clk, reset_n, strobe, rw,
     parameter  TRAMP_BOTTOM = `TRAMP_BOTTOM;
     parameter  TRAMP_BITS   = 8;                // trampoline size in bits
     localparam TRAMP_SIZE   = 1 << TRAMP_BITS;  // trampoline size in words
+
+    parameter  VECTS_BOTTOM = `VECTOR_ADDR;
+    localparam VECTS_BITS   = 5;                // vector table size in bits
+    localparam VECTS_SIZE   = 1 << VECTS_BITS;  // vector table size in words
+    parameter  VECTORFILE   = "vectors.memh";
 
     reg [31:0] d_rdata, i_rdata;                // output on bus data lines
 
@@ -38,36 +38,32 @@ module Eib(input clk, reset_n, strobe, rw,
     assign d_data  = (d_active & ~rw) ? d_rdata : 32'bz;
     assign i_data  = i_inrange ? i_rdata : 32'bz;
 
-`define STACK_ADDR(X)   ((depth << STACK_BITS) | X[(STACK_BITS - 1):0])
+`define STACK_ADDR(X)   (X[(STACK_BITS - 1):0] | (depth << STACK_BITS))
 `define TRAMP_ADDR(X)   (X[(TRAMP_BITS - 1):0])
 `define VECTS_ADDR(X)   (X[(VECTS_BITS - 1):0])
 
-    wire[31:0] vects_dout_d, vects_dout_i;
     wire[31:0] stack_dout_d, stack_dout_i;
     wire[31:0] tramp_dout_d, tramp_dout_i;
-    reg [31:0] cntrl_dout_d, cntrl_dout_i; // XXX cntrl_dout_i is never set
+    wire[31:0] vects_dout_d, vects_dout_i;
+    reg [31:0] cntrl_dout_d; // cntrl_dout_i is not implemented : not sensible
 
-    wire[31:0] vects_ad = `VECTS_ADDR(d_addr), vects_ai = `VECTS_ADDR(i_addr);
     wire[31:0] stack_ad = `STACK_ADDR(d_addr), stack_ai = `STACK_ADDR(i_addr);
     wire[31:0] tramp_ad = `TRAMP_ADDR(d_addr), tramp_ai = `TRAMP_ADDR(i_addr);
+    wire[31:0] vects_ad = `VECTS_ADDR(d_addr), vects_ai = `VECTS_ADDR(i_addr);
 
-    wire d_is_vects, d_is_tramp, d_is_stack,
-         i_is_vects, i_is_tramp, i_is_stack;
+    wire d_is_stack, i_is_stack, d_is_tramp, d_is_vects, i_is_tramp, i_is_vects;
+    wire d_is_cntrl = ~|{d_is_vects,d_is_tramp,d_is_stack};
 
-    wire d_is_cntrl = !(d_is_vects | d_is_tramp | d_is_stack);
-    wire i_is_cntrl = !(i_is_vects | i_is_tramp | i_is_stack);
-
-    ramwrap #( // TODO vects doesn't need to be accessible to instruction port
-        .LOAD(1), .LOADFILE(VECTORFILE), .ABITS(VECTS_BITS), .SIZE(VECTS_SIZE),
-        .BASE_A(VECTS_BOTTOM)
-    ) vects(
+    ramwrap #(
+        .ABITS(STACK_BITS), .SIZE(STACK_SIZE), .BASE_A(STACK_BOTTOM)
+    ) stack(
         .clka  ( clk          ), .clkb  ( clk          ),
         .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
-        .addra ( vects_ad     ), .addrb ( vects_ai     ),
+        .addra ( stack_ad     ), .addrb ( stack_ai     ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
-        .douta ( vects_dout_d ), .doutb ( vects_dout_i ),
-        .acta  ( d_is_vects   ), .actb  ( i_is_vects   )
+        .douta ( stack_dout_d ), .doutb ( stack_dout_i ),
+        .acta  ( d_is_stack   ), .actb  ( i_is_stack   )
     );
 
     ramwrap #(
@@ -83,16 +79,17 @@ module Eib(input clk, reset_n, strobe, rw,
         .acta  ( d_is_tramp   ), .actb  ( i_is_tramp   )
     );
 
-    ramwrap #(
-        .ABITS(STACK_BITS), .SIZE(STACK_SIZE), .BASE_A(STACK_BOTTOM)
-    ) stack(
+    ramwrap #( // TODO vects doesn't need to be accessible to instruction port
+        .LOAD(1), .LOADFILE(VECTORFILE), .ABITS(VECTS_BITS), .SIZE(VECTS_SIZE),
+        .BASE_A(VECTS_BOTTOM)
+    ) vects(
         .clka  ( clk          ), .clkb  ( clk          ),
         .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
-        .addra ( stack_ad     ), .addrb ( stack_ai     ),
+        .addra ( vects_ad     ), .addrb ( vects_ai     ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
-        .douta ( stack_dout_d ), .doutb ( stack_dout_i ),
-        .acta  ( d_is_stack   ), .actb  ( i_is_stack   )
+        .douta ( vects_dout_d ), .doutb ( vects_dout_i ),
+        .acta  ( d_is_vects   ), .actb  ( i_is_vects   )
     );
 
     wire       ra_active = d_addr[11:0] == 12'hfff;
