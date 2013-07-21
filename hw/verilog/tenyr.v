@@ -14,7 +14,7 @@ module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
     assign valueY = ~en ? 32'bz : Yis0 ? 0 : YisP ? next_pc : store[indexY];
     assign valueZ = ~en ? 32'bz : Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
 
-    always @(posedge clk) if (en & upZ & ~Zis0 & ~ZisP) store[indexZ] <= writeZ;
+    always @(posedge clk) if (&{en,upZ,~Zis0,~ZisP}) store[indexZ] <= writeZ;
 
 endmodule
 
