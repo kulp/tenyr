@@ -19,11 +19,13 @@ module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I, input en,
-              output[3:0] op, output kind, illegal, storing, deref_rhs, branch);
+              output[3:0] op, output kind, throw, storing, deref_rhs, branch,
+              output[4:0] vector);
 
     assign {kind, storing, deref_rhs, Z, X, Y, op, I} = en ? insn : 32'b0;
-    assign illegal = en & &insn;
-    assign branch  = en & &Z & ~storing;
+    assign vector = en ? insn[4:0] : 5'b0;
+    assign throw  = en & &insn[31:30];
+    assign branch = en & &Z & ~storing;
 
 endmodule
 
@@ -58,31 +60,32 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, sH=7, sT=8, sW=9;
+    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, sE=7, sT=8, sW=9;
 
-    wire illegal, kind, drhs, jumping, storing, loading, deref;
+    wire throw, kind, drhs, jumping, storing, loading, deref;
     wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, irhs, rhs, storand, tostore;
     wire[11:0] valueI;
+    wire[ 4:0] vector;
 
     reg [31:0] r_irhs, r_data, next_pc;
     reg [3:0] state = sI;
-    assign halt[`HALT_EXEC] = state == sH;
+    assign halt[`HALT_EXEC] = 0; // TODO give EIB a register that pulls this
 
     always @(posedge clk)
         if (!reset_n)
             state <= sI;
         else case (state)
-            sI: begin state <= |halt ? sI : s5; i_addr <= `RESETVECTOR;    end
-            s0: begin state <= |halt ? sI : illegal ? sH : trap ? sT : s1; end
-            s1: begin state <= s2; r_irhs  <= irhs;                        end
-            s2: begin state <= s3;    /* compensate for slow multiplier */ end
-            s3: begin state <= s4; r_data  <= d_data;                      end
-            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;     end
-            s5: begin state <= s0; next_pc <= i_addr + 1;                  end
-            sT: begin state <= sW; r_irhs  <= i_addr; /* delay for trap */ end
-            sW: begin state <= s5; i_addr  <= `TRAMP_BOTTOM; /* to fall */ end
-            default:  state <= sH;
+            sI: begin state <= |halt ? sI : s5; i_addr <= `RESETVECTOR;  end
+            s0: begin state <= |halt ? sI : throw ? sE : trap ? sT : s1; end
+            s1: begin state <= s2; r_irhs  <= irhs;                      end
+            s2: begin state <= s3; /* compensate for slow multiplier */  end
+            s3: begin state <= s4; r_data  <= d_data;                    end
+            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;   end
+            s5: begin state <= s0; next_pc <= i_addr + 1;                end
+            sT: begin state <= sW; r_irhs  <= i_addr; /* trap falls : */ end
+            sW: begin state <= s5; i_addr  <= `TRAMP_BOTTOM; /* now */   end
+            sE: begin state <= s5; i_addr  <= `VECTOR_ADDR | ~vector;    end
         endcase
 
     // Instruction fetch happens on cycle 0
@@ -91,7 +94,8 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
     Decode decode(.Z ( indexZ ), .insn ( i_data      ), .storing   ( storing ),
                   .X ( indexX ), .kind ( kind        ), .deref_rhs ( drhs    ),
                   .Y ( indexY ), .op   ( op          ), .branch    ( jumping ),
-                  .I ( valueI ), .en   ( state != s5 ), .illegal   ( illegal ));
+                  .I ( valueI ), .en   ( state != s5 ), .throw     ( throw   ),
+                                                        .vector    ( vector  ));
 
     // Execution (arithmetic operation) occurs on cycle 0
     wire en_ex = state == s0;
