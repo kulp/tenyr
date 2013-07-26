@@ -16,22 +16,22 @@ module VGAwrap(
     assign vgaGreen[1:0] = {2{vgaGreen[2]}};
     assign vgaBlue [1  ] = {1{vgaBlue [2]}};
 
-    mmr #(.ADDR(VIDEO_ADDR), .MMR_WIDTH(8), .DEFAULT(8'b11110111)) video_ctl(
+    mmr #(.ADDR(VIDEO_ADDR), .DBITS(8), .DEFAULT(8'b11110111)) video_ctl(
         .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe  ),
         .rw  ( rw       ), .addr    ( addr    ), .data   ( data    ),
-        .re  ( 1        ), .we      ( 0       ), .val    ( vga_ctl )
+        .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( vga_ctl )
     );
 
-    mmr #(.ADDR(VIDEO_ADDR + 1), .MMR_WIDTH(8), .DEFAULT(1)) crx_mmr(
+    mmr #(.ADDR(VIDEO_ADDR + 1), .DBITS(8), .DEFAULT(1)) crx_mmr(
         .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe ),
         .rw  ( rw       ), .addr    ( addr    ), .data   ( data   ),
-        .re  ( 1        ), .we      ( 0       ), .val    ( crx    )
+        .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( crx    )
     ); // crx is 1-based ?
 
-    mmr #(.ADDR(VIDEO_ADDR + 2), .MMR_WIDTH(8), .DEFAULT(0)) cry_mmr(
+    mmr #(.ADDR(VIDEO_ADDR + 2), .DBITS(8), .DEFAULT(0)) cry_mmr(
         .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe ),
         .rw  ( rw       ), .addr    ( addr    ), .data   ( data   ),
-        .re  ( 1        ), .we      ( 0       ), .val    ( cry    )
+        .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( cry    )
     ); // cry is 0-based ?
 
     vga80x40 vga(
