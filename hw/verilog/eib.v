@@ -39,8 +39,6 @@ module Eib(input clk, reset_n, strobe, rw,
     assign i_data  = i_inrange ? i_rdata : 32'bz;
 
 `define STACK_ADDR(X)   (X[(STACK_BITS - 1):0] | (depth << STACK_BITS))
-`define TRAMP_ADDR(X)   (X[(TRAMP_BITS - 1):0])
-`define VECTS_ADDR(X)   (X[(VECTS_BITS - 1):0])
 
     wire[31:0] stack_dout_d, stack_dout_i;
     wire[31:0] tramp_dout_d, tramp_dout_i;
@@ -49,20 +47,19 @@ module Eib(input clk, reset_n, strobe, rw,
     reg [31:0] cntrl_dout_d, cntrl_dout_i;
 
     wire[31:0] stack_ad = `STACK_ADDR(d_addr), stack_ai = `STACK_ADDR(i_addr);
-    wire[31:0] tramp_ad = `TRAMP_ADDR(d_addr), tramp_ai = `TRAMP_ADDR(i_addr);
-    wire[31:0] vects_ad = `VECTS_ADDR(d_addr), vects_ai = `VECTS_ADDR(i_addr);
 
     wire d_is_stack, i_is_stack, d_is_tramp, d_is_vects, i_is_tramp, i_is_vects;
     wire d_is_cntrl = ~|{d_is_vects,d_is_tramp,d_is_stack};
 
-    ramwrap #(
-        .ABITS(STACK_BITS), .SIZE(STACK_SIZE), .BASE_A(STACK_BOTTOM)
-    ) stack(
+`define APPLIES(Bits,Base,Addr) `IN_RANGE(32,Bits,Base,Addr)
+
+    assign d_is_stack = `APPLIES(STACK_BITS,STACK_BOTTOM,d_addr),
+           i_is_stack = `APPLIES(STACK_BITS,STACK_BOTTOM,i_addr);
+    BlockRAM #(.ABITS(STACK_BITS), .SIZE(STACK_SIZE)) stack(
         .clka  ( clk          ), .clkb  ( clk          ),
         .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
         .addra ( stack_ad     ), .addrb ( stack_ai     ),
-        .acta  ( d_is_stack   ), .actb  ( i_is_stack   ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
         .douta ( stack_dout_d ), .doutb ( stack_dout_i )
     );
@@ -74,7 +71,7 @@ module Eib(input clk, reset_n, strobe, rw,
         .clka  ( clk          ), .clkb  ( clk          ),
         .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
-        .addra ( tramp_ad     ), .addrb ( tramp_ai     ),
+        .addra ( d_addr       ), .addrb ( i_addr       ),
         .acta  ( d_is_tramp   ), .actb  ( i_is_tramp   ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
         .douta ( tramp_dout_d ), .doutb ( tramp_dout_i )
@@ -87,7 +84,7 @@ module Eib(input clk, reset_n, strobe, rw,
         .clka  ( clk          ), .clkb  ( clk          ),
         .ena   ( d_active     ), .enb   ( i_inrange    ),
         .wea   ( rw           ), .web   ( 1'b0         ),
-        .addra ( vects_ad     ), .addrb ( vects_ai     ),
+        .addra ( d_addr       ), .addrb ( i_addr       ),
         .acta  ( d_is_vects   ), .actb  ( i_is_vects   ),
         .dina  ( d_data       ), .dinb  ( 32'bx        ),
         .douta ( vects_dout_d ), .doutb ( vects_dout_i )

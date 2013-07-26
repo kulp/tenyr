@@ -19,5 +19,8 @@
 `define ISTACK_BOTTOM   32'hffffffa0
 `define TRAMP_BOTTOM    32'hfffff800
 
+`define IN_RANGE(AddrBits,BaseBits,Base,Addr) \
+        (Addr[AddrBits-1:BaseBits] == Base[AddrBits-1:BaseBits])
+
 /* vi: set ts=4 sw=4 et syntax=verilog: */
 
