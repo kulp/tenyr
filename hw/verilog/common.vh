@@ -19,8 +19,18 @@
 `define ISTACK_BOTTOM   32'hffffffa0
 `define TRAMP_BOTTOM    32'hfffff800
 
+// Need a bit on the top end to handle the case where AddrBits == BaseBits
+`ifdef __ICARUS__
+// Icarus appears to balk at part-select of concatenation
 `define IN_RANGE(AddrBits,BaseBits,Base,Addr) \
-        (Addr[AddrBits-1:BaseBits] == Base[AddrBits-1:BaseBits])
+        (Addr[AddrBits-1:BaseBits] == \
+         Base[AddrBits-1:BaseBits])
+`else
+// ISE balks at part-select with zero width, whereas Icarus accepts it
+`define IN_RANGE(AddrBits,BaseBits,Base,Addr) \
+        ({1'b1,Addr}[AddrBits:BaseBits] == \
+         {1'b1,Base}[AddrBits:BaseBits])
+`endif
 
 /* vi: set ts=4 sw=4 et syntax=verilog: */
 

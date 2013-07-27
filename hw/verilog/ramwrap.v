@@ -16,7 +16,7 @@ module ramwrap(
     parameter ABITS    = 10; // internal address bits
     parameter DBITS    = 32;
     parameter SIZE     = 1 << ABITS;
-    // BASEs are assumed to have ABITS of zeros
+    // BASEs are assumed to have ABITS-worth of zeros in the LSBs
     parameter [PBITS-1:0] BASE_A = 0;
     parameter [PBITS-1:0] BASE_B = BASE_A;
 

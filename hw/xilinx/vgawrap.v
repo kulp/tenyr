@@ -45,12 +45,12 @@ module VGAwrap(
 
     ramwrap #(
         .BASE_B(VIDEO_ADDR + 'h10), .SIZE(80 * 40), .ABITS(12),
-        .DBITS(8), .INIT(1), .ZERO('h20)
+        .PBITS(12), .DBITS(8), .INIT(1), .ZERO('h20)
     ) text(
         .clka  ( clk_vga ), .clkb  ( clk_core ),
-        .ena   ( 1       ), .enb   ( 1        ),
+        .ena   ( 1'b1    ), .enb   ( 1'b1     ),
         .addra ( ram_adA ), .addrb ( addr     ),
-        .dina  ( 'bx     ), .dinb  ( data     ),
+        .dina  ( 8'bx    ), .dinb  ( data     ),
         .douta ( ram_doA ), //.doutb ( data     ),
         .wea   ( 1'b0    ), .web   ( rw       )
     );
@@ -58,8 +58,8 @@ module VGAwrap(
     BlockRAM #(.LOAD(1), .LOADFILE("../verilog/lat0-12.memh"),
                .SIZE(256 * 12), .DBITS(8))
     font(
-		.clka  ( clk_vga ), .ena   ( 1       ), .wea ( 0 ),
-		.addra ( rom_adA ), .douta ( rom_doA )
+		.clka  ( clk_vga ), .ena   ( 1'b1    ), .wea  ( 1'b0 ),
+		.addra ( rom_adA ), .douta ( rom_doA ), .clkb ( 1'b0 )
 	);
 
 endmodule
