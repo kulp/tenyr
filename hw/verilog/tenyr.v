@@ -60,13 +60,15 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
                                    output reg[31:0] i_addr, input[31:0] i_data,
             output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
 
-    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, sE=7, sT=8, sW=9;
+    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6,
+                    sE=7, sF=8, sR=9, sT=10, sW=11;
 
     wire throw, kind, drhs, jumping, storing, loading, deref;
     wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, irhs, rhs, storand, tostore;
     wire[11:0] valueI;
     wire[ 4:0] vector;
+    reg [31:0] vect;
 
     reg [31:0] r_irhs, r_data, next_pc;
     reg [3:0] state = sI;
@@ -76,16 +78,18 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
         if (!reset_n)
             state <= sI;
         else case (state)
-            sI: begin state <= |halt ? sI : s5; i_addr <= `RESETVECTOR;  end
-            s0: begin state <= |halt ? sI : throw ? sE : trap ? sT : s1; end
-            s1: begin state <= s2; r_irhs  <= irhs;                      end
-            s2: begin state <= s3; /* compensate for slow multiplier */  end
-            s3: begin state <= s4; r_data  <= d_data;                    end
-            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;   end
-            s5: begin state <= s0; next_pc <= i_addr + 1;                end
-            sT: begin state <= sW; r_irhs  <= i_addr; /* trap falls : */ end
-            sW: begin state <= s5; i_addr  <= `TRAMP_BOTTOM; /* now */   end
-            sE: begin state <= s5; i_addr  <= `VECTOR_ADDR | ~vector;    end
+            sI: begin state <= halt ? sI : s5; i_addr <= `RESETVECTOR;  end
+            s0: begin state <= halt ? sI : trap ? sF : throw ? sE : s1; end
+            sE: begin state <= sR; r_irhs  <= `VECTOR_ADDR | vector;    end
+            sR: begin state <= sT; vect    <= d_data; /* test this */   end
+            sF: begin state <= sT; vect    <= `TRAMP_BOTTOM;            end
+            s1: begin state <= s2; r_irhs  <= irhs;                     end
+            s2: begin state <= s3; /* compensate for slow multiplier */ end
+            s3: begin state <= s4; r_data  <= d_data;                   end
+            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;  end
+            s5: begin state <= s0; next_pc <= i_addr + 1;               end
+            sT: begin state <= sW; r_irhs  <= i_addr; /* wait for */    end
+            sW: begin state <= s5; i_addr  <= vect; /* trap to fall */  end
         endcase
 
     // Instruction fetch happens on cycle 0
@@ -104,7 +108,7 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
               .X   ( valueX ), .Y  ( valueY ), .I  ( extI ), .rhs  ( irhs ));
 
     // Memory loads or stores on cycle 3
-    assign loading = drhs && !mem_rw;
+    assign loading = (drhs && !mem_rw) || state == sR;
     assign strobe  = (state == s3 && (loading || storing)) || state == sW;
     assign mem_rw  = storing || state == sW;
     assign tostore = state == sW ? `TRAP_ADDR : valueZ;
