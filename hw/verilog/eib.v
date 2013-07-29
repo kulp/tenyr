@@ -5,7 +5,7 @@
 // contains its own RAMs and presents a simple interrupt handler interface
 // to the tenyr Core
 module Eib(input clk, reset_n, strobe, rw,
-           input[IRQ_COUNT-1:0] irq, output reg trap,
+           input[IRQ_COUNT-1:0] irq, output reg trap, halt,
            input[31:0] i_addr, output [31:0] i_data,
            input[31:0] d_addr, inout  [31:0] d_data);
 
@@ -31,6 +31,7 @@ module Eib(input clk, reset_n, strobe, rw,
 
     reg [DEPTH_BITS-1:0] depth = 0;             // stack pointer
     reg [ IRQ_COUNT-1:0] isr = 0;               // Interrupt Status Register
+    // halt control register is at ...ff0
 
     wire d_inrange = d_addr[31:12] == 20'hfffff;
     wire i_inrange = i_addr[31:12] == 20'hfffff;
@@ -159,6 +160,8 @@ module Eib(input clk, reset_n, strobe, rw,
                         depth <= depth + 1;
                     if (im_active)
                         isr <= (isr | irq) & ~d_data;  // ISR bit clear
+                    if (d_addr[11:0] == 12'hff0)
+                        halt <= d_data[0];
                 end else
                     if (ra_active)
                         depth <= depth - 1;

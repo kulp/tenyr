@@ -20,7 +20,7 @@ module Tenyr(
     parameter LOADFILE = "default.memh";
     parameter RAMABITS = 13;
 
-    wire oper_rw, oper_strobe, trap;
+    wire oper_rw, oper_strobe, trap, eib_halt;
     wire valid_clk, clk_vga, clk_core;
     wire[31:0] insn_addr, oper_addr, insn_data, out_data;
     wire[31:0] oper_data = (!oper_rw && oper_strobe) ? out_data : 32'bz;
@@ -30,6 +30,7 @@ module Tenyr(
     always @(posedge clk_core) startup <= {startup,valid_clk};
 
     assign halt[`HALT_TENYR] = ~startup[3];
+    assign halt[`HALT_EIB] = eib_halt;
     assign Led[7:0] = halt;
 
     tenyr_mainclock clocks(
@@ -51,7 +52,7 @@ module Tenyr(
         .clk    ( clk_core    ), .reset_n ( _reset_n  ), .rw     ( oper_rw   ),
         .strobe ( oper_strobe ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
         .irq    ( irqs        ), .i_data  ( insn_data ), .d_data ( oper_data ),
-        .trap   ( trap        )
+        .trap   ( trap        ), .halt    ( eib_halt  )
     );
 `else
     assign trap = 0;
