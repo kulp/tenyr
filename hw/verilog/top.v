@@ -94,7 +94,7 @@ module Tenyr(
     VGAwrap vga(
         .clk_core ( clk_core ), .rw     ( oper_rw     ), .vgaRed   ( vgaRed   ),
         .clk_vga  ( clk_vga  ), .addr   ( oper_addr   ), .vgaGreen ( vgaGreen ),
-        .en       ( 1        ), .data   ( oper_data   ), .vgaBlue  ( vgaBlue  ),
+        .en       ( 1'b1     ), .data   ( oper_data   ), .vgaBlue  ( vgaBlue  ),
         .reset_n  ( _reset_n ), .strobe ( oper_strobe ), .hsync    ( hsync    ),
                                                          .vsync    ( vsync    )
     );

@@ -7,7 +7,7 @@ module VGAwrap(
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
 
-	parameter VIDEO_ADDR = `VIDEO_ADDR;
+	parameter[31:0] VIDEO_ADDR = `VIDEO_ADDR;
 
     wire[11:0] ram_adA, rom_adA;
     wire[ 7:0] crx, cry, vga_ctl, ram_doA, rom_doA;
@@ -44,7 +44,7 @@ module VGAwrap(
     );
 
     ramwrap #(
-        .BASE_B(VIDEO_ADDR + 'h10), .SIZE(80 * 40), .ABITS(12),
+        .BASE_B(VIDEO_ADDR + 32'h10), .SIZE(80 * 40), .ABITS(12),
         .PBITS(12), .DBITS(8), .INIT(1), .ZERO('h20)
     ) text(
         .clka  ( clk_vga ), .clkb  ( clk_core ),
