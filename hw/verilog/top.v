@@ -11,7 +11,7 @@
 `define INTERRUPTS
 
 module Tenyr(
-    input clk, reset, inout `HALTTYPE halt,
+    input clk, reset, input wor `HALTTYPE halt,
     output[7:0] Led, output[7:0] seg, output[3:0] an,
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync,
     input[31:0] irqs
@@ -20,10 +20,10 @@ module Tenyr(
     parameter LOADFILE = "default.memh";
     parameter RAMABITS = 13;
 
-    wire oper_rw, oper_strobe, trap, eib_halt;
+    wire d_rw, d_strobe, trap, eib_halt;
     wire valid_clk, clk_vga, clk_core;
-    wire[31:0] insn_addr, oper_addr, insn_data, out_data;
-    wire[31:0] oper_data = (!oper_rw && oper_strobe) ? out_data : 32'bz;
+    wire[31:0] i_addr, d_addr, i_data, out_data;
+    wire[31:0] d_to_mast, d_do_slav;
 
     reg[3:0] startup = 0; // delay startup for a few clocks
     wire _reset_n = startup[3] & ~reset;
@@ -41,18 +41,18 @@ module Tenyr(
     );
 
     Core core(
-        .clk    ( clk_core    ), .reset_n ( _reset_n  ), .mem_rw ( oper_rw   ),
-        .strobe ( oper_strobe ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
-        .halt   ( halt        ), .i_data  ( insn_data ), .d_data ( oper_data ),
-        .trap   ( trap        )
+        .clk    ( clk_core ), .reset_n ( _reset_n ), .mem_rw ( d_rw      ),
+        .strobe ( d_strobe ), .i_addr  ( i_addr   ), .d_addr ( d_addr    ),
+        .halt   ( halt     ), .i_data  ( i_data   ), .d_in   ( d_to_mast ),
+        .trap   ( trap     ),                        .d_out  ( d_to_slav )
     );
 
 `ifdef INTERRUPTS
     Eib eib(
-        .clk    ( clk_core    ), .reset_n ( _reset_n  ), .rw     ( oper_rw   ),
-        .strobe ( oper_strobe ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
-        .irq    ( irqs        ), .i_data  ( insn_data ), .d_data ( oper_data ),
-        .trap   ( trap        ), .halt    ( eib_halt  )
+        .clk    ( clk_core ), .reset_n ( _reset_n ), .rw     ( d_rw      ),
+        .strobe ( d_strobe ), .i_addr  ( i_addr   ), .d_addr ( d_addr    ),
+        .irq    ( irqs     ), .i_data  ( i_data   ), .d_in   ( d_to_slav ),
+        .trap   ( trap     ), .halt    ( eib_halt ), .d_out  ( d_to_mast )
     );
 `else
     assign trap = 0;
@@ -64,12 +64,12 @@ module Tenyr(
     ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .BASE_A(`RESETVECTOR)
     ) ram(
-        .clka  ( clk_core    ), .clkb  ( clk_core   ),
-        .ena   ( oper_strobe ), .enb   ( startup[2] ),
-        .wea   ( oper_rw     ), .web   ( 1'b0       ),
-        .addra ( oper_addr   ), .addrb ( insn_addr  ),
-        .dina  ( oper_data   ), .dinb  ( 32'bz      ),
-        .douta ( out_data    ), .doutb ( insn_data  )
+        .clka  ( clk_core  ), .clkb  ( clk_core   ),
+        .ena   ( d_strobe  ), .enb   ( startup[2] ),
+        .wea   ( d_rw      ), .web   ( 1'b0       ),
+        .addra ( d_addr    ), .addrb ( i_addr     ),
+        .dina  ( d_to_slav ), .dinb  ( 32'bz      ),
+        .douta ( d_to_mast ), .doutb ( i_data     )
     );
 
 // -----------------------------------------------------------------------------
@@ -78,25 +78,25 @@ module Tenyr(
 `ifdef SERIAL
     // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
-        .clk ( clk     ), .reset_n ( reset_n   ), .enable ( oper_strobe ),
-        .rw  ( oper_rw ), .addr    ( oper_addr ), .data   ( oper_data   )
+        .clk ( clk     ), .reset_n ( reset_n   ), .enable ( d_strobe ),
+        .rw  ( d_rw ), .addr    ( d_addr ), .data   ( d_data   )
     );
 `endif
 
 `ifdef SEG7
     Seg7 #(.BASE(12'h100)) seg7(
-        .clk     ( clk_core    ), .rw   ( oper_rw   ), .seg ( seg ),
-        .reset_n ( _reset_n    ), .addr ( oper_addr ), .an  ( an  ),
-        .enable  ( oper_strobe ), .data ( oper_data )
+        .clk     ( clk_core    ), .rw   ( d_rw   ), .seg ( seg ),
+        .reset_n ( _reset_n    ), .addr ( d_addr ), .an  ( an  ),
+        .enable  ( d_strobe ), .data ( d_data )
     );
 `endif
 
 `ifdef VGA
     VGAwrap vga(
-        .clk_core ( clk_core ), .rw     ( oper_rw     ), .vgaRed   ( vgaRed   ),
-        .clk_vga  ( clk_vga  ), .addr   ( oper_addr   ), .vgaGreen ( vgaGreen ),
-        .en       ( 1'b1     ), .data   ( oper_data   ), .vgaBlue  ( vgaBlue  ),
-        .reset_n  ( _reset_n ), .strobe ( oper_strobe ), .hsync    ( hsync    ),
+        .clk_core ( clk_core ), .rw     ( d_rw     ), .vgaRed   ( vgaRed   ),
+        .clk_vga  ( clk_vga  ), .addr   ( d_addr   ), .vgaGreen ( vgaGreen ),
+        .en       ( 1'b1     ), .data   ( d_data   ), .vgaBlue  ( vgaBlue  ),
+        .reset_n  ( _reset_n ), .strobe ( d_strobe ), .hsync    ( hsync    ),
                                                          .vsync    ( vsync    )
     );
 `endif
