@@ -125,7 +125,6 @@
     <property xil_pn:name="Synthesis Tool" xil_pn:value="XST (VHDL/Verilog)" xil_pn:valueState="default"/>
     <property xil_pn:name="Target UCF File Name" xil_pn:value="Tenyr.ucf" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Top-Level Source Type" xil_pn:value="HDL" xil_pn:valueState="default"/>
-    <property xil_pn:name="Use DSP Block spartan6" xil_pn:value="Automax" xil_pn:valueState="non-default"/>
     <property xil_pn:name="User Browsed Strategy Files" xil_pn:value="/opt/eda/Xilinx/13.4/ISE_DS/ISE/data/default.xds" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Verilog Include Directories" xil_pn:value="../verilog" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Working Directory" xil_pn:value="." xil_pn:valueState="non-default"/>
