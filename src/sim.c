@@ -39,20 +39,17 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     }
 }
 
-static int do_common(struct sim_state *s, int32_t *ip, int32_t *Z, int32_t
-        *rhs, uint32_t *value, int deref_lhs, int deref_rhs, int reversed)
+static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
+        uint32_t *value, int deref_lhs, int deref_rhs, int reversed)
 {
-    uint32_t r_addr = (reversed ? *Z        : *rhs     ) & PTR_MASK;
-    uint32_t w_addr = (reversed ? *rhs      : *Z       ) & PTR_MASK;
+    int read_mem  = reversed ? deref_lhs : deref_rhs;
+    int write_mem = reversed ? deref_rhs : deref_lhs;
 
-    int read_mem    =  reversed ? deref_lhs : deref_rhs;
-    int write_mem   =  reversed ? deref_rhs : deref_lhs;
-
-    int32_t *r      =  reversed ? Z         : rhs;
-    int32_t *w      =  reversed ? rhs       : Z;
+    int32_t *r    = reversed ? Z         : rhs;
+    int32_t *w    = reversed ? rhs       : Z;
 
     if (read_mem) {
-        if (s->dispatch_op(s, OP_READ, r_addr, value)) {
+        if (s->dispatch_op(s, OP_DATA_READ, *r, value)) {
             if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }
@@ -60,22 +57,12 @@ static int do_common(struct sim_state *s, int32_t *ip, int32_t *Z, int32_t
         *value = *r;
 
     if (write_mem) {
-        if (s->dispatch_op(s, OP_WRITE, w_addr, value)) {
+        if (s->dispatch_op(s, OP_WRITE, *w, value)) {
             if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }
     } else if (w != &s->machine.regs[0])  // throw away write to reg 0
         *w = *value;
-
-    if (w != ip) {
-        if (*ip & ~PTR_MASK && s->conf.nowrap) {
-            if (s->conf.pause) getchar();
-            if (s->conf.abort) abort();
-            return 1;
-        }
-
-        *ip &= PTR_MASK;
-    }
 
     return 0;
 }
@@ -83,7 +70,6 @@ static int do_common(struct sim_state *s, int32_t *ip, int32_t *Z, int32_t
 int run_instruction(struct sim_state *s, struct instruction *i)
 {
     int32_t *ip = &s->machine.regs[15];
-    assert(("PC within address space", !(*ip & ~PTR_MASK)));
 
     ++*ip;
 
@@ -103,7 +89,7 @@ int run_instruction(struct sim_state *s, struct instruction *i)
             do_op(g->op, g->p, &rhs, s->machine.regs[g->x],
                                      s->machine.regs[g->y],
                                      g->imm);
-            do_common(s, ip, &s->machine.regs[g->z], &rhs, &value, g->dd == 2,
+            do_common(s, &s->machine.regs[g->z], &rhs, &value, g->dd == 2,
                     g->dd & 1, g->dd == 3);
 
             break;
@@ -120,9 +106,8 @@ int run_instruction(struct sim_state *s, struct instruction *i)
 int run_sim(struct sim_state *s, struct run_ops *ops)
 {
     while (1) {
-        assert(("PC within address space", !(s->machine.regs[15] & ~PTR_MASK)));
         struct instruction i;
-        if (s->dispatch_op(s, OP_READ, s->machine.regs[15], &i.u.word)) {
+        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.u.word)) {
             if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }

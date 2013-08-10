@@ -202,7 +202,6 @@ begin
     signal vctr_479 : std_logic;
     signal chrx_007 : std_logic;
     signal chry_011 : std_logic;
-    signal scrx_079 : std_logic;
 
     -- RAM read, ROM read
     signal ram_tmp : integer range 3200 downto 0;  --12 bits
@@ -229,7 +228,6 @@ begin
     vctr_479 <= '1' when vctr = 479 else '0';
     chrx_007 <= '1' when chrx = 007 else '0';
     chry_011 <= '1' when chry = 011 else '0';
-    scrx_079 <= '1' when scrx = 079 else '0';
 
     chrx_rs <= chrx_007 or hctr_639;
     chry_rs <= chry_011 or vctr_479;
@@ -241,11 +239,6 @@ begin
     chry_ce <= hctr_639 and blank;
     scry_ce <= chry_011 and hctr_639;
 
-
--- Proboscide99 31/08/08
---    ram_tmp <= scry * 80 + scrx + 1 when ((scrx_079 = '0')) else
---               scry * 80 when ((chry_011 = '0') and (scrx_079 = '1')) else
---               0         when ((chry_011 = '1') and (scrx_079 = '1'));
     ram_tmp <= scry * 80 + scrx;
 
     TEXT_A <= std_logic_vector(TO_UNSIGNED(ram_tmp, 12));

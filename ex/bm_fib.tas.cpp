@@ -14,7 +14,7 @@
 _start:
     bare_metal_init()   // TODO this shouldn't be necessary
     c <- 1              // argument
-    o <- 1023           // stack pointer
+    prologue
 
     //call(init_display)
     //call(disable_cursor)

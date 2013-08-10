@@ -8,17 +8,19 @@
 `endif
 `define SEG7
 `undef SERIAL
+`define INTERRUPTS
 
 module Tenyr(
     input clk, reset, inout `HALTTYPE halt,
     output[7:0] Led, output[7:0] seg, output[3:0] an,
-    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
+    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync,
+    input[31:0] irqs
 );
 
     parameter LOADFILE = "default.memh";
-    parameter RAMWORDS = 8192;
+    parameter RAMABITS = 13;
 
-    wire oper_rw, oper_strobe;
+    wire oper_rw, oper_strobe, trap, eib_halt;
     wire valid_clk, clk_vga, clk_core;
     wire[31:0] insn_addr, oper_addr, insn_data, out_data;
     wire[31:0] oper_data = (!oper_rw && oper_strobe) ? out_data : 32'bz;
@@ -28,6 +30,7 @@ module Tenyr(
     always @(posedge clk_core) startup <= {startup,valid_clk};
 
     assign halt[`HALT_TENYR] = ~startup[3];
+    assign halt[`HALT_EIB] = eib_halt;
     assign Led[7:0] = halt;
 
     tenyr_mainclock clocks(
@@ -40,14 +43,26 @@ module Tenyr(
     Core core(
         .clk    ( clk_core    ), .reset_n ( _reset_n  ), .mem_rw ( oper_rw   ),
         .strobe ( oper_strobe ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
-        .halt   ( halt        ), .i_data  ( insn_data ), .d_data ( oper_data )
+        .halt   ( halt        ), .i_data  ( insn_data ), .d_data ( oper_data ),
+        .trap   ( trap        )
     );
+
+`ifdef INTERRUPTS
+    Eib eib(
+        .clk    ( clk_core    ), .reset_n ( _reset_n  ), .rw     ( oper_rw   ),
+        .strobe ( oper_strobe ), .i_addr  ( insn_addr ), .d_addr ( oper_addr ),
+        .irq    ( irqs        ), .i_data  ( insn_data ), .d_data ( oper_data ),
+        .trap   ( trap        ), .halt    ( eib_halt  )
+    );
+`else
+    assign trap = 0;
+`endif
 
 // -----------------------------------------------------------------------------
 // MEMORY ----------------------------------------------------------------------
 
-    ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0), .SIZE(RAMWORDS),
-        .BASE_A(`RESETVECTOR)
+    ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0),
+        .PBITS(32), .ABITS(RAMABITS), .BASE_A(`RESETVECTOR)
     ) ram(
         .clka  ( clk_core    ), .clkb  ( clk_core   ),
         .ena   ( oper_strobe ), .enb   ( startup[2] ),
@@ -80,7 +95,7 @@ module Tenyr(
     VGAwrap vga(
         .clk_core ( clk_core ), .rw     ( oper_rw     ), .vgaRed   ( vgaRed   ),
         .clk_vga  ( clk_vga  ), .addr   ( oper_addr   ), .vgaGreen ( vgaGreen ),
-        .en       ( 1        ), .data   ( oper_data   ), .vgaBlue  ( vgaBlue  ),
+        .en       ( 1'b1     ), .data   ( oper_data   ), .vgaBlue  ( vgaBlue  ),
         .reset_n  ( _reset_n ), .strobe ( oper_strobe ), .hsync    ( hsync    ),
                                                          .vsync    ( vsync    )
     );

@@ -64,7 +64,6 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
         uint32_t *data)
 {
     struct sparseram_state *sparseram = cookie;
-    assert(("Address within address space", !(addr & ~PTR_MASK)));
 
     struct element key = (struct element){ addr & ~WORDMASK, NULL };
     struct element **p = tsearch(&key, &sparseram->mem, tree_compare);
@@ -85,7 +84,7 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
 
     if (op == OP_WRITE)
         *where = *data;
-    else if (op == OP_READ)
+	else if (op == OP_INSN_READ || op == OP_DATA_READ)
         *data = *where;
     else
         return 1;

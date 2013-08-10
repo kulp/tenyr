@@ -420,9 +420,33 @@ static int text_out(FILE *stream, struct instruction *i, void *ud)
 /*******************************************************************************
  * memh format : suitable for use with $readmemh() in Verilog
  */
+static int memh_init(FILE *stream, int flags, void **ud)
+{
+    // Use ud as a "last-address-written" marker. Only write addresses
+    // explicitly when gaps appear. This has not been tested enough, and will
+    // probably require more finesse when gaps do appear, when memh images are
+    // loaded into ram.v's OFFSET RAMs.
+    int *last = *ud = malloc(sizeof *last);
+    *last = -1;
+
+    return 0;
+}
+
+static int memh_fini(FILE *stream, void **ud)
+{
+    free(*ud);
+    *ud = NULL;
+    return 0;
+}
+
 static int memh_out(FILE *stream, struct instruction *i, void *ud)
 {
-    return fprintf(stream, "@%x %08x\n", i->reladdr, i->u.word) > 0;
+    int *last = ud;
+    int diff = i->reladdr - *last;
+    *last = i->reladdr;
+    return diff > 1
+        ? (fprintf(stream, "@%x %08x\n", i->reladdr, i->u.word) > 0)
+        : (fprintf(stream,     "%08x\n",             i->u.word) > 0);
 }
 
 const struct format tenyr_asm_formats[] = {
@@ -436,7 +460,7 @@ const struct format tenyr_asm_formats[] = {
         .reloc = obj_reloc },
     { "raw" , .in = raw_in , .out = raw_out  },
     { "text", .in = text_in, .out = text_out },
-    { "memh", .out = memh_out },
+    { "memh", .init = memh_init, .out = memh_out, .fini = memh_fini },
 };
 
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);

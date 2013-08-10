@@ -31,6 +31,7 @@ all: tenyr glue.vpi
 
 vpath %.c ../vpi ../../src
 vpath %.v ../verilog ../verilog/sim .
+vpath %.memh ../verilog
 
 VFLAGS += -I../verilog
 VFLAGS += -DSIM
@@ -46,7 +47,8 @@ tenyr: simtop.v top.v                               \
        simserial.v ram.v simclocks.v                \
        seg7.v seglookup.v                           \
        hex2ascii.v ramwrap.v                        \
-       | glue.vpi
+       eib.v                                        \
+       | glue.vpi trampoline.memh
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 
@@ -57,11 +59,21 @@ asm.o sim.o: CFLAGS += -Wno-unused-value
 # it's all right for callbacks not to use all their parameters
 asm.o: CFLAGS += -Wno-unused-parameter
 
+%.memh:
+	$(MAKE) -C ../verilog $@
+
 vpath %.tas ../verilog
 vpath %.texe ../../ex
 
 LOGFILE = Top.vcd
-run_%: PLUSARGS += +PERIODS=$(PERIODS) +LOGFILE=$(LOGFILE)
+run_%: PLUSARGS += +PERIODS=$(PERIODS) \
+                   +LOGFILE=$(LOGFILE) \
+                   +VECTORS=$(VECTORS) \
+                   $(if $(INTERRUPTS),+INTERRUPT_TIMES=$(INTERRUPTS).times \
+                                      +INTERRUPT_SIGNALS=$(INTERRUPTS).signals) \
+                   #
+
+run_%: VECTORS = ../../ex/$*.vectors.memh
 run_%: %.texe tenyr
 	vvp -M. tenyr +LOAD=$< $(PLUSARGS)
 

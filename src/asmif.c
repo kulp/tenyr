@@ -22,7 +22,8 @@
 
 #if EMSCRIPTEN
 // needed for EMCC so far
-void *lfind(const void *key, const void *base, size_t *nmemb, size_t size, int(*compar)(const void *, const void *));
+void *lfind(const void *key, const void *base, size_t *nmemb, size_t size,
+        int(*compar)(const void *, const void *));
 #endif
 
 enum { RHS_FLIP = 1 << 0, NO_NAMED_RELOC = 1 << 1 };
@@ -51,7 +52,8 @@ static int ce_eval(struct parse_data *pd, struct instruction *evalctx, struct
         instruction *defctx, struct const_expr *ce, int flags, reloc_handler
         *rhandler, void *rud, uint32_t *result);
 
-static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width, int flags);
+static int add_relocation(struct parse_data *pd, const char *name,
+        struct instruction *insn, int width, int flags);
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
@@ -87,7 +89,8 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 }
 
 // add_relocation returns 1 on success
-static int add_relocation(struct parse_data *pd, const char *name, struct instruction *insn, int width, int flags)
+static int add_relocation(struct parse_data *pd, const char *name,
+        struct instruction *insn, int width, int flags)
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
@@ -230,7 +233,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
 
         uint32_t result;
         if (ce_eval(pd, ce->insn, NULL, ce, 0, sym_reloc_handler, &r->width, &result)) {
-            uint32_t mask = ~(((1ULL << (r->width - 1)) << 1) - 1);
+            uint32_t mask = ~((1ULL << r->width) - 1);
             result *= r->mult;
 
             int hasupperbits = result & mask;
@@ -340,7 +343,8 @@ static int assembly_fixup_insns(struct parse_data *pd)
     list_foreach(symbol_list, li, pd->symbols)
         list_foreach(symbol, l, li->symbol)
             if (!l->resolved)
-                if (ce_eval(pd, NULL, NULL, l->ce, 0, sym_reloc_handler, (int[]){ WORD_BITWIDTH }, &l->reladdr))
+                if (ce_eval(pd, NULL, NULL, l->ce, 0, sym_reloc_handler,
+                            (int[]){ WORD_BITWIDTH }, &l->reladdr))
                     l->resolved = 1;
 
     return 0;
@@ -352,7 +356,7 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
 
     mark_globals(pd->symbols, pd->globals);
     if (check_symbols(pd->symbols))
-        fatal(0, "Error while processing symbols : check for duplicate symbols");
+        fatal(0, "Error in symbol processing : check for duplicate symbols");
 
     if (!fixup_deferred_exprs(pd)) {
         void *ud;
@@ -430,7 +434,7 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
     rc = feof(in) ? 0 : -1;
 
     if (f->fini)
-        rc = f->fini(in, &ud);
+        rc |= f->fini(in, &ud);
 
     fflush(out);
 

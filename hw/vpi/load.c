@@ -27,7 +27,8 @@ static int vpi_dispatch(void *ud, int op, uint32_t addr, uint32_t *data)
             if (s->debug > 4)
                 vpi_printf("put value %#x @ %#x\n", *data, addr);
             break;
-        case OP_READ:
+        case OP_INSN_READ:
+        case OP_DATA_READ:
             vpi_get_value(word, &argval);
             *data = argval.value.integer;
             if (s->debug > 4)

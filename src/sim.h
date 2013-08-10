@@ -16,7 +16,7 @@ struct sim_state;
 
 typedef int recipe(struct sim_state *s);
 
-enum memory_op { OP_READ=0, OP_WRITE=1 };
+enum memory_op { OP_INSN_READ=0, OP_DATA_READ=1, OP_WRITE=2 };
 
 struct recipe_book {
     recipe *recipe;
@@ -29,7 +29,6 @@ struct sim_state {
     struct {
         int abort;
         int pause;
-        int nowrap;
         int verbose;
         int run_defaults;   ///< whether to run default recipes
         int debugging;

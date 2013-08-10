@@ -15,8 +15,6 @@
 #define UNUSED   __attribute__((unused))
 #define NORETURN __attribute__((noreturn))
 
-#define PTR_MASK ((1 << 24) - 1)
-
 #define list_foreach(Tag,Node,Object)                                          \
     for (struct Tag *Next = (Object), *Node = Next;                            \
             (void)(Node && (Next = Next->next)), Node;                         \
@@ -60,6 +58,8 @@ static inline char *strcopy(char *dest, const char *src, size_t sz)
     dest[sz - 1] = '\0';
     return result;
 }
+
+long long numberise(char *str, int base);
 
 // defines a function that traverses a tsearch tree, adding todo nodes
 // assumes struct Tag has a reference to an aggregate named `state' that has a

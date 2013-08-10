@@ -1,14 +1,23 @@
 NET "clk" TNM_NET = "clk";
 NET "clk" LOC = V10;
 
-NET "vga/vga/clk25MHz" TNM_NET = "vga/vga/clk25MHz";
-NET "core/clk" TNM_NET = "core/clk";
-TIMESPEC TS_vga_clk25MHz = PERIOD "vga/vga/clk25MHz" 25 MHz HIGH 50%;
+//NET "vga/vga/clk25MHz" TNM_NET = "vga/vga/clk25MHz";
+NET "core/clk" TNM = "core_clk";
+TIMESPEC TS_core_clk = PERIOD "core_clk" 27 ns HIGH 50%;
+//TIMESPEC TS_vga_clk25MHz = PERIOD "vga/vga/clk25MHz" 25 MHz HIGH 50%;
 TIMESPEC TS_clk = PERIOD "clk" 100 MHz HIGH 50%;
+NET "core/exec/clk" TNM = "exec_clk";
+#NET "core/irhs" TNM = "exec_rhs";
+TIMESPEC TS_ex_clk = FROM "exec_clk" TO "exec_clk" TS_core_clk*3;
+# TIMESPEC TS_ex2_clk = FROM "exec_clk" TO "core_clk" TS_core_clk*3;
+#TIMESPEC TS_ex3_clk = FROM "exec_clk" TO "exec_rhs" TS_core_clk*3;
 
 NET "halt[0]" LOC = T10;
 NET "reset" LOC = A8;
 
 # False path specification
-TIMESPEC "TS_00" = FROM "vga/vga/clk25MHz" TO "core/clk" TIG;
-TIMESPEC "TS_01" = FROM "core/clk" TO "vga/vga/clk25MHz" TIG;
+//TIMESPEC "TS_00" = FROM "vga/vga/clk25MHz" TO "core_clk" TIG;
+//TIMESPEC "TS_01" = FROM "core_clk" TO "vga/vga/clk25MHz" TIG;
+
+Net "irqs[2]" LOC = C4 | IOSTANDARD = LVCMOS33; #Bank = 0, pin name = IO_L1N_VREF, Sch name = BTNL
+Net "irqs[3]" LOC = D9 | IOSTANDARD = LVCMOS33; # Bank = 0, pin name = IO_L34P_GCLK19, Sch name = BTNR

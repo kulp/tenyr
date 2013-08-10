@@ -21,15 +21,15 @@
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
-    _(nowrap  , "stop when PC wraps around 24-bit boundary") \
     _(plugin  , "load plugins specified through param mechanism") \
+    _(eib     , "enable the External Interrupt Block") \
     //
 
 #define DEFAULT_RECIPES(_) \
     _(sparse)   \
     _(serial)   \
-    _(nowrap)   \
     _(plugin)   \
+    _(eib)      \
     //
 
 #define Space(X) STR(X) " "
@@ -179,12 +179,7 @@ static int recipe_plugin(struct sim_state *s)
 DEVICE_RECIPE_TMPL(prealloc,      ram_add_device)
 DEVICE_RECIPE_TMPL(sparse  ,sparseram_add_device)
 DEVICE_RECIPE_TMPL(serial  ,   serial_add_device)
-
-static int recipe_nowrap(struct sim_state *s)
-{
-    s->conf.nowrap = 1;
-    return 0;
-}
+DEVICE_RECIPE_TMPL(eib     ,      eib_add_device)
 
 static int run_recipe(struct sim_state *s, recipe r)
 {
@@ -372,7 +367,7 @@ int main(int argc, char *argv[])
     if (load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr))
         fatal(0, "Error while loading state into simulation");
 
-    s->machine.regs[15] = s->conf.start_addr & PTR_MASK;
+    s->machine.regs[15] = s->conf.start_addr;
 
     struct run_ops ops = {
         .pre_insn = pre_insn,
