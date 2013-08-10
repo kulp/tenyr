@@ -78,18 +78,18 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
         if (!reset_n)
             state <= sI;
         else case (state)
-            sI: begin state <= halt ? sI : s5; i_addr <= `RESETVECTOR;  end
             s0: begin state <= halt ? sI : trap ? sF : throw ? sE : s1; end
-            sE: begin state <= sR; r_irhs  <= `VECTOR_ADDR | vector;    end
-            sR: begin state <= sT; vect    <= d_data; /* test this */   end
-            sF: begin state <= sT; vect    <= `TRAMP_BOTTOM;            end
             s1: begin state <= s2; r_irhs  <= irhs;                     end
             s2: begin state <= s3; /* compensate for slow multiplier */ end
             s3: begin state <= s4; r_data  <= d_data;                   end
             s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;  end
             s5: begin state <= s0; next_pc <= i_addr + 1;               end
+            sE: begin state <= sR; r_irhs  <= `VECTOR_ADDR | vector;    end
+            sR: begin state <= sT; vect    <= d_data; /* test this */   end
+            sF: begin state <= sT; vect    <= `TRAMP_BOTTOM;            end
             sT: begin state <= sW; r_irhs  <= i_addr; /* wait for */    end
             sW: begin state <= s5; i_addr  <= vect; /* trap to fall */  end
+            sI: begin state <= halt ? sI : s5; i_addr <= `RESETVECTOR;  end
         endcase
 
     // Instruction fetch happens on cycle 0
