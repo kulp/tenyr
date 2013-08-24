@@ -11,7 +11,7 @@
 `define INTERRUPTS
 
 module Tenyr(
-    input clk, reset, input wor `HALTTYPE halt,
+    input clk, reset, inout wor `HALTTYPE halt,
     output[7:0] Led, output[7:0] seg, output[3:0] an,
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync,
     input[31:0] irqs
@@ -69,7 +69,7 @@ module Tenyr(
         .ena   ( d_strobe  ), .enb   ( startup[2] ),
         .wea   ( d_rw      ), .web   ( 1'b0       ),
         .addra ( d_addr    ), .addrb ( i_addr     ),
-        .dina  ( d_to_slav ), .dinb  ( 32'bz      ),
+        .dina  ( d_to_slav ), .dinb  ( 32'b0      ),
         .douta ( d_to_mast ), .doutb ( i_data     )
     );
 
@@ -94,11 +94,11 @@ module Tenyr(
 
 `ifdef VGA
     VGAwrap vga(
-        .clk_core ( clk_core ), .rw     ( d_rw     ), .vgaRed   ( vgaRed   ),
-        .clk_vga  ( clk_vga  ), .addr   ( d_addr   ), .vgaGreen ( vgaGreen ),
-        .en       ( 1'b1     ), .data   ( d_data   ), .vgaBlue  ( vgaBlue  ),
-        .reset_n  ( _reset_n ), .strobe ( d_strobe ), .hsync    ( hsync    ),
-                                                         .vsync    ( vsync    )
+        .clk_core ( clk_core ), .rw     ( d_rw      ), .vgaRed   ( vgaRed   ),
+        .clk_vga  ( clk_vga  ), .addr   ( d_addr    ), .vgaGreen ( vgaGreen ),
+        .en       ( 1'b1     ), .d_in   ( d_to_slav ), .vgaBlue  ( vgaBlue  ),
+        .reset_n  ( _reset_n ), .strobe ( d_strobe  ), .hsync    ( hsync    ),
+                                                       .vsync    ( vsync    )
     );
 `endif
 

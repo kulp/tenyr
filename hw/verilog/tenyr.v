@@ -4,7 +4,8 @@
 module Reg(input clk, upZ,               input[ 3:0] indexZ, indexX, indexY,
            input[31:0] writeZ, next_pc, output[31:0] valueZ, valueX, valueY);
 
-    reg[31:0] store[0:14] = { 0 };
+    reg[31:0] store[0:14];
+    initial store[0] = 0;
 
     //              reg is P ?           reg is B-O
     assign valueX = &indexX ? next_pc : store[indexX];
@@ -53,7 +54,7 @@ module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
 
 endmodule
 
-module Core(input clk, reset_n, trap, input wor `HALTTYPE halt, output strobe,
+module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
             output reg[31:0] i_addr, input[31:0] i_data, output mem_rw,
             output    [31:0] d_addr, input[31:0] d_in  , output[31:0] d_out);
 
