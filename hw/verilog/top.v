@@ -23,7 +23,8 @@ module Tenyr(
     wire d_rw, d_strobe, trap, eib_halt;
     wire valid_clk, clk_vga, clk_core;
     wire[31:0] i_addr, d_addr, i_data, out_data;
-    wire[31:0] d_to_mast, d_do_slav;
+    wire[31:0] d_to_slav;
+    wor [31:0] d_to_mast;
 
     reg[3:0] startup = 0; // delay startup for a few clocks
     wire _reset_n = startup[3] & ~reset;
@@ -87,7 +88,7 @@ module Tenyr(
     Seg7 #(.BASE(12'h100)) seg7(
         .clk     ( clk_core    ), .rw   ( d_rw   ), .seg ( seg ),
         .reset_n ( _reset_n    ), .addr ( d_addr ), .an  ( an  ),
-        .enable  ( d_strobe ), .data ( d_data )
+        .enable  ( d_strobe    ), .data ( d_to_slav )
     );
 `endif
 
