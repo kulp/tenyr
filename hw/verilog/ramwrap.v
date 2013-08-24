@@ -22,8 +22,8 @@ module ramwrap(
 
     wire[DBITS-1:0] douta_internal, doutb_internal;
 
-    assign douta = (acta && !wea) ? douta_internal : 32'bz;
-    assign doutb = (actb && !web) ? doutb_internal : 32'bz;
+    assign douta = (acta && !wea) ? douta_internal : 32'b0;
+    assign doutb = (actb && !web) ? doutb_internal : 32'b0;
 
 `define APROPOS(Base,Addr) `IN_RANGE(PBITS,ABITS,Base,Addr)
 

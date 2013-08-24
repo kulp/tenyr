@@ -1,31 +1,29 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(input clk, en, upZ,           input[ 3:0] indexZ, indexX, indexY,
+module Reg(input clk, upZ,               input[ 3:0] indexZ, indexX, indexY,
            input[31:0] writeZ, next_pc, output[31:0] valueZ, valueX, valueY);
 
-    reg[31:0] store[1:14];
+    reg[31:0] store[0:14];
+    initial store[0] = 0;
 
-    wire XisP = &indexX, Xis0 = ~|indexX,
-         YisP = &indexY, Yis0 = ~|indexY,
-         ZisP = &indexZ, Zis0 = ~|indexZ;
+    //              reg is P ?           reg is B-O
+    assign valueX = &indexX ? next_pc : store[indexX];
+    assign valueY = &indexY ? next_pc : store[indexY];
+    assign valueZ = &indexZ ? next_pc : store[indexZ];
 
-    assign valueX = ~en ? 32'bz : Xis0 ? 0 : XisP ? next_pc : store[indexX];
-    assign valueY = ~en ? 32'bz : Yis0 ? 0 : YisP ? next_pc : store[indexY];
-    assign valueZ = ~en ? 32'bz : Zis0 ? 0 : ZisP ? next_pc : store[indexZ];
-
-    always @(posedge clk) if (&{en,upZ,~Zis0,~ZisP}) store[indexZ] <= writeZ;
+    always @(posedge clk) if (&{upZ,|indexZ,~&indexZ}) store[indexZ] <= writeZ;
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I, input en,
+module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
               output[3:0] op, output kind, throw, storing, deref_rhs, branch,
               output[4:0] vector);
 
-    assign {kind, storing, deref_rhs, Z, X, Y, op, I} = en ? insn : 32'b0;
-    assign vector = en ? insn[4:0] : 5'b0;
-    assign throw  = en & &insn[31:30];
-    assign branch = en & &Z & ~storing;
+    assign {kind, storing, deref_rhs, Z, X, Y, op, I} = insn;
+    assign vector = insn[4:0];
+    assign throw  = &insn[31:30];
+    assign branch = &Z & ~storing;
 
 endmodule
 
@@ -56,16 +54,16 @@ module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
 
 endmodule
 
-module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
-                                   output reg[31:0] i_addr, input[31:0] i_data,
-            output mem_rw, strobe, output    [31:0] d_addr, inout[31:0] d_data);
+module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
+            output reg[31:0] i_addr, input[31:0] i_data, output mem_rw,
+            output    [31:0] d_addr, input[31:0] d_in  , output[31:0] d_out);
 
     localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6,
                     sE=7, sF=8, sR=9, sT=10, sW=11;
 
     wire throw, kind, drhs, jumping, storing, loading, deref;
     wire[ 3:0] indexX, indexY, indexZ, op;
-    wire[31:0] valueX, valueY, valueZ, irhs, rhs, storand, tostore;
+    wire[31:0] valueX, valueY, valueZ, irhs, rhs, tostore;
     wire[11:0] valueI;
     wire[ 4:0] vector;
     reg [31:0] vect;
@@ -81,11 +79,11 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
             s0: begin state <= halt ? sI : trap ? sF : throw ? sE : s1; end
             s1: begin state <= s2; r_irhs  <= irhs;                     end
             s2: begin state <= s3; /* compensate for slow multiplier */ end
-            s3: begin state <= s4; r_data  <= d_data;                   end
+            s3: begin state <= s4; r_data  <= d_in;                     end
             s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;  end
             s5: begin state <= s0; next_pc <= i_addr + 1;               end
             sE: begin state <= sR; r_irhs  <= `VECTOR_ADDR | vector;    end
-            sR: begin state <= sT; vect    <= d_data; /* test this */   end
+            sR: begin state <= sT; vect    <= d_in;   /* test this */   end
             sF: begin state <= sT; vect    <= `TRAMP_BOTTOM;            end
             sT: begin state <= sW; r_irhs  <= i_addr; /* wait for */    end
             sW: begin state <= s5; i_addr  <= vect; /* trap to fall */  end
@@ -95,11 +93,10 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
     // Instruction fetch happens on cycle 0
 
     // Decode and register reads happen as soon as instruction is ready
-    Decode decode(.Z ( indexZ ), .insn ( i_data      ), .storing   ( storing ),
-                  .X ( indexX ), .kind ( kind        ), .deref_rhs ( drhs    ),
-                  .Y ( indexY ), .op   ( op          ), .branch    ( jumping ),
-                  .I ( valueI ), .en   ( state != s5 ), .throw     ( throw   ),
-                                                        .vector    ( vector  ));
+    Decode decode(.Z ( indexZ ), .insn  ( i_data ), .storing   ( storing ),
+                  .X ( indexX ), .kind  ( kind   ), .deref_rhs ( drhs    ),
+                  .Y ( indexY ), .op    ( op     ), .branch    ( jumping ),
+                  .I ( valueI ), .throw ( throw  ), .vector    ( vector  ));
 
     // Execution (arithmetic operation) occurs on cycle 0
     wire en_ex = state == s0;
@@ -113,16 +110,15 @@ module Core(input clk, reset_n, inout `HALTTYPE halt, input trap,
     assign mem_rw  = storing || state == sW;
     assign tostore = state == sW ? `TRAP_ADDR : valueZ;
     assign deref   = drhs && (state != sT);
-    assign rhs     = deref   ? r_data  : r_irhs;
-    assign storand = deref   ? valueZ  : r_irhs;
-    assign d_addr  = deref   ? r_irhs  : tostore;
-    assign d_data  = mem_rw  ? storand : 32'bz;
+    assign rhs     = deref ? r_data : r_irhs;
+    assign d_out   = deref ? valueZ : r_irhs;
+    assign d_addr  = deref ? r_irhs : tostore;
 
     // Registers commit on cycle 4
     wire updateZ = !storing && state == s4;
     Reg regs(.clk     ( clk         ), .indexX ( indexX ), .valueX ( valueX  ),
-             .en      ( state != s5 ), .indexY ( indexY ), .valueY ( valueY  ),
-             .next_pc ( next_pc     ), .indexZ ( indexZ ), .valueZ ( valueZ  ),
+             .next_pc ( next_pc     ), .indexY ( indexY ), .valueY ( valueY  ),
+                                       .indexZ ( indexZ ), .valueZ ( valueZ  ),
                                        .writeZ ( rhs    ), .upZ    ( updateZ ));
 
 endmodule
