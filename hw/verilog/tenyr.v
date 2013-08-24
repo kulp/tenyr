@@ -15,14 +15,14 @@ module Reg(input clk, upZ,               input[ 3:0] indexZ, indexX, indexY,
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I, input en,
+module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
               output[3:0] op, output kind, throw, storing, deref_rhs, branch,
               output[4:0] vector);
 
-    assign {kind, storing, deref_rhs, Z, X, Y, op, I} = en ? insn : 32'b0;
-    assign vector = en ? insn[4:0] : 5'b0;
-    assign throw  = en & &insn[31:30];
-    assign branch = en & &Z & ~storing;
+    assign {kind, storing, deref_rhs, Z, X, Y, op, I} = insn;
+    assign vector = insn[4:0];
+    assign throw  = &insn[31:30];
+    assign branch = &Z & ~storing;
 
 endmodule
 
@@ -92,11 +92,10 @@ module Core(input clk, reset_n, trap, input wor `HALTTYPE halt, output strobe,
     // Instruction fetch happens on cycle 0
 
     // Decode and register reads happen as soon as instruction is ready
-    Decode decode(.Z ( indexZ ), .insn ( i_data      ), .storing   ( storing ),
-                  .X ( indexX ), .kind ( kind        ), .deref_rhs ( drhs    ),
-                  .Y ( indexY ), .op   ( op          ), .branch    ( jumping ),
-                  .I ( valueI ), .en   ( state != s5 ), .throw     ( throw   ),
-                                                        .vector    ( vector  ));
+    Decode decode(.Z ( indexZ ), .insn  ( i_data ), .storing   ( storing ),
+                  .X ( indexX ), .kind  ( kind   ), .deref_rhs ( drhs    ),
+                  .Y ( indexY ), .op    ( op     ), .branch    ( jumping ),
+                  .I ( valueI ), .throw ( throw  ), .vector    ( vector  ));
 
     // Execution (arithmetic operation) occurs on cycle 0
     wire en_ex = state == s0;
