@@ -22,8 +22,8 @@ module Tenyr(
 
     wire d_rw, d_strobe, trap, eib_halt;
     wire valid_clk, clk_vga, clk_core;
-    wire[31:0] i_addr, d_addr, i_data, out_data;
-    wire[31:0] d_to_slav;
+    wire[31:0] i_addr, i_data;
+    wire[31:0] d_addr, d_to_slav;
     wor [31:0] d_to_mast;
 
     wire _reset_n = ~reset;

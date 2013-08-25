@@ -66,9 +66,8 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
     wire[31:0] valueX, valueY, valueZ, irhs, rhs, tostore;
     wire[11:0] valueI;
     wire[ 4:0] vector;
-    reg [31:0] vect;
 
-    reg [31:0] r_irhs, r_data, next_pc;
+    reg [31:0] r_irhs, r_data, next_pc, v_addr;
     reg [3:0] state = sI;
 
     always @(posedge clk)
@@ -82,10 +81,10 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
             s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;  end
             s5: begin state <= s0; next_pc <= i_addr + 1;               end
             sE: begin state <= sR; r_irhs  <= `VECTOR_ADDR | vector;    end
-            sR: begin state <= sT; vect    <= d_in;   /* test this */   end
-            sF: begin state <= sT; vect    <= `TRAMP_BOTTOM;            end
+            sR: begin state <= sT; v_addr  <= d_in;   /* test this */   end
+            sF: begin state <= sT; v_addr  <= `TRAMP_BOTTOM;            end
             sT: begin state <= sW; r_irhs  <= i_addr; /* wait for */    end
-            sW: begin state <= s5; i_addr  <= vect; /* trap to fall */  end
+            sW: begin state <= s5; i_addr  <= v_addr; /* trap's fall */ end
             sI: begin state <= halt ? sI : s5; i_addr <= `RESETVECTOR;  end
         endcase
 
@@ -115,10 +114,10 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
 
     // Registers commit on cycle 4
     wire updateZ = !storing && state == s4;
-    Reg regs(.clk     ( clk         ), .indexX ( indexX ), .valueX ( valueX  ),
-             .next_pc ( next_pc     ), .indexY ( indexY ), .valueY ( valueY  ),
-                                       .indexZ ( indexZ ), .valueZ ( valueZ  ),
-                                       .writeZ ( rhs    ), .upZ    ( updateZ ));
+    Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX  ),
+             .next_pc ( next_pc ), .indexY ( indexY ), .valueY ( valueY  ),
+                                   .indexZ ( indexZ ), .valueZ ( valueZ  ),
+                                   .writeZ ( rhs    ), .upZ    ( updateZ ));
 
 endmodule
 
