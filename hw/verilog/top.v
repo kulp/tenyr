@@ -26,11 +26,8 @@ module Tenyr(
     wire[31:0] d_to_slav;
     wor [31:0] d_to_mast;
 
-    reg[3:0] startup = 0; // delay startup for a few clocks
-    wire _reset_n = startup[3] & ~reset;
-    always @(posedge clk_core) startup <= {startup,valid_clk};
+    wire _reset_n = ~reset;
 
-    assign halt[`HALT_TENYR] = ~startup[3];
     assign halt[`HALT_EIB] = eib_halt;
     assign Led[7:0] = halt;
 
@@ -65,12 +62,12 @@ module Tenyr(
     ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .BASE_A(`RESETVECTOR)
     ) ram(
-        .clka  ( clk_core  ), .clkb  ( clk_core   ),
-        .ena   ( d_strobe  ), .enb   ( startup[2] ),
-        .wea   ( d_rw      ), .web   ( 1'b0       ),
-        .addra ( d_addr    ), .addrb ( i_addr     ),
-        .dina  ( d_to_slav ), .dinb  ( 32'b0      ),
-        .douta ( d_to_mast ), .doutb ( i_data     )
+        .clka  ( clk_core  ), .clkb  ( clk_core ),
+        .ena   ( d_strobe  ), .enb   ( 1'b1     ),
+        .wea   ( d_rw      ), .web   ( 1'b0     ),
+        .addra ( d_addr    ), .addrb ( i_addr   ),
+        .dina  ( d_to_slav ), .dinb  ( 32'b0    ),
+        .douta ( d_to_mast ), .doutb ( i_data   )
     );
 
 // -----------------------------------------------------------------------------

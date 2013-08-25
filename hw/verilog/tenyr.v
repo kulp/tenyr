@@ -70,7 +70,6 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
 
     reg [31:0] r_irhs, r_data, next_pc;
     reg [3:0] state = sI;
-    assign halt[`HALT_EXEC] = 0; // TODO give EIB a register that pulls this
 
     always @(posedge clk)
         if (!reset_n)
