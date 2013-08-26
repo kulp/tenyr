@@ -58,8 +58,8 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
             output reg[31:0] i_addr, input[31:0] i_data, output mem_rw,
             output    [31:0] d_addr, input[31:0] d_in  , output[31:0] d_out);
 
-    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6,
-                    sE=7, sF=8, sR=9, sT=10, sW=11;
+    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, s6=7,
+                    sE=8, sF=9, sR=10, sT=11, sW=12;
 
     wire throw, kind, drhs, jumping, storing, loading, deref;
     wire[ 3:0] indexX, indexY, indexZ, op;
@@ -67,7 +67,7 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
     wire[11:0] valueI;
     wire[ 4:0] vector;
 
-    reg [31:0] r_irhs, r_data, next_pc, v_addr;
+    reg [31:0] r_irhs, r_data, next_pc, v_addr, insn;
     reg [3:0] state = sI;
 
     always @(posedge clk)
@@ -79,7 +79,9 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
             s2: begin state <= s3; /* compensate for slow multiplier */ end
             s3: begin state <= s4; r_data  <= d_in;                     end
             s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;  end
-            s5: begin state <= s0; next_pc <= i_addr + 1;               end
+            s5: begin state <= s6; next_pc <= i_addr + 1;               end
+            s6: begin state <= s0; insn    <= i_data; /* why extra ? */ end
+            // TODO return to instruction OF a trap, but AFTER a throw
             sE: begin state <= sR; r_irhs  <= `VECTOR_ADDR | vector;    end
             sR: begin state <= sT; v_addr  <= d_in;   /* test this */   end
             sF: begin state <= sT; v_addr  <= `TRAMP_BOTTOM;            end
@@ -91,7 +93,7 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
     // Instruction fetch happens on cycle 0
 
     // Decode and register reads happen as soon as instruction is ready
-    Decode decode(.Z ( indexZ ), .insn  ( i_data ), .storing   ( storing ),
+    Decode decode(.Z ( indexZ ), .insn  ( insn   ), .storing   ( storing ),
                   .X ( indexX ), .kind  ( kind   ), .deref_rhs ( drhs    ),
                   .Y ( indexY ), .op    ( op     ), .branch    ( jumping ),
                   .I ( valueI ), .throw ( throw  ), .vector    ( vector  ));
