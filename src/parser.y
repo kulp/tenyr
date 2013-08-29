@@ -82,6 +82,14 @@ extern void tenyr_pop_state(void *yyscanner);
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
 
+/* synonyms for literal string tokens */
+%token LSH "<<"
+%token RSH ">>"
+%token EQ "=="
+%token NEQ "<>"
+%token XORN "^~"
+%token ANDN "&~"
+
 %type <ce> const_expr pconst_expr preloc_expr greloc_expr
 %type <ce> reloc_expr const_atom eref here_atom here_expr phere_expr here
 %type <cl> reloc_expr_list
@@ -304,16 +312,16 @@ op
     | '-'   { $op = OP_SUBTRACT           ; }
     | '*'   { $op = OP_MULTIPLY           ; }
     | '<'   { $op = OP_COMPARE_LT         ; }
-    | EQ    { $op = OP_COMPARE_EQ         ; }
+    | "=="  { $op = OP_COMPARE_EQ         ; }
     | '>'   { $op = OP_COMPARE_GT         ; }
-    | NEQ   { $op = OP_COMPARE_NE         ; }
+    | "<>"  { $op = OP_COMPARE_NE         ; }
     | '|'   { $op = OP_BITWISE_OR         ; }
     | '&'   { $op = OP_BITWISE_AND        ; }
-    | ANDN  { $op = OP_BITWISE_ANDN       ; }
+    | "&~"  { $op = OP_BITWISE_ANDN       ; }
     | '^'   { $op = OP_BITWISE_XOR        ; }
-    | XORN  { $op = OP_BITWISE_XORN       ; }
-    | LSH   { $op = OP_SHIFT_LEFT         ; }
-    | RSH   { $op = OP_SHIFT_RIGHT_LOGICAL; }
+    | "^~"  { $op = OP_BITWISE_XORN       ; }
+    | "<<"  { $op = OP_SHIFT_LEFT         ; }
+    | ">>"  { $op = OP_SHIFT_RIGHT_LOGICAL; }
 
 
 arrow
