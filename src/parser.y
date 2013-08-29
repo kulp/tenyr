@@ -9,7 +9,6 @@
 
 #include "parser_global.h"
 #include "parser.h"
-#include "lexer.h"
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
@@ -43,6 +42,8 @@ static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
+extern void tenyr_push_state(int st, void *yyscanner);
+extern void tenyr_pop_state(void *yyscanner);
 %}
 
 %error-verbose
@@ -52,6 +53,10 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name);
 %lex-param { void *yyscanner }
 /* declare parse_data struct as opaque for bison 2.6 */
 %code requires { struct parse_data; }
+%code {
+    #define YY_HEADER_EXPORT_START_CONDITIONS 1
+    #include "lexer.h"
+}
 %parse-param { struct parse_data *pd }
 %name-prefix "tenyr_"
 
@@ -165,11 +170,11 @@ insn[outer]
         }
 
 insn_inner
-    : lhs_plain TOL rhs_plain
+    : lhs_plain tol rhs_plain
         {   $insn_inner = make_insn_general(pd, $lhs_plain, 0, $rhs_plain);
             free($rhs_plain);
             free($lhs_plain); }
-    | lhs_plain TOR rhs_plain
+    | lhs_plain tor rhs_plain
         {   struct expr *t0 = make_expr_type0($rhs_plain->x, OP_BITWISE_OR, 0, 0, NULL),
                         *t1 = make_expr_type0($lhs_plain->x, OP_BITWISE_OR, 0, 0, NULL);
             $insn_inner = make_insn_general(pd, t0, 0, t1);
@@ -230,7 +235,10 @@ reloc_expr_list[outer]
 
 lhs_plain
     : regname
-        {   ($lhs_plain = malloc(sizeof *$lhs_plain))->x = $regname;
+        {   /* this isn't semantically the ideal place to start looking for
+               arrows, but it works */
+            tenyr_push_state(needarrow, pd->scanner);
+            ($lhs_plain = malloc(sizeof *$lhs_plain))->x = $regname;
             $lhs_plain->deref = 0; }
 
 lhs_deref
@@ -263,7 +271,7 @@ rhs_plain
     | unary_op greloc_expr /* responsible for a S/R conflict */
         { $rhs_plain = make_expr_type1(0, $unary_op, $greloc_expr, 0); }
     | greloc_expr '+' regname[y]
-        {   $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, $y); }
+        { $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, $y); }
 
 unary_op
     : '~' { $unary_op = OP_BITWISE_XORN; }
@@ -309,8 +317,11 @@ op
 
 
 arrow
-    : TOL { $arrow = 0; }
-    | TOR { $arrow = 1; }
+    : tol { $arrow = 0; }
+    | tor { $arrow = 1; }
+
+tol : TOL { tenyr_pop_state(pd->scanner); }
+tor : TOR { tenyr_pop_state(pd->scanner); }
 
 reloc_op
     : '+' { $reloc_op = '+'; }

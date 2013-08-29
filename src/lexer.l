@@ -34,6 +34,7 @@ static int translate_escape(int what);
 %option extra-type="struct parse_data *"
 %option prefix="tenyr_"
 
+%s needarrow
 %x charlit charend charesc comment
 
 regname ([A-P])
@@ -73,7 +74,7 @@ regnum  {hexnum}|{octnum}|{decnum}
 "<>"                    { return NEQ;  }
 "^~"                    { return XORN; }
 ">>"                    { return RSH;  }
-"<-"                    { return TOL;  }
+<needarrow>"<-"         { return TOL;  }
 "->"                    { return TOR;  }
 
 {binnum}                { yylval->i = numberise(&yytext[2],  2); return BITSTRING; }
@@ -128,5 +129,15 @@ static int translate_escape(int what)
         case 'v' : return '\v';
         default: return -1;
     }
+}
+
+void tenyr_push_state(int st, void *yyscanner)
+{
+    yy_push_state(st, yyscanner);
+}
+
+void tenyr_pop_state(void *yyscanner)
+{
+    yy_pop_state(yyscanner);
 }
 
