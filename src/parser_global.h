@@ -11,6 +11,7 @@
 
 struct parse_data {
     void *scanner;
+    int errored;
     struct {
         unsigned savecol;
         char saveline[LINE_LEN];

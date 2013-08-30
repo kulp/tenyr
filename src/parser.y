@@ -453,6 +453,7 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
             locp->first_line, locp->first_column,
             tenyr_get_text(pd->scanner));
 
+    pd->errored++;
     return 0;
 }
 

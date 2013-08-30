@@ -398,6 +398,9 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         tenyr_set_in(in, pd->scanner);
 
     int result = tenyr_parse(pd);
+    if (pd->errored)
+        fatal(0, "Encountered %d error%s while parsing, bailing",
+                pd->errored, &"s"[pd->errored == 1]);
     if (!result && f)
         assembly_inner(pd, out, f);
     tenyr_lex_destroy(pd->scanner);
