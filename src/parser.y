@@ -119,7 +119,10 @@ extern void tenyr_pop_state(void *yyscanner);
         int32_t i;
         int is_bits;    ///< if this immediate should be treated as a bitstring
     } imm;
-    char str[LINE_LEN];
+    struct strbuf {
+        int pos, len;
+        char buf[LINE_LEN];
+    } str;
     char chr;
     int op;
     int arrow;
@@ -137,7 +140,8 @@ string_or_data[outer]
     | data
     | symbol ':' opt_nl string_or_data[inner]
         {   $outer = $inner;
-            struct symbol *n = add_symbol_to_insn(&yyloc, $inner->insn, $symbol);
+            struct symbol *n = add_symbol_to_insn(&yyloc, $inner->insn,
+                    $symbol.buf);
             if (check_add_symbol(&yyloc, pd, n))
                 YYABORT;
         }
@@ -180,7 +184,7 @@ insn[outer]
     | insn_inner
     | symbol ':' opt_nl insn[inner]
         {   $outer = $inner;
-            struct symbol *n = add_symbol_to_insn(&yyloc, $inner, $symbol);
+            struct symbol *n = add_symbol_to_insn(&yyloc, $inner, $symbol.buf);
             if (check_add_symbol(&yyloc, pd, n))
                 YYABORT;
         }
@@ -212,10 +216,9 @@ string[outer]
         {   $outer = NULL; }
     | STRING string[inner]
         {   $outer = calloc(1, sizeof *$outer);
-            $outer->len = strlen($STRING);
+            $outer->len = $STRING.len;
             $outer->str = malloc($outer->len + 1);
-            // skip quotes
-            strcopy($outer->str, $STRING, $outer->len + 1);
+            strcopy($outer->str, $STRING.buf, $outer->len + 1);
             $outer->right = $inner; }
 
 utf32
@@ -234,7 +237,7 @@ directive
     : GLOBAL symbol_list
         {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_GLOBAL, $symbol_list); }
     | SET SYMBOL ',' reloc_expr
-        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL, $reloc_expr); }
+        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL.buf, $reloc_expr); }
 
 symbol_list
     : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
@@ -406,10 +409,10 @@ const_atom
     | LOCAL
         {   $const_atom = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS);
             struct symbol *s;
-            if ((s = symbol_find(pd->symbols, $LOCAL))) {
+            if ((s = symbol_find(pd->symbols, $LOCAL.buf))) {
                 $const_atom->symbol = s;
             } else {
-                strcopy($const_atom->symbolname, $LOCAL, sizeof $const_atom->symbolname);
+                strcopy($const_atom->symbolname, $LOCAL.buf, sizeof $const_atom->symbolname);
             }
         }
 
@@ -425,10 +428,10 @@ eref
     : '@' SYMBOL
         {   $eref = make_const_expr(CE_EXT, 0, NULL, NULL, IMM_IS_BITS);
             struct symbol *s;
-            if ((s = symbol_find(pd->symbols, $SYMBOL))) {
+            if ((s = symbol_find(pd->symbols, $SYMBOL.buf))) {
                 $eref->symbol = s;
             } else {
-                strcopy($eref->symbolname, $SYMBOL, sizeof $eref->symbolname);
+                strcopy($eref->symbolname, $SYMBOL.buf, sizeof $eref->symbolname);
             }
         }
 
@@ -733,15 +736,15 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
     switch (type) {
         case D_GLOBAL:
             result->type = type;
-            result->data = malloc(SYMBOL_LEN);
-            const char *symbol = va_arg(vl,const char *);
-            strcopy(result->data, symbol, SYMBOL_LEN);
+            const struct strbuf symbol = va_arg(vl,const struct strbuf);
+            result->data = malloc(symbol.len + 1);
+            strcopy(result->data, symbol.buf, symbol.len + 1);
             break;
         case D_SET: {
             result->type = type;
             // TODO stop allocating datum_D_SET if we don't need it
             struct datum_D_SET *d = result->data = malloc(sizeof *d);
-            const char *symbol = va_arg(vl,const char *);
+            const struct strbuf symbol = va_arg(vl,const struct strbuf);
 
             struct symbol *n = calloc(1, sizeof *n);
             n->column   = locp->first_column;
@@ -750,7 +753,11 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             n->next     = NULL;
             n->ce       = va_arg(vl,struct const_expr *);
             n->unique   = 0;
-            strcopy(n->name, symbol, sizeof n->name);
+            if (symbol.len > sizeof n->name) {
+                tenyr_error(locp, pd, "symbol too long in .set directive");
+                return NULL;
+            }
+            strcopy(n->name, symbol.buf, symbol.len + 1);
 
             d->symbol = n;
 

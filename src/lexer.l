@@ -68,15 +68,15 @@ illegal             { return ILLEGAL; }
 {symbol}            { savestr(yyscanner); return SYMBOL; }
 {local}             { savestr(yyscanner); return LOCAL; }
 
-\"                  PUSH(string);
+\"                  { PUSH(string); yylval->str.pos = yylval->str.len = 0; }
 <string>{
     /* avoid returning STRING multiple times ; build a string here instead */
-    \"              POP;
+    \"              { POP; yylval->str.pos = 0; return STRING; }
     /* TODO make \\ push a new state, but then we need somewhere to put a
      * character if we are in the middle of constructing a string ; setting
      * yylval->i will clobber our string */
-    \\{charesc}     { savechr(translate_escape(yytext[1]), yyscanner); return STRING; }
-    [^\\"]+         { savestr(yyscanner); return STRING; }
+    \\{charesc}     savechr(translate_escape(yytext[1]), yyscanner);
+    [^\\"]+         savestr(yyscanner);
     .               tenyr_error(yylloc, yyextra, "unexpected string contents");
 }
 
@@ -136,13 +136,15 @@ static int savestr(yyscan_t yyscanner)
     YYLTYPE *lloc    = yyget_lloc(yyscanner);
     const char *text = yyget_text(yyscanner);
     void *extra      = yyget_extra(yyscanner);
+    struct strbuf *s = &lval->str;
 
-    if (len >= (signed)sizeof lval->str) {
+    if (s->pos + len >= (signed)sizeof s->buf) {
         tenyr_error(lloc, extra, "token too long");
         return 1;
     } else {
-        memset(lval->str, 0, sizeof lval->str);
-        strcopy(lval->str, text, len + 1);
+        memcpy(&s->buf[s->pos], text, len + 1);
+        s->pos += len;
+        s->len += len;
         return 0;
     }
 }
@@ -151,10 +153,11 @@ static int savechr(int ch, yyscan_t yyscanner)
 {
     int len          = 1;
     YYSTYPE *lval    = yyget_lval(yyscanner);
+    struct strbuf *s = &lval->str;
 
-    // TODO support reporting '\0' (don't use strlen() in parser)
-    lval->str[0] = ch;
-    lval->str[1] = '\0';
+    s->buf[s->pos++] = ch;
+    s->len++;
+
     return 0;
 }
 

@@ -54,7 +54,8 @@ int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp
 
 static inline char *strcopy(char *dest, const char *src, size_t sz)
 {
-    char *result = strncpy(dest, src, sz);
+    // Use memcpy() to copy past embedded NUL characters, but force NUL term
+    char *result = memcpy(dest, src, sz);
     dest[sz - 1] = '\0';
     return result;
 }
