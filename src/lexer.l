@@ -26,6 +26,9 @@ static int translate_escape(int what);
         yycolumn += yyleng; \
     } while (0);
 
+#define PUSH(State) yy_push_state(State, yyscanner)
+#define POP         yy_pop_state(yyscanner)
+
 %}
 
 %option reentrant bison-bridge bison-locations stack
@@ -35,7 +38,8 @@ static int translate_escape(int what);
 %option prefix="tenyr_"
 
 %s needarrow
-%x charlit charend charesc comment
+%x charlit charend
+%x comment linecomment
 
 regname ([A-P])
 /* don't permit collision with regname */
@@ -51,9 +55,9 @@ regnum  {hexnum}|{octnum}|{decnum}
 
 %%
 
-"\t"                    { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
-"\n"                    { saveline[savecol = 0] = 0; }
-"illegal"               { return ILLEGAL; }
+\t                      { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
+\n                      { saveline[savecol = 0] = 0; }
+illegal                 { return ILLEGAL; }
 
 {regname}               { yylval->chr = yytext[0]; return REGISTER; }
 {symbol}                { savestr(yyscanner); return SYMBOL; }
@@ -82,18 +86,31 @@ regnum  {hexnum}|{octnum}|{decnum}
 {decnum}                { yylval->i = numberise(&yytext[0], 10); return INTEGER; }
 {hexnum}                { yylval->i = numberise(&yytext[2], 16); return BITSTRING; }
 
-[\t\f\v\r ]+            ;
+[\t\f\v\r ]+            ; /* ignored whitespace */
 
-"//".*$                 ; // c99-style comments
-"#".*$                  ; // bash-style comments
-"/*"                    yy_push_state(comment, yyscanner);
-<comment>"*/"           yy_pop_state(yyscanner);
+"//"|"#"                PUSH(linecomment);
+<linecomment>{
+    \\\r?\n             ; /* escaped newline */
+    \r?\n               POP; /* pop linecomment, reveal INITIAL */
+    .                   ; /* ignored content */
+}
 
-"'"                     BEGIN charlit;
-<charend>"'"            BEGIN INITIAL;
-<charlit>\\             BEGIN charesc;
-<charlit>.              { yylval->i = yytext[0]; BEGIN charend; return CHARACTER; }
-<charesc>[nbrtfv\\]     { yylval->i = translate_escape(yytext[0]); BEGIN charend; return CHARACTER; }
+"/*"                    PUSH(comment);
+<comment>{
+    "*/"                POP; /* pop comment, reveal INITIAL */
+    .                   ; /* ignored content */
+}
+
+"'"                     {   PUSH(charend); PUSH(charlit); }
+<charlit>{
+    \\[nbrtfv\\]        {   yylval->i = translate_escape(yytext[1]);
+                            POP; /* pop charlit, reveal charend */
+                            return CHARACTER; }
+    .                   {   yylval->i = yytext[0];
+                            POP; /* pop charend, reveal INITIAL */
+                            return CHARACTER; }
+}
+<charend>"'"            {   POP; }
 
 .                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
 
@@ -133,11 +150,11 @@ static int translate_escape(int what)
 
 void tenyr_push_state(int st, void *yyscanner)
 {
-    yy_push_state(st, yyscanner);
+    PUSH(st);
 }
 
 void tenyr_pop_state(void *yyscanner)
 {
-    yy_pop_state(yyscanner);
+    POP;
 }
 
