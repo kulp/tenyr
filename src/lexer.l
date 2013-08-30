@@ -40,7 +40,7 @@ static int translate_escape(int what);
 
 %s ignore_nl
 %s needarrow
-%x charlit charend
+%x charlit charend charesc
 %x comment linecomment
 %x string
 
@@ -57,7 +57,7 @@ decnum  [0-9_]+
 bitstr  {hexnum}|{octnum}|{binnum}
 self    [][|&+*^<>.,:@()~;/-]
 strcon  ([^"]|\\\")
-charesc [\\"0nbrtfv]
+escchar [\\"0nbrtfv]
 
 %%
 
@@ -75,7 +75,7 @@ illegal             { return ILLEGAL; }
     /* TODO make \\ push a new state, but then we need somewhere to put a
      * character if we are in the middle of constructing a string ; setting
      * yylval->i will clobber our string */
-    \\{charesc}     savechr(translate_escape(yytext[1]), yyscanner);
+    \\{escchar}     savechr(translate_escape(yytext[1]), yyscanner);
     [^\\"]+         savestr(yyscanner);
     .               tenyr_error(yylloc, yyextra, "unexpected string contents");
 }
@@ -116,10 +116,14 @@ illegal             { return ILLEGAL; }
     .               ; /* ignored content */
 }
 
-"'"                 { PUSH(charend); PUSH(charlit); }
+"'"                 { PUSH(charend); PUSH(charlit); yylval->str.pos = 0; }
 <charlit>{
-    \\{charesc}     { yylval->i = translate_escape(yytext[1]); POP; }
-    .               { yylval->i = yytext[0]; POP; }
+    \\              PUSH(charesc);
+    .               { savechr(yytext[0], yyscanner); POP; }
+}
+<charesc>{
+    {escchar}       { savechr(translate_escape(yytext[0]), yyscanner); POP; POP; }
+    .               tenyr_error(yylloc, yyextra, "bad escape character");
 }
 <charend>"'"        { POP; return CHARACTER; }
 

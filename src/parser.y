@@ -76,8 +76,8 @@ extern void tenyr_pop_state(void *yyscanner);
 %token <chr> '+' '-' '*' '~'
 %token <chr> ',' ';'
 %token <arrow> TOL TOR
-%token <str> SYMBOL LOCAL STRING
-%token <i> INTEGER CHARACTER BITSTRING
+%token <str> SYMBOL LOCAL STRING CHARACTER
+%token <i> INTEGER BITSTRING
 %token <chr> REGISTER
 %token ILLEGAL
 %token WORD ASCII UTF32 GLOBAL SET
@@ -315,7 +315,7 @@ immediate
         {   $immediate.i = $BITSTRING;
             $immediate.is_bits = 1; }
     | CHARACTER
-        {   $immediate.i = $CHARACTER;
+        {   $immediate.i = $CHARACTER.buf[$CHARACTER.pos - 1];
             $immediate.is_bits = 1; }
 
 op
