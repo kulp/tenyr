@@ -204,10 +204,10 @@ string[outer]
         {   $outer = NULL; }
     | STRING string[inner]
         {   $outer = calloc(1, sizeof *$outer);
-            $outer->len = strlen($STRING) - 2; // drop quotes
+            $outer->len = strlen($STRING);
             $outer->str = malloc($outer->len + 1);
             // skip quotes
-            strcopy($outer->str, $STRING + 1, $outer->len + 1);
+            strcopy($outer->str, $STRING, $outer->len + 1);
             $outer->right = $inner; }
 
 utf32

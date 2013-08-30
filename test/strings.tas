@@ -5,3 +5,5 @@
 .ascii "hello, world!"
 .ascii "hello, world!plus al this stuff"
 .ascii "this is a longish string, which is definitely longer than 32 characters"
+.utf32 "this is a string with embedded \"quotes\""
+.utf32 "this is a string with embedded \b\v\r\n control \t characters\0other things"

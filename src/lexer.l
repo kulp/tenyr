@@ -10,6 +10,7 @@
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
 static int savestr(yyscan_t yyscanner);
+static int savechr(int ch, yyscan_t yyscanner);
 static int translate_escape(int what);
 
 #define savecol  yyextra->lexstate.savecol
@@ -40,6 +41,7 @@ static int translate_escape(int what);
 %s needarrow
 %x charlit charend
 %x comment linecomment
+%x string
 
 regname [A-P]
 /* don't permit collision with regname */
@@ -53,6 +55,8 @@ binnum  "0b"[01_]+
 decnum  [0-9_]+
 bitstr  {hexnum}|{octnum}|{binnum}
 self    [][|&+*^<>.,:@()~;/-]
+strcon  ([^"]|\\\")
+charesc [\\"0nbrtfv]
 
 %%
 
@@ -63,7 +67,18 @@ illegal             { return ILLEGAL; }
 {regname}           { yylval->chr = yytext[0]; return REGISTER; }
 {symbol}            { savestr(yyscanner); return SYMBOL; }
 {local}             { savestr(yyscanner); return LOCAL; }
-"\""{string}"\""    { savestr(yyscanner); return STRING; }
+
+\"                  PUSH(string);
+<string>{
+    /* avoid returning STRING multiple times ; build a string here instead */
+    \"              POP;
+    /* TODO make \\ push a new state, but then we need somewhere to put a
+     * character if we are in the middle of constructing a string ; setting
+     * yylval->i will clobber our string */
+    \\{charesc}     { savechr(translate_escape(yytext[1]), yyscanner); return STRING; }
+    [^\\"]+         { savestr(yyscanner); return STRING; }
+    .               tenyr_error(yylloc, yyextra, "unexpected string contents");
+}
 
 ".word"             { return WORD; }
 ".ascii"            { return ASCII; }
@@ -101,16 +116,12 @@ illegal             { return ILLEGAL; }
     .               ; /* ignored content */
 }
 
-"'"                 {   PUSH(charend); PUSH(charlit); }
+"'"                 { PUSH(charend); PUSH(charlit); }
 <charlit>{
-    \\[nbrtfv\\]    {   yylval->i = translate_escape(yytext[1]);
-                        POP; /* pop charlit, reveal charend */
-                        return CHARACTER; }
-    .               {   yylval->i = yytext[0];
-                        POP; /* pop charend, reveal INITIAL */
-                        return CHARACTER; }
+    \\{charesc}     { yylval->i = translate_escape(yytext[1]); POP; }
+    .               { yylval->i = yytext[0]; POP; }
 }
-<charend>"'"        POP;
+<charend>"'"        { POP; return CHARACTER; }
 
 .                   tenyr_error(yylloc, yyextra, "unexpected character");
 
@@ -134,10 +145,23 @@ static int savestr(yyscan_t yyscanner)
     }
 }
 
+static int savechr(int ch, yyscan_t yyscanner)
+{
+    int len          = 1;
+    YYSTYPE *lval    = yyget_lval(yyscanner);
+
+    // TODO support reporting '\0' (don't use strlen() in parser)
+    lval->str[0] = ch;
+    lval->str[1] = '\0';
+    return 0;
+}
+
 static int translate_escape(int what)
 {
     switch (what) {
         case '\\': return '\\';
+        case '"' : return '\"';
+        case '0' : return '\0';
         case 'b' : return '\b';
         case 'f' : return '\f';
         case 'n' : return '\n';
