@@ -28,6 +28,7 @@ static int translate_escape(int what);
     } while (0);
 
 #define PUSH(State) yy_push_state(State, yyscanner)
+#define DUP         yy_push_state(yy_top_state(yyscanner), yyscanner)
 #define POP         yy_pop_state(yyscanner)
 
 %}
@@ -72,12 +73,8 @@ illegal             { return ILLEGAL; }
 <string>{
     /* avoid returning STRING multiple times ; build a string here instead */
     \"              { POP; yylval->str.pos = 0; return STRING; }
-    /* TODO make \\ push a new state, but then we need somewhere to put a
-     * character if we are in the middle of constructing a string ; setting
-     * yylval->i will clobber our string */
-    \\{escchar}     savechr(translate_escape(yytext[1]), yyscanner);
+    \\              { DUP; /* because charesc double-POPs */ PUSH(charesc); }
     [^\\"]+         savestr(yyscanner);
-    .               tenyr_error(yylloc, yyextra, "unexpected string contents");
 }
 
 ".word"             { PUSH(ignore_nl); return WORD; }
@@ -122,6 +119,7 @@ illegal             { return ILLEGAL; }
     .               { savechr(yytext[0], yyscanner); POP; }
 }
 <charesc>{
+    \r?\n           POP; /* escaped newline */
     {escchar}       { savechr(translate_escape(yytext[0]), yyscanner); POP; POP; }
     .               tenyr_error(yylloc, yyextra, "bad escape character");
 }
@@ -135,6 +133,7 @@ illegal             { return ILLEGAL; }
 
 static int savestr(yyscan_t yyscanner)
 {
+    // savestr() appends a string piece into a buffer
     int len          = yyget_leng(yyscanner);
     YYSTYPE *lval    = yyget_lval(yyscanner);
     YYLTYPE *lloc    = yyget_lloc(yyscanner);
@@ -155,6 +154,7 @@ static int savestr(yyscan_t yyscanner)
 
 static int savechr(int ch, yyscan_t yyscanner)
 {
+    // savechr() appends a character into the string-building buffer
     int len          = 1;
     YYSTYPE *lval    = yyget_lval(yyscanner);
     struct strbuf *s = &lval->str;

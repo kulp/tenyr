@@ -1,13 +1,17 @@
-B <- 'A'
-B <- 'a'
-B <- 'Z'
-B <- 'z'
-B <- ('A' - 'a')
-B <- ('a' - 'A')
-B <- ('a' - 0x20)
+A <- 'A'
+A <- 'a'
+A <- 'Z'
+A <- 'z'
+A <- ('A' - 'a')
+A <- ('a' - 'A')
+A <- ('a' - 0x20)
 .word ' '
 .word '\n'
 .word '\b'
 .word '\t'
 .word '\r'
 .word '\\'
+.word '\
+a'
+.word '\
+\\'
