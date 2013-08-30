@@ -64,11 +64,11 @@ extern void tenyr_pop_state(void *yyscanner);
 
 /* precedence rules only matter in constant expressions */
 %left '|'
-%left '^' XORN
-%left '&' ANDN
-%left EQ NEQ
+%left '^' "^~"
+%left '&' "&~"
+%left "==" "<>"
 %left '<' '>'
-%left LSH RSH
+%left "<<" ">>"
 %left '+' '-'
 %left '*' '/'
 
@@ -363,10 +363,10 @@ reloc_expr[outer]
 
 const_op
     : reloc_op
-    | '*' { $const_op = '*'; }
-    | '/' { $const_op = '/'; }
-    | '^' { $const_op = '^'; }
-    | LSH { $const_op = LSH; }
+    | '*'  { $const_op = '*'; }
+    | '/'  { $const_op = '/'; }
+    | '^'  { $const_op = '^'; }
+    | "<<" { $const_op = LSH; }
 
 here_atom
     : here
