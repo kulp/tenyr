@@ -38,6 +38,7 @@ static int translate_escape(int what);
 %option extra-type="struct parse_data *"
 %option prefix="tenyr_"
 
+%s ignore_nl
 %s needarrow
 %x charlit charend
 %x comment linecomment
@@ -61,7 +62,6 @@ charesc [\\"0nbrtfv]
 %%
 
 \t                  { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
-\n                  { saveline[savecol = 0] = 0; }
 illegal             { return ILLEGAL; }
 
 {regname}           { yylval->chr = yytext[0]; return REGISTER; }
@@ -80,11 +80,11 @@ illegal             { return ILLEGAL; }
     .               tenyr_error(yylloc, yyextra, "unexpected string contents");
 }
 
-".word"             { return WORD; }
-".ascii"            { return ASCII; }
-".utf32"            { return UTF32; }
-".global"           { return GLOBAL; }
-".set"              { return SET; }
+".word"             { PUSH(ignore_nl); return WORD; }
+".ascii"            { PUSH(ignore_nl); return ASCII; }
+".utf32"            { PUSH(ignore_nl); return UTF32; }
+".global"           { PUSH(ignore_nl); return GLOBAL; }
+".set"              { PUSH(ignore_nl); return SET; }
 
 {self}              { return yytext[0]; }
 
@@ -106,7 +106,7 @@ illegal             { return ILLEGAL; }
 "//"|"#"            PUSH(linecomment);
 <linecomment>{
     \\\r?\n         ; /* escaped newline */
-    \r?\n           POP; /* pop linecomment, reveal INITIAL */
+    \r?\n           { POP; return '\n'; }
     .               ; /* ignored content */
 }
 
@@ -122,6 +122,8 @@ illegal             { return ILLEGAL; }
     .               { yylval->i = yytext[0]; POP; }
 }
 <charend>"'"        { POP; return CHARACTER; }
+
+<*>\n               { saveline[savecol = 0] = 0; return '\n'; }
 
 .                   tenyr_error(yylloc, yyextra, "unexpected character");
 

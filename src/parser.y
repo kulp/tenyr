@@ -135,42 +135,50 @@ string_or_data[outer]
     : ascii
     | utf32
     | data
-    | symbol ':' string_or_data[inner]
+    | symbol ':' opt_nl string_or_data[inner]
         {   $outer = $inner;
             struct symbol *n = add_symbol_to_insn(&yyloc, $inner->insn, $symbol);
             if (check_add_symbol(&yyloc, pd, n))
                 YYABORT;
         }
 
+opt_nl
+    : '\n' opt_nl
+    | /* empty */
+
 program[outer]
     :   /* empty */
         {   $outer = calloc(1, sizeof *$outer);
             // dummy instruction permits capturing previous instruction from $outer->prev
         }
-    | ';' program[inner]
+    | sep program[inner]
         {   $outer = $inner; }
-    | string_or_data program[inner]
+    | string_or_data sep program[inner]
         {   struct instruction_list *p = $string_or_data, *i = $inner;
             while (p->next) p = p->next;
             p->next = i;
             i->prev = p;
             $outer = $string_or_data;
         }
-    | directive program[inner]
+    | directive sep program[inner]
         {   $outer = $inner;
             handle_directive(pd, &yylloc, $directive, $inner); }
-    | insn program[inner]
+    | insn sep program[inner]
         {   $outer = calloc(1, sizeof *$outer);
             $inner->prev = $outer;
             $outer->next = $inner;
             $outer->insn = $insn; }
+
+sep
+    : '\n'
+    | ';'
 
 insn[outer]
     : ILLEGAL
         {   $outer = calloc(1, sizeof *$outer);
             $outer->u.word = -1; }
     | insn_inner
-    | symbol ':' insn[inner]
+    | symbol ':' opt_nl insn[inner]
         {   $outer = $inner;
             struct symbol *n = add_symbol_to_insn(&yyloc, $inner, $symbol);
             if (check_add_symbol(&yyloc, pd, n))
@@ -212,21 +220,21 @@ string[outer]
 
 utf32
     : UTF32 string
-        {   $utf32 = make_utf32($string); }
+        {   tenyr_pop_state(pd->scanner); $utf32 = make_utf32($string); }
 
 ascii
     : ASCII string
-        {   $ascii = make_ascii($string); }
+        {   tenyr_pop_state(pd->scanner); $ascii = make_ascii($string); }
 
 data
     : WORD reloc_expr_list
-        {   $data = make_data(pd, $reloc_expr_list); }
+        {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $reloc_expr_list); }
 
 directive
     : GLOBAL symbol_list
-        {   $directive = make_directive(pd, &yylloc, D_GLOBAL, $symbol_list); }
+        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_GLOBAL, $symbol_list); }
     | SET SYMBOL ',' reloc_expr
-        {   $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL, $reloc_expr); }
+        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL, $reloc_expr); }
 
 symbol_list
     : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
