@@ -127,7 +127,7 @@ illegal             { return ILLEGAL; }
 
 <*>\n               { saveline[savecol = 0] = 0; return '\n'; }
 
-.                   tenyr_error(yylloc, yyextra, "unexpected character");
+<*>.                tenyr_error(yylloc, yyextra, "unexpected character");
 
 %%
 
