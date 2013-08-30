@@ -27,9 +27,12 @@ static int translate_escape(int what);
         yycolumn += yyleng; \
     } while (0);
 
+#define YSTR        yylval->str
 #define PUSH(State) yy_push_state(State, yyscanner)
 #define DUP         yy_push_state(yy_top_state(yyscanner), yyscanner)
 #define POP         yy_pop_state(yyscanner)
+#define RESETSTR    YSTR.pos = YSTR.len = 0
+#define DONESTR     do { YSTR.len = YSTR.pos; YSTR.pos = 0; } while (0)
 
 %}
 
@@ -66,13 +69,13 @@ escchar [\\"0nbrtfv]
 illegal             { return ILLEGAL; }
 
 {regname}           { yylval->chr = yytext[0]; return REGISTER; }
-{symbol}            { savestr(yyscanner); return SYMBOL; }
-{local}             { savestr(yyscanner); return LOCAL; }
+{symbol}            { RESETSTR; savestr(yyscanner); return SYMBOL; }
+{local}             { RESETSTR; savestr(yyscanner); return LOCAL; }
 
-\"                  { PUSH(string); yylval->str.pos = yylval->str.len = 0; }
+\"                  { RESETSTR; PUSH(string); }
 <string>{
     /* avoid returning STRING multiple times ; build a string here instead */
-    \"              { POP; yylval->str.pos = 0; return STRING; }
+    \"              { POP; DONESTR; return STRING; }
     \\              { DUP; /* because charesc double-POPs */ PUSH(charesc); }
     [^\\"]+         savestr(yyscanner);
 }
@@ -113,7 +116,7 @@ illegal             { return ILLEGAL; }
     .               ; /* ignored content */
 }
 
-"'"                 { PUSH(charend); PUSH(charlit); yylval->str.pos = 0; }
+"'"                 { PUSH(charend); PUSH(charlit); DONESTR; }
 <charlit>{
     \\              PUSH(charesc);
     .               { savechr(yytext[0], yyscanner); POP; }
