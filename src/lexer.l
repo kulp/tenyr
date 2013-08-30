@@ -41,78 +41,78 @@ static int translate_escape(int what);
 %x charlit charend
 %x comment linecomment
 
-regname ([A-P])
+regname [A-P]
 /* don't permit collision with regname */
-symbol   ([A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30})
+symbol  [A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30}
 /* local symbols start with ".L" */
-local   (\.L[A-Z0-9_]{1,31})
-string  (([^"]|\\\")+)
-hexnum  ("0"[xX][0-9a-fA-F_]+)
-octnum  ("0"[0-7_]+)
-binnum  ("0"[bB][01_]+)
-decnum  ([0-9_]+)
-regnum  {hexnum}|{octnum}|{decnum}
+local   \.L[A-Z0-9_]{1,31}
+string  ([^"]|\\\")+
+hexnum  "0x"[0-9a-f_]+
+octnum  "0"[0-7_]+
+binnum  "0b"[01_]+
+decnum  [0-9_]+
+bitstr  {hexnum}|{octnum}|{binnum}
+self    [][|&+*^<>.,:@()~;/-]
 
 %%
 
-\t                      { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
-\n                      { saveline[savecol = 0] = 0; }
-illegal                 { return ILLEGAL; }
+\t                  { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
+\n                  { saveline[savecol = 0] = 0; }
+illegal             { return ILLEGAL; }
 
-{regname}               { yylval->chr = yytext[0]; return REGISTER; }
-{symbol}                { savestr(yyscanner); return SYMBOL; }
-{local}                 { savestr(yyscanner); return LOCAL; }
-"\""{string}"\""        { savestr(yyscanner); return STRING; }
+{regname}           { yylval->chr = yytext[0]; return REGISTER; }
+{symbol}            { savestr(yyscanner); return SYMBOL; }
+{local}             { savestr(yyscanner); return LOCAL; }
+"\""{string}"\""    { savestr(yyscanner); return STRING; }
 
-".word"                 { return WORD; }
-".ascii"                { return ASCII; }
-".utf32"                { return UTF32; }
-".global"               { return GLOBAL; }
-".set"                  { return SET; }
+".word"             { return WORD; }
+".ascii"            { return ASCII; }
+".utf32"            { return UTF32; }
+".global"           { return GLOBAL; }
+".set"              { return SET; }
 
-[][|&+*^<>.,:@()~;/-]   { return yytext[0]; }
+{self}              { return yytext[0]; }
 
-"<<"                    { return LSH;  }
-"=="                    { return EQ;   }
-"&~"                    { return ANDN; }
-"<>"                    { return NEQ;  }
-"^~"                    { return XORN; }
-">>"                    { return RSH;  }
-<needarrow>"<-"         { return TOL;  }
-"->"                    { return TOR;  }
+"<<"                { return LSH;  }
+"=="                { return EQ;   }
+"&~"                { return ANDN; }
+"<>"                { return NEQ;  }
+"^~"                { return XORN; }
+">>"                { return RSH;  }
+<needarrow>"<-"     { return TOL;  }
+"->"                { return TOR;  }
 
-{binnum}                { yylval->i = numberise(&yytext[2],  2); return BITSTRING; }
-{octnum}                { yylval->i = numberise(&yytext[1],  8); return BITSTRING; }
-{decnum}                { yylval->i = numberise(&yytext[0], 10); return INTEGER; }
-{hexnum}                { yylval->i = numberise(&yytext[2], 16); return BITSTRING; }
+{hexnum}|{octnum}   { yylval->i = numberise(&yytext[0],  0); return BITSTRING; }
+{binnum}            { yylval->i = numberise(&yytext[2],  2); return BITSTRING; }
+{decnum}            { yylval->i = numberise(&yytext[0], 10); return INTEGER; }
 
-[\t\f\v\r ]+            ; /* ignored whitespace */
+[\t\f\v\r ]+        ; /* ignored whitespace */
 
-"//"|"#"                PUSH(linecomment);
+"//"|"#"            PUSH(linecomment);
 <linecomment>{
-    \\\r?\n             ; /* escaped newline */
-    \r?\n               POP; /* pop linecomment, reveal INITIAL */
-    .                   ; /* ignored content */
+    \\\r?\n         ; /* escaped newline */
+    \r?\n           POP; /* pop linecomment, reveal INITIAL */
+    .               ; /* ignored content */
 }
 
-"/*"                    PUSH(comment);
+"/*"                PUSH(comment);
 <comment>{
-    "*/"                POP; /* pop comment, reveal INITIAL */
-    .                   ; /* ignored content */
+    "*/"            POP; /* pop comment, reveal INITIAL */
+    .               ; /* ignored content */
 }
 
-"'"                     {   PUSH(charend); PUSH(charlit); }
+"'"                 {   PUSH(charend); PUSH(charlit); }
 <charlit>{
-    \\[nbrtfv\\]        {   yylval->i = translate_escape(yytext[1]);
-                            POP; /* pop charlit, reveal charend */
-                            return CHARACTER; }
-    .                   {   yylval->i = yytext[0];
-                            POP; /* pop charend, reveal INITIAL */
-                            return CHARACTER; }
+    \\[nbrtfv\\]    {   yylval->i = translate_escape(yytext[1]);
+                        POP; /* pop charlit, reveal charend */
+                        return CHARACTER; }
+    .               {   yylval->i = yytext[0];
+                        POP; /* pop charend, reveal INITIAL */
+                        return CHARACTER; }
 }
-<charend>"'"            {   POP; }
+<charend>"'"        POP;
 
-.                       { tenyr_error(yylloc, yyextra, "unexpected character"); }
+.                   tenyr_error(yylloc, yyextra, "unexpected character");
 
 %%
 
