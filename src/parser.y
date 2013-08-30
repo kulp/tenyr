@@ -159,10 +159,13 @@ program[outer]
         {   $outer = $inner; }
     | string_or_data sep program[inner]
         {   struct instruction_list *p = $string_or_data, *i = $inner;
-            while (p->next) p = p->next;
-            p->next = i;
-            i->prev = p;
-            $outer = $string_or_data;
+            if (p) {
+                while (p->next) p = p->next;
+                p->next = i;
+                i->prev = p;
+                $outer = $string_or_data;
+            } else
+                $outer = i; // an empty string is NULL
         }
     | directive sep program[inner]
         {   $outer = $inner;
