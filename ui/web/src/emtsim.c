@@ -100,7 +100,7 @@ int main(void)
     if (load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr))
         fatal(0, "Error while loading state into simulation");
 
-    s->machine.regs[15] = s->conf.start_addr & PTR_MASK;
+    s->machine.regs[15] = s->conf.start_addr;
 
     struct run_ops ops = {
         .pre_insn = pre_insn,
