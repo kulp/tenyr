@@ -90,8 +90,8 @@ extern void tenyr_pop_state(void *yyscanner);
 %token XORN "^~"
 %token ANDN "&~"
 
-%type <ce> const_expr pconst_expr preloc_expr greloc_expr
-%type <ce> reloc_expr const_atom eref here_atom here_expr phere_expr here
+%type <ce> const_expr preloc_expr greloc_expr
+%type <ce> reloc_expr const_atom eref here_atom here_expr here
 %type <cl> reloc_expr_list
 %type <cstr> string
 %type <dctv> directive
@@ -384,7 +384,8 @@ const_op
 
 here_atom
     : here
-    | phere_expr
+    | '(' here_expr ')'
+        {   $here_atom = $here_expr; }
 
 here
     : '.'
@@ -395,17 +396,14 @@ here_expr[outer]
     | here_expr[left] const_op const_atom[right]
         {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0); }
 
-phere_expr
-    : '(' here_expr ')'
-        {   $phere_expr = $here_expr; }
-
 const_expr[outer]
     : const_atom
     | const_expr[left] const_op const_atom[right]
         {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0); }
 
 const_atom
-    : pconst_expr
+    : '(' const_expr ')'
+        {   $const_atom = $const_expr; }
     | immediate
         {   $const_atom = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
             $const_atom->i = $immediate.i; }
@@ -422,10 +420,6 @@ const_atom
 preloc_expr
     : '(' reloc_expr ')'
         {   $preloc_expr = $reloc_expr; }
-
-pconst_expr
-    : '(' const_expr ')'
-        {   $pconst_expr = $const_expr; }
 
 eref
     : '@' SYMBOL
