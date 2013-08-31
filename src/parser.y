@@ -337,7 +337,6 @@ op
     | "<<"  { $op = OP_SHIFT_LEFT         ; }
     | ">>"  { $op = OP_SHIFT_RIGHT_LOGICAL; }
 
-
 arrow
     : tol { $arrow = 0; }
     | tor { $arrow = 1; }

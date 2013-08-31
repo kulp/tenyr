@@ -61,7 +61,7 @@ decnum  [0-9_]+
 bitstr  {hexnum}|{octnum}|{binnum}
 self    [][|&+*^<>.,:@()~;/-]
 strcon  ([^"]|\\\")
-escchar [\\"0nbrtfv]
+escchar [\\"'0nbrtfv]
 
 %%
 
@@ -124,7 +124,7 @@ illegal             { return ILLEGAL; }
 <charesc>{
     \r?\n           POP; /* escaped newline */
     {escchar}       { savechr(translate_escape(yytext[0]), yyscanner); POP; POP; }
-    .               tenyr_error(yylloc, yyextra, "bad escape character");
+    .               { tenyr_error(yylloc, yyextra, "bad escape character"); POP; }
 }
 <charend>"'"        { POP; return CHARACTER; }
 
@@ -172,6 +172,7 @@ static int translate_escape(int what)
 {
     switch (what) {
         case '\\': return '\\';
+        case '\'': return '\'';
         case '"' : return '\"';
         case '0' : return '\0';
         case 'b' : return '\b';
