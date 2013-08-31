@@ -90,7 +90,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token XORN "^~"
 %token ANDN "&~"
 
-%type <ce> const_expr preloc_expr greloc_expr
+%type <ce> const_expr greloc_expr reloc_expr_atom
 %type <ce> reloc_expr const_atom eref here_atom here_expr here
 %type <cl> reloc_expr_list
 %type <cstr> string
@@ -351,9 +351,8 @@ reloc_op
 
 /* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
 greloc_expr
-    : eref
-    | here_atom
-    | preloc_expr
+    : here_atom
+    | reloc_expr_atom
     | const_atom
         {   struct const_expr *c = $const_atom;
             if (c->type == CE_IMM)
@@ -363,8 +362,7 @@ greloc_expr
 
 reloc_expr[outer]
     : const_expr
-    | eref
-    | preloc_expr
+    | reloc_expr_atom
     | here_expr
     | eref reloc_op const_atom
         {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_atom, 0); }
@@ -374,6 +372,11 @@ reloc_expr[outer]
         {   struct const_expr *inner = make_const_expr(CE_OP2, $lop, $eref, $here_atom, 0);
             $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom, 0);
         }
+
+reloc_expr_atom
+    : eref
+    | '(' reloc_expr ')'
+        {   $reloc_expr_atom = $reloc_expr; }
 
 const_op
     : reloc_op
@@ -416,10 +419,6 @@ const_atom
                 strcopy($const_atom->symbolname, $LOCAL.buf, sizeof $const_atom->symbolname);
             }
         }
-
-preloc_expr
-    : '(' reloc_expr ')'
-        {   $preloc_expr = $reloc_expr; }
 
 eref
     : '@' SYMBOL
