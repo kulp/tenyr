@@ -91,7 +91,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token ANDN "&~"
 
 %type <ce> const_expr greloc_expr reloc_expr_atom
-%type <ce> reloc_expr const_atom eref here_atom here_expr here
+%type <ce> reloc_expr here_or_const_atom const_atom eref here_atom here_expr
 %type <cl> reloc_expr_list
 %type <cstr> string
 %type <dctv> directive
@@ -351,10 +351,11 @@ reloc_op
 
 /* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
 greloc_expr
-    : here_atom
-    | reloc_expr_atom
-    | const_atom
-        {   struct const_expr *c = $const_atom;
+    : reloc_expr_atom
+    | here_or_const_atom
+        {   struct const_expr *c = $here_or_const_atom;
+            /* TODO check more complex expressions for size as well
+             * relative jumps and offsets can fail ! */
             if (c->type == CE_IMM)
                 check_immediate_size(pd, &yylloc, c->i);
             $greloc_expr = c;
@@ -364,14 +365,16 @@ reloc_expr[outer]
     : const_expr
     | reloc_expr_atom
     | here_expr
-    | eref reloc_op const_atom
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_atom, 0); }
-    | eref reloc_op here_atom
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $here_atom, 0); }
+    | eref reloc_op here_or_const_atom
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $here_or_const_atom, 0); }
     | eref reloc_op[lop] here_atom reloc_op[rop] const_atom
         {   struct const_expr *inner = make_const_expr(CE_OP2, $lop, $eref, $here_atom, 0);
             $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom, 0);
         }
+
+here_or_const_atom
+    : here_atom
+    | const_atom
 
 reloc_expr_atom
     : eref
@@ -386,13 +389,10 @@ const_op
     | "<<" { $const_op = LSH; }
 
 here_atom
-    : here
+    : '.'
+        {   $here_atom = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS); }
     | '(' here_expr ')'
         {   $here_atom = $here_expr; }
-
-here
-    : '.'
-        {   $here = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS); }
 
 here_expr[outer]
     : here_atom
