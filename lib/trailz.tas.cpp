@@ -33,6 +33,5 @@ trailz:
     B   <- B <> A + 1
     B   <- D << 1 + B
 
-    popall(D,E,F)
-    ret
+    popall_ret(D,E,F)
 
