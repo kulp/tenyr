@@ -27,7 +27,7 @@ trampoline:
     goto(check8)
 
 top8:
-    D   <- C & 1 + D
+    D   <- D + 1
     B   <- B >> 8
 check8:
     C   <- B & 0xff     // 0000000011111111
@@ -55,7 +55,7 @@ ready8:
     P   <- [VEC_BOTTOM + C]
 
 after:
-    popall(C)
+    loadall_(C)
     restore_user_stack()
     P   <- [IRR_ADDR]
 
