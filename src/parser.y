@@ -311,7 +311,7 @@ immediate
     : INTEGER
         {   $immediate.i = $INTEGER;
             $immediate.is_bits = 0; }
-    | '-' INTEGER
+    | '-' INTEGER /* S/R conflict ; see unary_op greloc_expr */
         {   $immediate.i = -$INTEGER;
             $immediate.is_bits = 0; }
     | BITSTRING
