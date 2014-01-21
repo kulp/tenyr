@@ -112,10 +112,10 @@ $(GENDIR)/lexer.o asmif.o dbg.o tas.o: $(GENDIR)/parser.h
 tsim.o: $(GENDIR)/debugger_parser.h
 
 $(GENDIR)/debugger_lexer.o: $(GENDIR)/debugger_parser.h
-$(GENDIR)/debugger_lexer.o: | $(GENDIR)
-$(GENDIR)/debugger_parser.o: $(GENDIR)/debugger_lexer.h | $(GENDIR)
-$(GENDIR)/lexer.o: lexer.l | $(GENDIR)
-$(GENDIR)/parser.o: parser.y $(GENDIR)/lexer.h | $(GENDIR)
+$(GENDIR)/debugger_lexer.h $(GENDIR)/debugger_lexer.c: debugger_lexer.l | $(GENDIR)
+$(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y $(GENDIR)/debugger_lexer.h | $(GENDIR)
+$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l | $(GENDIR)
+$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y $(GENDIR)/lexer.h | $(GENDIR)
 
 $(GENDIR):
 	@mkdir -p $@
