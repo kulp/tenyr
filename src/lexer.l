@@ -62,6 +62,7 @@ bitstr  {hexnum}|{octnum}|{binnum}
 self    [][|&+*^<>.,:@()~;/-]
 strcon  ([^"]|\\\")
 escchar [\\"'0nbrtfv]
+white   [\t\f\v\r ]
 
 %%
 
@@ -80,11 +81,11 @@ illegal             { return ILLEGAL; }
     [^\\"]+         savestr(yyscanner);
 }
 
-".word"             { PUSH(ignore_nl); return WORD; }
-".ascii"            { PUSH(ignore_nl); return ASCII; }
-".utf32"            { PUSH(ignore_nl); return UTF32; }
-".global"           { PUSH(ignore_nl); return GLOBAL; }
-".set"              { PUSH(ignore_nl); return SET; }
+".word"{white}      { PUSH(ignore_nl); return WORD; }
+".ascii"{white}     { PUSH(ignore_nl); return ASCII; }
+".utf32"{white}     { PUSH(ignore_nl); return UTF32; }
+".global"{white}    { PUSH(ignore_nl); return GLOBAL; }
+".set"{white}       { PUSH(ignore_nl); return SET; }
 
 {self}              { return yytext[0]; }
 
@@ -101,7 +102,7 @@ illegal             { return ILLEGAL; }
 {binnum}            { yylval->i = numberise(&yytext[2],  2); return BITSTRING; }
 {decnum}            { yylval->i = numberise(&yytext[0], 10); return INTEGER; }
 
-[\t\f\v\r ]+        ; /* ignored whitespace */
+{white}+            ; /* ignored whitespace */
 
 "//"|"#"            PUSH(linecomment);
 <linecomment>{
