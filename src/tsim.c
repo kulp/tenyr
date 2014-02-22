@@ -29,7 +29,6 @@
     _(sparse)   \
     _(serial)   \
     _(plugin)   \
-    _(eib)      \
     //
 
 #define Space(X) STR(X) " "
