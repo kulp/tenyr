@@ -20,9 +20,9 @@
 
 #include "push.th"
 
-// arguments pushed in the order specified
+// specify arguments to push or pop in address-descending order
+// arguments are pushed and popped downard in memory (last argument is pushed or popped last)
 #define pushall(...)        pushall_(o,__VA_ARGS__)
-// arguments popped in the reverse of the order specified
 #define popall(...)         popall_(o,__VA_ARGS__)
 #define loadall(...)        loadall_(o,__VA_ARGS__)
 #define dropall(...)        dropall_(o,__VA_ARGS__)
