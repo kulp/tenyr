@@ -36,7 +36,7 @@ static int ram_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
         va_list vl;
         va_start(vl, nargs);
 
-        ram->memsize = va_arg(vl, int);
+        memsize = ram->memsize = va_arg(vl, int);
         reset_memsize = 1;
         if (nargs > 1)
             ram->base = va_arg(vl, int);
@@ -44,12 +44,10 @@ static int ram_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
         va_end(vl);
     }
 
-    memsize = ram->memsize;
-
     // only reallocate if we were given an explicit size, or if we have no
     // memory yet
     if (!ram->mem || reset_memsize)
-        ram->mem = realloc(ram->mem, ram->memsize * sizeof *ram->mem);
+        ram->mem = realloc(ram->mem, memsize * sizeof *ram->mem);
 
     for (unsigned long i = 0; i < memsize; i++)
         ram->mem[i] = 0xffffffff; // "illlegal" ; will trap
