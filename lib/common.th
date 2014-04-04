@@ -26,8 +26,8 @@
 #define popall(...)         popall_(o,__VA_ARGS__)
 #define loadall(...)        loadall_(o,__VA_ARGS__)
 #define dropall(...)        dropall_(o,__VA_ARGS__)
-// popall() combined with ret saves one instruction, an O increment
-#define popall_ret(...)     loadall_(o,__VA_ARGS__) ; o <- o + (_narg(__VA_ARGS__) + 1) ; p <- [o]
+// popall_ret() for convenient symmetry with a frame-creating popall()
+#define popall_ret(...)     popall(__VA_ARGS__,P)
 
 #endif
 
