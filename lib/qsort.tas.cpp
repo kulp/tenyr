@@ -6,10 +6,10 @@
     //
 
 #define swap(i0, i1)         \
-    pushall(c,d,e,f)         \
-    f <- i0                  \
-    g <- i1                  \
-    call(do_swap)            \
+    pushall(c,d,e,f)       ; \
+    f <- i0                ; \
+    g <- i1                ; \
+    call(do_swap)          ; \
     popall(c,d,e,f)          \
     //
 
