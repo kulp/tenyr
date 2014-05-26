@@ -28,9 +28,13 @@ else
 PEDANTIC_FLAGS ?= -Werror -pedantic-errors
 endif
 
+gcc_flag_supported = $(shell gcc $1 -x c /dev/null 2>/dev/null >/dev/null && echo $1)
+
 CPPFLAGS += -DMAY_ALIAS='__attribute__((__may_alias__))'
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
-CPPFLAGS += -Wno-unknown-warning-option
+# Use := to ensure the expensive underyling call is not repeated
+NO_UNKNOWN_WARN_OPTS := $(call gcc_flag_supported,-Wno-unknown-warning-option)
+CPPFLAGS += $(NO_UNKNOWN_WARN_OPTS)
 
 # Optimised build
 ifeq ($(DEBUG),)
@@ -54,11 +58,16 @@ BUILD_NAME := $(shell git describe --tags --match 'v?.?.?*')
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
-libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) -Wno-c11-extensions
+ifneq ($(SDL),0)
+SDL_VERSION = $(shell sdl2-config --version 2>/dev/null)
+ifneq ($(SDL_VERSION),)
+# Use := to ensure the expensive underyling call is not repeated
+NO_C11_WARN_OPTS := $(call gcc_flag_supported,-Wno-c11-extensions)
+libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
 libsdl%$(DYLIB_SUFFIX): LDLIBS   += $(shell sdl2-config --libs) -lSDL2_image
 PDEVICES_SDL += sdlled sdlvga
-ifneq ($(SDL),0)
 PDEVICES += $(PDEVICES_SDL)
+endif
 endif
 
 DEVICES = ram sparseram debugwrap serial spi eib
