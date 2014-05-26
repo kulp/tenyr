@@ -28,20 +28,6 @@ void *lfind(const void *key, const void *base, size_t *nmemb, size_t size,
 
 enum { RHS_FLIP = 1 << 0, NO_NAMED_RELOC = 1 << 1 };
 
-static const char shortopts[] = "df:o:sv" "hV";
-static const struct option longopts[] = {
-    { "disassemble" ,       no_argument, NULL, 'd' },
-    { "format"      , required_argument, NULL, 'f' },
-    { "output"      , required_argument, NULL, 'o' },
-    { "strict"      ,       no_argument, NULL, 's' },
-    { "verbose"     ,       no_argument, NULL, 'v' },
-
-    { "help"        ,       no_argument, NULL, 'h' },
-    { "version"     ,       no_argument, NULL, 'V' },
-
-    { NULL, 0, NULL, 0 },
-};
-
 #define version() "tas version " STR(BUILD_NAME)
 
 typedef int reloc_handler(struct parse_data *pd, struct element *evalctx,
