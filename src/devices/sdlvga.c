@@ -30,6 +30,7 @@ struct sdlvga_state {
     uint32_t data[ROWS][COLS];
     SDL_Window *window;
     SDL_Renderer *renderer;
+    SDL_Texture *display;
     SDL_Texture *sprite;
     struct timeval last_update, deadline;
     enum { RUNNING, STOPPING, STOPPED } status;
@@ -75,7 +76,8 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (!state->window)
         fatal(0, "Unable to create sdlvga window : %s", SDL_GetError());
 
-    state->renderer = SDL_CreateRenderer(state->window, -1, 0);
+    state->renderer = SDL_CreateRenderer(state->window, -1,
+            SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 
     int flags = IMG_INIT_PNG;
     if (IMG_Init(flags) != flags)
@@ -86,10 +88,15 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie, int nargs, .
     if (!sprite)
         fatal(0, "sdlvga failed to load font sprite `%s'", filename);
 
+    state->display = SDL_CreateTexture(state->renderer,
+            SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, COLS *
+            FONT_WIDTH, ROWS * FONT_HEIGHT);
+
     state->sprite = SDL_CreateTextureFromSurface(state->renderer, sprite);
     SDL_FreeSurface(sprite);
 
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
+    SDL_SetRenderTarget(state->renderer, state->display);
     SDL_RenderClear(state->renderer);
     SDL_RenderPresent(state->renderer);
 
@@ -105,6 +112,7 @@ static int sdlvga_fini(void *cookie)
 
     SDL_DestroyRenderer(state->renderer);
     SDL_DestroyTexture(state->sprite);
+    SDL_DestroyTexture(state->display);
     SDL_DestroyWindow(state->window);
 
     free(state);
@@ -123,7 +131,10 @@ static int handle_update(struct sdlvga_state *state)
     gettimeofday(&now, NULL);
     // TODO this could get lagged behind
     if (timercmp(&now, &state->deadline, >)) {
+        SDL_SetRenderTarget(state->renderer, NULL);
+        SDL_RenderCopy(state->renderer, state->display, NULL, NULL);
         SDL_RenderPresent(state->renderer);
+        SDL_SetRenderTarget(state->renderer, state->display);
         state->last_update = state->deadline;
         timeradd(&state->deadline, &tick, &state->deadline);
     }
