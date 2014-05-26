@@ -1,10 +1,14 @@
 b <- -1     // ok
-c <- 0xfff  // ok
+c <- 0x7ff  // ok
+c <- 0xfff  // bad
 d <- 0xffff // bad
 e <- 12345  // bad
+e <- -0x7ff // ok
+e <- -0x800 // bad
 e <- -0xfff // bad
 f <- -555   // ok
-g <- 07777  // ok
+g <- 03777  // ok
+g <- 07777  // bad
 h <- 017777 // bad
 i <- (1 << 11) // bad
 j <- (1 << 12) // bad
