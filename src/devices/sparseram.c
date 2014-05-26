@@ -20,7 +20,6 @@
 
 struct sparseram_state {
     void *mem;
-    void *userdata; ///< transient userdata, used for twalk() support
 };
 
 struct ram_element {
@@ -44,17 +43,11 @@ static int sparseram_init(struct plugin_cookie *pcookie, void *cookie, int nargs
     return 0;
 }
 
-TODO_TRAVERSE_(ram_element)
-
 static int sparseram_fini(void *cookie)
 {
     struct sparseram_state *sparseram = cookie;
-    // tdestroy() is a glibc extension. Here we generate a list of nodes to
-    // delete and then delete them one by one.
-    struct todo_node *todo = NULL;
-    sparseram->userdata = &todo;
-
-    tree_destroy(&todo, &sparseram->mem, traverse_ram_element, tree_compare);
+    while (sparseram->mem)
+        tdelete(*(void**)sparseram->mem, &sparseram->mem, tree_compare);
     free(sparseram);
 
     return 0;

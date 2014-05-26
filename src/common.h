@@ -65,25 +65,6 @@ static inline char *strcopy(char *dest, const char *src, size_t sz)
 
 long long numberise(char *str, int base);
 
-// defines a function that traverses a tsearch tree, adding todo nodes
-// assumes struct Tag has a reference to an aggregate named `state' that has a
-// pointer named `userdata' that contains our todo-list. See `struct
-// link_state' and `struct defn' in tld.c for an example.
-#define TODO_TRAVERSE_(Tag)                                                    \
-static void traverse_##Tag(const void *node, VISIT order, int level)           \
-{                                                                              \
-    const struct Tag * const *element = node;                                  \
-    struct todo_node **todo = (*element)->state->userdata;                     \
-    (void)level;                                                               \
-                                                                               \
-    if (order == leaf || order == preorder) {                                  \
-        struct todo_node *here = malloc(sizeof *here);                         \
-        here->what = *(void**)node;                                            \
-        here->next = *todo;                                                    \
-        *todo = here;                                                          \
-    }                                                                          \
-}
-
 #define ALIASING_CAST(Type,Expr) \
     *(Type * __attribute__((__may_alias__)) *)&(Expr)
 

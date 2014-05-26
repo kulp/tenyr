@@ -44,26 +44,6 @@ static void main_debug_(int level, const char *file, int line,
     fprintf(stderr, " (in %s() at %s:%d)\n", func, file, line);
 }
 
-// tdestroy() is a glibc extension. Here we generate a list of nodes to delete
-// and then delete them one by one.
-int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp)
-{
-    *todo = NULL;
-
-    twalk(*tree, trav);
-
-    list_foreach(todo_node, t, *todo) {
-        tdelete(t->what, tree, comp);
-        free(t->what);
-        free(t);
-        t = NULL;
-    }
-
-    *todo = NULL;
-
-    return 0;
-}
-
 long long numberise(char *str, int base)
 {
     char *p = str;

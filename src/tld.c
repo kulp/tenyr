@@ -21,8 +21,6 @@ struct link_state {
     struct obj *relocated;
 
     long insns, syms, rlcs, words;
-
-    void *userdata; ///< transient userdata, used for twalk() support
 };
 
 struct defn {
@@ -97,9 +95,6 @@ static int ptrcmp(const void *a, const void *b)
 {
     return *(const char**)a - *(const char**)b;
 }
-
-TODO_TRAVERSE_(defn)
-TODO_TRAVERSE_(objmeta)
 
 static int do_link_build_state(struct link_state *s, void **objtree, void **defns)
 {
@@ -188,10 +183,10 @@ static int do_link_process(struct link_state *s)
     do_link_build_state(s, &objtree, &defns);
     do_link_relocate(s->objs, &objtree, &defns);
 
-    struct todo_node *todo;
-    s->userdata = &todo;
-    tree_destroy(&todo, &objtree, traverse_objmeta, ptrcmp);
-    tree_destroy(&todo, &defns  , traverse_defn   , (cmp*)strcmp);
+    while (objtree)
+        tdelete(*(void**)objtree, &objtree, ptrcmp);
+    while (defns)
+        tdelete(*(void**)defns, &defns, (cmp*)strcmp);
 
     return 0;
 }
