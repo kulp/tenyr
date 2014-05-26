@@ -145,7 +145,7 @@ static int sdlvga_op(void *cookie, int op, uint32_t addr, uint32_t *data)
             state->data[row][col] = *data;
             put_character(state, row, col, *data & 0xff);
             handle_update(state);
-		} else if (op == OP_INSN_READ || op == OP_DATA_READ) {
+        } else if (op == OP_INSN_READ || op == OP_DATA_READ) {
             *data = state->data[row][col];
         }
     }
@@ -194,4 +194,6 @@ int EXPORT sdlvga_add_device(struct device **device)
 
     return 0;
 }
+
+/* vi:set et ts=4 sw=4: */
 
