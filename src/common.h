@@ -83,7 +83,7 @@ static void traverse_##Tag(const void *node, VISIT order, int level)           \
 }
 
 #define ALIASING_CAST(Type,Expr) \
-    *(Type * MAY_ALIAS *)&(Expr)
+    *(Type * __attribute__((__may_alias__)) *)&(Expr)
 
 #endif
 
