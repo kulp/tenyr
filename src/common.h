@@ -10,7 +10,9 @@
 #define STR(X) STR_(X)
 #define STR_(X) #X
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
-#define SEXTEND(Bits,X) (struct { signed i:(Bits); }){ .i = (X) }.i
+#define MSB32_(Bits,X) ((1ULL << ((Bits) - 1)) & (uint32_t)(X))
+#define EXTEND32_(Bits,X) ((-!!MSB32_(Bits,X)) << (Bits))
+#define SEXTEND32(Bits,X) ((Bits) >= 32 ? (X) : (uint32_t)(EXTEND32_(Bits,X) | (((uint32_t)X) & ~(-1LL << (Bits)))))
 
 #define UNUSED   __attribute__((unused))
 #define NORETURN __attribute__((noreturn))

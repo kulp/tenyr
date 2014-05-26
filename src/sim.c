@@ -10,7 +10,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     int32_t  Xs = X;
     uint32_t Xu = X;
     int32_t  Ys = Y;
-    int32_t  Is = SEXTEND(12, I);
+    int32_t  Is = SEXTEND32(12, I);
 
     int32_t  O = (type == 0) ? Ys : Is;
     int32_t  A = (type == 0) ? Is : Ys;

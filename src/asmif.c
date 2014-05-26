@@ -219,19 +219,15 @@ static int fixup_deferred_exprs(struct parse_data *pd)
 
         uint32_t result;
         if (ce_eval(pd, ce->insn, NULL, ce, 0, sym_reloc_handler, &r->width, &result)) {
-            uint32_t mask = ~((1ULL << r->width) - 1);
             result *= r->mult;
 
-            int hasupperbits = result & mask;
-            uint32_t semask = -1 << (r->width - 1);
-            int notsignextended = (result & semask) != semask;
-
-            if (hasupperbits && notsignextended) {
+            if (result != SEXTEND32(r->width, result)) {
                 debug(0, "Expression resulting in value %#x is too large for "
                         "%d-bit signed immediate field", result, r->width);
                 rc |= 1;
             }
 
+            uint32_t mask = -1ll << r->width;
             *r->dest &= mask;
             *r->dest |= result & ~mask;
             ce_free(ce, 1);

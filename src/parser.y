@@ -830,7 +830,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
 static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
         imm)
 {
-    if (imm != SEXTEND(SMALL_IMMEDIATE_BITWIDTH, imm)) {
+    if (imm != SEXTEND32(SMALL_IMMEDIATE_BITWIDTH, imm)) {
         char buf[128];
         snprintf(buf, sizeof buf, "Immediate with value %#x is too large for "
                 "%d-bit signed immediate field", imm, SMALL_IMMEDIATE_BITWIDTH);

@@ -108,7 +108,7 @@ int print_disassembly(FILE *out, struct element *i, int flags)
           char    f5 = 'A' + g->x;            // register name for X
     const char   *f6 = op_meta[g->op].name;   // operator name
           char    f7 = 'A' + g->y;            // register name for Y
-          int32_t f8 = SEXTEND(12,g->imm);    // immediate value, sign-extended
+          int32_t f8 = SEXTEND32(12,g->imm);  // immediate value, sign-extended
           char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
     int hex   = op_meta[g->op].hex;
