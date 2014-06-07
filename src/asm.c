@@ -12,29 +12,29 @@
 #include "parser_global.h"
 
 static const struct {
-    const char *name;
+    const char name[4];
     int valid;
     int hex;    ///< whether to use hex digits in disassembly
     int inert;  ///< if equivalent to `Z <- Y + I` when when X == A
 } op_meta[] = {
-    [OP_ADD                ] = { "+" , 1, 0, 1 },
-    [OP_SUBTRACT           ] = { "-" , 1, 0, 0 },
-    [OP_MULTIPLY           ] = { "*" , 1, 0, 0 },
+    [OP_ADD              ] = { "+"  , 1, 0, 1 },
+    [OP_SUBTRACT         ] = { "-"  , 1, 0, 0 },
+    [OP_MULTIPLY         ] = { "*"  , 1, 0, 0 },
 
-    [OP_COMPARE_LT         ] = { "<" , 1, 0, 0 },
-    [OP_COMPARE_EQ         ] = { "==", 1, 0, 0 },
-    [OP_COMPARE_GT         ] = { ">" , 1, 0, 0 },
-    [OP_COMPARE_NE         ] = { "<>", 1, 0, 0 },
-    [OP_BITWISE_OR         ] = { "|" , 1, 1, 1 },
-    [OP_BITWISE_AND        ] = { "&" , 1, 1, 0 },
-    [OP_BITWISE_ANDN       ] = { "&~", 1, 1, 0 },
-    [OP_BITWISE_XOR        ] = { "^" , 1, 1, 1 },
-    [OP_BITWISE_XORN       ] = { "^~", 1, 1, 0 },
-    [OP_SHIFT_LEFT         ] = { "<<", 1, 0, 0 },
-    [OP_SHIFT_RIGHT_LOGICAL] = { ">>", 1, 0, 0 },
+    [OP_COMPARE_LT       ] = { "<"  , 1, 0, 0 },
+    [OP_COMPARE_EQ       ] = { "==" , 1, 0, 0 },
+    [OP_COMPARE_GT       ] = { ">"  , 1, 0, 0 },
+    [OP_COMPARE_NE       ] = { "<>" , 1, 0, 0 },
+    [OP_BITWISE_OR       ] = { "|"  , 1, 1, 1 },
+    [OP_BITWISE_AND      ] = { "&"  , 1, 1, 0 },
+    [OP_BITWISE_ANDN     ] = { "&~" , 1, 1, 0 },
+    [OP_BITWISE_XOR      ] = { "^"  , 1, 1, 1 },
+    [OP_BITWISE_XORN     ] = { "^~" , 1, 1, 0 },
+    [OP_SHIFT_LEFT       ] = { "<<" , 1, 0, 0 },
+    [OP_SHIFT_RIGHT_LOGIC] = { ">>" , 1, 0, 0 },
+    [OP_SHIFT_RIGHT_ARITH] = { ">>>", 1, 0, 0 },
 
-    [OP_RESERVED0          ] = { "X0", 0, 0, 0 },
-    [OP_RESERVED1          ] = { "X1", 0, 0, 0 },
+    [OP_RESERVED0        ] = { "X0" , 0, 0, 0 },
 };
 
 static int is_printable(int ch, size_t len, char buf[len])

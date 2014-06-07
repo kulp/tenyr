@@ -49,7 +49,7 @@ module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
             4'b1100: rhs <=  (X  ^~ O) + A; // X xor ones' complement Y
             4'b1101: rhs <=  (X  >> O) + A; // X shift right logical Y
             4'b1110: rhs <= -(X  != O) + A; // X compare <> Y
-            4'b1111: rhs <= 32'bx;          // reserved
+            4'b1111: rhs <=  (X >>> O) + A; // X shift right arithmetic Y
         endcase
 
 endmodule

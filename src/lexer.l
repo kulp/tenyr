@@ -96,6 +96,7 @@ illegal             { return ILLEGAL; }
 "&~"                { return ANDN; }
 "<>"                { return NEQ;  }
 "^~"                { return XORN; }
+">>>"               { return RSHA; }
 ">>"                { return RSH;  }
 <needarrow>"<-"     { return TOL;  }
 "->"                { return TOR;  }
