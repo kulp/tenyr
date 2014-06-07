@@ -12,7 +12,7 @@
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define MSB32_(Bits,X) ((1ULL << ((Bits) - 1)) & (uint32_t)(X))
 #define EXTEND32_(Bits,X) ((-!!MSB32_(Bits,X)) << (Bits))
-#define SEXTEND32(Bits,X) ((Bits) >= 32 ? (X) : (uint32_t)(EXTEND32_(Bits,X) | (((uint32_t)X) & ~(-1LL << (Bits)))))
+#define SEXTEND32(Bits,X) ((Bits) >= 32 ? (uint32_t)(X) : (uint32_t)(EXTEND32_(Bits,X) | (((uint32_t)X) & ~(-1LL << (Bits)))))
 
 #define UNUSED   __attribute__((unused))
 #define NORETURN __attribute__((noreturn))
