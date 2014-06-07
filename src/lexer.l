@@ -91,6 +91,7 @@ illegal             { return ILLEGAL; }
 
 {self}              { return yytext[0]; }
 
+"<<<"               { return LSH;  }
 "<<"                { return LSH;  }
 "=="                { return EQ;   }
 "&~"                { return ANDN; }
