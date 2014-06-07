@@ -255,7 +255,7 @@ reloc_expr_list[outer]
         {   $outer = calloc(1, sizeof *$outer);
             $outer->right = NULL;
             $outer->ce = $expr; }
-    | reloc_expr[expr] ',' reloc_expr_list[inner]
+    | reloc_expr[expr] ',' opt_nl reloc_expr_list[inner]
         {   $outer = calloc(1, sizeof *$outer);
             $outer->right = $inner;
             $outer->ce = $expr; }

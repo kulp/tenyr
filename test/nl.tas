@@ -1,0 +1,18 @@
+# the assembler must permit a newline in the middle of a list
+.word 1, 2, 3,
+      4, 5, 6
+
+.word 'A',
+
+    'B', 'C',
+      'D',
+      
+      'E', 'F'
+
+# This would be nice but is not available yet ; need to review the ambiguity of
+# the grammar
+#.utf32 "hi"
+#       "there"
+#.ascii "hello,"
+#       
+# " world"
