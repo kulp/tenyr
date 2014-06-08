@@ -19,8 +19,6 @@ PASS_ASSEMBLE = $(call get_obj_name,$(wildcard pass_compile/*))
 # $(FAIL_ASSEMBLE). Most of them should probably succeed.
 CHECK = \
 	break.to \
-	emit.to \
-	echo.to \
 	dots.to \
 	error.to \
 	imm.to \
