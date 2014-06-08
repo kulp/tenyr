@@ -24,7 +24,6 @@ CHECK = \
 	linked.to \
 	reloc.to \
 	set.to \
-	symbols.to \
 	unary.to \
 	\
 	copy.texe \
