@@ -24,7 +24,6 @@ CHECK = \
 	linked.to \
 	reloc.to \
 	set.to \
-	unary.to \
 	\
 	copy.texe \
 	jzrel.texe \
