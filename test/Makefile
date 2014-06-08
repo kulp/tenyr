@@ -11,31 +11,9 @@ vpath %.tas.cpp ../lib
 
 CPP := $(CPP) -
 
-GOOD = \
-	ambiguous.to \
-	arrows.to \
-	badarrow.to \
-	binnum.to \
-	charlit.to \
-	comments.to \
-	data.to \
-	div.to \
-	exports.to \
-	extern.to \
-	global.to \
-	local.to \
-	loop.to \
-	negnull.to \
-	nl.to \
-	precedence.to \
-	strings.to \
-	twopass.to \
-	type1.to \
-	underscore.to \
-	utf32.to \
-	zero.to \
-	zeros.to \
-	#
+get_obj_name = $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1))
+
+GOOD = $(call get_obj_name,$(wildcard pass_compile/*))
 
 # The contents of $(CHECK) need to be categorised into $(GOOD) and
 # $(ASSEMBLE_FAIL). Most of them should probably succeed.
@@ -61,10 +39,7 @@ CHECK = \
 	test_imul.texe \
 	#
 
-ASSEMBLE_FAIL = \
-	dup.to \
-	toolong.to \
-	#
+ASSEMBLE_FAIL = $(call get_obj_name,$(wildcard fail_compile/*))
 
 CLEANFILES = *.to *.texe
 
@@ -79,14 +54,14 @@ copy.texe: memcpy.to puts.to
 	$(CPP) $(CPPFLAGS) < $< > $@
 
 %.to: %.tas
-	$(TAS) -o$@ $<
+	$(TAS) -o$(OBJDIR)$(@F) $<
 
 $(filter %.to,$(ASSEMBLE_FAIL)): %.to: %.tas
 	@echo "Assembling $@ (should fail) ..."
-	@! $(TAS) -o$@ $< 2>/dev/null
+	@! $(TAS) -o$(OBJDIR)$(@F) $< 2>/dev/null
 
 %.texe: %.to
-	$(TLD) -o$@ $^
+	$(TLD) -o$(OBJDIR)$(@F) $^
 
 clean:
 	$(RM) $(CLEANFILES)
