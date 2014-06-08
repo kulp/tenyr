@@ -9,9 +9,11 @@ CPPFLAGS += -I../lib
 vpath %.tas ../lib
 vpath %.tas.cpp ../lib
 
+vpath %.tas pass_compile/ fail_compile/
+
 CPP := $(CPP) -
 
-get_obj_name = $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1))
+get_obj_name = $(notdir $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1)))
 
 PASS_ASSEMBLE = $(call get_obj_name,$(wildcard pass_compile/*))
 
@@ -48,14 +50,14 @@ copy.texe: memcpy.to puts.to
 	$(CPP) $(CPPFLAGS) < $< > $@
 
 %.to: %.tas
-	$(TAS) -o$(OBJDIR)$(@F) $<
+	$(TAS) -o$@ $<
 
 $(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
 	@echo "Assembling $@ (should fail) ..."
-	@! $(TAS) -o$(OBJDIR)$(@F) $< 2>/dev/null
+	@! $(TAS) -o$@ $< 2>/dev/null
 
 %.texe: %.to
-	$(TLD) -o$(OBJDIR)$(@F) $^
+	$(TLD) -o$@ $^
 
 clean:
 	$(RM) $(CLEANFILES)
