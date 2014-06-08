@@ -13,10 +13,10 @@ CPP := $(CPP) -
 
 get_obj_name = $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1))
 
-GOOD = $(call get_obj_name,$(wildcard pass_compile/*))
+PASS_ASSEMBLE = $(call get_obj_name,$(wildcard pass_compile/*))
 
-# The contents of $(CHECK) need to be categorised into $(GOOD) and
-# $(ASSEMBLE_FAIL). Most of them should probably succeed.
+# The contents of $(CHECK) need to be categorised into $(PASS_ASSEMBLE) and
+# $(FAIL_ASSEMBLE). Most of them should probably succeed.
 CHECK = \
 	break.to \
 	emit.to \
@@ -39,13 +39,13 @@ CHECK = \
 	test_imul.texe \
 	#
 
-ASSEMBLE_FAIL = $(call get_obj_name,$(wildcard fail_compile/*))
+FAIL_ASSEMBLE = $(call get_obj_name,$(wildcard fail_compile/*))
 
 CLEANFILES = *.to *.texe
 
 all: positive negative
-positive: $(GOOD)
-negative: $(ASSEMBLE_FAIL)
+positive: $(PASS_ASSEMBLE)
+negative: $(FAIL_ASSEMBLE)
 
 test_imul.texe: imul.to puts.to print_hex.to
 copy.texe: memcpy.to puts.to
@@ -56,7 +56,7 @@ copy.texe: memcpy.to puts.to
 %.to: %.tas
 	$(TAS) -o$(OBJDIR)$(@F) $<
 
-$(filter %.to,$(ASSEMBLE_FAIL)): %.to: %.tas
+$(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
 	@echo "Assembling $@ (should fail) ..."
 	@! $(TAS) -o$(OBJDIR)$(@F) $< 2>/dev/null
 
