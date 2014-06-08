@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     int disassemble = 0;
     int flags = 0;
 
-    int opened = 0;
+    volatile int opened = 0;
     char outfname[1044];
     FILE * volatile out = stdout;
 
