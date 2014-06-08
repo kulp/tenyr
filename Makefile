@@ -80,7 +80,7 @@ BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS ?= $(PDEVLIBS)
 TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
 
-.PHONY: all win32 win64
+.PHONY: all win32 win64 check
 all: $(TARGETS)
 
 win32: export _32BIT=1
@@ -88,6 +88,9 @@ win32 win64: export WIN32=1
 # reinvoke make to ensure vars are set early enough
 win32 win64:
 	$(MAKE) $^
+
+check:
+	$(MAKE) -C test -B
 
 TAS_OBJECTS  = common.o asmif.o asm.o obj.o $(GENDIR)/parser.o $(GENDIR)/lexer.o
 TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
