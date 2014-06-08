@@ -20,7 +20,6 @@ PASS_ASSEMBLE = $(call get_obj_name,$(wildcard pass_compile/*))
 # The contents of $(CHECK) need to be categorised into $(PASS_ASSEMBLE) and
 # $(FAIL_ASSEMBLE). Most of them should probably succeed.
 CHECK = \
-	break.to \
 	linked.to \
 	reloc.to \
 	set.to \
