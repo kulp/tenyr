@@ -15,7 +15,13 @@ CPP := $(CPP) -
 
 get_obj_name = $(notdir $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1)))
 
-PASS_ASSEMBLE = $(call get_obj_name,$(wildcard pass_compile/*))
+# TODO run .texe's instead of just compiling them
+PASS_ASSEMBLE = \
+	$(call get_obj_name,$(wildcard pass_compile/*)) \
+	copy.texe \
+	jzrel.texe \
+	test_imul.texe \
+	#
 
 # The contents of $(CHECK) need to be categorised into $(PASS_ASSEMBLE) and
 # $(FAIL_ASSEMBLE). Most of them should probably succeed.
@@ -23,10 +29,6 @@ CHECK = \
 	linked.to \
 	reloc.to \
 	set.to \
-	\
-	copy.texe \
-	jzrel.texe \
-	test_imul.texe \
 	#
 
 FAIL_ASSEMBLE = $(call get_obj_name,$(wildcard fail_compile/*))
