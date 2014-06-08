@@ -23,14 +23,6 @@ PASS_ASSEMBLE = \
 	test_imul.texe \
 	#
 
-# The contents of $(CHECK) need to be categorised into $(PASS_ASSEMBLE) and
-# $(FAIL_ASSEMBLE). Most of them should probably succeed.
-CHECK = \
-	linked.to \
-	reloc.to \
-	set.to \
-	#
-
 FAIL_ASSEMBLE = $(call get_obj_name,$(wildcard fail_compile/*))
 
 CLEANFILES = *.to *.texe
