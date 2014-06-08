@@ -1,6 +1,7 @@
 TOP ?= .
 
 CC = $(CROSS_COMPILE)gcc
+ECHO = $(shell which echo)
 
 ifndef NDEBUG
  CFLAGS  += -g
@@ -90,10 +91,14 @@ win32 win64:
 	$(MAKE) $^
 
 check: tsim tas tld
-	$(MAKE) -C test -B
-	$(MAKE) -C ex -B
-	[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ]
-	[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ]
+	@$(ECHO) "Compiling tests from test/ ... "
+	@$(MAKE) -s -B -C test
+	@$(ECHO) "Compiling examples from ex/ ... "
+	@$(MAKE) -s -B -C ex
+	@$(ECHO) -n "Running qsort demo ... "
+	@[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(ECHO) "ok"
+	@$(ECHO) -n "Running bsearch demo ... "
+	@[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(ECHO) "ok"
 
 TAS_OBJECTS  = common.o asmif.o asm.o obj.o $(GENDIR)/parser.o $(GENDIR)/lexer.o
 TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
