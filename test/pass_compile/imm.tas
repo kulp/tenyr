@@ -3,7 +3,7 @@ foo:
     c <- -6
     d <- [@foo]
     e <- @foo
-    [e] <- [@bar]
+    [e] <- @bar
     e <- [e]
     illegal
 bar:

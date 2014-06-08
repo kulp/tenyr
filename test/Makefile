@@ -9,9 +9,27 @@ CPPFLAGS += -I../lib
 vpath %.tas ../lib
 vpath %.tas.cpp ../lib
 
+vpath %.tas pass_compile/ fail_compile/
+
 CPP := $(CPP) -
 
-all:
+get_obj_name = $(notdir $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1)))
+
+# TODO run .texe's instead of just compiling them
+PASS_ASSEMBLE = \
+	$(call get_obj_name,$(wildcard pass_compile/*)) \
+	copy.texe \
+	jzrel.texe \
+	test_imul.texe \
+	#
+
+FAIL_ASSEMBLE = $(call get_obj_name,$(wildcard fail_compile/*))
+
+CLEANFILES = *.to *.texe
+
+all: positive negative
+positive: $(PASS_ASSEMBLE)
+negative: $(FAIL_ASSEMBLE)
 
 test_imul.texe: imul.to puts.to print_hex.to
 copy.texe: memcpy.to puts.to
@@ -21,6 +39,10 @@ copy.texe: memcpy.to puts.to
 
 %.to: %.tas
 	$(TAS) -o$@ $<
+
+$(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
+	@echo "Assembling $@ (should fail) ..."
+	@! $(TAS) -o$@ $< 2>/dev/null
 
 %.texe: %.to
 	$(TLD) -o$@ $^

@@ -4,5 +4,5 @@
 	.word @external + (5 * 2)
 	.word @external + 3
 glow:
-	.word @.L123
+	.word .L123
 	.global glow

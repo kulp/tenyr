@@ -86,7 +86,7 @@ struct element {
         char name[SYMBOL_LEN];
         int column;
         int lineno;
-        uint32_t reladdr;
+        int32_t reladdr;
         uint32_t size;
 
         unsigned resolved:1;

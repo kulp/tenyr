@@ -36,7 +36,7 @@ typedef int reloc_handler(struct parse_data *pd, struct element *evalctx,
 
 static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
         element *defctx, struct const_expr *ce, int flags, reloc_handler
-        *rhandler, void *rud, uint32_t *result);
+        *rhandler, void *rud, int32_t *result);
 
 static int add_relocation(struct parse_data *pd, const char *name,
         struct element *insn, int width, int flags);
@@ -52,7 +52,7 @@ struct symbol *symbol_find(struct symbol_list *list, const char *name)
 
 // symbol_lookup returns 1 on success
 static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
-        char *name, uint32_t *result)
+        char *name, int32_t *result)
 {
     struct symbol *symbol = NULL;
     if ((symbol = symbol_find(list, name))) {
@@ -128,9 +128,9 @@ static int sym_reloc_handler(struct parse_data *pd, struct element
 // ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
 static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
         element *defctx, struct const_expr *ce, int flags, reloc_handler
-        *rhandler, void *rud, uint32_t *result)
+        *rhandler, void *rud, int32_t *result)
 {
-    uint32_t left, right;
+    int32_t left, right;
 
     switch (ce->type) {
         case CE_SYM:
@@ -217,11 +217,11 @@ static int fixup_deferred_exprs(struct parse_data *pd)
     list_foreach(deferred_expr, r, pd->defexprs) {
         struct const_expr *ce = r->ce;
 
-        uint32_t result;
+        int32_t result;
         if (ce_eval(pd, ce->insn, NULL, ce, 0, sym_reloc_handler, &r->width, &result)) {
             result *= r->mult;
 
-            if (result != SEXTEND32(r->width, result)) {
+            if (result != (int32_t)SEXTEND32(r->width, result)) {
                 debug(0, "Expression resulting in value %#x is too large for "
                         "%d-bit signed immediate field", result, r->width);
                 rc |= 1;

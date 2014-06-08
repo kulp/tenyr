@@ -1,6 +1,7 @@
 TOP ?= .
 
 CC = $(CROSS_COMPILE)gcc
+ECHO = $(shell which echo)
 
 ifndef NDEBUG
  CFLAGS  += -g
@@ -80,7 +81,7 @@ BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS ?= $(PDEVLIBS)
 TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
 
-.PHONY: all win32 win64
+.PHONY: all win32 win64 check
 all: $(TARGETS)
 
 win32: export _32BIT=1
@@ -88,6 +89,16 @@ win32 win64: export WIN32=1
 # reinvoke make to ensure vars are set early enough
 win32 win64:
 	$(MAKE) $^
+
+check: tsim tas tld
+	@$(ECHO) "Compiling tests from test/ ... "
+	@$(MAKE) -s -B -C test
+	@$(ECHO) "Compiling examples from ex/ ... "
+	@$(MAKE) -s -B -C ex
+	@$(ECHO) -n "Running qsort demo ... "
+	@[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(ECHO) "ok"
+	@$(ECHO) -n "Running bsearch demo ... "
+	@[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(ECHO) "ok"
 
 TAS_OBJECTS  = common.o asmif.o asm.o obj.o $(GENDIR)/parser.o $(GENDIR)/lexer.o
 TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
@@ -153,13 +164,17 @@ endif
 
 CLEANFILES += $(TARGETS)
 CLEANFILES += *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o $(PDEVOBJS)
-clean:
+clean::
 	$(RM) $(CLEANFILES)
 
-clobber: clean
+clobber:: clean
 	$(RM) $(GENDIR)/debugger_parser.[ch] $(GENDIR)/debugger_lexer.[ch] $(GENDIR)/parser.[ch] $(GENDIR)/lexer.[ch]
 	-rmdir $(GENDIR)
 	$(RM) -r *.dSYM
+
+clean clobber::
+	-$(MAKE) -C ex $@
+	-$(MAKE) -C test $@
 
 ##############################################################################
 
