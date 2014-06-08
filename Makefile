@@ -89,8 +89,11 @@ win32 win64: export WIN32=1
 win32 win64:
 	$(MAKE) $^
 
-check:
+check: tsim tas tld
 	$(MAKE) -C test -B
+	$(MAKE) -C ex
+	[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ]
+	[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ]
 
 TAS_OBJECTS  = common.o asmif.o asm.o obj.o $(GENDIR)/parser.o $(GENDIR)/lexer.o
 TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
