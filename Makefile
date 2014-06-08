@@ -1,7 +1,8 @@
 TOP ?= .
 
 CC = $(CROSS_COMPILE)gcc
-ECHO = $(shell which echo)
+ECHO := $(shell which echo)
+MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
 
 ifndef NDEBUG
  CFLAGS  += -g
@@ -91,14 +92,14 @@ win32 win64:
 	$(MAKE) $^
 
 check: tsim tas tld
-	@$(ECHO) "Compiling tests from test/ ... "
-	@$(MAKE) -s -B -C test
-	@$(ECHO) "Compiling examples from ex/ ... "
-	@$(MAKE) -s -B -C ex
-	@$(ECHO) -n "Running qsort demo ... "
-	@[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(ECHO) "ok"
-	@$(ECHO) -n "Running bsearch demo ... "
-	@[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(ECHO) "ok"
+	@$(MAKESTEP) -n "Compiling tests from test/ ... "
+	@$(MAKE) -s -B -C test && $(MAKESTEP) ok
+	@$(MAKESTEP) -n "Compiling examples from ex/ ... "
+	@$(MAKE) -s -B -C ex && $(MAKESTEP) ok
+	@$(MAKESTEP) -n "Running qsort demo ... "
+	@[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
+	@$(MAKESTEP) -n "Running bsearch demo ... "
+	@[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
 
 TAS_OBJECTS  = common.o asmif.o asm.o obj.o $(GENDIR)/parser.o $(GENDIR)/lexer.o
 TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
@@ -185,7 +186,7 @@ COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 ifneq ($(MAKE_VERBOSE),)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 else
-	@echo "[ CC ] $<"
+	@$(MAKESTEP) "[ CC ] $<"
 	@$(COMPILE.c) $(OUTPUT_OPTION) $<
 endif
 
@@ -196,7 +197,7 @@ ifeq ($(SUPPRESS_BINARY_RULE),)
 ifneq ($(MAKE_VERBOSE),)
 	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 else
-	@echo "[ LD ] $@"
+	@$(MAKESTEP) "[ LD ] $@"
 	@$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 endif
 endif
@@ -205,7 +206,7 @@ $(GENDIR)/%.h $(GENDIR)/%.c: %.l
 ifneq ($(MAKE_VERBOSE),)
 	$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 else
-	@echo "[ FLEX ] $<"
+	@$(MAKESTEP) "[ FLEX ] $<"
 	@$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 endif
 
@@ -213,7 +214,7 @@ $(GENDIR)/%.h $(GENDIR)/%.c: %.y
 ifneq ($(MAKE_VERBOSE),)
 	$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 else
-	@echo "[ BISON ] $<"
+	@$(MAKESTEP) "[ BISON ] $<"
 	@$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 endif
 
@@ -221,7 +222,7 @@ plugin,dy.o pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
 ifneq ($(MAKE_VERBOSE),)
 	$(COMPILE.c) -o $@ $<
 else
-	@echo "[ DYCC ] $<"
+	@$(MAKESTEP) "[ DYCC ] $<"
 	@$(COMPILE.c) -o $@ $<
 endif
 
@@ -229,7 +230,7 @@ $(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
 ifneq ($(MAKE_VERBOSE),)
 	$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 else
-	@echo "[ DYLD ] $@"
+	@$(MAKESTEP) "[ DYLD ] $@"
 	@$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 endif
 

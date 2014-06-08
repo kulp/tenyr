@@ -8,6 +8,9 @@ INCLUDES += -I../lib -I../lib/dword
 CPPFLAGS += -xc $(INCLUDES)
 CPP := $(CPP) -
 
+ECHO := $(shell which echo)
+MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+
 vpath %.tas ../lib ../lib/dword
 vpath %.tas.cpp ../lib ../lib/dword
 
@@ -46,7 +49,7 @@ ifneq ($(MAKE_VERBOSE),)
 	@mkdir -p $(*D)
 	$(CPP) $(CPPFLAGS) < $< -o $@
 else
-	@echo "[ CPP ] $<"
+	@$(MAKESTEP) "[ CPP ] $<"
 	@mkdir -p $(*D)
 	@$(CPP) $(CPPFLAGS) < $< -o $@
 endif
@@ -56,7 +59,7 @@ ifneq ($(MAKE_VERBOSE),)
 	@mkdir -p $(*D)
 	$(TAS) -o$@ $<
 else
-	@echo "[ TAS ] $<"
+	@$(MAKESTEP) "[ TAS ] $<"
 	@mkdir -p $(*D)
 	@$(TAS) -o$@ $<
 endif
@@ -66,7 +69,7 @@ ifneq ($(MAKE_VERBOSE),)
 	@mkdir -p $(*D)
 	$(TLD) -o$@ $^
 else
-	@echo "[ TLD ] $@"
+	@$(MAKESTEP) "[ TLD ] $@"
 	@mkdir -p $(*D)
 	@$(TLD) -o$@ $^
 endif

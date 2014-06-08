@@ -6,6 +6,9 @@ TLD = ../tld
 
 CPPFLAGS += -I../lib
 
+ECHO := $(shell which echo)
+MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+
 vpath %.tas ../lib
 vpath %.tas.cpp ../lib
 
@@ -41,7 +44,7 @@ copy.texe: memcpy.to puts.to
 	$(TAS) -o$@ $<
 
 $(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
-	@echo "Assembling $@ (should fail) ..."
+	@$(MAKESTEP) "Assembling $@ (should fail) ..."
 	@! $(TAS) -o$@ $< 2>/dev/null
 
 %.texe: %.to
