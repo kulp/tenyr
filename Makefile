@@ -91,7 +91,7 @@ win32 win64:
 
 check: tsim tas tld
 	$(MAKE) -C test -B
-	$(MAKE) -C ex
+	$(MAKE) -C ex -B
 	[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ]
 	[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ]
 
