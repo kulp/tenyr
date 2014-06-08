@@ -22,7 +22,6 @@ PASS_ASSEMBLE = $(call get_obj_name,$(wildcard pass_compile/*))
 CHECK = \
 	break.to \
 	linked.to \
-	lowercase.to \
 	multiword.to \
 	nest.to \
 	reloc.to \
