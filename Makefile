@@ -159,13 +159,17 @@ endif
 
 CLEANFILES += $(TARGETS)
 CLEANFILES += *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o $(PDEVOBJS)
-clean:
+clean::
 	$(RM) $(CLEANFILES)
 
-clobber: clean
+clobber:: clean
 	$(RM) $(GENDIR)/debugger_parser.[ch] $(GENDIR)/debugger_lexer.[ch] $(GENDIR)/parser.[ch] $(GENDIR)/lexer.[ch]
 	-rmdir $(GENDIR)
 	$(RM) -r *.dSYM
+
+clean clobber::
+	-$(MAKE) -C ex $@
+	-$(MAKE) -C test $@
 
 ##############################################################################
 
