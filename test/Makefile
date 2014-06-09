@@ -44,8 +44,8 @@ copy.texe: memcpy.to puts.to
 	$(TAS) -o$@ $<
 
 $(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
-	@$(MAKESTEP) "Assembling $@ (should fail) ..."
-	@! $(TAS) -o$@ $< 2>/dev/null
+	@$(MAKESTEP) -n "Assembling $@ (should fail) ... "
+	@(! $(TAS) -o$@ $< 2>/dev/null) && echo "failed as expected"
 
 %.texe: %.to
 	$(TLD) -o$@ $^
