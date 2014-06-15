@@ -16,23 +16,24 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     int32_t  A = (type == 0) ? Is : Ys;
 
     switch (op) {
-        case OP_ADD                 : *rhs =  (Xs  +  O) + A; break;
-        case OP_SUBTRACT            : *rhs =  (Xs  -  O) + A; break;
-        case OP_MULTIPLY            : *rhs =  (Xs  *  O) + A; break;
+        case OP_ADD               : *rhs =  (Xs  +  O) + A; break;
+        case OP_SUBTRACT          : *rhs =  (Xs  -  O) + A; break;
+        case OP_MULTIPLY          : *rhs =  (Xs  *  O) + A; break;
 
-        case OP_SHIFT_LEFT          : *rhs =  (Xu  << O) + A; break;
-        case OP_SHIFT_RIGHT_LOGICAL : *rhs =  (Xu  >> O) + A; break;
+        case OP_SHIFT_LEFT        : *rhs =  (Xu  << O) + A; break;
+        case OP_SHIFT_RIGHT_LOGIC : *rhs =  (Xu  >> O) + A; break;
+        case OP_SHIFT_RIGHT_ARITH : *rhs =  (Xs  >> O) + A; break;
 
-        case OP_COMPARE_LT          : *rhs = -(Xs  <  O) + A; break;
-        case OP_COMPARE_EQ          : *rhs = -(Xs  == O) + A; break;
-        case OP_COMPARE_GT          : *rhs = -(Xs  >  O) + A; break;
-        case OP_COMPARE_NE          : *rhs = -(Xs  != O) + A; break;
+        case OP_COMPARE_LT        : *rhs = -(Xs  <  O) + A; break;
+        case OP_COMPARE_EQ        : *rhs = -(Xs  == O) + A; break;
+        case OP_COMPARE_GT        : *rhs = -(Xs  >  O) + A; break;
+        case OP_COMPARE_NE        : *rhs = -(Xs  != O) + A; break;
 
-        case OP_BITWISE_AND         : *rhs =  (Xu  &  O) + A; break;
-        case OP_BITWISE_ANDN        : *rhs =  (Xu  & ~O) + A; break;
-        case OP_BITWISE_OR          : *rhs =  (Xu  |  O) + A; break;
-        case OP_BITWISE_XOR         : *rhs =  (Xu  ^  O) + A; break;
-        case OP_BITWISE_XORN        : *rhs =  (Xu  ^ ~O) + A; break;
+        case OP_BITWISE_AND       : *rhs =  (Xu  &  O) + A; break;
+        case OP_BITWISE_ANDN      : *rhs =  (Xu  & ~O) + A; break;
+        case OP_BITWISE_OR        : *rhs =  (Xu  |  O) + A; break;
+        case OP_BITWISE_XOR       : *rhs =  (Xu  ^  O) + A; break;
+        case OP_BITWISE_XORN      : *rhs =  (Xu  ^ ~O) + A; break;
 
         default:
             fatal(0, "Encountered reserved opcode");

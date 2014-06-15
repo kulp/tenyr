@@ -32,7 +32,7 @@ set_blocklen:
 put_spisd:                      // not reentrant (due to CMD_WORK)
     i <- [reloff(CMD_TMPL,0)]   // load first word of command template
     i <- b << 16 + i            // assumes b is valid so that ADD = OR
-    i <- e >> 16 + i            // effectively OR in top 16 bits of E
+    i <- e >> 16 + i            // effectively OR in top 16 bits of E (XXX nonsensical E ?)
     i -> [reloff(CMD_WORK,0)]   // write first word of command workspace
 
     i <- [reloff(CMD_TMPL,1)]   // load second word of command template

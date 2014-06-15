@@ -70,7 +70,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %left '&' "&~"
 %left "==" "<>"
 %left '<' '>'
-%left "<<" ">>"
+%left "<<" ">>" ">>>"
 %left '+' '-'
 %left '*' '/'
 
@@ -87,6 +87,7 @@ extern void tenyr_pop_state(void *yyscanner);
 /* synonyms for literal string tokens */
 %token LSH "<<"
 %token RSH ">>"
+%token RSHA ">>>"
 %token EQ "=="
 %token NEQ "<>"
 %token XORN "^~"
@@ -322,20 +323,21 @@ immediate
             $immediate.is_bits = 1; }
 
 op
-    : '+'   { $op = OP_ADD                ; }
-    | '-'   { $op = OP_SUBTRACT           ; }
-    | '*'   { $op = OP_MULTIPLY           ; }
-    | '<'   { $op = OP_COMPARE_LT         ; }
-    | "=="  { $op = OP_COMPARE_EQ         ; }
-    | '>'   { $op = OP_COMPARE_GT         ; }
-    | "<>"  { $op = OP_COMPARE_NE         ; }
-    | '|'   { $op = OP_BITWISE_OR         ; }
-    | '&'   { $op = OP_BITWISE_AND        ; }
-    | "&~"  { $op = OP_BITWISE_ANDN       ; }
-    | '^'   { $op = OP_BITWISE_XOR        ; }
-    | "^~"  { $op = OP_BITWISE_XORN       ; }
-    | "<<"  { $op = OP_SHIFT_LEFT         ; }
-    | ">>"  { $op = OP_SHIFT_RIGHT_LOGICAL; }
+    : '+'   { $op = OP_ADD              ; }
+    | '-'   { $op = OP_SUBTRACT         ; }
+    | '*'   { $op = OP_MULTIPLY         ; }
+    | '<'   { $op = OP_COMPARE_LT       ; }
+    | "=="  { $op = OP_COMPARE_EQ       ; }
+    | '>'   { $op = OP_COMPARE_GT       ; }
+    | "<>"  { $op = OP_COMPARE_NE       ; }
+    | '|'   { $op = OP_BITWISE_OR       ; }
+    | '&'   { $op = OP_BITWISE_AND      ; }
+    | "&~"  { $op = OP_BITWISE_ANDN     ; }
+    | '^'   { $op = OP_BITWISE_XOR      ; }
+    | "^~"  { $op = OP_BITWISE_XORN     ; }
+    | "<<"  { $op = OP_SHIFT_LEFT       ; }
+    | ">>"  { $op = OP_SHIFT_RIGHT_LOGIC; }
+    | ">>>" { $op = OP_SHIFT_RIGHT_ARITH; }
 
 arrow
     : tol { $arrow = 0; }

@@ -3,6 +3,7 @@
 .global udiv
 
 // Performs C / D and stores the result in B.
+// Assumes C and D are 31-bit unsigned
 udiv:
   pushall(d,g,j,k)
   b <- 0

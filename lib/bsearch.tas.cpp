@@ -12,7 +12,7 @@ bsearch:
 bsearch_loop:
     // c is the key ptr
     // d is the first element to consider
-    // e is the number of elements to consider after d
+    // e is the number of elements to consider after d (31-bit unsigned)
     i <- e == 0
     jnzrel(i,bsearch_notfound)
 

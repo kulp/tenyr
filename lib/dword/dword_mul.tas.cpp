@@ -3,6 +3,7 @@
 .global dw_mul
 
 // Performs B:C <- D * E
+// Assumes D and E are 31-bit unsigned
 dw_mul:
   push(m)
   // Load mask.

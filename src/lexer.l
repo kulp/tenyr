@@ -91,11 +91,13 @@ illegal             { return ILLEGAL; }
 
 {self}              { return yytext[0]; }
 
+"<<<"               { return LSH;  }
 "<<"                { return LSH;  }
 "=="                { return EQ;   }
 "&~"                { return ANDN; }
 "<>"                { return NEQ;  }
 "^~"                { return XORN; }
+">>>"               { return RSHA; }
 ">>"                { return RSH;  }
 <needarrow>"<-"     { return TOL;  }
 "->"                { return TOR;  }

@@ -4,7 +4,7 @@
 
 #include "common.th"
 
-    b <- ARGUMENT       // b = upper limit (N)
+    b <- ARGUMENT       // b = upper limit (N) (31-bit unsigned)
     c <- b >> 1         // c = (N/2)
     i <- 2              // i = outer loop control
     o <- rel(array)     // base of array

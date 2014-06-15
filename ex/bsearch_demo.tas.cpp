@@ -45,7 +45,7 @@ loop_exit:
 
 // c <- key
 // d <- base
-// e <- number of elements
+// e <- number of elements (31-bit unsigned)
 // f <- size of element
 // g <- comparator
 // b -> pointer or null
