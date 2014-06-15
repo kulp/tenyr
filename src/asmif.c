@@ -153,6 +153,15 @@ static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
             *result = defctx ? defctx->insn.reladdr : evalctx ? evalctx->insn.reladdr : 0;
             return rhandler ? rhandler(pd, evalctx, defctx, flags, ce, rud) : !!defctx;
         case CE_IMM: *result = ce->i; return 1;
+        case CE_OP1:
+            if (ce_eval(pd, evalctx, defctx, ce->left, flags, rhandler, rud, result)) {
+                switch (ce->op) {
+                    case '-': *result = -*result; return 1;
+                    case '~': *result = ~*result; return 1;
+                    default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
+                }
+            }
+            return 0;
         case CE_OP2: {
             int lhsflags = flags;
             int rhsflags = flags;
@@ -169,7 +178,7 @@ static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
                     case '^': *result = left ^  right; return 1;
                     case '/': *result = left /  right; return 1;
                     case LSH: *result = left << right; return 1;
-                    default: fatal(0, "Unrecognised const_expr op '%c'", ce->op);
+                    default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
                 }
             }
             return 0;
@@ -200,8 +209,9 @@ static void ce_free(struct const_expr *ce, int recurse)
                 free(ce->left);
                 break;
             case CE_OP2:
+                ce_free(ce->right, recurse); /* FALLTHROUGH */
+            case CE_OP1:
                 ce_free(ce->left, recurse);
-                ce_free(ce->right, recurse);
                 break;
             default:
                 fatal(0, "Unrecognised const_expr type %d", ce->type);
@@ -426,3 +436,4 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
     return rc;
 }
 
+/* vi:set ts=4 sw=4 et: */
