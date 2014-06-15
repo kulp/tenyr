@@ -26,7 +26,7 @@ void *lfind(const void *key, const void *base, size_t *nmemb, size_t size,
         int(*compar)(const void *, const void *));
 #endif
 
-enum { RHS_FLIP = 1 << 0, NO_NAMED_RELOC = 1 << 1 };
+enum { RHS_NEGATE = 1 << 0, NO_NAMED_RELOC = 1 << 1 };
 
 #define version() "tas version " STR(BUILD_NAME)
 
@@ -103,7 +103,7 @@ static int sym_reloc_handler(struct parse_data *pd, struct element
 
     int rlc_flags = 0;
 
-    if (flags & RHS_FLIP)
+    if (flags & RHS_NEGATE)
         rlc_flags |= RLC_NEGATE;
 
     switch (ce->type) {
@@ -157,7 +157,7 @@ static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
             int lhsflags = flags;
             int rhsflags = flags;
             if (ce->op == '-')
-                rhsflags ^= RHS_FLIP;
+                rhsflags ^= RHS_NEGATE;
             // TODO what if rhandler doesn't always succeed ? could change lhs but not rhs
             if (ce_eval(pd, evalctx, defctx, ce->left , lhsflags, rhandler, rud, &left) &&
                 ce_eval(pd, evalctx, defctx, ce->right, rhsflags, rhandler, rud, &right))
