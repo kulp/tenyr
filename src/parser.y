@@ -359,8 +359,8 @@ greloc_expr
     : reloc_expr_atom
     | here_or_const_atom
         {   struct const_expr *c = $here_or_const_atom;
-            /* TODO check more complex expressions for size as well
-             * relative jumps and offsets can fail ! */
+            /* More complex expressions are checked for size
+             * in fixup_deferred_exprs() */
             if (c->type == CE_IMM)
                 check_immediate_size(pd, &yylloc, c->i);
             $greloc_expr = c;
