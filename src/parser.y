@@ -101,11 +101,11 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <i> arrow regname reloc_op const_op
 %type <imm> immediate
 %type <insn> insn insn_inner
-%type <op> op unary_op
+%type <op> op unary_op reloc_unary_op
 %type <program> program ascii utf32 data string_or_data
 %type <str> symbol symbol_list
 
-%expect 3
+%expect 2
 
 %union {
     int32_t i;
@@ -295,8 +295,6 @@ rhs_plain
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, $y); }
     | regname[x] op greloc_expr
         { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, 0); }
-    | unary_op greloc_expr /* responsible for a S/R conflict */
-        { $rhs_plain = make_expr_type1(0, $unary_op, $greloc_expr, 0); }
     | greloc_expr '+' regname[y]
         { $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, $y); }
 
@@ -315,9 +313,6 @@ regname
 immediate
     : INTEGER
         {   $immediate.i = $INTEGER;
-            $immediate.is_bits = 0; }
-    | '-' INTEGER /* S/R conflict ; see unary_op greloc_expr */
-        {   $immediate.i = -$INTEGER;
             $immediate.is_bits = 0; }
     | BITSTRING
         {   $immediate.i = $BITSTRING;
@@ -352,6 +347,10 @@ tor : TOR { tenyr_pop_state(pd->scanner); }
 reloc_op
     : '+' { $reloc_op = '+'; }
     | '-' { $reloc_op = '-'; }
+
+reloc_unary_op
+    : '~' { $reloc_unary_op = '~'; }
+    | '-' { $reloc_unary_op = '-'; }
 
 /* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
 greloc_expr
@@ -408,19 +407,21 @@ const_expr[outer]
     | const_expr[left] const_op const_atom[right]
         {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0); }
 
-const_atom
-    : '(' const_expr ')'
-        {   $const_atom = $const_expr; }
+const_atom[outer]
+    : reloc_unary_op const_atom[inner]
+        {   $outer = make_const_expr(CE_OP1, $reloc_unary_op, $inner, NULL, 0); }
+    | '(' const_expr ')'
+        {   $outer = $const_expr; }
     | immediate
-        {   $const_atom = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
-            $const_atom->i = $immediate.i; }
+        {   $outer = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
+            $outer->i = $immediate.i; }
     | LOCAL
-        {   $const_atom = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS);
+        {   $outer = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL.buf))) {
-                $const_atom->symbol = s;
+                $outer->symbol = s;
             } else {
-                strcopy($const_atom->symbolname, $LOCAL.buf, sizeof $const_atom->symbolname);
+                strcopy($outer->symbolname, $LOCAL.buf, sizeof $outer->symbolname);
             }
         }
 
