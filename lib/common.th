@@ -20,14 +20,16 @@
 
 #include "push.th"
 
-// specify arguments to push or pop in address-descending order
-// arguments are pushed and popped downard in memory (last argument is pushed or popped last)
+// specify arguments to push or pop in address-ascending order
+// The stack pointer is moved downward in memory, but arguments are pushed and
+// popped upward in memory (last argument to {push,pop,load,drop}all has the
+// highest address in memory)
 #define pushall(...)        pushall_(o,__VA_ARGS__)
 #define popall(...)         popall_(o,__VA_ARGS__)
 #define loadall(...)        loadall_(o,__VA_ARGS__)
 #define dropall(...)        dropall_(o,__VA_ARGS__)
 // popall_ret() for convenient symmetry with a frame-creating popall()
-#define popall_ret(...)     popall(__VA_ARGS__,P)
+#define popall_ret(...)     popall(P,__VA_ARGS__)
 
 #endif
 
