@@ -408,19 +408,19 @@ const_expr[outer]
     | const_expr[left] const_op const_atom[right]
         {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0); }
 
-const_atom
+const_atom[outer]
     : '(' const_expr ')'
-        {   $const_atom = $const_expr; }
+        {   $outer = $const_expr; }
     | immediate
-        {   $const_atom = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
-            $const_atom->i = $immediate.i; }
+        {   $outer = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
+            $outer->i = $immediate.i; }
     | LOCAL
-        {   $const_atom = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS);
+        {   $outer = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL.buf))) {
-                $const_atom->symbol = s;
+                $outer->symbol = s;
             } else {
-                strcopy($const_atom->symbolname, $LOCAL.buf, sizeof $const_atom->symbolname);
+                strcopy($outer->symbolname, $LOCAL.buf, sizeof $outer->symbolname);
             }
         }
 
