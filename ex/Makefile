@@ -42,7 +42,7 @@ bsearch_demo.texe: puts.to
 qsort_demo.texe: qsort.to puts.to memcpy.to
 irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
 parse_hex.texe: strtol.to
-bm_mults.texe bm_fib.texe baremetal.texe: putnum.to
+bm_mults.texe bm_fib.texe baremetal.texe: putnum.to baremetal_common.to
 
 %.tas: %.tas.cpp
 ifneq ($(MAKE_VERBOSE),)

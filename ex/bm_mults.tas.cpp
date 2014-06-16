@@ -6,11 +6,6 @@
 
 #include "common.th"
 
-#define bare_metal_init() \
-    b <- a ; c <- a ; d <- a ; e <- a ; f <- a ; g <- a ; h <- a ; \
-    i <- a ; j <- a ; k <- a ; l <- a ; m <- a ; n <- a ; o <- a ; \
-    //
-
 _start:
     bare_metal_init()   // TODO this shouldn't be necessary
     c <- 1              // argument
@@ -64,33 +59,4 @@ loop_k:
     c <- j < 0x27
     jnzrel(c,loop_j)
     illegal
-
-
-init_display:
-    pushall(h,k,l,m);
-    h <- 0x100
-    h <- h << 8         // h is video base
-    k <- 0              // k is offset into text region
-
-init_display_loop:
-    m <- h + k + 0x10   // m is k characters past start of text region
-    [m] <- ' '          // write space to display
-    k <- k + 1          // go to the right one character
-    l <- k < 0x21       // shall we loop ?
-    jnzrel(l,init_display_loop)
-
-init_display_done:
-    popall(h,k,l,m);
-    ret
-
-
-disable_cursor:
-    pushall(g,h)
-    h <- 0x100
-    h <- h << 8
-    g <- [h]
-    [h] <- g &~ (1 << 6)  // unset cursor-enable bit
-    popall(g,h)
-    ret
-
 
