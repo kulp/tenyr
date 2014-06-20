@@ -30,6 +30,6 @@ rand:
     b <- [rel(seed)]
     c <- [rel(mult)]
     b <- b * c + INCREMENT
-	b -> [rel(seed)]
+    b -> [rel(seed)]
     popall_ret(c)
 

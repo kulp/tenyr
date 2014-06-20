@@ -1,8 +1,8 @@
-	.word 0xdeadbeef
+    .word 0xdeadbeef
 .L123:
-	.word @glow
-	.word @external + (5 * 2)
-	.word @external + 3
+    .word @glow
+    .word @external + (5 * 2)
+    .word @external + 3
 glow:
-	.word .L123
-	.global glow
+    .word .L123
+    .global glow

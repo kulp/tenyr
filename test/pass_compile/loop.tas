@@ -1,11 +1,11 @@
 _start:
-	b <- 10         // set up loop constraint
-	// foo
-	d <- -5         // load multiplier
+    b <- 10         // set up loop constraint
+    // foo
+    d <- -5         // load multiplier
 top:
-	b <- b - 1      // decrement loop variable
-	c <- b > a      // compare b to 0
-	c <- c & d
-	p <- p + c + 1  // jump back
+    b <- b - 1      // decrement loop variable
+    c <- b > a      // compare b to 0
+    c <- c & d
+    p <- p + c + 1  // jump back
 done:
-	illegal
+    illegal
