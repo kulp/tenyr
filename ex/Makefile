@@ -6,7 +6,7 @@ TLD = ../tld
 
 INCLUDES += -I../lib -I../lib/dword
 CPPFLAGS += -xc $(INCLUDES)
-CPP := $(CPP) -
+CPP := $(CPP) $(DEFINES) -
 
 ECHO := $(shell which echo)
 MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
@@ -26,6 +26,7 @@ TARGETS = \
     parse_hex.texe      \
     qsort_demo.texe     \
     sieve.texe          \
+    snake.texe          \
     #
 
 CLEANFILES += $(TARGETS)
@@ -43,6 +44,7 @@ qsort_demo.texe: qsort.to puts.to memcpy.to
 irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
 parse_hex.texe: strtol.to
 bm_mults.texe bm_fib.texe baremetal.texe: putnum.to baremetal_common.to
+snake.texe: rand.to baremetal_common.to
 
 %.tas: %.tas.cpp
 ifneq ($(MAKE_VERBOSE),)
