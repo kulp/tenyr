@@ -15,14 +15,14 @@
 
 int do_assembly(FILE *in, FILE *out, const struct format *f);
 
-static int pre_insn(struct sim_state *s, struct instruction *i)
+static int pre_insn(struct sim_state *s, struct element *i)
 {
     (void)s;
     (void)i;
     return -1;
 }
 
-static int post_insn(struct sim_state *s, struct instruction *i)
+static int post_insn(struct sim_state *s, struct element *i)
 {
     (void)s;
     (void)i;
