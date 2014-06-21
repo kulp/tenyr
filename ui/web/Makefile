@@ -24,7 +24,7 @@ INCLUDES += $(CHECK_PATHS)
 %.js: EMCCFLAGS_LD += -s SAFE_HEAP_LINES=0
 
 ifeq ($(DEBUG),)
-%.js: EMCCFLAGS_LD += -O1 # TODO make -O2 work again
+%.js: EMCCFLAGS_LD += -O2
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=0 -s MICRO_OPTS=1 \
                       -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0 \
                       -s CLOSURE_ANNOTATIONS=1 \
@@ -35,8 +35,8 @@ ifeq ($(DEBUG),)
                       #-s RELOOP=1 \
                       #
 else
-%.js: EMCCFLAGS_LD += -O0
-%.js: EMCCFLAGS_LD += -s ASSERTIONS=1 -s MICRO_OPTS=0 \
+%.js: EMCCFLAGS_LD += -O2 # -O0 causes failure
+%.js: EMCCFLAGS_LD += -s ASSERTIONS=2 -s MICRO_OPTS=0 \
                       -s LABEL_DEBUG=0 \
                       -s LIBRARY_DEBUG=0 \
                       -s WARN_ON_UNDEFINED_SYMBOLS=1 \
