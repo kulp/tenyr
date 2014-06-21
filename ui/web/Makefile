@@ -58,7 +58,7 @@ tas.bc: CFLAGS =# reset CFLAGS
 
 TENYR_LIB_DIR ?= lib
 TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
-TH_FLAGS = $(addprefix --embed-file ,$(TH_FILES))
+TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$m))
 tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
 tcc.bc: CFLAGS =# reset CFLAGS
