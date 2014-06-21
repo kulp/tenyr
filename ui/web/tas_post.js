@@ -26,6 +26,7 @@
         var mod = {
             noInitialRun: true,
             preInit: [ function(){ set_up_fs(mod) } ],
+            noExitRuntime: true,
         };
 
         return mod;
@@ -36,6 +37,6 @@ function assemble()
 {
     tasdata.outarea.value = "";
     tasdata.get_pp_line_char.i = 0;
-    tasdata.tasModule.run();
+    tasdata.tasModule['callMain']();
 }
 

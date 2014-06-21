@@ -26,6 +26,7 @@
         var mod = {
             noInitialRun: true,
             preInit: [ function(){ set_up_fs(mod) } ],
+            noExitRuntime: true,
         };
 
         return mod;
@@ -36,6 +37,6 @@ function simulate()
 {
     tasdata.simarea.value = "";
     tasdata.get_as_line_char.i = 0;
-    tasdata.tsimModule.run();
+    tasdata.tsimModule['callMain']();
 }
 

@@ -25,9 +25,9 @@
 
         var mod = {
             noInitialRun: true,
-            //preRun: [ set_up_fs ],
             preInit: [ function(){ set_up_fs(mod) } ],
             arguments: [ "-Ilib" ],
+            noExitRuntime: true,
         };
 
         return mod;
@@ -38,6 +38,6 @@ function preprocess()
 {
     tasdata.pparea.value = "";
     tasdata.get_in_line_char.i = 0;
-    tasdata.tccModule.run();
+    tasdata.tccModule['callMain'](tasdata.tccModule['arguments']);
 }
 
