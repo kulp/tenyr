@@ -77,15 +77,9 @@ int main(void)
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
             .fmt          = &tenyr_asm_formats[2], // text
-            .params = {
-                .params_size  = DEFAULT_PARAMS_COUNT,
-                .params_count = 0,
-                .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params.params),
-            },
         },
         .dispatch_op = dispatch_op,
         .plugin_cookie = {
-            .param = &_s.conf.params,
             .gops         = {
                 .fatal = fatal_,
                 .debug = debug_,
@@ -94,6 +88,9 @@ int main(void)
             },
         },
     }, *s = &_s;
+
+    param_init(&s->conf.params);
+    s->plugin_cookie.param = s->conf.params;
 
     em_device_setup(s);
 
