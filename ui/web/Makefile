@@ -54,7 +54,15 @@ endif
 # We have to do our own --pre-js equivalent for now, because the --pre-js
 # content comes before the main code but after the FS-setup code, and we need
 # ours to enclose all modifications to Module.
-PREFIX_XFORM = "sed -i '' -e '1r pre_wrap.js' -e '1N; /PRE_RUN_ADDITIONS/r fsify.txt'"
+# We would like to use `-i ''` on MacOS X and `-i` on Linux but they are
+# mutually incompatible
+HAVE_GNU_SED := $(shell sed --version 2>&1 | grep -c GNU)
+ifneq ($(HAVE_GNU_SED),0)
+SED_IN_PLACE = sed -i.bak
+else
+SED_IN_PLACE = sed -i ''
+endif
+PREFIX_XFORM = "$(SED_IN_PLACE) -e '1r pre_wrap.js' -e '1N; /PRE_RUN_ADDITIONS/r fsify.txt'"
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --js-transform $(PREFIX_XFORM)
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --post-js $*_post.js
 
