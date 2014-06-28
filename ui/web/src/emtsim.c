@@ -94,6 +94,9 @@ int main(void)
 
     em_device_setup(s);
 
+    // This clearerr() is necessary to allow multiple runs of main() in
+    // emscripten
+    clearerr(in);
     if (load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr))
         fatal(0, "Error while loading state into simulation");
 
@@ -105,9 +108,6 @@ int main(void)
     };
 
     run_sim(s, &ops);
-
-    if (in)
-        fclose(in);
 
     //param_destroy(&s->conf.params);
 
