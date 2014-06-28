@@ -24,7 +24,10 @@ INCLUDES += $(CHECK_PATHS)
 %.js: EMCCFLAGS_LD += -s SAFE_HEAP_LINES=0
 
 ifeq ($(DEBUG),)
-%.js: EMCCFLAGS_LD += -O2
+# --closure 1 probably fails because system functions shared between the
+#  multiple separate .js binaries are renamed in different ways. --closure 1
+#  works fine as long as only one binary is loaded into the web page.
+%.js: EMCCFLAGS_LD += -O2 --closure 0
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=0 -s MICRO_OPTS=1 \
                       -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0 \
                       -s CLOSURE_ANNOTATIONS=1 \
@@ -65,9 +68,9 @@ TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
 TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$m))
 tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
+%.js: LDFLAGS =# reset LDFLAGS
 tcc.bc: CFLAGS =# reset CFLAGS
 tcc.bc: CPPFLAGS =# reset CPPFLAGS
-tcc.bc: CFLAGS += -g -Wall
 tcc.bc: CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing
 # clang doesn't know we are using old-style variable-sized structs
 tcc.bc: CFLAGS += -Wno-array-bounds

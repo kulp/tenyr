@@ -1,5 +1,3 @@
-var tasdata = { };
-
 //document.onload = function() {
     tasdata.inarea  = document.getElementById('input');
     tasdata.pparea  = document.getElementById('preprocessed');

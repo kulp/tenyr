@@ -22,6 +22,7 @@
       .alone { clear: left; clear: right; }
       /*.wide { width: 100%; }*/
     </style>
+    <script type='text/javascript'>var tasdata = { };</script>
   </head>
   <body>
     <h1 class="title">tenyr technology demonstrator</h1>
@@ -79,17 +80,17 @@ puts_loop:
 puts_done:
     pop(d)
     ret</textarea>
-            <button onclick="preprocess()">Preprocess &rarr;</button>
+            <button onclick="tasdata.preprocess()">Preprocess &rarr;</button>
         </div>
         <div class="box">
             <span>Preprocessed input :</span>
             <textarea id="preprocessed" rows="30"></textarea>
-            <button onclick="assemble()">Assemble &rarr;</button>
+            <button onclick="tasdata.assemble()">Assemble &rarr;</button>
         </div>
         <div class="box">
             <span>Assembled output :</span>
             <textarea id="output" rows="30"></textarea>
-            <button onclick="simulate()">Simulate &rarr;</button>
+            <button onclick="tasdata.simulate()">Simulate &rarr;</button>
         </div>
         <div class="box">
             <span>Simulator output :</span>
