@@ -244,9 +244,9 @@ data
 
 directive
     : GLOBAL symbol_list
-        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_GLOBAL, $symbol_list); }
+        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_GLOBAL, &$symbol_list); }
     | SET SYMBOL ',' reloc_expr
-        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL, $reloc_expr); }
+        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL, &$reloc_expr); }
 
 symbol_list
     : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
@@ -753,15 +753,15 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
     switch (type) {
         case D_GLOBAL:
             result->type = type;
-            const struct strbuf symbol = va_arg(vl,const struct strbuf);
-            result->data = malloc(symbol.len + 1);
-            strcopy(result->data, symbol.buf, symbol.len + 1);
+            const struct strbuf *symbol = va_arg(vl,const struct strbuf*);
+            result->data = malloc(symbol->len + 1);
+            strcopy(result->data, symbol->buf, symbol->len + 1);
             break;
         case D_SET: {
             result->type = type;
             // TODO stop allocating datum_D_SET if we don't need it
             struct datum_D_SET *d = result->data = malloc(sizeof *d);
-            const struct strbuf symbol = va_arg(vl,const struct strbuf);
+            const struct strbuf *symbol = va_arg(vl,const struct strbuf*);
 
             struct symbol *n = calloc(1, sizeof *n);
             n->column   = locp->first_column;
@@ -770,11 +770,11 @@ static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
             n->next     = NULL;
             n->ce       = va_arg(vl,struct const_expr *);
             n->unique   = 0;
-            if (symbol.len > sizeof n->name) {
+            if (symbol->len > sizeof n->name) {
                 tenyr_error(locp, pd, "symbol too long in .set directive");
                 return NULL;
             }
-            strcopy(n->name, symbol.buf, symbol.len + 1);
+            strcopy(n->name, symbol->buf, symbol->len + 1);
 
             d->symbol = n;
 

@@ -22,6 +22,7 @@
       .alone { clear: left; clear: right; }
       /*.wide { width: 100%; }*/
     </style>
+    <script type='text/javascript'>var tenyr_state = { };</script>
   </head>
   <body>
     <h1 class="title">tenyr technology demonstrator</h1>
@@ -39,10 +40,7 @@
         </p>
         <p class="desc">
             For now, the simulation environment available is very limited ;
-            only serial output (read and write address <code>0x20</code>) is
-            supported. Also, if you wish to run multiple simulations, you must
-            reload the page between simulations. This weakness will be
-            addressed in a future revision.
+            only serial output (write address <code>0x20</code>) is supported.
         </p>
         <p class="desc">
             Eventually, we intend to provide a <a
@@ -53,7 +51,7 @@
     <div class="outer">
         <div class="box">
             <span>Input tenyr assembly :</span>
-            <textarea id="input" rows="30">
+            <textarea id="input" rows="20">
 #include "common.th"
 
     prologue
@@ -82,21 +80,21 @@ puts_loop:
 puts_done:
     pop(d)
     ret</textarea>
-            <button onclick="preprocess()">Preprocess &rarr;</button>
+            <button onclick="tenyr_state.tcc_entry()">Preprocess &rarr;</button>
         </div>
         <div class="box">
             <span>Preprocessed input :</span>
-            <textarea id="preprocessed" rows="30"></textarea>
-            <button onclick="assemble()">Assemble &rarr;</button>
+            <textarea id="preprocessed" rows="20"></textarea>
+            <button onclick="tenyr_state.tas_entry()">Assemble &rarr;</button>
         </div>
         <div class="box">
             <span>Assembled output :</span>
-            <textarea id="output" rows="30"></textarea>
-            <button onclick="simulate()">Simulate &rarr;</button>
+            <textarea id="output" rows="20"></textarea>
+            <button onclick="tenyr_state.tsim_entry()">Simulate &rarr;</button>
         </div>
         <div class="box">
             <span>Simulator output :</span>
-            <textarea id="simoutput" rows="30"></textarea>
+            <textarea id="simoutput" rows="20"></textarea>
         </div>
     </div>
 

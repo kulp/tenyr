@@ -1,14 +1,12 @@
-var tasdata = { };
-
 //document.onload = function() {
-    tasdata.inarea  = document.getElementById('input');
-    tasdata.pparea  = document.getElementById('preprocessed');
-    tasdata.outarea = document.getElementById('output');
-    tasdata.simarea = document.getElementById('simoutput');
+    tenyr_state.tcc_in_area  = document.getElementById('input');
+    tenyr_state.tcc_out_area = tenyr_state.tas_in_area  = document.getElementById('preprocessed');
+    tenyr_state.tas_out_area = tenyr_state.tsim_in_area = document.getElementById('output');
+    tenyr_state.tsim_out_area = document.getElementById('simoutput');
 
-    tasdata.get_in_line_char = make_char_getter(tasdata.inarea);
-    tasdata.get_pp_line_char = make_char_getter(tasdata.pparea);
-    tasdata.get_as_line_char = make_char_getter(tasdata.outarea);
+    tenyr_state.tcc_get_line_char = make_char_getter(tenyr_state.tcc_in_area);
+    tenyr_state.tas_get_line_char = make_char_getter(tenyr_state.tas_in_area);
+    tenyr_state.tsim_get_line_char = make_char_getter(tenyr_state.tas_out_area);
 //};
 
 function make_char_getter(area)

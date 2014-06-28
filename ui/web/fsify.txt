@@ -1,0 +1,1 @@
+Module['_FSref_init'] = function(a,b,c) { return FS.init(a,b,c); };

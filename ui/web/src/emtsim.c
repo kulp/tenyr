@@ -15,14 +15,14 @@
 
 int do_assembly(FILE *in, FILE *out, const struct format *f);
 
-static int pre_insn(struct sim_state *s, struct instruction *i)
+static int pre_insn(struct sim_state *s, struct element *i)
 {
     (void)s;
     (void)i;
     return -1;
 }
 
-static int post_insn(struct sim_state *s, struct instruction *i)
+static int post_insn(struct sim_state *s, struct element *i)
 {
     (void)s;
     (void)i;
@@ -77,15 +77,9 @@ int main(void)
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
             .fmt          = &tenyr_asm_formats[2], // text
-            .params = {
-                .params_size  = DEFAULT_PARAMS_COUNT,
-                .params_count = 0,
-                .params       = calloc(DEFAULT_PARAMS_COUNT, sizeof *_s.conf.params.params),
-            },
         },
         .dispatch_op = dispatch_op,
         .plugin_cookie = {
-            .param = &_s.conf.params,
             .gops         = {
                 .fatal = fatal_,
                 .debug = debug_,
@@ -95,8 +89,14 @@ int main(void)
         },
     }, *s = &_s;
 
+    param_init(&s->conf.params);
+    s->plugin_cookie.param = s->conf.params;
+
     em_device_setup(s);
 
+    // This clearerr() is necessary to allow multiple runs of main() in
+    // emscripten
+    clearerr(in);
     if (load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr))
         fatal(0, "Error while loading state into simulation");
 
@@ -108,9 +108,6 @@ int main(void)
     };
 
     run_sim(s, &ops);
-
-    if (in)
-        fclose(in);
 
     //param_destroy(&s->conf.params);
 

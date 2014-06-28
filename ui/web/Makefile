@@ -24,7 +24,10 @@ INCLUDES += $(CHECK_PATHS)
 %.js: EMCCFLAGS_LD += -s SAFE_HEAP_LINES=0
 
 ifeq ($(DEBUG),)
-%.js: EMCCFLAGS_LD += -O1 # TODO make -O2 work again
+# --closure 1 probably fails because system functions shared between the
+#  multiple separate .js binaries are renamed in different ways. --closure 1
+#  works fine as long as only one binary is loaded into the web page.
+%.js: EMCCFLAGS_LD += -O2 --closure 0
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=0 -s MICRO_OPTS=1 \
                       -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0 \
                       -s CLOSURE_ANNOTATIONS=1 \
@@ -35,8 +38,8 @@ ifeq ($(DEBUG),)
                       #-s RELOOP=1 \
                       #
 else
-%.js: EMCCFLAGS_LD += -O0
-%.js: EMCCFLAGS_LD += -s ASSERTIONS=1 -s MICRO_OPTS=0 \
+%.js: EMCCFLAGS_LD += -O2 # -O0 causes failure
+%.js: EMCCFLAGS_LD += -s ASSERTIONS=2 -s MICRO_OPTS=0 \
                       -s LABEL_DEBUG=0 \
                       -s LIBRARY_DEBUG=0 \
                       -s WARN_ON_UNDEFINED_SYMBOLS=1 \
@@ -48,22 +51,37 @@ endif
 ################################################################################
 # Specific rules
 
-tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --js-transform "perl -i -p ./fsify.pl"
-tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --pre-js $*_pre.js
+# We have to do our own --pre-js equivalent for now, because the --pre-js
+# content comes before the main code but after the FS-setup code, and we need
+# ours to enclose all modifications to Module.
+# We would like to use `-i ''` on MacOS X and `-i` on Linux but they are
+# mutually incompatible
+HAVE_GNU_SED := $(shell sed --version 2>&1 | grep -c GNU)
+ifneq ($(HAVE_GNU_SED),0)
+SED_IN_PLACE = sed -i.bak
+else
+SED_IN_PLACE = sed -i ''
+endif
+PREFIX_XFORM = "$(SED_IN_PLACE) -e '1r pre_wrap.js' -e '1N; /PRE_RUN_ADDITIONS/r fsify.txt'"
+tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --js-transform $(PREFIX_XFORM)
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --post-js $*_post.js
 
-%.js: %_pre.js %_post.js
+CLEANFILES += *_post.js
+%_post.js: post_wrap.js
+	sed 's/TENYR_BINARY_NAME/"$*"/g' $< > $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
+
+tcc.js tas.js tsim.js tld.js: %.js: pre_wrap.js %_post.js
 
 tas.bc: CFLAGS =# reset CFLAGS
 
 TENYR_LIB_DIR ?= lib
 TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
-TH_FLAGS = $(addprefix --embed-file ,$(TH_FILES))
+TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
 tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
+%.js: LDFLAGS =# reset LDFLAGS
 tcc.bc: CFLAGS =# reset CFLAGS
 tcc.bc: CPPFLAGS =# reset CPPFLAGS
-tcc.bc: CFLAGS += -g -Wall
 tcc.bc: CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing
 # clang doesn't know we are using old-style variable-sized structs
 tcc.bc: CFLAGS += -Wno-array-bounds
