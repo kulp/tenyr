@@ -80,17 +80,17 @@ puts_loop:
 puts_done:
     pop(d)
     ret</textarea>
-            <button onclick="tasdata.preprocess()">Preprocess &rarr;</button>
+            <button onclick="tasdata.tcc_entry()">Preprocess &rarr;</button>
         </div>
         <div class="box">
             <span>Preprocessed input :</span>
             <textarea id="preprocessed" rows="20"></textarea>
-            <button onclick="tasdata.assemble()">Assemble &rarr;</button>
+            <button onclick="tasdata.tas_entry()">Assemble &rarr;</button>
         </div>
         <div class="box">
             <span>Assembled output :</span>
             <textarea id="output" rows="20"></textarea>
-            <button onclick="tasdata.simulate()">Simulate &rarr;</button>
+            <button onclick="tasdata.tsim_entry()">Simulate &rarr;</button>
         </div>
         <div class="box">
             <span>Simulator output :</span>

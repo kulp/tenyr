@@ -54,17 +54,21 @@ endif
 # We have to do our own --pre-js equivalent for now, because the --pre-js
 # content comes before the main code but after the FS-setup code, and we need
 # ours to enclose all modifications to Module.
-PREFIX_XFORM = "sed -i '' -e '1r wrap_pre.js' -e '1N; /PRE_RUN_ADDITIONS/r fsify.txt'"
+PREFIX_XFORM = "sed -i '' -e '1r pre_wrap.js' -e '1N; /PRE_RUN_ADDITIONS/r fsify.txt'"
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --js-transform $(PREFIX_XFORM)
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --post-js $*_post.js
 
-%.js: wrap_pre.js %_post.js
+CLEANFILES += *_post.js
+%_post.js: post_wrap.js
+	sed 's/TENYR_BINARY_NAME/"$*"/g' $< > $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
+
+tcc.js tas.js tsim.js tld.js: %.js: pre_wrap.js %_post.js
 
 tas.bc: CFLAGS =# reset CFLAGS
 
 TENYR_LIB_DIR ?= lib
 TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
-TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$m))
+TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
 tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
 %.js: LDFLAGS =# reset LDFLAGS
