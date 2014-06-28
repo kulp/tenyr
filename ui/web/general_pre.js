@@ -1,12 +1,12 @@
 //document.onload = function() {
-    tasdata.tcc_in_area  = document.getElementById('input');
-    tasdata.tcc_out_area = tasdata.tas_in_area  = document.getElementById('preprocessed');
-    tasdata.tas_out_area = tasdata.tsim_in_area = document.getElementById('output');
-    tasdata.tsim_out_area = document.getElementById('simoutput');
+    tenyr_state.tcc_in_area  = document.getElementById('input');
+    tenyr_state.tcc_out_area = tenyr_state.tas_in_area  = document.getElementById('preprocessed');
+    tenyr_state.tas_out_area = tenyr_state.tsim_in_area = document.getElementById('output');
+    tenyr_state.tsim_out_area = document.getElementById('simoutput');
 
-    tasdata.tcc_get_line_char = make_char_getter(tasdata.tcc_in_area);
-    tasdata.tas_get_line_char = make_char_getter(tasdata.tas_in_area);
-    tasdata.tsim_get_line_char = make_char_getter(tasdata.tas_out_area);
+    tenyr_state.tcc_get_line_char = make_char_getter(tenyr_state.tcc_in_area);
+    tenyr_state.tas_get_line_char = make_char_getter(tenyr_state.tas_in_area);
+    tenyr_state.tsim_get_line_char = make_char_getter(tenyr_state.tas_out_area);
 //};
 
 function make_char_getter(area)

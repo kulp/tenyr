@@ -1,14 +1,14 @@
     return Module;
-})((tasdata[prefix + '_module'] = (function(){
+})((tenyr_state[prefix + '_module'] = (function(){
         function put_char(ch)
         {
-            tasdata[prefix + '_out_area']['value'] += String.fromCharCode(ch);
+            tenyr_state[prefix + '_out_area']['value'] += String.fromCharCode(ch);
         }
 
         function set_up_fs(mod)
         {
             if (ENVIRONMENT_IS_WEB) {
-                mod['_FSref_init'](tasdata[prefix + '_get_line_char'], put_char, put_char);
+                mod['_FSref_init'](tenyr_state[prefix + '_get_line_char'], put_char, put_char);
             }
         }
 
@@ -22,13 +22,13 @@
     })()
 ));
 
-tasdata[prefix + '_entry'] = function ()
+tenyr_state[prefix + '_entry'] = function ()
 {
     if (ENVIRONMENT_IS_WEB) {
-        tasdata[prefix + '_out_area']['value'] = "";
-        tasdata[prefix + '_get_line_char']['i'] = 0;
+        tenyr_state[prefix + '_out_area']['value'] = "";
+        tenyr_state[prefix + '_get_line_char']['i'] = 0;
     }
-    tasdata[prefix + '_module']['callMain'](tasdata[prefix + '_module']['arguments']);
+    tenyr_state[prefix + '_module']['callMain'](tenyr_state[prefix + '_module']['arguments']);
 }
 
-})(TENYR_BINARY_NAME, tasdata);
+})(TENYR_BINARY_NAME, tenyr_state);
