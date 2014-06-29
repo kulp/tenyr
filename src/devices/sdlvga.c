@@ -91,7 +91,7 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie)
     char *filename = build_path(share_path, RESOURCE_DIR"/font.png");
     SDL_Surface *sprite = IMG_Load(filename);
     if (!sprite)
-        fatal(0, "sdlvga failed to load font sprite `%s'", filename);
+        fatal(0, "sdlvga failed to load font sprite `%s' : %s", filename, IMG_GetError());
 
     free(filename);
 
