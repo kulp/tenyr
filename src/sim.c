@@ -7,33 +7,35 @@
 static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         uint32_t I)
 {
-    int32_t  Xs = X;
-    uint32_t Xu = X;
-    int32_t  Ys = Y;
-    int32_t  Is = SEXTEND32(12, I);
-
-    int32_t  O = (type == 0) ? Ys : Is;
-    int32_t  A = (type == 0) ? Is : Ys;
+    uint32_t p[3] = { 0 };
+    // The `type` determines which position the immediate has
+    p[type] = SEXTEND32(12, I);
+    p[2 - (type > 1)] = X;
+    p[1 - (type > 0)] = Y;
 
     switch (op) {
-        case OP_ADD               : *rhs =  (Xs  +  O) + A; break;
-        case OP_SUBTRACT          : *rhs =  (Xs  -  O) + A; break;
-        case OP_MULTIPLY          : *rhs =  (Xs  *  O) + A; break;
+        #define Ps(x) ((( int32_t*)p)[x])
+        #define Pu(x) (((uint32_t*)p)[x])
+        case OP_ADD               : *rhs =  (Ps(2) +  Ps(1)) + Ps(0); break;
+        case OP_SUBTRACT          : *rhs =  (Ps(2) -  Ps(1)) + Ps(0); break;
+        case OP_MULTIPLY          : *rhs =  (Ps(2) *  Ps(1)) + Ps(0); break;
 
-        case OP_SHIFT_LEFT        : *rhs =  (Xu  << O) + A; break;
-        case OP_SHIFT_RIGHT_LOGIC : *rhs =  (Xu  >> O) + A; break;
-        case OP_SHIFT_RIGHT_ARITH : *rhs =  (Xs  >> O) + A; break;
+        case OP_SHIFT_LEFT        : *rhs =  (Pu(2) << Pu(1)) + Ps(0); break;
+        case OP_SHIFT_RIGHT_LOGIC : *rhs =  (Pu(2) >> Pu(1)) + Ps(0); break;
+        case OP_SHIFT_RIGHT_ARITH : *rhs =  (Ps(2) >> Pu(1)) + Ps(0); break;
 
-        case OP_COMPARE_LT        : *rhs = -(Xs  <  O) + A; break;
-        case OP_COMPARE_EQ        : *rhs = -(Xs  == O) + A; break;
-        case OP_COMPARE_GE        : *rhs = -(Xs  >= O) + A; break;
-        case OP_COMPARE_NE        : *rhs = -(Xs  != O) + A; break;
+        case OP_COMPARE_LT        : *rhs = -(Ps(2) <  Ps(1)) + Ps(0); break;
+        case OP_COMPARE_EQ        : *rhs = -(Ps(2) == Ps(1)) + Ps(0); break;
+        case OP_COMPARE_GE        : *rhs = -(Ps(2) >= Ps(1)) + Ps(0); break;
+        case OP_COMPARE_NE        : *rhs = -(Ps(2) != Ps(1)) + Ps(0); break;
 
-        case OP_BITWISE_AND       : *rhs =  (Xu  &  O) + A; break;
-        case OP_BITWISE_ANDN      : *rhs =  (Xu  & ~O) + A; break;
-        case OP_BITWISE_OR        : *rhs =  (Xu  |  O) + A; break;
-        case OP_BITWISE_XOR       : *rhs =  (Xu  ^  O) + A; break;
-        case OP_BITWISE_XORN      : *rhs =  (Xu  ^ ~O) + A; break;
+        case OP_BITWISE_AND       : *rhs =  (Pu(2) &  Pu(1)) + Ps(0); break;
+        case OP_BITWISE_ANDN      : *rhs =  (Pu(2) &~ Pu(1)) + Ps(0); break;
+        case OP_BITWISE_OR        : *rhs =  (Pu(2) |  Pu(1)) + Ps(0); break;
+        case OP_BITWISE_XOR       : *rhs =  (Pu(2) ^  Pu(1)) + Ps(0); break;
+        case OP_BITWISE_XORN      : *rhs =  (Pu(2) ^~ Pu(1)) + Ps(0); break;
+        #undef Ps
+        #undef Pu
 
         default:
             fatal(0, "Encountered reserved opcode");
@@ -82,7 +84,8 @@ int run_instruction(struct sim_state *s, struct element *i)
         case 0x4:
         case 0x5:
         case 0x6:
-        case 0x7: {
+        case 0x7:
+        case 0x8: {
             struct instruction_general *g = &i->insn.u._0xxx;
             int32_t rhs = 0;
             uint32_t value;

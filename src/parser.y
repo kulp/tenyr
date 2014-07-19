@@ -15,10 +15,8 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width, int flags);
 static struct const_expr *make_const_expr(enum const_expr_type type, int op,
         struct const_expr *left, struct const_expr *right, int flags);
-static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
-        const_expr *defexpr);
-static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
-        int y);
+static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
+		const_expr *defexpr);
 static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
         *defexpr);
 static struct element *make_insn_general(struct parse_data *pd, struct
@@ -107,7 +105,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <program> program ascii utf32 data string_or_data
 %type <str> symbol symbol_list
 
-%expect 2
+%expect 3
 
 %union {
     int32_t i;
@@ -203,8 +201,8 @@ insn_inner
             free($rhs_plain);
             free($lhs_plain); }
     | lhs_plain tor rhs_plain
-        {   struct expr *t0 = make_expr_type0($rhs_plain->x, OP_BITWISE_OR, 0, 0, NULL),
-                        *t1 = make_expr_type0($lhs_plain->x, OP_BITWISE_OR, 0, 0, NULL);
+        {   struct expr *t0 = make_expr(0, $rhs_plain->x, OP_BITWISE_OR, 0, 0, NULL),
+                        *t1 = make_expr(0, $lhs_plain->x, OP_BITWISE_OR, 0, 0, NULL);
             $insn_inner = make_insn_general(pd, t0, 0, t1);
             free(t1);
             free(t0);
@@ -278,11 +276,11 @@ lhs_deref
 rhs_plain
     /* type0 */
     : regname[x] op regname[y] reloc_op greloc_expr
-        { $rhs_plain = make_expr_type0($x, $op, $y, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
+        { $rhs_plain = make_expr(0, $x, $op, $y, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
     | regname[x] op regname[y]
-        { $rhs_plain = make_expr_type0($x, $op, $y, 0, NULL); }
+        { $rhs_plain = make_expr(0, $x, $op, $y, 0, NULL); }
     | regname[x]
-        { $rhs_plain = make_expr_type0($x, OP_BITWISE_OR, 0, 0, NULL); }
+        { $rhs_plain = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
     | unary_op regname[x] reloc_op greloc_expr
         { $rhs_plain = make_unary_type0($x, $unary_op, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
     | unary_op regname[x]
@@ -291,14 +289,19 @@ rhs_plain
         {   /* When the RHS is just a constant, choose OR or ADD depending on
              * what kind of constant this is likely to be. */
             enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
-            $rhs_plain = make_expr_type0(0, op, 0, 1, $greloc_expr); }
+            $rhs_plain = make_expr(0, 0, op, 0, 1, $greloc_expr); }
     /* type1 */
     | regname[x] op greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, $y); }
+        { $rhs_plain = make_expr(1, $x, $op, $y, 1, $greloc_expr); }
     | regname[x] op greloc_expr
-        { $rhs_plain = make_expr_type1($x, $op, $greloc_expr, 0); }
+        { $rhs_plain = make_expr(1, $x, $op, 0, 1, $greloc_expr); }
     | greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr_type1(0, OP_ADD, $greloc_expr, $y); }
+        { $rhs_plain = make_expr(1, 0, OP_ADD, $y, 1, $greloc_expr); }
+    /* type2 */
+    | greloc_expr op regname[x] '+' regname[y]
+        { $rhs_plain = make_expr(2, $x, $op, $y, 1, $greloc_expr); }
+    | greloc_expr op regname[x]
+        { $rhs_plain = make_expr(2, $x, $op, 0, 1, $greloc_expr); }
 
 unary_op
     : '~' { $unary_op = OP_BITWISE_XORN; }
@@ -465,7 +468,6 @@ static struct element *make_insn_general(struct parse_data *pd, struct
 
     int dd = ((lhs->deref | !!arrow) << 1) | expr->deref;
 
-    elem->insn.u._0xxx.t   = 0;
     elem->insn.u._0xxx.p   = expr->type;
     elem->insn.u._0xxx.dd  = dd;
     elem->insn.u._0xxx.z   = lhs->x;
@@ -517,38 +519,18 @@ static struct const_expr *make_const_expr(enum const_expr_type type, int op,
     return n;
 }
 
-static struct expr *make_expr_type0(int x, int op, int y, int mult, struct
-        const_expr *defexpr)
+static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
+		const_expr *defexpr)
 {
     struct expr *e = calloc(1, sizeof *e);
 
-    e->type  = 0;
+    e->type  = type;
     e->deref = 0;
     e->x     = x;
     e->op    = op;
     e->y     = y;
     e->mult  = mult;
     e->ce    = defexpr;
-    if (defexpr)
-        e->i = 0xfffffbad; // put in a placeholder that must be overwritten
-    else
-        e->i = 0; // there was no const_expr ; zero defined by language
-
-    return e;
-}
-
-static struct expr *make_expr_type1(int x, int op, struct const_expr *defexpr,
-        int y)
-{
-    struct expr *e = calloc(1, sizeof *e);
-
-    e->type  = 1;
-    e->deref = 0;
-    e->x     = x;
-    e->op    = op;
-    e->ce    = defexpr;
-    e->mult  = 1;
-    e->y     = y;
     if (defexpr)
         e->i = 0xfffffbad; // put in a placeholder that must be overwritten
     else

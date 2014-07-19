@@ -1,0 +1,6 @@
+c <- 4
+d <- 5
+e <- c * d + 3
+f <- c * 3 + d
+g <- 3 * c + d
+illegal

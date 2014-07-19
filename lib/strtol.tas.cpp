@@ -11,7 +11,7 @@ strtol:
     callnz(h,detect_base)
     e <- b
 
-    h <- e >= 37
+    h <- 36 < e
     jnzrel(h,strtol_error_EINVAL)
     h <- e < 2
     jnzrel(h,strtol_error_EINVAL)

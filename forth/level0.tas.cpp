@@ -215,7 +215,7 @@ head(FILL,FILL):
     T2 <- [S + 3]       // T2 is address
     T3 <- 0             // T3 is offset
 L_FILL_top:
-    T4 <- T1 >= 1       // T4 is loop condition
+    T4 <- 0 < T1        // T4 is loop condition
     iffalse(T4, L_FILL_done)
     T0 -> [T2 + T3]     // write char to location
     T3 <- T3 + 1        // increment offset

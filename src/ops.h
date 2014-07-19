@@ -24,6 +24,14 @@
 //      01 :  Z  <- [X f I + Y]
 //      11 :  Z  -> [X f I + Y]
 //
+// [10DDZZZZXXXXYYYYffffIIIIIIIIIIII]
+// I = sign-extended 12-bit immediate
+// performs
+// DD = 00 :  Z  <-  I f X + Y
+//      10 : [Z] <-  I f X + Y
+//      01 :  Z  <- [I f X + Y]
+//      11 :  Z  -> [I f X + Y]
+//
 //  a <- [b * c + 4]
 //  a <- [p + 3]
 //  p <- [p + c] (jump from table)
@@ -71,8 +79,7 @@ struct insn_or_data {
             unsigned x   :  4;  ///< operand x
             unsigned z   :  4;  ///< operand z
             unsigned dd  :  2;  ///< dereference
-            unsigned p   :  1;  ///< expr type0 or type1
-            unsigned t   :  1;  ///< type bit
+            unsigned p   :  2;  ///< expr type0 or type1
         } _0xxx;
     } u;
     uint32_t reladdr;   ///< used for CE_ICI resolving
