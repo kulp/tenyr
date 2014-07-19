@@ -4,7 +4,7 @@ _start:
     d <- -5         // load multiplier
 top:
     b <- b - 1      // decrement loop variable
-    c <- b > a      // compare b to 0
+    c <- a < b      // compare b to 0
     c <- c & d
     p <- p + c + 1  // jump back
 done:

@@ -69,7 +69,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %left '^' "^~"
 %left '&' "&~"
 %left "==" "<>"
-%left '<' '>'
+%left '<' ">="
 %left "<<" ">>" ">>>"
 %left '+' '-'
 %left '*' '/'
@@ -89,6 +89,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token RSH ">>"
 %token RSHA ">>>"
 %token EQ "=="
+%token GE ">="
 %token NEQ "<>"
 %token XORN "^~"
 %token ANDN "&~"
@@ -328,7 +329,7 @@ op
     | '*'   { $op = OP_MULTIPLY         ; }
     | '<'   { $op = OP_COMPARE_LT       ; }
     | "=="  { $op = OP_COMPARE_EQ       ; }
-    | '>'   { $op = OP_COMPARE_GT       ; }
+    | ">="  { $op = OP_COMPARE_GE       ; }
     | "<>"  { $op = OP_COMPARE_NE       ; }
     | '|'   { $op = OP_BITWISE_OR       ; }
     | '&'   { $op = OP_BITWISE_AND      ; }

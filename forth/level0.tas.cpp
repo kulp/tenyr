@@ -58,20 +58,20 @@ head(ADDMEM,+!):
 head(SUB,-): BINOP(-)
 
 // <      n1 n2 -- flag           test n1<n2, signed
-head(CMP_LT,<):
-    .word . + 1
-    T0  <- [S + 2]
-    T1  <- [S + 1]
-    S   <- S + 1
-    T2  <- T0 < T1
-    T2  -> [S + 1]
-    goto(NEXT)
+head(CMP_LT,<): BINOP(<)
 
 // =      x1 x2 -- flag                   test x1=x2
 head(CMP_EQ,=): BINOP(==)
 
 // >      n1 n2 -- flag           test n1>n2, signed
-head(CMP_GT,>): BINOP(>)
+head(CMP_GT,>):
+    .word . + 1
+    T0  <- [S + 2]
+    T1  <- [S + 1]
+    S   <- S + 1
+    T2  <- T1 < T0
+    T2  -> [S + 1]
+    goto(NEXT)
 
 // >R     x --   R: -- x        push to return stack
 head(PUSH_R,>R):
@@ -215,7 +215,7 @@ head(FILL,FILL):
     T2 <- [S + 3]       // T2 is address
     T3 <- 0             // T3 is offset
 L_FILL_top:
-    T4 <- T1 > 0        // T4 is loop condition
+    T4 <- T1 >= 1       // T4 is loop condition
     iffalse(T4, L_FILL_done)
     T0 -> [T2 + T3]     // write char to location
     T3 <- T3 + 1        // increment offset

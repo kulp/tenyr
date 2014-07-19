@@ -18,7 +18,7 @@ loop:
   k <- d == 0
   jnzrel(k, done)
 
-  k <- b > d
+  k <- d < b
   jnzrel(k, else)
 
   d <- d - b

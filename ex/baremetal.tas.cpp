@@ -5,6 +5,7 @@
 //  N is the relative-jump temp register
 
 #include "common.th"
+#define ROWS 40
 
 _start:
     bare_metal_init()   // TODO this shouldn't be necessary
@@ -49,17 +50,17 @@ loop:
     c <- c + 1          // increment N
 
     j <- j + 1          // increment row
-    m <- j > 39         // check for column full
+    m <- j >= ROWS      // check for column full
     // TODO try `l <- m * -20 + l`
-    k <- k - m          // if j > 39, k <- k - -1
-    j <- j &~ m         // if j > 39, j <- j & 0
+    k <- k - m          // if j >= ROWS, k <- k - -1
+    j <- j &~ m         // if j >= ROWS, j <- j & 0
 
     goto(loop)
     illegal
 
 fib:
     d <- 1
-    d <- c > d          // zero or one ?
+    d <- d < c          // zero or one ?
     jnzrel(d,_recurse)  // not-zero is true (c >= 2)
     b <- c
     ret

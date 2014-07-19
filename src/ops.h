@@ -40,7 +40,7 @@
 //  0101 = X shift left Y
 //  0110 = X compare < Y
 //  0111 = X compare == Y
-//  1000 = X compare > Y
+//  1000 = X compare >= Y
 //  1001 = X bitwise and complement Y
 //  1010 = X bitwise xor Y
 //  1011 = X subtract Y
@@ -114,7 +114,7 @@ enum op {
     OP_SHIFT_LEFT        = 0x5,
     OP_COMPARE_LT        = 0x6,
     OP_COMPARE_EQ        = 0x7,
-    OP_COMPARE_GT        = 0x8,
+    OP_COMPARE_GE        = 0x8,
     OP_BITWISE_ANDN      = 0x9,
     OP_BITWISE_XOR       = 0xa,
     OP_SUBTRACT          = 0xb,

@@ -13,14 +13,14 @@ udiv:
   jnzrel(k, done)
 
   // Check for divisor > dividend.
-  k <- d > c
+  k <- c < d
   jnzrel(k, done)
 
   // Prepare the value to subtract from the dividend.
   g <- d
 build_subtrahend:
   // If the value is greater than the dividend, we're done.
-  k <- g > c
+  k <- c < g
   jnzrel(k, compute_quotient)
 
   // Otherwise, multiply by 2.

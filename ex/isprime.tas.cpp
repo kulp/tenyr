@@ -54,7 +54,7 @@ mod_loop:
     // Check to see if we're done, i.e. 6*i - 1 > m
     g <- i * 6
     g <- g - 1
-    k <- g > m
+    k <- m < g
     jnzrel(k, prime)
 
     // Check for divisibility by 6*i - 1.

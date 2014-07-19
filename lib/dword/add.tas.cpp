@@ -9,8 +9,8 @@ dw_add:
   h <- c + e
   
   // Compute carry and store it in K
-  j <- h > c
-  k <- h > e
+  j <- c < h
+  k <- e < h
   k <- j & k + 1
   
   // Finish computing sum.

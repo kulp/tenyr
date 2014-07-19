@@ -10,7 +10,7 @@ main:
     c <- 0                      // needle
     i <- [rel(largest)]
 loop_top:
-    h <- c > i
+    h <- i < c
     jnzrel(h, loop_exit)
 
     c -> [rel(key)]             // update key value

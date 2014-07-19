@@ -499,8 +499,8 @@ head(ISNUMBER,?NUMBER): .word . + 1
     e <- [reloc(base)]
     ccall(strtol)
     l <- [h - g - 2]    // load endptr value
-    e <-  h - g - 1     // E is address of string
-    l <- l > e          // check if we consumed chars
+    e <-  h - g         // E is address of string
+    l <- l >= e         // check if we consumed chars
     n <- b &  l         // E is either B or F
     e <- f &~ l         //  ... depending on L
     e <- e | n

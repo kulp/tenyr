@@ -12,7 +12,7 @@ init_display_loop:
     m <- h + k + 0x10   // m is k characters past start of text region
     [m] <- ' '          // write space to display
     k <- k + 1          // go to the right one character
-    l <- k > 0x20       // shall we loop ?
+    l <- k >= 0x21      // shall we loop ?
     jzrel(l,init_display_loop)
 
 init_display_done:

@@ -11,7 +11,7 @@ strtol:
     callnz(h,detect_base)
     e <- b
 
-    h <- e > 36
+    h <- e >= 37
     jnzrel(h,strtol_error_EINVAL)
     h <- e < 2
     jnzrel(h,strtol_error_EINVAL)
@@ -59,7 +59,7 @@ strtol_le10_top:
     i <- i - '0'
     g <- i < e
     jzrel(g,strtol_done)
-    g <- i > -1
+    g <- i >= 0
     jzrel(g,strtol_done)
     c <- c + 1
     b <- b * e
@@ -70,7 +70,7 @@ strtol_le10_top:
 strtol_gt10_top:
     i <- [c]
     g <- i - '0'
-    h <- g > -1
+    h <- g >= 0
     jzrel(h,strtol_done)
     h <- g < e
     jzrel(h,strtol_gt10_tryhigh)
@@ -82,7 +82,7 @@ strtol_gt10_top:
 strtol_gt10_tryhigh:
     i <- i &~ ('a' - 'A')
     g <- i - 'A'
-    h <- g > -1
+    h <- g >= 0
     jzrel(h,strtol_done)
     g <- g + 10
     h <- g < e

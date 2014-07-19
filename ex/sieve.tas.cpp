@@ -16,10 +16,10 @@
 init:
     d -> [o + j]        // write truth to table cell
     j <- j + 1          // increment table index
-    m <- j > b          // exit loop when i > N
+    m <- b < j          // exit loop when i > N
     jzrel(m,init)
 outer:
-    m <- i > c          // exit loop when i > N/2
+    m <- c < i          // exit loop when i > N/2
     jnzrel(m,done)
     g <- [o + i]        // load compositeness
     m <- g == 0         // check recorded compositeness
@@ -28,7 +28,7 @@ outer:
 inner:
     j <- i * k          // compute j
     k <- k + 1          // increment multiplier
-    m <- j > b          // compare j to N
+    m <- b < j          // compare j to N
     jnzrel(m,bottom)    // branch if j > N
     a -> [o + j]        // mark as composite
     goto(inner)         // loop

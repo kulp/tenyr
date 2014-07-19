@@ -68,10 +68,10 @@ L_snake:
 
     // start clamp
     // Check for out-of-bounds and bounce off the wall
-    b <- j > (ROWS - 1) ; j <- b << 1 + j
-    b <- j > g + 1      ; j <- b << 1 + j
-    c <- k > (COLS - 1) ; k <- c << 1 + k
-    c <- k > g + 1      ; k <- c << 1 + k
+    b <- j >= ROWS  ; j <- b << 1 + j
+    b <- j >= a + 1 ; j <- b << 1 + j
+    c <- k >= COLS  ; k <- c << 1 + k
+    c <- k >= a + 1 ; k <- c << 1 + k
     // end clamp
 
     j -> [n + 2] // store new row, col

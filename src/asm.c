@@ -26,7 +26,7 @@ static const struct {
 
     [OP_COMPARE_LT       ] = { "<"  , 1, 0, 0 },
     [OP_COMPARE_EQ       ] = { "==" , 1, 0, 0 },
-    [OP_COMPARE_GT       ] = { ">"  , 1, 0, 0 },
+    [OP_COMPARE_GE       ] = { ">=" , 1, 0, 0 },
     [OP_COMPARE_NE       ] = { "<>" , 1, 0, 0 },
     [OP_BITWISE_OR       ] = { "|"  , 1, 1, 1 },
     [OP_BITWISE_AND      ] = { "&"  , 1, 1, 0 },
