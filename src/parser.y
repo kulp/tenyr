@@ -200,13 +200,12 @@ insn_inner
         {   $insn_inner = make_insn_general(pd, $lhs_plain, 0, $rhs_plain);
             free($rhs_plain);
             free($lhs_plain); }
-    | lhs_plain tor rhs_plain
-        {   struct expr *t0 = make_expr(0, $rhs_plain->x, OP_BITWISE_OR, 0, 0, NULL),
+    | lhs_plain tor regname[x]
+        {   struct expr *t0 = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL),
                         *t1 = make_expr(0, $lhs_plain->x, OP_BITWISE_OR, 0, 0, NULL);
             $insn_inner = make_insn_general(pd, t0, 0, t1);
             free(t1);
             free(t0);
-            free($rhs_plain);
             free($lhs_plain); }
     | lhs_plain arrow rhs_deref
         {   $insn_inner = make_insn_general(pd, $lhs_plain, $arrow, $rhs_deref);

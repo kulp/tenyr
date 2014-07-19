@@ -1,0 +1,2 @@
+b->c+5 // must fail
+b->c*a // must fail
