@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdarg.h>
 
 #include "parser_global.h"
 #include "parser.h"
@@ -16,7 +15,7 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
 static struct const_expr *make_const_expr(enum const_expr_type type, int op,
         struct const_expr *left, struct const_expr *right, int flags);
 static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
-		const_expr *defexpr);
+        const_expr *defexpr);
 static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
         *defexpr);
 static struct element *make_insn_general(struct parse_data *pd, struct
@@ -31,8 +30,10 @@ static struct element_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
 static struct element_list *make_zeros(struct parse_data *pd, struct
         const_expr *size);
-static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
-        enum directive_type type, ...);
+static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
+        const struct strbuf *sym);
+static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
+        const struct strbuf *sym, struct const_expr *expr);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct element_list *p);
 static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
@@ -242,9 +243,9 @@ data
 
 directive
     : GLOBAL symbol_list
-        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_GLOBAL, &$symbol_list); }
+        {   tenyr_pop_state(pd->scanner); $directive = make_global(pd, &yylloc, &$symbol_list); }
     | SET SYMBOL ',' reloc_expr
-        {   tenyr_pop_state(pd->scanner); $directive = make_directive(pd, &yylloc, D_SET, $SYMBOL, &$reloc_expr); }
+        {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
 symbol_list
     : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
@@ -519,7 +520,7 @@ static struct const_expr *make_const_expr(enum const_expr_type type, int op,
 }
 
 static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
-		const_expr *defexpr)
+        const_expr *defexpr)
 {
     struct expr *e = calloc(1, sizeof *e);
 
@@ -723,54 +724,41 @@ struct datum_D_SET {
     struct symbol *symbol;
 };
 
-static struct directive *make_directive(struct parse_data *pd, YYLTYPE *locp,
-        enum directive_type type, ...)
+static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
+        const struct strbuf *symbol)
 {
     struct directive *result = calloc(1, sizeof *result);
-    result->type = D_NULL;
+    result->type = D_GLOBAL;
+    result->data = malloc(symbol->len + 1);
+    strcopy(result->data, symbol->buf, symbol->len + 1);
+    return result;
+}
 
-    va_list vl;
-    va_start(vl,type);
+static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
+        const struct strbuf *symbol, struct const_expr *expr)
+{
+    struct directive *result = calloc(1, sizeof *result);
+    result->type = D_SET;
+    // TODO stop allocating datum_D_SET if we don't need it
+    struct datum_D_SET *d = result->data = malloc(sizeof *d);
 
-    switch (type) {
-        case D_GLOBAL:
-            result->type = type;
-            const struct strbuf *symbol = va_arg(vl,const struct strbuf*);
-            result->data = malloc(symbol->len + 1);
-            strcopy(result->data, symbol->buf, symbol->len + 1);
-            break;
-        case D_SET: {
-            result->type = type;
-            // TODO stop allocating datum_D_SET if we don't need it
-            struct datum_D_SET *d = result->data = malloc(sizeof *d);
-            const struct strbuf *symbol = va_arg(vl,const struct strbuf*);
-
-            struct symbol *n = calloc(1, sizeof *n);
-            n->column   = locp->first_column;
-            n->lineno   = locp->first_line;
-            n->resolved = 0;
-            n->next     = NULL;
-            n->ce       = va_arg(vl,struct const_expr *);
-            n->unique   = 0;
-            if (symbol->len > sizeof n->name) {
-                tenyr_error(locp, pd, "symbol too long in .set directive");
-                return NULL;
-            }
-            strcopy(n->name, symbol->buf, symbol->len + 1);
-
-            d->symbol = n;
-
-            add_symbol(locp, pd, n);
-            break;
-        }
-        default: {
-            char buf[128];
-            snprintf(buf, sizeof buf, "Unknown directive type %d in %s", type, __func__);
-            tenyr_error(locp, pd, buf);
-        }
+    struct symbol *n = calloc(1, sizeof *n);
+    n->column   = locp->first_column;
+    n->lineno   = locp->first_line;
+    n->resolved = 0;
+    n->next     = NULL;
+    n->ce       = expr;
+    n->unique   = 0;
+    if (symbol->len > sizeof n->name) {
+        tenyr_error(locp, pd, "symbol too long in .set directive");
+        return NULL;
     }
+    strcopy(n->name, symbol->buf, symbol->len + 1);
 
-    va_end(vl);
+    d->symbol = n;
+
+    add_symbol(locp, pd, n);
+
     return result;
 }
 
