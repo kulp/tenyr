@@ -13,7 +13,7 @@ syn keyword tenyrRegister a b c d e f g h i j k l m n o p
 syn keyword tenyrDelim '[[]' '[]]'
 
 "syn keyword tenyrArrow <- ->
-syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<^.+\&|*\~]\|<<\|>>\|<>\|==\|>=\|\^\~\|&\~\)\([[:space:]]\|$\)\@='
+syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<^.+\&|*\~]\|<<\|>>\|<>\|!=\|==\|>=\|\^\~\|&\~\)\([[:space:]]\|$\)\@='
 syn match tenyrArrow '<-\|->'
 
 syn match tenyrDirective '\.\(global\|word\|set\|zero\)'

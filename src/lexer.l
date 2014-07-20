@@ -97,6 +97,7 @@ illegal             { return ILLEGAL; }
 "=="                { return EQ;   }
 "&~"                { return ANDN; }
 "<>"                { return NEQ;  }
+"!="                { return NEQ;  }
 "^~"                { return XORN; }
 ">>>"               { return RSHA; }
 ">>"                { return RSH;  }
