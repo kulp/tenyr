@@ -49,7 +49,7 @@ struct obj {
         UWord flags;    ///< unused so far (eventually indicate relocations ?)
         char name[SYMBOL_LEN];
         UWord value;
-		UWord size;
+        UWord size;
     } *symbols;
 
     UWord rlc_count;    ///< count of relocations

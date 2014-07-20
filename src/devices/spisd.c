@@ -27,7 +27,7 @@ struct spisd_state {
     unsigned long cycle_count;  ///< monotonically increasing
     unsigned long last_reset;   ///< cycle count of idle finish
 
-	struct plugin_cookie pcookie;
+    struct plugin_cookie pcookie;
 
     FILE *store;
 };
@@ -263,7 +263,7 @@ int EXPORT spisd_spi_init(void *pcookie, const struct plugin_cookie *plugcook)
     *(void**)pcookie = s;
     s->out_shift_len = 0;
     s->state = SPISD_UNINITIALISED;
-	s->pcookie = *plugcook;
+    s->pcookie = *plugcook;
 
     open_storefile(s);
 
