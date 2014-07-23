@@ -17,39 +17,40 @@ module Reg(input clk, upZ,               input[ 3:0] indexZ, indexX, indexY,
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
-              output[3:0] op, output kind, throw, storing, deref_rhs, branch,
-              output[4:0] vector);
+              output[3:0] op, output[1:0] kind,
+              output throw, storing, deref_rhs, branch, output[4:0] vector);
 
     assign {kind, storing, deref_rhs, Z, X, Y, op, I} = insn;
     assign vector = insn[4:0];
-    assign throw  = &insn[31:30];
+    assign throw  = &kind;
     assign branch = &Z & ~storing;
 
 endmodule
 
-module Exec(input clk, en, swap, output reg[31:0] rhs, input[3:0] op,
+module Exec(input clk, en, input[1:0] kind, output reg[31:0] rhs, input[3:0] op,
             input signed[31:0] X, Y, I);
 
-    wire[31:0] O = swap ? I : Y;
-    wire[31:0] A = swap ? Y : I;
+    wire[31:0] A = kind[1] ? I : X;
+    wire[31:0] B = kind[1] ? X : kind[0] ? I : Y;
+    wire[31:0] C = kind    ? Y : I;
     always @(posedge clk) if (en)
         case (op)
-            4'b0000: rhs <=  (X  |  O) + A; // X bitwise or Y
-            4'b0001: rhs <=  (X  &  O) + A; // X bitwise and Y
-            4'b0010: rhs <=  (X  +  O) + A; // X add Y
-            4'b0011: rhs <=  (X  *  O) + A; // X multiply Y
+            4'b0000: rhs <=  (A  |  B) + C; // X bitwise or Y
+            4'b0001: rhs <=  (A  &  B) + C; // X bitwise and Y
+            4'b0010: rhs <=  (A  +  B) + C; // X add Y
+            4'b0011: rhs <=  (A  *  B) + C; // X multiply Y
             4'b0100: rhs <= 32'bx;          // reserved
-            4'b0101: rhs <=  (X  << O) + A; // X shift left Y
-            4'b0110: rhs <= -(X  <  O) + A; // X compare < Y
-            4'b0111: rhs <= -(X  == O) + A; // X compare == Y
-            4'b1000: rhs <= -(X  >  O) + A; // X compare > Y
-            4'b1001: rhs <=  (X  &~ O) + A; // X bitwise and complement Y
-            4'b1010: rhs <=  (X  ^  O) + A; // X bitwise xor Y
-            4'b1011: rhs <=  (X  -  O) + A; // X subtract Y
-            4'b1100: rhs <=  (X  ^~ O) + A; // X xor ones' complement Y
-            4'b1101: rhs <=  (X  >> O) + A; // X shift right logical Y
-            4'b1110: rhs <= -(X  != O) + A; // X compare <> Y
-            4'b1111: rhs <=  (X >>> O) + A; // X shift right arithmetic Y
+            4'b0101: rhs <=  (A  << B) + C; // X shift left Y
+            4'b0110: rhs <= -(A  <  B) + C; // X compare < Y
+            4'b0111: rhs <= -(A  == B) + C; // X compare == Y
+            4'b1000: rhs <= -(A  >= B) + C; // X compare >= Y
+            4'b1001: rhs <=  (A  &~ B) + C; // X bitwise and complement Y
+            4'b1010: rhs <=  (A  ^  B) + C; // X bitwise xor Y
+            4'b1011: rhs <=  (A  -  B) + C; // X subtract Y
+            4'b1100: rhs <=  (A  ^~ B) + C; // X xor ones' complement Y
+            4'b1101: rhs <=  (A  >> B) + C; // X shift right logical Y
+            4'b1110: rhs <= -(A  != B) + C; // X compare <> Y
+            4'b1111: rhs <=  (A >>> B) + C; // X shift right arithmetic Y
         endcase
 
 endmodule
@@ -101,7 +102,7 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
     // Execution (arithmetic operation) occurs on cycle 0
     wire en_ex = state == s0;
     wire[31:0] extI = { {20{valueI[11]}}, valueI[11:0] };
-    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op   ), .swap ( kind ),
+    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op   ), .kind ( kind ),
               .X   ( valueX ), .Y  ( valueY ), .I  ( extI ), .rhs  ( irhs ));
 
     // Memory loads or stores on cycle 3
