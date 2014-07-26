@@ -1,91 +1,88 @@
-TAS = ../../tas
-TLD = ../../tld
+TAS   = ../../tas
+TLD   = ../../tld
 SHELL = /bin/bash
-SETUP = source ~/ise.sh
-TARGET = Tenyr
-
-BURNER = fpgalink
 FLCLI = flcli
+SETUP = source ~/ise.sh
 
-all: $(BURNTARGET)
+DESIGN       = Tenyr
+LOADSRC     ?= bm_fib
+DEVICE       = xc6slx16-csg324-3
+FILTER       = -filter iseconfig/filter.filter
+INTSTYLE     = -intstyle silent # or xflow, or ise
+CONSTRAINTS  = Tenyr.ucf Nexys3_Master.ucf
+EFFORT       = -ol std
+THREADING    = -mt 2
 
-ifeq ($(BURNER),fpgalink)
-BURNTARGET = $(TARGET).xsvf
-burn: $(BURNTARGET)
+.DEFAULT_GOAL = bit
+.PHONY: xst ngdbuild map par trce bit xsvf
+.PRECIOUS: %.xsvf %.bit %.ngc %.ngd %.ncd
+
+xst:      $(DESIGN).ngc
+ngdbuild: $(DESIGN).ngd
+map:      $(DESIGN)_map.ncd
+par:      $(DESIGN).ncd
+trce:     $(DESIGN).twr
+bit:      $(DESIGN).bit
+xsvf:     $(DESIGN).xsvf
+
+burn: $(DESIGN).xsvf
 	$(FLCLI) -v 1443:0007 -i 1443:0007 -x $<
-else
-BURNTARGET = $(TARGET).bit
-burn: $(BURNTARGET)
-	djtgcfg -d Nexys3 -i 0 -f $< prog
-endif
 
-vpath %.tas ../verilog
-vpath %.tas.cpp ../verilog
+vpath %.tas     ../verilog ../../ex
+vpath %.tas.cpp ../verilog ../../ex
+vpath %.texe    ../verilog ../../ex
 
-CPPFLAGS += -I../../lib
+ipcore_dir/tenyr_mainclock.v: ipcore_dir/gen_tenyr_mainclock.tcl
+	(cd $(<D) ; xtclsh $(<F))
+
+Tenyr.ngc: ../verilog/common.vh
+Tenyr.ngc: gen/$(LOADSRC).memh
+Tenyr.ngd Tenyr.twr: $(CONSTRAINTS)
+-include Tenyr.md
+
+################################################################################
+# General rules
+%.md: %.prj
+	perl -nae 'BEGIN{print "$*.ngc: "}$$_=$$F[2]; y/"//d; print "$$_ "' $< > $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
+
+# force remaking %.texe because we don't have actual dependency information here
+FORCE:
+%.texe: %.tas FORCE
+	@$(MAKE) -C $(<D) $@
+	@cp -p $(<D)/$(@F) $@
+
+%.texe: %.tas.cpp FORCE
+	@$(MAKE) -C $(<D) $@
+	@cp -p $(<D)/$(@F) $@
+
+gen/%.memh: %.texe
+	@mkdir -p $(@D)
+	$(TAS) -vd $< | $(TAS) -fmemh -o $@ -
+
+%.ngc: %.xst
+	@ln -sf $(filter %.memh,$^) baremetal.memh
+	xst $(INTSTYLE) $(FILTER) -ifn $<
+
+%.ngd: %.ngc
+	ngdbuild $(FILTER) $(INTSTYLE) -sd ipcore_dir $(addprefix -uc ,$(filter %.ucf,$^)) $< $@
+
+# -global_opt speed
+%_map.ncd: %.ngd
+	map -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -logic_opt on -detail -ir off -pr b -lc auto -o $@ $< $*.pcf
+
+%.ncd: %_map.ncd
+	par -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) $< $@ $*.pcf
+
+%.twx %.twr: %.ncd
+	trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
+
+%.bit: %.ncd
+	bitgen -w $(FILTER) $(INTSTYLE) $< $@ $*.pcf
 
 %.xsvf: %.bit burn.batch.tmpl
-	sed -e 's/{TOP_LEVEL}/$*/g' burn.batch.tmpl > $@.batch.$$$$ ; \
+	sed -e 's/{TOP_LEVEL}/$*/g' burn.batch.tmpl > $@.batch.$$$$ && \
 	$(SETUP) && impact -batch $@.batch.$$$$ ;\
 	rm $@.batch.$$$$
-
-%.tas: %.tas.cpp
-	$(CPP) $(CPPFLAGS) -o $@ $<
-
-%.to: %.tas
-	$(TAS) -o$@ $<
-
-%.tasd: %.to
-	$(TAS) -d -o$@ $<
-
-%.tasd: %.mif
-	perl -nle 'printf "0x%08x\n", unpack("N", pack("B32", $$_))' < $< | $(TAS) -ftext -d -o $@ -
-
-%.texe: %.to
-	$(TLD) -o$@ $^
-
-vpath %.coe ipcore_dir
-%.coe: %.texe
-	echo 'memory_initialization_radix = 16;' > $@
-	echo 'memory_initialization_vector =' >> $@
-	$(TAS) -d $< | sed 's/.*# \.word //; s/ ;.*//; s/^0x//' >> $@
-	echo ';' >> $@
-	mv $@ ipcore_dir
-
-vpath gen_%.tcl ipcore_dir
-vpath %.xco ipcore_dir
-vpath %.ngc ipcore_dir
-
-%.ngc: gen_%.tcl
-	$(SETUP) && cd $(dir $<) && xtclsh $(notdir $<)
-
-GenedBlockMem.ngc: GenedBlockMem.xco small.coe
-
-vpath %.v ../verilog
-vpath %.vh ../verilog
-
-Tenyr_SRCDEPS += \
-	common.vh \
-	fontram.xco \
-	GenedBlockMem.xco \
-	hex2ascii.v \
-	mmr.v \
-	Nexys3_Master.ucf \
-	ramwrap.v \
-	seg7.v \
-	seglookup.v \
-	tenyr_mainclock.xco \
-	Tenyr.ucf \
-	tenyr.v \
-	textram.xco \
-	vga80x40_col1fixed.vhd \
-	vga80x40.ucf \
-	xilinx_top.v \
-# end of Tenyr_SRCDEPS list
-
-# TODO pull tenyr.tcl components into Makefile to allow incremental builds
-%.bit: $($*_SRCDEPS) GenedBlockMem.ngc
-	$(SETUP) && xtclsh $*.tcl run_process
 
 clean:
 	@echo 'Run `make clobber` to clean up generated files'
@@ -93,3 +90,4 @@ clean:
 clobber:
 	xargs rm -rf < .gitignore
 	git ls-files --others | xargs rm -rf
+

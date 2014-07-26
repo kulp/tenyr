@@ -20,8 +20,7 @@ putnumloop:
     jnzrel(l,putnumloop)
 
 putnumdone:
-    popall(h,i,j,k,l,m)
-    ret
+    popall_ret(h,i,j,k,l,m)
 
 hexes:
     .word '0', '1', '2', '3', '4', '5', '6', '7'

@@ -7,8 +7,6 @@
 `endif
 `endif
 `define SEG7
-`undef SERIAL
-`define INTERRUPTS
 
 module Tenyr(
     input clk, reset, inout wor `HALTTYPE halt,

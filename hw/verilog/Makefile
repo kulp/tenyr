@@ -3,8 +3,7 @@ TAS = $(TOP)/tas
 TLD = $(TOP)/tld
 
 INCLUDES += -I../../lib
-CPPFLAGS += -xc $(INCLUDES)
-CPP := $(CPP) -
+CPPFLAGS += $(INCLUDES)
 
 vpath %.texe $(TOP)/ex
 vpath %.tas.cpp $(TOP)/lib

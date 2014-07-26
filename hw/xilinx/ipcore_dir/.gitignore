@@ -8,7 +8,6 @@ blk_mem_gen_v6_3_readme.txt
 *.v
 *.veo
 *.xise
-gen_*.tcl
 example_design/
 edit_*.tcl
 tenyr_clocks/

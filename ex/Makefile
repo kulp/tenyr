@@ -5,7 +5,7 @@ TAS = ../tas
 TLD = ../tld
 
 INCLUDES += -I../lib -I../lib/dword
-CPPFLAGS += -xc $(INCLUDES)
+CPPFLAGS += $(INCLUDES)
 CPP := $(CPP) $(DEFINES) -
 
 ECHO := $(shell which echo)
@@ -46,7 +46,7 @@ parse_hex.texe: strtol.to
 bm_mults.texe bm_fib.texe baremetal.texe: putnum.to baremetal_common.to
 snake.texe: rand.to baremetal_common.to
 
-%.tas: %.tas.cpp
+%.tas: %.tas.cpp ../lib/common.th
 ifneq ($(MAKE_VERBOSE),)
 	@mkdir -p $(*D)
 	$(CPP) $(CPPFLAGS) < $< -o $@

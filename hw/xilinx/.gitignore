@@ -1,7 +1,6 @@
 *.html
 _xmsgs
 *.xrpt
-iseconfig
 webtalk_pn.xml
 *.cmd_log
 *.syr
@@ -43,7 +42,6 @@ Tenyr.tfi
 *_map.ngm
 *_pad.csv
 *_pad.txt
-xst/
 *.rpt
 default.wcfg
 Top_isim_beh1.wdb
@@ -154,3 +152,9 @@ ipcore_dir/coregen_lock
 ipcore_dir/tenyr_mainclock/
 *.wdb
 *.psr
+*.srp
+baremetal.memh
+xst/work/
+gen/
+Tenyr.md
+netlist.lst
