@@ -1,3 +1,6 @@
 [submodule "3rdparty/tinypp"]
 	path = 3rdparty/tinypp
 	url = https://github.com/kulp/tinypp.git
+[submodule "3rdparty/lcc"]
+	path = 3rdparty/lcc
+	url = https://github.com/drh/lcc.git
