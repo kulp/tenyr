@@ -11,9 +11,8 @@ putnum:
     i <- rel(hexes)     // i is base of hex transform
 
 putnumloop:
-    m <- h + k + 0x10   // m is k characters past start of text region
     j <- [c & 0xf + i]  // j is character for bottom 4 bits of c
-    [m] <- j            // write character to display
+    j -> [h + k]        // write character to display
     k <- k - 1          // go to the left one character
     c <- c >> 4         // shift down for next iteration
     l <- c <> 0         // shall we loop ?

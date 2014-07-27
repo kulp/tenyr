@@ -26,7 +26,7 @@ module mmr(clk, enable, rw, addr, d_in, d_out, reset_n, we, re, val);
     wire active = enable && addr == ADDR;
 
     assign d_out = (active && !rw && RE) ? store : 32'b0;
-    assign val  = re ? store : {DBITS{1'bz}};
+    assign val   = re ? store : {DBITS{1'bz}};
 
     always @(posedge clk)
         if (active) begin

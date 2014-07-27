@@ -22,13 +22,14 @@ module ramwrap(
 
     wire[DBITS-1:0] douta_internal, doutb_internal;
 
-    assign douta = (acta && !wea) ? douta_internal : 32'b0;
-    assign doutb = (actb && !web) ? doutb_internal : 32'b0;
+    assign douta = (acta && !wea) ? douta_internal : 32'bz;
+    assign doutb = (actb && !web) ? doutb_internal : 32'bz;
 
 `define APROPOS(Base,Addr) `IN_RANGE(PBITS,ABITS,Base,Addr)
 
-    always @(posedge clka) acta <= `APROPOS(BASE_A,addra);
-    always @(posedge clkb) actb <= `APROPOS(BASE_B,addrb);
+    // TODO support use of APROPOS for blocks that are powers of two in size
+    always @(posedge clka) acta <= addra >= BASE_A && addra < BASE_A + SIZE;
+    always @(posedge clkb) actb <= addrb >= BASE_B && addrb < BASE_B + SIZE;
 
     BlockRAM #(
         .INIT(INIT), .ZERO(ZERO), .LOAD(LOAD), .LOADFILE(LOADFILE), .SIZE(SIZE),

@@ -23,10 +23,8 @@
 #define COLS 80
 #define FONT_HEIGHT 12
 #define FONT_WIDTH  8
-#define CELL_OFFSET 0x10 /* where the VRAM *data* starts, after controls */
 
 struct sdlvga_state {
-    uint32_t control[CELL_OFFSET];
     uint32_t data[ROWS][COLS];
     SDL_Window *window;
     SDL_Renderer *renderer;
@@ -147,10 +145,9 @@ static int sdlvga_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     struct sdlvga_state *state = cookie;
 
     // TODO handle control settings
-    if (addr - SDLVGA_BASE > CELL_OFFSET) {
-        uint32_t base = SDLVGA_BASE + CELL_OFFSET;
-        unsigned row = (addr - base) / COLS;
-        unsigned col = (addr - base) % COLS;
+    if (addr - SDLVGA_BASE > 0) {
+        unsigned row = (addr - SDLVGA_BASE) / COLS;
+        unsigned col = (addr - SDLVGA_BASE) % COLS;
 
         if (op == OP_WRITE) {
             state->data[row][col] = *data;
@@ -194,7 +191,7 @@ void EXPORT tenyr_plugin_init(struct guest_ops *ops)
 int EXPORT sdlvga_add_device(struct device **device)
 {
     **device = (struct device){
-        .bounds = { SDLVGA_BASE, SDLVGA_BASE + CELL_OFFSET + (COLS * ROWS) - 1 },
+        .bounds = { SDLVGA_BASE, SDLVGA_BASE + 0x1000 - 1 },
         .ops = {
             .op = sdlvga_op,
             .init = sdlvga_init,

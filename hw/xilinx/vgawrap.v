@@ -8,6 +8,7 @@ module VGAwrap(
 );
 
     parameter[31:0] VIDEO_ADDR = `VIDEO_ADDR;
+    localparam[31:0] ROWS = 40, COLS = 80;
 
     wire[11:0] ram_adA, rom_adA;
     wire[ 7:0] crx, cry, vga_ctl, ram_doA, rom_doA;
@@ -16,19 +17,19 @@ module VGAwrap(
     assign vgaGreen[1:0] = {2{vgaGreen[2]}};
     assign vgaBlue [1  ] = {1{vgaBlue [2]}};
 
-    mmr #(.ADDR(VIDEO_ADDR), .DBITS(8), .DEFAULT(8'b11110111)) video_ctl(
+    mmr #(.ADDR(VIDEO_ADDR + 'h1000 - 1), .DBITS(8), .DEFAULT(8'b11110111)) video_ctl(
         .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe  ),
         .rw  ( rw       ), .addr    ( addr    ), .d_in   ( d_in    ),
         .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( vga_ctl )
     );
 
-    mmr #(.ADDR(VIDEO_ADDR + 1), .DBITS(8), .DEFAULT(1)) crx_mmr(
+    mmr #(.ADDR(VIDEO_ADDR + 'h1000 - 2), .DBITS(8), .DEFAULT(1)) crx_mmr(
         .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe ),
         .rw  ( rw       ), .addr    ( addr    ), .d_in   ( d_in   ),
         .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( crx    )
     ); // crx is 1-based ?
 
-    mmr #(.ADDR(VIDEO_ADDR + 2), .DBITS(8), .DEFAULT(0)) cry_mmr(
+    mmr #(.ADDR(VIDEO_ADDR + 'h1000 - 3), .DBITS(8), .DEFAULT(0)) cry_mmr(
         .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe ),
         .rw  ( rw       ), .addr    ( addr    ), .d_in   ( d_in   ),
         .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( cry    )
@@ -44,8 +45,8 @@ module VGAwrap(
     );
 
     ramwrap #(
-        .BASE_B(VIDEO_ADDR + 32'h10), .SIZE(80 * 40), .ABITS(12),
-        .PBITS(12), .DBITS(8), .INIT(1), .ZERO('h20)
+        .BASE_B(VIDEO_ADDR), .SIZE(ROWS * COLS),
+        .ABITS(12), .DBITS(8), .INIT(1), .ZERO('h20)
     ) text(
         .clka  ( clk_vga ), .clkb  ( clk_core ),
         .ena   ( 1'b1    ), .enb   ( 1'b1     ),
