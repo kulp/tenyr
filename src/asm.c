@@ -40,7 +40,7 @@ static const struct {
     [OP_RESERVED0        ] = { "X0" , 0, 0, 0 },
 };
 
-static int is_printable(int ch, size_t len, char buf[len])
+static int is_printable(unsigned int ch, size_t len, char buf[len])
 {
     memset(buf, 0, len);
 
