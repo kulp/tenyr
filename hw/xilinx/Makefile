@@ -32,7 +32,7 @@ vpath %.tas     ../verilog ../../ex
 vpath %.tas.cpp ../verilog ../../ex
 vpath %.texe    ../verilog ../../ex
 
-ipcore_dir/tenyr_mainclock.v: ipcore_dir/gen_tenyr_mainclock.tcl
+ipcore_dir/%.v: ipcore_dir/gen_%.tcl ipcore_dir/%.xco
 	(cd $(<D) ; xtclsh $(<F))
 
 Tenyr.ngc: ../verilog/common.vh
