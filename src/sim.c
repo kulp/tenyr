@@ -85,7 +85,10 @@ int run_instruction(struct sim_state *s, struct element *i)
         case 0x5:
         case 0x6:
         case 0x7:
-        case 0x8: {
+        case 0x8:
+        case 0x9:
+        case 0xa:
+        case 0xb: {
             struct instruction_general *g = &i->insn.u._0xxx;
             int32_t rhs = 0;
             uint32_t value;

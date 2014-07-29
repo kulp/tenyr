@@ -88,6 +88,9 @@ int print_disassembly(FILE *out, struct element *i, int flags)
         case 0x6:
         case 0x7:
         case 0x8:
+        case 0x9:
+        case 0xa:
+        case 0xb:
             break;
     }
 
