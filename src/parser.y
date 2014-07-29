@@ -106,7 +106,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <program> program ascii utf32 data string_or_data
 %type <str> symbol symbol_list
 
-%expect 3
+%expect 2
 
 %union {
     int32_t i;
@@ -295,8 +295,6 @@ rhs_plain
         { $rhs_plain = make_expr(1, $x, $op, $y, 1, $greloc_expr); }
     | regname[x] op greloc_expr
         { $rhs_plain = make_expr(1, $x, $op, 0, 1, $greloc_expr); }
-    | greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr(1, 0, OP_ADD, $y, 1, $greloc_expr); }
     /* type2 */
     | greloc_expr op regname[x] '+' regname[y]
         { $rhs_plain = make_expr(2, $x, $op, $y, 1, $greloc_expr); }
