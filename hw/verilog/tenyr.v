@@ -16,26 +16,26 @@ module Reg(input clk, upZ,             input[ 3:0] idxZ, idxX, idxY,
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
+module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[31:0] I,
               output[3:0] op, output[1:0] kind,
               output throw, storing, deref_rhs, branch, output[4:0] vector);
 
-    assign {kind, storing, deref_rhs, Z, X, Y, op, I} = insn;
+    assign {kind, storing, deref_rhs, Z, X, Y, op, I[11:0]} = insn;
+    assign I[31:12] = {20{I[11]}};
     assign vector = insn[4:0];
     assign throw  = &kind;
     assign branch = &Z & ~storing;
 
 endmodule
 
-module Shuf(input clk, input en, input[1:0] kind,
-            input[31:0] X, Y, input[11:0] I, output reg[31:0] A, B, C);
+module Shuf(input clk, input en, input[1:0] kind, input[31:0] X, Y, I,
+                                             output reg[31:0] A, B, C);
 
-    wire[31:0] J = { {20{I[11]}}, I };
     always @(posedge clk) if (en)
         case (kind)
-            2'b00   : begin A <= X   ; B <= Y   ; C <= J   ; end
-            2'b01   : begin A <= X   ; B <= J   ; C <= Y   ; end
-            2'b10   : begin A <= J   ; B <= X   ; C <= Y   ; end
+            2'b00   : begin A <= X   ; B <= Y   ; C <= I   ; end
+            2'b01   : begin A <= X   ; B <= I   ; C <= Y   ; end
+            2'b10   : begin A <= I   ; B <= X   ; C <= Y   ; end
             default : begin A <= 'bx ; B <= 'bx ; C <= 'bx ; end
         endcase
 
@@ -75,8 +75,7 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
 
     wire throw, kind, drhs, jumping, storing, loading, deref;
     wire[ 3:0] idxX, idxY, idxZ, op;
-    wire[31:0] valX, valY, valZ, valA, valB, valC, rhs, nextZ;
-    wire[11:0] valI;
+    wire[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
     wire[ 4:0] vector;
 
     reg [31:0] r_irhs, r_data, nextP, v_addr, insn;
