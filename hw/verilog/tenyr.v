@@ -27,12 +27,23 @@ module Decode(input[31:0] insn, output[3:0] Z, X, Y, output[11:0] I,
 
 endmodule
 
-module Exec(input clk, en, input[1:0] kind, output reg[31:0] rhs, input[3:0] op,
-            input signed[31:0] X, Y, I);
+module Shuf(input clk, input[1:0] kind, input[31:0] X, Y, input[11:0] I,
+                                   output reg[31:0] A, B, C);
 
-    wire[31:0] A = kind[1] ? I : X;
-    wire[31:0] B = kind[1] ? X : kind[0] ? I : Y;
-    wire[31:0] C = kind    ? Y : I;
+    wire[31:0] J = { {20{I[11]}}, I[11:0] };
+    always @(posedge clk)
+        case (kind)
+            2'b00   : begin A <= X   ; B <= Y   ; C <= J   ; end
+            2'b01   : begin A <= X   ; B <= J   ; C <= Y   ; end
+            2'b10   : begin A <= J   ; B <= X   ; C <= Y   ; end
+            default : begin A <= 'bx ; B <= 'bx ; C <= 'bx ; end
+        endcase
+
+endmodule
+
+module Exec(input clk, en, output reg[31:0] rhs, input[3:0] op,
+            input signed[31:0] A, B, C);
+
     always @(posedge clk) if (en)
         case (op)
             4'b0000: rhs <=  (A  |  B) + C; // X bitwise or Y
@@ -59,12 +70,13 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
             output reg[31:0] i_addr, input[31:0] i_data, output mem_rw,
             output    [31:0] d_addr, input[31:0] d_in  , output[31:0] d_out);
 
-    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, s6=7,
+    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, s6=7, s7=8,
                     sE=8, sF=9, sR=10, sT=11, sW=12;
 
     wire throw, kind, drhs, jumping, storing, loading, deref;
     wire[ 3:0] indexX, indexY, indexZ, op;
     wire[31:0] valueX, valueY, valueZ, irhs, rhs, tostore;
+    wire[31:0] valueA, valueB, valueC;
     wire[11:0] valueI;
     wire[ 4:0] vector;
 
@@ -76,19 +88,20 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
             state <= sI;
         else case (state)
             s0: begin state <= halt ? sI : trap ? sF : throw ? sE : s1; end
-            s1: begin state <= s2; r_irhs  <= irhs;                     end
-            s2: begin state <= s3; /* compensate for slow multiplier */ end
-            s3: begin state <= s4; r_data  <= d_in;                     end
-            s4: begin state <= s5; i_addr  <= jumping ? rhs : next_pc;  end
-            s5: begin state <= s6; next_pc <= i_addr + 1;               end
-            s6: begin state <= s0; insn    <= i_data; /* why extra ? */ end
+            s1: begin state <= s2; /* shuffle */                        end
+            s2: begin state <= s3; r_irhs  <= irhs;                     end
+            s3: begin state <= s4; /* compensate for slow multiplier */ end
+            s4: begin state <= s5; r_data  <= d_in;                     end
+            s5: begin state <= s6; i_addr  <= jumping ? rhs : next_pc;  end
+            s6: begin state <= s7; next_pc <= i_addr + 1;               end
+            s7: begin state <= s0; insn    <= i_data; /* why extra ? */ end
             // TODO return to instruction OF a trap, but AFTER a throw
             sE: begin state <= sR; r_irhs  <= `VECTOR_ADDR | vector;    end
             sR: begin state <= sT; v_addr  <= d_in;   /* test this */   end
             sF: begin state <= sT; v_addr  <= `TRAMP_BOTTOM;            end
             sT: begin state <= sW; r_irhs  <= i_addr; /* wait for */    end
-            sW: begin state <= s5; i_addr  <= v_addr; /* trap's fall */ end
-            sI: begin state <= halt ? sI : s5; i_addr <= `RESETVECTOR;  end
+            sW: begin state <= s6; i_addr  <= v_addr; /* trap's fall */ end
+            sI: begin state <= halt ? sI : s6; i_addr <= `RESETVECTOR;  end
         endcase
 
     // Instruction fetch happens on cycle 0
@@ -99,15 +112,18 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
                   .Y ( indexY ), .op    ( op     ), .branch    ( jumping ),
                   .I ( valueI ), .throw ( throw  ), .vector    ( vector  ));
 
-    // Execution (arithmetic operation) occurs on cycle 0
-    wire en_ex = state == s0;
-    wire[31:0] extI = { {20{valueI[11]}}, valueI[11:0] };
-    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op   ), .kind ( kind ),
-              .X   ( valueX ), .Y  ( valueY ), .I  ( extI ), .rhs  ( irhs ));
+    // Shuffle occurs on cycle 0
+    Shuf shuf(.clk ( clk  ), .A( valueA ), .B( valueB ), .C( valueC ),
+              .kind( kind ), .X( valueX ), .Y( valueY ), .I( valueI ));
+
+    // Execution (arithmetic operation) occurs on cycle 1
+    wire en_ex = state == s1;
+    Exec exec(.clk ( clk    ), .en ( en_ex  ), .op ( op     ),
+              .A   ( valueA ), .B  ( valueB ), .C  ( valueC ), .rhs ( irhs ));
 
     // Memory loads or stores on cycle 3
     assign loading = (drhs && !mem_rw) || state == sR;
-    assign strobe  = (state == s3 && (loading || storing)) || state == sW;
+    assign strobe  = (state == s4 && (loading || storing)) || state == sW;
     assign mem_rw  = storing || state == sW;
     assign tostore = state == sW ? `TRAP_ADDR : valueZ;
     assign deref   = drhs && (state != sT);
@@ -116,7 +132,7 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
     assign d_addr  = deref ? r_irhs : tostore;
 
     // Registers commit on cycle 4
-    wire updateZ = !storing && state == s4;
+    wire updateZ = !storing && state == s5;
     Reg regs(.clk     ( clk     ), .indexX ( indexX ), .valueX ( valueX  ),
              .next_pc ( next_pc ), .indexY ( indexY ), .valueY ( valueY  ),
                                    .indexZ ( indexZ ), .valueZ ( valueZ  ),
