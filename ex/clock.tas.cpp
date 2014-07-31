@@ -40,8 +40,9 @@ top:
     illegal
 
 sleep:
-    c <- c * 1070
-    c <- c * 1780
+    // 40MHz clock, 4-cycle ticks() loop, 8cpi
+    c <- c * 1000
+    c <- c * 1250
     call(ticks)
     ret
 
@@ -51,6 +52,7 @@ ticks:
 Lticks_loop:
     e <- d < c
     d <- d + 1
+    a <- a // delay to make the loop 4 cycles long
     jnzrel(e,Lticks_loop)
     popall_ret(d,e)
 
