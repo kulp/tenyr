@@ -40,9 +40,9 @@ top:
     illegal
 
 sleep:
-    // 40MHz clock, 4-cycle ticks() loop, 8cpi
+    // 40MHz clock, 4-cycle ticks() loop, 7cpi
     c <- c * 1000
-    c <- c * 1250
+    c <- c * 1428
     call(ticks)
     ret
 
