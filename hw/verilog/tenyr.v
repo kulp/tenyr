@@ -40,27 +40,42 @@ module Shuf(input[1:0] kind, input[31:0] X, Y, I, output reg[31:0] A, B, C);
 
 endmodule
 
-module Exec(input clk, en, output reg[31:0] Z, input[3:0] op,
+module Exec(input clk, en, output done, output reg[31:0] Z, input[3:0] op,
             input signed[31:0] A, B, C);
 
-    always @(posedge clk) if (en)
-        case (op)
-            4'b0000: Z <=  (A  |  B) + C; // X bitwise or Y
-            4'b0001: Z <=  (A  &  B) + C; // X bitwise and Y
-            4'b0010: Z <=  (A  +  B) + C; // X add Y
-            4'b0011: Z <=  (A  *  B) + C; // X multiply Y
-            4'b0100: Z <= 32'bx;          // reserved
-            4'b0101: Z <=  (A  << B) + C; // X shift left Y
-            4'b0110: Z <= -(A  <  B) + C; // X compare < Y
-            4'b0111: Z <= -(A  == B) + C; // X compare == Y
-            4'b1000: Z <= -(A  >= B) + C; // X compare >= Y
-            4'b1001: Z <=  (A  &~ B) + C; // X bitwise and complement Y
-            4'b1010: Z <=  (A  ^  B) + C; // X bitwise xor Y
-            4'b1011: Z <=  (A  -  B) + C; // X subtract Y
-            4'b1100: Z <=  (A  ^~ B) + C; // X xor ones' complement Y
-            4'b1101: Z <=  (A  >> B) + C; // X shift right logical Y
-            4'b1110: Z <= -(A  != B) + C; // X compare <> Y
-            4'b1111: Z <=  (A >>> B) + C; // X shift right arithmetic Y
+    reg signed[31:0] rZ, rA, rB, rC;
+    reg[3:0] rop;
+    reg[2:0] ren;
+    assign done = ren[2];
+
+    always @(posedge clk) begin
+        rop  <= op;
+        Z    <= rZ;
+        rA   <= A;
+        rB   <= B;
+        rC   <= C;
+
+        ren  <= {ren[1:0],en};
+    end
+
+    always @(posedge clk) if (ren)
+        case (rop)
+            4'b0000: rZ <=  (rA  |  rB) + rC;
+            4'b0001: rZ <=  (rA  &  rB) + rC;
+            4'b0010: rZ <=  (rA  +  rB) + rC;
+            4'b0011: rZ <=  (rA  *  rB) + rC;
+            4'b0101: rZ <=  (rA  << rB) + rC;
+            4'b0110: rZ <= -(rA  <  rB) + rC;
+            4'b0111: rZ <= -(rA  == rB) + rC;
+            4'b1000: rZ <= -(rA  >= rB) + rC;
+            4'b1001: rZ <=  (rA  &~ rB) + rC;
+            4'b1010: rZ <=  (rA  ^  rB) + rC;
+            4'b1011: rZ <=  (rA  -  rB) + rC;
+            4'b1100: rZ <=  (rA  ^~ rB) + rC;
+            4'b1101: rZ <=  (rA  >> rB) + rC;
+            4'b1110: rZ <= -(rA  != rB) + rC;
+            4'b1111: rZ <=  (rA >>> rB) + rC;
+            default: rZ <= 32'bx;
         endcase
 
 endmodule
@@ -72,7 +87,7 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
     localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, s6=7,
                     sE=8, sF=9, sR=10, sT=11, sW=12;
 
-    wire throw, drhs, jumping, storing, loading, deref;
+    wire throw, drhs, jumping, storing, loading, deref, edone;
     wire[ 3:0] idxX, idxY, idxZ, op;
     wire[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
     wire[ 4:0] vector;
@@ -86,7 +101,7 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
             state <= sI;
         else case (state)
             s0: begin state <= halt ? sI : trap ? sF : throw ? sE : s1; end
-            s1: begin state <= s2; r_irhs <= rhs;                       end
+            s1: begin state <= edone ? s2 : s1; r_irhs <= rhs;          end
             s2: begin state <= s3; /* compensate for slow multiplier */ end
             s3: begin state <= s4; r_data <= d_in;                      end
             s4: begin state <= s5; i_addr <= jumping ? nextZ : nextP;   end
@@ -115,9 +130,9 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
               .I ( valI ), .C ( valC ));
 
     // Execution (arithmetic operation) occurs on cycle 0
-    Exec exec (.clk ( clk         ), .op ( op  ), .A ( valA ),
-               .en  ( state == s0 ), .Z  ( rhs ), .B ( valB ),
-                                                  .C ( valC ));
+    Exec exec (.clk ( clk         ), .op   ( op    ), .A ( valA ),
+               .en  ( state == s0 ), .Z    ( rhs   ), .B ( valB ),
+                                     .done ( edone ), .C ( valC ));
 
     // Memory loads or stores on cycle 3
     assign loading = (drhs && !mem_rw) || state == sR;
