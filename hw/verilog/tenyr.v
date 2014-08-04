@@ -73,10 +73,11 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
     localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, s6=7, s7=8,
                     sE=8, sF=9, sR=10, sT=11, sW=12;
 
-    wire throw, kind, drhs, jumping, storing, loading, deref;
+    wire throw, drhs, jumping, storing, loading, deref;
     wire[ 3:0] idxX, idxY, idxZ, op;
     wire[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
     wire[ 4:0] vector;
+    wire[ 1:0] kind;
 
     reg [31:0] r_irhs, r_data, nextP, v_addr, insn;
     reg [ 3:0] state = sI;
