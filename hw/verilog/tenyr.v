@@ -40,25 +40,17 @@ module Shuf(input[1:0] kind, input[31:0] X, Y, I, output reg[31:0] A, B, C);
 
 endmodule
 
-module Exec(input clk, en, output done, output reg[31:0] Z, input[3:0] op,
+module Exec(input clk, en, output reg done, output reg[31:0] Z, input[3:0] op,
             input signed[31:0] A, B, C);
 
     reg signed[31:0] rZ, rA, rB, rC;
     reg[3:0] rop;
-    reg[2:0] ren;
-    assign done = ren[2];
+    reg active, staged;
 
-    always @(posedge clk) begin
-        rop  <= op;
-        Z    <= rZ;
-        rA   <= A;
-        rB   <= B;
-        rC   <= C;
+    always @(posedge clk)
+        {rop,Z,rA,rB,rC,done,active,staged} <= {op,rZ,A,B,C,active,staged,en};
 
-        ren  <= {ren[1:0],en};
-    end
-
-    always @(posedge clk) if (ren)
+    always @(posedge clk) if (staged)
         case (rop)
             4'b0000: rZ <=  (rA  |  rB) + rC;
             4'b0001: rZ <=  (rA  &  rB) + rC;
@@ -125,9 +117,9 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
                   .I ( valI ), .throw ( throw ), .vector    ( vector  ));
 
     // Shuffle occurs on cycle 0
-    Shuf shuf(.X ( valX ), .A ( valA ), .kind ( kind ),
-              .Y ( valY ), .B ( valB ),
-              .I ( valI ), .C ( valC ));
+    Shuf shuf(.kind ( kind ), .X ( valX ), .A ( valA ),
+                              .Y ( valY ), .B ( valB ),
+                              .I ( valI ), .C ( valC ));
 
     // Execution (arithmetic operation) occurs on cycle 0
     Exec exec (.clk ( clk         ), .op   ( op    ), .A ( valA ),
