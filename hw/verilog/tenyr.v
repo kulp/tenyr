@@ -43,32 +43,34 @@ endmodule
 module Exec(input clk, en, output reg done, output reg[31:0] Z, input[3:0] op,
             input signed[31:0] A, B, C);
 
-    reg signed[31:0] rZ, rA, rB, rC;
+    reg signed[31:0] rY, rZ, rA, rB, rC;
     reg[3:0] rop;
-    reg active, staged;
+    reg add, act, staged;
 
     always @(posedge clk)
-        {rop,Z,rA,rB,rC,done,active,staged} <= {op,rZ,A,B,C,active,staged,en};
+        {rop,Z,rA,rB,rC,done,add,act,staged} <= {op,rZ,A,B,C,add,act,staged,en};
 
-    always @(posedge clk) if (staged)
-        case (rop)
-            4'b0000: rZ <=  (rA  |  rB) + rC;
-            4'b0001: rZ <=  (rA  &  rB) + rC;
-            4'b0010: rZ <=  (rA  +  rB) + rC;
-            4'b0011: rZ <=  (rA  *  rB) + rC;
-            4'b0101: rZ <=  (rA  << rB) + rC;
-            4'b0110: rZ <= -(rA  <  rB) + rC;
-            4'b0111: rZ <= -(rA  == rB) + rC;
-            4'b1000: rZ <= -(rA  >= rB) + rC;
-            4'b1001: rZ <=  (rA  &~ rB) + rC;
-            4'b1010: rZ <=  (rA  ^  rB) + rC;
-            4'b1011: rZ <=  (rA  -  rB) + rC;
-            4'b1100: rZ <=  (rA  ^~ rB) + rC;
-            4'b1101: rZ <=  (rA  >> rB) + rC;
-            4'b1110: rZ <= -(rA  != rB) + rC;
-            4'b1111: rZ <=  (rA >>> rB) + rC;
-            default: rZ <= 32'bx;
+    always @(posedge clk) begin
+        if (staged) case (rop)
+            4'b0000: rY <=  (rA  |  rB);
+            4'b0001: rY <=  (rA  &  rB);
+            4'b0010: rY <=  (rA  +  rB);
+            4'b0011: rY <=  (rA  *  rB);
+            4'b0101: rY <=  (rA  << rB);
+            4'b0110: rY <= -(rA  <  rB);
+            4'b0111: rY <= -(rA  == rB);
+            4'b1000: rY <= -(rA  >= rB);
+            4'b1001: rY <=  (rA  &~ rB);
+            4'b1010: rY <=  (rA  ^  rB);
+            4'b1011: rY <=  (rA  -  rB);
+            4'b1100: rY <=  (rA  ^~ rB);
+            4'b1101: rY <=  (rA  >> rB);
+            4'b1110: rY <= -(rA  != rB);
+            4'b1111: rY <=  (rA >>> rB);
+            default: rY <= 32'bx;
         endcase
+        if (act) rZ <= rY + rC;
+    end
 
 endmodule
 
