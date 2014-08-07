@@ -30,13 +30,12 @@ endmodule
 
 module Shuf(input[1:0] kind, input[31:0] X, Y, I, output reg[31:0] A, B, C);
 
-    always @*
-        case (kind)
-            2'b00   : begin A = X   ; B = Y   ; C = I   ; end
-            2'b01   : begin A = X   ; B = I   ; C = Y   ; end
-            2'b10   : begin A = I   ; B = X   ; C = Y   ; end
-            default : begin A = 'bx ; B = 'bx ; C = 'bx ; end
-        endcase
+    always @* case (kind)
+        2'b00:   {A,B,C} = {X,Y,I};
+        2'b01:   {A,B,C} = {X,I,Y};
+        2'b10:   {A,B,C} = {I,X,Y};
+        default: {A,B,C} = 'bx;
+    endcase
 
 endmodule
 
@@ -47,27 +46,17 @@ module Exec(input clk, en, output reg done, output reg[31:0] Z, input[3:0] op,
     reg[3:0] rop;
     reg add, act, staged;
 
-    always @(posedge clk)
-        {rop,Z,rA,rB,rC,done,add,act,staged} <= {op,rZ,A,B,C,add,act,staged,en};
-
     always @(posedge clk) begin
+        {rop,Z,rA,rB,rC,done,add,act,staged} <= {op,rZ,A,B,C,add,act,staged,en};
         if (staged) case (rop)
-            4'b0000: rY <=  (rA  |  rB);
-            4'b0001: rY <=  (rA  &  rB);
-            4'b0010: rY <=  (rA  +  rB);
-            4'b0011: rY <=  (rA  *  rB);
-            4'b0101: rY <=  (rA  << rB);
-            4'b0110: rY <= -(rA  <  rB);
-            4'b0111: rY <= -(rA  == rB);
-            4'b1000: rY <= -(rA  >= rB);
-            4'b1001: rY <=  (rA  &~ rB);
-            4'b1010: rY <=  (rA  ^  rB);
-            4'b1011: rY <=  (rA  -  rB);
-            4'b1100: rY <=  (rA  ^~ rB);
-            4'b1101: rY <=  (rA  >> rB);
-            4'b1110: rY <= -(rA  != rB);
-            4'b1111: rY <=  (rA >>> rB);
-            default: rY <= 32'bx;
+            4'b0000: rY <=  (rA  |  rB); 4'b1000: rY <= -(rA  >= rB);
+            4'b0001: rY <=  (rA  &  rB); 4'b1001: rY <=  (rA  &~ rB);
+            4'b0010: rY <=  (rA  +  rB); 4'b1010: rY <=  (rA  ^  rB);
+            4'b0011: rY <=  (rA  *  rB); 4'b1011: rY <=  (rA  -  rB);
+            default: rY <= 32'bx;        4'b1100: rY <=  (rA  ^~ rB);
+            4'b0101: rY <=  (rA  << rB); 4'b1101: rY <=  (rA  >> rB);
+            4'b0110: rY <= -(rA  <  rB); 4'b1110: rY <= -(rA  != rB);
+            4'b0111: rY <= -(rA  == rB); 4'b1111: rY <=  (rA >>> rB);
         endcase
         if (act) rZ <= rY + rC;
     end
@@ -96,7 +85,7 @@ module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
         else case (state)
             s0: begin state <= halt ? sI : trap ? sF : throw ? sE : s1; end
             s1: begin state <= edone ? s2 : s1; r_irhs <= rhs;          end
-            s2: begin state <= s3; /* compensate for slow multiplier */ end
+            s2: begin state <= s3; /* compensate for slow memory */     end
             s3: begin state <= s4; r_data <= d_in;                      end
             s4: begin state <= s5; i_addr <= jumping ? nextZ : nextP;   end
             s5: begin state <= s6; nextP  <= i_addr + 1;                end

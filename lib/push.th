@@ -5,7 +5,7 @@
 #define _paste_(X,Y)        X ## Y
 
 #define _post_0( Op,Inc,Ud,Off,One,...)  /* no-op */
-#define _post_1( Op,Inc,Ud,Off,One,...)  _post_0( Op,Inc,Ud,(Off) Inc,__VA_ARGS__) ; Op(Ud,Off,One)
+#define _post_1( Op,Inc,Ud,Off,One,...)                                              Op(Ud,Off,One)
 #define _post_2( Op,Inc,Ud,Off,One,...)  _post_1( Op,Inc,Ud,(Off) Inc,__VA_ARGS__) ; Op(Ud,Off,One)
 #define _post_3( Op,Inc,Ud,Off,One,...)  _post_2( Op,Inc,Ud,(Off) Inc,__VA_ARGS__) ; Op(Ud,Off,One)
 #define _post_4( Op,Inc,Ud,Off,One,...)  _post_3( Op,Inc,Ud,(Off) Inc,__VA_ARGS__) ; Op(Ud,Off,One)

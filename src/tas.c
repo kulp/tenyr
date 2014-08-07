@@ -65,14 +65,12 @@ static int usage(const char *me)
 int main(int argc, char *argv[])
 {
     int rc = 0;
-    int disassemble = 0;
-    int flags = 0;
+    volatile int disassemble = 0;
+    volatile int flags = 0;
 
     volatile int opened = 0;
     char outfname[1044];
     FILE * volatile out = stdout;
-
-    const struct format *f = &tenyr_asm_formats[0];
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
@@ -84,6 +82,8 @@ int main(int argc, char *argv[])
             remove(outfname);
         return EXIT_FAILURE;
     }
+
+    const struct format *f = &tenyr_asm_formats[0];
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {

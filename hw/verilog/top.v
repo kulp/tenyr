@@ -75,16 +75,16 @@ module Tenyr(
 `ifdef SERIAL
     // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
-        .clk ( clk     ), .reset_n ( reset_n   ), .enable ( d_strobe ),
-        .rw  ( d_rw ), .addr    ( d_addr ), .data   ( d_data   )
+        .clk ( clk  ), .reset_n ( _reset_n ), .enable ( d_strobe  ),
+        .rw  ( d_rw ), .addr    ( d_addr   ), .data   ( d_to_slav )
     );
 `endif
 
 `ifdef SEG7
     Seg7 #(.BASE(12'h100)) seg7(
-        .clk     ( clk_core    ), .rw   ( d_rw   ), .seg ( seg ),
-        .reset_n ( _reset_n    ), .addr ( d_addr ), .an  ( an  ),
-        .enable  ( d_strobe    ), .data ( d_to_slav )
+        .clk     ( clk_core ), .rw   ( d_rw      ), .seg ( seg ),
+        .reset_n ( _reset_n ), .addr ( d_addr    ), .an  ( an  ),
+        .enable  ( d_strobe ), .data ( d_to_slav )
     );
 `endif
 

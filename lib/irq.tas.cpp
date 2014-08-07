@@ -55,7 +55,7 @@ ready8:
     P   <- [VEC_BOTTOM + C]
 
 after:
-    loadall_(C)
+    loadall_(O, C)
     restore_user_stack()
     P   <- [IRR_ADDR]
 
