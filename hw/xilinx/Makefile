@@ -1,8 +1,13 @@
 TAS   = ../../tas
 TLD   = ../../tld
-SHELL = /bin/bash
 FLCLI = flcli
-SETUP = source ~/ise.sh
+
+ifeq ($(XILINX),)
+$(error Set XILINX to /path/to/Xilinx/<VERSION>/ISE_DS/ISE)
+endif
+
+ARCH := lin$(shell uname -m | grep -o 64)
+BIN = $(XILINX)/bin/$(ARCH)
 
 DESIGN       = Tenyr
 LOADSRC     ?= bm_fib
@@ -26,14 +31,19 @@ bit:      $(DESIGN).bit
 xsvf:     $(DESIGN).xsvf
 
 burn: $(DESIGN).xsvf
-	$(FLCLI) -v 1443:0007 -i 1443:0007 -x $<
+	$(FLCLI) --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
 
 vpath %.tas     ../verilog ../../ex
 vpath %.tas.cpp ../verilog ../../ex
 vpath %.texe    ../verilog ../../ex
 
+# We would like to also regenerate the .xco if the .tcl file changes, but it
+# doesn't seem possible to express the necessary circular rule.
 ipcore_dir/%.v: ipcore_dir/gen_%.tcl ipcore_dir/%.xco
-	(cd $(<D) ; xtclsh $(<F))
+	(cd $(<D) ; $(BIN)/xtclsh $(<F))
+	sed -i.bak -e '/^# \(Date\|CRC\):/s/:.*/: .../' $(<D)/$*.xco
+	touch -r $(<D)/$*.xco $@ # ensure sed doesn't make .xco too new
+	-rm $(<D)/$*.xco.bak
 
 Tenyr.ngc: ../verilog/common.vh
 Tenyr.ngc: gen/$(LOADSRC).memh
@@ -61,28 +71,34 @@ gen/%.memh: %.texe
 
 %.ngc: %.xst
 	@ln -sf $(filter %.memh,$^) baremetal.memh
-	xst $(INTSTYLE) $(FILTER) -ifn $<
+	$(BIN)/xst $(INTSTYLE) $(FILTER) -ifn $<
 
 %.ngd: %.ngc
-	ngdbuild $(FILTER) $(INTSTYLE) -sd ipcore_dir $(addprefix -uc ,$(filter %.ucf,$^)) $< $@
+	$(BIN)/ngdbuild $(FILTER) $(INTSTYLE) -sd ipcore_dir $(addprefix -uc ,$(filter %.ucf,$^)) $< $@
 
 # -global_opt speed
 %_map.ncd: %.ngd
-	map -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -logic_opt on -detail -ir off -pr b -lc auto -o $@ $< $*.pcf
+	$(BIN)/map -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -logic_opt on -detail -ir off -pr b -lc auto -o $@ $< $*.pcf
 
 %.ncd: %_map.ncd
-	par -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) $< $@ $*.pcf
+	$(BIN)/par -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) $< $@ $*.pcf
 
 %.twx %.twr: %.ncd
-	trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
+	$(BIN)/trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
 
 %.bit: %.ncd
-	bitgen -w $(FILTER) $(INTSTYLE) $< $@ $*.pcf
+	$(BIN)/bitgen -w $(FILTER) $(INTSTYLE) $< $@ $*.pcf
 
-%.xsvf: %.bit burn.batch.tmpl
-	sed -e 's/{TOP_LEVEL}/$*/g' burn.batch.tmpl > $@.batch.$$$$ && \
-	$(SETUP) && impact -batch $@.batch.$$$$ ;\
-	rm $@.batch.$$$$
+%.impact.in: %.bit
+	@echo > $@.$$$$ "setMode -bs"                       && \
+	echo >> $@.$$$$ "setCable -port xsvf -file $*.xsvf" && \
+	echo >> $@.$$$$ "addDevice -p 1 -file $<"           && \
+	echo >> $@.$$$$ "program -p 1"                      && \
+	echo >> $@.$$$$ "quit"                              && \
+	mv $@.$$$$ $@ || rm $@.$$$$
+
+%.xsvf: %.impact.in %.bit
+	$(BIN)/impact -batch $<
 
 clean:
 	@echo 'Run `make clobber` to clean up generated files'
