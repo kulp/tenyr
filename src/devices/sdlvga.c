@@ -145,9 +145,10 @@ static int sdlvga_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     struct sdlvga_state *state = cookie;
 
     // TODO handle control settings
-    if (addr - SDLVGA_BASE > 0) {
-        unsigned row = (addr - SDLVGA_BASE) / COLS;
-        unsigned col = (addr - SDLVGA_BASE) % COLS;
+    int offset = addr - SDLVGA_BASE;
+    if (offset >= 0 && offset < ROWS * COLS) {
+        unsigned row = offset / COLS;
+        unsigned col = offset % COLS;
 
         if (op == OP_WRITE) {
             state->data[row][col] = *data;
