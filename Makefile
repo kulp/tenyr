@@ -10,10 +10,10 @@ ifndef NDEBUG
 endif
 
 ifeq ($(WIN32),1)
- -include Makefile.Win32
+ -include $(TOP)/Makefile.Win32
 else
  OS = $(shell uname -s)
- -include Makefile.$(OS)
+ -include $(TOP)/Makefile.$(OS)
  ifeq ($(_32BIT),1)
   CFLAGS  += -m32
   LDFLAGS += -m32
