@@ -68,7 +68,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %left '^' "^~"
 %left '&' "&~"
 %left "==" "<>"
-%left '<' ">="
+%left '<' '>' "<=" ">="
 %left "<<" ">>" ">>>"
 %left '+' '-'
 %left '*' '/'
@@ -89,6 +89,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token RSHA ">>>"
 %token EQ "=="
 %token GE ">="
+%token LE "<="
 %token NEQ "<>"
 %token XORN "^~"
 %token ANDN "&~"
@@ -102,7 +103,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <i> arrow regname reloc_op const_op
 %type <imm> immediate
 %type <insn> insn insn_inner
-%type <op> op unary_op reloc_unary_op
+%type <op> native_op sugar_op unary_op reloc_unary_op
 %type <program> program ascii utf32 data string_or_data
 %type <str> symbol symbol_list
 
@@ -127,7 +128,7 @@ extern void tenyr_pop_state(void *yyscanner);
         char buf[LINE_LEN];
     } str;
     char chr;
-    int op;
+    signed op; ///< negative ops are used to mark swapped operands
     int arrow;
 }
 
@@ -275,10 +276,10 @@ lhs_deref
 
 rhs_plain
     /* type0 */
-    : regname[x] op regname[y] reloc_op greloc_expr
-        { $rhs_plain = make_expr(0, $x, $op, $y, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
-    | regname[x] op regname[y]
-        { $rhs_plain = make_expr(0, $x, $op, $y, 0, NULL); }
+    : regname[x] native_op regname[y] reloc_op greloc_expr
+        { $rhs_plain = make_expr(0, $x, $native_op, $y, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
+    | regname[x] native_op regname[y]
+        { $rhs_plain = make_expr(0, $x, $native_op, $y, 0, NULL); }
     | regname[x]
         { $rhs_plain = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
     | unary_op regname[x] reloc_op greloc_expr
@@ -291,15 +292,23 @@ rhs_plain
             enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
             $rhs_plain = make_expr(0, 0, op, 0, 1, $greloc_expr); }
     /* type1 */
-    | regname[x] op greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr(1, $x, $op, $y, 1, $greloc_expr); }
-    | regname[x] op greloc_expr
-        { $rhs_plain = make_expr(1, $x, $op, 0, 1, $greloc_expr); }
+    | regname[x] native_op greloc_expr '+' regname[y]
+        { $rhs_plain = make_expr(1, $x, $native_op, $y, 1, $greloc_expr); }
+    | regname[x] native_op greloc_expr
+        { $rhs_plain = make_expr(1, $x, $native_op, 0, 1, $greloc_expr); }
+    | greloc_expr sugar_op regname[x] '+' regname[y]
+        { $rhs_plain = make_expr(1, $x, -$sugar_op, $y, 1, $greloc_expr); }
+    | greloc_expr sugar_op regname[x]
+        { $rhs_plain = make_expr(1, $x, -$sugar_op, 0, 1, $greloc_expr); }
     /* type2 */
-    | greloc_expr op regname[x] '+' regname[y]
-        { $rhs_plain = make_expr(2, $x, $op, $y, 1, $greloc_expr); }
-    | greloc_expr op regname[x]
-        { $rhs_plain = make_expr(2, $x, $op, 0, 1, $greloc_expr); }
+    | greloc_expr native_op regname[x] '+' regname[y]
+        { $rhs_plain = make_expr(2, $x, $native_op, $y, 1, $greloc_expr); }
+    | greloc_expr native_op regname[x]
+        { $rhs_plain = make_expr(2, $x, $native_op, 0, 1, $greloc_expr); }
+    | regname[x] sugar_op greloc_expr '+' regname[y]
+        { $rhs_plain = make_expr(2, $x, -$sugar_op, $y, 1, $greloc_expr); }
+    | regname[x] sugar_op greloc_expr
+        { $rhs_plain = make_expr(2, $x, -$sugar_op, 0, 1, $greloc_expr); }
 
 unary_op
     : '~' { $unary_op = OP_BITWISE_XORN; }
@@ -324,22 +333,26 @@ immediate
         {   $immediate.i = $CHARACTER.buf[$CHARACTER.pos - 1];
             $immediate.is_bits = 1; }
 
-op
-    : '+'   { $op = OP_ADD              ; }
-    | '-'   { $op = OP_SUBTRACT         ; }
-    | '*'   { $op = OP_MULTIPLY         ; }
-    | '<'   { $op = OP_COMPARE_LT       ; }
-    | "=="  { $op = OP_COMPARE_EQ       ; }
-    | ">="  { $op = OP_COMPARE_GE       ; }
-    | "<>"  { $op = OP_COMPARE_NE       ; }
-    | '|'   { $op = OP_BITWISE_OR       ; }
-    | '&'   { $op = OP_BITWISE_AND      ; }
-    | "&~"  { $op = OP_BITWISE_ANDN     ; }
-    | '^'   { $op = OP_BITWISE_XOR      ; }
-    | "^~"  { $op = OP_BITWISE_XORN     ; }
-    | "<<"  { $op = OP_SHIFT_LEFT       ; }
-    | ">>"  { $op = OP_SHIFT_RIGHT_LOGIC; }
-    | ">>>" { $op = OP_SHIFT_RIGHT_ARITH; }
+native_op
+    : '+'   { $native_op = OP_ADD              ; }
+    | '-'   { $native_op = OP_SUBTRACT         ; }
+    | '*'   { $native_op = OP_MULTIPLY         ; }
+    | '<'   { $native_op = OP_COMPARE_LT       ; }
+    | "=="  { $native_op = OP_COMPARE_EQ       ; }
+    | ">="  { $native_op = OP_COMPARE_GE       ; }
+    | "<>"  { $native_op = OP_COMPARE_NE       ; }
+    | '|'   { $native_op = OP_BITWISE_OR       ; }
+    | '&'   { $native_op = OP_BITWISE_AND      ; }
+    | "&~"  { $native_op = OP_BITWISE_ANDN     ; }
+    | '^'   { $native_op = OP_BITWISE_XOR      ; }
+    | "^~"  { $native_op = OP_BITWISE_XORN     ; }
+    | "<<"  { $native_op = OP_SHIFT_LEFT       ; }
+    | ">>"  { $native_op = OP_SHIFT_RIGHT_LOGIC; }
+    | ">>>" { $native_op = OP_SHIFT_RIGHT_ARITH; }
+
+sugar_op
+    : '>'   { $sugar_op = -OP_COMPARE_LT; }
+    | "<="  { $sugar_op = -OP_COMPARE_GE; }
 
 arrow
     : tol { $arrow = 0; }

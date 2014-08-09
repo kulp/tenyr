@@ -1,0 +1,23 @@
+# type1 -> type2
+A <- B < 3
+# B > 3 will be rewritten as 3 < B
+A <- B > 3
+# D <= 4 will be rewritten as 4 >= D
+C <- D <= 4
+C <- D >= 4
+A <- B < 3 + E
+# B > 3 will be rewritten as 3 < B
+A <- B > 3 + E
+# D <= 4 will be rewritten as 4 >= D
+C <- D <= 4 + F
+C <- D >= 4 + F
+
+# type2 -> type1
+A <- 3 < B
+A <- 3 > B
+C <- 4 <= D
+C <- 4 >= D
+A <- 3 < B + E
+A <- 3 > B + E
+C <- 4 <= D + F
+C <- 4 >= D + F
