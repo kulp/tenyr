@@ -16,6 +16,7 @@ vpath %.tas.cpp ../lib ../lib/dword
 
 TARGETS = \
     bsearch_demo.texe   \
+    bm_snake.texe       \
     compare.texe        \
     fib.texe            \
     fib_iter.texe       \
@@ -26,12 +27,14 @@ TARGETS = \
     parse_hex.texe      \
     qsort_demo.texe     \
     sieve.texe          \
-    snake.texe          \
     #
 
 CLEANFILES += $(TARGETS)
 
 all: $(TARGETS)
+
+$(patsubst %.tas,%.texe,$(patsubst %.tas.cpp,%.tas,$(wildcard bm_*.tas*))): \
+		bm_%.texe: baremetal_common.to
 
 hello.texe: puts.to
 compare.texe: strcmp.to puts.to
@@ -43,8 +46,9 @@ bsearch_demo.texe: puts.to
 qsort_demo.texe: qsort.to puts.to memcpy.to
 irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
 parse_hex.texe: strtol.to
-bm_mults.texe bm_fib.texe baremetal.texe: putnum.to baremetal_common.to
-snake.texe: rand.to baremetal_common.to
+bm_snake.texe: rand.to
+bm_fib.texe bm_mults.texe: putnum.to
+clock.texe: sleep.to
 
 %.tas: %.tas.cpp ../lib/common.th
 ifneq ($(MAKE_VERBOSE),)
