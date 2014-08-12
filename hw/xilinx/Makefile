@@ -83,6 +83,9 @@ gen/%.memh: %.texe
 %.ncd: %_map.ncd
 	$(BIN)/par -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) $< $@ $*.pcf
 
+%.xdl: %.ncd
+	$(BIN)/xdl -ncd2xdl $< $@
+
 %.twx %.twr: %.ncd
 	$(BIN)/trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
 
