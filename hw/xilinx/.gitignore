@@ -153,9 +153,10 @@ ipcore_dir/tenyr_mainclock/
 *.wdb
 *.psr
 *.srp
-baremetal.memh
 xst/work/
 gen/
 Tenyr.md
 netlist.lst
 *.xdl
+*_bd.bmm
+baremetal.memh

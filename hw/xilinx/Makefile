@@ -10,7 +10,7 @@ ARCH := lin$(shell uname -m | grep -o 64)
 BIN = $(XILINX)/bin/$(ARCH)
 
 DESIGN       = Tenyr
-LOADSRC     ?= bm_fib
+LOADSRC     ?= clock
 DEVICE       = xc6slx16-csg324-3
 FILTER       = -filter iseconfig/filter.filter
 INTSTYLE     = -intstyle silent # or xflow, or ise
@@ -36,6 +36,7 @@ burn: $(DESIGN).xsvf
 vpath %.tas     ../verilog ../../ex
 vpath %.tas.cpp ../verilog ../../ex
 vpath %.texe    ../verilog ../../ex
+vpath %.memh    gen
 
 # We would like to also regenerate the .xco if the .tcl file changes, but it
 # doesn't seem possible to express the necessary circular rule.
@@ -46,9 +47,11 @@ ipcore_dir/%.v: ipcore_dir/gen_%.tcl ipcore_dir/%.xco
 	-rm $(<D)/$*.xco.bak
 
 Tenyr.ngc: ../verilog/common.vh
-Tenyr.ngc: gen/$(LOADSRC).memh
 Tenyr.ngd Tenyr.twr: $(CONSTRAINTS)
 -include Tenyr.md
+
+baremetal.memh: gen/$(LOADSRC).memh
+	cp -p $< $@
 
 ################################################################################
 # General rules
@@ -69,12 +72,15 @@ gen/%.memh: %.texe
 	@mkdir -p $(@D)
 	$(TAS) -vd $< | $(TAS) -fmemh -o $@ -
 
-%.ngc: %.xst
-	@ln -sf $(filter %.memh,$^) baremetal.memh
+%.mem: gen/%.memh
+	cp $< $@
+
+# Don't automatically regenerate baremetal.memh (use .bmm rules to insert code)
+%.ngc: %.xst | baremetal.memh
 	$(BIN)/xst $(INTSTYLE) $(FILTER) -ifn $<
 
-%.ngd: %.ngc
-	$(BIN)/ngdbuild $(FILTER) $(INTSTYLE) -sd ipcore_dir $(addprefix -uc ,$(filter %.ucf,$^)) $< $@
+%.ngd: %.ngc %.bmm
+	$(BIN)/ngdbuild $(FILTER) $(INTSTYLE) -bm $*.bmm -sd ipcore_dir $(addprefix -uc ,$(filter %.ucf,$^)) $< $@
 
 # -global_opt speed
 %_map.ncd: %.ngd
@@ -89,8 +95,8 @@ gen/%.memh: %.texe
 %.twx %.twr: %.ncd
 	$(BIN)/trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
 
-%.bit: %.ncd
-	$(BIN)/bitgen -w $(FILTER) $(INTSTYLE) $< $@ $*.pcf
+%.bit %_bd.bmm: %.ncd $(LOADSRC).mem
+	$(BIN)/bitgen -w $(FILTER) $(INTSTYLE) -bd $(LOADSRC).mem $< $*.bit $*.pcf
 
 %.impact.in: %.bit
 	@echo > $@.$$$$ "setMode -bs"                       && \
