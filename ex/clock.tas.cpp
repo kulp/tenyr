@@ -14,6 +14,7 @@ top:
     h <- h << 4 + f
     h <- h << 4 + g
     h -> [0x100]
+    h -> [0x101]
 
     c <- 1
     call(sleep)
