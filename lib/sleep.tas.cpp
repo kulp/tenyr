@@ -2,9 +2,9 @@
 
 .global sleep
 sleep:
-    // 40MHz clock, 4-cycle ticks() loop, 10cpi
+    // 80MHz clock, 4-cycle ticks() loop, 10cpi
     c <- c * 1000
-    c <- c * 1000
+    c <- c * 2000
     call(ticks)
     ret
 
