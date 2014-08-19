@@ -160,3 +160,4 @@ netlist.lst
 *.xdl
 *_bd.bmm
 baremetal.memh
+iseconfig/*.xreport
