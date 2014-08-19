@@ -86,7 +86,7 @@ L_snake:
     d <- j * 80 + k     // d is offset into display
     e <- 0x100
     e <- e << 8         // e is video base
-    c -> [e + d + 0x10] // e is d characters past start of text region
+    c -> [e + d]        // e is d characters past start of text region
 
     n <- n + SIZEOF_SNAKE
     e <- rel(snakes_after)
