@@ -92,6 +92,14 @@ L_snake:
     e <- rel(snakes_after)
     j <- n < e
     jnzrel(j,L_snake)
+#ifndef SIM
+	j <- 250
+	j <- j * 75
+slow_down:
+	e <- j > 0
+	j <- j - 1
+	jnzrel(e,slow_down)
+#endif
     goto(L_loop) // infinite loop
 
 snakes:
