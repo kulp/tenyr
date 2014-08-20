@@ -55,7 +55,7 @@
 //  1100 = X xor ones' complement Y
 //  1101 = X shift right logical Y
 //  1110 = X compare != Y
-//  1111 = reserved
+//  1111 = X shift right arithmetic Y
 
 #ifndef OPS_H_
 #define OPS_H_
