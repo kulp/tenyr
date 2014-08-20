@@ -30,8 +30,13 @@ trce:     $(DESIGN).twr
 bit:      $(DESIGN).bit
 xsvf:     $(DESIGN).xsvf
 
+ifeq ($(BURNTOOL),djtgcfg)
+burn: $(DESIGN).bit
+	djtgcfg prog -d Nexys3 -f $< -i 0
+else
 burn: $(DESIGN).xsvf
 	$(FLCLI) --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
+endif
 
 vpath %.tas     ../verilog ../../ex
 vpath %.tas.cpp ../verilog ../../ex
