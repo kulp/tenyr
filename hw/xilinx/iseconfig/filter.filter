@@ -13,13 +13,10 @@
 <filter task="map" file="Map" num="284" type="info"></filter>
 <filter task="par" file="Par" num="288" type="warning"></filter>
 <filter task="par" file="ParHelpers" num="361" type="warning"></filter>
-<filter task="bitgen" file="PhysDesignRules" num="367" type="warning"></filter>
 <filter task="xst" file="HDLCompiler" num="413" type="warning"><arg index="1" match_type="wildcard">32</arg><arg index="2" match_type="wildcard">*</arg></filter>
 <filter task="xst" file="HDLCompiler" num="413" type="warning"></filter>
 <filter task="ngdbuild" file="NgdBuild" num="452" type="warning"></filter>
-<filter task="xst" file="HDLCompiler" num="552" type="warning"></filter>
 <filter task="map" file="MapLib" num="562" type="info"></filter>
-<filter task="xst" file="HDLCompiler" num="634" type="warning"></filter>
 <filter task="xst" file="Xst" num="647" type="warning"></filter>
 <filter task="xst" file="Xst" num="653" type="warning"></filter>
 <filter task="xst" file="HDLCompiler" num="817" type="warning"><arg index="1" match_type="wildcard">*</arg></filter>
@@ -42,7 +39,6 @@
 <filter task="xst" file="Xst" num="2038" type="warning"></filter>
 <filter task="xst" file="Xst" num="2040" type="warning"></filter>
 <filter task="xst" file="Xst" num="2042" type="warning"></filter>
-<filter task="xst" file="Xst" num="2169" type="info"></filter>
 <filter task="bitgen" file="PhysDesignRules" num="2212" type="warning"></filter>
 <filter task="xst" file="Xst" num="2677" type="warning"></filter>
 <filter task="trce" file="Timing" num="2752" type="info"></filter>
@@ -50,11 +46,8 @@
 <filter task="xst" file="Xst" num="2774" type="info"></filter>
 <filter task="xst" file="Xst" num="2898" type="warning"><arg index="1" match_type="wildcard">*b</arg></filter>
 <filter task="xst" file="Xst" num="2898" type="warning"></filter>
-<filter task="xst" file="Xst" num="3015" type="warning"></filter>
 <filter task="xst" file="Xst" num="3035" type="warning"></filter>
 <filter task="xst" file="Xst" num="3210" type="info"></filter>
-<filter task="xst" file="Xst" num="3218" type="info"></filter>
-<filter task="par" file="Timing" num="3223" type="warning"></filter>
 <filter task="xst" file="Xst" num="3226" type="info"></filter>
 <filter task="xst" file="Xst" num="3231" type="info"></filter>
 <filter task="trce" file="Timing" num="3339" type="info"></filter>
