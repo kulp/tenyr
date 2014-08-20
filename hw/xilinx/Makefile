@@ -19,7 +19,7 @@ EFFORT       = -ol std
 THREADING    = -mt 2
 
 .DEFAULT_GOAL = bit
-.PHONY: xst ngdbuild map par trce bit xsvf
+.PHONY: xst ngdbuild map par trce bit xsvf burn
 .PRECIOUS: %.xsvf %.bit %.ngc %.ngd %.ncd
 
 xst:      $(DESIGN).ngc
