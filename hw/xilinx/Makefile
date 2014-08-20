@@ -18,6 +18,10 @@ CONSTRAINTS  = Tenyr.ucf Nexys3_Master.ucf
 EFFORT       = -ol std
 THREADING    = -mt 2
 
+ifeq ($V,1)
+INTSTYLE = -intstyle xflow
+endif
+
 .DEFAULT_GOAL = bit
 .PHONY: xst ngdbuild map par trce bit xsvf burn
 .PRECIOUS: %.xsvf %.bit %.ngc %.ngd %.ncd
