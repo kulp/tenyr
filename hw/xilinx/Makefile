@@ -1,6 +1,7 @@
-TAS   = ../../tas
-TLD   = ../../tld
-FLCLI = flcli
+.DEFAULT_GOAL = bit
+
+TAS = ../../tas
+TLD = ../../tld
 
 ifeq ($(XILINX),)
 $(error Set XILINX to /path/to/Xilinx/<VERSION>/ISE_DS/ISE)
@@ -22,26 +23,12 @@ ifeq ($V,1)
 INTSTYLE = -intstyle xflow
 endif
 
-.DEFAULT_GOAL = bit
-.PHONY: xst ngdbuild map par trce bit xsvf burn
-.PRECIOUS: %.xsvf %.bit %.ngc %.ngd %.ncd
+Tenyr.ngc: ../verilog/common.vh
+Tenyr.ngd Tenyr.twr: $(CONSTRAINTS)
+-include Tenyr.md
 
-xst:      $(DESIGN).ngc
-ngdbuild: $(DESIGN).ngd
-map:      $(DESIGN)_map.ncd
-par:      $(DESIGN).ncd
-trce:     $(DESIGN).twr
-bit:      $(DESIGN).bit
-xsvf:     $(DESIGN).xsvf
-
-ifeq ($(BURNTOOL),djtgcfg)
-burn: $(DESIGN).bit
-	djtgcfg prog -d Nexys3 -f $< -i 0
-else
-burn: $(DESIGN).xsvf
-	$(FLCLI) --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
-endif
-
+################################################################################
+# General rules
 vpath %.tas     ../verilog ../../ex
 vpath %.tas.cpp ../verilog ../../ex
 vpath %.texe    ../verilog ../../ex
@@ -55,15 +42,27 @@ ipcore_dir/%.v: ipcore_dir/gen_%.tcl ipcore_dir/%.xco
 	touch -r $(<D)/$*.xco $@ # ensure sed doesn't make .xco too new
 	-rm $(<D)/$*.xco.bak
 
-Tenyr.ngc: ../verilog/common.vh
-Tenyr.ngd Tenyr.twr: $(CONSTRAINTS)
--include Tenyr.md
+.PHONY: xst ngdbuild map par trce bit xsvf burn
+.PRECIOUS: %.xsvf %.bit %.ngc %.ngd %.ncd
+xst:      $(DESIGN).ngc
+ngdbuild: $(DESIGN).ngd
+map:      $(DESIGN)_map.ncd
+par:      $(DESIGN).ncd
+trce:     $(DESIGN).twr
+bit:      $(DESIGN).bit
+xsvf:     $(DESIGN).xsvf
 
 baremetal.memh: gen/$(LOADSRC).memh
 	cp -p $< $@
 
-################################################################################
-# General rules
+ifeq ($(BURNTOOL),djtgcfg)
+burn: $(DESIGN).bit
+	djtgcfg prog -d Nexys3 -f $< -i 0
+else
+burn: $(DESIGN).xsvf
+	flcli --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
+endif
+
 %.md: %.prj
 	perl -nae 'BEGIN{print "$*.ngc: "}$$_=$$F[2]; y/"//d; print "$$_ "' $< > $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
 
