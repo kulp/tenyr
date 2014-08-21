@@ -2,7 +2,14 @@ TOP ?= .
 
 CC = $(CROSS_COMPILE)gcc
 ECHO := $(shell which echo)
+
+ifeq ($V,1)
+SILENCE =
+MAKESTEP = true
+else
+SILENCE = @
 MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+endif
 
 ifndef NDEBUG
  CFLAGS  += -g
@@ -183,54 +190,30 @@ OUTPUT_OPTION ?= -o $@
 
 COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 %.o: %.c
-ifneq ($(MAKE_VERBOSE),)
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
-else
 	@$(MAKESTEP) "[ CC ] $<"
-	@$(COMPILE.c) $(OUTPUT_OPTION) $<
-endif
+	$(SILENCE)$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 
 ifeq ($(SUPPRESS_BINARY_RULE),)
 %$(EXE_SUFFIX): %.o
-ifneq ($(MAKE_VERBOSE),)
-	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-else
 	@$(MAKESTEP) "[ LD ] $@"
-	@$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-endif
+	$(SILENCE)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 endif
 
 $(GENDIR)/%.h $(GENDIR)/%.c: %.l
-ifneq ($(MAKE_VERBOSE),)
-	$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
-else
 	@$(MAKESTEP) "[ FLEX ] $<"
-	@$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
-endif
+	$(SILENCE)$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 
 $(GENDIR)/%.h $(GENDIR)/%.c: %.y
-ifneq ($(MAKE_VERBOSE),)
-	$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
-else
 	@$(MAKESTEP) "[ BISON ] $<"
-	@$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
-endif
+	$(SILENCE)$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 
 plugin,dy.o pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
-ifneq ($(MAKE_VERBOSE),)
-	$(COMPILE.c) -o $@ $<
-else
 	@$(MAKESTEP) "[ DYCC ] $<"
-	@$(COMPILE.c) -o $@ $<
-endif
+	$(SILENCE)$(COMPILE.c) -o $@ $<
 
 $(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
-ifneq ($(MAKE_VERBOSE),)
-	$(LINK.c) -shared -o $@ $^ $(LDLIBS)
-else
 	@$(MAKESTEP) "[ DYLD ] $@"
-	@$(LINK.c) -shared -o $@ $^ $(LDLIBS)
-endif
+	$(SILENCE)$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 

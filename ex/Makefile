@@ -9,7 +9,14 @@ CPPFLAGS += $(INCLUDES)
 CPP := $(CPP) $(DEFINES) -
 
 ECHO := $(shell which echo)
+
+ifeq ($V,1)
+SILENCE =
+MAKESTEP = true
+else
+SILENCE = @
 MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+endif
 
 vpath %.tas ../lib ../lib/dword
 vpath %.tas.cpp ../lib ../lib/dword
@@ -51,34 +58,19 @@ bm_fib.texe bm_mults.texe: putnum.to
 clock.texe: sleep.to
 
 %.tas: %.tas.cpp ../lib/common.th
-ifneq ($(MAKE_VERBOSE),)
-	@mkdir -p $(*D)
-	$(CPP) $(CPPFLAGS) < $< -o $@
-else
 	@$(MAKESTEP) "[ CPP ] $<"
-	@mkdir -p $(*D)
-	@$(CPP) $(CPPFLAGS) < $< -o $@
-endif
+	$(SILENT)mkdir -p $(*D)
+	$(SILENT)$(CPP) $(CPPFLAGS) < $< -o $@
 
 %.to: %.tas
-ifneq ($(MAKE_VERBOSE),)
-	@mkdir -p $(*D)
-	$(TAS) -o$@ $<
-else
 	@$(MAKESTEP) "[ TAS ] $<"
-	@mkdir -p $(*D)
-	@$(TAS) -o$@ $<
-endif
+	$(SILENT)mkdir -p $(*D)
+	$(SILENT)$(TAS) -o$@ $<
 
 %.texe: %.to
-ifneq ($(MAKE_VERBOSE),)
-	@mkdir -p $(*D)
-	$(TLD) -o$@ $^
-else
 	@$(MAKESTEP) "[ TLD ] $@"
 	@mkdir -p $(*D)
-	@$(TLD) -o$@ $^
-endif
+	$(SILENT)$(TLD) -o$@ $^
 
 clean:
 	$(RM) $(CLEANFILES)

@@ -5,6 +5,16 @@ VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I../../src
 
+ECHO := $(shell which echo)
+
+ifeq ($V,1)
+SILENCE =
+MAKESTEP = true
+else
+SILENCE = @
+MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+endif
+
 TAS = $(TOP)/tas
 TLD = $(TOP)/tld
 
@@ -90,51 +100,27 @@ OUTPUT_OPTION ?= -o $@
 $(GEN_V): VFLAGS += -DPUT='$$$(SIM_PUT_$*)' -DGET='$$$(SIM_GET_$*)' -DSTEM='$*'
 $(GEN_V): VFLAGS += -E
 $(GEN_V): %.v: ../verilog/sim/simwrap.v
-ifneq ($(MAKE_VERBOSE),)
-	iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
-else
-	@echo "[ IVERILOG -E ] $@"
-	@iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
-endif
+	@$(MAKESTEP) "[ IVERILOG -E ] $@"
+	$(SILENT)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 %.o: %.c
-ifneq ($(MAKE_VERBOSE),)
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
-else
-	@echo "[ CC ] $<"
-	@$(COMPILE.c) $(OUTPUT_OPTION) $<
-endif
+	@$(MAKESTEP) "[ CC ] $<"
+	$(SILENT)$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 %.to: %.tas
-ifneq ($(MAKE_VERBOSE),)
-	$(TAS) -o$@ $<
-else
-	@echo "[ TAS ] $<"
-	@$(TAS) -o$@ $<
-endif
+	@$(MAKESTEP) "[ TAS ] $<"
+	$(SILENT)$(TAS) -o$@ $<
 
 %.texe: %.to
-ifneq ($(MAKE_VERBOSE),)
-	$(TLD) -o$@ $<
-else
-	@echo "[ TLD ] $<"
-	@$(TLD) -o$@ $<
-endif
+	@$(MAKESTEP) "[ TLD ] $<"
+	$(SILENT)$(TLD) -o$@ $<
 
 %: %.v
-ifneq ($(MAKE_VERBOSE),)
-	iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
-else
-	@echo "[ IVERILOG ] $@"
-	@iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
-endif
+	@$(MAKESTEP) "[ IVERILOG ] $@"
+	$(SILENT)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 %.vpi: %.o
-ifneq ($(MAKE_VERBOSE),)
-	iverilog-vpi $(OUTPUT_OPTION) $^
-else
-	@echo "[ VPI ] $@"
-	@iverilog-vpi $(OUTPUT_OPTION) $^
-endif
+	@$(MAKESTEP) "[ VPI ] $@"
+	$(SILENT)iverilog-vpi $(OUTPUT_OPTION) $^
 

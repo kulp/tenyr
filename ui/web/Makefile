@@ -15,6 +15,16 @@ CHECK_PATHS = src src/gen pp_build
 VPATH += $(CHECK_PATHS)
 INCLUDES += $(CHECK_PATHS)
 
+ECHO := $(shell which echo)
+
+ifeq ($V,1)
+SILENCE =
+MAKESTEP = true
+else
+SILENCE = @
+MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+endif
+
 ################################################################################
 # General rules
 
@@ -98,26 +108,14 @@ CLEANFILES += *.bc
 
 # `make -B EXE_SUFFIX=.exe` to make a command-line version of the em% code
 %.exe: em%.o
-ifneq ($(MAKE_VERBOSE),)
-	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-else
-	@echo "[ LD ] $@"
-	@$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-endif
+	@$(MAKESTEP) "[ LD ] $@"
+	$(SILENT)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 %.bc: em%.o
-ifneq ($(MAKE_VERBOSE),)
-	emcc $(LDFLAGS) $(EMCCFLAGS_CC) -o $@ $^ $(LDLIBS)
-else
-	@echo "[ EM-CC ] $@"
-	@emcc $(LDFLAGS) $(EMCCFLAGS_CC) -o $@ $^ $(LDLIBS)
-endif
+	@$(MAKESTEP) "[ EM-CC ] $@"
+	$(SILENT)emcc $(LDFLAGS) $(EMCCFLAGS_CC) -o $@ $^ $(LDLIBS)
 
 %.js: %.bc
-ifneq ($(MAKE_VERBOSE),)
-	emcc $(LDFLAGS) $(EMCCFLAGS_LD) -o $@ $<
-else
-	@echo "[ EM-LD ] $@"
-	@emcc $(LDFLAGS) $(EMCCFLAGS_LD) -o $@ $<
-endif
+	@$(MAKESTEP) "[ EM-LD ] $@"
+	$(SILENT)emcc $(LDFLAGS) $(EMCCFLAGS_LD) -o $@ $<
 
