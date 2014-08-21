@@ -1,7 +1,14 @@
 .DEFAULT_GOAL = bit
 
-TAS = ../../tas
-TLD = ../../tld
+TAS = ./bin/tas
+TLD = ./bin/tld
+
+export TAS
+export TLD
+
+$(TAS) $(TLD): ../../Makefile
+	mkdir -p $(@D)
+	$(MAKE) BUILDDIR=$(@D) -f $< $(@F)
 
 ifeq ($(XILINX),)
 $(error Set XILINX to /path/to/Xilinx/<VERSION>/ISE_DS/ISE)
@@ -68,15 +75,15 @@ endif
 
 # force remaking %.texe because we don't have actual dependency information here
 FORCE:
-%.texe: %.tas FORCE
-	@$(MAKE) -C $(<D) $@
+%.texe: %.tas FORCE | $(TAS) $(TLD)
+	@$(MAKE) -C $(<D) $@ TAS=$(PWD)/$(TAS) TLD=$(PWD)/$(TLD)
 	@cp -p $(<D)/$(@F) $@
 
-%.texe: %.tas.cpp FORCE
-	@$(MAKE) -C $(<D) $@
+%.texe: %.tas.cpp FORCE | $(TAS) $(TLD)
+	@$(MAKE) -C $(<D) $@ TAS=$(PWD)/$(TAS) TLD=$(PWD)/$(TLD)
 	@cp -p $(<D)/$(@F) $@
 
-gen/%.memh: %.texe
+gen/%.memh: %.texe | $(TAS)
 	@mkdir -p $(@D)
 	$(TAS) -vd $< | $(TAS) -fmemh -o $@ -
 
@@ -123,4 +130,5 @@ clean:
 clobber:
 	xargs rm -rf < .gitignore
 	git ls-files --others | xargs rm -rf
+	-rm -f $(TAS) $(TLD)
 
