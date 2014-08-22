@@ -1,4 +1,15 @@
 TOP ?= .
+BUILDDIR ?= .
+GIT = git --git-dir=$(TOP)/.git
+
+ifneq ($(BUILDDIR),.)
+# from http://stackoverflow.com/a/18137056
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
+all $(MAKECMDGOALS):
+	mkdir -p $(BUILDDIR)
+	$(MAKE) BUILDDIR=. -C $(BUILDDIR) -f $(mkfile_path) TOP=$(dir $(mkfile_path)) $@
+else
 
 CC = $(CROSS_COMPILE)gcc
 ECHO := $(shell which echo)
@@ -57,12 +68,12 @@ FLEX  = flex
 BISON = bison -Werror
 
 CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
-GENDIR = $(TOP)/src/gen
+GENDIR = gen
 
 VPATH += $(TOP)/src $(TOP)/src/devices $(GENDIR)
 INCLUDES += $(TOP)/src $(GENDIR) $(INCLUDE_OS)
 
-BUILD_NAME := $(shell git describe --tags --match 'v?.?.?*')
+BUILD_NAME := $(shell $(GIT) describe --tags --match 'v?.?.?*')
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
@@ -155,7 +166,7 @@ install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install $^ $(INSTALL_DIR)
 
 upload: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) | scripts/upload.pl
-	$(realpath $|) "$(shell $(CC) -dumpmachine)" "$(shell git describe --tags)" $^
+	$(realpath $|) "$(shell $(CC) -dumpmachine)" "$(shell $(GIT) describe --tags)" $^
 
 ifndef INHIBIT_DEPS
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
@@ -216,4 +227,5 @@ plugin,dy.o pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
 $(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
 	@$(MAKESTEP) "[ DYLD ] $@"
 	$(SILENCE)$(LINK.c) -shared -o $@ $^ $(LDLIBS)
+endif # BUILDDIR
 

@@ -7,7 +7,6 @@ tld
 *.o
 *.d
 *.vim
-src/gen
 tags
 *.to
 *.texe
