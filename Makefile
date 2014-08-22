@@ -201,7 +201,7 @@ OUTPUT_OPTION ?= -o $@
 
 COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 %.o: %.c
-	@$(MAKESTEP) "[ CC ] $<"
+	@$(MAKESTEP) "[ CC ] $(<F)"
 	$(SILENCE)$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
@@ -213,15 +213,15 @@ ifeq ($(SUPPRESS_BINARY_RULE),)
 endif
 
 $(GENDIR)/%.h $(GENDIR)/%.c: %.l
-	@$(MAKESTEP) "[ FLEX ] $<"
+	@$(MAKESTEP) "[ FLEX ] $(<F)"
 	$(SILENCE)$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 
 $(GENDIR)/%.h $(GENDIR)/%.c: %.y
-	@$(MAKESTEP) "[ BISON ] $<"
+	@$(MAKESTEP) "[ BISON ] $(<F)"
 	$(SILENCE)$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
 
 plugin,dy.o pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
-	@$(MAKESTEP) "[ DYCC ] $<"
+	@$(MAKESTEP) "[ DYCC ] $(<F)"
 	$(SILENCE)$(COMPILE.c) -o $@ $<
 
 $(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
