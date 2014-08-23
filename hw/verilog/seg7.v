@@ -7,7 +7,7 @@ module Seg7(input clk, strobe, rw, reset_n, input[31:0] addr, data,
             output[7:0] seg, output reg[NUM_DIGITS-1:0] an);
 
     parameter  ADDR_BASE    = 1 << 4;
-    parameter  COUNTER_BITS = 12;
+    parameter  COUNTER_BITS = 16; // 80MHz input => full screen refresh in 2ms
     localparam NUM_DIGITS   = 4;
 
     reg[COUNTER_BITS-1:0] counter = 0;
