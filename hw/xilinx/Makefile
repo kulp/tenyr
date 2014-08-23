@@ -63,10 +63,10 @@ baremetal.memh: gen/$(LOADSRC).memh
 	cp -p $< $@
 
 ifeq ($(BURNTOOL),djtgcfg)
-burn: $(DESIGN).bit
+burn: $(DESIGN)_$(LOADSRC).bit
 	djtgcfg prog -d Nexys3 -f $< -i 0
 else
-burn: $(DESIGN).xsvf
+burn: $(DESIGN)_$(LOADSRC).xsvf
 	flcli --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
 endif
 
@@ -87,8 +87,9 @@ gen/%.memh: %.texe | $(TAS)
 	@mkdir -p $(@D)
 	$(TAS) -vd $< | $(TAS) -fmemh -o $@ -
 
-%.mem: gen/%.memh
-	cp $< $@
+gen/%.mem: gen/%.memh
+	# TODO document / hoist start address
+	echo '@1000' > $@.$$$$ && cat $< >> $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
 
 # Don't automatically regenerate baremetal.memh (use .bmm rules to insert code)
 %.ngc: %.xst | baremetal.memh
@@ -110,8 +111,11 @@ gen/%.memh: %.texe | $(TAS)
 %.twx %.twr: %.ncd
 	$(BIN)/trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
 
-%.bit %_bd.bmm: %.ncd $(LOADSRC).mem
-	$(BIN)/bitgen -w $(FILTER) $(INTSTYLE) -bd $(LOADSRC).mem $< $*.bit $*.pcf
+%.bit %_bd.bmm: %.ncd
+	$(BIN)/bitgen -w $(FILTER) $(INTSTYLE) $< $*.bit $*.pcf
+
+%_$(LOADSRC).bit: %.bit gen/$(LOADSRC).mem %_bd.bmm
+	$(BIN)/data2mem -bm $(filter %.bmm,$^) -bd $(filter %.mem,$^) -bt $< -o b $@
 
 %.impact.in: %.bit
 	@echo > $@.$$$$ "setMode -bs"                       && \
