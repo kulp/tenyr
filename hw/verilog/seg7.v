@@ -24,11 +24,12 @@ module Seg7(input clk, strobe, rw, reset_n, input[31:0] addr, data,
         if (!reset_n) begin
             an       <= ~1;
             dig      <= 0;
+            counter  <= 0;
             store[0] <= 0;
             store[1] <= 0;
         end else begin
             counter <= counter + 1;
-            if (counter == 0) begin
+            if (&counter) begin
                 an  <= {an[NUM_DIGITS-2:0],an[NUM_DIGITS-1]};
                 dig <= dig + 1;
             end else if (in_range && strobe && rw)
