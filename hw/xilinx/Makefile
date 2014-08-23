@@ -41,14 +41,6 @@ vpath %.tas.cpp ../verilog ../../ex
 vpath %.texe    ../verilog ../../ex
 vpath %.memh    gen
 
-# We would like to also regenerate the .xco if the .tcl file changes, but it
-# doesn't seem possible to express the necessary circular rule.
-ipcore_dir/%.v: ipcore_dir/gen_%.tcl ipcore_dir/%.xco
-	(cd $(@D) ; $(BIN)/xtclsh $(notdir $(filter %.tcl,$^)))
-	sed -i.bak -e '/^# \(Date\|CRC\):/s/:.*/: .../' $(filter %.xco,$^)
-	touch -r $(filter %.xco,$^) $@ # ensure sed doesn't make .xco too new
-	-rm $(filter %.xco,$^).bak
-
 .PHONY: xst ngdbuild map par trce bit xsvf burn
 .PRECIOUS: %.xsvf %.bit %.ngc %.ngd %.ncd
 xst:      $(DESIGN).ngc

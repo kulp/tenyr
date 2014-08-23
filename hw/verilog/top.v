@@ -30,10 +30,8 @@ module Tenyr(
     assign Led[7:0] = halt;
 
     tenyr_mainclock clocks(
-        .in     ( clk       ), .clk_core0    ( clk_core  ),
-        .reset  ( 1'b0      ), .clk_core0_CE ( valid_clk ),
-        .locked ( valid_clk ), .clk_vga      ( clk_vga   ),
-                               .clk_vga_CE   ( valid_clk )
+        .clk_in ( clk   ), .clk_core ( clk_core ),
+        .reset  ( reset ), .clk_vga  ( clk_vga  )
     );
 
     Core core(
