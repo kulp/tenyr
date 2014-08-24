@@ -19,6 +19,7 @@ BIN = $(XILINX)/bin/$(ARCH)
 
 DESIGN       = Tenyr
 LOADSRC     ?= clock
+DEFAULTSRC   = clock
 DEVICE       = xc6slx16-csg324-3
 FILTER       = -filter iseconfig/filter.filter
 INTSTYLE     = -intstyle silent # or xflow, or ise
@@ -51,7 +52,7 @@ trce:     $(DESIGN).twr
 bit:      $(DESIGN).bit
 xsvf:     $(DESIGN).xsvf
 
-baremetal.memh: gen/$(LOADSRC).memh
+baremetal.memh: gen/$(DEFAULTSRC).memh
 	cp -p $< $@
 
 ifeq ($(BURNTOOL),djtgcfg)
