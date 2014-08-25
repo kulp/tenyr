@@ -18,19 +18,19 @@ module VGAwrap(
     assign vgaBlue [1  ] = {1{vgaBlue [2]}};
 
     mmr #(.ADDR(VIDEO_ADDR + 'h1000 - 1), .DBITS(8), .DEFAULT(8'b11110111)) video_ctl(
-        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe  ),
+        .clk ( clk_core ), .reset_n ( reset_n ), .strobe ( strobe  ),
         .rw  ( rw       ), .addr    ( addr    ), .d_in   ( d_in    ),
         .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( vga_ctl )
     );
 
     mmr #(.ADDR(VIDEO_ADDR + 'h1000 - 2), .DBITS(7), .DEFAULT(1)) crx_mmr(
-        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe ),
+        .clk ( clk_core ), .reset_n ( reset_n ), .strobe ( strobe ),
         .rw  ( rw       ), .addr    ( addr    ), .d_in   ( d_in   ),
         .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( crx    )
     ); // crx is 1-based ?
 
     mmr #(.ADDR(VIDEO_ADDR + 'h1000 - 3), .DBITS(6), .DEFAULT(0)) cry_mmr(
-        .clk ( clk_core ), .reset_n ( reset_n ), .enable ( strobe ),
+        .clk ( clk_core ), .reset_n ( reset_n ), .strobe ( strobe ),
         .rw  ( rw       ), .addr    ( addr    ), .d_in   ( d_in   ),
         .re  ( 1'b1     ), .we      ( 1'b0    ), .val    ( cry    )
     ); // cry is 0-based ?

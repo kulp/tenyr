@@ -1,7 +1,8 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module mmr(clk, enable, rw, addr, d_in, d_out, reset_n, we, re, val);
+module mmr(input clk, strobe, rw, reset_n, we, re, output reg[PBITS-1:0] d_out,
+           input[ABITS-1:0] addr, input[PBITS-1:0] d_in, inout[DBITS-1:0] val);
 
     parameter ADDR    = 0;
     parameter RE      = 1; // reads possible ?
@@ -11,32 +12,19 @@ module mmr(clk, enable, rw, addr, d_in, d_out, reset_n, we, re, val);
     parameter PBITS   = 32;
     parameter DBITS   = PBITS;
 
-    input clk;
-    input enable; // TODO convert to / add a proper strobe
-    input rw;
-    input[ABITS - 1:0] addr;
-    input[PBITS - 1:0] d_in;
-    output[PBITS - 1:0] d_out;
-    input reset_n;
-    input we, re; // write-enable, read-enable through val port
-    inout[DBITS - 1:0] val;
-
     reg[DBITS - 1:0] store = DEFAULT;
 
-    wire active = enable && addr == ADDR;
-
-    assign d_out = (active && !rw && RE) ? store : 32'b0;
-    assign val   = re ? store : {DBITS{1'bz}};
+    assign val = re ? store : 32'bz;
 
     always @(posedge clk)
-        if (active) begin
-            if (rw && WE) begin
+        if (strobe && addr == ADDR) begin
+            if (rw && WE)
                 store <= d_in[DBITS-1:0];
-            end
+            else if (!rw && RE)
+                d_out <= store;
         end else begin
-            if (we) begin
+            if (we)
                 store <= val;
-            end
         end
 
 endmodule
