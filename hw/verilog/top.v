@@ -79,7 +79,7 @@ module Tenyr(
 `endif
 
 `ifdef SEG7
-    Seg7 #(.ADDR_BASE(12'h100)) seg7(
+    Seg7 #(.BASE(12'h100)) seg7(
         .clk     ( clk_core ), .rw   ( d_rw      ), .seg ( seg ),
         .reset_n ( _reset_n ), .addr ( d_addr    ), .an  ( an  ),
         .strobe  ( d_strobe ), .data ( d_to_slav )
