@@ -1,6 +1,6 @@
 # -------------------------------------------------------------------------- #
 #
-# Copyright (C) 1991-2012 Altera Corporation
+# Copyright (C) 1991-2013 Altera Corporation
 # Your use of Altera Corporation's design tools, logic functions 
 # and other software and tools, and its AMPP partner logic 
 # functions, and any output files from any of the foregoing 
@@ -16,9 +16,9 @@
 #
 # -------------------------------------------------------------------------- #
 #
-# Quartus II 32-bit
-# Version 12.1 Build 243 01/31/2013 Service Pack 1 SJ Web Edition
-# Date created = 22:31:32  April 25, 2013
+# Quartus II 64-Bit
+# Version 13.1.0 Build 162 10/23/2013 SJ Web Edition
+# Date created = 23:11:16  August 26, 2014
 #
 # -------------------------------------------------------------------------- #
 #
@@ -41,20 +41,19 @@
 # ========================
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "12.1 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "23:36:57  APRIL 12, 2013"
-set_global_assignment -name LAST_QUARTUS_VERSION "12.1 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION 13.1
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name VERILOG_FILE tenyr_mainclock.v
 set_global_assignment -name VERILOG_FILE ../verilog/sim/simtop.v
 set_global_assignment -name VERILOG_FILE ../verilog/top.v
-set_global_assignment -name VERILOG_FILE ../verilog/tenyr.v
-set_global_assignment -name VERILOG_FILE ../verilog/seglookup.v
-set_global_assignment -name VERILOG_FILE ../verilog/seg7test.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../verilog/tenyr.v
 set_global_assignment -name VERILOG_FILE ../verilog/seg7.v
 set_global_assignment -name VERILOG_FILE ../verilog/ramwrap.v
 set_global_assignment -name VERILOG_FILE ../verilog/ram.v
 set_global_assignment -name VERILOG_FILE ../verilog/mmr.v
-set_global_assignment -name VERILOG_FILE ../verilog/hex2ascii.v
-set_global_assignment -name SOURCE_FILE DE1.qsf
+set_global_assignment -name VERILOG_FILE ../verilog/hex2segments.v
+set_global_assignment -name SOURCE_FILE DE0.qsf
+set_global_assignment -name SDC_FILE Tenyr.sdc
 
 # Classic Timing Assignments
 # ==========================
@@ -63,7 +62,7 @@ set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 
 # Analysis & Synthesis Assignments
 # ================================
-set_global_assignment -name FAMILY "Cyclone II"
+set_global_assignment -name FAMILY "Cyclone III"
 set_global_assignment -name SEARCH_PATH ..\\verilog
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
 set_global_assignment -name VERILOG_MACRO "__QUARTUS__=<None>"
@@ -71,7 +70,7 @@ set_global_assignment -name TOP_LEVEL_ENTITY Tenyr
 
 # Fitter Assignments
 # ==================
-set_global_assignment -name DEVICE EP2C20F484C7
+set_global_assignment -name DEVICE EP3C16F484C6
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
 
 # EDA Netlist Writer Assignments
@@ -80,7 +79,7 @@ set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
 
 # Parameter Assignments
 # =====================
-set_parameter -name LOADFILE ../verilog/baremetal.memh
+set_parameter -name LOADFILE ./baremetal.memh
 
 # start EDA_TOOL_SETTINGS(eda_simulation)
 # ---------------------------------------

@@ -1,8 +1,8 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Reg(input clk, upZ,            input[ 3:0] idxZ, idxX, idxY,
-           input[31:0] nextZ, nextP, output[31:0] valZ, valX, valY);
+module Reg(input clk, upZ, output signed[31:0] valZ, valX, valY,
+           input[3:0] idxZ, idxX, idxY, input signed[31:0] nextZ, nextP);
 
     reg[31:0] store[0:14];
     initial store[0] = 0;
@@ -16,8 +16,8 @@ module Reg(input clk, upZ,            input[ 3:0] idxZ, idxX, idxY,
 endmodule
 
 module Decode(input[31:0] insn, output[3:0] idxZ, output reg[3:0] idxX, idxY,
-              output reg[31:0] valI, output reg[3:0] op, output[1:0] kind,
-              output storing, loading, deref_rhs, branching);
+              output reg signed[31:0] valI, output reg[3:0] op,
+              output[1:0] kind, output storing, loading, deref_rhs, branching);
 
     wire [23:0] tI;
 
@@ -33,8 +33,8 @@ module Decode(input[31:0] insn, output[3:0] idxZ, output reg[3:0] idxX, idxY,
 
 endmodule
 
-module Shuf(input[1:0] kind, input[31:0] valX, valY, valI,
-                        output reg[31:0] valA, valB, valC);
+module Shuf(input[1:0] kind, input signed[31:0] valX, valY, valI,
+                        output reg signed[31:0] valA, valB, valC);
 
     always @* case (kind)
         2'b00: {valA,valB,valC} = {valX ,valY ,valI};
@@ -77,12 +77,12 @@ module Core(input clk, reset_n, inout wor `HALTTYPE halt, output strobe,
     localparam[3:0] s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6;
 
     wire deref_rhs, branching, storing, loading, edone;
-    wire[ 3:0] idxX, idxY, idxZ, op;
-    wire[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
-    wire[ 1:0] kind;
-
-    reg [31:0] r_irhs, r_data, nextP, v_addr, insn;
-    reg [ 3:0] state = s5;
+    wire[3:0] idxX, idxY, idxZ, op;
+    wire signed[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
+    wire[1:0] kind;
+    reg[31:0] insn, r_data;
+    reg signed[31:0] r_irhs, nextP;
+    reg[3:0] state = s5;
 
     always @(posedge clk)
         if (!reset_n) begin
