@@ -1,4 +1,9 @@
 db/
 incremental_db/
 output_files/
+simulation/
 *.qws
+*.bak
+*_assignment_defaults.qdf
+*_description.txt
+*.md
