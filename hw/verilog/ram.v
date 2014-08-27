@@ -17,27 +17,26 @@ module BlockRAM(
     parameter SIZE     = 1 << ABITS;
     parameter OFFSET   = 0;
 
-    reg[DBITS-1:0] store[(SIZE - 1 + OFFSET):OFFSET];
+    reg[DBITS-1:0] store[SIZE - 1:0];
 
-    integer i, j;
+    integer i;
     initial begin
         if (INIT)
-            for (i = 0; i < (SIZE + 7) / 8; i = i + 1)
-                for (j = 0; j < 8 && i * 8 + j < SIZE; j = j + 1)
-                    store[i * 8 + j + OFFSET] = ZERO;
+            for (i = 0; i < SIZE; i = i + 1)
+                store[i] = ZERO;
         if (LOAD) $readmemh(LOADFILE, store);
     end
 
     always @(posedge clka) begin
         if (wea && ena)
-            store[addra] <= dina;
-        douta <= store[addra];
+            store[addra - OFFSET] <= dina;
+        douta <= store[addra - OFFSET];
     end
 
     always @(posedge clkb) begin
         if (web && enb)
-            store[addrb] <= dinb;
-        doutb <= store[addrb];
+            store[addrb - OFFSET] <= dinb;
+        doutb <= store[addrb - OFFSET];
     end
 
 endmodule
