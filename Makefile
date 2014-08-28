@@ -51,7 +51,7 @@ endif
 gcc_flag_supported = $(shell gcc $1 -x c /dev/null 2>/dev/null >/dev/null && echo $1)
 
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
-# Use := to ensure the expensive underyling call is not repeated
+# Use := to ensure the expensive underlying call is not repeated
 NO_UNKNOWN_WARN_OPTS := $(call gcc_flag_supported,-Wno-unknown-warning-option)
 CPPFLAGS += $(NO_UNKNOWN_WARN_OPTS)
 
