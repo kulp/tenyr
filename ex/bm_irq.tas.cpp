@@ -7,7 +7,7 @@
 #include "bm_fib.tas.cpp"
 
 irq_00:
-    A   <- 0xeee
+    A   <- 0x0ee
     C   <- (1 << 0)
     C   -> [ISR_ADDR]
     ret

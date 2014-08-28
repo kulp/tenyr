@@ -33,5 +33,5 @@ loop:
   goto(loop)
 
 done:
-  popal(d,k)
+  popall(d,k)
   ret
