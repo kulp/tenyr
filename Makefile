@@ -109,7 +109,8 @@ win32 win64: export WIN32=1
 win32 win64:
 	$(MAKE) $^
 
-check: tsim tas tld
+tools: tsim tas tld
+check: dogfood tools
 	@$(MAKESTEP) -n "Compiling tests from test/ ... "
 	@$(MAKE) -s -B -C test && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Compiling examples from ex/ ... "
@@ -118,6 +119,10 @@ check: tsim tas tld
 	@[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Running bsearch demo ... "
 	@[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
+
+dogfood: $(wildcard test/pass_compile/*.tas ex/*.tas*)
+	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
+	@./scripts/dogfood.sh dogfood.$$$$.XXXXXX $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
 
 TAS_OBJECTS  = common.o asmif.o asm.o obj.o $(GENDIR)/parser.o $(GENDIR)/lexer.o
 TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
