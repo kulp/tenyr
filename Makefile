@@ -158,7 +158,7 @@ debugger_parser.h debugger_parser.c: debugger_lexer.h
 parser.h parser.c: lexer.h
 
 .PHONY: install
-INSTALL_STEM ?= .
+INSTALL_STEM ?= $(TOP)
 INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(MACHINE)
 install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install -d $(INSTALL_DIR)
