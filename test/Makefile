@@ -1,8 +1,10 @@
+TOP = $(abspath ..)
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe
 
-TAS = ../tas
-TLD = ../tld
+TOOLDIR := $(shell $(MAKE) BUILDDIR= -C $(TOP) showbuilddir)
+TAS = $(TOOLDIR)/tas
+TLD = $(TOOLDIR)/tld
 
 CPPFLAGS += -I../lib
 
@@ -44,8 +46,8 @@ copy.texe: memcpy.to puts.to
 	$(TAS) -o$@ $<
 
 $(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
-	@$(MAKESTEP) -n "Assembling $@ (should fail) ... "
-	@(! $(TAS) -o$@ $< 2>/dev/null) && echo "failed as expected"
+	@$(ECHO) -n "Assembling $@ (should fail) ... "
+	@(! $(TAS) -o$@ $< 2>/dev/null) && $(ECHO) "failed as expected"
 
 %.texe: %.to
 	$(TLD) -o$@ $^

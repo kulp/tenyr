@@ -1,4 +1,4 @@
-TOP ?= ../..
+TOP = $(abspath ../..)
 PERIODS ?= 32
 
 VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
@@ -15,8 +15,9 @@ SILENCE = @
 MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
 endif
 
-TAS = $(TOP)/tas
-TLD = $(TOP)/tld
+TOOLDIR := $(shell $(MAKE) -f $(TOP)/Makefile showbuilddir)
+TAS = $(TOOLDIR)/tas
+TLD = $(TOOLDIR)/tld
 
 ifeq ($(WIN32),1)
  OS = Win32
@@ -70,7 +71,7 @@ asm.o sim.o: CFLAGS += -Wno-unused-value
 asm.o: CFLAGS += -Wno-unused-parameter
 
 %.memh:
-	$(MAKE) -C ../verilog $@
+	$(MAKE) -C ../verilog TOP=$(TOP) $@
 
 vpath %.tas ../verilog
 vpath %.texe ../../ex

@@ -1,5 +1,6 @@
 .DEFAULT_GOAL = all
-TOP ?= .
+makefile_path = $(abspath $(firstword $(MAKEFILE_LIST)))
+TOP = $(dir $(makefile_path))
 
 ifeq ($(WIN32),1)
  OS = Win32
@@ -16,7 +17,12 @@ endif
 INCLUDE_OS = $(TOP)/src/os/$(OS)
 CC = $(CROSS_COMPILE)gcc
 MACHINE := $(shell $(CC) -dumpmachine)
-BUILDDIR ?= build/$(MACHINE)
+BUILDDIR = $(TOP)/build/$(MACHINE)
+ifeq ($(findstring command,$(origin $(BUILDDIR))),)
+ifeq ($(BUILDDIR),)
+override BUILDDIR = $(TOP)/build/$(MACHINE)
+endif
+endif
 GIT = git --git-dir=$(TOP)/.git
 
 .PHONY: win32 win64
@@ -26,9 +32,12 @@ win32 win64: export WIN32=1
 win32 win64:
 	$(MAKE) $^
 
+showbuilddir:
+	@echo $(abspath $(BUILDDIR))
+
 ifneq ($(BUILDDIR),.)
-makefile_path = $(abspath $(firstword $(MAKEFILE_LIST)))
-all $(filter-out win%,$(MAKECMDGOALS)):
+DROP_TARGETS = win% showbuilddir
+all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS)):
 	mkdir -p $(BUILDDIR)
 	$(MAKE) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(dir $(makefile_path)) $@
 else

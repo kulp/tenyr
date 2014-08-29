@@ -1,6 +1,8 @@
-TOP ?= ../..
-TAS = $(TOP)/tas
-TLD = $(TOP)/tld
+TOP = $(abspath ../..)
+
+TOOLDIR := $(shell $(MAKE) -f $(TOP)/Makefile showbuilddir)
+TAS = $(TOOLDIR)/tas
+TLD = $(TOOLDIR)/tld
 
 INCLUDES += -I../../lib
 CPPFLAGS += $(INCLUDES)

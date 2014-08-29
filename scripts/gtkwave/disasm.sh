@@ -1,6 +1,6 @@
 #!/bin/bash
 here=$(dirname $0)
-tas="$here/../../tas"
+tas="$(make -C $here/../.. showbuilddir)/tas"
 while read b ; do
     if [[ $b == "" ]]; then
         echo "EMPTY"

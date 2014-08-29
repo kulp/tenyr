@@ -1,8 +1,10 @@
+TOP = $(abspath ..)
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe
 
-TAS = ../tas
-TLD = ../tld
+TOOLDIR := $(shell $(MAKE) BUILDDIR= -C $(TOP) showbuilddir)
+TAS = $(TOOLDIR)/tas
+TLD = $(TOOLDIR)/tld
 
 INCLUDES += -I../lib -I../lib/dword
 CPPFLAGS += $(INCLUDES)

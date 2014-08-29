@@ -2,7 +2,7 @@
 here=`dirname $BASH_SOURCE`
 stem=`basename $1`
 shift
-tas=$here/../tas
+tas=$(make BUILDDIR= -C $here/.. showbuilddir)/tas
 base=`mktemp -t $stem`
 for file in $* ; do
 	temp1=$base.1.tas
