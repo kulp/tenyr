@@ -128,4 +128,5 @@ clobber:
 	xargs rm -rf < .gitignore
 	git ls-files --others | xargs rm -rf
 	-rm -f $(TAS) $(TLD)
+	-rm -rf bin
 
