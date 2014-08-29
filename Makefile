@@ -1,17 +1,40 @@
+.DEFAULT_GOAL = all
 TOP ?= .
-BUILDDIR ?= .
+
+ifeq ($(WIN32),1)
+ OS = Win32
+else
+ OS = $(shell uname -s)
+endif
+
+-include $(TOP)/Makefile.$(OS)
+ifeq ($(_32BIT),1)
+CFLAGS  += -m32
+LDFLAGS += -m32
+endif
+
+INCLUDE_OS = $(TOP)/src/os/$(OS)
+CC = $(CROSS_COMPILE)gcc
+MACHINE := $(shell $(CC) -dumpmachine)
+BUILDDIR ?= build/$(MACHINE)
 GIT = git --git-dir=$(TOP)/.git
+
+.PHONY: win32 win64
+win32: export _32BIT=1
+win32 win64: export WIN32=1
+# reinvoke make to ensure vars are set early enough
+win32 win64:
+	$(MAKE) $^
 
 ifneq ($(BUILDDIR),.)
 # from http://stackoverflow.com/a/18137056
-mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+mkfile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
 current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
-all $(MAKECMDGOALS):
+all $(filter-out win%,$(MAKECMDGOALS)):
 	mkdir -p $(BUILDDIR)
 	$(MAKE) BUILDDIR=. -C $(BUILDDIR) -f $(mkfile_path) TOP=$(dir $(mkfile_path)) $@
 else
 
-CC = $(CROSS_COMPILE)gcc
 ECHO := $(shell which echo)
 
 ifeq ($V,1)
@@ -26,19 +49,6 @@ ifndef NDEBUG
  CFLAGS  += -g
  LDFLAGS += -g
 endif
-
-ifeq ($(WIN32),1)
- -include $(TOP)/Makefile.Win32
-else
- OS = $(shell uname -s)
- -include $(TOP)/Makefile.$(OS)
- ifeq ($(_32BIT),1)
-  CFLAGS  += -m32
-  LDFLAGS += -m32
- endif
-endif
-
-INCLUDE_OS ?= $(TOP)/src/os/$(OS)
 
 CFLAGS += -std=c99
 CFLAGS += -Wall -Wextra $(PEDANTIC_FLAGS)
@@ -100,29 +110,23 @@ BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS ?= $(PDEVLIBS)
 TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
 
-.PHONY: all win32 win64 check
+.PHONY: all check
 all: $(TARGETS)
-
-win32: export _32BIT=1
-win32 win64: export WIN32=1
-# reinvoke make to ensure vars are set early enough
-win32 win64:
-	$(MAKE) $^
 
 tools: tsim tas tld
 check: dogfood tools
 	@$(MAKESTEP) -n "Compiling tests from test/ ... "
-	@$(MAKE) -s -B -C test && $(MAKESTEP) ok
+	@$(MAKE) -s -B -C $(TOP)/test && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Compiling examples from ex/ ... "
-	@$(MAKE) -s -B -C ex && $(MAKESTEP) ok
+	@$(MAKE) -s -B -C $(TOP)/ex && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Running qsort demo ... "
-	@[ "$$(./tsim ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
+	@[ "$$($(BUILDDIR)/tsim $(TOP)/ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Running bsearch demo ... "
-	@[ "$$(./tsim ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
+	@[ "$$($(BUILDDIR)/tsim $(TOP)/ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
 
-dogfood: $(wildcard test/pass_compile/*.tas ex/*.tas*)
+dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tools
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
-	@./scripts/dogfood.sh dogfood.$$$$.XXXXXX $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
+	@$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
 
 TAS_OBJECTS  = common.o asmif.o asm.o obj.o $(GENDIR)/parser.o $(GENDIR)/lexer.o
 TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
@@ -165,7 +169,7 @@ $(GENDIR):
 
 .PHONY: install
 INSTALL_STEM ?= .
-INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(shell $(CC) -dumpmachine)
+INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(MACHINE)
 install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install -d $(INSTALL_DIR)
 	install $^ $(INSTALL_DIR)

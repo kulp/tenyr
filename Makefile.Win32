@@ -11,6 +11,5 @@ else
  PEDANTIC =
  CROSS_COMPILE ?= x86_64-w64-mingw32-
 endif
-INCLUDE_OS = src/os/Win32
 LDFLAGS += -Wl,--kill-at
 SDL = 0 # haven't tried SDL Windows build yet
