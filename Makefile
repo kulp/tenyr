@@ -27,12 +27,10 @@ win32 win64:
 	$(MAKE) $^
 
 ifneq ($(BUILDDIR),.)
-# from http://stackoverflow.com/a/18137056
-mkfile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
-current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
+makefile_path = $(abspath $(firstword $(MAKEFILE_LIST)))
 all $(filter-out win%,$(MAKECMDGOALS)):
 	mkdir -p $(BUILDDIR)
-	$(MAKE) BUILDDIR=. -C $(BUILDDIR) -f $(mkfile_path) TOP=$(dir $(mkfile_path)) $@
+	$(MAKE) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(dir $(makefile_path)) $@
 else
 
 ECHO := $(shell which echo)
