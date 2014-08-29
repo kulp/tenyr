@@ -190,8 +190,7 @@ clobber:: clean
 	$(RM) -r *.dSYM
 
 clean clobber::
-	-$(MAKE) -C ex $@
-	-$(MAKE) -C test $@
+	-$(MAKE) -C $(TOP)/test $@
 
 ##############################################################################
 
