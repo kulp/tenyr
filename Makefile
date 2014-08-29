@@ -185,7 +185,7 @@ clean::
 clobber:: clean
 	$(RM) $(BUILDDIR)/debugger_parser.[ch] $(BUILDDIR)/debugger_lexer.[ch]
 	$(RM) $(BUILDDIR)/parser.[ch] $(BUILDDIR)/lexer.[ch]
-	$(RM) -r *.dSYM
+	$(RM) -r $(BUILDDIR)/*.dSYM
 
 clean clobber::
 	-$(MAKE) -C $(TOP)/test $@
