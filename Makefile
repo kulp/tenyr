@@ -78,10 +78,9 @@ FLEX  = flex
 BISON = bison -Werror
 
 CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
-GENDIR = gen
 
-VPATH += $(TOP)/src $(TOP)/src/devices $(GENDIR)
-INCLUDES += $(TOP)/src $(GENDIR) $(INCLUDE_OS)
+VPATH += $(TOP)/src $(TOP)/src/devices
+INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
 
 BUILD_NAME := $(shell $(GIT) describe --tags --match 'v?.?.?*')
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
@@ -128,9 +127,9 @@ dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tools
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
 	@$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
 
-TAS_OBJECTS  = common.o asmif.o asm.o obj.o $(GENDIR)/parser.o $(GENDIR)/lexer.o
+TAS_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o
 TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
-               $(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o $(DEVOBJS) sim.o param.o
+               debugger_parser.o debugger_lexer.o $(DEVOBJS) sim.o param.o
 TLD_OBJECTS  = common.o obj.o
 
 tas$(EXE_SUFFIX):  $(TAS_OBJECTS)
@@ -152,20 +151,13 @@ ffi.o asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 $(PDEVLIBS): lib%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o
 
 # flex-generated code we can't control warnings of as easily
-$(GENDIR)/debugger_parser.o $(GENDIR)/debugger_lexer.o \
-$(GENDIR)/parser.o $(GENDIR)/lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
+debugger_parser.o debugger_lexer.o \
+parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
-$(GENDIR)/lexer.o asmif.o dbg.o tas.o: $(GENDIR)/parser.h
-tsim.o: $(GENDIR)/debugger_parser.h
-
-$(GENDIR)/debugger_lexer.o: $(GENDIR)/debugger_parser.h
-$(GENDIR)/debugger_lexer.h $(GENDIR)/debugger_lexer.c: debugger_lexer.l | $(GENDIR)
-$(GENDIR)/debugger_parser.h $(GENDIR)/debugger_parser.c: debugger_parser.y $(GENDIR)/debugger_lexer.h | $(GENDIR)
-$(GENDIR)/lexer.h $(GENDIR)/lexer.c: lexer.l | $(GENDIR)
-$(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y $(GENDIR)/lexer.h | $(GENDIR)
-
-$(GENDIR):
-	@mkdir -p $@
+lexer.o asmif.o dbg.o tas.o: parser.h
+tsim.o dbg.o debugger_lexer.o: debugger_parser.h
+debugger_parser.h debugger_parser.c: debugger_lexer.h
+parser.h parser.c: lexer.h
 
 .PHONY: install
 INSTALL_STEM ?= .
@@ -188,13 +180,13 @@ endif
 endif
 
 CLEANFILES += $(TARGETS)
-CLEANFILES += *.o *.d src/*.d src/devices/*.d $(GENDIR)/*.d $(GENDIR)/*.o $(PDEVOBJS)
+CLEANFILES += *.o *.d src/*.d src/devices/*.d *.d *.o $(PDEVOBJS)
 clean::
 	$(RM) $(CLEANFILES)
 
 clobber:: clean
-	$(RM) $(GENDIR)/debugger_parser.[ch] $(GENDIR)/debugger_lexer.[ch] $(GENDIR)/parser.[ch] $(GENDIR)/lexer.[ch]
-	-rmdir $(GENDIR)
+	$(RM) $(BUILDDIR)/debugger_parser.[ch] $(BUILDDIR)/debugger_lexer.[ch]
+	$(RM) $(BUILDDIR)/parser.[ch] $(BUILDDIR)/lexer.[ch]
 	$(RM) -r *.dSYM
 
 clean clobber::
@@ -218,13 +210,13 @@ ifeq ($(SUPPRESS_BINARY_RULE),)
 	$(SILENCE)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 endif
 
-$(GENDIR)/%.h $(GENDIR)/%.c: %.l
+%.h %.c: %.l
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
-	$(SILENCE)$(FLEX) --header-file=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
+	$(SILENCE)$(FLEX) --header-file=$*.h -o $*.c $<
 
-$(GENDIR)/%.h $(GENDIR)/%.c: %.y
+%.h %.c: %.y
 	@$(MAKESTEP) "[ BISON ] $(<F)"
-	$(SILENCE)$(BISON) --defines=$(GENDIR)/$*.h -o $(GENDIR)/$*.c $<
+	$(SILENCE)$(BISON) --defines=$*.h -o $*.c $<
 
 plugin,dy.o pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
 	@$(MAKESTEP) "[ DYCC ] $(<F)"
