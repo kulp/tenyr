@@ -178,7 +178,7 @@ endif
 endif
 
 CLEANFILES += $(TARGETS)
-CLEANFILES += *.o *.d src/*.d src/devices/*.d *.d *.o $(PDEVOBJS)
+CLEANFILES += $(BUILDDIR)/*.o $(BUILDDIR)/*.d $(PDEVOBJS)
 clean::
 	$(RM) $(CLEANFILES)
 
