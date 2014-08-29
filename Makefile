@@ -58,11 +58,11 @@ else
 PEDANTIC_FLAGS ?= -Werror -pedantic-errors
 endif
 
-gcc_flag_supported = $(shell gcc $1 -x c /dev/null 2>/dev/null >/dev/null && echo $1)
+cc_flag_supp = $(shell $(CC) $1 -x c /dev/null 2>/dev/null >/dev/null && echo $1)
 
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 # Use := to ensure the expensive underlying call is not repeated
-NO_UNKNOWN_WARN_OPTS := $(call gcc_flag_supported,-Wno-unknown-warning-option)
+NO_UNKNOWN_WARN_OPTS := $(call cc_flag_supp,-Wno-unknown-warning-option)
 CPPFLAGS += $(NO_UNKNOWN_WARN_OPTS)
 
 # Optimised build
@@ -90,7 +90,7 @@ ifneq ($(SDL),0)
 SDL_VERSION = $(shell sdl2-config --version 2>/dev/null)
 ifneq ($(SDL_VERSION),)
 # Use := to ensure the expensive underyling call is not repeated
-NO_C11_WARN_OPTS := $(call gcc_flag_supported,-Wno-c11-extensions)
+NO_C11_WARN_OPTS := $(call cc_flag_supp,-Wno-c11-extensions)
 libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
 libsdl%$(DYLIB_SUFFIX): LDLIBS   += $(shell sdl2-config --libs) -lSDL2_image
 PDEVICES_SDL += sdlled sdlvga
