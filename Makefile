@@ -163,15 +163,12 @@ $(GENDIR)/parser.h $(GENDIR)/parser.c: parser.y $(GENDIR)/lexer.h | $(GENDIR)
 $(GENDIR):
 	@mkdir -p $@
 
-.PHONY: install upload
+.PHONY: install
 INSTALL_STEM ?= .
 INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(shell $(CC) -dumpmachine)
 install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install -d $(INSTALL_DIR)
 	install $^ $(INSTALL_DIR)
-
-upload: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) | scripts/upload.pl
-	$(realpath $|) "$(shell $(CC) -dumpmachine)" "$(shell $(GIT) describe --tags)" $^
 
 ifndef INHIBIT_DEPS
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
