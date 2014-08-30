@@ -457,9 +457,16 @@ static int text_init(FILE *stream, int flags, void **ud)
 
 static int text_in(FILE *stream, struct element *i, void *ud)
 {
-    return
-        fscanf(stream, " %x", &i->insn.u.word) == 1 ||
+    int result =
+        fscanf(stream, "   %x", &i->insn.u.word) == 1 ||
         fscanf(stream, " 0x%x", &i->insn.u.word) == 1;
+    // Check for whitespace or EOF after the consumed item. This format can
+    // read "agda"" as "0xa" and subsequently fail, when the whole string
+    // should have been rejected.
+    int next_char = fgetc(stream);
+    if (!isspace(next_char) && next_char != EOF)
+        return 0;
+    return result;
 }
 
 static int text_out(FILE *stream, struct element *i, void *ud)
