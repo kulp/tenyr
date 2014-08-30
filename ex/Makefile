@@ -61,18 +61,18 @@ clock.texe: sleep.to
 
 %.tas: %.tas.cpp ../lib/common.th
 	@$(MAKESTEP) "[ CPP ] $<"
-	$(SILENT)mkdir -p $(*D)
-	$(SILENT)$(CPP) $(CPPFLAGS) < $< -o $@
+	$(SILENCE)mkdir -p $(*D)
+	$(SILENCE)$(CPP) $(CPPFLAGS) < $< -o $@
 
 %.to: %.tas
 	@$(MAKESTEP) "[ TAS ] $<"
-	$(SILENT)mkdir -p $(*D)
-	$(SILENT)$(TAS) -o$@ $<
+	$(SILENCE)mkdir -p $(*D)
+	$(SILENCE)$(TAS) -o$@ $<
 
 %.texe: %.to
 	@$(MAKESTEP) "[ TLD ] $@"
 	@mkdir -p $(*D)
-	$(SILENT)$(TLD) -o$@ $^
+	$(SILENCE)$(TLD) -o$@ $^
 
 clean:
 	$(RM) $(CLEANFILES)

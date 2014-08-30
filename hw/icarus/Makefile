@@ -102,26 +102,26 @@ $(GEN_V): VFLAGS += -DPUT='$$$(SIM_PUT_$*)' -DGET='$$$(SIM_GET_$*)' -DSTEM='$*'
 $(GEN_V): VFLAGS += -E
 $(GEN_V): %.v: ../verilog/sim/simwrap.v
 	@$(MAKESTEP) "[ IVERILOG -E ] $@"
-	$(SILENT)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+	$(SILENCE)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 %.o: %.c
 	@$(MAKESTEP) "[ CC ] $<"
-	$(SILENT)$(COMPILE.c) $(OUTPUT_OPTION) $<
+	$(SILENCE)$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 %.to: %.tas
 	@$(MAKESTEP) "[ TAS ] $<"
-	$(SILENT)$(TAS) -o$@ $<
+	$(SILENCE)$(TAS) -o$@ $<
 
 %.texe: %.to
 	@$(MAKESTEP) "[ TLD ] $<"
-	$(SILENT)$(TLD) -o$@ $<
+	$(SILENCE)$(TLD) -o$@ $<
 
 %: %.v
 	@$(MAKESTEP) "[ IVERILOG ] $@"
-	$(SILENT)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+	$(SILENCE)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 %.vpi: %.o
 	@$(MAKESTEP) "[ VPI ] $@"
-	$(SILENT)iverilog-vpi $(OUTPUT_OPTION) $^
+	$(SILENCE)iverilog-vpi $(OUTPUT_OPTION) $^
 

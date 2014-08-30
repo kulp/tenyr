@@ -109,13 +109,13 @@ CLEANFILES += *.bc
 # `make -B EXE_SUFFIX=.exe` to make a command-line version of the em% code
 %.exe: em%.o
 	@$(MAKESTEP) "[ LD ] $@"
-	$(SILENT)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(SILENCE)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 %.bc: em%.o
 	@$(MAKESTEP) "[ EM-CC ] $@"
-	$(SILENT)emcc $(LDFLAGS) $(EMCCFLAGS_CC) -o $@ $^ $(LDLIBS)
+	$(SILENCE)emcc $(LDFLAGS) $(EMCCFLAGS_CC) -o $@ $^ $(LDLIBS)
 
 %.js: %.bc
 	@$(MAKESTEP) "[ EM-LD ] $@"
-	$(SILENT)emcc $(LDFLAGS) $(EMCCFLAGS_LD) -o $@ $<
+	$(SILENCE)emcc $(LDFLAGS) $(EMCCFLAGS_LD) -o $@ $<
 
