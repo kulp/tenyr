@@ -16,3 +16,4 @@ tmp/
 *.so
 *.dll
 gen/
+build/
