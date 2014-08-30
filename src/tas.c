@@ -139,6 +139,8 @@ int main(int argc, char *argv[])
         }
 
         if (disassemble) {
+            // This output might be consumed by a tool that needs a line at a time
+            setvbuf(out, NULL, _IOLBF, 0);
             if (f->in) {
                 rc = do_disassembly(in, out, f, flags);
             } else {

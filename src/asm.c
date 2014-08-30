@@ -449,6 +449,12 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
 /*******************************************************************************
  * Text format : hexadecimal numbers
  */
+static int text_init(FILE *stream, int flags, void **ud)
+{
+    // This output might be consumed by a tool that needs a line at a time
+    return setvbuf(stream, NULL, _IOLBF, 0);
+}
+
 static int text_in(FILE *stream, struct element *i, void *ud)
 {
     return
@@ -507,7 +513,7 @@ const struct format tenyr_asm_formats[] = {
         .sym   = obj_sym,
         .reloc = obj_reloc },
     { "raw" , .in = raw_in , .out = raw_out  },
-    { "text", .in = text_in, .out = text_out },
+    { "text", .init = text_init, .in = text_in, .out = text_out },
     { "memh", .init = memh_init, .out = memh_out, .fini = memh_fini },
 };
 
