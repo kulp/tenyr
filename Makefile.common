@@ -1,0 +1,45 @@
+ECHO := $(shell which echo)
+
+ifeq ($V,1)
+ SILENCE =
+ MAKESTEP = true
+else
+ SILENCE = @
+ MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+endif
+
+ifndef NDEBUG
+ CFLAGS  += -g
+ LDFLAGS += -g
+endif
+
+ifeq ($(WIN32),1)
+ OS := Win32
+else
+ OS := $(shell uname -s)
+endif
+INCLUDE_OS = $(TOP)/src/os/$(OS)
+
+-include $(TOP)/Makefile.$(OS)
+
+ifeq ($(_32BIT),1)
+ CFLAGS  += -m32
+ LDFLAGS += -m32
+endif
+
+GIT = git --git-dir=$(TOP)/.git
+CC = $(CROSS_COMPILE)gcc
+MACHINE := $(shell $(CC) -dumpmachine)
+BUILDDIR = $(TOP)/build/$(MACHINE)
+TOOLDIR := $(BUILDDIR)
+ifeq ($(findstring command,$(origin $(BUILDDIR))),)
+ ifeq ($(BUILDDIR),)
+  override BUILDDIR := $(TOP)/build/$(MACHINE)
+ endif
+endif
+BUILD_NAME := $(shell $(GIT) describe --tags --match 'v?.?.?*')
+
+TOOLDIR = $(TOP)/build/$(MACHINE)
+TAS = $(TOOLDIR)/tas
+TLD = $(TOOLDIR)/tld
+

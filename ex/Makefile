@@ -1,24 +1,12 @@
-TOP = $(abspath ..)
+TOP := $(abspath ..)
+include $(TOP)/Makefile.common
+
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe
-
-TOOLDIR := $(shell $(MAKE) BUILDDIR= -C $(TOP) showbuilddir)
-TAS = $(TOOLDIR)/tas
-TLD = $(TOOLDIR)/tld
 
 INCLUDES += -I../lib -I../lib/dword
 CPPFLAGS += $(INCLUDES)
 CPP := $(CPP) $(DEFINES) -
-
-ECHO := $(shell which echo)
-
-ifeq ($V,1)
-SILENCE =
-MAKESTEP = true
-else
-SILENCE = @
-MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
-endif
 
 vpath %.tas ../lib ../lib/dword
 vpath %.tas.cpp ../lib ../lib/dword

@@ -1,4 +1,4 @@
-TOP = $(abspath ../..)
+TOP := $(abspath ../..)
 
 TOOLDIR := $(shell $(MAKE) -f $(TOP)/Makefile showbuilddir)
 TAS = $(TOOLDIR)/tas

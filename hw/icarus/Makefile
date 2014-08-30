@@ -1,33 +1,13 @@
-TOP = $(abspath ../..)
+TOP := $(abspath ../..)
+include $(TOP)/Makefile.common
+
 PERIODS ?= 32
 
 VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I../../src
 
-ECHO := $(shell which echo)
-
-ifeq ($V,1)
-SILENCE =
-MAKESTEP = true
-else
-SILENCE = @
-MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
-endif
-
-TOOLDIR := $(shell $(MAKE) -f $(TOP)/Makefile showbuilddir)
-TAS = $(TOOLDIR)/tas
-TLD = $(TOOLDIR)/tld
-
-ifeq ($(WIN32),1)
- OS = Win32
-else
- OS = $(shell uname -s)
-endif
-
-INCLUDE_OS ?= $(TOP)/src/os/$(OS)
-
-INCLUDES += $(INCLUDE_OS)
+INCLUDES += $(TOP)/src/os/$(OS)
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 

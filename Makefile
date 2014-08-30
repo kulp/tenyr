@@ -1,29 +1,10 @@
+makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
+TOP := $(dir $(makefile_path))
+ifeq ($(INCLUDED_common),)
+include $(TOP)/Makefile.common
+endif
+
 .DEFAULT_GOAL = all
-makefile_path = $(abspath $(firstword $(MAKEFILE_LIST)))
-TOP = $(dir $(makefile_path))
-
-ifeq ($(WIN32),1)
- OS = Win32
-else
- OS = $(shell uname -s)
-endif
-
--include $(TOP)/Makefile.$(OS)
-ifeq ($(_32BIT),1)
-CFLAGS  += -m32
-LDFLAGS += -m32
-endif
-
-INCLUDE_OS = $(TOP)/src/os/$(OS)
-CC = $(CROSS_COMPILE)gcc
-MACHINE := $(shell $(CC) -dumpmachine)
-BUILDDIR = $(TOP)/build/$(MACHINE)
-ifeq ($(findstring command,$(origin $(BUILDDIR))),)
-ifeq ($(BUILDDIR),)
-override BUILDDIR = $(TOP)/build/$(MACHINE)
-endif
-endif
-GIT = git --git-dir=$(TOP)/.git
 
 .PHONY: win32 win64
 win32: export _32BIT=1
@@ -39,23 +20,8 @@ ifneq ($(BUILDDIR),.)
 DROP_TARGETS = win% showbuilddir
 all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS)):
 	mkdir -p $(BUILDDIR)
-	$(MAKE) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(dir $(makefile_path)) $@
+	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
 else
-
-ECHO := $(shell which echo)
-
-ifeq ($V,1)
-SILENCE =
-MAKESTEP = true
-else
-SILENCE = @
-MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
-endif
-
-ifndef NDEBUG
- CFLAGS  += -g
- LDFLAGS += -g
-endif
 
 CFLAGS += -std=c99
 CFLAGS += -Wall -Wextra $(PEDANTIC_FLAGS)
@@ -89,7 +55,6 @@ CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
 VPATH += $(TOP)/src $(TOP)/src/devices
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
 
-BUILD_NAME := $(shell $(GIT) describe --tags --match 'v?.?.?*')
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 

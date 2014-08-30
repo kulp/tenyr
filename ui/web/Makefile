@@ -1,8 +1,10 @@
+TOP := main_build
+include $(TOP)/Makefile.common
+
 .PHONY: all
 BIN_TARGETS = tcc.js tas.js tsim.js
 TARGETS = $(BIN_TARGETS)
 # get dependency information from main Makefiles
-TOP = main_build
 SUPPRESS_BINARY_RULE = 1
 EXE_SUFFIX = .bc
 DYLIB_SUFFIX = .so
@@ -14,16 +16,6 @@ all: $(BIN_TARGETS)
 CHECK_PATHS = src src/gen pp_build
 VPATH += $(CHECK_PATHS)
 INCLUDES += $(CHECK_PATHS)
-
-ECHO := $(shell which echo)
-
-ifeq ($V,1)
-SILENCE =
-MAKESTEP = true
-else
-SILENCE = @
-MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
-endif
 
 ################################################################################
 # General rules
