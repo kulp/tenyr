@@ -87,3 +87,4 @@ int plugin_load(const char *path, const char *base,
 
     return rc;
 }
+/* vi: set ts=4 sw=4 et: */

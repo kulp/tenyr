@@ -10,3 +10,4 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags);
 
 #endif
 
+/* vi: set ts=4 sw=4 et: */

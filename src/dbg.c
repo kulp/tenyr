@@ -220,3 +220,4 @@ int run_debugger(struct sim_state *s, FILE *stream)
     return 0;
 }
 
+/* vi: set ts=4 sw=4 et: */

@@ -150,3 +150,4 @@ int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
     return 0;
 }
 
+/* vi: set ts=4 sw=4 et: */

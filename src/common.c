@@ -60,3 +60,4 @@ long long numberise(char *str, int base)
 void (* NORETURN fatal_)(int code, const char *file, int line, const char *func, const char *fmt, ...) = main_fatal_;
 void (*debug_)(int level, const char *file, int line, const char *func, const char *fmt, ...) = main_debug_;
 
+/* vi: set ts=4 sw=4 et: */

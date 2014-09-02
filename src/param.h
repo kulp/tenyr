@@ -14,3 +14,4 @@ void param_destroy(struct param_state *pstate);
 
 #endif
 
+/* vi: set ts=4 sw=4 et: */

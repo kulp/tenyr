@@ -42,3 +42,4 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
         const char *sep);
 #endif
 
+/* vi: set ts=4 sw=4 et: */

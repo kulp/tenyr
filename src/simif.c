@@ -112,3 +112,4 @@ int devices_dispatch_cycle(struct sim_state *s)
     return 0;
 }
 
+/* vi: set ts=4 sw=4 et: */

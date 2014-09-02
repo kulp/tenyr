@@ -80,3 +80,4 @@ int devices_dispatch_cycle(struct sim_state *s);
 
 #endif
 
+/* vi: set ts=4 sw=4 et: */

@@ -70,3 +70,4 @@ long long numberise(char *str, int base);
 
 #endif
 
+/* vi: set ts=4 sw=4 et: */

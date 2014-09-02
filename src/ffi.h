@@ -28,3 +28,4 @@ int tf_call(struct sim_state *s, const char *symbol);
 
 #endif
 
+/* vi: set ts=4 sw=4 et: */

@@ -30,3 +30,4 @@ int EXPORT spidummy_spi_fini(void *cookie)
     return 0;
 }
 
+/* vi: set ts=4 sw=4 et: */

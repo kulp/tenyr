@@ -69,3 +69,4 @@ void obj_free(struct obj *o);
 
 #endif
 
+/* vi: set ts=4 sw=4 et: */

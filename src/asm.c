@@ -525,3 +525,4 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
     return pos;
 }
 
+/* vi: set ts=4 sw=4 et: */

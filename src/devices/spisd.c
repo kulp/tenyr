@@ -337,3 +337,4 @@ void EXPORT tenyr_plugin_init(struct guest_ops *ops)
     debug_ = ops->debug;
 }
 
+/* vi: set ts=4 sw=4 et: */

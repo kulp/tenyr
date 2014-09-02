@@ -68,3 +68,4 @@ int tdbg_prompt(struct debugger_data *dd, FILE *where);
 
 #endif
 
+/* vi: set ts=4 sw=4 et: */

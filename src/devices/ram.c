@@ -92,3 +92,4 @@ int ram_add_device(struct device **device)
     return 0;
 }
 
+/* vi: set ts=4 sw=4 et: */
