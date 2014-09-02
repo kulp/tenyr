@@ -182,7 +182,7 @@ static int spi_emu_init(struct plugin_cookie *pcookie, void *cookie, int nargs, 
         .spi = spi,
         .pcookie = pcookie,
     };
-    return plugin_load("spi", pcookie, plugin_success, &box);
+    return plugin_load(NULL, "spi", pcookie, plugin_success, &box);
 }
 
 static int spi_emu_fini(void *cookie)

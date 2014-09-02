@@ -154,8 +154,14 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
 
 static int recipe_plugin(struct sim_state *s)
 {
-    return s->plugins_loaded ||
-        (s->plugins_loaded = !plugin_load("plugin", &s->plugin_cookie, plugin_success, s));
+    char *buf = strdup(s->conf.tsim_path);
+    char *solidus = strrchr(buf, PATH_SEPARATOR_CHAR);
+    if (solidus)
+        *solidus = '\0';
+    int result = s->plugins_loaded ||
+        (s->plugins_loaded = !plugin_load(buf, "plugin", &s->plugin_cookie, plugin_success, s));
+    free(buf);
+    return result;
 }
 
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \
@@ -310,6 +316,7 @@ int main(int argc, char *argv[])
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
             .fmt          = &tenyr_asm_formats[0],
+            .tsim_path    = argv[0],
         },
         .dispatch_op = dispatch_op,
         .plugin_cookie = {

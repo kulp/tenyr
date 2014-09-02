@@ -38,6 +38,7 @@ struct sim_state {
         int start_addr;
         int load_addr;
         const struct format *fmt;
+        char *tsim_path;
     } conf;
 
     struct {

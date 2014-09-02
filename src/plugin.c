@@ -19,8 +19,8 @@ int tenyr_plugin_host_init(void *libhandle)
     return 0;
 }
 
-int plugin_load(const char *base, const struct plugin_cookie *p,
-        plugin_success_cb *success, void *ud)
+int plugin_load(const char *path, const char *base,
+        const struct plugin_cookie *p, plugin_success_cb *success, void *ud)
 {
     int rc = 0;
 
@@ -62,6 +62,13 @@ int plugin_load(const char *base, const struct plugin_cookie *p,
             debug(1, "Could not load %s, bailing", implpath);
             break;
 #else
+            if (!libhandle && path) {
+				char buf[256];
+                snprintf(buf, sizeof buf, "%s%c%s",
+                         path, PATH_SEPARATOR_CHAR, implpath);
+                libhandle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
+            }
+
             if (!libhandle) {
                 debug(1, "Could not load %s, trying default library search", implpath);
                 libhandle = RTLD_DEFAULT;
