@@ -1,3 +1,7 @@
+TOP = $(abspath ../..)
+include $(TOP)/Makefile.common
+include $(TOP)/Makefile.rules
+
 .DEFAULT_GOAL = bit
 
 TAS = ./bin/tas
@@ -121,12 +125,5 @@ gen/%.mem: gen/%.memh
 %.xsvf: %.impact.in %.bit
 	$(BIN)/impact -batch $<
 
-clean:
-	@echo 'Run `make clobber` to clean up generated files'
-
-clobber:
-	xargs rm -rf < .gitignore
-	git ls-files --others | xargs rm -rf
-	-rm -f $(TAS) $(TLD)
-	-rm -rf bin
-
+clean_FILES =
+clobber_FILES := $(shell cat .gitignore) $($(GIT) ls-files --others) bin/

@@ -1,5 +1,6 @@
 TOP := $(abspath ../..)
 include $(TOP)/Makefile.common
+include $(TOP)/Makefile.rules
 
 PERIODS ?= 32
 
@@ -8,13 +9,9 @@ CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I../../src
 
 INCLUDES += $(TOP)/src/os/$(OS)
-CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
-            $(patsubst %,-I%,$(INCLUDES))
 
-ifdef DEBUG
-CFLAGS += -O0 -g
-CFLAGS += -DDEBUG=$(DEBUG)
-endif
+clean_FILES = tenyr glue.vpi *.o
+clobber_FILES = *.vcd
 
 all: tenyr glue.vpi
 
@@ -67,12 +64,6 @@ run_%: PLUSARGS += +PERIODS=$(PERIODS) \
 run_%: VECTORS = ../../ex/$*.vectors.memh
 run_%: %.texe tenyr
 	vvp -M. tenyr +LOAD=$< $(PLUSARGS)
-
-clean:
-	$(RM) tenyr glue.vpi *.o
-
-clobber: clean
-	$(RM) *.vcd
 
 ##############################################################################
 

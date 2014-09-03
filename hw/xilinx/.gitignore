@@ -27,14 +27,12 @@ _ngo
 *.pad
 *.par
 *.pcf
-*.prj
 *.ptwx
 *.twr
 *.twx
 *.unroutes
 *.ut
 *.xpi
-*.xst
 *_bitgen.xwbt
 *_guide.ncd
 *_map.map

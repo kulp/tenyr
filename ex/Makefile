@@ -1,12 +1,12 @@
 TOP := $(abspath ..)
 include $(TOP)/Makefile.common
+include $(TOP)/Makefile.rules
 
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe
 
 INCLUDES += -I../lib -I../lib/dword
 CPPFLAGS += $(INCLUDES)
-CPP := $(CPP) $(DEFINES) -
 
 vpath %.tas ../lib ../lib/dword
 vpath %.tas.cpp ../lib ../lib/dword
@@ -26,7 +26,7 @@ TARGETS = \
     sieve.texe          \
     #
 
-CLEANFILES += $(TARGETS)
+clean_FILES += $(TARGETS) *.to dword/*.to
 
 all: $(TARGETS)
 
@@ -47,25 +47,5 @@ bm_snake.texe: rand.to
 bm_fib.texe bm_mults.texe: putnum.to
 clock.texe: sleep.to
 
-%.tas: %.tas.cpp ../lib/common.th
-	@$(MAKESTEP) "[ CPP ] $<"
-	$(SILENCE)mkdir -p $(*D)
-	$(SILENCE)$(CPP) $(CPPFLAGS) < $< -o $@
-
-%.to: %.tas
-	@$(MAKESTEP) "[ TAS ] $<"
-	$(SILENCE)mkdir -p $(*D)
-	$(SILENCE)$(TAS) -o$@ $<
-
-%.texe: %.to
-	@$(MAKESTEP) "[ TLD ] $@"
-	@mkdir -p $(*D)
-	$(SILENCE)$(TLD) -o$@ $^
-
-clean:
-	$(RM) $(CLEANFILES)
-
-clobber: clean
-	$(RM) *.to dword/*.to
-	rmdir dword
+$(patsubst %.tas.cpp,%.tas,$(wildcard *.tas.cpp)): %.tas: $(TOP)/lib/common.th
 

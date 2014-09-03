@@ -3,6 +3,7 @@ TOP := $(dir $(makefile_path))
 ifeq ($(INCLUDED_common),)
 include $(TOP)/Makefile.common
 endif
+include $(TOP)/Makefile.rules
 
 .DEFAULT_GOAL = all
 
@@ -16,47 +17,26 @@ win32 win64:
 showbuilddir:
 	@echo $(abspath $(BUILDDIR))
 
+clean_FILES = $(BUILDDIR)
+clean clobber::
+	-$(MAKE) -C $(TOP)/test $@
+
 ifneq ($(BUILDDIR),.)
-DROP_TARGETS = win% showbuilddir
-all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS)):
+DROP_TARGETS = win% showbuilddir clean clobber
+all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	mkdir -p $(BUILDDIR)
 	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
 else
-
-CFLAGS += -std=c99
-CFLAGS += -Wall -Wextra $(PEDANTIC_FLAGS)
-ifeq ($(PEDANTIC),)
-PEDANTIC_FLAGS ?= -pedantic
-else
-PEDANTIC_FLAGS ?= -Werror -pedantic-errors
-endif
-
-cc_flag_supp = $(shell $(CC) $1 -x c /dev/null 2>/dev/null >/dev/null && echo $1)
 
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 # Use := to ensure the expensive underlying call is not repeated
 NO_UNKNOWN_WARN_OPTS := $(call cc_flag_supp,-Wno-unknown-warning-option)
 CPPFLAGS += $(NO_UNKNOWN_WARN_OPTS)
 
-# Optimised build
-ifeq ($(DEBUG),)
- CPPFLAGS += -DNDEBUG
- CFLAGS   += -O3
-else
- CPPFLAGS += -DDEBUG=$(DEBUG)
- CFLAGS   += -fstack-protector -Wstack-protector
-endif
-
-FLEX  = flex
-BISON = bison -Werror
-
 CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
 
 VPATH += $(TOP)/src $(TOP)/src/devices
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
-
-CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
-            $(patsubst %,-I%,$(INCLUDES))
 
 ifneq ($(SDL),0)
 SDL_VERSION = $(shell sdl2-config --version 2>/dev/null)
@@ -139,55 +119,12 @@ install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install $^ $(INSTALL_DIR)
 
 ifndef INHIBIT_DEPS
-ifeq ($(filter clean,$(MAKECMDGOALS)),)
+ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)
 endif
-
-# TODO fix .d files ; something is causing many unnecessary rebuilds
-%.d: %.c
-	@set -e; rm -f $@; \
-	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null && \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@ && \
-	rm -f $@.$$$$ || rm -f $@.$$$$
 endif
-
-CLEANFILES += $(TARGETS)
-CLEANFILES += $(BUILDDIR)/*.o $(BUILDDIR)/*.d $(PDEVOBJS)
-clean::
-	$(RM) $(CLEANFILES)
-
-clobber:: clean
-	$(RM) $(BUILDDIR)/debugger_parser.[ch] $(BUILDDIR)/debugger_lexer.[ch]
-	$(RM) $(BUILDDIR)/parser.[ch] $(BUILDDIR)/lexer.[ch]
-	$(RM) -r $(BUILDDIR)/*.dSYM
-
-clean clobber::
-	-$(MAKE) -C $(TOP)/test $@
 
 ##############################################################################
-
-OUTPUT_OPTION ?= -o $@
-
-COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
-%.o: %.c
-	@$(MAKESTEP) "[ CC ] $(<F)"
-	$(SILENCE)$(COMPILE.c) $(OUTPUT_OPTION) $<
-
-LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
-
-ifeq ($(SUPPRESS_BINARY_RULE),)
-%$(EXE_SUFFIX): %.o
-	@$(MAKESTEP) "[ LD ] $@"
-	$(SILENCE)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-endif
-
-%.h %.c: %.l
-	@$(MAKESTEP) "[ FLEX ] $(<F)"
-	$(SILENCE)$(FLEX) --header-file=$*.h -o $*.c $<
-
-%.h %.c: %.y
-	@$(MAKESTEP) "[ BISON ] $(<F)"
-	$(SILENCE)$(BISON) --defines=$*.h -o $*.c $<
 
 plugin,dy.o pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
 	@$(MAKESTEP) "[ DYCC ] $(<F)"

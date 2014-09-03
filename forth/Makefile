@@ -1,16 +1,16 @@
+TOP := $(abspath ..)
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe
+include $(TOP)/Makefile.common
+include $(TOP)/Makefile.rules
 
-TAS = ../tas
-TLD = ../tld
+CPPFLAGS += -I$(TOP)/lib
 
-CPPFLAGS += -I../lib
-
-vpath %.tas ../lib
-vpath %.tas.cpp ../lib
+vpath %.tas $(TOP)/lib
+vpath %.tas.cpp $(TOP)/lib
 
 TARGETS = forty.texe
-CLEANFILES += $(TARGETS)
+clean_FILES += $(TARGETS) *.to
 
 all: $(TARGETS)
 
@@ -24,9 +24,4 @@ forty.texe: main.to level0.to level1.to stringtable.to strtol.to memcpy.to
 
 %.texe: %.to
 	$(TLD) -o$@ $^
-
-clean:
-	$(RM) *.to $(CLEANFILES)
-
-clobber: clean
 
