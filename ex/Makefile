@@ -5,11 +5,11 @@ include $(TOP)/Makefile.rules
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe
 
-INCLUDES += -I../lib -I../lib/dword
+INCLUDES += -I$(TOP)/lib -I$(TOP)/lib/dword
 CPPFLAGS += $(INCLUDES)
 
-vpath %.tas ../lib ../lib/dword
-vpath %.tas.cpp ../lib ../lib/dword
+vpath %.tas $(TOP)/lib $(TOP)/lib/dword
+vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
 
 TARGETS = \
     bsearch_demo.texe   \
@@ -26,7 +26,10 @@ TARGETS = \
     sieve.texe          \
     #
 
+CPP_FILES := $(wildcard *.tas.cpp)
+
 clean_FILES += $(TARGETS) *.to dword/*.to
+clean_FILES += $(CPP_FILES:%.tas.cpp=%.tas)
 
 all: $(TARGETS)
 
@@ -47,5 +50,5 @@ bm_snake.texe: rand.to
 bm_fib.texe bm_mults.texe: putnum.to
 clock.texe: sleep.to
 
-$(patsubst %.tas.cpp,%.tas,$(wildcard *.tas.cpp)): %.tas: $(TOP)/lib/common.th
+$(patsubst %.tas.cpp,%.tas,$(CPP_FILES)): %.tas: $(TOP)/lib/common.th
 
