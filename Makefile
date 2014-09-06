@@ -80,14 +80,14 @@ dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tools
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
 	@$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
 
-TAS_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o
-TSIM_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
+tas_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o
+tsim_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
                debugger_parser.o debugger_lexer.o $(DEVOBJS) sim.o param.o
-TLD_OBJECTS  = common.o obj.o
+tld_OBJECTS  = common.o obj.o
 
-tas$(EXE_SUFFIX):  $(TAS_OBJECTS)
-tsim$(EXE_SUFFIX): $(TSIM_OBJECTS)
-tld$(EXE_SUFFIX):  $(TLD_OBJECTS)
+tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
+tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
+tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
 
 asm.o: CFLAGS += -Wno-override-init
 
