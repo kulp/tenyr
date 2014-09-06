@@ -47,6 +47,7 @@ libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_
 libsdl%$(DYLIB_SUFFIX): LDLIBS   += $(shell sdl2-config --libs) -lSDL2_image
 PDEVICES_SDL += sdlled sdlvga
 PDEVICES += $(PDEVICES_SDL)
+$(PDEVICES_SDL:%=%,dy.o): PEDANTIC_FLAGS :=
 endif
 endif
 
