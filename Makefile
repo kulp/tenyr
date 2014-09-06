@@ -7,6 +7,30 @@ include $(TOP)/Makefile.rules
 
 .DEFAULT_GOAL = all
 
+DEVICES = ram sparseram debugwrap serial spi eib
+DEVOBJS = $(DEVICES:%=%.o)
+# plugin devices
+PDEVICES += spidummy spisd spi
+PDEVOBJS = $(PDEVICES:%=%,dy.o)
+PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
+
+ifneq ($(SDL),0)
+SDL_VERSION = $(shell sdl2-config --version 2>/dev/null)
+ifneq ($(SDL_VERSION),)
+# Use := to ensure the expensive underyling call is not repeated
+NO_C11_WARN_OPTS := $(call cc_flag_supp,-Wno-c11-extensions)
+libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
+libsdl%$(DYLIB_SUFFIX): LDLIBS   += $(shell sdl2-config --libs) -lSDL2_image
+PDEVICES_SDL += sdlled sdlvga
+PDEVICES += $(PDEVICES_SDL)
+$(PDEVICES_SDL:%=%,dy.o): PEDANTIC_FLAGS :=
+endif
+endif
+
+BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+LIB_TARGETS ?= $(PDEVLIBS)
+TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
+
 .PHONY: win32 win64
 win32: export _32BIT=1
 win32 win64: export WIN32=1
@@ -17,7 +41,15 @@ win32 win64:
 showbuilddir:
 	@echo $(abspath $(BUILDDIR))
 
-clean_FILES = $(BUILDDIR)
+clean_FILES := $(addprefix $(BUILDDIR)/, \
+                   *.o                   \
+                   debugger_parser.[ch]  \
+                   debugger_lexer.[ch]   \
+                   parser.[ch]           \
+                   lexer.[ch]            \
+                   $(TARGETS)            \
+               )#
+
 clean clobber::
 	-$(MAKE) -C $(TOP)/test $@
 
@@ -37,30 +69,6 @@ CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
 
 VPATH += $(TOP)/src $(TOP)/src/devices
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
-
-ifneq ($(SDL),0)
-SDL_VERSION = $(shell sdl2-config --version 2>/dev/null)
-ifneq ($(SDL_VERSION),)
-# Use := to ensure the expensive underyling call is not repeated
-NO_C11_WARN_OPTS := $(call cc_flag_supp,-Wno-c11-extensions)
-libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
-libsdl%$(DYLIB_SUFFIX): LDLIBS   += $(shell sdl2-config --libs) -lSDL2_image
-PDEVICES_SDL += sdlled sdlvga
-PDEVICES += $(PDEVICES_SDL)
-$(PDEVICES_SDL:%=%,dy.o): PEDANTIC_FLAGS :=
-endif
-endif
-
-DEVICES = ram sparseram debugwrap serial spi eib
-DEVOBJS = $(DEVICES:%=%.o)
-# plugin devices
-PDEVICES += spidummy spisd spi
-PDEVOBJS = $(PDEVICES:%=%,dy.o)
-PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
-
-BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
-LIB_TARGETS ?= $(PDEVLIBS)
-TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
 
 .PHONY: all check
 all: $(TARGETS)
