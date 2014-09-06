@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 600
+#include "os_common.h"
 
 #include "param.h"
 
@@ -8,7 +9,7 @@
 
 struct param_state {
 #define DEFAULT_PARAMS_COUNT 16
-    size_t params_count;
+    lfind_size_t params_count;
     size_t params_size;
     struct param_entry {
         char *key;

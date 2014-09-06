@@ -1,3 +1,5 @@
+#include "os_common.h"
+
 #include "asm.h"
 #include "asmif.h"
 #include "common.h"
@@ -94,7 +96,7 @@ int main(int argc, char *argv[])
             case 's': flags |= ASM_NO_SUGAR; break;
             case 'v': flags |= ASM_VERBOSE; break;
             case 'f': {
-                size_t sz = tenyr_asm_formats_count;
+                lfind_size_t sz = tenyr_asm_formats_count;
                 f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
                         sizeof tenyr_asm_formats[0], find_format_by_name);
                 if (!f)

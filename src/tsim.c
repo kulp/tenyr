@@ -1,3 +1,4 @@
+#include "os_common.h"
 #include "plugin.h"
 
 #include "ops.h"
@@ -216,7 +217,7 @@ static int add_recipe(struct sim_state *s, const char *name)
         #define Entry(Name,Desc) { STR(Name), recipe_##Name },
         RECIPES(Entry)
     };
-    size_t sz = countof(entries);
+    lfind_size_t sz = countof(entries);
 
     struct recipe_entry *r = lfind(&(struct recipe_entry){ .name = name },
             entries, &sz, sizeof entries[0],
@@ -246,7 +247,7 @@ static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, 
 
 static int find_format(const char *optarg, const struct format **f)
 {
-    size_t sz = tenyr_asm_formats_count;
+    lfind_size_t sz = tenyr_asm_formats_count;
     *f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
             sizeof tenyr_asm_formats[0], find_format_by_name);
     return !*f;
