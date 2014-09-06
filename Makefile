@@ -119,10 +119,8 @@ install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install -d $(INSTALL_DIR)
 	install $^ $(INSTALL_DIR)
 
-ifndef INHIBIT_DEPS
 ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)
-endif
 endif
 
 ##############################################################################
