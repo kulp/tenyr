@@ -31,34 +31,8 @@ BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS ?= $(PDEVLIBS)
 TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
 
-.PHONY: win32 win64
-win32: export _32BIT=1
-win32 win64: export WIN32=1
-# reinvoke make to ensure vars are set early enough
-win32 win64:
-	$(MAKE) $^
-
-showbuilddir:
-	@echo $(abspath $(BUILDDIR))
-
-clean_FILES := $(addprefix $(BUILDDIR)/, \
-                   *.o                   \
-                   debugger_parser.[ch]  \
-                   debugger_lexer.[ch]   \
-                   parser.[ch]           \
-                   lexer.[ch]            \
-                   $(TARGETS)            \
-               )#
-
-clean clobber::
-	-$(MAKE) -C $(TOP)/test $@
-
-ifneq ($(BUILDDIR),.)
-DROP_TARGETS = win% showbuilddir clean clobber
-all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
-	mkdir -p $(BUILDDIR)
-	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
-else
+INSTALL_STEM ?= $(TOP)
+INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(MACHINE)
 
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 # Use := to ensure the expensive underlying call is not repeated
@@ -69,6 +43,42 @@ CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
 
 VPATH += $(TOP)/src $(TOP)/src/devices
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
+
+clean_FILES := $(addprefix $(BUILDDIR)/, \
+                   *.o                   \
+                   debugger_parser.[ch]  \
+                   debugger_lexer.[ch]   \
+                   parser.[ch]           \
+                   lexer.[ch]            \
+                   $(TARGETS)            \
+               )#
+
+tas_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o
+tsim_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
+               debugger_parser.o debugger_lexer.o $(DEVOBJS) sim.o param.o
+tld_OBJECTS  = common.o obj.o
+
+.PHONY: win32 win64
+win32: export _32BIT=1
+win32 win64: export WIN32=1
+# reinvoke make to ensure vars are set early enough
+win32 win64:
+	$(MAKE) $^
+
+showbuilddir:
+	@echo $(abspath $(BUILDDIR))
+
+clean clobber::
+	-$(MAKE) -C $(TOP)/test $@
+
+################################################################################
+# Rerun make inside $(BUILDDIR) if we are not already building in the $(PWD)
+DROP_TARGETS = win% showbuilddir clean clobber
+ifneq ($(BUILDDIR),.)
+all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
+	mkdir -p $(BUILDDIR)
+	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
+else
 
 .PHONY: all check
 all: $(TARGETS)
@@ -87,11 +97,6 @@ check: dogfood tools
 dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tools
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
 	@$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
-
-tas_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o
-tsim_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
-               debugger_parser.o debugger_lexer.o $(DEVOBJS) sim.o param.o
-tld_OBJECTS  = common.o obj.o
 
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
@@ -121,8 +126,6 @@ debugger_parser.h debugger_parser.c: debugger_lexer.h
 parser.h parser.c: lexer.h
 
 .PHONY: install
-INSTALL_STEM ?= $(TOP)
-INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(MACHINE)
 install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
 	install -d $(INSTALL_DIR)
 	install $^ $(INSTALL_DIR)
