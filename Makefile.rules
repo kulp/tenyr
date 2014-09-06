@@ -51,3 +51,4 @@ clean clobber::
 
 clobber:: clean
 
+# vi: set syntax=make: #
