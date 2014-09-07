@@ -2,7 +2,7 @@ language: c
 compiler:
   - gcc
   - clang
-script: "make V=1 SDL=0 && make check"
+script: "make V=1 SDL=0 && make check && make install"
 notifications:
     irc:
         channels:
