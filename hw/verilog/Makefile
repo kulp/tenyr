@@ -1,6 +1,6 @@
 TOP := $(abspath ../..)
-include $(TOP)/Makefile.common
-include $(TOP)/Makefile.rules
+include $(TOP)/mk/Makefile.common
+include $(TOP)/mk/Makefile.rules
 
 INCLUDES += -I../../lib
 CPPFLAGS += $(INCLUDES)

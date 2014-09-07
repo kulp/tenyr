@@ -1,6 +1,6 @@
 TOP := $(abspath ..)
-include $(TOP)/Makefile.common
-include $(TOP)/Makefile.rules
+include $(TOP)/mk/Makefile.common
+include $(TOP)/mk/Makefile.rules
 
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe

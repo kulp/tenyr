@@ -20,7 +20,7 @@ else
 endif
 INCLUDE_OS = $(TOP)/src/os/$(OS)
 
--include $(TOP)/Makefile.$(OS)
+include $(TOP)/mk/Makefile.$(OS)
 
 ifeq ($(_32BIT),1)
  CFLAGS  += -m32

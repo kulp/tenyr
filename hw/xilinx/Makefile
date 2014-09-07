@@ -1,6 +1,6 @@
 TOP = $(abspath ../..)
-include $(TOP)/Makefile.common
-include $(TOP)/Makefile.rules
+include $(TOP)/mk/Makefile.common
+include $(TOP)/mk/Makefile.rules
 
 .DEFAULT_GOAL = bit
 
@@ -37,7 +37,7 @@ endif
 
 Tenyr.ngc: ../verilog/common.vh
 Tenyr.ngd Tenyr.twr: $(CONSTRAINTS)
--include Tenyr.md
+include Tenyr.md
 
 ################################################################################
 # General rules

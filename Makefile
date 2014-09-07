@@ -1,9 +1,7 @@
 makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
 TOP := $(dir $(makefile_path))
-ifeq ($(INCLUDED_common),)
-include $(TOP)/Makefile.common
-endif
-include $(TOP)/Makefile.rules
+include $(TOP)/mk/Makefile.common
+include $(TOP)/mk/Makefile.rules
 
 .DEFAULT_GOAL = all
 

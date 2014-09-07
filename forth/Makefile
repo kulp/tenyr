@@ -1,8 +1,8 @@
 TOP := $(abspath ..)
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe
-include $(TOP)/Makefile.common
-include $(TOP)/Makefile.rules
+include $(TOP)/mk/Makefile.common
+include $(TOP)/mk/Makefile.rules
 
 CPPFLAGS += -I$(TOP)/lib
 

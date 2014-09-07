@@ -1,7 +1,7 @@
 makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
 TOP := $(abspath $(dir $(makefile_path))/..)
-include $(TOP)/Makefile.common
-include $(TOP)/Makefile.rules
+include $(TOP)/mk/Makefile.common
+include $(TOP)/mk/Makefile.rules
 
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe

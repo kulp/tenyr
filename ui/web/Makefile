@@ -1,5 +1,6 @@
 TOP := main_build
-include $(TOP)/Makefile.common
+include $(TOP)/mk/Makefile.common
+include $(TOP)/mk/Makefile.rules
 
 .PHONY: all
 BIN_TARGETS = tcc.js tas.js tsim.js
