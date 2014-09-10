@@ -3,7 +3,7 @@
 
 .set link, @level1_link
 
-.global INBUF .global INPOS .global INLEN
+.global INBUF ; .global INPOS ; .global INLEN
 .L_INBUF_before:
 INBUF:
     .utf32 "                                               "

@@ -1,14 +1,15 @@
 #include "forth_common.th"
 #include "serial.th"
 
-#define BINOP(Op)    \
-    .word . + 1      \
-    T0  <- [S + 2]   \
-    T1  <- [S + 1]   \
-    W   <-  T0 Op T1 \
-    S   <-  S + 1    \
-    W   -> [S + 1]   \
-    goto(NEXT)
+#define BINOP(Op)      \
+    .word . + 1      ; \
+    T0  <- [S + 2]   ; \
+    T1  <- [S + 1]   ; \
+    W   <-  T0 Op T1 ; \
+    S   <-  S + 1    ; \
+    W   -> [S + 1]   ; \
+    goto(NEXT)       ; \
+    //
 
 .set link, 0
 

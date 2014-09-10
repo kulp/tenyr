@@ -237,15 +237,15 @@ ascii
         {   tenyr_pop_state(pd->scanner); $ascii = make_ascii($string); }
 
 data
-    : WORD reloc_expr_list
+    : WORD opt_nl reloc_expr_list
         {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $reloc_expr_list); }
-    | ZERO reloc_expr
+    | ZERO opt_nl reloc_expr
         {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, $reloc_expr); }
 
 directive
-    : GLOBAL symbol_list
+    : GLOBAL opt_nl symbol_list
         {   tenyr_pop_state(pd->scanner); $directive = make_global(pd, &yylloc, &$symbol_list); }
-    | SET SYMBOL ',' reloc_expr
+    | SET opt_nl SYMBOL ',' reloc_expr
         {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
 symbol_list
