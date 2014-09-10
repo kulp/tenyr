@@ -92,9 +92,9 @@ check: dogfood tools
 	@$(MAKESTEP) -n "Running bsearch demo ... "
 	@[ "$$($(BUILDDIR)/tsim $(TOP)/ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
 
-dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tools
+dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tas
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
-	@$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
+	@$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $(TAS) $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
 
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)

@@ -1,8 +1,10 @@
 #!/bin/bash
+# Usage: dogfood.sh tempfile-stem path-to-tas file.tas[.cpp] [ files... ]
 here=`dirname $BASH_SOURCE`
 stem=`basename $1`
+tas=$2
 shift
-tas=$(make BUILDDIR= -C $here/.. showbuilddir)/tas
+shift
 base=`mktemp -t $stem`
 for file in $* ; do
 	temp1=$base.1.tas
