@@ -78,8 +78,24 @@ all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
 else
 
-.PHONY: all check
+.PHONY: all check coverage
 all: $(TARGETS)
+
+clobber_FILES += $(BUILDDIR)/*.gc??
+coverage: CFLAGS  += --coverage
+coverage: LDFLAGS += --coverage
+coverage: coverage_html_src
+
+clobber_FILES += $(BUILDDIR)/coverage.info
+coverage.info: check
+	lcov --capture --test-name $< --directory $(BUILDDIR) --output-file $@
+
+coverage.info.%: coverage.info
+	lcov --extract $< '*/$*/*' --output-file $@
+
+CLOBBER_FILES += $(BUILDDIR)/coverage_html
+coverage_html_%: coverage.info.%
+	genhtml $< --output-directory $@
 
 tools: tsim tas tld
 check: dogfood tools
