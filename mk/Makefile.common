@@ -62,7 +62,7 @@ ifeq ($(findstring command,$(origin $(BUILDDIR))),)
   override BUILDDIR := $(TOP)/build/$(MACHINE)
  endif
 endif
-BUILD_NAME := $(shell $(GIT) describe --tags --match 'v?.?.?*')
+BUILD_NAME := $(shell $(GIT) describe --tags --match 'v?.?.?*' 2>/dev/null || $(ECHO) "unknown")
 
 TOOLDIR = $(TOP)/build/$(MACHINE)
 TAS = $(TOOLDIR)/tas
