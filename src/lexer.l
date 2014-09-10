@@ -139,9 +139,10 @@ illegal             { return ILLEGAL; }
 <*>\n               { saveline[savecol = 0] = 0; return '\n'; }
 
 <*>.                tenyr_error(yylloc, yyextra, "unexpected character");
-
+                    /* LCOV_EXCL_START */
 %%
 
+/* LCOV_EXCL_STOP LCOV_EXCL_LINE */
 static int savestr(yyscan_t yyscanner)
 {
     // savestr() appends a string piece into a buffer
