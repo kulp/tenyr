@@ -90,7 +90,10 @@ clobber_FILES += $(BUILDDIR)/coverage.info
 coverage.info: check
 	lcov --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
-coverage.info.%: coverage.info
+coverage.info.trimmed: coverage.info
+	lcov --output-file $@ --remove $< '*/debugger_*.*' --remove $< '*/dbg.c'
+
+coverage.info.%: coverage.info.trimmed
 	lcov --extract $< '*/$*/*' --output-file $@
 
 CLOBBER_FILES += $(BUILDDIR)/coverage_html
