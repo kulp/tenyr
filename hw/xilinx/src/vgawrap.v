@@ -56,7 +56,7 @@ module VGAwrap(
         .wea   ( 1'b0    ), .web   ( rw       )
     );
 
-    BlockRAM #(.LOAD(1), .LOADFILE("../verilog/lat0-12.memh"),
+    BlockRAM #(.LOAD(1), .LOADFILE("lat0-12.memh"),
                .SIZE(256 * 12), .DBITS(8))
     font(
         .clka  ( clk_vga ), .ena   ( 1'b1    ), .wea  ( 1'b0 ),
