@@ -67,6 +67,7 @@ showbuilddir:
 	@echo $(abspath $(BUILDDIR))
 
 clean clobber::
+	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
 
 ################################################################################

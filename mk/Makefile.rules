@@ -48,7 +48,6 @@ endif
 
 clean clobber::
 	$(RM) -rf $($@_FILES)
-	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
 
 clobber:: clean
 
