@@ -1,0 +1,8 @@
+b <- '\\' ; .word '\\' ; .utf32 "hello\\world"
+b <- '\0' ; .word '\0' ; .utf32 "hello\0world"
+b <- '\b' ; .word '\b' ; .utf32 "hello\bworld"
+b <- '\f' ; .word '\f' ; .utf32 "hello\fworld"
+b <- '\n' ; .word '\n' ; .utf32 "hello\nworld"
+b <- '\r' ; .word '\r' ; .utf32 "hello\rworld"
+b <- '\t' ; .word '\t' ; .utf32 "hello\tworld"
+b <- '\v' ; .word '\v' ; .utf32 "hello\vworld"
