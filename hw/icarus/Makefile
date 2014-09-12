@@ -75,19 +75,6 @@ $(GEN_V): %.v: ../verilog/sim/simwrap.v
 	@$(MAKESTEP) "[ IVERILOG -E ] $@"
 	$(SILENCE)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
-COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
-%.o: %.c
-	@$(MAKESTEP) "[ CC ] $<"
-	$(SILENCE)$(COMPILE.c) $(OUTPUT_OPTION) $<
-
-%.to: %.tas
-	@$(MAKESTEP) "[ TAS ] $<"
-	$(SILENCE)$(TAS) -o$@ $<
-
-%.texe: %.to
-	@$(MAKESTEP) "[ TLD ] $<"
-	$(SILENCE)$(TLD) -o$@ $<
-
 %: %.v
 	@$(MAKESTEP) "[ IVERILOG ] $@"
 	$(SILENCE)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
