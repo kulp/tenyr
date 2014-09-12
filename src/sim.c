@@ -126,7 +126,7 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
     }
 }
 
-int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
+int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
         FILE *in, int load_address)
 {
     void *ud = NULL;
@@ -136,7 +136,7 @@ int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
     struct element i;
     while (f->in(in, &i, ud) > 0) {
         // TODO stop assuming addresses are contiguous and monotonic
-        if (dispatch_op(sud, OP_WRITE, load_address++, &i.insn.u.word))
+        if (dispatch(sud, OP_WRITE, load_address++, &i.insn.u.word))
             return -1;
     }
 
