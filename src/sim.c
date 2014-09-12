@@ -53,7 +53,6 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
 
     if (read_mem) {
         if (s->dispatch_op(s, OP_DATA_READ, *r, value)) {
-            if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }
     } else
@@ -61,7 +60,6 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
 
     if (write_mem) {
         if (s->dispatch_op(s, OP_WRITE, *w, value)) {
-            if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }
     } else if (w != &s->machine.regs[0])  // throw away write to reg 0
@@ -102,7 +100,6 @@ int run_instruction(struct sim_state *s, struct element *i)
             break;
         }
         default:
-            if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
             return 1;
     }
@@ -115,7 +112,6 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
     while (1) {
         struct element i;
         if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word)) {
-            if (s->conf.pause) getchar();
             if (s->conf.abort) abort();
         }
 
