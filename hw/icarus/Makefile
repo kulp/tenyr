@@ -6,7 +6,7 @@ PERIODS ?= 32
 
 VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
-CFLAGS += -I../../src
+CFLAGS += -I$(TOP)/src
 
 INCLUDES += $(TOP)/src/os/$(OS)
 
@@ -17,7 +17,7 @@ all: tenyr glue.vpi
 
 .SUFFIXES: .v .c
 
-vpath %.c ../vpi ../../src
+vpath %.c ../vpi $(TOP)/src
 vpath %.v ../verilog ../verilog/sim .
 vpath %.memh ../verilog
 
@@ -51,7 +51,7 @@ asm.o: CFLAGS += -Wno-unused-parameter
 	$(MAKE) -C ../verilog TOP=$(TOP) $@
 
 vpath %.tas ../verilog
-vpath %.texe ../../ex
+vpath %.texe $(TOP)/ex
 
 LOGFILE = Top.vcd
 run_%: PLUSARGS += +PERIODS=$(PERIODS) \
@@ -61,7 +61,7 @@ run_%: PLUSARGS += +PERIODS=$(PERIODS) \
                                       +INTERRUPT_SIGNALS=$(INTERRUPTS).signals) \
                    #
 
-run_%: VECTORS = ../../ex/$*.vectors.memh
+run_%: VECTORS = $(TOP)/ex/$*.vectors.memh
 run_%: %.texe tenyr
 	vvp -M. tenyr +LOAD=$< $(PLUSARGS)
 

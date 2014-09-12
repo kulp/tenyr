@@ -10,7 +10,7 @@ TLD = ./bin/tld
 export TAS
 export TLD
 
-$(TAS) $(TLD): ../../Makefile
+$(TAS) $(TLD): $(TOP)/Makefile
 	mkdir -p $(@D)
 	$(MAKE) BUILDDIR=$(@D) -f $< $(@F)
 
@@ -41,9 +41,9 @@ include Tenyr.md
 
 ################################################################################
 # General rules
-vpath %.tas     ../verilog ../../ex
-vpath %.tas.cpp ../verilog ../../ex
-vpath %.texe    ../verilog ../../ex
+vpath %.tas     ../verilog $(TOP)/ex
+vpath %.tas.cpp ../verilog $(TOP)/ex
+vpath %.texe    ../verilog $(TOP)/ex
 vpath %.memh    gen
 
 .PHONY: xst ngdbuild map par trce bit xsvf burn

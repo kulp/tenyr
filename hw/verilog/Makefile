@@ -2,7 +2,7 @@ TOP := $(abspath ../..)
 include $(TOP)/mk/Makefile.common
 include $(TOP)/mk/Makefile.rules
 
-INCLUDES += -I../../lib
+INCLUDES += -I$(TOP)/lib
 CPPFLAGS += $(INCLUDES)
 
 vpath %.texe $(TOP)/ex
