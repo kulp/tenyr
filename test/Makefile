@@ -16,14 +16,14 @@ vpath %.tas pass_compile/ fail_compile/
 get_obj_name = $(notdir $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1)))
 
 # TODO run .texe's instead of just compiling them
-PASS_ASSEMBLE = \
+PASS_ASSEMBLE := \
 	$(call get_obj_name,$(wildcard pass_compile/*)) \
 	copy.texe \
 	jzrel.texe \
 	test_imul.texe \
 	#
 
-FAIL_ASSEMBLE = $(call get_obj_name,$(wildcard fail_compile/*))
+FAIL_ASSEMBLE := $(call get_obj_name,$(wildcard fail_compile/*))
 
 clean_FILES = *.to *.texe
 
@@ -36,5 +36,7 @@ copy.texe: memcpy.to puts.to
 
 $(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
 	@$(ECHO) -n "Assembling $@ (should fail) ... "
-	@(! $(TAS) -o$@ $< 2>/dev/null) && $(ECHO) "failed as expected"
+	@(! $(TAS) -o$@ $< 2>/dev/null) \
+		&& $(ECHO) "failed as expected" \
+		|| ($(ECHO) "succeeded unexpectedly" ; false)
 

@@ -70,6 +70,9 @@ clean clobber::
 	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
 
+clobber::
+	-$(MAKE) -C $(TOP)/ex $@
+
 ################################################################################
 # Rerun make inside $(BUILDDIR) if we are not already building in the $(PWD)
 DROP_TARGETS = win% showbuilddir clean clobber
