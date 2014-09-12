@@ -30,6 +30,7 @@ INTSTYLE     = -intstyle silent # or xflow, or ise
 CONSTRAINTS  = Tenyr.ucf Nexys3_Master.ucf
 EFFORT       = -ol std
 THREADING    = -mt 2
+XST_TMPDIR   = xst/projnav.tmp
 
 ifeq ($V,1)
 INTSTYLE = -intstyle xflow
@@ -88,8 +89,11 @@ gen/%.mem: gen/%.memh
 	# TODO document / hoist start address
 	echo '@1000' > $@.$$$$ && cat $< >> $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
 
+$(XST_TMPDIR):
+	mkdir -p $@
+
 # Don't automatically regenerate baremetal.memh (use .bmm rules to insert code)
-%.ngc: %.xst | baremetal.memh
+%.ngc: %.xst | baremetal.memh $(XST_TMPDIR)
 	$(BIN)/xst $(INTSTYLE) $(FILTER) -ifn $<
 
 %.ngd: %.ngc %.bmm
