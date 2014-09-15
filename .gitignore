@@ -17,3 +17,4 @@ tmp/
 *.dll
 gen/
 build/
+dist/

@@ -28,9 +28,12 @@ endif
 BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS ?= $(PDEVLIBS)
 TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
+RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
+               $(TOP)/rsrc/font.png \
+               $(wildcard $(TOP)/plugins/*.rcp) \
+               #
 
-INSTALL_STEM ?= $(TOP)
-INSTALL_DIR  ?= $(INSTALL_STEM)/bin/$(BUILD_NAME)/$(MACHINE)
+INSTALL_DIR ?= /usr/local
 
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 # Use := to ensure the expensive underlying call is not repeated
@@ -66,6 +69,10 @@ win32 win64:
 showbuilddir:
 	@echo $(abspath $(BUILDDIR))
 
+.PHONY: distclean
+distclean:: clobber
+	$(RM) -r install/
+
 clean clobber::
 	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
@@ -75,7 +82,7 @@ clobber::
 
 ################################################################################
 # Rerun make inside $(BUILDDIR) if we are not already building in the $(PWD)
-DROP_TARGETS = win% showbuilddir clean clobber
+DROP_TARGETS = win% showbuilddir clean clobber distclean
 ifneq ($(BUILDDIR),.)
 all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	mkdir -p $(BUILDDIR)
@@ -146,10 +153,30 @@ tsim.o dbg.o debugger_lexer.o: debugger_parser.h
 debugger_parser.h debugger_parser.c: debugger_lexer.h
 parser.h parser.c: lexer.h
 
-.PHONY: install
-install: tsim$(EXE_SUFFIX) tas$(EXE_SUFFIX) tld$(EXE_SUFFIX) $(PDEVLIBS)
-	install -d $(INSTALL_DIR)
-	install $^ $(INSTALL_DIR)
+.PHONY: install local-install
+local-install: INSTALL_DIR = $(TOP)/dist/$(MACHINE)
+local-install: install
+
+install:: $(BIN_TARGETS)
+	install -d $(INSTALL_DIR)/bin
+	install $^ $(INSTALL_DIR)/bin
+
+install:: $(LIB_TARGETS)
+	install -d $(INSTALL_DIR)/lib
+	install $^ $(INSTALL_DIR)/lib
+
+install:: $(RESOURCES)
+	install -d $(subst $(TOP)/,$(INSTALL_DIR)/share/tenyr/,$(^D))
+	$(foreach f,$^,install -m 0644 $f $(INSTALL_DIR)/share/tenyr/$(subst $(TOP)/,,$(dir $f));)
+
+uninstall:: $(BIN_TARGETS)
+	$(RM) $(foreach t,$(^F),$(INSTALL_DIR)/bin/$t)
+
+uninstall:: $(LIB_TARGETS)
+	$(RM) $(foreach t,$(^F),$(INSTALL_DIR)/lib/$t)
+
+uninstall:: $(RESOURCES)
+	$(RM) -r $(INSTALL_DIR)/share/tenyr
 
 ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include $(CFILES:.c=.d)
