@@ -100,8 +100,8 @@ module Eib(input clk, reset_n, strobe, rw,
     wire[31:0] imrs_dout;
 
     BlockRAM #(.ABITS(DEPTH_BITS), .SIZE(MAX_DEPTH), .INIT(1)) imrs(
-        .clka ( clk      ), .addra ( imrs_addr ), .clkb ( 0 ), .addrb ( 0 ),
-        .ena  ( d_active ), .dina  ( imrs_din  ), .enb  ( 0 ), .dinb  ( 0 ),
+        .clka ( clk      ), .addra ( imrs_addr ), .clkb ( 0 ), .addrb ( 32'b0 ),
+        .ena  ( d_active ), .dina  ( imrs_din  ), .enb  ( 0 ), .dinb  ( 32'b0 ),
         .wea  ( imrs_rw  ), .douta ( imrs_dout ), .web  ( 0 )
     );
 
@@ -110,8 +110,8 @@ module Eib(input clk, reset_n, strobe, rw,
     wire[31:0] rets_dout;
 
     BlockRAM #(.ABITS(DEPTH_BITS), .SIZE(MAX_DEPTH), .INIT(1)) rets(
-        .clka ( clk       ), .addra ( rets_addr ), .clkb ( 0 ), .addrb ( 0 ),
-        .ena  ( d_active  ), .dina  ( rets_din  ), .enb  ( 0 ), .dinb  ( 0 ),
+        .clka ( clk       ), .addra ( rets_addr ), .clkb ( 0 ), .addrb ( 32'b0 ),
+        .ena  ( d_active  ), .dina  ( rets_din  ), .enb  ( 0 ), .dinb  ( 32'b0 ),
         .wea  ( ra_active ), .douta ( rets_dout ), .web  ( 0 )
     );
 
