@@ -4,7 +4,7 @@ include $(TOP)/mk/Makefile.rules
 
 PERIODS ?= 32
 
-VPI_CFLAGS := $(shell iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
+VPI_CFLAGS := $(shell $(IVERILOG)iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I$(TOP)/src
 
@@ -63,7 +63,7 @@ run_%: PLUSARGS += +PERIODS=$(PERIODS) \
 
 run_%: VECTORS = $(TOP)/ex/$*.vectors.memh
 run_%: %.texe tenyr
-	vvp -M. tenyr +LOAD=$< $(PLUSARGS)
+	$(IVERILOG)vvp -M. tenyr +LOAD=$< $(PLUSARGS)
 
 ##############################################################################
 
@@ -73,13 +73,13 @@ $(GEN_V): VFLAGS += -DPUT='$$$(SIM_PUT_$*)' -DGET='$$$(SIM_GET_$*)' -DSTEM='$*'
 $(GEN_V): VFLAGS += -E
 $(GEN_V): %.v: ../verilog/sim/simwrap.v
 	@$(MAKESTEP) "[ IVERILOG -E ] $@"
-	$(SILENCE)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+	$(SILENCE)$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 %: %.v
 	@$(MAKESTEP) "[ IVERILOG ] $@"
-	$(SILENCE)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+	$(SILENCE)$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 %.vpi: %.o
 	@$(MAKESTEP) "[ VPI ] $@"
-	$(SILENCE)iverilog-vpi $(OUTPUT_OPTION) $^
+	$(SILENCE)$(IVERILOG)iverilog-vpi $(OUTPUT_OPTION) $^
 
