@@ -1,21 +1,21 @@
     return Module;
 })((tenyr_state[prefix + '_module'] = (function(){
-        function put_char(ch)
-        {
-            tenyr_state[prefix + '_out_area']['value'] += String.fromCharCode(ch);
-        }
-
-        function set_up_fs(mod)
-        {
-            if (ENVIRONMENT_IS_WEB) {
-                mod['_FSref_init'](tenyr_state[prefix + '_get_line_char'], put_char, put_char);
-            }
-        }
-
         var mod = {
             'noInitialRun': !ENVIRONMENT_IS_NODE,
-            'preRun': [ function(){ set_up_fs(mod) } ],
             'noExitRuntime': !ENVIRONMENT_IS_NODE,
+			/* hack around invisibility of FS due to wrapping all code in an
+			 * extra function scope to permit multiple emscripten scripts in
+			 * one HTML page */
+			'_set_up_fs':
+				function(FS) {
+					if (ENVIRONMENT_IS_WEB) {
+						function put_char(ch) {
+							tenyr_state[prefix + '_out_area']['value'] += String.fromCharCode(ch);
+						}
+
+						FS.init(tenyr_state[prefix + '_get_line_char'], put_char, put_char);
+					}
+				},
         };
 
         return mod;

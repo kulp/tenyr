@@ -26,11 +26,9 @@ COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 	$(SILENCE)$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
-ifeq ($(SUPPRESS_BINARY_RULE),)
 %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
 	$(SILENCE)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-endif
 
 %.h %.c: %.l
 	@$(MAKESTEP) "[ FLEX ] $(<F)"

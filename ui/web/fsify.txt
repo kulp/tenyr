@@ -1,1 +1,3 @@
-Module['_FSref_init'] = function(a,b,c) { return FS.init(a,b,c); };
+/* hack around invisibility of FS due to wrapping all code in an extra function
+ * scope to permit multiple emscripten scripts in one HTML page */
+Module['_set_up_fs'](FS);
