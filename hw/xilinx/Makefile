@@ -49,6 +49,7 @@ vpath %.memh    gen
 
 .PHONY: xst ngdbuild map par trce bit xsvf burn
 .PRECIOUS: %.xsvf %.bit %.ngc %.ngd %.ncd
+.SECONDARY: $(DESIGN)_bd.bmm
 xst:      $(DESIGN).ngc
 ngdbuild: $(DESIGN).ngd
 map:      $(DESIGN)_map.ncd
