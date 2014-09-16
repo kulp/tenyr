@@ -81,7 +81,7 @@ Here are the operations that **tenyr** supports :
 
  Syntax         | Description
 :--------------:|:-------------------
- `B <- C  \| D` | C bitwise or D
+ <code>B <- C  &#124;  D</code> | C bitwise or D
  `B <- C  &  D` | C bitwise and D
  `B <- C  +  D` | C add D
  `B <- C  *  D` | C multiply D
