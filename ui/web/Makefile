@@ -40,7 +40,6 @@ CC_DEBUG =
                       -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0 \
                       -s CLOSURE_ANNOTATIONS=1 \
                       -s CHECK_OVERFLOWS=0 \
-                      -s CORRECT_OVERFLOWS=0 \
                       -s DISABLE_EXCEPTION_CATCHING=1 \
                       # TODO make relooping work \
                       #-s RELOOP=1 \
