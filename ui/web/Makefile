@@ -12,7 +12,7 @@ CPPFLAGS += -D"PATH_SEPARATOR_CHAR='/'"
 .PHONY: all
 all:: $(BIN_TARGETS)
 
-MAIN_BUILD_DIR := $(shell $(MAKE) -C main_build showbuilddir)
+MAIN_BUILD_DIR := $(shell $(MAKE) -s -C main_build showbuilddir)
 
 CHECK_PATHS = src main_build/src $(MAIN_BUILD_DIR) main_build/src/os/Linux
 vpath %.h $(CHECK_PATHS)
