@@ -35,10 +35,7 @@ EMCC = emcc
 ifeq ($(DEBUG),)
 CC_OPT = -O2
 CC_DEBUG =
-# --closure 1 probably fails because system functions shared between the
-#  multiple separate .js binaries are renamed in different ways. --closure 1
-#  works fine as long as only one binary is loaded into the web page.
-%.js: EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG) --closure 0
+%.js: EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG) --closure 1
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=0 -s MICRO_OPTS=1 \
                       -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0 \
                       -s CLOSURE_ANNOTATIONS=1 \
@@ -113,6 +110,8 @@ tsim$(EXE_SUFFIX): sim.o simif.o param.o asm.o obj.o ram.o serial.o debugwrap.o
 tld$(EXE_SUFFIX): common.o obj.o
 
 tsim.js: CC_OPT = -O2 # -O0 causes failure
+# --closure 1 doesn't work with tcc.js yet - reason not known.
+tcc.js: EMCCFLAGS_LD += --closure 0
 
 asm.o debugwrap.o ram.o serial.o sparseram.o parser.o lexer.o: CFLAGS += -Wno-unused-parameter
 asm.o simif.o: CFLAGS += -Wno-unused-value
