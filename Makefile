@@ -92,6 +92,13 @@ else
 .PHONY: all check coverage
 all: $(TARGETS)
 
+.PHONY: gzip
+gzip: tenyr-$(BUILD_NAME).tar.gz
+
+tenyr-$(BUILD_NAME).tar.gz: INSTALL_DIR := $(shell mktemp -d tenyr.gzip.XXXXXX)/tenyr-$(BUILD_NAME)
+tenyr-$(BUILD_NAME).tar.gz: local-install
+	tar zcf $@ -C $(INSTALL_DIR)/.. .
+
 clobber_FILES += $(BUILDDIR)/*.gc??
 coverage: CFLAGS  += --coverage
 coverage: LDFLAGS += --coverage
@@ -154,7 +161,7 @@ debugger_parser.h debugger_parser.c: debugger_lexer.h
 parser.h parser.c: lexer.h
 
 .PHONY: install local-install
-local-install: INSTALL_DIR = $(TOP)/dist/$(MACHINE)
+local-install: INSTALL_DIR ?= $(TOP)/dist/$(MACHINE)
 local-install: install
 
 install:: $(BIN_TARGETS)
