@@ -17,7 +17,10 @@
       <header>
         <h1>tenyr</h1>
         <p>A simple 32-bit computing environment</p>
+
         <p class="view"><a href="https://github.com/kulp/tenyr">View the Project on GitHub <small>kulp/tenyr</small></a></p>
+
+
         <ul>
           <li><a href="https://github.com/kulp/tenyr/zipball/master">Download <strong>ZIP File</strong></a></li>
           <li><a href="https://github.com/kulp/tenyr/tarball/master">Download <strong>TAR Ball</strong></a></li>
@@ -25,48 +28,341 @@
         </ul>
       </header>
       <section>
-        <h3>Usage</h3>
+        <h1>
+<a name="tenyr" class="anchor" href="#tenyr"><span class="octicon octicon-link"></span></a>tenyr</h1>
 
-<pre><code>$ tas -ohello.to hello.tas
-$ tld -ohello.texe hello.to puts.to
-$ tsim hello.texe
-hello, world !
+<p><a href="https://travis-ci.org/kulp/tenyr"><img src="https://travis-ci.org/kulp/tenyr.svg?branch=develop" alt="Build Status"></a></p>
+
+<h2>
+<a name="overview" class="anchor" href="#overview"><span class="octicon octicon-link"></span></a>Overview</h2>
+
+<p><strong>tenyr</strong> is a 32-bit computer architecture and computing environment that
+focuses on simplicity of design and implementation. <strong>tenyr</strong> comprises :</p>
+
+<ul>
+<li>an <a href="https://github.com/kulp/tenyr/wiki/Assembly-language">instruction set architecture (ISA)</a>
+</li>
+<li>an <a href="https://github.com/kulp/tenyr/tree/develop/hw/verilog">implementation in FPGA hardware</a> with device support</li>
+<li>tools for building software
+
+<ul>
+<li><a href="https://github.com/kulp/tenyr/wiki/Assembler">assembler (tas)</a></li>
+<li>linker (tld)</li>
+<li><a href="https://github.com/kulp/tenyr/wiki/Simulator">simulator (tsim)</a></li>
+</ul>
+</li>
+<li>a <a href="https://github.com/kulp/tenyr/tree/develop/lib">standard library</a> of tenyr code</li>
+<li>some <a href="https://github.com/kulp/tenyr/tree/develop/ex">example software</a>, including :
+
+<ul>
+<li>a <a href="https://github.com/kulp/tenyr/blob/develop/ex/clock.tas.cpp">timer</a>
+</li>
+<li><a href="https://github.com/kulp/tenyr/blob/develop/ex/bm_snake.tas.cpp">random snakes</a></li>
+<li>a <a href="https://github.com/kulp/tenyr/blob/develop/ex/bm_fib.tas.cpp">recursive Fibonacci number generator</a>
+</li>
+</ul>
+</li>
+</ul><p>Someday it will also include :</p>
+
+<ul>
+<li>a C compiler based on LCC</li>
+<li><a href="https://github.com/kulp/tenyr/tree/develop/forth">a Forth environment</a></li>
+<li>a novel operating system</li>
+</ul><p>Explore a <a href="http://demo.tenyr.info/">simple online demo of the <strong>tenyr</strong> toolset</a>.</p>
+
+<p>This page serves as a general overview of the design of <strong>tenyr</strong>. It
+is not an exhaustive reference. An older version of some of this
+documentation, perhaps in some ways more complete, can be found <a href="https://github.com/kulp/tenyr/wiki">on the
+<strong>tenyr</strong> wiki</a>.</p>
+
+<hr><h2>
+<a name="description" class="anchor" href="#description"><span class="octicon octicon-link"></span></a>Description</h2>
+
+<h3>
+<a name="assembler-syntax-and-machine-model" class="anchor" href="#assembler-syntax-and-machine-model"><span class="octicon octicon-link"></span></a>Assembler Syntax and Machine Model</h3>
+
+<h4>
+<a name="registers" class="anchor" href="#registers"><span class="octicon octicon-link"></span></a>Registers</h4>
+
+<p><strong>tenyr</strong> has sixteen registers, named <code>A</code> through <code>P</code>. Refer to them
+using their uppercase or lowercase names ; <strong>tenyr</strong> tools are not
+case-sensitive. Two of these registers, <code>A</code> and <code>P</code>, are special, while
+the others are completely general purpose. All registers are 32 bits
+wide, and are treated as two's-complement signed integers everywhere
+that makes sense (there are no unsigned 32-bit integers in <strong>tenyr</strong>,
+just signed integers and bitstrings).</p>
+
+<h4>
+<a name="instruction-format" class="anchor" href="#instruction-format"><span class="octicon octicon-link"></span></a>Instruction Format</h4>
+
+<p>Every <strong>tenyr</strong> instruction can be expressed in a single, regular,
+algebraic instruction format :</p>
+
+<pre><code>Z &lt;- _ op _ + _
 </code></pre>
 
-<h3>Overview</h3>
+<p>where <code>Z</code> is a register, <code>op</code> is one of the accepted arithmetic
+operations, <code>+</code> is addition, two of the blanks are registers, and
+one of the blanks is an immediate value (a integer) between -2048 and
+2047. Any one of the blanks and the operation that goes before it can
+be left out. Examples :</p>
 
-<p><strong>tenyr</strong> is a 32-bit computing environment with focus on simplicity of design and implementation.</p>
+<pre><code>a &lt;- a + a + 0
+b &lt;- c * d + 3
+c &lt;- d - e + -2
+d &lt;- e ^ f
+e &lt;- f - 2
+f &lt;- 2 | g
+g &lt;- -h
+h &lt;- i &lt;&gt; 0
+i &lt;- j &lt; k
+j &lt;- k
+</code></pre>
 
-<p><strong>tenyr</strong> currently provides</p>
+<h4>
+<a name="operations" class="anchor" href="#operations"><span class="octicon octicon-link"></span></a>Operations</h4>
 
-<ul>
-<li>an <a href="https://github.com/kulp/tenyr/wiki/Assembly-language">instruction set architecture</a>
-</li>
-<li>an <a href="https://github.com/kulp/tenyr/wiki/Assembler">assembler / disassembler (tas)</a>
-</li>
-<li>a linker (tld)</li>
-<li>a <a href="https://github.com/kulp/tenyr/wiki/Simulator">canonical architectural simulator (tsim)</a>
-</li>
-<li>an <a href="https://github.com/forestbelton/htutils">alternate architectural simulator in Haskell (htsim, by Forest Belton)</a>
-</li>
-</ul><p>shows progress on</p>
+<p>Here are the operations that <strong>tenyr</strong> supports :</p>
 
-<ul>
-<li>a <a href="https://github.com/kulp/tenyr/tree/master/lib">standard library</a>
-</li>
-<li>a <a href="https://github.com/kulp/tenyr/tree/master/forth">Forth environment</a>
-</li>
-<li>a <a href="https://github.com/kulp/tenyr/tree/master/hw/verilog">synthesisable HDL implementation</a>
-</li>
-</ul><p>and aspires to achieve</p>
+<table>
+<thead><tr>
+<th align="center">Syntax</th>
+<th align="left">Description</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="center"><code>B &lt;- C  |  D</code></td>
+<td align="left">C bitwise or D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C  &amp;  D</code></td>
+<td align="left">C bitwise and D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C  +  D</code></td>
+<td align="left">C add D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C  *  D</code></td>
+<td align="left">C multiply D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C &lt;&lt;  D</code></td>
+<td align="left">C shift left D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C  &lt;  D</code></td>
+<td align="left">C test less than D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C ==  D</code></td>
+<td align="left">C test equal to D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C &gt;=  D</code></td>
+<td align="left">C test greater than or equal to D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C  &amp;~ D</code></td>
+<td align="left">C bitwise and complement D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C  ^  D</code></td>
+<td align="left">C bitwise xor D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C  -  D</code></td>
+<td align="left">C subtract D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C  ^~ D</code></td>
+<td align="left">C xor ones' complement D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C &gt;&gt;  D</code></td>
+<td align="left">C shift right logical D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C &lt;&gt;  D</code></td>
+<td align="left">C test not equal to D</td>
+</tr>
+<tr>
+<td align="center"><code>B &lt;- C &gt;&gt;&gt; D</code></td>
+<td align="left">C shift right arithmetic D</td>
+</tr>
+</tbody>
+</table><p>Some of the operations merit explanation. The comparison operations
+(<code>&lt;</code>, <code>&gt;=</code>, <code>==</code>, and <code>&lt;&gt;</code>) produce a result that is either <code>0</code> (false)
+or <code>-1</code> (true). The canonical truth value in <strong>tenyr</strong> is <code>-1</code>, not
+<code>1</code>. This allows us to do clever things with masks, and also explains
+the existence of the special <code>&amp;~</code> and <code>^~</code> operations -- when the second
+operand is a truth value, the bitwise complement works as a Boolean
+NOT. The operations also underlie some syntactical sugar ; for example,
+<code>B &lt;- ~C</code> is accepted by the assembler and transformed into <code>B &lt;- C ^~ A</code>.</p>
 
-<ul>
-<li>a <a href="https://github.com/kulp/toycen">C compiler</a>
-</li>
-<li>a novel operating system</li>
-</ul><p>The novel <strong>tenyr</strong> architecture is a two's complement, 32-bit, single-core, modified Harvard architecture. It is intended that <strong>tenyr</strong> be useful as a didactic tool.</p>
+<h4>
+<a name="memory-operations" class="anchor" href="#memory-operations"><span class="octicon octicon-link"></span></a>Memory Operations</h4>
 
-<p><strong>tenyr</strong> is made available under the <a href="https://github.com/kulp/tenyr/blob/master/COPYING">MIT license</a>, and is Copyright 2011-2012 <a href="mailto:darren@kulp.ch">Darren Kulp</a> and <a href="https://github.com/kulp/tenyr/blob/master/CREDITS">contributors</a>.</p>
+<p>A memory operation looks just like a register-register operation, but
+with one side of the instruction dereferenced, using brackets :</p>
+
+<pre><code> d  &lt;- [e * 4 + f]    // a load into D
+ e  -&gt; [f &lt;&lt; 2]       // a store from E
+[f] &lt;- 2              // another kind of store, with an immediate value
+</code></pre>
+
+<p>One instruction can't have brackets on both sides of an arrow, and an
+immediate value cannot appear on the left side of an arrow. Otherwise,
+most anything that makes sense using the operations that are valid in
+<strong>tenyr</strong> should be possible.</p>
+
+<h4>
+<a name="instruction-shorthand" class="anchor" href="#instruction-shorthand"><span class="octicon octicon-link"></span></a>Instruction Shorthand</h4>
+
+<p>Although pieces of the right-hand-side of an instruction can be left
+out during assembly, under the covers all the pieces are still there ;
+the missing parts are filled in with zeros or with references to the
+special <code>A</code> register, which always contains <code>0</code>, even if it is written
+to. Therefore, each instruction in the following pairs is identical to
+the other one in the pair :</p>
+
+<pre><code>b &lt;- 3      ; b &lt;- a +  a + 3
+c &lt;- d *  e ; c &lt;- d *  e + 0
+e &lt;- 1 &lt;&lt; b ; e &lt;- 1 &lt;&lt; b + a
+</code></pre>
+
+<p>To see the expanded form, invoke the disassembler (<code>tas -d</code>) with the
+<code>-v</code> option.</p>
+
+<h4>
+<a name="control-flow" class="anchor" href="#control-flow"><span class="octicon octicon-link"></span></a>Control Flow</h4>
+
+<p><strong>tenyr</strong> has no dedicated control-flow instructions ; flow is
+controlled by updating the <code>P</code> register, which is the program counter /
+instruction pointer. Reading from <code>P</code> will produce the address of the
+currently executing instruction, plus one. Writing to it will cause the
+next instruction executed to be fetched from the address written into
+<code>P</code>. For example, if this program starts at address 0 :</p>
+
+<pre><code>B &lt;- P        // after this instruction, B contains 1
+D &lt;- 3        // after this instruction, D contains 3
+P &lt;- P - 3    // this is a loop back to the first instruction above
+</code></pre>
+
+<p>Notice that in the third instruction it was necessary to subtract 3
+instead of 2, because the value in <code>P</code> was effectively the location of
+the <em>next</em> instruction that would have been executed in the absence of
+a control flow change.</p>
+
+<p>Under normal circumstances, the programmer is not expected
+to update the <code>P</code> register in such a direct fashion,
+but rather to use a macro like <code>jnzrel(reg,target)</code> from
+<a href="https://github.com/kulp/tenyr/blob/develop/lib/common.th">common.th</a> :</p>
+
+<pre><code>    D &lt;- 5
+    C &lt;- 10
+loop_top:
+    C &lt; C - 1
+    N &lt;- C &gt; D
+    jnzrel(N,loop_top)
+</code></pre>
+
+<p>where <code>loop_top</code> is a label to jump to, and <code>jnzrel</code> means "jump if not
+zero to relative" (admittedly, this is not a very good name, because
+<code>N</code> needs to be <code>-1</code> not merely nonzero).</p>
+
+<p>Notice that we used <code>&gt;</code> even though this is not one of the supported
+operations. The assembler accepts <code>&gt;</code> and rewrites it into a valid
+<strong>tenyr</strong> instruction by swapping the order of the operands and using
+<code>&lt;</code> instead. An analogous transformation occurs for <code>&lt;=</code>.</p>
+
+<h4>
+<a name="special-instructions" class="anchor" href="#special-instructions"><span class="octicon octicon-link"></span></a>Special instructions</h4>
+
+<p>There is currently one special instruction, written as <code>illegal</code>
+; it stops program execution in the simulator. It is currently not
+implemented in hardware (use an infinite loop instead, such as <code>P &lt;- P -
+1</code>). Eventually it will be a specific case of a more generic exception
+mechanism, but for now it is the only "trap" instruction <strong>tenyr</strong> has.</p>
+
+<h4>
+<a name="labels" class="anchor" href="#labels"><span class="octicon octicon-link"></span></a>Labels</h4>
+
+<p>Labels can be used to identify segments of code and data. A label
+is defined by a sequence of alphanumeric characters and underscores,
+where that sequence cannot look like a register name (this restriction
+may be relaxed in the future). A label is referred to by prefixing <code>@</code>
+to its name :</p>
+
+<pre><code>data:
+    .word 0xdeadbeef
+top:
+    B &lt;- C
+    D &lt;- @data
+    E &lt;- @top
+</code></pre>
+
+<p>Getting the value of <code>@label</code> isn't very useful, though, because
+that value is relative to where the code was loaded in memory. So if
+code was loaded at the default address of <code>0x1000</code>, one would need to
+add <code>0x1000</code> to <code>@data</code> to get the absolute value in memory. This is
+easier when using the special label <code>.</code> ; then the expression <code>P - .</code>
+will be the loading offset. This is handled by the <code>rel()</code> macro from
+<a href="https://github.com/kulp/tenyr/blob/develop/lib/common.th">common.th</a>.
+Think of <code>rel()</code> as producing a "relocated" address from a relative one.</p>
+
+<h4>
+<a name="immediates" class="anchor" href="#immediates"><span class="octicon octicon-link"></span></a>Immediates</h4>
+
+<p>Immediate values are 12 bits wide, thus ranging from -2048 to 2047. ASCII
+(the ASCII subset of UTF-32, really) character constants can appear in
+immediate expressions :</p>
+
+<pre><code>B &lt;- '$'
+C &lt;- 4
+</code></pre>
+
+<p>An immediate value can also be an expression with multiple terms, as
+long as :</p>
+
+<ol>
+<li>all of the terms are constants</li>
+<li>the entire expression is enclosed in parentheses</li>
+<li>a <code>@label</code> reference occurs at most once</li>
+</ol><p>The result of an immediate expression is computed in the assembler,
+and only the resulting immediate value is written out. Many of the
+<strong>tenyr</strong> operations can be used in immediate expressions, too, as well
+as one that isn't available : integer division, with <code>/</code>. Be aware that
+currently there is no operator precedence within an immediate expression ;
+expressions are evaluated left-to-right.</p>
+
+<pre><code>B &lt;- B ^ ('A' ^ 'a')  // flip capitalisation of the character in B
+C &lt;- ((124 - 1) | 1)  // after this instruction, C will contain the value 123
+D &lt;- (8 / 4)          // D will contain 2
+E &lt;- (16 - 8 / 4)     // E will contain 2, not 14
+</code></pre>
+
+<h4>
+<a name="directives" class="anchor" href="#directives"><span class="octicon octicon-link"></span></a>Directives</h4>
+
+<p>There are a few assembly directives to make assembly easier :</p>
+
+<pre><code>.word 0, 1, 2, 0x1234, 'A', 'B'    // each value is expanded to a 32-bit word
+.utf32 "Hello, world"              // each character is saved in a 32-bit word
+.zero 0x14                         // this creates 0x14 = 20 zeros in a row
+</code></pre>
+
+<h3>
+<a name="caveats" class="anchor" href="#caveats"><span class="octicon octicon-link"></span></a>Caveats</h3>
+
+<p>It is intended that disassembling a program and reassembling it will
+produce an identical binary, but this is not yet guaranteed. Because
+most word-sized bit-patterns are valid <strong>tenyr</strong> instructions, and
+because the default disassembly of a constant value might be reassembled
+as a different value, it is recommended to use <code>-v</code> to produce verbose
+disassembly if reassembly is intended. File a bug on any situation where
+an assembler-disassembler-assembler round-trip does not produce identical
+output on each round.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/kulp">kulp</a></p>
