@@ -15,7 +15,7 @@ focuses on simplicity of design and implementation. **tenyr** comprises :
 * a [standard library](https://github.com/kulp/tenyr/tree/develop/lib) of tenyr code
 * some [example software](https://github.com/kulp/tenyr/tree/develop/ex), including :
   * a [timer](https://github.com/kulp/tenyr/blob/develop/ex/clock.tas.cpp)
-  * [random snakes](https://github.com/kulp/tenyr/blob/develop/ex/bm_snake.tas.cpp)
+  * [random snakes](https://github.com/kulp/tenyr/blob/develop/ex/bm_snake.tas.cpp) ([running in the simulator](https://vimeo.com/98338696), [running on the FPGA](https://vimeo.com/103773300))
   * a [recursive Fibonacci number generator](https://github.com/kulp/tenyr/blob/develop/ex/bm_fib.tas.cpp)
   
 Someday it will also include :
