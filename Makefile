@@ -92,12 +92,17 @@ else
 .PHONY: all check coverage
 all: $(TARGETS)
 
-.PHONY: gzip
+.PHONY: gzip zip
 gzip: tenyr-$(BUILD_NAME).tar.gz
+zip: tenyr-$(BUILD_NAME).zip
 
 tenyr-$(BUILD_NAME).tar.gz: INSTALL_DIR := $(shell mktemp -d tenyr.gzip.XXXXXX)/tenyr-$(BUILD_NAME)
 tenyr-$(BUILD_NAME).tar.gz: local-install
 	tar zcf $@ -C $(INSTALL_DIR)/.. .
+
+tenyr-$(BUILD_NAME).zip: INSTALL_DIR := $(shell mktemp -d tenyr.zip.XXXXXX)/tenyr-$(BUILD_NAME)
+tenyr-$(BUILD_NAME).zip: local-install
+	orig=$(abspath $@) && (cd $(INSTALL_DIR)/.. ; zip -r $$orig .)
 
 clobber_FILES += $(BUILDDIR)/*.gc??
 coverage: CFLAGS  += --coverage
