@@ -13,8 +13,8 @@ __boot:
 
     .global _PSPinit
     .global _RSPinit
-_PSPinit:   .word   0x007fffff
-_RSPinit:   .word   0x00ffffff
+_PSPinit:   .word   ((1 << 13) - 1)
+_RSPinit:   .word   ((1 << 14) - 1)
 
 // TODO smudge internal words
 head(RESET_RSP,RESET_RSP): .word . + 1
