@@ -29,7 +29,7 @@ head(NEXT,NEXT):
     jmp(X)
 
 head(ENTER,ENTER):
-    .word . + 1
+    // ENTER is special and does not have an interp-word entry
     push(R,I)
     I  <- W + 1
     goto(NEXT)
