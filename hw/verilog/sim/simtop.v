@@ -33,6 +33,7 @@ module Top();
     integer irq_size = 1024;
     integer periods = 64;
     integer clk_count = 0;
+    integer insn_count = 0;
     integer temp;
     initial #0 begin
         for (temp = 0; temp < 1024; temp = temp + 1)
@@ -73,7 +74,12 @@ module Top();
         end
     endtask
 
-    always #`CLOCKPERIOD clk_count = clk_count + 1;
+    always #`CLOCKPERIOD begin
+		clk_count = clk_count + 1;
+        if (tenyr.core.state == tenyr.core.s6) begin
+            insn_count = insn_count + 1;
+        end
+	end
 
     always #`CLOCKPERIOD begin
         if (irq_ptr < irq_size && irq_times[irq_ptr] == clk_count) begin
