@@ -3,7 +3,7 @@
 
 // port B is address-offset, and padded to 32 bits
 module ramwrap(
-    input clka, ena, wea, clkb, enb, web, output reg acta, actb,
+    input clka, ena, wea, clkb, enb, web, output acta, actb,
     input[PBITS-1:0] addra, input[DBITS-1:0] dina, output[DBITS-1:0] douta,
     input[PBITS-1:0] addrb, input[DBITS-1:0] dinb, output[DBITS-1:0] doutb
 );
@@ -27,9 +27,8 @@ module ramwrap(
 
 `define APROPOS(Base,Addr) `IN_RANGE(PBITS,ABITS,Base,Addr)
 
-    // TODO support use of APROPOS for blocks that are powers of two in size
-    always @(posedge clka) acta <= addra >= BASE_A && addra < BASE_A + SIZE;
-    always @(posedge clkb) actb <= addrb >= BASE_B && addrb < BASE_B + SIZE;
+    assign acta = `APROPOS(BASE_A,addra);
+    assign actb = `APROPOS(BASE_B,addrb);
 
     BlockRAM #(
         .INIT(INIT), .ZERO(ZERO), .LOAD(LOAD), .LOADFILE(LOADFILE), .SIZE(SIZE),

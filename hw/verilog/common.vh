@@ -22,13 +22,13 @@
 `ifdef __ICARUS__
 // Icarus appears to balk at part-select of concatenation
 `define IN_RANGE(AddrBits,BaseBits,Base,Addr) \
-        (Addr[AddrBits-1:BaseBits] == \
-         Base[AddrBits-1:BaseBits])
+        (Addr[AddrBits-1:BaseBits+1] == \
+         Base[AddrBits-1:BaseBits+1])
 `else
 // ISE balks at part-select with zero width, whereas Icarus accepts it
 `define IN_RANGE(AddrBits,BaseBits,Base,Addr) \
-        ({1'b1,Addr}[AddrBits:BaseBits] == \
-         {1'b1,Base}[AddrBits:BaseBits])
+        ({1'b1,Addr}[AddrBits:BaseBits+1] == \
+         {1'b1,Base}[AddrBits:BaseBits+1])
 `endif
 
 /* vi: set ts=4 sw=4 et syntax=verilog: */
