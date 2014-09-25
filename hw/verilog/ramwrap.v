@@ -25,10 +25,8 @@ module ramwrap(
     assign douta = (acta && !wea) ? douta_internal : 32'bz;
     assign doutb = (actb && !web) ? doutb_internal : 32'bz;
 
-`define APROPOS(Base,Addr) `IN_RANGE(PBITS,ABITS,Base,Addr)
-
-    assign acta = `APROPOS(BASE_A,addra);
-    assign actb = `APROPOS(BASE_B,addrb);
+    assign acta = `IN_RANGE(PBITS,ABITS,BASE_A,addra);
+    assign actb = `IN_RANGE(PBITS,ABITS,BASE_B,addrb);
 
     BlockRAM #(
         .INIT(INIT), .ZERO(ZERO), .LOAD(LOAD), .LOADFILE(LOADFILE), .SIZE(SIZE),
