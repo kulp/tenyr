@@ -2,7 +2,8 @@
 
 #include <stdlib.h>
 
-static void *user_data = NULL;
+static struct tenyr_sim_state tstate = { .cb.posedge = NULL };
+static s_cb_data user_data = { .user_data = (void*)&tstate };
 static void *pud = (void*)&user_data;
 
 static void register_genesis(void)

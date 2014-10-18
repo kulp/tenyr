@@ -5,7 +5,7 @@
 
 int tenyr_sim_genesis(p_cb_data data)
 {
-    struct tenyr_sim_state *d = *(void**)data->user_data = calloc(1, sizeof *d);
+    struct tenyr_sim_state *d = (void*)data->user_data;
 
 #if DEBUG
     d->debug = DEBUG;
@@ -39,21 +39,19 @@ int tenyr_sim_genesis(p_cb_data data)
 
 int tenyr_sim_apocalypse(p_cb_data data)
 {
-    struct tenyr_sim_state *d = *(void**)data->user_data;
+    struct tenyr_sim_state *d = (void*)data->user_data;
     if (d->debug > 4)
         vpi_printf("%s ; userdata = %p\n", __func__, data->user_data);
 
     if (d->cb.apocalypse)
         d->cb.apocalypse(d, data);
 
-    free(d);
-    *(void**)data->user_data = NULL;
     return 0;
 }
 
 int tenyr_sim_clock(p_cb_data data)
 {
-    struct tenyr_sim_state *d = *(void**)data->user_data;
+    struct tenyr_sim_state *d = (void*)data->user_data;
     int clk = data->value->value.integer;
 
     if (d->debug > 5) {
