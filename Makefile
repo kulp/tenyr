@@ -97,11 +97,11 @@ gzip: tenyr-$(BUILD_NAME).tar.gz
 zip: tenyr-$(BUILD_NAME).zip
 
 tenyr-$(BUILD_NAME).tar.gz: INSTALL_DIR := $(shell mktemp -d tenyr.gzip.XXXXXX)/tenyr-$(BUILD_NAME)
-tenyr-$(BUILD_NAME).tar.gz: local-install
+tenyr-$(BUILD_NAME).tar.gz: install
 	tar zcf $@ -C $(INSTALL_DIR)/.. .
 
 tenyr-$(BUILD_NAME).zip: INSTALL_DIR := $(shell mktemp -d tenyr.zip.XXXXXX)/tenyr-$(BUILD_NAME)
-tenyr-$(BUILD_NAME).zip: local-install
+tenyr-$(BUILD_NAME).zip: install
 	orig=$(abspath $@) && (cd $(INSTALL_DIR)/.. ; zip -r $$orig .)
 
 clobber_FILES += $(BUILDDIR)/*.gc??
@@ -166,7 +166,7 @@ debugger_parser.h debugger_parser.c: debugger_lexer.h
 parser.h parser.c: lexer.h
 
 .PHONY: install local-install
-local-install: INSTALL_DIR ?= $(TOP)/dist/$(MACHINE)
+local-install: INSTALL_DIR = $(TOP)/dist/$(MACHINE)
 local-install: install
 
 install:: $(BIN_TARGETS)
