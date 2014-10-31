@@ -19,7 +19,7 @@ $(error Set XILINX to /path/to/Xilinx/<VERSION>/ISE_DS/ISE)
 endif
 
 ARCH := lin$(shell uname -m | grep -o 64)
-BIN = $(XILINX)/bin/$(ARCH)
+BIN = $(XILINX)/bin/$(ARCH)/
 
 DESIGN       = Tenyr
 LOADSRC     ?= clock
@@ -95,29 +95,29 @@ $(XST_TMPDIR):
 
 # Don't automatically regenerate baremetal.memh (use .bmm rules to insert code)
 %.ngc: %.xst | baremetal.memh $(XST_TMPDIR)
-	$(BIN)/xst $(INTSTYLE) $(FILTER) -ifn $<
+	$(BIN)xst $(INTSTYLE) $(FILTER) -ifn $<
 
 %.ngd: %.ngc %.bmm
-	$(BIN)/ngdbuild $(FILTER) $(INTSTYLE) -bm $*.bmm -sd ipcore_dir $(addprefix -uc ,$(filter %.ucf,$^)) $< $@
+	$(BIN)ngdbuild $(FILTER) $(INTSTYLE) -bm $*.bmm -sd ipcore_dir $(addprefix -uc ,$(filter %.ucf,$^)) $< $@
 
 # -global_opt speed
 %_map.ncd: %.ngd
-	$(BIN)/map -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -logic_opt on -detail -ir off -pr b -lc auto -o $@ $< $*.pcf
+	$(BIN)map -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -logic_opt on -detail -ir off -pr b -lc auto -o $@ $< $*.pcf
 
 %.ncd: %_map.ncd
-	$(BIN)/par -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) $< $@ $*.pcf
+	$(BIN)par -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) $< $@ $*.pcf
 
 %.xdl: %.ncd
-	$(BIN)/xdl -ncd2xdl $< $@
+	$(BIN)xdl -ncd2xdl $< $@
 
 %.twx %.twr: %.ncd
-	$(BIN)/trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
+	$(BIN)trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
 
 %.bit %_bd.bmm: %.ncd
-	$(BIN)/bitgen -w $(FILTER) $(INTSTYLE) $< $*.bit $*.pcf
+	$(BIN)bitgen -w $(FILTER) $(INTSTYLE) $< $*.bit $*.pcf
 
 %_$(LOADSRC).bit: %.bit gen/$(LOADSRC).mem %_bd.bmm
-	$(BIN)/data2mem -bm $(filter %.bmm,$^) -bd $(filter %.mem,$^) -bt $< -o b $@
+	$(BIN)data2mem -bm $(filter %.bmm,$^) -bd $(filter %.mem,$^) -bt $< -o b $@
 
 %.impact.in: %.bit
 	@echo > $@.$$$$ "setMode -bs"                       && \
@@ -128,7 +128,7 @@ $(XST_TMPDIR):
 	mv $@.$$$$ $@ || rm $@.$$$$
 
 %.xsvf: %.impact.in %.bit
-	$(BIN)/impact -batch $<
+	$(BIN)impact -batch $<
 
 clean_FILES =
 clobber_FILES := $(shell cat .gitignore) $($(GIT) ls-files --others) bin/ \
