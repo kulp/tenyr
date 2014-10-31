@@ -131,5 +131,6 @@ $(XST_TMPDIR):
 	$(BIN)impact -batch $<
 
 clean_FILES =
-clobber_FILES := $(shell cat .gitignore) $($(GIT) ls-files --others) bin/ \
-                 $(shell find . -type d -empty | sort -r | xargs rmdir)
+clobber_FILES := $(shell cat .gitignore) $($(GIT) ls-files --others) bin/
+clobber::
+	find . -type d -empty | sort -r | xargs -r rmdir
