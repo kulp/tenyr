@@ -52,6 +52,11 @@ ifeq ($(OPT),1)
 OPTS_map += -logic_opt on -pr b -lc auto
 endif
 
+ifeq ($(OPT),2)
+OPTS_map += -logic_opt on -pr b -lc auto -global_opt speed
+EFFORT = -ol high
+endif
+
 Tenyr.ngc: ../verilog/common.vh
 include Tenyr.md
 
@@ -119,7 +124,6 @@ $(XST_TMPDIR):
 %.ngd: %.ngc %.bmm %.ucf
 	$(BIN)ngdbuild $(OPTS_ngdbuild) -bm $*.bmm $< $@
 
-# -global_opt speed
 %_map.ncd: %.ngd
 	$(BIN)map $(OPTS_map) -o $@ $< $*.pcf
 
