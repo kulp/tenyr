@@ -68,8 +68,8 @@ vpath %.texe    ../verilog $(TOP)/ex
 vpath %.memh    gen
 
 .PHONY: xst ngdbuild map par trce bit xsvf burn
-.PRECIOUS: %.xsvf %.bit %.ngc %.ngd %.ncd
-.SECONDARY: $(DESIGN)_bd.bmm
+.SECONDARY: $(DESIGN).ngc $(DESIGN).ngd $(DESIGN)_map.ncd $(DESIGN).ncd
+.SECONDARY: $(DESIGN).bit $(DESIGN)_bd.bmm $(DESIGN).xsvf
 xst:      $(DESIGN).ngc
 ngdbuild: $(DESIGN).ngd
 map:      $(DESIGN)_map.ncd
