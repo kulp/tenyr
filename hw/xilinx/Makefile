@@ -58,7 +58,6 @@ EFFORT = -ol high
 endif
 
 Tenyr.ngc: ../verilog/common.vh
-include Tenyr.md
 
 ################################################################################
 # General rules
@@ -89,6 +88,7 @@ burn: $(DESIGN)_$(LOADSRC).xsvf
 	flcli --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
 endif
 
+include $(DESIGN).md
 %.md: %.prj
 	perl -nae 'BEGIN{print "$*.ngc: "}$$_=$$F[2]; y/"//d; print "$$_ "' $< > $@
 
