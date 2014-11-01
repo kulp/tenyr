@@ -90,12 +90,16 @@ endif
 # force remaking %.texe because we don't have actual dependency information here
 FORCE:
 %.texe: %.tas.cpp FORCE | $(TAS) $(TLD)
-	@$(MAKE) -C $(<D) $@ TAS=$(PWD)/$(TAS) TLD=$(PWD)/$(TLD)
+	@echo -n "Recursively building $@ from $< ... "
+	@$(MAKE) -s -C $(<D) $@ TAS=$(PWD)/$(TAS) TLD=$(PWD)/$(TLD)
 	@cp -p $(<D)/$(@F) $@
+	@echo done
 
 %.texe: %.tas FORCE | $(TAS) $(TLD)
-	@$(MAKE) -C $(<D) $@ TAS=$(PWD)/$(TAS) TLD=$(PWD)/$(TLD)
+	@echo -n "Recursively building $@ from $< ... "
+	@$(MAKE) -s -C $(<D) $@ TAS=$(PWD)/$(TAS) TLD=$(PWD)/$(TLD)
 	@cp -p $(<D)/$(@F) $@
+	@echo done
 
 gen/%.memh: %.texe | $(TAS)
 	@mkdir -p $(@D)
