@@ -5,14 +5,10 @@ run
 -ofn Tenyr
 -p xc6slx16-3-csg324
 -top Tenyr
--opt_level 2
+-opt_level 1
 -keep_hierarchy Yes
 -netlist_hierarchy Rebuilt
--rtlview Yes
--read_cores NO
 -vlgincdir { "../verilog" }
 -generics { LOADFILE="baremetal.memh" }
 -resource_sharing NO
 -register_balancing Yes
--iob True
--slice_utilization_ratio_maxmargin 5
