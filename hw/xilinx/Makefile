@@ -27,7 +27,6 @@ DEFAULTSRC   = clock
 DEVICE       = xc6slx16-csg324-3
 FILTER       = -filter filter.filter
 INTSTYLE     = -intstyle silent # or xflow, or ise
-CONSTRAINTS  = Tenyr.ucf Nexys3_Master.ucf
 EFFORT       = -ol std
 THREADING    = -mt 2
 XST_TMPDIR   = xst/projnav.tmp
@@ -37,7 +36,6 @@ INTSTYLE = -intstyle xflow
 endif
 
 Tenyr.ngc: ../verilog/common.vh
-Tenyr.ngd Tenyr.twr: $(CONSTRAINTS)
 include Tenyr.md
 
 ################################################################################
@@ -98,7 +96,7 @@ $(XST_TMPDIR):
 	$(BIN)xst $(INTSTYLE) $(FILTER) -ifn $<
 
 %.ngd: %.ngc %.bmm
-	$(BIN)ngdbuild $(FILTER) $(INTSTYLE) -bm $*.bmm -sd ipcore_dir $(addprefix -uc ,$(filter %.ucf,$^)) $< $@
+	$(BIN)ngdbuild $(FILTER) $(INTSTYLE) -bm $*.bmm -sd ipcore_dir $< $@
 
 # -global_opt speed
 %_map.ncd: %.ngd
@@ -111,7 +109,7 @@ $(XST_TMPDIR):
 	$(BIN)xdl -ncd2xdl $< $@
 
 %.twx %.twr: %.ncd
-	$(BIN)trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf $(addprefix -ucf ,$(filter %.ucf,$^))
+	$(BIN)trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf -ucf $*.ucf
 
 %.bit %_bd.bmm: %.ncd
 	$(BIN)bitgen -w $(FILTER) $(INTSTYLE) $< $*.bit $*.pcf
