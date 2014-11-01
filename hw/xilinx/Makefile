@@ -85,7 +85,7 @@ burn: $(DESIGN)_$(LOADSRC).xsvf
 endif
 
 %.md: %.prj
-	perl -nae 'BEGIN{print "$*.ngc: "}$$_=$$F[2]; y/"//d; print "$$_ "' $< > $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
+	perl -nae 'BEGIN{print "$*.ngc: "}$$_=$$F[2]; y/"//d; print "$$_ "' $< > $@
 
 # force remaking %.texe because we don't have actual dependency information here
 FORCE:
@@ -103,7 +103,7 @@ gen/%.memh: %.texe | $(TAS)
 
 gen/%.mem: gen/%.memh
 	# TODO document / hoist start address
-	echo '@1000' > $@.$$$$ && cat $< >> $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
+	echo '@1000' > $@ && cat $< >> $@
 
 $(XST_TMPDIR):
 	mkdir -p $@
@@ -135,12 +135,11 @@ $(XST_TMPDIR):
 	$(BIN)data2mem -bm $(filter %.bmm,$^) -bd $(filter %.mem,$^) -bt $< -o b $@
 
 %.impact.in: %.bit
-	@echo > $@.$$$$ "setMode -bs"                       && \
-	echo >> $@.$$$$ "setCable -port xsvf -file $*.xsvf" && \
-	echo >> $@.$$$$ "addDevice -p 1 -file $<"           && \
-	echo >> $@.$$$$ "program -p 1"                      && \
-	echo >> $@.$$$$ "quit"                              && \
-	mv $@.$$$$ $@ || rm $@.$$$$
+	@echo > $@ "setMode -bs"                       && \
+	echo >> $@ "setCable -port xsvf -file $*.xsvf" && \
+	echo >> $@ "addDevice -p 1 -file $<"           && \
+	echo >> $@ "program -p 1"                      && \
+	echo >> $@ "quit"
 
 %.xsvf: %.impact.in %.bit
 	$(BIN)impact -batch $<
