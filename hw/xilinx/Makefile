@@ -4,6 +4,11 @@ include $(TOP)/mk/Makefile.rules
 
 .DEFAULT_GOAL = bit
 
+# Optimisations on by default
+OPT := 1
+# Verbosity off by default
+V   :=#
+
 TAS = ./bin/tas
 TLD = ./bin/tld
 
@@ -31,8 +36,20 @@ EFFORT       = -ol std
 THREADING    = -mt 2
 XST_TMPDIR   = xst/projnav.tmp
 
+OPTS_xst      = $(FILTER) $(INTSTYLE)
+OPTS_ngdbuild = $(FILTER) $(INTSTYLE)
+OPTS_map      = $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -w
+OPTS_par      = $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -w
+OPTS_trce     = $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths
+OPTS_bitgen   = $(FILTER) $(INTSTYLE) -w
+
 ifeq ($V,1)
 INTSTYLE = -intstyle xflow
+OPTS_map += -detail
+endif
+
+ifeq ($(OPT),1)
+OPTS_map += -logic_opt on -pr b -lc auto
 endif
 
 Tenyr.ngc: ../verilog/common.vh
@@ -93,26 +110,26 @@ $(XST_TMPDIR):
 
 # Don't automatically regenerate baremetal.memh (use .bmm rules to insert code)
 %.ngc: %.xst | baremetal.memh $(XST_TMPDIR)
-	$(BIN)xst $(INTSTYLE) $(FILTER) -ifn $<
+	$(BIN)xst $(OPTS_xst) -ifn $<
 
-%.ngd: %.ngc %.bmm
-	$(BIN)ngdbuild $(FILTER) $(INTSTYLE) -bm $*.bmm -sd ipcore_dir $< $@
+%.ngd: %.ngc %.bmm %.ucf
+	$(BIN)ngdbuild $(OPTS_ngdbuild) -bm $*.bmm $< $@
 
 # -global_opt speed
 %_map.ncd: %.ngd
-	$(BIN)map -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -logic_opt on -detail -ir off -pr b -lc auto -o $@ $< $*.pcf
+	$(BIN)map $(OPTS_map) -o $@ $< $*.pcf
 
 %.ncd: %_map.ncd
-	$(BIN)par -w $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) $< $@ $*.pcf
+	$(BIN)par $(OPTS_par) $< $@ $*.pcf
 
 %.xdl: %.ncd
 	$(BIN)xdl -ncd2xdl $< $@
 
-%.twx %.twr: %.ncd
-	$(BIN)trce $(FILTER) $(INTSTYLE) -v 3 -s 3 -n 3 -fastpaths -xml $*.twx $< -o $*.twr $*.pcf -ucf $*.ucf
+%.twx %.twr: %.ncd %.ucf
+	$(BIN)trce $(OPTS_trce) -ucf $*.ucf -xml $*.twx $< -o $*.twr $*.pcf
 
 %.bit %_bd.bmm: %.ncd
-	$(BIN)bitgen -w $(FILTER) $(INTSTYLE) $< $*.bit $*.pcf
+	$(BIN)bitgen $(OPTS_bitgen) $< $*.bit $*.pcf
 
 %_$(LOADSRC).bit: %.bit gen/$(LOADSRC).mem %_bd.bmm
 	$(BIN)data2mem -bm $(filter %.bmm,$^) -bd $(filter %.mem,$^) -bt $< -o b $@
