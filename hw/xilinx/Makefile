@@ -139,8 +139,8 @@ $(XST_TMPDIR):
 %.bit %_bd.bmm: %.ncd
 	$(BIN)bitgen $(OPTS_bitgen) $< $*.bit $*.pcf
 
-%_$(LOADSRC).bit: %.bit gen/$(LOADSRC).mem %_bd.bmm
-	$(BIN)data2mem -bm $(filter %.bmm,$^) -bd $(filter %.mem,$^) -bt $< -o b $@
+%_$(LOADSRC).bit: gen/$(LOADSRC).mem %_bd.bmm %.bit
+	$(BIN)data2mem -bd $< -bm $*_bd.bmm -bt $*.bit -o b $@
 
 %.impact.in: %.bit
 	@echo > $@ "setMode -bs"                       && \
