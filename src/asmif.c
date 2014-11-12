@@ -58,6 +58,9 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
     if ((symbol = symbol_find(list, name))) {
         if (result) {
             if (symbol->ce) {
+                if (symbol->name && !strcmp(symbol->name, name))
+                    fatal(0, "Bad use before definition of symbol `%s'", name);
+
                 struct element_list **prev = symbol->ce->deferred;
                 struct element *c = (prev && *prev) ? (*prev)->elem : NULL;
                 return ce_eval(pd, c, NULL, symbol->ce, 0, NULL, NULL, result);
