@@ -219,8 +219,11 @@ insn_inner
             free($lhs_deref); }
 
 string[outer]
-    :   /* empty */
-        {   $outer = NULL; }
+    : STRING
+        {   $outer = calloc(1, sizeof *$outer);
+            $outer->len = $STRING.len;
+            $outer->str = malloc($outer->len + 1);
+            strcopy($outer->str, $STRING.buf, $outer->len + 1); }
     | STRING string[inner]
         {   $outer = calloc(1, sizeof *$outer);
             $outer->len = $STRING.len;
