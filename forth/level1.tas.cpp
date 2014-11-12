@@ -510,12 +510,6 @@ head(ISNUMBER,?NUMBER): .word . + 1
     e -> [S + 2]
     goto(NEXT)          // return to interpreter
 
-head(DEBUG,DEBUG): .word . + 1
-    illegal
-    //@ENTER,
-    //@ABORT,
-    //@EXIT
-
 .global level1_link
 .set level1_link, @link
 
