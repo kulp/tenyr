@@ -179,8 +179,14 @@ static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
                     case '-': *result = left -  right; return 1;
                     case '*': *result = left *  right; return 1;
                     case '^': *result = left ^  right; return 1;
-                    case '/': *result = left /  right; return 1;
                     case LSH: *result = left << right; return 1;
+                    case '/': {
+                        if (right != 0)
+                            *result = left / right;
+                        else
+                            fatal(0, "Constant expression attempted %d/%d", left, right);
+                        return 1;
+                    }
                     default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
                 }
             }
