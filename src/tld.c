@@ -249,6 +249,8 @@ static int do_emit(struct link_state *s, FILE *out)
 
 int do_load_all(struct link_state *s, int count, char *names[count])
 {
+    int rc = 0;
+
     for (int i = 0; i < count; i++) {
         FILE *in = NULL;
 
@@ -263,9 +265,12 @@ int do_load_all(struct link_state *s, int count, char *names[count])
             }
         }
 
-        do_load(s, in);
+        rc = do_load(s, in);
 
         fclose(in);
+
+        if (rc)
+            return rc;
     }
 
     return 0;
@@ -314,7 +319,9 @@ int main(int argc, char *argv[])
     if (!out)
         fatal(PRINT_ERRNO, "Failed to open output file");
 
-    do_load_all(s, argc - optind, &argv[optind]);
+    rc = do_load_all(s, argc - optind, &argv[optind]);
+    if (rc)
+        fatal(PRINT_ERRNO, "Failed to load objects");
     do_link(s);
     do_emit(s, out);
     do_unload(s);
