@@ -139,10 +139,23 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
     return 0;
 }
 
-static void do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
+static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
                                        void **objtree, void **defns)
 {
     UWord reladdr = 0;
+
+    // XXX stop assuming there is only one record per object
+    if (i->rec_count != 1)
+        debug(0, "Object has more than one record, only using first");
+
+    struct objrec *r = &i->records[0];
+    if (rlc->addr < r->addr ||
+        rlc->addr - r->addr > r->size)
+    {
+        debug(0, "Invalid relocation @ 0x%08x outside record @ 0x%08x size %d",
+              rlc->addr, r->addr, r->size);
+        return 1;
+    }
 
     struct objmeta **me = tfind(&i, objtree, ptrcmp);
     if (rlc->name[0]) {
@@ -164,11 +177,12 @@ static void do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     }
     // here we actually add the found-symbol's value to the relocation
     // slot, being careful to trim to the right width
-    // XXX stop assuming there is only one record per object
-    UWord *dest = &i->records[0].data[rlc->addr - i->records[0].addr] ;
+    UWord *dest = &r->data[rlc->addr - r->addr];
     UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
     UWord updated = (*dest + reladdr) & mask;
     *dest = (*dest & ~mask) | updated;
+
+    return 0;
 }
 
 static void do_link_relocate_obj(struct obj *i, void **objtree, void **defns)
@@ -179,8 +193,14 @@ static void do_link_relocate_obj(struct obj *i, void **objtree, void **defns)
 
 static void do_link_relocate(struct obj_list *ol, void **objtree, void **defns)
 {
-    list_foreach(obj_list, Node, ol)
+    list_foreach(obj_list, Node, ol) {
+        if (!Node->obj->rec_count) {
+            debug(0, "Object has no records, skipping");
+            continue;
+        }
+
         do_link_relocate_obj(Node->obj, objtree, defns);
+    }
 }
 
 static int do_link_process(struct link_state *s)
