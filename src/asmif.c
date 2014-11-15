@@ -139,9 +139,20 @@ static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
         case CE_SYM:
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
-                struct element *dc = (*ce->symbol->ce->deferred)->elem;
-                return ce_eval(pd, evalctx, dc, ce->symbol->ce, flags, rhandler, rud, result)
-                    || (rhandler ? rhandler(pd, evalctx, dc, flags, ce, rud) : 0);
+                if (*ce->symbol->ce->deferred) {
+                    struct element *dc = (*ce->symbol->ce->deferred)->elem;
+                    return ce_eval(pd, evalctx, dc, ce->symbol->ce, flags, rhandler, rud, result)
+                        || (rhandler ? rhandler(pd, evalctx, dc, flags, ce, rud) : 0);
+                } else {
+                    /*
+                     * This is a bit of a hack (see the `D_SET` case in
+                     * handle_directive()), to prevent dereferencing NULL when
+                     * there is no instruction or data to provide context to a
+                     * deferred symbol evaluation. This code should be
+                     * readdressed when handle_directive() is made more robust.
+                     */
+                    fatal(0, "No context instruction for symbol `%s'", ce->symbol->name);
+                }
             } else {
                 const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
                 int found = symbol_lookup(pd, pd->symbols, name, result);
