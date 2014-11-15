@@ -72,7 +72,8 @@ int obj_write(struct obj *o, FILE *out)
 
 #define for_counted_get(Tag,Name,List,Count) \
     if (((List) = NULL)) {} else for (struct Tag *_f = NULL, *_l = NULL, *Name = NULL; \
-            ((Count) ? Name ? !!(Count) : !!(Name = List = calloc(Count, sizeof *Name)) : 0) && !_f; \
+            ((Count) ? Name ? !!(Count) : (!!(Name = List = calloc(Count, sizeof *Name)) || \
+                (fatal(PRINT_ERRNO, "Failed to allocate %d records for %s", Count, #List),0)) : 0) && !_f; \
             _f++) \
         for (UWord _i = (Count); _i > 0; _l ? (void)(_l->next = Name) : (void)0, _l = Name++, _i--)
 
