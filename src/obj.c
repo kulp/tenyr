@@ -4,6 +4,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 
 #define MAGIC_BYTES "TOV"
 
@@ -76,6 +78,14 @@ int obj_write(struct obj *o, FILE *out)
 
 static int obj_v0_read(struct obj *o, FILE *in)
 {
+    long where = ftell(in);
+    long filesize = LONG_MAX;
+    if (!fseek(in, 0L, SEEK_END)) { // seekable stream
+        filesize = ftell(in);
+        if (fseek(in, where, SEEK_SET))
+            fatal(PRINT_ERRNO, "Failed to seek input stream");
+    }
+
     GET(o->flags, in);
 
     GET(o->rec_count, in);
@@ -83,7 +93,14 @@ static int obj_v0_read(struct obj *o, FILE *in)
     for_counted_get(objrec, rec, o->records, o->rec_count) {
         GET(rec->addr, in);
         GET(rec->size, in);
+        long here = ftell(in);
+        if (rec->size + here > filesize) {
+            errno = EMSGSIZE;
+            return 1;
+        }
         rec->data = calloc(rec->size, sizeof *rec->data);
+        if (!rec->data)
+            fatal(PRINT_ERRNO, "Failed to allocate record data field");
         if (fread(rec->data, sizeof *rec->data, rec->size, in) != rec->size)
             fatal(PRINT_ERRNO, "Unknown error occurred while parsing object");
     }

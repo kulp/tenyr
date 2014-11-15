@@ -131,7 +131,8 @@ int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
 {
     void *ud = NULL;
     if (f->init)
-        f->init(in, ASM_DISASSEMBLE, &ud);
+        if (f->init(in, ASM_DISASSEMBLE, &ud))
+            fatal(0, "Error during initialisation for format '%s'", f->name);
 
     struct element i;
     while (f->in(in, &i, ud) > 0) {

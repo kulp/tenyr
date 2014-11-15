@@ -362,7 +362,8 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
     if (!fixup_deferred_exprs(pd)) {
         void *ud;
         if (f->init)
-            f->init(out, ASM_ASSEMBLE, &ud);
+            if (f->init(out, ASM_ASSEMBLE, &ud))
+                fatal(0, "Error during initialisation for format '%s'", f->name);
 
         list_foreach(element_list, Node, pd->top)
             // if !Node->elem, it's a placeholder or some kind of dummy
@@ -416,7 +417,8 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
     struct element i;
     void *ud = NULL;
     if (f->init)
-        f->init(in, ASM_DISASSEMBLE, &ud);
+        if (f->init(in, ASM_DISASSEMBLE, &ud))
+            fatal(0, "Error during initialisation for format '%s'", f->name);
 
     uint32_t reladdr = 0;
     while ((rc = f->in(in, &i, ud)) == 1) {
