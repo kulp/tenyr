@@ -18,9 +18,12 @@ ifeq ($(WIN32),1)
 else
  OS := $(shell uname -s)
 endif
-INCLUDE_OS = $(TOP)/src/os/$(OS)
+INCLUDE_OS = $(TOP)/src/os/$(OS) $(TOP)/src/os/default
 
-include $(TOP)/mk/Makefile.$(OS)
+include $(TOP)/mk/Makefile.default
+-include $(TOP)/mk/Makefile.$(OS)
+
+CPPFLAGS += -D"PATH_SEPARATOR_CHAR=$(PATH_SEP_CHAR)"
 
 ifeq ($(_32BIT),1)
  CFLAGS  += -m32

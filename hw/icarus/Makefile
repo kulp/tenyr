@@ -8,7 +8,7 @@ VPI_CFLAGS := $(shell $(IVERILOG)iverilog-vpi --cflags | sed s/-no-cpp-precomp//
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I$(TOP)/src
 
-INCLUDES += $(TOP)/src/os/$(OS)
+INCLUDES += $(INCLUDE_OS)
 
 clean_FILES = tenyr glue.vpi *.o
 clobber_FILES = *.vcd
