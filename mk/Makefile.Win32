@@ -4,6 +4,7 @@ DYLIB_SUFFIX = .dll
 PATH_SEP_CHAR = '\\\\'
 EXE_SUFFIX = .exe
 CFLAGS_PIC =
+CC := gcc
 ifeq ($(_32BIT),1)
  CROSS_COMPILE ?= i686-w64-mingw32-
 else

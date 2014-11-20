@@ -56,7 +56,7 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
 GIT = git --git-dir=$(TOP)/.git
-CC = $(CROSS_COMPILE)gcc
+CC := $(CROSS_COMPILE)$(CC)
 FLEX  = flex
 BISON = bison -Werror
 
