@@ -123,5 +123,4 @@ baremetal.memh
 iseconfig/*.xreport
 iseconfig/xmsgs.tags
 iseconfig/tenyr.projectmgr
-filter.filter
 bin/
