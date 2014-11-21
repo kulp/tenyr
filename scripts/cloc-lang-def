@@ -113,7 +113,7 @@ lex
     3rd_gen_scale 1.00
     end_of_line_continuation \\$
 m4
-    filter remove_matches ^dnl 
+    filter remove_matches ^dnl
     extension ac
     extension m4
     3rd_gen_scale 1.00

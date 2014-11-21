@@ -89,7 +89,7 @@
 #Net "PhyCrs" LOC = N3 | IOSTANDARD = LVCMOS33; #Bank = 3, pin name = IO_L1N_VREF, Sch name = ETH-CRS
 #Net "PhyCol" LOC = P4 | IOSTANDARD = LVCMOS33; #Bank = 3, pin name = IO_L2P, Sch name = ETH-COL
 #Net "PhyClk25Mhz" LOC = N4 | IOSTANDARD = LVCMOS33; #Unconnected if R172 is not loaded, Bank = 3, pin name = IO_L1P, Sch name = ETH-CLK25MHZ
-#Net "PhyTxd<3>" LOC = T1 | IOSTANDARD = LVCMOS33; #Bank = 3, pin name = IO_L33N_M3DQ13, Sch name = ETH-TXD3 
+#Net "PhyTxd<3>" LOC = T1 | IOSTANDARD = LVCMOS33; #Bank = 3, pin name = IO_L33N_M3DQ13, Sch name = ETH-TXD3
 #Net "PhyTxd<2>" LOC  = T2 | IOSTANDARD = LVCMOS33; #Bank = 3, pin name = IO_L33P_M3DQ12, Sch name = ETH-TXD2
 #Net "PhyTxd<1>" LOC = U1 | IOSTANDARD = LVCMOS33; #Bank = 3, pin name = IO_L32N_M3DQ15, Sch name = ETH-TXD1
 #Net "PhyTxd<0>" LOC = U2 | IOSTANDARD = LVCMOS33; #Bank = 3, pin name = IO_L32P_M3DQ14, Sch name = ETH-TXD0
@@ -166,7 +166,7 @@
 ## 12 pin connectors
 ##JA
 #Net "JA<0>" LOC = T12 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L19P, Sch name = JA1
-#Net "JA<1>" LOC = V12 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L19N, Sch name = JA2  
+#Net "JA<1>" LOC = V12 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L19N, Sch name = JA2
 #Net "JA<2>" LOC = N10 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L20P, Sch name = JA3
 #Net "JA<3>" LOC = P11 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L20N, Sch name = JA4
 #Net "JA<4>" LOC = M10 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L22P, Sch name = JA7

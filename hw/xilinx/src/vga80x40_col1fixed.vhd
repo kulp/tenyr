@@ -3,7 +3,7 @@
 --
 -- Monocrome Text Mode Video Controller VHDL Macro
 -- 80x40 characters. Pixel resolution is 640x480/60Hz
--- 
+--
 -- Copyright (c) 2007 Javier Valcarce García, javier.valcarce@gmail.com
 -- $Id$
 --
@@ -45,7 +45,7 @@ entity vga80x40 is
     B           : out std_logic;
     hsync       : out std_logic;
     vsync       : out std_logic
-    );   
+    );
 end vga80x40;
 
 
@@ -57,7 +57,7 @@ architecture rtl of vga80x40 is
   signal B_int : std_logic;
   signal hsync_int : std_logic;
   signal vsync_int : std_logic;
-  
+
   signal blank : std_logic;
   signal hctr  : integer range 793 downto 0;
   signal vctr  : integer range 524 downto 0;
@@ -66,7 +66,7 @@ architecture rtl of vga80x40 is
   signal scrx  : integer range 079 downto 0;  -- chr col   < 80 (7 bits)
   signal chry  : integer range 011 downto 0;  -- chr high  < 12 (4 bits)
   signal chrx  : integer range 007 downto 0;  -- chr width < 08 (3 bits)
-  
+
   signal losr_ce : std_logic;
   signal losr_ld : std_logic;
   signal losr_do : std_logic;
@@ -105,18 +105,18 @@ architecture rtl of vga80x40 is
       do    : out std_logic;
       di    : in  std_logic_vector(N-1 downto 0));
   end component;
-  
+
 begin
 
 -------------------------------------------------------------------------------
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
 -- hsync generator, initialized with '1'
   process (reset, clk25MHz)
   begin
     if reset = '1' then
       hsync_int <= '1';
     elsif rising_edge(clk25MHz) then
-      
+
       if (hctr > 663) and (hctr < 757) then
         hsync_int <= '0';
       else
@@ -144,15 +144,15 @@ begin
   end process;
 
 -------------------------------------------------------------------------------
--------------------------------------------------------------------------------  
--- Blank signal, 0 = no draw, 1 = visible/draw zone   
+-------------------------------------------------------------------------------
+-- Blank signal, 0 = no draw, 1 = visible/draw zone
 
 -- Proboscide99 31/08/08
 --  blank <= '0' when (hctr > 639) or (vctr > 479) else '1';
   blank <= '0' when (hctr < 8) or (hctr > 647) or (vctr > 479) else '1';
 
 -------------------------------------------------------------------------------
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
 -- flip-flips for sync of R, G y B signal, initialized with '0'
   process (reset, clk25MHz)
   begin
@@ -169,14 +169,14 @@ begin
 
 
 -------------------------------------------------------------------------------
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
   -- Control register. Individual control signal
-  cur_mode  <= octl(4); 
-  cur_blink <= octl(5); 
-  cur_en    <= octl(6); 
-  vga_en    <= octl(7); 
+  cur_mode  <= octl(4);
+  cur_blink <= octl(5);
+  cur_en    <= octl(6);
+  vga_en    <= octl(7);
   ctl_r     <= octl(2);
   ctl_g     <= octl(1);
   ctl_b     <= octl(0);
@@ -208,7 +208,7 @@ begin
     signal rom_tmp : integer range 3070 downto 0;
 
   begin
-    
+
     U_HCTR : ctrm generic map (M => 794) port map (
       reset =>reset, clk=>clk25MHz, ce =>hctr_ce, rs =>hctr_rs, do => hctr);
 
@@ -253,7 +253,7 @@ begin
 
   U_LOSR : losr generic map (N => 8)
     port map (reset, clk25MHz, losr_ld, losr_ce, losr_do, FONT_D);
-  
+
   losr_ce <= blank;
   losr_ld <= '1' when (chrx = 007) else '0';
 
@@ -261,10 +261,10 @@ begin
   R_int <= (ctl_r and y) and blank;
   G_int <= (ctl_g and y) and blank;
   B_int <= (ctl_b and y) and blank;
-  
+
   hsync <= hsync_int and vga_en;
-  vsync <= vsync_int and vga_en;  
-  
+  vsync <= vsync_int and vga_en;
+
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -280,7 +280,7 @@ begin
     signal cry_tmp : integer range 039 downto 0;
     signal crx     : integer range 079 downto 0;
     signal cry     : integer range 039 downto 0;
-    signal counter : unsigned(22 downto 0);  
+    signal counter : unsigned(22 downto 0);
   begin
 
     -- slowclk for blink hardware cursor
@@ -296,7 +296,7 @@ begin
     curen2 <= (slowclk or (not cur_blink)) and cur_en;
     yint   <= '1' when cur_mode = '0'                else small;
     y      <= (yint and curpos and curen2) xor losr_do;
-    
+
   end block;
-  
+
 end rtl;
