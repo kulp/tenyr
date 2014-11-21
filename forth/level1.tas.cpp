@@ -383,7 +383,7 @@ L_SKIP_cont: .word
     // c addr u
     @ROT,
 //@DUP, @LITERAL, 84, @PUTSN,
-    
+
     @ROT,             // u c addr
     @SWAP, @TWO_DUP,        // u addr c addr c
     @SWAP, @FETCHR,         // u addr c1 c1 c2

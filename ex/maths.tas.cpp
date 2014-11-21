@@ -2,7 +2,7 @@
 
 start:
   prologue
-  
+
   c <- 11
   d <- 5
   call(umod)

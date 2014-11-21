@@ -1,5 +1,5 @@
 #include "common.th"
-#define newline 
+#define newline
 
 _start:
     prologue

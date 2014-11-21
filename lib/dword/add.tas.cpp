@@ -7,17 +7,17 @@ dw_add:
   pushall(h,j,k)
   // Computes lower sum.
   h <- c + e
-  
+
   // Compute carry and store it in K
   j <- c < h
   k <- e < h
   k <- j & k + 1
-  
+
   // Finish computing sum.
   b <- b + k
   b <- b + d
   c <- h
-  
+
   popall(h,j,k)
   ret
 

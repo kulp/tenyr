@@ -7,12 +7,12 @@ ipow:
   push(k)
   // Initialize the return value to 1.
   b <- 1
-  
+
   // Multiply the product by C until D == 0.
 mult_loop:
   k <- d == 0
   jnzrel(k, done)
-  
+
   // Check to see if the exponent is even or not.
   k <- d & 1
   k <- k - 1
@@ -23,7 +23,7 @@ odd:
   b <- b * c
   d <- d - 1
   goto(mult_loop)
-  
+
   // If even, halve the exponent and square the base.
 even:
   c <- c * c

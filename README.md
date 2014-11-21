@@ -1,4 +1,4 @@
-# tenyr 
+# tenyr
 [![Build Status](https://travis-ci.org/kulp/tenyr.svg?branch=develop)](https://travis-ci.org/kulp/tenyr)
 
 ## Overview
@@ -17,7 +17,7 @@ focuses on simplicity of design and implementation. **tenyr** comprises :
   * a [timer](https://github.com/kulp/tenyr/blob/develop/ex/clock.tas.cpp)
   * [random snakes](https://github.com/kulp/tenyr/blob/develop/ex/bm_snake.tas.cpp) ([running in the simulator](https://vimeo.com/98338696), [running on the FPGA](https://vimeo.com/103773300))
   * a [recursive Fibonacci number generator](https://github.com/kulp/tenyr/blob/develop/ex/bm_fib.tas.cpp)
-  
+
 Someday it will also include :
 
 * a C compiler based on LCC

@@ -6,7 +6,7 @@
 
     'B', 'C',
       'D',
-      
+
       'E', 'F'
 
 # This would be nice but is not available yet ; need to review the ambiguity of
@@ -14,5 +14,5 @@
 #.utf32 "hi"
 #       "there"
 #.ascii "hello,"
-#       
+#
 # " world"

@@ -48,7 +48,7 @@ int param_get(struct param_state *pstate, char *key, size_t count, const char *v
             val[i] = r->value;
         r = r->next;
     }
-    
+
     return i;
 }
 

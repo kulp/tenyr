@@ -28,7 +28,7 @@ puts_ascii_loop:
     c <- c + 1                  // increment index for next time
 puts_ascii_inner:
     e <- b & 0xff               // mask off top bits
-    d <- e == 0                 // compare 
+    d <- e == 0                 // compare
     jnzrel(d,puts_ascii_loop)   // skip to next word if zero
     b <- b >> 8                 // shift down next character
     emit(e)                     // output character to serial device
