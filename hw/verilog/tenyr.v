@@ -17,11 +17,12 @@ endmodule
 
 module Decode(input[31:0] insn, output[3:0] idxZ, idxX, idxY, output[31:0] valI,
               output[3:0] op, output[1:0] kind,
-              output storing, deref_rhs, branching);
+              output storing, loading, deref_rhs, branching);
 
     assign {kind, storing, deref_rhs, idxZ, idxX, idxY, op, valI[11:0]} = insn;
     assign valI[31:12] = {20{valI[11]}};
     assign branching   = &idxZ & ~storing;
+    assign loading     = deref_rhs & ~storing;
 
 endmodule
 
@@ -52,7 +53,7 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
             4'b0001: rY <=  (rA  &  rB); 4'b1001: rY <=  (rA  &~ rB);
             4'b0010: rY <=  (rA  +  rB); 4'b1010: rY <=  (rA  ^  rB);
             4'b0011: rY <=  (rA  *  rB); 4'b1011: rY <=  (rA  -  rB);
-            default: rY <= 32'bx;        4'b1100: rY <=  (rA  ^~ rB);
+            4'b0100: rY <= 32'hxxxxxxxx; 4'b1100: rY <=  (rA  ^~ rB);
             4'b0101: rY <=  (rA  << rB); 4'b1101: rY <=  (rA  >> rB);
             4'b0110: rY <= -(rA  <  rB); 4'b1110: rY <= -(rA  != rB);
             4'b0111: rY <= -(rA  == rB); 4'b1111: rY <=  (rA >>> rB);
@@ -90,20 +91,19 @@ module Core(input clk, reset_n, inout wor `HALTTYPE halt, output strobe,
             s6: begin state <= s0; insn   <= i_data; /* why extra ? */  end
         endcase
 
-    Decode decode(.insn, .op, .idxZ, .idxX, .idxY, .valI, .storing, .deref_rhs,
-                  .kind, .branching);
+    Decode decode(.insn, .op, .idxZ, .idxX, .idxY, .valI, .deref_rhs,
+                  .kind, .branching, .loading, .storing);
 
     Shuf shuf(.kind, .valX, .valA, .valY, .valB, .valI, .valC);
 
     Exec exec(.clk, .en ( state == s0 ), .done ( edone ),
               .op, .valA, .valB, .valC,  .valZ ( rhs   ));
 
-    assign mem_rw  = storing;
-    assign loading = deref_rhs && !storing;
-    assign strobe  = state == s3 && (loading || storing);
-    assign nextZ   = deref_rhs ? r_data : r_irhs;
-    assign d_out   = deref_rhs ? valZ   : r_irhs;
-    assign d_addr  = deref_rhs ? r_irhs : valZ;
+    assign mem_rw = storing;
+    assign strobe = state == s3 && (loading || storing);
+    assign nextZ  = deref_rhs ? r_data : r_irhs;
+    assign d_out  = deref_rhs ? valZ   : r_irhs;
+    assign d_addr = deref_rhs ? r_irhs : valZ;
 
     wire upZ = !storing && state == s4;
     Reg regs(.clk, .nextP, .idxX, .idxY, .idxZ,
