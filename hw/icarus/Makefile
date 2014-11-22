@@ -35,8 +35,7 @@ tenyr: simtop.v top.v                               \
        simserial.v ram.v simclocks.v                \
        seg7.v hex2segments.v                        \
        ramwrap.v                                    \
-       eib.v                                        \
-       | glue.vpi trampoline.memh
+       | glue.vpi
 
 seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
 
@@ -56,12 +55,8 @@ vpath %.texe $(TOP)/ex
 LOGFILE = Top.vcd
 run_%: PLUSARGS += +PERIODS=$(PERIODS) \
                    +LOGFILE=$(LOGFILE) \
-                   +VECTORS=$(VECTORS) \
-                   $(if $(INTERRUPTS),+INTERRUPT_TIMES=$(INTERRUPTS).times \
-                                      +INTERRUPT_SIGNALS=$(INTERRUPTS).signals) \
                    #
 
-run_%: VECTORS = $(TOP)/ex/$*.vectors.memh
 run_%: %.texe tenyr
 	$(IVERILOG)vvp -n -M. tenyr +LOAD=$< $(PLUSARGS)
 

@@ -1,4 +1,3 @@
-verilog work "../verilog/eib.v"
 verilog work "../verilog/hex2segments.v"
 verilog work "../verilog/mmr.v"
 verilog work "../verilog/ram.v"

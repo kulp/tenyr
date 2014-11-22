@@ -9,6 +9,4 @@ vpath %.texe $(TOP)/ex
 vpath %.tas.cpp $(TOP)/lib
 
 # Specific rules
-trampoline.memh: irq.memh
-	cp $< $@
 

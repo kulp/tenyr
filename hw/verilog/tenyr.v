@@ -17,12 +17,10 @@ endmodule
 
 module Decode(input[31:0] insn, output[3:0] idxZ, idxX, idxY, output[31:0] valI,
               output[3:0] op, output[1:0] kind,
-              output throw, storing, deref_rhs, branching, output[4:0] vector);
+              output storing, deref_rhs, branching);
 
     assign {kind, storing, deref_rhs, idxZ, idxX, idxY, op, valI[11:0]} = insn;
     assign valI[31:12] = {20{valI[11]}};
-    assign vector      = insn[4:0];
-    assign throw       = &kind;
     assign branching   = &idxZ & ~storing;
 
 endmodule
@@ -64,56 +62,48 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
 
 endmodule
 
-module Core(input clk, reset_n, trap, inout wor `HALTTYPE halt, output strobe,
+module Core(input clk, reset_n, inout wor `HALTTYPE halt, output strobe,
             output reg[31:0] i_addr, input[31:0] i_data, output mem_rw,
             output    [31:0] d_addr, input[31:0] d_in  , output[31:0] d_out);
 
-    localparam[3:0] sI=0, s0=1, s1=2, s2=3, s3=4, s4=5, s5=6, s6=7,
-                    sE=8, sF=9, sR=10, sT=11, sW=12;
+    localparam[3:0] s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6;
 
-    wire throw, deref_rhs, branching, storing, loading, deref, edone;
+    wire deref_rhs, branching, storing, loading, edone;
     wire[ 3:0] idxX, idxY, idxZ, op;
     wire[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
-    wire[ 4:0] vector;
     wire[ 1:0] kind;
 
     reg [31:0] r_irhs, r_data, nextP, v_addr, insn;
-    reg [ 3:0] state = sI;
+    reg [ 3:0] state = s5;
 
     always @(posedge clk)
-        if (!reset_n)
-            state <= sI;
-        else case (state)
-            s0: begin state <= halt ? sI : trap ? sF : throw ? sE : s1; end
+        if (!reset_n) begin
+            state  <= s5;
+            i_addr <= `RESETVECTOR;
+        end else case (state)
+            s0: begin state <= halt  ? s0 : s1;                         end
             s1: begin state <= edone ? s2 : s1; r_irhs <= rhs;          end
             s2: begin state <= s3; /* compensate for slow memory */     end
             s3: begin state <= s4; r_data <= d_in;                      end
             s4: begin state <= s5; i_addr <= branching ? nextZ : nextP; end
             s5: begin state <= s6; nextP  <= i_addr + 1;                end
             s6: begin state <= s0; insn   <= i_data; /* why extra ? */  end
-            sE: begin state <= sR; r_irhs <= `VECTOR_ADDR | vector;     end
-            sR: begin state <= sT; v_addr <= d_in;   /* test this */    end
-            sF: begin state <= sT; v_addr <= `TRAMP_BOTTOM;             end
-            sT: begin state <= sW; r_irhs <= i_addr; /* wait for */     end
-            sW: begin state <= s5; i_addr <= v_addr; /* trap's fall */  end
-            sI: begin state <= halt ? sI : s5; i_addr <= `RESETVECTOR;  end
         endcase
 
-    Decode decode(.insn, .idxZ, .idxX, .idxY, .valI , .storing  , .deref_rhs,
-                                .kind, .op  , .throw, .branching, .vector);
+    Decode decode(.insn, .op, .idxZ, .idxX, .idxY, .valI, .storing, .deref_rhs,
+                  .kind, .branching);
 
     Shuf shuf(.kind, .valX, .valA, .valY, .valB, .valI, .valC);
 
     Exec exec(.clk, .en ( state == s0 ), .done ( edone ),
               .op, .valA, .valB, .valC,  .valZ ( rhs   ));
 
-    assign loading = (deref_rhs && !mem_rw) || state == sR;
-    assign strobe  = (state == s3 && (loading || storing)) || state == sW;
-    assign mem_rw  = storing || state == sW;
-    assign deref   = deref_rhs && (state != sT);
-    assign nextZ   = deref ? r_data : r_irhs;
-    assign d_out   = deref ? valZ   : r_irhs;
-    assign d_addr  = deref ? r_irhs : state == sW ? `TRAP_ADDR : valZ;
+    assign mem_rw  = storing;
+    assign loading = deref_rhs && !storing;
+    assign strobe  = state == s3 && (loading || storing);
+    assign nextZ   = deref_rhs ? r_data : r_irhs;
+    assign d_out   = deref_rhs ? valZ   : r_irhs;
+    assign d_addr  = deref_rhs ? r_irhs : valZ;
 
     wire upZ = !storing && state == s4;
     Reg regs(.clk, .nextP, .idxX, .idxY, .idxZ,

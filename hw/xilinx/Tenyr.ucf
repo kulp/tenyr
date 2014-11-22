@@ -17,8 +17,6 @@ TIMESPEC "TS_01" = FROM "core_clk" TO "vga_clk"  TIG;
 //TIMESPEC "TS_02" = FROM "core_clk" TO "exec_clk" TIG;
 //TIMESPEC "TS_03" = FROM "exec_clk" TO "core_clk" TIG;
 
-Net "irqs[2]" LOC = C4 | IOSTANDARD = LVCMOS33; # Bank = 0, pin name = IO_L1N_VREF, Sch name = BTNL
-Net "irqs[3]" LOC = D9 | IOSTANDARD = LVCMOS33; # Bank = 0, pin name = IO_L34P_GCLK19, Sch name = BTNR
 Net "seg<0>" LOC = T17 | IOSTANDARD = LVCMOS33; #Bank = 1, pin name = IO_L51P_M1DQ12, Sch name = CA
 Net "seg<1>" LOC = T18 | IOSTANDARD = LVCMOS33; #Bank = 1, pin name = IO_L51N_M1DQ13, Sch name = CB
 Net "seg<2>" LOC = U17 | IOSTANDARD = LVCMOS33; #Bank = 1, pin name = IO_L52P_M1DQ14, Sch name = CC

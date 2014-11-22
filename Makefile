@@ -8,7 +8,7 @@ GNUMAKEFLAGS += --no-print-directory
 
 .DEFAULT_GOAL = all
 
-DEVICES = ram sparseram debugwrap serial spi eib
+DEVICES = ram sparseram debugwrap serial spi
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
 PDEVICES += spidummy spisd spi

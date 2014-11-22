@@ -11,14 +11,13 @@
 module Tenyr(
     input clk, reset, inout wor `HALTTYPE halt,
     output[7:0] Led, output[7:0] seg, output[3:0] an,
-    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync,
-    input[31:0] irqs
+    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
 
     parameter LOADFILE = "default.memh";
     parameter RAMABITS = 13;
 
-    wire d_rw, d_strobe, trap, eib_halt;
+    wire d_rw, d_strobe;
     wire valid_clk, clk_vga, clk_core;
     wire[31:0] i_addr, i_data;
     wire[31:0] d_addr, d_to_slav;
@@ -26,7 +25,6 @@ module Tenyr(
 
     wire _reset_n = ~reset;
 
-    assign halt[`HALT_EIB] = eib_halt;
     assign Led[7:0] = halt;
 
     tenyr_mainclock clocks(
@@ -38,20 +36,8 @@ module Tenyr(
         .clk    ( clk_core ), .reset_n ( _reset_n ), .mem_rw ( d_rw      ),
         .strobe ( d_strobe ), .i_addr  ( i_addr   ), .d_addr ( d_addr    ),
         .halt   ( halt     ), .i_data  ( i_data   ), .d_in   ( d_to_mast ),
-        .trap   ( trap     ),                        .d_out  ( d_to_slav )
+                                                     .d_out  ( d_to_slav )
     );
-
-`ifdef INTERRUPTS
-    Eib eib(
-        .clk    ( clk_core ), .reset_n ( _reset_n ), .rw     ( d_rw      ),
-        .strobe ( d_strobe ), .i_addr  ( i_addr   ), .d_addr ( d_addr    ),
-        .irq    ( irqs     ), .i_data  ( i_data   ), .d_in   ( d_to_slav ),
-        .trap   ( trap     ), .halt    ( eib_halt ), .d_out  ( d_to_mast )
-    );
-`else
-    assign trap = 0;
-    assign eib_halt = 0;
-`endif
 
 // -----------------------------------------------------------------------------
 // MEMORY ----------------------------------------------------------------------
