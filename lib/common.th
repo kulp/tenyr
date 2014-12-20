@@ -17,6 +17,7 @@
 #define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
+#define illegal             p <- -1
 
 #include "push.th"
 

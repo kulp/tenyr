@@ -36,8 +36,6 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
         const struct strbuf *sym, struct const_expr *expr);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct element_list *p);
-static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
-        imm);
 
 #define YYLEX_PARAM (pd->scanner)
 
@@ -188,7 +186,7 @@ insn[outer]
     : ILLEGAL
         {   $outer = calloc(1, sizeof *$outer);
             $outer->insn.size = 1;
-            $outer->insn.u.word = -1; }
+            $outer->insn.u.word = 0xcfffffff; /* P <- -1 */ }
     | insn_inner
     | symbol ':' opt_nl insn[inner]
         {   $outer = $inner;
@@ -293,11 +291,6 @@ rhs_plain
         { $rhs_plain = make_unary_type0($x, $unary_op, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
     | unary_op regname[x]
         { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
-    | greloc_expr
-        {   /* When the RHS is just a constant, choose OR or ADD depending on
-             * what kind of constant this is likely to be. */
-            enum op op = ($greloc_expr->flags & IMM_IS_BITS) ? OP_BITWISE_OR : OP_ADD;
-            $rhs_plain = make_expr(0, 0, op, 0, 1, $greloc_expr); }
     /* type1 */
     | regname[x] native_op greloc_expr '+' regname[y]
         { $rhs_plain = make_expr(1, $x, $native_op, $y, 1, $greloc_expr); }
@@ -316,6 +309,18 @@ rhs_plain
         { $rhs_plain = make_expr(2, $x, -$sugar_op, $y, 1, $greloc_expr); }
     | regname[x] sugar_op greloc_expr
         { $rhs_plain = make_expr(2, $x, -$sugar_op, 0, 1, $greloc_expr); }
+    /* type3 */
+    | greloc_expr
+        {   struct const_expr *ce = $greloc_expr;
+            int is_bits = ce->flags & IMM_IS_BITS;
+            /* Large immediates and ones that should be expressed in
+             * hexadecimal use type3 ; others use type0. */
+            if (is_bits || ce->i != SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,ce->i)) {
+                $rhs_plain = make_expr(3, 0, OP_BITWISE_OR, 0, 1, ce);
+            } else {
+                $rhs_plain = make_expr(0, 0, OP_ADD, 0, 1, ce);
+            }
+        }
 
 unary_op
     : '~' { $unary_op = OP_BITWISE_XORN; }
@@ -380,13 +385,6 @@ reloc_unary_op
 greloc_expr
     : reloc_expr_atom
     | here_or_const_atom
-        {   struct const_expr *c = $here_or_const_atom;
-            /* More complex expressions are checked for size
-             * in fixup_deferred_exprs() */
-            if (c->type == CE_IMM)
-                check_immediate_size(pd, &yylloc, c->i);
-            $greloc_expr = c;
-        }
 
 reloc_expr[outer]
     : const_expr
@@ -496,8 +494,11 @@ static struct element *make_insn_general(struct parse_data *pd, struct
     elem->insn.size = 1;
 
     if (expr->ce) {
+        int width = (expr->type == 3)
+            ? MEDIUM_IMMEDIATE_BITWIDTH
+            : SMALL_IMMEDIATE_BITWIDTH;
         add_deferred_expr(pd, expr->ce, expr->mult, &elem->insn.u.word,
-                SMALL_IMMEDIATE_BITWIDTH, 0);
+                width, 0);
         expr->ce->insn = elem;
     }
 
@@ -816,20 +817,5 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
             tenyr_error(locp, pd, buf);
         }
     }
-}
-
-static int check_immediate_size(struct parse_data *pd, YYLTYPE *locp, uint32_t
-        imm)
-{
-    if (imm != SEXTEND32(SMALL_IMMEDIATE_BITWIDTH, imm)) {
-        char buf[128];
-        snprintf(buf, sizeof buf, "Immediate with value %#x is too large for "
-                "%d-bit signed immediate field", imm, SMALL_IMMEDIATE_BITWIDTH);
-        tenyr_error(locp, pd, buf);
-
-        return 1;
-    }
-
-    return 0;
 }
 
