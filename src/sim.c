@@ -9,9 +9,19 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 {
     uint32_t p[3] = { 0 };
     // The `type` determines which position the immediate has
-    p[type] = SEXTEND32(12, I);
-    p[2 - (type > 1)] = X;
-    p[1 - (type > 0)] = Y;
+    switch (type) {
+        case 0:
+        case 1:
+        case 2:
+            p[type] = SEXTEND32(SMALL_IMMEDIATE_BITWIDTH, I);
+            p[2 - (type > 1)] = X;
+            p[1 - (type > 0)] = Y;
+            break;
+        case 3:
+            p[0] = SEXTEND32(MEDIUM_IMMEDIATE_BITWIDTH, I);
+            p[1] = p[2] = 0;
+            break;
+    }
 
     switch (op) {
         #define Ps(x) ((( int32_t*)p)[x])
@@ -71,38 +81,33 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
 int run_instruction(struct sim_state *s, struct element *i)
 {
     int32_t *ip = &s->machine.regs[15];
+    int32_t rhs = 0;
+    uint32_t Y, imm, value;
+    int op;
 
     ++*ip;
 
+    struct instruction_type012 *g = &i->insn.u.type012;
+    struct instruction_type3   *v = &i->insn.u.type3;
+
     switch (i->insn.u.typeany.p) {
-        case 0x0:
-        case 0x1:
-        case 0x2:
-        case 0x3:
-        case 0x4:
-        case 0x5:
-        case 0x6:
-        case 0x7:
-        case 0x8:
-        case 0x9:
-        case 0xa:
-        case 0xb: {
-            struct instruction_type012 *g = &i->insn.u.type012;
-            int32_t rhs = 0;
-            uint32_t value;
-
-            do_op(g->op, g->p, &rhs, s->machine.regs[g->x],
-                                     s->machine.regs[g->y],
-                                     g->imm);
-            do_common(s, &s->machine.regs[g->z], &rhs, &value, g->dd == 2,
-                    g->dd & 1, g->dd == 3);
-
+        case 0:
+        case 1:
+        case 2:
+            Y   = s->machine.regs[g->y];
+            imm = g->imm;
+            op  = g->op;
             break;
-        }
-        default:
-            if (s->conf.abort) abort();
-            return 1;
+        case 3:
+            Y   = 0;
+            imm = v->imm;
+            op  = OP_BITWISE_OR;
+            break;
     }
+
+    do_op(op, g->p, &rhs, s->machine.regs[g->x], Y, imm);
+    do_common(s, &s->machine.regs[g->z], &rhs, &value, g->dd == 2,
+            g->dd & 1, g->dd == 3);
 
     return 0;
 }
@@ -110,6 +115,11 @@ int run_instruction(struct sim_state *s, struct element *i)
 int run_sim(struct sim_state *s, struct run_ops *ops)
 {
     while (1) {
+        if (s->machine.regs[15] == (signed)0xffffffff) { // end condition
+            if (s->conf.abort) abort();
+            return -1;
+        }
+
         struct element i;
         if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word)) {
             if (s->conf.abort) abort();
