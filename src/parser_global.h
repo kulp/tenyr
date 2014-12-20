@@ -3,10 +3,6 @@
 
 #include "ops.h"
 
-#define SMALL_IMMEDIATE_BITWIDTH    12
-#define MEDIUM_IMMEDIATE_BITWIDTH   24
-#define WORD_BITWIDTH               32
-
 struct parse_data {
     void *scanner;
     int errored;

@@ -71,36 +71,30 @@ int print_disassembly(FILE *out, struct element *i, int flags)
             return fprintf(out, "          ");
     }
 
-    int type = i->insn.u._xxxx.t;
-    switch (type) {
-        default:
-            if (i->insn.u.word == 0xffffffff)
-                return fprintf(out, "illegal");
-            else
-                return fprintf(out, ".word 0x%08x", i->insn.u.word);
+    struct instruction_typeany *g = &i->insn.u.typeany;
+    struct instruction_type012 *t = &i->insn.u.type012;
+    struct instruction_type3   *v = &i->insn.u.type3;
 
-        case 0x0:
-        case 0x1:
-        case 0x2:
-        case 0x3:
-        case 0x4:
-        case 0x5:
-        case 0x6:
-        case 0x7:
-        case 0x8:
-        case 0x9:
-        case 0xa:
-        case 0xb:
-            break;
-    }
-
-    struct instruction_general *g = &i->insn.u._0xxx;
-
-    if (!op_meta[g->op].valid)   // reserved
+    if (g->p != 3 && !op_meta[t->op].valid)   // reserved
         return fprintf(out, ".word 0x%08x", i->insn.u.word);
 
     int rd = g->dd &  1;
     int ld = g->dd == 2;
+
+    int width;
+    int32_t imm;
+    switch (g->p) {
+        case 0:
+        case 1:
+        case 2:
+            width = SMALL_IMMEDIATE_BITWIDTH;
+            imm = t->imm;
+            break;
+        case 3:
+            width = MEDIUM_IMMEDIATE_BITWIDTH;
+            imm = v->imm;
+            break;
+    }
 
     // LHS
           char    f0 = ld ? '[' : ' ';        // left side dereferenced ?
@@ -113,38 +107,40 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     // RHS
           char    f4 = rd ? '[' : ' ';        // right side dereferenced ?
           char    f5 = 'A' + g->x;            // register name for X
-    const char   *f6 = op_meta[g->op].name;   // operator name
-          char    f7 = 'A' + g->y;            // register name for Y
-          int32_t f8 = SEXTEND32(12,g->imm);  // immediate value, sign-extended
+    const char   *f6 = op_meta[t->op].name;   // operator name
+          char    f7 = 'A' + t->y;            // register name for Y
+          int32_t f8 = SEXTEND32(width,imm);  // immediate value, sign-extended
           char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
-    int hex   = op_meta[g->op].hex;
-    int inert = op_meta[g->op].inert;
+    int hex   = op_meta[t->op].hex;
+    int inert = op_meta[t->op].inert;
     int opXA  = g->x == 0;
-    int opYA  = g->y == 0;
-    int op3   = g->p ? !opYA : (!!g->imm);
-    int op2   = !inert || (g->p ? (g->imm || opYA) : !opYA);
+    int opYA  = t->y == 0;
+    int op3   = g->p ? !opYA : (!!imm);
+    int op2   = (!inert || (g->p ? (imm || opYA) : !opYA));
     int op1   = !(opXA && inert) || (!op2 && !op3);
-    int kind  = g->p;
 
     if (flags & ASM_VERBOSE)
         op1 = op2 = op3 = hex = 1;
 
-    if (!(flags & (ASM_NO_SUGAR | ASM_VERBOSE))) {
-        if (g->op == OP_BITWISE_XORN && g->y == 0) {
+    if (g->p == 3) {
+        hex = op1 = 1; // Large immediates are always emitted as hex
+        op2 = op3 = 0;
+    } else if (!(flags & (ASM_NO_SUGAR | ASM_VERBOSE))) {
+        if (t->op == OP_BITWISE_XORN && t->y == 0) {
             f7 = f5;    // Y slot is now X
             f5 = ' ';   // don't print X
             f6 = "~";   // change op to a unary not
-        } else if (g->op == OP_SUBTRACT && g->x == 0) {
+        } else if (t->op == OP_SUBTRACT && g->x == 0) {
             f5 = ' ';   // don't print X
         }
 
         // sugar for P update idiom ; prefer signed decimal operand
-        if (g->y == 15
-            && (    (g->op == OP_BITWISE_AND)
-                 || (g->op == OP_BITWISE_OR && g->x == 0)
-                 || (g->op == OP_ADD)
-                 || (g->op == OP_SUBTRACT)
+        if (t->y == 15
+            && (    (t->op == OP_BITWISE_AND)
+                 || (t->op == OP_BITWISE_OR && g->x == 0)
+                 || (t->op == OP_ADD)
+                 || (t->op == OP_SUBTRACT)
                )
            ) {
             hex = 0;
@@ -155,7 +151,7 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     // We'd like to use positional references in these format strings, but to
     // preserve compatibility with Win32 libc, we don't.
     // indices : hex, g->p, op1, op2, op3
-    static const char *fmts[C_(1,2,1,1,1)+1] = {
+    static const char *fmts[C_(1,3,1,1,1)+1] = {
       //[C_(0,0,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
         [C_(0,0,0,0,1)] = "%c%c%c %s %c"                "%d%c", // [Z] <- [          -0]
         [C_(0,0,0,1,0)] = "%c%c%c %s %c"        "%c"      "%c", // [Z] <- [     Y      ]
@@ -180,6 +176,8 @@ int print_disassembly(FILE *out, struct element *i, int flags)
         [C_(0,2,1,0,1)] = "%c%c%c %s %c%d"        " + " "%c%c", // [Z] <- [-0     +   Y]
         [C_(0,2,1,1,0)] = "%c%c%c %s %c%d %3s " "%c"      "%c", // [Z] <- [-0 - X      ]
         [C_(0,2,1,1,1)] = "%c%c%c %s %c%d %3s " "%c + " "%c%c", // [Z] <- [-0 - X +   Y]
+      //[C_(0,3,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
+        [C_(0,3,1,0,0)] = "%c%c%c %s %c%d"                "%c", // [Z] <- [-0          ]
       //[C_(1,0,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
         [C_(1,0,0,0,1)] = "%c%c%c %s %c"            "0x%08x%c", // [Z] <- [         0x0]
         [C_(1,0,0,1,0)] = "%c%c%c %s %c"       "%c"       "%c", // [Z] <- [     Y      ]
@@ -204,6 +202,8 @@ int print_disassembly(FILE *out, struct element *i, int flags)
         [C_(1,2,1,0,1)] = "%c%c%c %s %c0x%08x"       " + %c%c", // [Z] <- [0x0      + Y]
         [C_(1,2,1,1,0)] = "%c%c%c %s %c0x%08x %3s ""%c"   "%c", // [Z] <- [0x0 -  X    ]
         [C_(1,2,1,1,1)] = "%c%c%c %s %c0x%08x %3s ""%c + %c%c", // [Z] <- [0x0 -  X + Y]
+      //[C_(1,3,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
+        [C_(1,3,1,0,0)] = "%c%c%c %s %c0x%08x"            "%c", // [Z] <- [0x0         ]
     };
 
     // Centre a 1-to-3-character op
@@ -211,8 +211,8 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     snprintf(op, sizeof op, "%-2s", f6);
     f6 = op;
 
-    #define PUT(...) return fprintf(out, fmts[C_(hex,kind,op1,op2,op3)], __VA_ARGS__)
-    switch (C_(0,kind,op1,op2,op3)) {
+    #define PUT(...) return fprintf(out, fmts[C_(hex,g->p,op1,op2,op3)], __VA_ARGS__)
+    switch (C_(0,g->p,op1,op2,op3)) {
       //case C_(0,0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
         case C_(0,0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
         case C_(0,0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
@@ -237,6 +237,8 @@ int print_disassembly(FILE *out, struct element *i, int flags)
         case C_(0,2,1,0,1): PUT(f0,f1,f2,f3,f4,f8,      f7,f9); break;
         case C_(0,2,1,1,0): PUT(f0,f1,f2,f3,f4,f8,f6,f5,   f9); break;
         case C_(0,2,1,1,1): PUT(f0,f1,f2,f3,f4,f8,f6,f5,f7,f9); break;
+      //case C_(0,3,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
+        case C_(0,3,1,0,0): PUT(f0,f1,f2,f3,f4,f8,         f9); break;
 
         default:
             fatal(0, "Unsupported hex,kind,op1,op2,op3 %d,%d,%d,%d,%d",

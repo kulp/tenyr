@@ -74,7 +74,7 @@ int run_instruction(struct sim_state *s, struct element *i)
 
     ++*ip;
 
-    switch (i->insn.u._xxxx.t) {
+    switch (i->insn.u.typeany.p) {
         case 0x0:
         case 0x1:
         case 0x2:
@@ -87,7 +87,7 @@ int run_instruction(struct sim_state *s, struct element *i)
         case 0x9:
         case 0xa:
         case 0xb: {
-            struct instruction_general *g = &i->insn.u._0xxx;
+            struct instruction_type012 *g = &i->insn.u.type012;
             int32_t rhs = 0;
             uint32_t value;
 

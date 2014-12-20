@@ -484,13 +484,23 @@ static struct element *make_insn_general(struct parse_data *pd, struct
 
     int dd = ((lhs->deref | !!arrow) << 1) | expr->deref;
 
-    elem->insn.u._0xxx.p   = expr->type;
-    elem->insn.u._0xxx.dd  = dd;
-    elem->insn.u._0xxx.z   = lhs->x;
-    elem->insn.u._0xxx.x   = expr->x;
-    elem->insn.u._0xxx.op  = expr->op;
-    elem->insn.u._0xxx.y   = expr->y;
-    elem->insn.u._0xxx.imm = expr->i;
+    elem->insn.u.typeany.p  = expr->type;
+    elem->insn.u.typeany.dd = dd;
+    elem->insn.u.typeany.z  = lhs->x;
+    elem->insn.u.typeany.x  = expr->x;
+
+    switch (expr->type) {
+        case 0:
+        case 1:
+        case 2:
+            elem->insn.u.type012.op  = expr->op;
+            elem->insn.u.type012.y   = expr->y;
+            elem->insn.u.type012.imm = expr->i;
+            break;
+        case 3:
+            elem->insn.u.type3.imm = expr->i;
+    }
+
     elem->insn.size = 1;
 
     if (expr->ce) {

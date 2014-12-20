@@ -69,23 +69,37 @@
 
 #include <stdint.h>
 
+#define SMALL_IMMEDIATE_BITWIDTH    12
+#define MEDIUM_IMMEDIATE_BITWIDTH   24
+#define WORD_BITWIDTH               32
+
 // TODO assumes bits are filled in rightmost-first
 struct insn_or_data {
     union insn {
         uint32_t word;
-        struct instruction_any {
-            unsigned   : 28;    ///< unused
-            unsigned t :  4;    ///< type code
-        } _xxxx;
-        struct instruction_general {
-            unsigned imm : 12;  ///< immediate
+        struct instruction_typeany {
+            unsigned     : 20;   ///< differs by type
+            unsigned x   :  4;   ///< operand x
+            unsigned z   :  4;   ///< operand z
+            unsigned dd  :  2;   ///< dereference
+            unsigned p   :  2;   ///< type code
+        } typeany;
+        struct instruction_type012 {
+            unsigned imm : SMALL_IMMEDIATE_BITWIDTH; ///< immediate
             unsigned op  :  4;  ///< operation
             unsigned y   :  4;  ///< operand y
             unsigned x   :  4;  ///< operand x
             unsigned z   :  4;  ///< operand z
             unsigned dd  :  2;  ///< dereference
+            unsigned p   :  2;  ///< type code
+        } type012;
+        struct instruction_type3 {
+            unsigned imm : MEDIUM_IMMEDIATE_BITWIDTH; ///< immediate
+            unsigned x   :  4;  ///< operand x
+            unsigned z   :  4;  ///< operand z
+            unsigned dd  :  2;  ///< dereference
             unsigned p   :  2;  ///< expr type0 or type1
-        } _0xxx;
+        } type3;
     } u;
     uint32_t reladdr;   ///< used for CE_ICI resolving
     uint32_t size;      ///< unused for instruction, used for data
