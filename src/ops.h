@@ -1,13 +1,10 @@
 // Instructions
-// [TTTT............................] TTTT = instruction type/class
+// [TT..............................] TT = instruction type/class
 // all-zero instruction = no-op
 //  a <- a | a + 0 (and A has sticky value zero and takes no writes)
-// all-one instruction = illegal instruction
-// TTTT == 1111 : reserved
 //
 // algebraic assembler
 //
-// load/store/arith/control (TTTT = 0xxx)
 // [00DDZZZZXXXXYYYYffffIIIIIIIIIIII]
 // I = sign-extended 12-bit immediate
 // performs
@@ -31,6 +28,14 @@
 //      10 : [Z] <-  I f X + Y
 //      01 :  Z  <- [I f X + Y]
 //      11 :  Z  -> [I f X + Y]
+//
+// [11DDZZZZIIIIIIIIIIIIIIIIIIIIIIII]
+// I = sign-extended 24-bit immediate
+// performs
+// DD = 00 :  Z  <-  I
+//      10 : [Z] <-  I
+//      01 :  Z  <- [I]
+//      11 :  Z  -> [I]
 //
 //  a <- [b * c + 4]
 //  a <- [p + 3]

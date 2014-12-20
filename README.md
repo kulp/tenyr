@@ -49,18 +49,23 @@ just signed integers and bitstrings).
 
 #### Instruction Format
 
-Every **tenyr** instruction can be expressed in a single, regular,
-algebraic instruction format :
+Every **tenyr** instruction can be expressed in four algebraic
+instruction formats (type0, type1, type2, type3) :
 
 ```
-Z <- _ op _ + _
+Z <- X op Y + I
+Z <- X op I + Y
+Z <- I op X + Y
+Z <- I24
 ```
 
 where `Z` is a register, `op` is one of the accepted arithmetic
-operations, `+` is addition, two of the blanks are registers, and
-one of the blanks is an immediate value (a integer) between -2048 and
-2047. Any one of the blanks and the operation that goes before it can
-be left out. Examples :
+operations, `+` is addition, X and Y are registers, I is any immediate
+integer value between -2048 and 2047 inclusive, and I24 is any immediate
+integer value between -8388608 and 8388607 inclusive (i.e., I and I24
+are 12-bit and 24-bit signed two's-complement integers immediates).  In
+the first three formats, any one of the operands on the right hand side
+can be left out, along with the operation that precedes it. Examples :
 
 ```
 a <- a + a + 0
@@ -73,6 +78,8 @@ g <- -h
 h <- i <> 0
 i <- j < k
 j <- k
+k <- 0x89abcd
+l <- a + a + 0x89a
 ```
 
 #### Operations
@@ -185,11 +192,15 @@ operations. The assembler accepts `>` and rewrites it into a valid
 
 #### Special instructions
 
-There is currently one special instruction, written as `illegal`
-; it stops program execution in the simulator. It is currently not
-implemented in hardware (use an infinite loop instead, such as `P <- P -
-1`). Eventually it will be a specific case of a more generic exception
-mechanism, but for now it is the only "trap" instruction **tenyr** has.
+With the exception of type{0,1,2} instructions with an operation of 4
+(which is currently reserved), all 32-bit words decode to a legal
+operation of type 0, 1, 2, or 3. Previously in tenyr's history, there
+was one special instruction, written as `illegal` and encoded as
+`0xffffffff`, which stopped program execution in the simulator. This
+value now decodes as the type3 instruction `P -> [-1]`, which is not an
+illegal operation. The word `illegal` is still accepted, but it is now
+translated into the type3 operation `P <- -1`, which encodes as
+`0xcfffffff`. The simulator halts execution when `P == -1`.
 
 #### Labels
 
