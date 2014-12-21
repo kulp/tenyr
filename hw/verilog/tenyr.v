@@ -15,12 +15,19 @@ module Reg(input clk, upZ,            input[ 3:0] idxZ, idxX, idxY,
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] idxZ, idxX, idxY, output[31:0] valI,
-              output[3:0] op, output[1:0] kind,
+module Decode(input[31:0] insn, output[3:0] idxZ, output reg[3:0] idxX, idxY,
+              output reg[31:0] valI, output reg[3:0] op, output[1:0] kind,
               output storing, loading, deref_rhs, branching);
 
-    assign {kind, storing, deref_rhs, idxZ, idxX, idxY, op, valI[11:0]} = insn;
-    assign valI[31:12] = {20{valI[11]}};
+    wire [23:0] tI;
+
+    assign {kind, storing, deref_rhs, idxZ, tI} = insn;
+
+    always @* case (kind)
+        2'b11:   {idxX,idxY,op,valI[23:0],valI[31:24]} = {32'h0,tI,{8{tI[23]}}};
+        default: {idxX,idxY,op,valI[11:0],valI[31:12]} = {tI,{20{tI[11]}}};
+    endcase
+
     assign branching   = &idxZ & ~storing;
     assign loading     = deref_rhs & ~storing;
 
@@ -30,10 +37,10 @@ module Shuf(input[1:0] kind, input[31:0] valX, valY, valI,
                         output reg[31:0] valA, valB, valC);
 
     always @* case (kind)
-        2'b00:   {valA,valB,valC} = {valX,valY,valI};
-        2'b01:   {valA,valB,valC} = {valX,valI,valY};
-        2'b10:   {valA,valB,valC} = {valI,valX,valY};
-        default: {valA,valB,valC} = 'bx;
+        2'b00: {valA,valB,valC} = {valX ,valY ,valI};
+        2'b01: {valA,valB,valC} = {valX ,valI ,valY};
+        2'b10: {valA,valB,valC} = {valI ,valX ,valY};
+        2'b11: {valA,valB,valC} = {32'h0,32'h0,valI};
     endcase
 
 endmodule
