@@ -136,7 +136,7 @@ check: dogfood tools
 
 dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tas
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
-	@$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $(TAS) $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
+	$(SILENCE)$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $(TAS) $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
 
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)

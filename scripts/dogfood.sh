@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Usage: dogfood.sh tempfile-stem path-to-tas file.tas[.cpp] [ files... ]
 here=`dirname $BASH_SOURCE`
 stem=`basename $1`
@@ -16,6 +16,6 @@ for file in $* ; do
 	else
 		pp=cat
 	fi
-	$pp $file | $tas - | $tas -d -v - | tee $temp1 | $tas - | $tas -d -v - | tee $temp2 | $tas - | $tas -d -v -o $temp3 -
+	$pp $file | $tas -f text - | tee $temp1 | $tas -d -f text -v - | $tas -f text - | tee $temp2 | $tas -d -f text -v - | $tas -f text -o $temp3 -
 	diff -q $temp1 $temp2 && diff -q $temp2 $temp3 && echo $(basename $file): OK || echo $(basename $file): FAILED
 done
