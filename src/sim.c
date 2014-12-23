@@ -23,9 +23,13 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
             break;
     }
 
+    #define Ps(x) ((( int32_t*)p)[x])
+    #define Pu(x) (((uint32_t*)p)[x])
+    uint32_t pack2 = (Pu(2) << 20) & ~(-1 << 20);
+    uint32_t pack1 =  Pu(1)        & ~(-1 << 12);
+     int32_t pack0 =  Ps(0);
+
     switch (op) {
-        #define Ps(x) ((( int32_t*)p)[x])
-        #define Pu(x) (((uint32_t*)p)[x])
         case OP_ADD               : *rhs =  (Ps(2) +  Ps(1)) + Ps(0); break;
         case OP_SUBTRACT          : *rhs =  (Ps(2) -  Ps(1)) + Ps(0); break;
         case OP_MULTIPLY          : *rhs =  (Ps(2) *  Ps(1)) + Ps(0); break;
@@ -44,12 +48,14 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_BITWISE_OR        : *rhs =  (Pu(2) |  Pu(1)) + Ps(0); break;
         case OP_BITWISE_XOR       : *rhs =  (Pu(2) ^  Pu(1)) + Ps(0); break;
         case OP_BITWISE_XORN      : *rhs =  (Pu(2) ^~ Pu(1)) + Ps(0); break;
-        #undef Ps
-        #undef Pu
+
+        case OP_PACK              : *rhs =  (pack2 |  pack1) + pack0; break;
 
         default:
-            fatal(0, "Encountered reserved opcode");
+            fatal(0, "Encountered illegal opcode %d", op);
     }
+    #undef Ps
+    #undef Pu
 }
 
 static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
