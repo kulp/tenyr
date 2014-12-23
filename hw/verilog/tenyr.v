@@ -28,8 +28,8 @@ module Decode(input[31:0] insn, output[3:0] idxZ, output reg[3:0] idxX, idxY,
         default: {idxX,idxY,op,valI[11:0],valI[31:12]} = {tI,{20{tI[11]}}};
     endcase
 
-    assign branching   = &idxZ & ~storing;
-    assign loading     = deref_rhs & ~storing;
+    assign branching = &idxZ & ~storing;
+    assign loading   = deref_rhs & ~storing;
 
 endmodule
 
@@ -56,14 +56,14 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
         { rop , valZ , rA   , rB   , rC   , done , add , act    , staged } <=
         { op  , rZ   , valA , valB , valC , add  , act , staged , en     } ;
         if (staged) case (rop)
-            4'b0000: rY <=  (rA  |  rB); 4'b1000: rY <= -(rA  >= rB);
-            4'b0001: rY <=  (rA  &  rB); 4'b1001: rY <=  (rA  &~ rB);
-            4'b0010: rY <=  (rA  +  rB); 4'b1010: rY <=  (rA  ^  rB);
-            4'b0011: rY <=  (rA  *  rB); 4'b1011: rY <=  (rA  -  rB);
-            4'b0100: rY <= 32'hxxxxxxxx; 4'b1100: rY <=  (rA  ^~ rB);
-            4'b0101: rY <=  (rA  << rB); 4'b1101: rY <=  (rA  >> rB);
-            4'b0110: rY <= -(rA  <  rB); 4'b1110: rY <= -(rA  != rB);
-            4'b0111: rY <= -(rA  == rB); 4'b1111: rY <=  (rA >>> rB);
+            4'b0000: rY <=  (rA  |  rB  ); 4'b1000: rY <= -(rA  >= rB);
+            4'b0001: rY <=  (rA  &  rB  ); 4'b1001: rY <=  (rA  &~ rB);
+            4'b0010: rY <=  (rA  +  rB  ); 4'b1010: rY <=  (rA  ^  rB);
+            4'b0011: rY <=  (rA  *  rB  ); 4'b1011: rY <=  (rA  -  rB);
+            4'b0100: rY <=  {rA,rB[11:0]}; 4'b1100: rY <=  (rA  ^~ rB);
+            4'b0101: rY <=  (rA  << rB  ); 4'b1101: rY <=  (rA  >> rB);
+            4'b0110: rY <= -(rA  <  rB  ); 4'b1110: rY <= -(rA  != rB);
+            4'b0111: rY <= -(rA  == rB  ); 4'b1111: rY <=  (rA >>> rB);
         endcase
         if (act) rZ <= rY + rC;
     end
