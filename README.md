@@ -103,6 +103,7 @@ Here are the operations that **tenyr** supports :
  `B <- C >>  D` | C shift right logical D
  `B <- C <>  D` | C test not equal to D
  `B <- C >>> D` | C shift right arithmetic D
+ `B <- C ^^  D` | C pack D
 
 Some of the operations merit explanation. The comparison operations
 (`<`, `>=`, `==`, and `<>`) produce a result that is either `0` (false)
@@ -112,6 +113,11 @@ the existence of the special `&~` and `^~` operations -- when the second
 operand is a truth value, the bitwise complement works as a Boolean
 NOT. The operations also underlie some syntactical sugar ; for example,
 `B <- ~C` is accepted by the assembler and transformed into `B <- C ^~ A`.
+
+The `pack` operation (represented by `^^`) concatenates the 20 least
+significant bits of the left operand with the 12 least significant bits
+of the right operand. This operation makes it easier to construct large
+values in registers using immediates.
 
 #### Memory Operations
 
