@@ -3,6 +3,9 @@ TOP := $(dir $(makefile_path))
 include $(TOP)/mk/Makefile.common
 include $(TOP)/mk/Makefile.rules
 
+# ensure directory printing doesn't mess up check rules
+GNUMAKEFLAGS += --no-print-directory
+
 .DEFAULT_GOAL = all
 
 DEVICES = ram sparseram debugwrap serial spi eib
@@ -123,16 +126,42 @@ CLOBBER_FILES += $(BUILDDIR)/coverage_html
 coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
 
-tools: tsim tas tld
-check: dogfood tools
-	@$(MAKESTEP) -n "Compiling tests from test/ ... "
-	@$(MAKE) -s -B -C $(TOP)/test && $(MAKESTEP) ok
-	@$(MAKESTEP) -n "Compiling examples from ex/ ... "
-	@$(MAKE) -s -B -C $(TOP)/ex && $(MAKESTEP) ok
+check: check_sw check_hw
+check_sw: check_compile check_sim dogfood
+
+demos: tas tld
+	@$(MAKESTEP) -n "Rebuilding demos ... "
+	@$(MAKE) -s -B -C $(TOP)/ex qsort_demo.texe bsearch_demo.texe && $(MAKESTEP) ok
+
+check_hw:
+	@$(MAKESTEP) -n "Checking for the exixtence of Icarus Verilog ... "
+	$(SILENCE)icarus="$$($(MAKE) -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
+	if [ -n "$$icarus" ] ; then \
+		$(MAKESTEP) $$icarus ; \
+		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) check_hw_icarus ; \
+	else \
+		$(MAKESTEP) "not found" ; \
+	fi
+
+check_hw_icarus: demos
+	@$(MAKESTEP) -n "Rebuilding hardware simulator ... "
+	$(SILENCE)$(MAKE) -s -B -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
+	@$(MAKESTEP) -n "Running qsort demo (icarus) ... "
+	$(SILENCE)[ "$$($(MAKE) -s -C $(TOP)/hw/icarus run_qsort_demo PERIODS=70000 | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
+	@$(MAKESTEP) -n "Running bsearch demo (icarus) ... "
+	$(SILENCE)[ "$$($(MAKE) -s -C $(TOP)/hw/icarus run_bsearch_demo PERIODS=400000 | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD -e "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
+
+check_sim: tsim demos
 	@$(MAKESTEP) -n "Running qsort demo ... "
-	@[ "$$($(BUILDDIR)/tsim $(TOP)/ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
+	$(SILENCE)[ "$$($(BUILDDIR)/tsim $(TOP)/ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Running bsearch demo ... "
-	@[ "$$($(BUILDDIR)/tsim $(TOP)/ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
+	$(SILENCE)[ "$$($(BUILDDIR)/tsim $(TOP)/ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
+
+check_compile: tas tld
+	@$(MAKESTEP) -n "Compiling tests from test/ ... "
+	$(SILENCE)$(MAKE) -s -B -C $(TOP)/test && $(MAKESTEP) ok
+	@$(MAKESTEP) -n "Compiling examples from ex/ ... "
+	$(SILENCE)$(MAKE) -s -B -C $(TOP)/ex && $(MAKESTEP) ok
 
 dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tas
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "

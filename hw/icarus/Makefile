@@ -4,7 +4,7 @@ include $(TOP)/mk/Makefile.rules
 
 PERIODS ?= 32
 
-VPI_CFLAGS := $(shell $(IVERILOG)iverilog-vpi --cflags | sed s/-no-cpp-precomp//)
+VPI_CFLAGS := $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I$(TOP)/src
 
@@ -63,7 +63,10 @@ run_%: PLUSARGS += +PERIODS=$(PERIODS) \
 
 run_%: VECTORS = $(TOP)/ex/$*.vectors.memh
 run_%: %.texe tenyr
-	$(IVERILOG)vvp -M. tenyr +LOAD=$< $(PLUSARGS)
+	$(IVERILOG)vvp -n -M. tenyr +LOAD=$< $(PLUSARGS)
+
+has-icarus:
+	which $(IVERILOG)iverilog
 
 ##############################################################################
 
