@@ -136,7 +136,7 @@ enum op {
     OP_BITWISE_AND       = 0x1,
     OP_ADD               = 0x2,
     OP_MULTIPLY          = 0x3,
-
+    OP_PACK              = 0x4,
     OP_SHIFT_LEFT        = 0x5,
     OP_COMPARE_LT        = 0x6,
     OP_COMPARE_EQ        = 0x7,
@@ -148,8 +148,6 @@ enum op {
     OP_SHIFT_RIGHT_LOGIC = 0xd,
     OP_COMPARE_NE        = 0xe,
     OP_SHIFT_RIGHT_ARITH = 0xf,
-
-    OP_RESERVED0         = 0x4,
 };
 
 #endif

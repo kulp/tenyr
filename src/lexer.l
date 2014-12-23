@@ -102,6 +102,7 @@ illegal             { return ILLEGAL; }
 "^~"                { return XORN; }
 ">>>"               { return RSHA; }
 ">>"                { return RSH;  }
+"^^"                { return PACK; }
 <needarrow>"<-"     { return TOL;  }
 "->"                { return TOR;  }
 

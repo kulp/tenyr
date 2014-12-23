@@ -91,6 +91,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token NEQ "<>"
 %token XORN "^~"
 %token ANDN "&~"
+%token PACK "^^"
 
 %type <ce> const_expr greloc_expr reloc_expr_atom
 %type <ce> reloc_expr here_or_const_atom const_atom eref here_atom here_expr
@@ -361,6 +362,7 @@ native_op
     | "<<"  { $native_op = OP_SHIFT_LEFT       ; }
     | ">>"  { $native_op = OP_SHIFT_RIGHT_LOGIC; }
     | ">>>" { $native_op = OP_SHIFT_RIGHT_ARITH; }
+    | "^^"  { $native_op = OP_PACK             ; }
 
 sugar_op
     : '>'   { $sugar_op = -OP_COMPARE_LT; }

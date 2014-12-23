@@ -23,7 +23,7 @@ static const struct {
     [OP_ADD              ] = { "+"  , 1, 0, 1 },
     [OP_SUBTRACT         ] = { "-"  , 1, 0, 0 },
     [OP_MULTIPLY         ] = { "*"  , 1, 0, 0 },
-
+    [OP_PACK             ] = { "^^" , 1, 0, 1 },
     [OP_COMPARE_LT       ] = { "<"  , 1, 0, 0 },
     [OP_COMPARE_EQ       ] = { "==" , 1, 0, 0 },
     [OP_COMPARE_GE       ] = { ">=" , 1, 0, 0 },
@@ -36,8 +36,6 @@ static const struct {
     [OP_SHIFT_LEFT       ] = { "<<" , 1, 0, 0 },
     [OP_SHIFT_RIGHT_LOGIC] = { ">>" , 1, 0, 0 },
     [OP_SHIFT_RIGHT_ARITH] = { ">>>", 1, 0, 0 },
-
-    [OP_RESERVED0        ] = { "X0" , 0, 0, 0 },
 };
 
 static int is_printable(unsigned int ch, size_t len, char buf[len])
