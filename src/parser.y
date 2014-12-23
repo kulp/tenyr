@@ -285,6 +285,10 @@ rhs_plain
         { $rhs_plain = make_expr(0, $x, $native_op, $y, 0, NULL); }
     | regname[x]
         { $rhs_plain = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
+    | regname[x] sugar_op regname[y] '+' greloc_expr
+        { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 1, $greloc_expr); }
+    | regname[x] sugar_op regname[y]
+        { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 0, NULL); }
     | unary_op regname[x] reloc_op greloc_expr
         { $rhs_plain = make_unary_type0($x, $unary_op, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
     | unary_op regname[x]
