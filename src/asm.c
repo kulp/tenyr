@@ -16,26 +16,25 @@
 
 static const struct {
     const char name[MAX_OP_LEN + 1];
-    int valid;
     int hex;    ///< whether to use hex digits in disassembly
     int inert;  ///< if equivalent to `Z <- Y + I` when when X == A
 } op_meta[] = {
-    [OP_ADD              ] = { "+"  , 1, 0, 1 },
-    [OP_SUBTRACT         ] = { "-"  , 1, 0, 0 },
-    [OP_MULTIPLY         ] = { "*"  , 1, 0, 0 },
-    [OP_PACK             ] = { "^^" , 1, 0, 1 },
-    [OP_COMPARE_LT       ] = { "<"  , 1, 0, 0 },
-    [OP_COMPARE_EQ       ] = { "==" , 1, 0, 0 },
-    [OP_COMPARE_GE       ] = { ">=" , 1, 0, 0 },
-    [OP_COMPARE_NE       ] = { "<>" , 1, 0, 0 },
-    [OP_BITWISE_OR       ] = { "|"  , 1, 1, 1 },
-    [OP_BITWISE_AND      ] = { "&"  , 1, 1, 0 },
-    [OP_BITWISE_ANDN     ] = { "&~" , 1, 1, 0 },
-    [OP_BITWISE_XOR      ] = { "^"  , 1, 1, 1 },
-    [OP_BITWISE_XORN     ] = { "^~" , 1, 1, 0 },
-    [OP_SHIFT_LEFT       ] = { "<<" , 1, 0, 0 },
-    [OP_SHIFT_RIGHT_LOGIC] = { ">>" , 1, 0, 0 },
-    [OP_SHIFT_RIGHT_ARITH] = { ">>>", 1, 0, 0 },
+    [OP_ADD              ] = { "+"  , 0, 1 },
+    [OP_SUBTRACT         ] = { "-"  , 0, 0 },
+    [OP_MULTIPLY         ] = { "*"  , 0, 0 },
+    [OP_PACK             ] = { "^^" , 0, 1 },
+    [OP_COMPARE_LT       ] = { "<"  , 0, 0 },
+    [OP_COMPARE_EQ       ] = { "==" , 0, 0 },
+    [OP_COMPARE_GE       ] = { ">=" , 0, 0 },
+    [OP_COMPARE_NE       ] = { "<>" , 0, 0 },
+    [OP_BITWISE_OR       ] = { "|"  , 1, 1 },
+    [OP_BITWISE_AND      ] = { "&"  , 1, 0 },
+    [OP_BITWISE_ANDN     ] = { "&~" , 1, 0 },
+    [OP_BITWISE_XOR      ] = { "^"  , 1, 1 },
+    [OP_BITWISE_XORN     ] = { "^~" , 1, 0 },
+    [OP_SHIFT_LEFT       ] = { "<<" , 0, 0 },
+    [OP_SHIFT_RIGHT_LOGIC] = { ">>" , 0, 0 },
+    [OP_SHIFT_RIGHT_ARITH] = { ">>>", 0, 0 },
 };
 
 static int is_printable(unsigned int ch, size_t len, char buf[len])
@@ -72,9 +71,6 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     struct instruction_typeany *g = &i->insn.u.typeany;
     struct instruction_type012 *t = &i->insn.u.type012;
     struct instruction_type3   *v = &i->insn.u.type3;
-
-    if (g->p != 3 && !op_meta[t->op].valid)   // reserved
-        return fprintf(out, ".word 0x%08x", i->insn.u.word);
 
     int rd = g->dd &  1;
     int ld = g->dd == 2;
