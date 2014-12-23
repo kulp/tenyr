@@ -74,7 +74,6 @@ static int usage(const char *me)
            "Options:\n"
            "  -@, --options=X       use options from file X\n"
            "  -a, --address=N       load instructions into memory at word address N\n"
-           "  -d, --debug           start the simulator in debugger mode\n"
            "  -f, --format=F        select input format (%s)\n"
            "  -n, --scratch         don't run default recipes\n"
            "  -p, --param=X=Y       set parameter X to value Y\n"
@@ -372,13 +371,7 @@ int main(int argc, char *argv[])
         .post_insn = post_insn,
     };
 
-    // XXX move run_debugger to its own header file once there is something
-    // meaty to put there
-    int run_debugger(struct sim_state *s, FILE *stream);
-    if (s->conf.debugging)
-        run_debugger(s, stdin);
-    else
-        run_sim(s, &ops);
+    run_sim(s, &ops);
 
     if (in)
         fclose(in);

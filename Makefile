@@ -50,16 +50,14 @@ INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
 
 clean_FILES := $(addprefix $(BUILDDIR)/, \
                    *.o                   \
-                   debugger_parser.[ch]  \
-                   debugger_lexer.[ch]   \
                    parser.[ch]           \
                    lexer.[ch]            \
                    $(TARGETS)            \
                )#
 
 tas_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o
-tsim_OBJECTS = common.o simif.o asm.o obj.o dbg.o ffi.o plugin.o \
-               debugger_parser.o debugger_lexer.o $(DEVOBJS) sim.o param.o
+tsim_OBJECTS = common.o simif.o asm.o obj.o plugin.o \
+               $(DEVOBJS) sim.o param.o
 tld_OBJECTS  = common.o obj.o
 
 .PHONY: win32 win64
@@ -117,7 +115,7 @@ coverage.info: check
 	lcov --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
 coverage.info.trimmed: coverage.info
-	lcov --output-file $@ --remove $< '*/debugger_*.*' --remove $< '*/dbg.c'
+	lcov --output-file $@ --remove $< --remove $<
 
 coverage.info.%: coverage.info.trimmed
 	lcov --extract $< '*/$*/*' --output-file $@
@@ -179,19 +177,16 @@ asm.o: CFLAGS += -Wno-override-init
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
 # don't complain about unused values that we might use in asserts
-tas.o asm.o tsim.o sim.o simif.o dbg.o ffi.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-value
+tas.o asm.o tsim.o sim.o simif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
-ffi.o asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
+asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
 $(PDEVLIBS): lib%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o
 
 # flex-generated code we can't control warnings of as easily
-debugger_parser.o debugger_lexer.o \
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 
-lexer.o asmif.o dbg.o tas.o: parser.h
-tsim.o dbg.o debugger_lexer.o: debugger_parser.h
-debugger_parser.h debugger_parser.c: debugger_lexer.h
+lexer.o asmif.o tas.o: parser.h
 parser.h parser.c: lexer.h
 
 .PHONY: install local-install
