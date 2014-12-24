@@ -9,8 +9,8 @@ OPT := 1
 # Verbosity off by default
 V   :=#
 
-TAS = ./bin/tas
-TLD = ./bin/tld
+TAS = $(abspath .)/bin/tas
+TLD = $(abspath .)/bin/tld
 
 export TAS
 export TLD
@@ -95,19 +95,19 @@ include $(DESIGN).md
 # force remaking %.texe because we don't have actual dependency information here
 FORCE:
 %.texe: %.tas.cpp FORCE | $(TAS) $(TLD)
-	@echo -n "Recursively building $@ from $< ... "
-	@$(MAKE) -s -C $(<D) $@ TAS=$(PWD)/$(TAS) TLD=$(PWD)/$(TLD)
-	@cp -p $(<D)/$(@F) $@
-	@echo done
+	@$(MAKESTEP) -n "Recursively building $@ from $< ... "
+	$(SILENCE)$(MAKE) -s -C $(<D) $@ TAS=$(TAS) TLD=$(TLD)
+	$(SILENCE)cp -p $(<D)/$(@F) $@
+	@$(MAKESTEP) done
 
 %.texe: %.tas FORCE | $(TAS) $(TLD)
-	@echo -n "Recursively building $@ from $< ... "
-	@$(MAKE) -s -C $(<D) $@ TAS=$(PWD)/$(TAS) TLD=$(PWD)/$(TLD)
-	@cp -p $(<D)/$(@F) $@
-	@echo done
+	@$(MAKESTEP) -n "Recursively building $@ from $< ... "
+	$(SILENCE)$(MAKE) -s -C $(<D) $@ TAS=$(TAS) TLD=$(TLD)
+	$(SILENCE)cp -p $(<D)/$(@F) $@
+	@$(MAKESTEP) done
 
 gen/%.memh: %.texe | $(TAS)
-	@mkdir -p $(@D)
+	$(SILENCE)mkdir -p $(@D)
 	$(TAS) -vd $< | $(TAS) -fmemh -o $@ -
 
 gen/%.mem: gen/%.memh
