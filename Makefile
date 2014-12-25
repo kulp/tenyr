@@ -127,14 +127,14 @@ coverage_html_%: coverage.info.%
 check: check_sw check_hw
 check_sw: check_compile check_sim dogfood
 
-demos: tas tld
+demos: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Rebuilding demos ... "
 	@$(MAKE) -s -B -C $(TOP)/ex qsort_demo.texe bsearch_demo.texe && $(MAKESTEP) ok
 
 check_hw:
 	@$(MAKESTEP) -n "Checking for the exixtence of Icarus Verilog ... "
-	$(SILENCE)icarus="$$($(MAKE) -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
-	if [ -n "$$icarus" ] ; then \
+	$(SILENCE)icarus="$$($(MAKE) --no-print-directory -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
+	if [ -x "$$icarus" ] ; then \
 		$(MAKESTEP) $$icarus ; \
 		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) check_hw_icarus ; \
 	else \
@@ -149,19 +149,19 @@ check_hw_icarus: demos
 	@$(MAKESTEP) -n "Running bsearch demo (icarus) ... "
 	$(SILENCE)[ "$$($(MAKE) -s -C $(TOP)/hw/icarus run_bsearch_demo PERIODS=400000 | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD -e "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
 
-check_sim: tsim demos
+check_sim: tsim$(EXE_SUFFIX) demos
 	@$(MAKESTEP) -n "Running qsort demo ... "
-	$(SILENCE)[ "$$($(BUILDDIR)/tsim $(TOP)/ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
+	$(SILENCE)[ "$$($(BUILDDIR)/tsim$(EXE_SUFFIX) $(TOP)/ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Running bsearch demo ... "
-	$(SILENCE)[ "$$($(BUILDDIR)/tsim $(TOP)/ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
+	$(SILENCE)[ "$$($(BUILDDIR)/tsim$(EXE_SUFFIX) $(TOP)/ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
 
-check_compile: tas tld
+check_compile: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Compiling tests from test/ ... "
 	$(SILENCE)$(MAKE) -s -B -C $(TOP)/test && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Compiling examples from ex/ ... "
 	$(SILENCE)$(MAKE) -s -B -C $(TOP)/ex && $(MAKESTEP) ok
 
-dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tas
+dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tas$(EXE_SUFFIX)
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
 	$(SILENCE)$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $(TAS) $^ | grep -qi failed && $(ECHO) FAILED || $(ECHO) ok
 
