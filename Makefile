@@ -94,16 +94,27 @@ else
 all: $(TARGETS)
 
 .PHONY: gzip zip
+gzip zip: export CREATE_TEMP_INSTALL_DIR=1
+
+ifeq ($(CREATE_TEMP_INSTALL_DIR),1)
 gzip: tenyr-$(BUILD_NAME).tar.gz
 zip: tenyr-$(BUILD_NAME).zip
 
-tenyr-$(BUILD_NAME).tar.gz: INSTALL_DIR := $(shell mktemp -d tenyr.gzip.XXXXXX)/tenyr-$(BUILD_NAME)
+tenyr-$(BUILD_NAME).zip tenyr-$(BUILD_NAME).tar.gz: INSTALL_PRE := $(shell mktemp -d tenyr.dist.XXXXXX)
+tenyr-$(BUILD_NAME).zip tenyr-$(BUILD_NAME).tar.gz: INSTALL_DIR := $(INSTALL_PRE)/tenyr-$(BUILD_NAME)
+
 tenyr-$(BUILD_NAME).tar.gz: install
 	tar zcf $@ -C $(INSTALL_DIR)/.. .
+	$(RM) -r $(INSTALL_PRE)
 
-tenyr-$(BUILD_NAME).zip: INSTALL_DIR := $(shell mktemp -d tenyr.zip.XXXXXX)/tenyr-$(BUILD_NAME)
 tenyr-$(BUILD_NAME).zip: install
 	orig=$(abspath $@) && (cd $(INSTALL_DIR)/.. ; zip -r $$orig .)
+	$(RM) -r $(INSTALL_PRE)
+
+else
+gzip zip:
+	$(MAKE) -f $(makefile_path) $@
+endif
 
 clobber_FILES += $(BUILDDIR)/*.gc??
 coverage: CFLAGS  += --coverage
@@ -127,12 +138,22 @@ coverage_html_%: coverage.info.%
 check: check_sw check_hw
 check_sw: check_compile check_sim dogfood
 
+define LOCK
+lockfile -r2 $(@D)/lock.$(@F)
+endef
+
+define UNLOCK
+	$(RM) $(@D)/lock.$(@F)
+endef
+
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch
 DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
 $(DEMOFILES): %_demo.texe: %_demo.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+	$(SILENCE)$(call LOCK)
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
 	$(SILENCE)$(MAKE) -s -C $(@D) $(@F) && $(MAKESTEP) ok
+	$(SILENCE)$(call UNLOCK)
 
 check_hw:
 	@$(MAKESTEP) -n "Checking for Icarus Verilog ... "
