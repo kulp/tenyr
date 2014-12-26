@@ -111,7 +111,7 @@ coverage: LDFLAGS += --coverage
 coverage: coverage_html_src
 
 clobber_FILES += $(BUILDDIR)/coverage.info
-coverage.info: check
+coverage.info: check_sw
 	lcov --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
 coverage.info.trimmed: coverage.info
@@ -127,12 +127,15 @@ coverage_html_%: coverage.info.%
 check: check_sw check_hw
 check_sw: check_compile check_sim dogfood
 
-demos: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
-	@$(MAKESTEP) -n "Rebuilding demos ... "
-	@$(MAKE) -s -B -C $(TOP)/ex qsort_demo.texe bsearch_demo.texe && $(MAKESTEP) ok
+vpath %_demo.tas.cpp $(TOP)/ex
+DEMOS = qsort bsearch
+DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
+$(DEMOFILES): %_demo.texe: %_demo.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+	@$(MAKESTEP) -n "Building $(*F) demo ... "
+	$(SILENCE)$(MAKE) -s -C $(@D) $(@F) && $(MAKESTEP) ok
 
 check_hw:
-	@$(MAKESTEP) -n "Checking for the exixtence of Icarus Verilog ... "
+	@$(MAKESTEP) -n "Checking for Icarus Verilog ... "
 	$(SILENCE)icarus="$$($(MAKE) --no-print-directory -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
 	if [ -x "$$icarus" ] ; then \
 		$(MAKESTEP) $$icarus ; \
@@ -141,25 +144,35 @@ check_hw:
 		$(MAKESTEP) "not found" ; \
 	fi
 
-check_hw_icarus: demos
-	@$(MAKESTEP) -n "Rebuilding hardware simulator ... "
-	$(SILENCE)$(MAKE) -s -B -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
-	@$(MAKESTEP) -n "Running qsort demo (icarus) ... "
-	$(SILENCE)[ "$$($(MAKE) -s -C $(TOP)/hw/icarus run_qsort_demo PERIODS=70000 | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
-	@$(MAKESTEP) -n "Running bsearch demo (icarus) ... "
-	$(SILENCE)[ "$$($(MAKE) -s -C $(TOP)/hw/icarus run_bsearch_demo PERIODS=400000 | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD -e "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
+PERIODS_qsort   = 70000
+PERIODS_bsearch = 400000
 
-check_sim: tsim$(EXE_SUFFIX) demos
-	@$(MAKESTEP) -n "Running qsort demo ... "
-	$(SILENCE)[ "$$($(BUILDDIR)/tsim$(EXE_SUFFIX) $(TOP)/ex/qsort_demo.texe | sed -n 5p)" = "eight" ] && $(MAKESTEP) ok
-	@$(MAKESTEP) -n "Running bsearch demo ... "
-	$(SILENCE)[ "$$($(BUILDDIR)/tsim$(EXE_SUFFIX) $(TOP)/ex/bsearch_demo.texe | grep -v "not found" | wc -l | tr -d ' ')" = "11" ] && $(MAKESTEP) ok
+run_demo_qsort:   verify = sed -n 5p
+run_demo_qsort:   result = eight
+run_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
+run_demo_bsearch: result = 11
+run_demo_%:
+	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
+	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
 
-check_compile: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
-	@$(MAKESTEP) -n "Compiling tests from test/ ... "
-	$(SILENCE)$(MAKE) -s -B -C $(TOP)/test && $(MAKESTEP) ok
-	@$(MAKESTEP) -n "Compiling examples from ex/ ... "
-	$(SILENCE)$(MAKE) -s -B -C $(TOP)/ex && $(MAKESTEP) ok
+check_hw_icarus_pre:
+	@$(MAKESTEP) -n "Building hardware simulator ... "
+	$(SILENCE)$(MAKE) -s -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
+
+check_sim: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$$*_demo.texe
+check_sim: tsim$(EXE_SUFFIX)
+
+check_hw_icarus: export run=$(MAKE) -s -C $(TOP)/hw/icarus run_$$*_demo PERIODS=$$(PERIODS_$$*) | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_hw_icarus: check_hw_icarus_pre
+
+check_sim check_hw_icarus: $(DEMOFILES)
+	$(SILENCE)$(MAKE) -C $(TOP) context=$@ $(foreach d,$(DEMOS),run_demo_$d)
+
+check_compile: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+	@$(MAKESTEP) -n "Building tests from test/ ... "
+	$(SILENCE)$(MAKE) -s -C $(TOP)/test && $(MAKESTEP) ok
+	@$(MAKESTEP) -n "Building examples from ex/ ... "
+	$(SILENCE)$(MAKE) -s -C $(TOP)/ex && $(MAKESTEP) ok
 
 dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tas$(EXE_SUFFIX)
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
