@@ -4,3 +4,6 @@
 [submodule "3rdparty/lcc"]
 	path = 3rdparty/lcc
 	url = https://github.com/drh/lcc.git
+[submodule "wiki"]
+	path = wiki
+	url = https://github.com/kulp/tenyr.wiki.git

@@ -90,8 +90,13 @@ all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
 else
 
-.PHONY: all check coverage
+.PHONY: all check coverage doc
 all: $(TARGETS)
+doc: tas_usage tsim_usage tld_usage
+
+%_usage: %$(EXE_SUFFIX)
+	@$(MAKESTEP) -n "Generating usage description for $* ... "
+	$(SILENCE)PATH=$(BUILDDIR) $< --help | sed 's/^/    /;/version/s/-[0-9][0-9]*-g[[:xdigit:]]\{7\}/.../' > $(TOP)/wiki/$*--help.md && $(MAKESTEP) ok
 
 .PHONY: gzip zip
 gzip zip: export CREATE_TEMP_INSTALL_DIR=1
