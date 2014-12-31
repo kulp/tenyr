@@ -103,7 +103,7 @@ static int recipe_abort(struct sim_state *s)
 static int pre_insn(struct sim_state *s, struct element *i)
 {
     if (s->conf.verbose > 0)
-        printf("IP = 0x%06x\t", s->machine.regs[15]);
+        printf("IP = 0x%08x\t", s->machine.regs[15]);
 
     if (s->conf.verbose > 1) {
         int len = print_disassembly(stdout, i, ASM_AS_INSN);

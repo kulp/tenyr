@@ -440,7 +440,7 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
             fprintf(out, " ; ");
             print_disassembly(out, &i, ASM_AS_CHAR | flags);
             // TODO make i.reladdr correct so we can use that XXX hack
-            fprintf(out, " ; .addr 0x%06x\n", reladdr++); //i.reladdr);
+            fprintf(out, " ; .addr 0x%08x\n", reladdr++); //i.reladdr);
         } else {
             fputc('\n', out);
             // This probably means we want line-oriented output
