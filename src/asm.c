@@ -17,24 +17,25 @@
 static const struct {
     const char name[MAX_OP_LEN + 1];
     int hex;    ///< whether to use hex digits in disassembly
-    int inert;  ///< if equivalent to `Z <- Y + I` when when X == A
+    int inertX; ///< if equivalent to `Z <- Y + I` when when X == 0
+    int inertY; ///< if equivalent to `Z <- X + I` when when Y == 0
 } op_meta[] = {
-    [OP_ADD              ] = { "+"  , 0, 1 },
-    [OP_SUBTRACT         ] = { "-"  , 0, 0 },
-    [OP_MULTIPLY         ] = { "*"  , 0, 0 },
-    [OP_PACK             ] = { "^^" , 0, 1 },
-    [OP_COMPARE_LT       ] = { "<"  , 0, 0 },
-    [OP_COMPARE_EQ       ] = { "==" , 0, 0 },
-    [OP_COMPARE_GE       ] = { ">=" , 0, 0 },
-    [OP_COMPARE_NE       ] = { "<>" , 0, 0 },
-    [OP_BITWISE_OR       ] = { "|"  , 1, 1 },
-    [OP_BITWISE_AND      ] = { "&"  , 1, 0 },
-    [OP_BITWISE_ANDN     ] = { "&~" , 1, 0 },
-    [OP_BITWISE_XOR      ] = { "^"  , 1, 1 },
-    [OP_BITWISE_XORN     ] = { "^~" , 1, 0 },
-    [OP_SHIFT_LEFT       ] = { "<<" , 0, 0 },
-    [OP_SHIFT_RIGHT_LOGIC] = { ">>" , 0, 0 },
-    [OP_SHIFT_RIGHT_ARITH] = { ">>>", 0, 0 },
+    [OP_ADD              ] = { "+"  , 0, 1, 1 },
+    [OP_SUBTRACT         ] = { "-"  , 0, 0, 1 },
+    [OP_MULTIPLY         ] = { "*"  , 0, 0, 0 },
+    [OP_PACK             ] = { "^^" , 0, 1, 0 }, // pack is inert for X but not for Y
+    [OP_COMPARE_LT       ] = { "<"  , 0, 0, 0 },
+    [OP_COMPARE_EQ       ] = { "==" , 0, 0, 0 },
+    [OP_COMPARE_GE       ] = { ">=" , 0, 0, 0 },
+    [OP_COMPARE_NE       ] = { "<>" , 0, 0, 0 },
+    [OP_BITWISE_OR       ] = { "|"  , 1, 1, 1 },
+    [OP_BITWISE_AND      ] = { "&"  , 1, 0, 0 },
+    [OP_BITWISE_ANDN     ] = { "&~" , 1, 0, 1 },
+    [OP_BITWISE_XOR      ] = { "^"  , 1, 1, 1 },
+    [OP_BITWISE_XORN     ] = { "^~" , 1, 0, 0 },
+    [OP_SHIFT_LEFT       ] = { "<<" , 0, 0, 1 },
+    [OP_SHIFT_RIGHT_LOGIC] = { ">>" , 0, 0, 1 },
+    [OP_SHIFT_RIGHT_ARITH] = { ">>>", 0, 0, 1 },
 };
 
 static int is_printable(unsigned int ch, size_t len, char buf[len])
@@ -107,12 +108,12 @@ int print_disassembly(FILE *out, struct element *i, int flags)
           char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
 
     int hex   = op_meta[t->op].hex;
-    int inert = op_meta[t->op].inert;
-    int opXA  = g->x == 0;
-    int opYA  = t->y == 0;
-    int op3   = g->p ? !opYA : (!!imm);
-    int op2   = (!inert || (g->p ? (imm || opYA) : !opYA));
-    int op1   = !(opXA && inert) || (!op2 && !op3);
+    int opX0  = g->x == 0 || (imm == 0 && g->p == 2);
+    int opY0  = t->y == 0 || (imm == 0 && g->p == 1);
+    int inert = (op_meta[t->op].inertX && opX0) || (op_meta[t->op].inertY && opY0);
+    int op3   = g->p ? !opY0 : (!!imm);
+    int op2   = (!inert || (g->p ? (imm || opY0) : !opY0));
+    int op1   = !(opX0 && inert) || (!op2 && !op3);
 
     if (flags & ASM_VERBOSE)
         op1 = op2 = op3 = hex = 1;
