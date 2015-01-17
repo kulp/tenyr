@@ -65,8 +65,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %left '|'
 %left '^' "^~"
 %left '&' "&~"
-%left "==" "<>"
-%left '<' '>' "<=" ">="
+%left "==" '<' '>' "<=" ">="
 %left "<<" ">>" ">>>"
 %left '+' '-'
 %left '*' '/'
@@ -88,7 +87,6 @@ extern void tenyr_pop_state(void *yyscanner);
 %token EQ "=="
 %token GE ">="
 %token LE "<="
-%token NEQ "<>"
 %token XORN "^~"
 %token ANDN "&~"
 %token PACK "^^"

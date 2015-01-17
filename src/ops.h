@@ -40,7 +40,7 @@
 //  a <- [b * c + 4]
 //  a <- [p + 3]
 //  p <- [p + c] (jump from table)
-//  c <- c <> a (nonzero)
+//  c <- c == a (is zero ?)
 //  d <- c > d (no status flags, just bool result)
 //  e <- d >> e
 //  p <- p + -4 (jump backward)

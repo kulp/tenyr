@@ -79,8 +79,8 @@ L_snake:
 
     i <- [n + 1]
     c <- f >> i
-    h <- i <> 0 // special case when shift-value is zero : no randomness
-    c <- c & h
+    h <- i == 0 // special case when shift-value is zero : no randomness
+    c <- c &~ h
     h <- [n + 0]
     c <- c + h
     d <- j * 80 + k     // d is offset into display

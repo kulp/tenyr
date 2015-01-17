@@ -104,8 +104,8 @@ L_NODE2RANK_done:
 
 #define SIZE2RANK(B,C)  FUNCIFY2(SIZE2RANK,B,C)
 SIZE2RANK_func:
-    B   <- C <> 0
-    jzrel(B, L_SIZE2RANK_zero)
+    B   <- C == 0
+    jnzrel(B, L_SIZE2RANK_zero)
     C   <- C - 1
     C   <- C >> RANK_0_LOG
     call(ilog2)
@@ -291,8 +291,8 @@ buddy_splitnode:
     jnzrel(E,L_buddy_splitnode_done)
     B   <- 1
     GET_FULL(E,C,F)
-    E   <- E <> 0
-    jnzrel(E,L_buddy_splitnode_notempty)
+    E   <- E == 0
+    jzrel(E,L_buddy_splitnode_notempty)
 
     GET_COUNT(E,D)
     E   <- E - 1
@@ -356,8 +356,8 @@ L_buddy_alloc_rankplus:
     D   <- C < RANKS
     jzrel(D,L_buddy_alloc_rankdone)
     GET_COUNT(E,C)
-    E   <- E <> 0
-    jnzrel(E,L_buddy_alloc_rankdone)
+    E   <- E == 0
+    jzrel(E,L_buddy_alloc_rankdone)
     F   <- F + 1
     goto(L_buddy_alloc_rankplus)
 

@@ -44,9 +44,9 @@ L_put_spisd_wait:
     b <- rel(CMD_WORK)
     call(put_spi)
     b <- b & 1                  // mask off all but idle bit
-    i <- b <> 0                 // check if set
+    i <- b == 0                 // check if set
     popall(b,c,d,e)
-    jnzrel(i,L_put_spi_wait)    // loop if idle bit is set (means busy)
+    jzrel(i,L_put_spi_wait)     // loop if idle bit is set (means busy)
     ret
 //                01  |cmd-|  |cmd-argument------    ------------------|  |CRC--| 1   |rsp ---|
 CMD_TMPL: .word 0b01__000000__0000_0000_0000_0000, 0b0000_0000_0000_0000__1001010_1___1111_1111
@@ -83,8 +83,8 @@ put_spi:
 L_put_spi_wait:                 // wait for GO_BSY-bit to clear
     c <- [(SPI_BASE + 0x10)]    // read control register
     c <- c & (1 << 8)           // mask off all but GO_BSY bit
-    c <- c <> 0                 // check if set
-    jnzrel(c,L_put_spi_wait)    // loop if set
+    c <- c == 0                 // check if set
+    jzrel(c,L_put_spi_wait)     // loop if set
 
     b <- [(SPI_BASE + 0x0)]     // read response byte
     b <- b & 0xff               // chop upper bits

@@ -15,8 +15,8 @@ putnumloop:
     j -> [h + k]        // write character to display
     k <- k - 1          // go to the left one character
     c <- c >> 4         // shift down for next iteration
-    l <- c <> 0         // shall we loop ?
-    jnzrel(l,putnumloop)
+    l <- c == 0         // shall we loop ?
+    jzrel(l,putnumloop)
 
 putnumdone:
     popall_ret(h,i,j,k,l,m)

@@ -8,8 +8,8 @@ imul:
 #if IMUL_EARLY_EXITS
     b <- c == 0
     d <- d &~ b     // d = (c == 0) ? 0 : d
-    b <- d <> 0
-    jzrel(b, L_done)
+    b <- d == 0
+    jnzrel(b, L_done)
 #endif
 
     pushall(h,i,j)
@@ -28,8 +28,8 @@ L_top:
     b <- b + i
     c <- c << 1
     d <- d >> 1
-    i <- d <> 0
-    jnzrel(i, L_top)
+    i <- d == 0
+    jzrel(i, L_top)
 
     b <- b ^ j      // adjust product for signed math
     b <- b - j

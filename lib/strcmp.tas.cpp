@@ -16,14 +16,14 @@ strcmp_loop:
     jnzrel(i,strcmp_done)
     c <- c + 1          // increment index for next time
     d <- d + 1          // increment index for next time
-    e <- j <> g         // check for mismatch
-    b <- b | e          // accumulate mismatches
+    e <- j == g         // check for mismatch
+    b <- b |~ e         // accumulate mismatches
     goto(strcmp_loop)
 strcmp_done:
-    e <- j <> g         // check for mismatch
-    b <- b | e          // accumulate mismatches
-    e <- h <> i         // check for length mismatch
-    b <- b | e          // accumulate mismatches
+    e <- j == g         // check for mismatch
+    b <- b |~ e         // accumulate mismatches
+    e <- h == i         // check for length mismatch
+    b <- b |~ e         // accumulate mismatches
     popall(e,g,h,i,j)
     ret
 
@@ -46,14 +46,14 @@ strncmp_loop:
     c <- c + 1          // increment index for next time
     d <- d + 1          // increment index for next time
     e <- e - 1          // decrement length to check
-    f <- j <> g         // check for mismatch
-    b <- b | f          // accumulate mismatches
+    f <- j == g         // check for mismatch
+    b <- b |~ f         // accumulate mismatches
     goto(strncmp_loop)
 strncmp_done:
-    f <- j <> g         // check for mismatch
-    b <- b | f          // accumulate mismatches
-    f <- h <> i         // check for length mismatch
-    b <- b | f          // accumulate mismatches
+    f <- j == g         // check for mismatch
+    b <- b |~ f         // accumulate mismatches
+    f <- h == i         // check for length mismatch
+    b <- b |~ f         // accumulate mismatches
 strncmp_nreached:
     popall(f,g,h,i,j)
     ret

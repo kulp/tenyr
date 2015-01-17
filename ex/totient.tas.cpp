@@ -23,11 +23,11 @@ loop:
 
   call(gcd)
 
-  k <- b <> 1
+  k <- b == 1
 
   popall(b,c,d)
 
-  b <- b + k + 1
+  b <- b - k + 2
 
   d <- d - 1
   goto(loop)
