@@ -7,10 +7,11 @@ strtol:
     pushall(f,g,h,i)
 
     h <- e == 0
-    b <- e // in case we don't call
-    callnz(h,detect_base)
+    jzrel(h,strtol_no_call)
+    call(detect_base)
     e <- b
 
+strtol_no_call:
     h <- 36 < e
     jnzrel(h,strtol_error_EINVAL)
     h <- e < 2
