@@ -16,8 +16,8 @@ static struct const_expr *make_const_expr(enum const_expr_type type, int op,
         struct const_expr *left, struct const_expr *right, int flags);
 static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
         const_expr *defexpr);
-static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
-        *defexpr);
+static struct expr *make_unary(int op, int x, int y, int mult, struct
+        const_expr *defexpr);
 static struct element *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct element_list *make_ascii(struct cstr *cs);
@@ -87,7 +87,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token EQ "=="
 %token GE ">="
 %token LE "<="
-%token XORN "^~"
+%token ORN "|~"
 %token ANDN "&~"
 %token PACK "^^"
 
@@ -96,7 +96,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <cl> reloc_expr_list
 %type <cstr> string
 %type <dctv> directive
-%type <expr> rhs_plain rhs_deref lhs_plain lhs_deref
+%type <expr> rhs_plain rhs_sugared rhs_deref lhs_plain lhs_deref
 %type <i> arrow regname reloc_op const_op
 %type <imm> immediate
 %type <insn> insn insn_inner
@@ -275,8 +275,10 @@ lhs_deref
             $lhs_deref->deref = 1; }
 
 rhs_plain
+    /* syntax sugars */
+    : rhs_sugared
     /* type0 */
-    : regname[x] native_op regname[y] reloc_op greloc_expr
+    | regname[x] native_op regname[y] reloc_op greloc_expr
         { $rhs_plain = make_expr(0, $x, $native_op, $y, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
     | regname[x] native_op regname[y]
         { $rhs_plain = make_expr(0, $x, $native_op, $y, 0, NULL); }
@@ -286,10 +288,6 @@ rhs_plain
         { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 1, $greloc_expr); }
     | regname[x] sugar_op regname[y]
         { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 0, NULL); }
-    | unary_op regname[x] reloc_op greloc_expr
-        { $rhs_plain = make_unary_type0($x, $unary_op, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
-    | unary_op regname[x]
-        { $rhs_plain = make_unary_type0($x, $unary_op, 0, NULL); }
     /* type1 */
     | regname[x] native_op greloc_expr '+' regname[y]
         { $rhs_plain = make_expr(1, $x, $native_op, $y, 1, $greloc_expr); }
@@ -321,8 +319,16 @@ rhs_plain
             }
         }
 
+rhs_sugared
+    : unary_op regname[x]
+        { $rhs_sugared = make_unary($unary_op, $x,  0, 0, NULL); }
+    | unary_op regname[x] '+' regname[y]
+        { $rhs_sugared = make_unary($unary_op, $x, $y, 0, NULL); }
+    | unary_op regname[x] reloc_op greloc_expr
+        { $rhs_sugared = make_unary($unary_op, $x,  0, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
+
 unary_op
-    : '~' { $unary_op = OP_BITWISE_XORN; }
+    : '~' { $unary_op = OP_BITWISE_ORN; }
     | '-' { $unary_op = OP_SUBTRACT; }
 
 rhs_deref
@@ -353,10 +359,10 @@ native_op
     | ">="  { $native_op = OP_COMPARE_GE       ; }
     | "<>"  { $native_op = OP_COMPARE_NE       ; }
     | '|'   { $native_op = OP_BITWISE_OR       ; }
+    | "|~"  { $native_op = OP_BITWISE_ORN      ; }
     | '&'   { $native_op = OP_BITWISE_AND      ; }
     | "&~"  { $native_op = OP_BITWISE_ANDN     ; }
     | '^'   { $native_op = OP_BITWISE_XOR      ; }
-    | "^~"  { $native_op = OP_BITWISE_XORN     ; }
     | "<<"  { $native_op = OP_SHIFT_LEFT       ; }
     | ">>"  { $native_op = OP_SHIFT_RIGHT_LOGIC; }
     | ">>>" { $native_op = OP_SHIFT_RIGHT_ARITH; }
@@ -568,37 +574,35 @@ static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
     return e;
 }
 
-static struct expr *make_unary_type0(int x, int op, int mult, struct const_expr
-        *defexpr)
+static struct expr *make_unary(int op, int x, int y, int mult, struct
+        const_expr *defexpr)
 {
     // tenyr has no true unary ops, but the following sugars are recognised by
     // the assembler and converted into their corresponding binary equivalents :
     //
-    // b <- ~b      becomes     b <- b ^~ a
-    // b <- -b      becomes     b <- a -  b
+    // b <- ~b + 2  becomes     b <- a |~ b + 2 (type 0)
+    // b <- ~b + c  becomes     b <- 0 |~ b + c (type 2)
+    // b <- -b + 2  becomes     b <- a -  b + 2 (type 0)
+    // b <- -b + c  becomes     b <- 0 -  b + c (type 2)
 
     struct expr *e = calloc(1, sizeof *e);
 
-    switch (op) {
-        case OP_SUBTRACT:
-            e->x = 0;
-            e->y = x;
-            break;
-        case OP_BITWISE_XORN:
-            e->x = x;
-            e->y = 0;
-            break;
-    }
-
-    e->type  = 0;
     e->deref = 0;
     e->op    = op;
     e->mult  = mult;
-    e->ce    = defexpr;
-    if (defexpr)
+
+    if (defexpr) {
+        e->type = 0;
+        e->x = 0;
+        e->y = x;
+        e->ce = defexpr;
         e->i = 0xfffffbad; // put in a placeholder that must be overwritten
-    else
+    } else {
+        e->type = 2;
+        e->x = x;
+        e->y = y;
         e->i = 0; // there was no const_expr ; zero defined by language
+    }
 
     return e;
 }

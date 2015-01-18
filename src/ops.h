@@ -144,7 +144,7 @@ enum op {
     OP_BITWISE_ANDN      = 0x9,
     OP_BITWISE_XOR       = 0xa,
     OP_SUBTRACT          = 0xb,
-    OP_BITWISE_XORN      = 0xc,
+    OP_BITWISE_ORN       = 0xc,
     OP_SHIFT_RIGHT_LOGIC = 0xd,
     OP_COMPARE_NE        = 0xe,
     OP_SHIFT_RIGHT_ARITH = 0xf,
