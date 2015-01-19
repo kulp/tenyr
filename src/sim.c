@@ -34,9 +34,10 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_SUBTRACT          : *rhs =  (Ps(2) -  Ps(1)) + Ps(0); break;
         case OP_MULTIPLY          : *rhs =  (Ps(2) *  Ps(1)) + Ps(0); break;
 
-        case OP_SHIFT_LEFT        : *rhs =  (Pu(2) << Pu(1)) + Ps(0); break;
         case OP_SHIFT_RIGHT_LOGIC : *rhs =  (Pu(2) >> Pu(1)) + Ps(0); break;
         case OP_SHIFT_RIGHT_ARITH : *rhs =  (Ps(2) >> Pu(1)) + Ps(0); break;
+        case OP_SHIFT_LEFT        : *rhs =  (Pu(2) << Pu(1)) + Ps(0);
+                                    if (Pu(1) >= 32) *rhs = 0;        break;
 
         case OP_COMPARE_LT        : *rhs = -(Ps(2) <  Ps(1)) + Ps(0); break;
         case OP_COMPARE_EQ        : *rhs = -(Ps(2) == Ps(1)) + Ps(0); break;
