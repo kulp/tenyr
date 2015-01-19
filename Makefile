@@ -152,7 +152,7 @@ define UNLOCK
 endef
 
 vpath %_demo.tas.cpp $(TOP)/ex
-DEMOS = qsort bsearch
+DEMOS = qsort bsearch trailz
 DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
 $(DEMOFILES): %_demo.texe: %_demo.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	$(SILENCE)$(call LOCK)
@@ -172,11 +172,14 @@ check_hw:
 
 PERIODS_qsort   = 70000
 PERIODS_bsearch = 400000
+PERIODS_trailz  = 31850
 
 run_demo_qsort:   verify = sed -n 5p
 run_demo_qsort:   result = eight
 run_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
 run_demo_bsearch: result = 11
+run_demo_trailz:  verify = grep -c good
+run_demo_trailz:  result = 33
 run_demo_%:
 	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
 	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
