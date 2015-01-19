@@ -49,6 +49,7 @@ parse_hex.texe: strtol.to
 bm_snake.texe: rand.to
 bm_fib.texe bm_mults.texe: putnum.to
 clock.texe: sleep.to
+trailz_demo.texe: puts.to trailz.to
 
 $(patsubst %.tas.cpp,%.tas,$(CPP_FILES)): %.tas: $(TOP)/lib/common.th
 
