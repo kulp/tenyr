@@ -47,8 +47,8 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_BITWISE_AND       : *rhs =  (Pu(2) &  Pu(1)) + Ps(0); break;
         case OP_BITWISE_ANDN      : *rhs =  (Pu(2) &~ Pu(1)) + Ps(0); break;
         case OP_BITWISE_OR        : *rhs =  (Pu(2) |  Pu(1)) + Ps(0); break;
+        case OP_BITWISE_ORN       : *rhs =  (Pu(2) |~ Pu(1)) + Ps(0); break;
         case OP_BITWISE_XOR       : *rhs =  (Pu(2) ^  Pu(1)) + Ps(0); break;
-        case OP_BITWISE_XORN      : *rhs =  (Pu(2) ^~ Pu(1)) + Ps(0); break;
 
         case OP_PACK              : *rhs =  (pack2 |  pack1) + pack0; break;
 
