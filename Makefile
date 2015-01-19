@@ -154,6 +154,7 @@ endef
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz
 DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
+OPS = $(subst .tas.cpp,,$(notdir $(wildcard $(TOP)/test/ops/*.tas*)))
 $(DEMOFILES): %_demo.texe: %_demo.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	$(SILENCE)$(call LOCK)
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
@@ -180,22 +181,41 @@ run_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
 run_demo_bsearch: result = 11
 run_demo_trailz:  verify = grep -c good
 run_demo_trailz:  result = 33
-run_demo_%:
+run_demo_%: $(TOP)/ex/%_demo.texe
 	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
 	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
+
+randhex = 0x$(shell hexdump -n4 -e'"%08x"' /dev/urandom)
+test_op_%: export RAND0 := $(call randhex)
+test_op_%: export RAND1 := $(call randhex)
+test_op_%: export RAND2 := $(call randhex)
+test_op_%: export target=$(TOP)/test/ops/$*.texe
+test_op_%: $(TOP)/test/ops/%.tas.cpp
+	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) with random arguments $(RAND0), $(RAND1), $(RAND2) ... "
+	$(SILENCE)$(MAKE) -s -B -C $(TOP)/test ops/$*.texe CPPFLAGS+='-DLOAD_ADDRESS=$(LOAD_ADDRESS) -DRAND0=$(RAND0) -DRAND1=$(RAND1) -DRAND2=$(RAND2)'
+	$(SILENCE)$(run) && $(MAKESTEP) ok
 
 check_hw_icarus_pre:
 	@$(MAKESTEP) -n "Building hardware simulator ... "
 	$(SILENCE)$(MAKE) -s -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
 
-check_sim: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$$*_demo.texe
-check_sim: tsim$(EXE_SUFFIX)
+check_sim_demo check_sim_ops: tsim$(EXE_SUFFIX)
+check_sim: export context=sim
+check_sim: check_sim_demo check_sim_ops
 
+check_hw_icarus: export context=hw_icarus
 check_hw_icarus: export run=$(MAKE) -s -C $(TOP)/hw/icarus run_$$*_demo PERIODS=$$(PERIODS_$$*) | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_hw_icarus: check_hw_icarus_pre
 
-check_sim check_hw_icarus: $(DEMOFILES)
-	$(SILENCE)$(MAKE) -C $(TOP) context=$@ $(foreach d,$(DEMOS),run_demo_$d)
+check_sim_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$$*_demo.texe
+check_sim_demo check_hw_icarus: $(DEMOS:%=$(TOP)/ex/%_demo.texe)
+	$(SILENCE)$(MAKE) -C $(TOP) $(foreach d,$(DEMOS),run_demo_$d)
+
+# Explicitly set LOAD_ADDRESS so op tests don't have to do relocation at
+# runtime (to reduce their dependence on ops besides those under test)
+check_sim_ops: export LOAD_ADDRESS=0x1000
+check_sim_ops: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -a $(LOAD_ADDRESS) -vvvv $(target) | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_ops: $(OPS:%=test_op_%)
 
 check_compile: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Building tests from test/ ... "
