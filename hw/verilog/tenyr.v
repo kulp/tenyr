@@ -62,7 +62,7 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
             4'b0011: rY <=  (rA  *  rB  ); 4'b1011: rY <=  (rA  -  rB);
             4'b0100: rY <=  {rA,rB[11:0]}; 4'b1100: rY <=  (rA  |~ rB);
             4'b0101: rY <=  (rA  << rB  ); 4'b1101: rY <=  (rA  >> rB);
-            4'b0110: rY <= -(rA  <  rB  ); 4'b1110: rY <= -(rA  != rB);
+            4'b0110: rY <= -(rA  <  rB  ); 4'b1110: rY <= -(!(!(rA & (1 << rB))));
             4'b0111: rY <= -(rA  == rB  ); 4'b1111: rY <=  (rA >>> rB);
         endcase
         if (act) rZ <= rY + rC;

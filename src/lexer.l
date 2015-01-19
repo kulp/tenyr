@@ -98,8 +98,8 @@ illegal             { return ILLEGAL; }
 "=="                { return EQ;   }
 "&~"                { return ANDN; }
 "|~"                { return ORN;  }
-">>>"               { return RSHA; }
-">>"                { return RSH;  }
+">>"                { return RSHA; }
+">>>"               { return RSH;  }
 "^^"                { return PACK; }
 <needarrow>"<-"     { return TOL;  }
 "->"                { return TOR;  }

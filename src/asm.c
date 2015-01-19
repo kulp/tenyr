@@ -24,18 +24,18 @@ static const struct {
     [OP_SUBTRACT         ] = { "-"  , 0, 0, 1 },
     [OP_MULTIPLY         ] = { "*"  , 0, 0, 0 },
     [OP_PACK             ] = { "^^" , 0, 1, 0 }, // pack is inert for X but not for Y
+    [OP_TEST_BIT         ] = { "@"  , 0, 0, 0 },
     [OP_COMPARE_LT       ] = { "<"  , 0, 0, 0 },
     [OP_COMPARE_EQ       ] = { "==" , 0, 0, 0 },
     [OP_COMPARE_GE       ] = { ">=" , 0, 0, 0 },
-    [OP_COMPARE_NE       ] = { "<>" , 0, 0, 0 },
     [OP_BITWISE_OR       ] = { "|"  , 1, 1, 1 },
     [OP_BITWISE_ORN      ] = { "|~" , 1, 0, 0 },
     [OP_BITWISE_AND      ] = { "&"  , 1, 0, 0 },
     [OP_BITWISE_ANDN     ] = { "&~" , 1, 0, 1 },
     [OP_BITWISE_XOR      ] = { "^"  , 1, 1, 1 },
     [OP_SHIFT_LEFT       ] = { "<<" , 0, 0, 1 },
-    [OP_SHIFT_RIGHT_LOGIC] = { ">>" , 0, 0, 1 },
-    [OP_SHIFT_RIGHT_ARITH] = { ">>>", 0, 0, 1 },
+    [OP_SHIFT_RIGHT_ARITH] = { ">>" , 0, 0, 1 },
+    [OP_SHIFT_RIGHT_LOGIC] = { ">>>", 0, 0, 1 },
 };
 
 static int is_printable(unsigned int ch, size_t len, char buf[len])

@@ -12,7 +12,7 @@ A <- A  ^  A + 0
 A <- A  -  A + 0
 A <- A  |~ A + 0
 A <- A  >> A + 0
-A <- A  <> A + 0
+A <- A  @  A + 0
 A <- A >>> A + 0
 # sugar
 A <- A  >  A + 0
@@ -32,7 +32,7 @@ A <- A  ^  A
 A <- A  -  A
 A <- A  |~ A
 A <- A  >> A
-A <- A  <> A
+A <- A  @  A
 A <- A >>> A
 # sugar
 A <- A  >  A
@@ -52,7 +52,7 @@ A <- A  ^  0 + A
 A <- A  -  0 + A
 A <- A  |~ 0 + A
 A <- A  >> 0 + A
-A <- A  <> 0 + A
+A <- A  @  0 + A
 A <- A >>> 0 + A
 # sugar
 A <- A  >  0 + A
@@ -72,7 +72,7 @@ A <- A  ^  0
 A <- A  -  0
 A <- A  |~ 0
 A <- A  >> 0
-A <- A  <> 0
+A <- A  @  0
 A <- A >>> 0
 # sugar
 A <- A  >  0
@@ -92,7 +92,7 @@ A <- 0  ^  A + A
 A <- 0  -  A + A
 A <- 0  |~ A + A
 A <- 0  >> A + A
-A <- 0  <> A + A
+A <- 0  @  A + A
 A <- 0 >>> A + A
 # sugar
 A <- 0  >  A + A
@@ -112,7 +112,7 @@ A <- 0  ^  A
 A <- 0  -  A
 A <- 0  |~ A
 A <- 0  >> A
-A <- 0  <> A
+A <- 0  @  A
 A <- 0 >>> A
 # sugar
 A <- 0  >  A

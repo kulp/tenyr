@@ -42,7 +42,6 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_COMPARE_LT        : *rhs = -(Ps(2) <  Ps(1)) + Ps(0); break;
         case OP_COMPARE_EQ        : *rhs = -(Ps(2) == Ps(1)) + Ps(0); break;
         case OP_COMPARE_GE        : *rhs = -(Ps(2) >= Ps(1)) + Ps(0); break;
-        case OP_COMPARE_NE        : *rhs = -(Ps(2) != Ps(1)) + Ps(0); break;
 
         case OP_BITWISE_AND       : *rhs =  (Pu(2) &  Pu(1)) + Ps(0); break;
         case OP_BITWISE_ANDN      : *rhs =  (Pu(2) &~ Pu(1)) + Ps(0); break;
@@ -51,6 +50,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_BITWISE_XOR       : *rhs =  (Pu(2) ^  Pu(1)) + Ps(0); break;
 
         case OP_PACK              : *rhs =  (pack2 |  pack1) + pack0; break;
+        case OP_TEST_BIT          : *rhs = -!!(Ps(2) & (1 << Ps(1))) + Ps(0); break;
 
         default:
             fatal(0, "Encountered illegal opcode %d", op);

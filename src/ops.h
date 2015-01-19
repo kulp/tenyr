@@ -59,7 +59,7 @@
 //  1011 = X subtract Y
 //  1100 = X xor ones' complement Y
 //  1101 = X shift right logical Y
-//  1110 = X compare != Y
+//  1110 = X test bit position Y
 //  1111 = X shift right arithmetic Y
 
 #ifndef OPS_H_
@@ -146,7 +146,7 @@ enum op {
     OP_SUBTRACT          = 0xb,
     OP_BITWISE_ORN       = 0xc,
     OP_SHIFT_RIGHT_LOGIC = 0xd,
-    OP_COMPARE_NE        = 0xe,
+    OP_TEST_BIT          = 0xe,
     OP_SHIFT_RIGHT_ARITH = 0xf,
 };
 

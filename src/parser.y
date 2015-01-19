@@ -82,8 +82,8 @@ extern void tenyr_pop_state(void *yyscanner);
 
 /* synonyms for literal string tokens */
 %token LSH "<<"
-%token RSH ">>"
-%token RSHA ">>>"
+%token RSH ">>>"
+%token RSHA ">>"
 %token EQ "=="
 %token GE ">="
 %token LE "<="
@@ -357,16 +357,16 @@ native_op
     | '<'   { $native_op = OP_COMPARE_LT       ; }
     | "=="  { $native_op = OP_COMPARE_EQ       ; }
     | ">="  { $native_op = OP_COMPARE_GE       ; }
-    | "<>"  { $native_op = OP_COMPARE_NE       ; }
     | '|'   { $native_op = OP_BITWISE_OR       ; }
     | "|~"  { $native_op = OP_BITWISE_ORN      ; }
     | '&'   { $native_op = OP_BITWISE_AND      ; }
     | "&~"  { $native_op = OP_BITWISE_ANDN     ; }
     | '^'   { $native_op = OP_BITWISE_XOR      ; }
     | "<<"  { $native_op = OP_SHIFT_LEFT       ; }
-    | ">>"  { $native_op = OP_SHIFT_RIGHT_LOGIC; }
-    | ">>>" { $native_op = OP_SHIFT_RIGHT_ARITH; }
+    | ">>"  { $native_op = OP_SHIFT_RIGHT_ARITH; }
+    | ">>>" { $native_op = OP_SHIFT_RIGHT_LOGIC; }
     | "^^"  { $native_op = OP_PACK             ; }
+    | '@'   { $native_op = OP_TEST_BIT         ; }
 
 sugar_op
     : '>'   { $sugar_op = -OP_COMPARE_LT; }
