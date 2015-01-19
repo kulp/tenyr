@@ -29,10 +29,10 @@ static const struct {
     [OP_COMPARE_GE       ] = { ">=" , 0, 0, 0 },
     [OP_COMPARE_NE       ] = { "<>" , 0, 0, 0 },
     [OP_BITWISE_OR       ] = { "|"  , 1, 1, 1 },
+    [OP_BITWISE_ORN      ] = { "|~" , 1, 0, 0 },
     [OP_BITWISE_AND      ] = { "&"  , 1, 0, 0 },
     [OP_BITWISE_ANDN     ] = { "&~" , 1, 0, 1 },
     [OP_BITWISE_XOR      ] = { "^"  , 1, 1, 1 },
-    [OP_BITWISE_XORN     ] = { "^~" , 1, 0, 0 },
     [OP_SHIFT_LEFT       ] = { "<<" , 0, 0, 1 },
     [OP_SHIFT_RIGHT_LOGIC] = { ">>" , 0, 0, 1 },
     [OP_SHIFT_RIGHT_ARITH] = { ">>>", 0, 0, 1 },
@@ -122,8 +122,7 @@ int print_disassembly(FILE *out, struct element *i, int flags)
         hex = op1 = 1; // Large immediates are always emitted as hex
         op2 = op3 = 0;
     } else if (!(flags & (ASM_NO_SUGAR | ASM_VERBOSE))) {
-        if (t->op == OP_BITWISE_XORN && t->y == 0) {
-            f7 = f5;    // Y slot is now X
+        if (t->op == OP_BITWISE_ORN && t->x == 0) {
             f5 = ' ';   // don't print X
             f6 = "~";   // change op to a unary not
         } else if (t->op == OP_SUBTRACT && g->x == 0) {
