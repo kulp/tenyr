@@ -170,9 +170,9 @@ check_hw:
 		$(MAKESTEP) "not found" ; \
 	fi
 
-PERIODS_qsort   = 70000
-PERIODS_bsearch = 400000
-PERIODS_trailz  = 31850
+PERIODS_qsort   = 52690
+PERIODS_bsearch = 367920
+PERIODS_trailz  = 30210
 
 run_demo_qsort:   verify = sed -n 5p
 run_demo_qsort:   result = eight
