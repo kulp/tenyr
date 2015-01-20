@@ -186,11 +186,14 @@ run_demo_%: $(TOP)/ex/%_demo.texe
 	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
 
 randhex = 0x$(shell hexdump -n4 -e'"%08x"' /dev/urandom)
+# Explicitly set LOAD_ADDRESS so op tests don't have to do relocation at
+# runtime (to reduce their dependence on ops besides those under test)
+test_op_%: export LOAD_ADDRESS=0x1000
+test_op_%: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -a $(LOAD_ADDRESS) -vvvv $(TOP)/test/ops/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 test_op_%: export RAND0 := $(call randhex)
 test_op_%: export RAND1 := $(call randhex)
 test_op_%: export RAND2 := $(call randhex)
-test_op_%: export target=$(TOP)/test/ops/$*.texe
-test_op_%: $(TOP)/test/ops/%.tas.cpp
+test_op_%: $(TOP)/test/ops/%.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) with random arguments $(RAND0), $(RAND1), $(RAND2) ... "
 	$(SILENCE)$(MAKE) -s -B -C $(TOP)/test ops/$*.texe CPPFLAGS+='-DLOAD_ADDRESS=$(LOAD_ADDRESS) -DRAND0=$(RAND0) -DRAND1=$(RAND1) -DRAND2=$(RAND2)'
 	$(SILENCE)$(run) && $(MAKESTEP) ok
@@ -199,21 +202,17 @@ check_hw_icarus_pre:
 	@$(MAKESTEP) -n "Building hardware simulator ... "
 	$(SILENCE)$(MAKE) -s -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
 
+check_sim check_sim_demo check_sim_ops: export context=sim
 check_sim_demo check_sim_ops: tsim$(EXE_SUFFIX)
-check_sim: export context=sim
 check_sim: check_sim_demo check_sim_ops
 
 check_hw_icarus: export context=hw_icarus
-check_hw_icarus: export run=$(MAKE) -s -C $(TOP)/hw/icarus run_$*_demo PERIODS=$(PERIODS_$*) | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_hw_icarus: check_hw_icarus_pre
 
-check_sim_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*_demo.texe
-check_sim_demo check_hw_icarus: $(foreach d,$(DEMOS),run_demo_$d)
+check_hw_icarus: export run=$(MAKE) -s -C $(TOP)/hw/icarus run_$*_demo PERIODS=$(PERIODS_$*) | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_sim_demo:  export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*_demo.texe
 
-# Explicitly set LOAD_ADDRESS so op tests don't have to do relocation at
-# runtime (to reduce their dependence on ops besides those under test)
-check_sim_ops: export LOAD_ADDRESS=0x1000
-check_sim_ops: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -a $(LOAD_ADDRESS) -vvvv $(target) | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_demo check_hw_icarus: $(DEMOS:%=run_demo_%)
 check_sim_ops: $(OPS:%=test_op_%)
 
 check_compile: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
