@@ -204,12 +204,11 @@ check_sim: export context=sim
 check_sim: check_sim_demo check_sim_ops
 
 check_hw_icarus: export context=hw_icarus
-check_hw_icarus: export run=$(MAKE) -s -C $(TOP)/hw/icarus run_$$*_demo PERIODS=$$(PERIODS_$$*) | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_hw_icarus: export run=$(MAKE) -s -C $(TOP)/hw/icarus run_$*_demo PERIODS=$(PERIODS_$*) | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_hw_icarus: check_hw_icarus_pre
 
-check_sim_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$$*_demo.texe
-check_sim_demo check_hw_icarus: $(DEMOS:%=$(TOP)/ex/%_demo.texe)
-	$(SILENCE)$(MAKE) -C $(TOP) $(foreach d,$(DEMOS),run_demo_$d)
+check_sim_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*_demo.texe
+check_sim_demo check_hw_icarus: $(foreach d,$(DEMOS),run_demo_$d)
 
 # Explicitly set LOAD_ADDRESS so op tests don't have to do relocation at
 # runtime (to reduce their dependence on ops besides those under test)
