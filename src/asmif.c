@@ -251,9 +251,12 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         if (ce_eval(pd, ce->insn, NULL, ce, 0, sym_reloc_handler, &r->width, &result)) {
             result *= r->mult;
 
+            // XXX handle too-large values in a 32-bit field
+            // .word 0x123456123456 # this fails to provoke an error
+            const char *sstr = (r->width < 32) ? "signed " : "";
             if (result != (int32_t)SEXTEND32(r->width, result)) {
                 debug(0, "Expression resulting in value %#x is too large for "
-                        "%d-bit signed immediate field", result, r->width);
+                        "%d-bit %simmediate field", result, r->width, sstr);
                 rc |= 1;
             }
 
