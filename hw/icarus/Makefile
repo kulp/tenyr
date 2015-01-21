@@ -37,8 +37,6 @@ tenyr: simtop.v top.v                               \
        ramwrap.v                                    \
        | glue.vpi
 
-seg7test: seg7.v seglookup.v hex2ascii.v seg7_top.v
-
 glue.vpi: callbacks.o serial.o load.o sim.o asm.o obj.o common.o
 
 # don't complain about unused values that we might use in asserts
