@@ -30,7 +30,7 @@ puts_ascii_inner:
     e <- b & 0xff               // mask off top bits
     d <- e == 0                 // compare
     jnzrel(d,puts_ascii_loop)   // skip to next word if zero
-    b <- b >> 8                 // shift down next character
+    b <- b >>> 8                // shift down next character
     emit(e)                     // output character to serial device
     goto(puts_ascii_inner)      // and continue with same word
 puts_ascii_done:

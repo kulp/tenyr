@@ -17,7 +17,7 @@ imul:
     b <- 0
     h <- 1
 
-    j <- d >>> 31   // save sign bit in j
+    j <- d >> 31    // save sign bit in j
     d <- d ^ j      // adjust multiplier
     d <- d - j
 

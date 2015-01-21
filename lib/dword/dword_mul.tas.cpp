@@ -10,9 +10,9 @@ dw_mul:
   m <- [rel(mask)]
 
   // Split up factors into 16-bit components.
-  b <- d >> 16
+  b <- d >>> 16
   c <- d & m
-  d <- e >> 16
+  d <- e >>> 16
   e <- e & m
 
   // Compute upper and lower sums as well as an intermediate component.
@@ -26,7 +26,7 @@ dw_mul:
   c <- m << 16 + c
 
   // Adjust upper sum.
-  b <- m >> 16 + b
+  b <- m >>> 16 + b
 
   pop(m)
   ret

@@ -39,7 +39,7 @@ fp_mul:
 
   // B:C contains a 48-bit product, take the upper 23 bits.
   b <- b << 9
-  c <- c >> 23 + b
+  c <- c >>> 23 + b
 
   // Check to see if the exponent needs adjustment.
   pop(e)
@@ -51,7 +51,7 @@ fp_mul:
 
   // Adjust exponent.
   e <- e + 1
-  c <- c >> 1
+  c <- c >>> 1
 
 no_shift:
   // Restore the saved sign and combine the result.

@@ -9,7 +9,7 @@ convert_hex_top:
     d <- c & 0xf
     d <- [d + rel(hexes)]
     d -> [b]
-    c <- c >> 4
+    c <- c >>> 4
     d <- c == 0
     jzrel(d,convert_hex_top)
 

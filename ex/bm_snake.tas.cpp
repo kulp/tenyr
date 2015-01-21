@@ -25,8 +25,8 @@ _start:
     e <- rel(snakes_after)
 init:
     call(rand)
-    j <- b >> 27 // 5 bits
-    k <- b >> 21 ; k <- k & 0x3f // 6 bits
+    j <- b >>> 27 // 5 bits
+    k <- b >>> 21 ; k <- k & 0x3f // 6 bits
     j <- j + ((40 - 32) / 2) ; j -> [n + 2]
     k <- k + ((80 - 64) / 2) ; k -> [n + 3]
 
@@ -45,7 +45,7 @@ L_snake:
     // direction and character choice are not independent variables
     call(rand)
     f <- b // save away random value for later
-    d <- f >> 30 // a direction 0 - 3 ; clockwise, 0 = up
+    d <- f >>> 30 // a direction 0 - 3 ; clockwise, 0 = up
 
     // start get_incrs
     // direction map
@@ -78,7 +78,7 @@ L_snake:
     k -> [n + 3]
 
     i <- [n + 1]
-    c <- f >> i
+    c <- f >>> i
     h <- i == 0 // special case when shift-value is zero : no randomness
     c <- c &~ h
     h <- [n + 0]
