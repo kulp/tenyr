@@ -1,9 +1,7 @@
 // Instructions
 // [TT..............................] TT = instruction type/class
-// all-zero instruction = no-op
+// all-zero instruction = no-op :
 //  a <- a | a + 0 (and A has sticky value zero and takes no writes)
-//
-// algebraic assembler
 //
 // [00DDZZZZXXXXYYYYffffIIIIIIIIIIII]
 // I = sign-extended 12-bit immediate
@@ -36,31 +34,6 @@
 //      10 : [Z] <-  I
 //      01 :  Z  <- [I]
 //      11 :  Z  -> [I]
-//
-//  a <- [b * c + 4]
-//  a <- [p + 3]
-//  p <- [p + c] (jump from table)
-//  c <- c == a (is zero ?)
-//  d <- c > d (no status flags, just bool result)
-//  e <- d >> e
-//  p <- p + -4 (jump backward)
-// ops
-//  0000 = X bitwise or Y
-//  0001 = X bitwise and Y
-//  0010 = X add Y
-//  0011 = X multiply Y
-//  0100 = reserved
-//  0101 = X shift left Y
-//  0110 = X compare < Y
-//  0111 = X compare == Y
-//  1000 = X compare >= Y
-//  1001 = X bitwise and complement Y
-//  1010 = X bitwise xor Y
-//  1011 = X subtract Y
-//  1100 = X xor ones' complement Y
-//  1101 = X shift right logical Y
-//  1110 = X test bit position Y
-//  1111 = X shift right arithmetic Y
 
 #ifndef OPS_H_
 #define OPS_H_
