@@ -104,23 +104,34 @@ struct element_list {
     struct element_list *prev, *next;
 };
 
+/*
+ * Operations are encoded this way to group hardware-similar operations
+ * together, differing by the most sigificant bit only.
+ *
+ * In the table below, the column header is read before the row ; e.g., `&` is
+ * 0b0001 and `-` is 0b1100.
+ *
+ *       0   1
+ * 000   |   |~
+ * 001   &   &~
+ * 010   ^   ^^
+ * 011   >>  >>>
+ * 100   +   -
+ * 101   *   <<
+ * 110   ==  @
+ * 111   <   >=
+ */
+
 enum op {
-    OP_BITWISE_OR        = 0x0,
-    OP_BITWISE_AND       = 0x1,
-    OP_ADD               = 0x2,
-    OP_MULTIPLY          = 0x3,
-    OP_PACK              = 0x4,
-    OP_SHIFT_LEFT        = 0x5,
-    OP_COMPARE_LT        = 0x6,
-    OP_COMPARE_EQ        = 0x7,
-    OP_COMPARE_GE        = 0x8,
-    OP_BITWISE_ANDN      = 0x9,
-    OP_BITWISE_XOR       = 0xa,
-    OP_SUBTRACT          = 0xb,
-    OP_BITWISE_ORN       = 0xc,
-    OP_SHIFT_RIGHT_LOGIC = 0xd,
-    OP_TEST_BIT          = 0xe,
-    OP_SHIFT_RIGHT_ARITH = 0xf,
+    OP_BITWISE_OR        = 0x0,	OP_BITWISE_ORN       = 0x8,
+    OP_BITWISE_AND       = 0x1,	OP_BITWISE_ANDN      = 0x9,
+    OP_BITWISE_XOR       = 0x2,	OP_PACK              = 0xa,
+    OP_SHIFT_RIGHT_ARITH = 0x3,	OP_SHIFT_RIGHT_LOGIC = 0xb,
+
+    OP_ADD               = 0x4, OP_SUBTRACT          = 0xc,
+    OP_MULTIPLY          = 0x5, OP_SHIFT_LEFT        = 0xd,
+    OP_COMPARE_EQ        = 0x6, OP_TEST_BIT          = 0xe,
+    OP_COMPARE_LT        = 0x7, OP_COMPARE_GE        = 0xf,
 };
 
 #endif

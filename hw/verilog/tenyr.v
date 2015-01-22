@@ -56,14 +56,14 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
         { rop , valZ , rA   , rB   , rC   , done , add , act    , staged } <=
         { op  , rZ   , valA , valB , valC , add  , act , staged , en     } ;
         if (staged) case (rop)
-            4'b0000: rY <=  (rA  |  rB  ); 4'b1000: rY <= -(rA  >= rB);
-            4'b0001: rY <=  (rA  &  rB  ); 4'b1001: rY <=  (rA  &~ rB);
-            4'b0010: rY <=  (rA  +  rB  ); 4'b1010: rY <=  (rA  ^  rB);
-            4'b0011: rY <=  (rA  *  rB  ); 4'b1011: rY <=  (rA  -  rB);
-            4'b0100: rY <=  {rA,rB[11:0]}; 4'b1100: rY <=  (rA  |~ rB);
-            4'b0101: rY <=  (rA  << rB  ); 4'b1101: rY <=  (rA  >> rB);
-            4'b0110: rY <= -(rA  <  rB  ); 4'b1110: rY <= -(!(!(rA & (1 << rB))));
-            4'b0111: rY <= -(rA  == rB  ); 4'b1111: rY <=  (rA >>> rB);
+            4'h0: rY <=  (rA  |  rB); 4'h8: rY <=  (rA  |~ rB  );
+            4'h1: rY <=  (rA  &  rB); 4'h9: rY <=  (rA  &~ rB  );
+            4'h2: rY <=  (rA  ^  rB); 4'ha: rY <=  {rA,rB[11:0]};
+            4'h3: rY <=  (rA >>> rB); 4'hb: rY <=  (rA  >> rB  );
+            4'h4: rY <=  (rA  +  rB); 4'hc: rY <=  (rA  -  rB  );
+            4'h5: rY <=  (rA  *  rB); 4'hd: rY <=  (rA  << rB  );
+            4'h6: rY <= -(rA  == rB); 4'he: rY <= -(!(!(rA & (1 << rB))));
+            4'h7: rY <= -(rA  <  rB); 4'hf: rY <= -(rA  >= rB  );
         endcase
         if (act) rZ <= rY + rC;
     end
