@@ -78,6 +78,8 @@ clean clobber::
 	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
 
+clobber_FILES += $(BUILDDIR)/*.gc??
+clobber_FILES += $(BUILDDIR)/coverage.info
 clobber::
 	-$(MAKE) -C $(TOP)/ex $@
 
@@ -121,12 +123,10 @@ gzip zip:
 	$(MAKE) -f $(makefile_path) $@
 endif
 
-clobber_FILES += $(BUILDDIR)/*.gc??
 coverage: CFLAGS  += --coverage
 coverage: LDFLAGS += --coverage
 coverage: coverage_html_src
 
-clobber_FILES += $(BUILDDIR)/coverage.info
 coverage.info: check_sw
 	lcov --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
