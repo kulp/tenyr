@@ -25,7 +25,8 @@ PASS_ASSEMBLE := \
 
 FAIL_ASSEMBLE := $(call get_obj_name,$(wildcard fail_compile/*))
 
-clean_FILES = *.to *.texe
+clean_FILES += *.to *.texe
+clean_FILES += ops/*.texe
 
 all: positive negative
 positive: $(PASS_ASSEMBLE)
