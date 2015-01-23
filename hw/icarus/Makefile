@@ -2,7 +2,7 @@ TOP := $(abspath ../..)
 include $(TOP)/mk/Makefile.common
 include $(TOP)/mk/Makefile.rules
 
-PERIODS ?= 32
+PERIODS_DEFAULT ?= 32
 
 VPI_CFLAGS := $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
@@ -51,7 +51,7 @@ vpath %.tas ../verilog
 vpath %.texe $(TOP)/ex
 
 LOGFILE = Top.vcd
-run_%: PLUSARGS += +PERIODS=$(PERIODS) \
+run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAULT)) \
                    +LOGFILE=$(LOGFILE) \
                    #
 
