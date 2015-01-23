@@ -28,7 +28,7 @@ TARGETS = \
 
 CPP_FILES := $(wildcard *.tas.cpp)
 
-clean_FILES += $(TARGETS) *.to dword/*.to
+clean_FILES += $(TARGETS) *.to dword/*.to *.texe
 clean_FILES += $(CPP_FILES:%.tas.cpp=%.tas)
 
 all: $(TARGETS)
