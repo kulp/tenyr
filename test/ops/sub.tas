@@ -1,5 +1,5 @@
-C <- [(@args + (0 + LOAD_ADDRESS))]
-D <- [(@args + (1 + LOAD_ADDRESS))]
+C <- [(@args + (0 + 0x1000))]
+D <- [(@args + (1 + 0x1000))]
 D <- ~ D + 1
 
 // 16 unrolled repetitions of this block
@@ -119,4 +119,4 @@ B <- C - D
 B <- B == C
 illegal
 
-args: .word RAND0 ; .word RAND1 ; .word RAND2
+args:

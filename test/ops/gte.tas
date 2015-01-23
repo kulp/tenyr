@@ -1,6 +1,6 @@
-C <- [(@args + (0 + LOAD_ADDRESS))]
-D <- [(@args + (1 + LOAD_ADDRESS))]
-E <- [(@args + (2 + LOAD_ADDRESS))]
+C <- [(@args + (0 + 0x1000))]
+D <- [(@args + (1 + 0x1000))]
+E <- [(@args + (2 + 0x1000))]
 
 // precondition numbers to be equal to each other with about 1/16 probability
 F <- E & 31
@@ -16,7 +16,7 @@ G <- D >> 31	// get sign bit
 H <- F ^ G      // check sign bit inequality
 P <- (@signs_differ - (. + 1)) & H + P
 
-// signs are the same, subtraction will be not overflow
+// signs are the same, subtraction will not overflow
 E <- C - D
 F <- E >> 31
 
@@ -25,4 +25,4 @@ B <- B ^ F
 // B is -1 (matches) or 0 (mismatches)
 illegal
 
-args: .word RAND0 ; .word RAND1 ; .word RAND2
+args:

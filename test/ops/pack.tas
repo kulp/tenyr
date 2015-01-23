@@ -1,0 +1,15 @@
+C <- [(@args + (0 + 0x1000))]
+D <- [(@args + (1 + 0x1000))]
+B <- C ^^ D
+
+E <- 12
+F <- 1 << E
+F <- F - 1
+E <- C << 12
+F <- D & F
+H <- E | F
+
+B <- B == H
+illegal
+
+args:

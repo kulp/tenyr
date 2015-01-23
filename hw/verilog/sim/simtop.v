@@ -38,15 +38,28 @@ module Top();
             logfile = filename;
         $dumpfile(logfile);
         $dumpvars;
-        #(periods * `CLOCKPERIOD) $finish;
+        #(periods * `CLOCKPERIOD) begin:ending
+            integer row, col, i;
+            if ($test$plusargs("DUMPENDSTATE")) begin
+                for (row = 0; row < 3; row = row + 1) begin
+                    $write("state: ");
+                    for (col = 0; col < 6 && row * 6 + col < 16; col = col + 1) begin
+                        i = row * 6 + col;
+                        $write("%c %08x ", 65 + i, tenyr.core.regs.store[i]);
+                    end
+                    $write("\n");
+                end
+            end
+            $finish;
+        end
     end
 
     always #`CLOCKPERIOD begin
-		clk_count = clk_count + 1;
+        clk_count = clk_count + 1;
         if (tenyr.core.state == tenyr.core.s6) begin
             insn_count = insn_count + 1;
         end
-	end
+    end
 
 `endif
 

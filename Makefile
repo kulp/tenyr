@@ -80,6 +80,7 @@ clean clobber::
 
 clobber_FILES += $(BUILDDIR)/*.gc??
 clobber_FILES += $(BUILDDIR)/coverage.info
+clobber_FILES += $(BUILDDIR)/PERIODS.mk
 clobber::
 	-$(MAKE) -C $(TOP)/ex $@
 
@@ -154,7 +155,7 @@ endef
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz
 DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
-OPS = $(subst .tas.cpp,,$(notdir $(wildcard $(TOP)/test/ops/*.tas*)))
+OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/ops/*.tas)))
 $(DEMOFILES): %_demo.texe: %_demo.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	$(SILENCE)$(call LOCK)
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
@@ -166,14 +167,10 @@ check_hw:
 	$(SILENCE)icarus="$$($(MAKE) --no-print-directory -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
 	if [ -x "$$icarus" ] ; then \
 		$(MAKESTEP) $$icarus ; \
-		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) check_hw_icarus ; \
+		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) check_hw_icarus_ops check_hw_icarus_demos ; \
 	else \
 		$(MAKESTEP) "not found" ; \
 	fi
-
-PERIODS_qsort   = 52690
-PERIODS_bsearch = 367920
-PERIODS_trailz  = 30210
 
 run_demo_qsort:   verify = sed -n 5p
 run_demo_qsort:   result = eight
@@ -181,39 +178,47 @@ run_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
 run_demo_bsearch: result = 11
 run_demo_trailz:  verify = grep -c good
 run_demo_trailz:  result = 33
-run_demo_%: $(TOP)/ex/%_demo.texe
+run_demo_%: $(TOP)/ex/%_demo.texe PERIODS.mk
 	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
 	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
 
-randhex = 0x$(shell hexdump -n4 -e'"%08x"' /dev/urandom)
-# Explicitly set LOAD_ADDRESS so op tests don't have to do relocation at
-# runtime (to reduce their dependence on ops besides those under test)
-test_op_%: export LOAD_ADDRESS=0x1000
-test_op_%: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -a $(LOAD_ADDRESS) -vvvv $(TOP)/test/ops/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
-test_op_%: export RAND0 := $(call randhex)
-test_op_%: export RAND1 := $(call randhex)
-test_op_%: export RAND2 := $(call randhex)
-test_op_%: $(TOP)/test/ops/%.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
-	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) with random arguments $(RAND0), $(RAND1), $(RAND2) ... "
-	$(SILENCE)$(MAKE) -s -B -C $(TOP)/test ops/$*.texe CPPFLAGS+='-DLOAD_ADDRESS=$(LOAD_ADDRESS) -DRAND0=$(RAND0) -DRAND1=$(RAND1) -DRAND2=$(RAND2)'
+$(TOP)/test/ops/%.texe: $(TOP)/test/ops/%.tas | tas$(EXE_SUFFIX)
+	$(SILENCE)(cat $< ; hexdump -n12 -e'".word 0x%08x; "' /dev/urandom) | $(BUILDDIR)/tas -o $@ -
+
+test_op_%: $(TOP)/test/ops/%.tas PERIODS.mk | tas$(EXE_SUFFIX)
+	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
+	$(SILENCE)$(MAKE) -s -W $< -f $(BUILDDIR)/PERIODS.mk -f $(makefile_path) $(<:%.tas=%.texe)
 	$(SILENCE)$(run) && $(MAKESTEP) ok
 
 check_hw_icarus_pre:
 	@$(MAKESTEP) -n "Building hardware simulator ... "
 	$(SILENCE)$(MAKE) -s -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
 
-check_sim check_sim_demo check_sim_ops: export context=sim
-check_sim_demo check_sim_ops: tsim$(EXE_SUFFIX)
-check_sim: check_sim_demo check_sim_ops
+check_sim check_sim_demos check_sim_ops: export context=sim
+check_sim_demos check_sim_ops: tsim$(EXE_SUFFIX)
+check_sim: check_sim_demos check_sim_ops
 
-check_hw_icarus: export context=hw_icarus
-check_hw_icarus: check_hw_icarus_pre
+check_hw_icarus_demos check_hw_icarus_ops: export context=hw_icarus
+check_hw_icarus_demos check_hw_icarus_ops: check_hw_icarus_pre
 
-check_hw_icarus: export run=$(MAKE) -s -C $(TOP)/hw/icarus run_$*_demo PERIODS=$(PERIODS_$*) | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
-check_sim_demo:  export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*_demo.texe
+check_hw_icarus_demos: export run=$(MAKE) -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_sim_demos: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*_demo.texe
 
-check_sim_demo check_hw_icarus: $(DEMOS:%=run_demo_%)
-check_sim_ops: $(OPS:%=test_op_%)
+check_sim_demos check_hw_icarus_demos: $(DEMOS:%=run_demo_%)
+check_sim_ops check_hw_icarus_ops: $(OPS:%=test_op_%)
+
+# TODO make op tests take a fixed or predictable maximum amount of time
+# The number of cycles necessary to run a code in Verilog simulation is
+# determined by running it in tsim and multiplying the number of instructions
+# executed by the number of cycles per instruction (currently 10). A margin of
+# 2x is added to allow testcases not always to take exactly the same number of
+# instructions to complete.
+PERIODS.mk: $(OPS:%=$(TOP)/test/ops/%.texe) $(DEMOS:%=$(TOP)/ex/%_demo.texe) | tsim$(EXE_SUFFIX)
+	$(SILENCE)for f in $^ ; do echo PERIODS_`basename $${f/.texe/}`=`$(BUILDDIR)/tsim$(EXE_SUFFIX) -vv $$f | wc -l | while read b ; do dc -e "$$b 20*p" ; done` ; done > $@
+
+check_sim_ops: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -vvvv $(TOP)/test/ops/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_hw_icarus_ops: PERIODS.mk
+check_hw_icarus_ops: export run=$(MAKE) -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/ops PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
 check_compile: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Building tests from test/ ... "

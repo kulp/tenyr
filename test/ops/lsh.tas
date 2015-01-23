@@ -1,0 +1,28 @@
+C <- [(@args + (0 + 0x1000))]
+D <- [(@args + (1 + 0x1000))]
+D <- D & 63
+B <- C << D
+F <- 63
+
+loop:
+N <- F == 0
+P <- (@done - (. + 1)) & N + P
+F <- F - 1
+
+// stop decrementing D when it reaches 0
+M <- D == 0
+D <- D - 1
+D <- D &~ M
+
+E <- C + C
+G <- E &~ M
+H <- C & M
+C <- G + H
+// loop for a predictable number of instructions, to help hardware testing
+P <- (@loop - (. + 1)) + P
+
+done:
+B <- B == C
+illegal
+
+args:

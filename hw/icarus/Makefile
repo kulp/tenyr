@@ -53,6 +53,7 @@ vpath %.texe $(TOP)/ex
 LOGFILE = Top.vcd
 run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAULT)) \
                    +LOGFILE=$(LOGFILE) \
+                   $(PLUSARGS_EXTRA) \
                    #
 
 run_%: %.texe tenyr

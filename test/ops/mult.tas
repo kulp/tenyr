@@ -1,5 +1,5 @@
-C <- [(@args + (0 + LOAD_ADDRESS))]
-D <- [(@args + (1 + LOAD_ADDRESS))]
+C <- [(@args + (0 + 0x1000))]
+D <- [(@args + (1 + 0x1000))]
 H <- 0
 B <- C * D
 
@@ -231,4 +231,4 @@ C <- C << 1
 B <- B == H
 illegal
 
-args: .word RAND0 ; .word RAND1 ; .word RAND2
+args:
