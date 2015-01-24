@@ -93,28 +93,39 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     const int32_t i8 = SEXTEND32(width,imm);    // immediate value
     const char    c9 = brackets[1][g->dd & 1];  // right side dereferenced ?
 
-    // TODO simplify r[][]
-    int r[][3] = {
-        [/* type */ 0] = { t->x, t->y,    0 },
-        [/* type */ 1] = { t->x,    0, t->y },
-        [/* type */ 2] = {    0, t->x, t->y },
-        [/* type */ 3] = {    0,    0,    0 },
-    };
     int hex   = g->p == 3;
-    int show1 = ((g->p >  1) ? imm != 0 : t->x       != 0) || t->op != OP_BITWISE_OR;
-    int show2 = ((g->p == 1) ? imm != 0 : r[g->p][1] != 0) || t->op != OP_BITWISE_OR;
-    int show3 = ((g->p == 0) ? imm != 0 : t->y       != 0);
+    int mid   = g->p == 0 ? t->y :
+                g->p == 2 ? t->x : 0;
+    int show1 = ((g->p >  1) ? imm != 0 : t->x != 0) || t->op != OP_BITWISE_OR;
+    int show2 = ((g->p == 1) ? imm != 0 : mid  != 0) || t->op != OP_BITWISE_OR;
+    int show3 = ((g->p == 0) ? imm != 0 : t->y != 0);
 
-    // Edge case : show all operands if the type can't be inferred
-    if (t->op == OP_BITWISE_OR && show1 + show2 + show3 < 3)
-        show1 = show2 = show3 = 1;
+    // Edge cases : show more operands if the instruction type can't be inferred
+    if (show1 + show2 + show3 < 3) {
+        switch (g->p) {
+            case 0:
+                if (t->op != OP_BITWISE_OR)
+                    break;
+                if (t->x ? t->y == 0 && imm != 0 : t->y)
+                    show1 = show2 = show3 = 1;
+                break;
+            case 1:
+                if (t->x == 0 || t->y != 0 || t->op == OP_BITWISE_OR)
+                    show1 = show2 = show3 = 1;
+                break;
+            case 2:
+                if (imm == 0 || (t->op == OP_BITWISE_OR && t->x == 0))
+                    show1 = show2 = show3 = 1;
+                break;
+        }
+    }
 
     // Edge case : all operands are 0, but word may not be 0
     if (!(show1 | show2 | show3))
-        show1 = show2 = show3 = hex = g->p != 0;
+        show1 = show2 = show3 = g->p != 0;
 
     if (flags & ASM_VERBOSE)
-        show1 = show2 = show3 = 1;
+        show1 = show2 = show3 = hex = 1;
 
     char s8[16];
     snprintf(s8, sizeof s8, hex ? "0x%08x" : "%d", i8);
