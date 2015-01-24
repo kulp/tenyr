@@ -72,7 +72,7 @@ showbuilddir:
 
 .PHONY: distclean
 distclean:: clobber
-	$(RM) -r install/
+	$(RM) -r install/ build/
 
 clean clobber::
 	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
