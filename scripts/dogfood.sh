@@ -6,16 +6,28 @@ tas=$2
 shift
 shift
 base=`mktemp -t $stem`
+
+function fail ()
+{
+	file=$1
+	bn=$(basename $file)
+	echo $bn: FAILED
+	mkdir -p dogfood_failures/$bn
+	cp -p $file $base.{en,de}.? dogfood_failures/$bn/
+}
+
 for file in $* ; do
-	temp1=$base.1.tas
-	temp2=$base.2.tas
-	temp3=$base.3.tas
-	trap "rm $temp1 $temp2 $temp3" EXIT
+	trap "rm $base.{en,de}.[123]" EXIT
 	if [[ $file = *.cpp ]] ; then
 		pp="cpp -I$here/../lib"
 	else
 		pp=cat
 	fi
-	$pp $file | $tas -f text - | tee $temp1 | $tas -d -f text -v - | $tas -f text - | tee $temp2 | $tas -d -f text -v - | $tas -f text -o $temp3 -
-	diff -q $temp1 $temp2 && diff -q $temp2 $temp3 && echo $(basename $file): OK || echo $(basename $file): FAILED
+	$pp $file | $tas -f text - | tee $base.en.1 | $tas -d -f text - | tee $base.de.1 | $tas -f text - | tee $base.en.2 | $tas -d -f text - | tee $base.de.2 | $tas -f text -o $base.en.3 -
+	diff -q $base.en.1 $base.en.2 && diff -q $base.en.2 $base.en.3 && echo $(basename $file): OK || fail $file
 done
+
+base=random
+$here/random.sh | tee $base.en.1 | $tas -d -f text - | tee $base $base.de.1 | $tas -f text - | tee $base.en.2 | $tas -d -f text - | tee $base.de.2 | $tas -f text -o $base.en.3 -
+diff -q $base.en.1 $base.en.2 && diff -q $base.en.2 $base.en.3 && echo $(basename $file): OK || fail $base
+

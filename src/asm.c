@@ -14,28 +14,23 @@
 // The length (excluding terminating NUL) of an operator length in disassembly
 #define MAX_OP_LEN 3
 
-static const struct {
-    const char name[MAX_OP_LEN + 1];
-    int hex;    ///< whether to use hex digits in disassembly
-    int inertX; ///< if equivalent to `Z <- Y + I` when when X == 0
-    int inertY; ///< if equivalent to `Z <- X + I` when when Y == 0
-} op_meta[] = {
-    [OP_ADD              ] = { "+"  , 0, 1, 1 },
-    [OP_SUBTRACT         ] = { "-"  , 0, 0, 1 },
-    [OP_MULTIPLY         ] = { "*"  , 0, 0, 0 },
-    [OP_PACK             ] = { "^^" , 0, 1, 0 }, // pack is inert for X but not for Y
-    [OP_TEST_BIT         ] = { "@"  , 0, 0, 0 },
-    [OP_COMPARE_LT       ] = { "<"  , 0, 0, 0 },
-    [OP_COMPARE_EQ       ] = { "==" , 0, 0, 0 },
-    [OP_COMPARE_GE       ] = { ">=" , 0, 0, 0 },
-    [OP_BITWISE_OR       ] = { "|"  , 1, 1, 1 },
-    [OP_BITWISE_ORN      ] = { "|~" , 1, 0, 0 },
-    [OP_BITWISE_AND      ] = { "&"  , 1, 0, 0 },
-    [OP_BITWISE_ANDN     ] = { "&~" , 1, 0, 1 },
-    [OP_BITWISE_XOR      ] = { "^"  , 1, 1, 1 },
-    [OP_SHIFT_LEFT       ] = { "<<" , 0, 0, 1 },
-    [OP_SHIFT_RIGHT_ARITH] = { ">>" , 0, 0, 1 },
-    [OP_SHIFT_RIGHT_LOGIC] = { ">>>", 0, 0, 1 },
+static const char op_names[][MAX_OP_LEN + 1] = {
+    [OP_ADD              ] = "+",
+    [OP_SUBTRACT         ] = "-",
+    [OP_MULTIPLY         ] = "*",
+    [OP_PACK             ] = "^^",
+    [OP_TEST_BIT         ] = "@",
+    [OP_COMPARE_LT       ] = "<",
+    [OP_COMPARE_EQ       ] = "==",
+    [OP_COMPARE_GE       ] = ">=",
+    [OP_BITWISE_OR       ] = "|",
+    [OP_BITWISE_ORN      ] = "|~",
+    [OP_BITWISE_AND      ] = "&",
+    [OP_BITWISE_ANDN     ] = "&~",
+    [OP_BITWISE_XOR      ] = "^",
+    [OP_SHIFT_LEFT       ] = "<<",
+    [OP_SHIFT_RIGHT_ARITH] = ">>",
+    [OP_SHIFT_RIGHT_LOGIC] = ">>>",
 };
 
 static int is_printable(unsigned int ch, size_t len, char buf[len])
@@ -73,170 +68,95 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     struct instruction_type012 *t = &i->insn.u.type012;
     struct instruction_type3   *v = &i->insn.u.type3;
 
-    int rd = g->dd &  1;
-    int ld = g->dd == 2;
-
-    int width;
-    int32_t imm;
-    switch (g->p) {
-        case 0:
-        case 1:
-        case 2:
-            width = SMALL_IMMEDIATE_BITWIDTH;
-            imm = t->imm;
-            break;
-        case 3:
-            width = MEDIUM_IMMEDIATE_BITWIDTH;
-            imm = v->imm;
-            break;
+    int width = SMALL_IMMEDIATE_BITWIDTH;
+    int32_t imm = t->imm;
+    if (g->p == 3) {
+        width = MEDIUM_IMMEDIATE_BITWIDTH;
+        imm = v->imm;
     }
 
-    // LHS
-          char    f0 = ld ? '[' : ' ';        // left side dereferenced ?
-          char    f1 = 'A' + g->z;            // register name for Z
-          char    f2 = ld ? ']' : ' ';        // left side dereferenced ?
+    static const char regs[16 * 2] =
+        "A\0B\0C\0D\0E\0F\0G\0H\0I\0J\0K\0L\0M\0N\0O\0P\0";
+    static const char arrows[4 * 4] =
+        "<-\0\0<-\0\0<-\0\0->\0\0";
+    static const char brackets[2][2] =
+        { " [", " ]" };
 
-    // arrow
-    const char   *f3 = (g->dd == 3) ? "->" : "<-";    // arrow direction
+    const char    c0 = brackets[0][g->dd == 2]; // left side dereferenced ?
+    const char   *s1 = &regs[g->z * 2];         // register name for Z
+    const char    c2 = brackets[1][g->dd == 2]; // left side dereferenced ?
+    const char   *s3 = &arrows[g->dd * 4];      // arrow direction
+    const char    c4 = brackets[0][g->dd & 1];  // right side dereferenced ?
+    const char   *s5 = &regs[g->x * 2];         // register name for X
+    const char   *s6 = op_names[t->op];         // operator name
+    const char   *s7 = &regs[t->y * 2];         // register name for Y
+    const int32_t i8 = SEXTEND32(width,imm);    // immediate value
+    const char    c9 = brackets[1][g->dd & 1];  // right side dereferenced ?
 
-    // RHS
-          char    f4 = rd ? '[' : ' ';        // right side dereferenced ?
-          char    f5 = 'A' + g->x;            // register name for X
-    const char   *f6 = op_meta[t->op].name;   // operator name
-          char    f7 = 'A' + t->y;            // register name for Y
-          int32_t f8 = SEXTEND32(width,imm);  // immediate value, sign-extended
-          char    f9 = rd ? ']' : ' ';        // right side dereferenced ?
+    // TODO simplify r[][]
+    int r[][3] = {
+        [/* type */ 0] = { t->x, t->y,    0 },
+        [/* type */ 1] = { t->x,    0, t->y },
+        [/* type */ 2] = {    0, t->x, t->y },
+        [/* type */ 3] = {    0,    0,    0 },
+    };
+    int hex   = g->p == 3;
+    int show1 = ((g->p >  1) ? imm != 0 : t->x       != 0) || t->op != OP_BITWISE_OR;
+    int show2 = ((g->p == 1) ? imm != 0 : r[g->p][1] != 0) || t->op != OP_BITWISE_OR;
+    int show3 = ((g->p == 0) ? imm != 0 : t->y       != 0);
 
-    int hex   = op_meta[t->op].hex;
-    int opX0  = g->x == 0 || (imm == 0 && g->p == 2);
-    int opY0  = t->y == 0 || (imm == 0 && g->p == 1);
-    int inert = (op_meta[t->op].inertX && opX0) || (op_meta[t->op].inertY && opY0);
-    int op3   = g->p ? !opY0 : (!!imm);
-    int op2   = (!inert || (g->p ? (imm || opY0) : !opY0));
-    int op1   = !(opX0 && inert) || (!op2 && !op3);
+    // Edge case : show all operands if the type can't be inferred
+    if (t->op == OP_BITWISE_OR && show1 + show2 + show3 < 3)
+        show1 = show2 = show3 = 1;
+
+    // Edge case : all operands are 0, but word may not be 0
+    if (!(show1 | show2 | show3))
+        show1 = show2 = show3 = hex = g->p != 0;
 
     if (flags & ASM_VERBOSE)
-        op1 = op2 = op3 = hex = 1;
+        show1 = show2 = show3 = 1;
 
-    if (g->p == 3) {
-        hex = op1 = 1; // Large immediates are always emitted as hex
-        op2 = op3 = 0;
-    } else if (!(flags & (ASM_NO_SUGAR | ASM_VERBOSE))) {
-        if (t->op == OP_BITWISE_ORN && t->x == 0) {
-            f5 = ' ';   // don't print X
-            f6 = "~";   // change op to a unary not
-        } else if (t->op == OP_SUBTRACT && g->x == 0) {
-            f5 = ' ';   // don't print X
-        }
+    char s8[16];
+    snprintf(s8, sizeof s8, hex ? "0x%08x" : "%d", i8);
 
-        // sugar for P update idiom ; prefer signed decimal operand
-        if (t->y == 15
-            && (    (t->op == OP_BITWISE_AND)
-                 || (t->op == OP_BITWISE_OR && g->x == 0)
-                 || (t->op == OP_ADD)
-                 || (t->op == OP_SUBTRACT)
-               )
-           ) {
-            hex = 0;
-        }
+    const char *sA, *sB, *sC;
+    switch (g->p) {
+        case 0: sA = s5, sB = s7, sC = s8 ; break;
+        case 1: sA = s5, sB = s8, sC = s7 ; break;
+        case 2: sA = s8, sB = s5, sC = s7 ; break;
+        case 3: sA = s8; show2 = show3 = 0; break;
     }
 
-    #define C_(E,D,C,B,A) (((E) << 3) | ((D) << 5) | ((C) << 2) | ((B) << 1) | (A))
-    // We'd like to use positional references in these format strings, but to
-    // preserve compatibility with Win32 libc, we don't.
-    // indices : hex, g->p, op1, op2, op3
-    static const char *fmts[C_(1,3,1,1,1)+1] = {
-      //[C_(0,0,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
-        [C_(0,0,0,0,1)] = "%c%c%c %s %c"                "%d%c", // [Z] <- [          -0]
-        [C_(0,0,0,1,0)] = "%c%c%c %s %c"        "%c"      "%c", // [Z] <- [     Y      ]
-        [C_(0,0,0,1,1)] = "%c%c%c %s %c"        "%c + " "%d%c", // [Z] <- [     Y +  -0]
-        [C_(0,0,1,0,0)] = "%c%c%c %s %c%c"                "%c", // [Z] <- [ X          ]
-        [C_(0,0,1,0,1)] = "%c%c%c %s %c%c"        " + " "%d%c", // [Z] <- [ X     +  -0]
-        [C_(0,0,1,1,0)] = "%c%c%c %s %c%c %3s " "%c"      "%c", // [Z] <- [ X - Y      ]
-        [C_(0,0,1,1,1)] = "%c%c%c %s %c%c %3s " "%c + " "%d%c", // [Z] <- [ X - Y +  -0]
-      //[C_(0,1,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
-        [C_(0,1,0,0,1)] = "%c%c%c %s %c"                "%c%c", // [Z] <- [           Y]
-        [C_(0,1,0,1,0)] = "%c%c%c %s %c"           "%d"   "%c", // [Z] <- [      -0    ]
-        [C_(0,1,0,1,1)] = "%c%c%c %s %c"           "%d + %c%c", // [Z] <- [      -0 + Y]
-        [C_(0,1,1,0,0)] = "%c%c%c %s %c%c"                "%c", // [Z] <- [ X          ]
-        [C_(0,1,1,0,1)] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [ X       + Y]
-        [C_(0,1,1,1,0)] = "%c%c%c %s %c%c %3s "    "%d"   "%c", // [Z] <- [ X -  -0    ]
-        [C_(0,1,1,1,1)] = "%c%c%c %s %c%c %3s "    "%d + %c%c", // [Z] <- [ X -  -0 + Y]
-      //[C_(0,2,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
-        [C_(0,2,0,0,1)] = "%c%c%c %s %c"                "%c%c", // [Z] <- [           Y]
-        [C_(0,2,0,1,0)] = "%c%c%c %s %c"        "%c"      "%c", // [Z] <- [     X      ]
-        [C_(0,2,0,1,1)] = "%c%c%c %s %c"        "%c + " "%c%c", // [Z] <- [     X +   Y]
-        [C_(0,2,1,0,0)] = "%c%c%c %s %c%d"                "%c", // [Z] <- [-0          ]
-        [C_(0,2,1,0,1)] = "%c%c%c %s %c%d"        " + " "%c%c", // [Z] <- [-0     +   Y]
-        [C_(0,2,1,1,0)] = "%c%c%c %s %c%d %3s " "%c"      "%c", // [Z] <- [-0 - X      ]
-        [C_(0,2,1,1,1)] = "%c%c%c %s %c%d %3s " "%c + " "%c%c", // [Z] <- [-0 - X +   Y]
-      //[C_(0,3,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
-        [C_(0,3,1,0,0)] = "%c%c%c %s %c%d"                "%c", // [Z] <- [-0          ]
-      //[C_(1,0,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
-        [C_(1,0,0,0,1)] = "%c%c%c %s %c"            "0x%08x%c", // [Z] <- [         0x0]
-        [C_(1,0,0,1,0)] = "%c%c%c %s %c"       "%c"       "%c", // [Z] <- [     Y      ]
-        [C_(1,0,0,1,1)] = "%c%c%c %s %c"       "%c + 0x%08x%c", // [Z] <- [     Y + 0x0]
-        [C_(1,0,1,0,0)] = "%c%c%c %s %c%c"                "%c", // [Z] <- [ X          ]
-        [C_(1,0,1,0,1)] = "%c%c%c %s %c%c"       " + 0x%08x%c", // [Z] <- [ X     + 0x0]
-        [C_(1,0,1,1,0)] = "%c%c%c %s %c%c %3s ""%c"       "%c", // [Z] <- [ X - Y      ]
-        [C_(1,0,1,1,1)] = "%c%c%c %s %c%c %3s ""%c + 0x%08x%c", // [Z] <- [ X - Y + 0x0]
-      //[C_(1,1,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
-        [C_(1,1,0,0,1)] = "%c%c%c %s %c"                "%c%c", // [Z] <- [           Y]
-        [C_(1,1,0,1,0)] = "%c%c%c %s %c"       "0x%08x"   "%c", // [Z] <- [     0x0    ]
-        [C_(1,1,0,1,1)] = "%c%c%c %s %c"       "0x%08x + %c%c", // [Z] <- [     0x0 + Y]
-        [C_(1,1,1,0,0)] = "%c%c%c %s %c%c"                "%c", // [Z] <- [ X          ]
-        [C_(1,1,1,0,1)] = "%c%c%c %s %c%c"           " + %c%c", // [Z] <- [ X       + Y]
-        [C_(1,1,1,1,0)] = "%c%c%c %s %c%c %3s ""0x%08x"   "%c", // [Z] <- [ X - 0x0    ]
-        [C_(1,1,1,1,1)] = "%c%c%c %s %c%c %3s ""0x%08x + %c%c", // [Z] <- [ X - 0x0 + Y]
-      //[C_(1,0,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
-        [C_(1,2,0,0,1)] = "%c%c%c %s %c"                "%c%c", // [Z] <- [           Y]
-        [C_(1,2,0,1,0)] = "%c%c%c %s %c"       "%c"       "%c", // [Z] <- [       X    ]
-        [C_(1,2,0,1,1)] = "%c%c%c %s %c"       "%c + "  "%c%c", // [Z] <- [       X + Y]
-        [C_(1,2,1,0,0)] = "%c%c%c %s %c0x%08x"            "%c", // [Z] <- [0x0         ]
-        [C_(1,2,1,0,1)] = "%c%c%c %s %c0x%08x"       " + %c%c", // [Z] <- [0x0      + Y]
-        [C_(1,2,1,1,0)] = "%c%c%c %s %c0x%08x %3s ""%c"   "%c", // [Z] <- [0x0 -  X    ]
-        [C_(1,2,1,1,1)] = "%c%c%c %s %c0x%08x %3s ""%c + %c%c", // [Z] <- [0x0 -  X + Y]
-      //[C_(1,3,0,0,0)] = "%c%c%c %s %c"                  "%c", // [Z] <- [            ]
-        [C_(1,3,1,0,0)] = "%c%c%c %s %c0x%08x"            "%c", // [Z] <- [0x0         ]
+    static const char *fmts[] = {
+    //   c0s1c2 s3 c4sA s6  sB   sCc9   //
+        "%c%s%c %s %c"     "0"    "%c", // [Z] <- [      0     ]
+        "%c%s%c %s %c%s"          "%c", // [Z] <- [X           ]
+        "%c%s%c %s %c%s %3s %s"   "%c", // [Z] <- [X >>> Y     ]
+        "%c%s%c %s %c%s %3s %s + %s%c", // [Z] <- [X >>> Y + -0]
     };
 
-    // Centre a 1-to-3-character op
-    char op[MAX_OP_LEN + 1];
-    snprintf(op, sizeof op, "%-2s", f6);
-    f6 = op;
+    {
+        // Centre a 1-to-3-character op
+        char op[MAX_OP_LEN + 1];
+        snprintf(op, sizeof op, "%-2s", s6);
+        s6 = op;
+    }
 
-    #define PUT(...) return fprintf(out, fmts[C_(hex,g->p,op1,op2,op3)], __VA_ARGS__)
-    switch (C_(0,g->p,op1,op2,op3)) {
-      //case C_(0,0,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-        case C_(0,0,0,0,1): PUT(f0,f1,f2,f3,f4,         f8,f9); break;
-        case C_(0,0,0,1,0): PUT(f0,f1,f2,f3,f4,      f7,   f9); break;
-        case C_(0,0,0,1,1): PUT(f0,f1,f2,f3,f4,      f7,f8,f9); break;
-        case C_(0,0,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
-        case C_(0,0,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f8,f9); break;
-        case C_(0,0,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f7,   f9); break;
-        case C_(0,0,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f7,f8,f9); break;
-      //case C_(0,1,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-        case C_(0,1,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
-        case C_(0,1,0,1,0): PUT(f0,f1,f2,f3,f4,      f8,   f9); break;
-        case C_(0,1,0,1,1): PUT(f0,f1,f2,f3,f4,      f8,f7,f9); break;
-        case C_(0,1,1,0,0): PUT(f0,f1,f2,f3,f4,f5,         f9); break;
-        case C_(0,1,1,0,1): PUT(f0,f1,f2,f3,f4,f5,      f7,f9); break;
-        case C_(0,1,1,1,0): PUT(f0,f1,f2,f3,f4,f5,f6,f8,   f9); break;
-        case C_(0,1,1,1,1): PUT(f0,f1,f2,f3,f4,f5,f6,f8,f7,f9); break;
-      //case C_(0,2,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-        case C_(0,2,0,0,1): PUT(f0,f1,f2,f3,f4,         f7,f9); break;
-        case C_(0,2,0,1,0): PUT(f0,f1,f2,f3,f4,      f5,   f9); break;
-        case C_(0,2,0,1,1): PUT(f0,f1,f2,f3,f4,      f5,f7,f9); break;
-        case C_(0,2,1,0,0): PUT(f0,f1,f2,f3,f4,f8,         f9); break;
-        case C_(0,2,1,0,1): PUT(f0,f1,f2,f3,f4,f8,      f7,f9); break;
-        case C_(0,2,1,1,0): PUT(f0,f1,f2,f3,f4,f8,f6,f5,   f9); break;
-        case C_(0,2,1,1,1): PUT(f0,f1,f2,f3,f4,f8,f6,f5,f7,f9); break;
-      //case C_(0,3,0,0,0): PUT(f0,f1,f2,f3,f4,            f9); break;
-        case C_(0,3,1,0,0): PUT(f0,f1,f2,f3,f4,f8,         f9); break;
+    #define C_(C,B,A) (((C) << 2) | ((B) << 1) | (A))
+    #define PUT(...) return fprintf(out, fmts[show1+show2+show3], __VA_ARGS__)
+    switch (C_(show1,show2,show3)) {
+        case C_(0,0,0): PUT(c0,s1,c2,s3,c4,            c9); break;
+        case C_(0,0,1): PUT(c0,s1,c2,s3,c4,         sC,c9); break;
+        case C_(0,1,0): PUT(c0,s1,c2,s3,c4,      sB,   c9); break;
+        case C_(0,1,1): PUT(c0,s1,c2,s3,c4,sB," + ",sC,c9); break;
+        case C_(1,0,0): PUT(c0,s1,c2,s3,c4,sA,         c9); break;
+        case C_(1,0,1): PUT(c0,s1,c2,s3,c4,sA," + ",sC,c9); break;
+        case C_(1,1,0): PUT(c0,s1,c2,s3,c4,sA,s6,sB,   c9); break;
+        case C_(1,1,1): PUT(c0,s1,c2,s3,c4,sA,s6,sB,sC,c9); break;
 
         default:
-            fatal(0, "Unsupported hex,kind,op1,op2,op3 %d,%d,%d,%d,%d",
-                    hex,g->p,op1,op2,op3);
+            fatal(0, "Unsupported hex,kind,show1,show2,show3 %d,%d,%d,%d,%d",
+                    hex,g->p,show1,show2,show3);
     }
 }
 

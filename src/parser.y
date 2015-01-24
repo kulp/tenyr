@@ -311,13 +311,11 @@ rhs_plain
         {   struct const_expr *ce = $greloc_expr;
             int is_bits = ce->flags & IMM_IS_BITS;
             /* Large immediates and ones that should be expressed in
-             * hexadecimal use type3 ; others use type0. Consider ones
-             * that are zero to be unresolved and possibly large. */
-            if (ce->i == 0 || is_bits || ce->i != SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,ce->i)) {
-                $rhs_plain = make_expr(3, 0, OP_BITWISE_OR, 0, 1, ce);
-            } else {
-                $rhs_plain = make_expr(0, 0, OP_ADD, 0, 1, ce);
-            }
+             * hexadecimal use type3 ; others use type0. */
+            int type = 0;
+            if (is_bits || ce->i != SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,ce->i))
+                type = 3;
+            $rhs_plain = make_expr(type, 0, OP_BITWISE_OR, 0, 1, ce);
         }
 
 rhs_sugared
