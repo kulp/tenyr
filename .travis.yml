@@ -5,7 +5,7 @@ compiler:
 os:
   - linux
   - osx
-script: "make V=1 SDL=0 && make check && make local-install"
+script: "make lockfile= V=1 SDL=0 && make lockfile= check && make lockfile= local-install"
 notifications:
     irc:
         channels:

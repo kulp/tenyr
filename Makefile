@@ -3,6 +3,8 @@ TOP := $(dir $(makefile_path))
 include $(TOP)/mk/Makefile.common
 include $(TOP)/mk/Makefile.rules
 
+lockfile = lockfile
+
 # ensure directory printing doesn't mess up check rules
 GNUMAKEFLAGS += --no-print-directory
 
@@ -145,11 +147,11 @@ check: check_sw check_hw
 check_sw: check_compile check_sim dogfood
 
 define LOCK
-lockfile -r2 $(@D)/lock.$(@F)
+	$(lockfile) -r2 $(@D)/lock.$(@F)
 endef
 
 define UNLOCK
-	$(RM) $(@D)/lock.$(@F)
+	-$(RM) $(@D)/lock.$(@F)
 endef
 
 vpath %_demo.tas.cpp $(TOP)/ex
