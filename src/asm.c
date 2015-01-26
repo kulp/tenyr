@@ -130,7 +130,7 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     char s8[16];
     snprintf(s8, sizeof s8, hex ? "0x%08x" : "%d", i8);
 
-    const char *sA, *sB, *sC;
+    const char *sA = NULL, *sB = NULL, *sC = NULL;
     switch (g->p) {
         case 0: sA = s5, sB = s7, sC = s8 ; break;
         case 1: sA = s5, sB = s8, sC = s7 ; break;
