@@ -8,6 +8,7 @@
 
 #include "parser_global.h"
 #include "parser.h"
+#include "asm.h"
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
@@ -432,7 +433,8 @@ here_expr[outer]
 const_expr[outer]
     : const_atom
     | const_expr[left] const_op const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0); }
+        {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0);
+            ce_eval(pd, NULL, NULL, $outer, 0, NULL, NULL, &$outer->i); }
 
 const_atom[outer]
     : reloc_unary_op const_atom[inner]

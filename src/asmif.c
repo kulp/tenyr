@@ -30,14 +30,6 @@ enum { RHS_NEGATE = 1 << 0, NO_NAMED_RELOC = 1 << 1 };
 
 #define version() "tas version " STR(BUILD_NAME)
 
-typedef int reloc_handler(struct parse_data *pd, struct element *evalctx,
-        struct element *defctx, int flags, struct const_expr *ce, void
-        *ud);
-
-static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
-        element *defctx, struct const_expr *ce, int flags, reloc_handler
-        *rhandler, void *rud, int32_t *result);
-
 static int add_relocation(struct parse_data *pd, const char *name,
         struct element *insn, int width, int flags);
 
@@ -129,7 +121,7 @@ static int sym_reloc_handler(struct parse_data *pd, struct element
 }
 
 // ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
-static int ce_eval(struct parse_data *pd, struct element *evalctx, struct
+int ce_eval(struct parse_data *pd, struct element *evalctx, struct
         element *defctx, struct const_expr *ce, int flags, reloc_handler
         *rhandler, void *rud, int32_t *result)
 {

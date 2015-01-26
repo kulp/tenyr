@@ -40,6 +40,18 @@ extern const size_t tenyr_asm_formats_count;
 int make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format fmts[flen], size_t len, char buf[len],
         const char *sep);
+
+struct parse_data;
+struct const_expr;
+
+typedef int reloc_handler(struct parse_data *pd, struct element *evalctx,
+        struct element *defctx, int flags, struct const_expr *ce, void
+        *ud);
+
+int ce_eval(struct parse_data *pd, struct element *evalctx, struct
+        element *defctx, struct const_expr *ce, int flags, reloc_handler
+        *rhandler, void *rud, int32_t *result);
+
 #endif
 
 /* vi: set ts=4 sw=4 et: */
