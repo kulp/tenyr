@@ -20,7 +20,7 @@ $(TAS) $(TLD): $(TOP)/Makefile
 	$(MAKE) BUILDDIR=$(@D) -f $< $(@F)
 
 ifeq ($(XILINX),)
-$(error Set XILINX to /path/to/Xilinx/<VERSION>/ISE_DS/ISE)
+$(warning Set XILINX to /path/to/Xilinx/<VERSION>/ISE_DS/ISE)
 endif
 
 ARCH := lin$(shell uname -m | grep -o 64)
@@ -155,4 +155,4 @@ $(XST_TMPDIR):
 clean_FILES =
 clobber_FILES := $(shell cat .gitignore) $($(GIT) ls-files --others) bin/
 clobber::
-	find . -type d -empty | sort -r | xargs -r rmdir
+	find . -type d -empty | xargs rmdir -p
