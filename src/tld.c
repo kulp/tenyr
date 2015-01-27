@@ -224,13 +224,14 @@ int do_link_emit(struct link_state *s, struct obj *o)
     long rec_count = 0;
     // copy records
     struct objrec **ptr_objrec = &o->records, *front = NULL;
+    int32_t addr = 0;
     list_foreach(obj_list, Node, s->objs) {
         struct obj *i = Node->obj;
 
         list_foreach(objrec, rec, i->records) {
             struct objrec *n = calloc(1, sizeof *n);
 
-            n->addr = rec->addr;
+            n->addr = addr;
             n->size = rec->size;
             n->data = malloc(rec->size * sizeof *n->data);
             n->next = NULL;
@@ -241,6 +242,7 @@ int do_link_emit(struct link_state *s, struct obj *o)
             *ptr_objrec = n;
             ptr_objrec = &n->next;
 
+            addr += rec->size;
             rec_count++;
         }
     }

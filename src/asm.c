@@ -261,9 +261,8 @@ static int obj_in(FILE *stream, struct element *i, void *ud)
                 u->curr_rec = rec = rec->next;
                 u->pos = 0;
             } else {
+                i->insn.reladdr = rec->addr + u->pos;
                 i->insn.u.word = rec->data[u->pos++];
-                // TODO adjust addr where ?
-                i->insn.reladdr = rec->addr;
                 i->symbol = NULL;
                 done = 1;
             }
