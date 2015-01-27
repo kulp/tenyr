@@ -4,8 +4,7 @@
     // putnum takes number in C, (row,col) in D,E, and field width in F
 putnum:
     pushall(h,i,j,k,l,m)
-    h <- 0x100
-    h <- h << 8         // h is video base
+    h <- 0x10000        // h is video base
     k <- d * 80 + e     // k is offset into display
     k <- k + f          // start at right side of field
     i <- rel(hexes)     // i is base of hex transform
