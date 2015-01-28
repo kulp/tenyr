@@ -26,6 +26,8 @@
 #define FONT_HEIGHT 12
 #define FONT_WIDTH  8
 
+#define PUMP_CYCLES 2048
+
 struct sdlvga_state {
     uint32_t data[ROWS][COLS];
     SDL_Window *window;
@@ -34,6 +36,7 @@ struct sdlvga_state {
     SDL_Texture *sprite;
     struct timeval last_update, deadline;
     enum { RUNNING, STOPPING, STOPPED } status;
+    int cycles;
 };
 
 static int put_character(struct sdlvga_state *state, unsigned row,
@@ -169,7 +172,7 @@ static int sdlvga_pump(void *cookie)
     struct sdlvga_state *state = cookie;
 
     SDL_Event event;
-    if (state->status == RUNNING) {
+    if (state->cycles++ % PUMP_CYCLES == 0 && state->status == RUNNING) {
         if (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_QUIT:

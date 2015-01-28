@@ -24,6 +24,8 @@
 #define DIGIT_HEIGHT    64
 #define RESOURCE_DIR    "rsrc"
 
+#define PUMP_CYCLES 2048
+
 struct sdlled_state {
     uint32_t data[2];
     SDL_Window *window;
@@ -32,6 +34,7 @@ struct sdlled_state {
     SDL_Texture *digits[16];
     SDL_Texture *dots[2];
     struct timeval last_update, deadline;
+    int cycles;
 };
 
 static int handle_update(struct sdlled_state *state);
@@ -204,7 +207,7 @@ static int sdlled_pump(void *cookie)
     struct sdlled_state *state = cookie;
 
     SDL_Event event;
-    if (state->status == RUNNING) {
+    if (state->cycles++ % PUMP_CYCLES == 0 && state->status == RUNNING) {
         if (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_QUIT:
