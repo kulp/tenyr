@@ -329,7 +329,7 @@ static int assembly_cleanup(struct parse_data *pd)
 
 static int assembly_fixup_insns(struct parse_data *pd)
 {
-    int reladdr = 0;
+    int32_t reladdr = 0;
     // first pass, fix up addresses
     list_foreach(element_list, il, pd->top) {
         if (!il->elem)
@@ -344,7 +344,7 @@ static int assembly_fixup_insns(struct parse_data *pd)
             }
         }
 
-        reladdr++;
+        reladdr += il->elem->insn.size;
     }
 
     list_foreach(symbol_list, li, pd->symbols)
@@ -426,7 +426,6 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
         if (f->init(in, ASM_DISASSEMBLE, &ud))
             fatal(0, "Error during initialisation for format '%s'", f->name);
 
-    uint32_t reladdr = 0;
     while ((rc = f->in(in, &i, ud)) == 1) {
         int len = print_disassembly(out, &i, ASM_AS_INSN | flags);
         if (!(flags & ASM_QUIET)) {
@@ -434,8 +433,7 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
             print_disassembly(out, &i, ASM_AS_DATA | flags);
             fprintf(out, " ; ");
             print_disassembly(out, &i, ASM_AS_CHAR | flags);
-            // TODO make i.reladdr correct so we can use that XXX hack
-            fprintf(out, " ; .addr 0x%08x\n", reladdr++); //i.reladdr);
+            fprintf(out, " ; .addr 0x%08x\n", i.insn.reladdr);
         } else {
             fputc('\n', out);
             // This probably means we want line-oriented output

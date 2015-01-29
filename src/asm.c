@@ -274,9 +274,11 @@ static int obj_in(FILE *stream, struct element *i, void *ud)
 
 static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
 {
-    // TODO handle i->insn.size > 1 better. It should store .zero data
-    // sparsely.
+    if (i->insn.size <= 0)
+        return;
+
     o->records->data[u->insns++] = i->insn.u.word;
+    // We could store .zero data sparsely, but we don't (yet)
     for (int c = 1; c < i->insn.size; c++)
         o->records->data[u->insns++] = 0;
 }
