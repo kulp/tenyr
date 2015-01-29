@@ -1,0 +1,10 @@
+C <- (@first0 - (. + 1)) + P
+
+B <- [C + (10 + 0 + 5)]
+B <- B == ('A' + 5)
+
+illegal
+
+first0: .zero 10 ; .zero 0
+.utf32 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+

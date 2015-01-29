@@ -159,7 +159,9 @@ endef
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz
 DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
-OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/ops/*.tas)))
+OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/op/*.tas)))
+RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
+#TESTS = $(patsubst $(TOP)/test/%.tas,%,$(wildcard $(TOP)/test/*/*.tas))
 $(DEMOFILES): %_demo.texe: %_demo.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	$(SILENCE)$(call LOCK)
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
@@ -171,45 +173,58 @@ check_hw:
 	$(SILENCE)icarus="$$($(MAKE) --no-print-directory -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
 	if [ -x "$$icarus" ] ; then \
 		$(MAKESTEP) $$icarus ; \
-		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) check_hw_icarus_ops check_hw_icarus_demos ; \
+		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) check_hw_icarus_op check_hw_icarus_demo ; \
 	else \
 		$(MAKESTEP) "not found" ; \
 	fi
 
-run_demo_qsort:   verify = sed -n 5p
-run_demo_qsort:   result = eight
-run_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
-run_demo_bsearch: result = 11
-run_demo_trailz:  verify = grep -c good
-run_demo_trailz:  result = 33
-run_demo_%: $(TOP)/ex/%_demo.texe PERIODS.mk
+# Demos are not self-testing, so they have demo-specific external checkers
+test_demo_qsort:   verify = sed -n 5p
+test_demo_qsort:   result = eight
+test_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
+test_demo_bsearch: result = 11
+test_demo_trailz:  verify = grep -c good
+test_demo_trailz:  result = 33
+test_demo_%: $(TOP)/ex/%_demo.texe PERIODS.mk
 	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
 	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
 
-$(TOP)/test/ops/%.texe: $(TOP)/test/ops/%.tas | tas$(EXE_SUFFIX)
+# Op tests are self-testing -- they must leave B with the value 0xffffffff.
+# Use .INTERMEDIATE to indicate that op test files should be deleted after one
+# run -- they have random bits appended which should be regenerated each time.
+.INTERMEDIATE: $(OPS:%=$(TOP)/test/op/%.texe)
+$(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas | tas$(EXE_SUFFIX)
 	$(SILENCE)(cat $< ; hexdump -n12 -e'".word 0x%08x; "' /dev/urandom) | $(BUILDDIR)/tas -o $@ -
 
-test_op_%: $(TOP)/test/ops/%.tas PERIODS.mk | tas$(EXE_SUFFIX)
+test_op_%: $(TOP)/test/op/%.texe PERIODS.mk | tas$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
-	$(SILENCE)$(MAKE) -s -W $< -f $(BUILDDIR)/PERIODS.mk -f $(makefile_path) $(<:%.tas=%.texe)
+	$(SILENCE)$(run) && $(MAKESTEP) ok
+
+# Run tests are self-testing -- they must leave B with the value 0xffffffff.
+# Use .SECONDARY to indicate that run test files should *not* be deleted after
+# one run, as they do not have random bits appended (yet).
+.SECONDARY: $(RUNS:%=$(TOP)/test/run/%.texe)
+test_run_%: $(TOP)/test/run/%.texe PERIODS.mk | tas$(EXE_SUFFIX)
+	@$(MAKESTEP) -n "Running test `printf %-10s "'$*'"` ($(context)) ... "
 	$(SILENCE)$(run) && $(MAKESTEP) ok
 
 check_hw_icarus_pre:
 	@$(MAKESTEP) -n "Building hardware simulator ... "
 	$(SILENCE)$(MAKE) -s -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
 
-check_sim check_sim_demos check_sim_ops: export context=sim
-check_sim_demos check_sim_ops: tsim$(EXE_SUFFIX)
-check_sim: check_sim_demos check_sim_ops
+check_sim check_sim_demo check_sim_op check_sim_run: export context=sim
+check_sim_demo check_sim_op check_sim_run: tsim$(EXE_SUFFIX)
+check_sim: check_sim_demo check_sim_op check_sim_run
 
-check_hw_icarus_demos check_hw_icarus_ops: export context=hw_icarus
-check_hw_icarus_demos check_hw_icarus_ops: check_hw_icarus_pre
+check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
+check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre PERIODS.mk
 
-check_hw_icarus_demos: export run=$(MAKE) -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
-check_sim_demos: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*_demo.texe
+check_hw_icarus_demo: export run=$(MAKE) -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_sim_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*_demo.texe
 
-check_sim_demos check_hw_icarus_demos: $(DEMOS:%=run_demo_%)
-check_sim_ops check_hw_icarus_ops: $(OPS:%=test_op_%)
+check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
+check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
+check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 
 # TODO make op tests take a fixed or predictable maximum amount of time
 # The number of cycles necessary to run a code in Verilog simulation is
@@ -217,12 +232,14 @@ check_sim_ops check_hw_icarus_ops: $(OPS:%=test_op_%)
 # executed by the number of cycles per instruction (currently 10). A margin of
 # 2x is added to allow testcases not always to take exactly the same number of
 # instructions to complete.
-PERIODS.mk: $(OPS:%=$(TOP)/test/ops/%.texe) $(DEMOS:%=$(TOP)/ex/%_demo.texe) | tsim$(EXE_SUFFIX)
+PERIODS.mk: $(OPS:%=$(TOP)/test/op/%.texe) $(DEMOS:%=$(TOP)/ex/%_demo.texe) $(RUNS:%=$(TOP)/test/run/%.texe) | tsim$(EXE_SUFFIX)
 	$(SILENCE)for f in $^ ; do echo PERIODS_`basename $${f/.texe/}`=`$(BUILDDIR)/tsim$(EXE_SUFFIX) -vv $$f | wc -l | while read b ; do dc -e "$$b 20*p" ; done` ; done > $@
 
-check_sim_ops: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -vvvv $(TOP)/test/ops/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
-check_hw_icarus_ops: PERIODS.mk
-check_hw_icarus_ops: export run=$(MAKE) -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/ops PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_op: export stem=op
+check_sim_run: export stem=run
+check_sim_op check_sim_run: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -vvvv $(TOP)/test/$(stem)/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_hw_icarus_op: PERIODS.mk
+check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
 check_compile: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Building tests from test/ ... "
