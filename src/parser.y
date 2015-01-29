@@ -240,8 +240,8 @@ ascii
 data
     : WORD opt_nl reloc_expr_list
         {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $reloc_expr_list); }
-    | ZERO opt_nl reloc_expr
-        {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, $reloc_expr); }
+    | ZERO opt_nl const_expr
+        {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, $const_expr); }
 
 directive
     : GLOBAL opt_nl symbol_list
@@ -750,7 +750,7 @@ static struct element_list *make_zeros(struct parse_data *pd, struct const_expr 
 {
     struct element_list *result = calloc(1, sizeof *result);
     result->elem = calloc(1, sizeof *result->elem);
-    add_deferred_expr(pd, size, 1, &result->elem->insn.size, WORD_BITWIDTH, CE_SIMPLE);
+    ce_eval(pd, NULL, NULL, size, 0, NULL, NULL, &result->elem->insn.size);
     return result;
 }
 

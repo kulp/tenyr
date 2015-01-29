@@ -277,7 +277,7 @@ static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
     // TODO handle i->insn.size > 1 better. It should store .zero data
     // sparsely.
     o->records->data[u->insns++] = i->insn.u.word;
-    for (size_t c = 1; c < i->insn.size; c++)
+    for (int c = 1; c < i->insn.size; c++)
         o->records->data[u->insns++] = 0;
 }
 
@@ -367,7 +367,7 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
 {
     int ok = 1;
     ok &= fwrite(&i->insn.u.word, sizeof i->insn.u.word, 1, stream) == 1;
-    for (size_t c = 1; c < i->insn.size && ok; c++)
+    for (int c = 1; c < i->insn.size && ok; c++)
         ok &= fputc(0, stream) == 0;
     return ok;
 }
@@ -399,7 +399,7 @@ static int text_out(FILE *stream, struct element *i, void *ud)
 {
     int ok = 1;
     ok &= fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
-    for (size_t c = 1; c < i->insn.size && ok; c++)
+    for (int c = 1; c < i->insn.size && ok; c++)
         ok &= fputs("0x00000000\n", stream) > 0;
     return ok;
 }

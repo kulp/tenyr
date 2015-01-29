@@ -74,8 +74,8 @@ struct insn_or_data {
             unsigned p   :  2;  ///< expr type0 or type1
         } type3;
     } u;
-    uint32_t reladdr;   ///< used for CE_ICI resolving
-    uint32_t size;      ///< unused for instruction, used for data
+    int32_t reladdr;    ///< used for CE_ICI resolving
+    int32_t size;       ///< used for data (e.g., .zero 5 -> size == 5)
 };
 
 struct element {
