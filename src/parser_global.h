@@ -40,14 +40,6 @@ struct parse_data {
 
 int tenyr_parse(struct parse_data *);
 
-// flag to mark flipping value of relocations after a '-'
-#define CE_RHS_FLIP 1
-#define CE_NO_NAMED_RELOC 2
-// If the flag CE_IS_SIMPLE is when evaluating constant expressions,
-// expressions can consist only of OP2 and IMM operations (i.e., no references
-// to labels).
-#define CE_SIMPLE 4
-
 struct const_expr {
     enum const_expr_type { CE_BAD, CE_OP1, CE_OP2, CE_SYM, CE_EXT, CE_IMM, CE_ICI } type;
     int32_t i;

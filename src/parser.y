@@ -699,7 +699,7 @@ static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
 {
     struct symbol_list *l = calloc(1, sizeof *l);
 
-    l->next  = pd->symbols;
+    l->next = pd->symbols;
     l->symbol = n;
     pd->symbols = l;
 
@@ -784,7 +784,7 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
     n->ce       = expr;
     n->unique   = 0;
     if (symbol->len > sizeof n->name) {
-        tenyr_error(locp, pd, "symbol too long in .set directive");
+        tenyr_error(locp, pd, "symbol name too long in .set directive");
         return NULL;
     }
     strcopy(n->name, symbol->buf, symbol->len + 1);

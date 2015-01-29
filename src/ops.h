@@ -123,10 +123,10 @@ struct element_list {
  */
 
 enum op {
-    OP_BITWISE_OR        = 0x0,	OP_BITWISE_ORN       = 0x8,
-    OP_BITWISE_AND       = 0x1,	OP_BITWISE_ANDN      = 0x9,
-    OP_BITWISE_XOR       = 0x2,	OP_PACK              = 0xa,
-    OP_SHIFT_RIGHT_ARITH = 0x3,	OP_SHIFT_RIGHT_LOGIC = 0xb,
+    OP_BITWISE_OR        = 0x0, OP_BITWISE_ORN       = 0x8,
+    OP_BITWISE_AND       = 0x1, OP_BITWISE_ANDN      = 0x9,
+    OP_BITWISE_XOR       = 0x2, OP_PACK              = 0xa,
+    OP_SHIFT_RIGHT_ARITH = 0x3, OP_SHIFT_RIGHT_LOGIC = 0xb,
 
     OP_ADD               = 0x4, OP_SUBTRACT          = 0xc,
     OP_MULTIPLY          = 0x5, OP_SHIFT_LEFT        = 0xd,
