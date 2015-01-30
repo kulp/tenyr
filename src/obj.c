@@ -22,7 +22,7 @@ static inline void get_sized(void *what, size_t size, FILE *where)
         fatal(PRINT_ERRNO, "Unknown error in %s while parsing object", __func__);
 }
 
-static inline void put_sized(void *what, size_t size, FILE *where)
+static inline void put_sized(const void *what, size_t size, FILE *where)
 {
     if (fwrite(what, size, 1, where) != 1)
         fatal(PRINT_ERRNO, "Unknown error in %s while emitting object", __func__);
@@ -30,7 +30,7 @@ static inline void put_sized(void *what, size_t size, FILE *where)
 
 static int obj_v0_write(struct obj *o, FILE *out)
 {
-    put_sized(&MAGIC_BYTES, 3, out);
+    put_sized(MAGIC_BYTES, 3, out);
     PUT(o->magic.parsed.version, out);
     PUT(o->flags, out);
 
