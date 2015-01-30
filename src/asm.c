@@ -201,8 +201,6 @@ int find_format_by_name(const void *_a, const void *_b)
 struct obj_fdata {
     int flags;
     struct obj *o;
-    long words;
-    long insns;
     long syms;
     long rlcs;
 
@@ -226,9 +224,9 @@ static int obj_init(FILE *stream, int flags, void **ud)
         // TODO proper multiple-records support
         o->rec_count = 1;
         o->records = calloc(o->rec_count, sizeof *o->records);
-        o->records->addr = 0;
-        o->records->size = 1024;
-        o->records->data = calloc(o->records->size, sizeof *o->records->data);
+        o->records[0].addr = 0;
+        o->records[0].size = 1024; // will be realloc()ed as appropriate
+        o->records[0].data = calloc(o->records->size, sizeof *o->records->data);
         u->curr_rec = o->records;
 
         u->next_sym = &o->symbols;
@@ -277,10 +275,18 @@ static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
     if (i->insn.size <= 0)
         return;
 
-    o->records->data[u->insns++] = i->insn.u.word;
+    struct objrec *rec = &o->records[0];
+    if (rec->size < u->pos + i->insn.size) {
+        // TODO rewrite this without realloc() (start a new section ?)
+        while (rec->size < u->pos + i->insn.size)
+            rec->size *= 2;
+        rec->data = realloc(rec->data, rec->size * sizeof *rec->data);
+    }
+
     // We could store .zero data sparsely, but we don't (yet)
-    for (int c = 1; c < i->insn.size; c++)
-        o->records->data[u->insns++] = 0;
+    memset(&rec->data[u->pos], 0x00, i->insn.size);
+    rec->data[u->pos] = i->insn.u.word;
+    u->pos += i->insn.size;
 }
 
 static int obj_out(FILE *stream, struct element *i, void *ud)
@@ -342,7 +348,7 @@ static int obj_fini(FILE *stream, void **ud)
     struct obj *o = u->o;
 
     if (u->flags & ASM_ASSEMBLE) {
-        o->records->size = u->insns;
+        o->records[0].size = u->pos;
         o->sym_count = u->syms;
         o->rlc_count = u->rlcs;
 
