@@ -39,7 +39,7 @@ LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 	$(SILENCE)$(BISON) --defines=$*.h -o $*.c $<
 
 %.d: %.c
-	@set -e; rm -f $@; \
+	@set -e; mkdir -p $(@D); rm -f $@; \
 	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null && \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@ && \
 	rm -f $@.$$$$ || rm -f $@.$$$$

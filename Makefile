@@ -22,10 +22,10 @@ SDL_VERSION = $(shell sdl2-config --version 2>/dev/null)
 ifneq ($(SDL_VERSION),)
 # Use := to ensure the expensive underyling call is not repeated
 NO_C11_WARN_OPTS := $(call cc_flag_supp,-Wno-c11-extensions)
-libsdl%$(DYLIB_SUFFIX): CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
-libsdl%$(DYLIB_SUFFIX): LDLIBS   += $(shell sdl2-config --libs) -lSDL2_image
 PDEVICES_SDL += sdlled sdlvga
 PDEVICES += $(PDEVICES_SDL)
+libsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
+libsdl%$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
 $(PDEVICES_SDL:%=%,dy.o): PEDANTIC_FLAGS :=
 endif
 endif
@@ -45,13 +45,15 @@ CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 NO_UNKNOWN_WARN_OPTS := $(call cc_flag_supp,-Wno-unknown-warning-option)
 CPPFLAGS += $(NO_UNKNOWN_WARN_OPTS)
 
-CFILES = $(wildcard src/*.c) $(wildcard src/devices/*.c)
+SOURCEFILES = $(wildcard $(TOP)/src/*.c $(TOP)/src/devices/*.c)
+vpath %.c $(TOP)/src $(TOP)/src/devices
 
 VPATH += $(TOP)/src $(TOP)/src/devices
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
 
 clean_FILES := $(addprefix $(BUILDDIR)/, \
                    *.o                   \
+                   *.d                   \
                    parser.[ch]           \
                    lexer.[ch]            \
                    $(TARGETS)            \
@@ -301,7 +303,7 @@ uninstall:: $(RESOURCES)
 	$(RM) -r $(INSTALL_DIR)/share/tenyr
 
 ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
--include $(CFILES:.c=.d)
+-include $(patsubst $(TOP)/src/%.c,$(BUILDDIR)/%.d,$(SOURCEFILES))
 endif
 
 ##############################################################################
