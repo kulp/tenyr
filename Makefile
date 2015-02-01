@@ -46,7 +46,6 @@ NO_UNKNOWN_WARN_OPTS := $(call cc_flag_supp,-Wno-unknown-warning-option)
 CPPFLAGS += $(NO_UNKNOWN_WARN_OPTS)
 
 SOURCEFILES = $(wildcard $(TOP)/src/*.c $(TOP)/src/devices/*.c)
-vpath %.c $(TOP)/src $(TOP)/src/devices
 
 VPATH += $(TOP)/src $(TOP)/src/devices
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
