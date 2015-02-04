@@ -24,7 +24,8 @@ ifneq ($(SDL_VERSION),)
 NO_C11_WARN_OPTS := $(call cc_flag_supp,-Wno-c11-extensions)
 PDEVICES_SDL += sdlled sdlvga
 PDEVICES += $(PDEVICES_SDL)
-libsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
+libsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): \
+    CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
 libsdl%$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
 $(PDEVICES_SDL:%=%,dy.o): PEDANTIC_FLAGS :=
 endif
@@ -104,7 +105,10 @@ doc: tas_usage tsim_usage tld_usage
 
 %_usage: %$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Generating usage description for $* ... "
-	$(SILENCE)PATH=$(BUILDDIR) $< --help | sed 's/^/    /;/version/s/-[0-9][0-9]*-g[[:xdigit:]]\{7\}/.../' > $(TOP)/wiki/$*--help.md && $(MAKESTEP) ok
+	$(SILENCE)PATH=$(BUILDDIR) $< --help | \
+		sed -e 's/^/    /' \
+		    -e '/version/s/-[0-9][0-9]*-g[[:xdigit:]]\{7\}/$1.../' \
+	        > $(TOP)/wiki/$*--help.md && $(MAKESTEP) ok
 
 .PHONY: gzip zip
 gzip zip: export CREATE_TEMP_INSTALL_DIR=1
@@ -113,8 +117,9 @@ ifeq ($(CREATE_TEMP_INSTALL_DIR),1)
 gzip: tenyr-$(BUILD_NAME).tar.gz
 zip: tenyr-$(BUILD_NAME).zip
 
-tenyr-$(BUILD_NAME).zip tenyr-$(BUILD_NAME).tar.gz: INSTALL_PRE := $(shell mktemp -d tenyr.dist.XXXXXX)
-tenyr-$(BUILD_NAME).zip tenyr-$(BUILD_NAME).tar.gz: INSTALL_DIR := $(INSTALL_PRE)/tenyr-$(BUILD_NAME)
+ZIPBALLS = tenyr-$(BUILD_NAME).zip tenyr-$(BUILD_NAME).tar.gz
+$(ZIPBALLS): INSTALL_PRE := $(shell mktemp -d tenyr.dist.XXXXXX)
+$(ZIPBALLS): INSTALL_DIR := $(INSTALL_PRE)/tenyr-$(BUILD_NAME)
 
 tenyr-$(BUILD_NAME).tar.gz: install
 	tar zcf $@ -C $(INSTALL_DIR)/.. .
@@ -166,7 +171,7 @@ RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
 $(DEMOFILES): %_demo.texe: %_demo.tas.cpp | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	$(SILENCE)$(call LOCK)
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
-	$(SILENCE)$(MAKE) -s -C $(@D) $(@F) && $(MAKESTEP) ok
+	$(SILENCE)$(MAKE) -s BUILDDIR=$(abspath $(BUILDDIR)) -C $(@D) $(@F) && $(MAKESTEP) ok
 	$(SILENCE)$(call UNLOCK)
 
 check_hw:
@@ -174,7 +179,8 @@ check_hw:
 	$(SILENCE)icarus="$$($(MAKE) --no-print-directory -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
 	if [ -x "$$icarus" ] ; then \
 		$(MAKESTEP) $$icarus ; \
-		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) check_hw_icarus_op check_hw_icarus_demo ; \
+		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) BUILDDIR=$(BUILDDIR) \
+		    check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run; \
 	else \
 		$(MAKESTEP) "not found" ; \
 	fi
@@ -205,7 +211,7 @@ test_op_%: $(TOP)/test/op/%.texe PERIODS.mk | tas$(EXE_SUFFIX)
 # Use .SECONDARY to indicate that run test files should *not* be deleted after
 # one run, as they do not have random bits appended (yet).
 .SECONDARY: $(RUNS:%=$(TOP)/test/run/%.texe)
-test_run_%: $(TOP)/test/run/%.texe PERIODS.mk | tas$(EXE_SUFFIX)
+test_run_%: $(TOP)/test/run/%.texe PERIODS.mk | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Running test `printf %-10s "'$*'"` ($(context)) ... "
 	$(SILENCE)$(run) && $(MAKESTEP) ok
 
@@ -240,7 +246,7 @@ check_sim_op: export stem=op
 check_sim_run: export stem=run
 check_sim_op check_sim_run: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -vvvv $(TOP)/test/$(stem)/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 check_hw_icarus_op: PERIODS.mk
-check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
 check_compile: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Building tests from test/ ... "
