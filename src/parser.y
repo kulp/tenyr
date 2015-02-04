@@ -414,10 +414,13 @@ reloc_expr_atom
 
 const_op
     : reloc_op
-    | '*'  { $const_op = '*'; }
-    | '/'  { $const_op = '/'; }
-    | '^'  { $const_op = '^'; }
-    | "<<" { $const_op = LSH; }
+    | '*'   { $const_op = '*';  }
+    | '/'   { $const_op = '/';  }
+    | '^'   { $const_op = '^';  }
+    | '&'   { $const_op = '&';  }
+    | "<<"  { $const_op = LSH;  }
+    | ">>"  { $const_op = RSHA; }
+    | ">>>" { $const_op = RSH;  }
 
 here_atom
     : '.'

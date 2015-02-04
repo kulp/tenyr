@@ -178,12 +178,15 @@ int ce_eval(struct parse_data *pd, struct element *evalctx, struct
                 ce_eval(pd, evalctx, defctx, ce->right, rhsflags, rhandler, rud, &right))
             {
                 switch (ce->op) {
-                    case '+': *result = left +  right; return 1;
-                    case '-': *result = left -  right; return 1;
-                    case '*': *result = left *  right; return 1;
-                    case '^': *result = left ^  right; return 1;
-                    case LSH: *result = left << right; return 1;
-                    case '/': {
+                    case '+' : *result = left +  right; return 1;
+                    case '-' : *result = left -  right; return 1;
+                    case '*' : *result = left *  right; return 1;
+                    case '^' : *result = left ^  right; return 1;
+                    case '&' : *result = left &  right; return 1;
+                    case LSH : *result = left << right; return 1;
+                    case RSHA: *result = left >> right; return 1;
+                    case RSH : *result = ((uint32_t)left) >> right; return 1;
+                    case '/' : {
                         if (right != 0)
                             *result = left / right;
                         else
