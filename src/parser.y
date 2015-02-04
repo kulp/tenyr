@@ -571,9 +571,11 @@ static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
     e->y     = y;
     e->mult  = mult;
     e->ce    = defexpr;
-    if (defexpr)
+    if (defexpr) {
+        if (op == OP_PACK)
+            e->ce->flags |= IGNORE_WIDTH;
         e->i = 0xfffffbad; // put in a placeholder that must be overwritten
-    else
+    } else
         e->i = 0; // there was no const_expr ; zero defined by language
 
     return e;
