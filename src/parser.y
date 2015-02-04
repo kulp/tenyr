@@ -441,7 +441,8 @@ const_expr[outer]
 
 const_atom[outer]
     : reloc_unary_op const_atom[inner]
-        {   $outer = make_const_expr(CE_OP1, $reloc_unary_op, $inner, NULL, 0); }
+        {   $outer = make_const_expr(CE_OP1, $reloc_unary_op, $inner, NULL, 0);
+            ce_eval(pd, NULL, NULL, $outer, 0, NULL, NULL, &$outer->i); }
     | '(' const_expr ')'
         {   $outer = $const_expr; }
     | immediate
