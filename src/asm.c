@@ -182,8 +182,12 @@ int print_registers(FILE *out, int32_t regs[16])
         fprintf(out, "%c %08x ", 'A' + i, regs[i]);
     fputs("\n", out);
 
-    for (; i < 16; i++)
+    for (; i < 15; i++)
         fprintf(out, "%c %08x ", 'A' + i, regs[i]);
+
+    // Treat P specially : a read would return IP + 1
+    fprintf(out, "%c %08x ", 'A' + 15, regs[15] + 1);
+
     fputs("\n", out);
 
     return 0;
