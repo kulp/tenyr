@@ -98,12 +98,12 @@ extern void tenyr_pop_state(void *yyscanner);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce> const_expr greloc_expr reloc_expr const_atom reloc_atom eref
+%type <ce> const_expr const_binop_expr greloc_expr reloc_expr const_atom reloc_atom eref
 %type <cl> greloc_expr_list
 %type <cstr> string
 %type <dctv> directive
 %type <expr> rhs_plain rhs_sugared rhs_deref lhs_plain lhs_deref
-%type <i> arrow regname reloc_op const_op
+%type <i> arrow regname reloc_op
 %type <imm> immediate
 %type <insn> insn insn_inner
 %type <op> native_op sugar_op unary_op reloc_unary_op
@@ -406,21 +406,21 @@ reloc_atom
     | '(' reloc_expr ')'
         {   $reloc_atom = $reloc_expr; }
 
-const_op
-    : reloc_op
-    | '*'   { $const_op = '*';  }
-    | '/'   { $const_op = '/';  }
-    | '^'   { $const_op = '^';  }
-    | '&'   { $const_op = '&';  }
-    | "<<"  { $const_op = LSH;  }
-    | ">>"  { $const_op = RSHA; }
-    | ">>>" { $const_op = RSH;  }
-
 const_expr[outer]
     : const_atom
-    | const_expr[left] const_op const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0);
-            ce_eval(pd, NULL, NULL, $outer, 0, NULL, NULL, &$outer->i); }
+    | const_binop_expr
+        {   ce_eval(pd, NULL, NULL, $outer, 0, NULL, NULL, &$outer->i); }
+
+const_binop_expr
+    : const_expr[x]  '+'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '+', $x, $y, 0); }
+    | const_expr[x]  '-'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '-', $x, $y, 0); }
+    | const_expr[x]  '*'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '*', $x, $y, 0); }
+    | const_expr[x]  '/'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '/', $x, $y, 0); }
+    | const_expr[x]  '^'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '^', $x, $y, 0); }
+    | const_expr[x]  '&'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '&', $x, $y, 0); }
+    | const_expr[x]  "<<" const_expr[y] { $$ = make_const_expr(CE_OP2,  LSH, $x, $y, 0); }
+    | const_expr[x]  ">>" const_expr[y] { $$ = make_const_expr(CE_OP2,  RSH, $x, $y, 0); }
+    | const_expr[x] ">>>" const_expr[y] { $$ = make_const_expr(CE_OP2, RSHA, $x, $y, 0); }
 
 const_atom[outer]
     : reloc_unary_op const_atom[inner]
