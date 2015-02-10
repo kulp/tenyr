@@ -20,8 +20,8 @@ else
 endif
 INCLUDE_OS = $(TOP)/src/os/$(OS) $(TOP)/src/os/default
 
-include $(TOP)/mk/Makefile.default
--include $(TOP)/mk/Makefile.$(OS)
+include $(TOP)/mk/os/default.mk
+-include $(TOP)/mk/os/$(OS).mk
 
 CPPFLAGS += -D"PATH_SEPARATOR_CHAR=$(PATH_SEP_CHAR)"
 

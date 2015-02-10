@@ -1,6 +1,6 @@
 TOP = $(abspath ../..)
-include $(TOP)/mk/Makefile.common
-include $(TOP)/mk/Makefile.rules
+include $(TOP)/mk/common.mk
+include $(TOP)/mk/rules.mk
 
 .DEFAULT_GOAL = bit
 

@@ -1,8 +1,8 @@
 makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
 HERE := $(dir $(makefile_path))
 TOP ?= $(HERE)/main_build
-include $(TOP)/mk/Makefile.common
-include $(TOP)/mk/Makefile.rules
+include $(TOP)/mk/common.mk
+include $(TOP)/mk/rules.mk
 
 BIN_TARGETS = tcc.js tas.js tsim.js
 TARGETS = $(BIN_TARGETS)
