@@ -12,6 +12,7 @@ INCLUDES += $(INCLUDE_OS)
 
 clean_FILES = tenyr glue.vpi *.o
 clobber_FILES = *.vcd
+clobber_FILES = *.texe
 
 all: tenyr glue.vpi
 

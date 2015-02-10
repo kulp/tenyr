@@ -87,6 +87,10 @@ clean clobber::
 clobber_FILES += $(BUILDDIR)/*.gc??
 clobber_FILES += $(BUILDDIR)/coverage.info
 clobber_FILES += $(BUILDDIR)/PERIODS.mk
+clobber_FILES += $(BUILDDIR)/coverage_html
+clobber_FILES += $(TOP)/test/op/*.texe
+clobber_FILES += $(TOP)/test/run/*.texe
+clobber_FILES += $(SOURCEFILES:.c=.d)
 clobber::
 	-$(MAKE) -C $(TOP)/ex $@
 
@@ -147,7 +151,6 @@ coverage.info.trimmed: coverage.info
 coverage.info.%: coverage.info.trimmed
 	lcov --extract $< '*/$*/*' --output-file $@
 
-CLOBBER_FILES += $(BUILDDIR)/coverage_html
 coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
 
