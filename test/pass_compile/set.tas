@@ -1,8 +1,8 @@
 .set abc, 2
-.set bcd, 0xdeadbeef - 0xbeef
+.set bcd, (0xdeadbeef - 0xbeef)
 c <- d
 .word @bcd
-.set bcd, . + 0xdeadbeef - 0xbeef
+.set bcd, (. + 0xdeadbeef - 0xbeef)
 .set efg, .
 b <- 1
 c <- 2

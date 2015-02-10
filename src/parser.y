@@ -98,9 +98,8 @@ extern void tenyr_pop_state(void *yyscanner);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce> const_expr greloc_expr reloc_expr_atom
-%type <ce> reloc_expr here_or_const_atom const_atom eref here_atom here_expr
-%type <cl> reloc_expr_list
+%type <ce> const_expr greloc_expr reloc_expr const_atom reloc_atom eref
+%type <cl> greloc_expr_list
 %type <cstr> string
 %type <dctv> directive
 %type <expr> rhs_plain rhs_sugared rhs_deref lhs_plain lhs_deref
@@ -110,8 +109,6 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <op> native_op sugar_op unary_op reloc_unary_op
 %type <program> program ascii utf32 data string_or_data
 %type <str> symbol symbol_list
-
-%expect 2
 
 %union {
     int32_t i;
@@ -244,26 +241,26 @@ ascii
         {   tenyr_pop_state(pd->scanner); $ascii = make_ascii($string); }
 
 data
-    : ".word" opt_nl reloc_expr_list
-        {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $reloc_expr_list); }
+    : ".word" opt_nl greloc_expr_list
+        {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $greloc_expr_list); }
     | ".zero" opt_nl const_expr
         {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, $const_expr); }
 
 directive
     : ".global" opt_nl symbol_list
         {   tenyr_pop_state(pd->scanner); $directive = make_global(pd, &yylloc, &$symbol_list); }
-    | ".set" opt_nl SYMBOL ',' reloc_expr
-        {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
+    | ".set" opt_nl SYMBOL ',' greloc_expr
+        {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $greloc_expr); }
 
 symbol_list
     : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
 
-reloc_expr_list[outer]
-    : reloc_expr[expr]
+greloc_expr_list[outer]
+    : greloc_expr[expr]
         {   $outer = calloc(1, sizeof *$outer);
             $outer->right = NULL;
             $outer->ce = $expr; }
-    | reloc_expr[expr] ',' opt_nl reloc_expr_list[inner]
+    | greloc_expr[expr] ',' opt_nl greloc_expr_list[inner]
         {   $outer = calloc(1, sizeof *$outer);
             $outer->right = $inner;
             $outer->ce = $expr; }
@@ -395,28 +392,18 @@ reloc_unary_op
 
 /* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
 greloc_expr
-    : reloc_expr_atom
-    | here_or_const_atom
-
-reloc_expr[outer]
-    : const_expr
-    | reloc_expr_atom
-    | here_expr
-    | eref reloc_op here_or_const_atom
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $here_or_const_atom, 0); }
-    | eref reloc_op[lop] here_atom reloc_op[rop] const_atom
-        {   struct const_expr *inner = make_const_expr(CE_OP2, $lop, $eref, $here_atom, 0);
-            $outer = make_const_expr(CE_OP2, $rop, inner, $const_atom, 0);
-        }
-
-here_or_const_atom
-    : here_atom
+    : reloc_atom
     | const_atom
 
-reloc_expr_atom
+reloc_expr[outer]
+    : reloc_atom
+    | eref reloc_op const_expr
+        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_expr, 0); }
+
+reloc_atom
     : eref
     | '(' reloc_expr ')'
-        {   $reloc_expr_atom = $reloc_expr; }
+        {   $reloc_atom = $reloc_expr; }
 
 const_op
     : reloc_op
@@ -427,17 +414,6 @@ const_op
     | "<<"  { $const_op = LSH;  }
     | ">>"  { $const_op = RSHA; }
     | ">>>" { $const_op = RSH;  }
-
-here_atom
-    : '.'
-        {   $here_atom = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS); }
-    | '(' here_expr ')'
-        {   $here_atom = $here_expr; }
-
-here_expr[outer]
-    : here_atom
-    | here_expr[left] const_op const_atom[right]
-        {   $outer = make_const_expr(CE_OP2, $const_op, $left, $right, 0); }
 
 const_expr[outer]
     : const_atom
@@ -454,8 +430,10 @@ const_atom[outer]
     | immediate
         {   $outer = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
             $outer->i = $immediate.i; }
+    | '.'
+        {   $outer = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
-        {   $outer = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS);
+        {   $outer = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL.buf))) {
                 $outer->symbol = s;
@@ -466,7 +444,7 @@ const_atom[outer]
 
 eref
     : '@' SYMBOL
-        {   $eref = make_const_expr(CE_EXT, 0, NULL, NULL, IMM_IS_BITS);
+        {   $eref = make_const_expr(CE_EXT, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $SYMBOL.buf))) {
                 $eref->symbol = s;
