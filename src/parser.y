@@ -79,18 +79,24 @@ extern void tenyr_pop_state(void *yyscanner);
 %token <i> INTEGER BITSTRING
 %token <chr> REGISTER
 %token ILLEGAL
-%token WORD ASCII UTF32 GLOBAL SET ZERO
 
 /* synonyms for literal string tokens */
-%token LSH "<<"
-%token RSH ">>>"
+%token LSH  "<<"
+%token RSH  ">>>"
 %token RSHA ">>"
-%token EQ "=="
-%token GE ">="
-%token LE "<="
-%token ORN "|~"
+%token EQ   "=="
+%token GE   ">="
+%token LE   "<="
+%token ORN  "|~"
 %token ANDN "&~"
 %token PACK "^^"
+
+%token WORD     ".word"
+%token ASCII    ".ascii"
+%token UTF32    ".utf32"
+%token GLOBAL   ".global"
+%token SET      ".set"
+%token ZERO     ".zero"
 
 %type <ce> const_expr greloc_expr reloc_expr_atom
 %type <ce> reloc_expr here_or_const_atom const_atom eref here_atom here_expr
@@ -230,23 +236,23 @@ string[outer]
             $outer->right = $inner; }
 
 utf32
-    : UTF32 string
+    : ".utf32" string
         {   tenyr_pop_state(pd->scanner); $utf32 = make_utf32($string); }
 
 ascii
-    : ASCII string
+    : ".ascii" string
         {   tenyr_pop_state(pd->scanner); $ascii = make_ascii($string); }
 
 data
-    : WORD opt_nl reloc_expr_list
+    : ".word" opt_nl reloc_expr_list
         {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $reloc_expr_list); }
-    | ZERO opt_nl const_expr
+    | ".zero" opt_nl const_expr
         {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, $const_expr); }
 
 directive
-    : GLOBAL opt_nl symbol_list
+    : ".global" opt_nl symbol_list
         {   tenyr_pop_state(pd->scanner); $directive = make_global(pd, &yylloc, &$symbol_list); }
-    | SET opt_nl SYMBOL ',' reloc_expr
+    | ".set" opt_nl SYMBOL ',' reloc_expr
         {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
 symbol_list
