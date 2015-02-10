@@ -139,12 +139,12 @@ top
     : program
         {   pd->top = $program; }
 
-string_or_data[outer]
+string_or_data
     : ascii
     | utf32
     | data
     | symbol ':' opt_nl string_or_data[inner]
-        {   $outer = $inner;
+        {   $$ = $inner;
             struct symbol *n = add_symbol_to_insn(&yyloc, $inner->elem,
                     $symbol.buf);
             if (check_add_symbol(&yyloc, pd, n))
@@ -155,44 +155,44 @@ opt_nl
     : '\n' opt_nl
     | /* empty */
 
-program[outer]
+program
     :   /* empty */
-        {   $outer = calloc(1, sizeof *$outer);
-            // dummy instruction permits capturing previous instruction from $outer->prev
+        {   $$ = calloc(1, sizeof *$$);
+            // dummy instruction permits capturing previous instruction from $$->prev
         }
     | sep program[inner]
-        {   $outer = $inner; }
+        {   $$ = $inner; }
     | string_or_data sep program[inner]
         {   struct element_list *p = $string_or_data, *i = $inner;
             if (p) {
                 while (p->next) p = p->next;
                 p->next = i;
                 i->prev = p;
-                $outer = $string_or_data;
+                $$ = $string_or_data;
             } else
-                $outer = i; // an empty string is NULL
+                $$ = i; // an empty string is NULL
         }
     | directive sep program[inner]
-        {   $outer = $inner;
+        {   $$ = $inner;
             handle_directive(pd, &yylloc, $directive, $inner); }
     | insn sep program[inner]
-        {   $outer = calloc(1, sizeof *$outer);
-            $inner->prev = $outer;
-            $outer->next = $inner;
-            $outer->elem = $insn; }
+        {   $$ = calloc(1, sizeof *$$);
+            $inner->prev = $$;
+            $$->next = $inner;
+            $$->elem = $insn; }
 
 sep
     : '\n'
     | ';'
 
-insn[outer]
+insn
     : ILLEGAL
-        {   $outer = calloc(1, sizeof *$outer);
-            $outer->insn.size = 1;
-            $outer->insn.u.word = 0xcfffffff; /* P <- -1 */ }
+        {   $$ = calloc(1, sizeof *$$);
+            $$->insn.size = 1;
+            $$->insn.u.word = 0xcfffffff; /* P <- -1 */ }
     | insn_inner
     | symbol ':' opt_nl insn[inner]
-        {   $outer = $inner;
+        {   $$ = $inner;
             struct symbol *n = add_symbol_to_insn(&yyloc, $inner, $symbol.buf);
             if (check_add_symbol(&yyloc, pd, n))
                 YYABORT;
@@ -219,18 +219,18 @@ insn_inner
             free($rhs_plain);
             free($lhs_deref); }
 
-string[outer]
+string
     : STRING
-        {   $outer = calloc(1, sizeof *$outer);
-            $outer->len = $STRING.len;
-            $outer->str = malloc($outer->len + 1);
-            strcopy($outer->str, $STRING.buf, $outer->len + 1); }
+        {   $$ = calloc(1, sizeof *$$);
+            $$->len = $STRING.len;
+            $$->str = malloc($$->len + 1);
+            strcopy($$->str, $STRING.buf, $$->len + 1); }
     | STRING string[inner]
-        {   $outer = calloc(1, sizeof *$outer);
-            $outer->len = $STRING.len;
-            $outer->str = malloc($outer->len + 1);
-            strcopy($outer->str, $STRING.buf, $outer->len + 1);
-            $outer->right = $inner; }
+        {   $$ = calloc(1, sizeof *$$);
+            $$->len = $STRING.len;
+            $$->str = malloc($$->len + 1);
+            strcopy($$->str, $STRING.buf, $$->len + 1);
+            $$->right = $inner; }
 
 utf32
     : ".utf32" string
@@ -255,15 +255,15 @@ directive
 symbol_list
     : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
 
-greloc_expr_list[outer]
+greloc_expr_list
     : greloc_expr[expr]
-        {   $outer = calloc(1, sizeof *$outer);
-            $outer->right = NULL;
-            $outer->ce = $expr; }
+        {   $$ = calloc(1, sizeof *$$);
+            $$->right = NULL;
+            $$->ce = $expr; }
     | greloc_expr[expr] ',' opt_nl greloc_expr_list[inner]
-        {   $outer = calloc(1, sizeof *$outer);
-            $outer->right = $inner;
-            $outer->ce = $expr; }
+        {   $$ = calloc(1, sizeof *$$);
+            $$->right = $inner;
+            $$->ce = $expr; }
 
 lhs_plain
     : regname
@@ -396,20 +396,19 @@ greloc_expr
     : reloc_atom
     | const_atom
 
-reloc_expr[outer]
+reloc_expr
     : reloc_atom
     | eref reloc_op const_expr
-        {   $outer = make_const_expr(CE_OP2, $reloc_op, $eref, $const_expr, 0); }
+        {   $$ = make_const_expr(CE_OP2, $reloc_op, $eref, $const_expr, 0); }
 
 reloc_atom
     : eref
     | '(' reloc_expr ')'
         {   $reloc_atom = $reloc_expr; }
 
-const_expr[outer]
+const_expr
     : const_atom
-    | const_binop_expr
-        {   ce_eval(pd, NULL, NULL, $outer, 0, NULL, NULL, &$outer->i); }
+    | const_binop_expr { ce_eval(pd, NULL, NULL, $$, 0, NULL, NULL, &$$->i); }
 
 const_binop_expr
     : const_expr[x]  '+'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '+', $x, $y, 0); }
@@ -422,24 +421,24 @@ const_binop_expr
     | const_expr[x]  ">>" const_expr[y] { $$ = make_const_expr(CE_OP2,  RSH, $x, $y, 0); }
     | const_expr[x] ">>>" const_expr[y] { $$ = make_const_expr(CE_OP2, RSHA, $x, $y, 0); }
 
-const_atom[outer]
+const_atom
     : reloc_unary_op const_atom[inner]
-        {   $outer = make_const_expr(CE_OP1, $reloc_unary_op, $inner, NULL, 0);
-            ce_eval(pd, NULL, NULL, $outer, 0, NULL, NULL, &$outer->i); }
+        {   $$ = make_const_expr(CE_OP1, $reloc_unary_op, $inner, NULL, 0);
+            ce_eval(pd, NULL, NULL, $$, 0, NULL, NULL, &$$->i); }
     | '(' const_expr ')'
-        {   $outer = $const_expr; }
+        {   $$ = $const_expr; }
     | immediate
-        {   $outer = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
-            $outer->i = $immediate.i; }
+        {   $$ = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
+            $$->i = $immediate.i; }
     | '.'
-        {   $outer = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
+        {   $$ = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
-        {   $outer = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED);
+        {   $$ = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED);
             struct symbol *s;
             if ((s = symbol_find(pd->symbols, $LOCAL.buf))) {
-                $outer->symbol = s;
+                $$->symbol = s;
             } else {
-                strcopy($outer->symbolname, $LOCAL.buf, sizeof $outer->symbolname);
+                strcopy($$->symbolname, $LOCAL.buf, sizeof $$->symbolname);
             }
         }
 
