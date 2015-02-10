@@ -232,7 +232,7 @@ L_FILL_done:
 head(INVERT,INVERT):
     .word . + 1
     W   <- [S + 1]
-    W   <- W ^~ A
+    W   <- ~ W
     W   -> [S + 1]
     goto(NEXT)
 

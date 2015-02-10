@@ -64,7 +64,7 @@ extern void tenyr_pop_state(void *yyscanner);
 
 /* precedence rules only matter in constant expressions */
 %left '|'
-%left '^' "^~"
+%left '^'
 %left '&' "&~"
 %left "==" '<' '>' "<=" ">="
 %left "<<" ">>" ">>>"
