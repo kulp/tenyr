@@ -29,8 +29,8 @@ static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
 static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
 static struct element_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
-static struct element_list *make_zeros(struct parse_data *pd, struct
-        const_expr *size);
+static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
+        struct const_expr *size);
 static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
         const struct strbuf *sym);
 static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
@@ -244,7 +244,7 @@ data
     : ".word" opt_nl greloc_expr_list
         {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $greloc_expr_list); }
     | ".zero" opt_nl const_expr
-        {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, $const_expr); }
+        {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, &yylloc, $const_expr); }
 
 directive
     : ".global" opt_nl symbol_list
@@ -736,8 +736,13 @@ static struct element_list *make_data(struct parse_data *pd, struct const_expr_l
     return result;
 }
 
-static struct element_list *make_zeros(struct parse_data *pd, struct const_expr *size)
+static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp, struct const_expr *size)
 {
+    if (size->flags & IS_DEFERRED) {
+        tenyr_error(locp, pd, "size expression for .zero must not depend on symbol values");
+        return NULL;
+    }
+
     struct element_list *result = calloc(1, sizeof *result);
     result->elem = calloc(1, sizeof *result->elem);
     ce_eval(pd, NULL, NULL, size, 0, NULL, NULL, &result->elem->insn.size);
