@@ -11,8 +11,9 @@ CFLAGS += -I$(TOP)/src
 INCLUDES += $(INCLUDE_OS)
 
 clean_FILES = tenyr glue.vpi *.o
-clobber_FILES = *.vcd
-clobber_FILES = *.texe
+clobber_FILES  = *.vcd
+clobber_FILES += *.texe
+clobber_FILES += $(GEN_V)
 
 all: tenyr glue.vpi
 

@@ -51,12 +51,14 @@ SOURCEFILES = $(wildcard $(TOP)/src/*.c $(TOP)/src/devices/*.c)
 VPATH += $(TOP)/src $(TOP)/src/devices
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
 
-clean_FILES := $(addprefix $(BUILDDIR)/, \
+clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    *.o                   \
                    *.d                   \
                    parser.[ch]           \
                    lexer.[ch]            \
                    $(TARGETS)            \
+                   $(SOURCEFILES:$(TOP)/src/%.c=%.d) \
+                   random random.*       \
                )#
 
 tas_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o
@@ -90,7 +92,6 @@ clobber_FILES += $(BUILDDIR)/PERIODS.mk
 clobber_FILES += $(BUILDDIR)/coverage_html
 clobber_FILES += $(TOP)/test/op/*.texe
 clobber_FILES += $(TOP)/test/run/*.texe
-clobber_FILES += $(SOURCEFILES:.c=.d)
 clobber::
 	-$(MAKE) -C $(TOP)/ex $@
 
