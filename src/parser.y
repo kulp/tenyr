@@ -774,10 +774,7 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
     n->next     = NULL;
     n->ce       = expr;
     n->unique   = 0;
-    if (symbol->len > sizeof n->name) {
-        tenyr_error(locp, pd, "symbol name too long in .set directive");
-        return NULL;
-    }
+    // symbol length has already been validated by grammar
     strcopy(n->name, symbol->buf, symbol->len + 1);
 
     d->symbol = n;

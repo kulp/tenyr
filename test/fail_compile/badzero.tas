@@ -1,0 +1,3 @@
+.L0: .word 5
+.L1: .zero 5
+.zero (.L1 - .L0) /* illegally depends on deferred expression */
