@@ -33,6 +33,8 @@ LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 %.h %.c: %.l
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
 	$(SILENCE)$(FLEX) --header-file=$*.h -o $*.c $<
+	$(SILENCE)# Hack around an issue where gcov gets line numbers off by one after the rules section
+	$(SILENCE)-sed /XXXREMOVE/d < $*.c > $*.c.$$$$ && mv $*.c.$$$$ $*.c
 
 %.h %.c: %.y
 	@$(MAKESTEP) "[ BISON ] $(<F)"

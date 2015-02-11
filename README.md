@@ -1,5 +1,6 @@
 # tenyr
 [![Build Status](https://travis-ci.org/kulp/tenyr.svg?branch=develop)](https://travis-ci.org/kulp/tenyr)
+[![Coverage Status](https://coveralls.io/repos/kulp/tenyr/badge.svg?branch=develop)](https://coveralls.io/r/kulp/tenyr?branch=develop)
 
 ## Overview
 

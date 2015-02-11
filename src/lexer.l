@@ -140,8 +140,11 @@ illegal             { return ILLEGAL; }
 <*>.                tenyr_error(yylloc, yyextra, "unexpected character");
                     /* LCOV_EXCL_START */
 %%
-
 /* LCOV_EXCL_STOP LCOV_EXCL_LINE */
+/*
+ * XXXREMOVEXXX
+ * a line above this one removed to work around a gcov off-by-one-line bug
+ */
 static int savestr(yyscan_t yyscanner)
 {
     // savestr() appends a string piece into a buffer

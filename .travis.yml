@@ -5,7 +5,11 @@ compiler:
 os:
   - linux
   - osx
-script: "make lockfile= V=1 SDL=0 && make lockfile= check && make lockfile= local-install"
+before_install:
+  - sudo pip install cpp-coveralls
+script: "make lockfile= GCOV=1 V=1 SDL=0 && make lockfile= check && make lockfile= local-install"
+after_success:
+  - coveralls --include src --gcov-options '\-lp'
 notifications:
     irc:
         channels:
