@@ -290,11 +290,8 @@ int do_load_all(struct link_state *s, int count, char *names[count])
             in = stdin;
         } else {
             in = fopen(names[i], "rb");
-            if (!in) {
-                char buf[128];
-                snprintf(buf, sizeof buf, "Failed to open input file `%s'", names[i]);
-                fatal(PRINT_ERRNO, buf);
-            }
+            if (!in)
+                fatal(PRINT_ERRNO, "Failed to open input file `%s'", names[i]);
         }
 
         rc = do_load(s, in);

@@ -133,11 +133,8 @@ int main(int argc, char *argv[])
             in = stdin;
         } else {
             in = fopen(argv[i], "rb");
-            if (!in) {
-                char buf[128];
-                snprintf(buf, sizeof buf, "Failed to open input file `%s'", argv[i]);
-                fatal(PRINT_ERRNO, buf);
-            }
+            if (!in)
+                fatal(PRINT_ERRNO, "Failed to open input file `%s'", argv[i]);
         }
 
         if (disassemble) {
