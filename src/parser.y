@@ -414,8 +414,8 @@ const_binop_expr
     | const_expr[x]  '^'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '^', $x, $y, 0); }
     | const_expr[x]  '&'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '&', $x, $y, 0); }
     | const_expr[x]  "<<" const_expr[y] { $$ = make_const_expr(CE_OP2,  LSH, $x, $y, 0); }
-    | const_expr[x]  ">>" const_expr[y] { $$ = make_const_expr(CE_OP2,  RSH, $x, $y, 0); }
-    | const_expr[x] ">>>" const_expr[y] { $$ = make_const_expr(CE_OP2, RSHA, $x, $y, 0); }
+    | const_expr[x]  ">>" const_expr[y] { $$ = make_const_expr(CE_OP2, RSHA, $x, $y, 0); }
+    | const_expr[x] ">>>" const_expr[y] { $$ = make_const_expr(CE_OP2,  RSH, $x, $y, 0); }
 
 const_unary_op
     : '~' { $const_unary_op = '~'; }
