@@ -98,15 +98,15 @@ extern void tenyr_pop_state(void *yyscanner);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce> const_expr const_binop_expr greloc_expr reloc_expr const_atom reloc_atom eref
-%type <cl> greloc_expr_list
+%type <ce> const_expr const_binop_expr reloc_expr reloc_atom const_atom eref
+%type <cl> reloc_expr_list
 %type <cstr> string
 %type <dctv> directive
 %type <expr> rhs_plain rhs_sugared rhs_deref lhs_plain lhs_deref
 %type <i> arrow regname reloc_op
 %type <imm> immediate
 %type <insn> insn insn_inner
-%type <op> native_op sugar_op unary_op reloc_unary_op
+%type <op> native_op sugar_op sugar_unary_op const_unary_op
 %type <program> program ascii utf32 data string_or_data
 %type <str> symbol symbol_list
 
@@ -198,6 +198,10 @@ insn
                 YYABORT;
         }
 
+symbol
+    : SYMBOL
+    | LOCAL
+
 insn_inner
     : lhs_plain tol rhs_plain
         {   $insn_inner = make_insn_general(pd, $lhs_plain, 0, $rhs_plain);
@@ -241,26 +245,26 @@ ascii
         {   tenyr_pop_state(pd->scanner); $ascii = make_ascii($string); }
 
 data
-    : ".word" opt_nl greloc_expr_list
-        {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $greloc_expr_list); }
+    : ".word" opt_nl reloc_expr_list
+        {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $reloc_expr_list); }
     | ".zero" opt_nl const_expr
         {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, &yylloc, $const_expr); }
 
 directive
     : ".global" opt_nl symbol_list
         {   tenyr_pop_state(pd->scanner); $directive = make_global(pd, &yylloc, &$symbol_list); }
-    | ".set" opt_nl SYMBOL ',' greloc_expr
-        {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $greloc_expr); }
+    | ".set" opt_nl SYMBOL ',' reloc_expr
+        {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
 symbol_list
     : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
 
-greloc_expr_list
-    : greloc_expr[expr]
+reloc_expr_list
+    : reloc_expr[expr]
         {   $$ = calloc(1, sizeof *$$);
             $$->right = NULL;
             $$->ce = $expr; }
-    | greloc_expr[expr] ',' opt_nl greloc_expr_list[inner]
+    | reloc_expr[expr] ',' opt_nl reloc_expr_list[inner]
         {   $$ = calloc(1, sizeof *$$);
             $$->right = $inner;
             $$->ce = $expr; }
@@ -282,37 +286,37 @@ rhs_plain
     /* syntax sugars */
     : rhs_sugared
     /* type0 */
-    | regname[x] native_op regname[y] reloc_op greloc_expr
-        { $rhs_plain = make_expr(0, $x, $native_op, $y, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
+    | regname[x] native_op regname[y] reloc_op reloc_expr
+        { $rhs_plain = make_expr(0, $x, $native_op, $y, $reloc_op == '+' ? 1 : -1, $reloc_expr); }
     | regname[x] native_op regname[y]
         { $rhs_plain = make_expr(0, $x, $native_op, $y, 0, NULL); }
     | regname[x]
         { $rhs_plain = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
-    | regname[x] sugar_op regname[y] '+' greloc_expr
-        { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 1, $greloc_expr); }
+    | regname[x] sugar_op regname[y] '+' reloc_expr
+        { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 1, $reloc_expr); }
     | regname[x] sugar_op regname[y]
         { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 0, NULL); }
     /* type1 */
-    | regname[x] native_op greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr(1, $x, $native_op, $y, 1, $greloc_expr); }
-    | regname[x] native_op greloc_expr
-        { $rhs_plain = make_expr(1, $x, $native_op, 0, 1, $greloc_expr); }
-    | greloc_expr sugar_op regname[x] '+' regname[y]
-        { $rhs_plain = make_expr(1, $x, -$sugar_op, $y, 1, $greloc_expr); }
-    | greloc_expr sugar_op regname[x]
-        { $rhs_plain = make_expr(1, $x, -$sugar_op, 0, 1, $greloc_expr); }
+    | regname[x] native_op reloc_expr '+' regname[y]
+        { $rhs_plain = make_expr(1, $x, $native_op, $y, 1, $reloc_expr); }
+    | regname[x] native_op reloc_expr
+        { $rhs_plain = make_expr(1, $x, $native_op, 0, 1, $reloc_expr); }
+    | reloc_expr sugar_op regname[x] '+' regname[y]
+        { $rhs_plain = make_expr(1, $x, -$sugar_op, $y, 1, $reloc_expr); }
+    | reloc_expr sugar_op regname[x]
+        { $rhs_plain = make_expr(1, $x, -$sugar_op, 0, 1, $reloc_expr); }
     /* type2 */
-    | greloc_expr native_op regname[x] '+' regname[y]
-        { $rhs_plain = make_expr(2, $x, $native_op, $y, 1, $greloc_expr); }
-    | greloc_expr native_op regname[x]
-        { $rhs_plain = make_expr(2, $x, $native_op, 0, 1, $greloc_expr); }
-    | regname[x] sugar_op greloc_expr '+' regname[y]
-        { $rhs_plain = make_expr(2, $x, -$sugar_op, $y, 1, $greloc_expr); }
-    | regname[x] sugar_op greloc_expr
-        { $rhs_plain = make_expr(2, $x, -$sugar_op, 0, 1, $greloc_expr); }
+    | reloc_expr native_op regname[x] '+' regname[y]
+        { $rhs_plain = make_expr(2, $x, $native_op, $y, 1, $reloc_expr); }
+    | reloc_expr native_op regname[x]
+        { $rhs_plain = make_expr(2, $x, $native_op, 0, 1, $reloc_expr); }
+    | regname[x] sugar_op reloc_expr '+' regname[y]
+        { $rhs_plain = make_expr(2, $x, -$sugar_op, $y, 1, $reloc_expr); }
+    | regname[x] sugar_op reloc_expr
+        { $rhs_plain = make_expr(2, $x, -$sugar_op, 0, 1, $reloc_expr); }
     /* type3 */
-    | greloc_expr
-        {   struct const_expr *ce = $greloc_expr;
+    | reloc_expr
+        {   struct const_expr *ce = $reloc_expr;
             int is_bits  = ce->flags & IMM_IS_BITS;
             int deferred = ce->flags & IS_DEFERRED;
             /* Large immediates and ones that should be expressed in
@@ -324,16 +328,12 @@ rhs_plain
         }
 
 rhs_sugared
-    : unary_op regname[x]
-        { $rhs_sugared = make_unary($unary_op, $x,  0, 0, NULL); }
-    | unary_op regname[x] '+' regname[y]
-        { $rhs_sugared = make_unary($unary_op, $x, $y, 0, NULL); }
-    | unary_op regname[x] reloc_op greloc_expr
-        { $rhs_sugared = make_unary($unary_op, $x,  0, $reloc_op == '+' ? 1 : -1, $greloc_expr); }
-
-unary_op
-    : '~' { $unary_op = OP_BITWISE_ORN; }
-    | '-' { $unary_op = OP_SUBTRACT; }
+    : sugar_unary_op regname[x]
+        { $rhs_sugared = make_unary($sugar_unary_op, $x,  0, 0, NULL); }
+    | sugar_unary_op regname[x] '+' regname[y]
+        { $rhs_sugared = make_unary($sugar_unary_op, $x, $y, 0, NULL); }
+    | sugar_unary_op regname[x] reloc_op reloc_expr
+        { $rhs_sugared = make_unary($sugar_unary_op, $x,  0, $reloc_op == '+' ? 1 : -1, $reloc_expr); }
 
 rhs_deref
     : '[' rhs_plain ']'
@@ -376,6 +376,10 @@ sugar_op
     : '>'   { $sugar_op = -OP_COMPARE_LT; }
     | "<="  { $sugar_op = -OP_COMPARE_GE; }
 
+sugar_unary_op
+    : '~' { $sugar_unary_op = OP_BITWISE_ORN; }
+    | '-' { $sugar_unary_op = OP_SUBTRACT; }
+
 arrow
     : tol { $arrow = 0; }
     | tor { $arrow = 1; }
@@ -387,24 +391,16 @@ reloc_op
     : '+' { $reloc_op = '+'; }
     | '-' { $reloc_op = '-'; }
 
-reloc_unary_op
-    : '~' { $reloc_unary_op = '~'; }
-    | '-' { $reloc_unary_op = '-'; }
-
-/* guarded reloc_exprs : either a single term, or a parenthesised reloc_expr */
-greloc_expr
-    : reloc_atom
-    | const_atom
-
 reloc_expr
-    : reloc_atom
-    | eref reloc_op const_expr
-        {   $$ = make_const_expr(CE_OP2, $reloc_op, $eref, $const_expr, 0); }
+    : const_atom
+    | reloc_atom
 
 reloc_atom
     : eref
-    | '(' reloc_expr ')'
-        {   $reloc_atom = $reloc_expr; }
+    | '(' reloc_atom[inner] ')'
+        {   $$ = $inner; }
+    | '(' eref reloc_op const_expr ')'
+        {   $$ = make_const_expr(CE_OP2, $reloc_op, $eref, $const_expr, 0); }
 
 const_expr
     : const_atom
@@ -421,9 +417,13 @@ const_binop_expr
     | const_expr[x]  ">>" const_expr[y] { $$ = make_const_expr(CE_OP2,  RSH, $x, $y, 0); }
     | const_expr[x] ">>>" const_expr[y] { $$ = make_const_expr(CE_OP2, RSHA, $x, $y, 0); }
 
+const_unary_op
+    : '~' { $const_unary_op = '~'; }
+    | '-' { $const_unary_op = '-'; }
+
 const_atom
-    : reloc_unary_op const_atom[inner]
-        {   $$ = make_const_expr(CE_OP1, $reloc_unary_op, $inner, NULL, 0);
+    : const_unary_op const_atom[inner]
+        {   $$ = make_const_expr(CE_OP1, $const_unary_op, $inner, NULL, 0);
             ce_eval(pd, NULL, NULL, $$, 0, NULL, NULL, &$$->i); }
     | '(' const_expr ')'
         {   $$ = $const_expr; }
@@ -452,10 +452,6 @@ eref
                 strcopy($eref->symbolname, $SYMBOL.buf, sizeof $eref->symbolname);
             }
         }
-
-symbol
-    : SYMBOL
-    | LOCAL
 
 %%
 
