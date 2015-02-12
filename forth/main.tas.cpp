@@ -10,7 +10,7 @@ INBUF:
     .utf32 "                                               "
 .L_INBUF_after:
 INPOS: .word 0
-INLEN: .word .L_INBUF_after - .L_INBUF_before
+INLEN: .word (.L_INBUF_after - .L_INBUF_before)
 
 head(QUIT,QUIT): .word
         // no @ENTER for QUIT since it resets RSP anyway
@@ -126,27 +126,27 @@ head(PUTS,PUTS): .word // ( c-addr -- )
     @GET_PSP, @SAYTOP, @DROP,
     @EXIT
 
-head(SET_IP,SET-IP): .word . + 1
+head(SET_IP,SET-IP): .word (. + 1)
     S   <- S + 1
     I   <- [S]
     goto(NEXT)
 
-head(GET_IP,GET-IP): .word . + 1
+head(GET_IP,GET-IP): .word (. + 1)
     I   -> [S]
     S   <- S - 1
     goto(NEXT)
 
-head(GET_PSP,GET-PSP): .word . + 1
+head(GET_PSP,GET-PSP): .word (. + 1)
     S   -> [S]
     S   <- S - 1
     goto(NEXT)
 
-head(GET_RSP,GET-RSP): .word . + 1
+head(GET_RSP,GET-RSP): .word (. + 1)
     R   -> [S]
     S   <- S - 1
     goto(NEXT)
 
-head(RELOC,RELOC): .word . + 1
+head(RELOC,RELOC): .word (. + 1)
     W   <- [S + 1]
     W   <- rel(W)
     W   -> [S + 1]

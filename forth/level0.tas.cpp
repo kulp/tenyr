@@ -2,7 +2,7 @@
 #include "serial.th"
 
 #define BINOP(Op)      \
-    .word . + 1      ; \
+    .word (. + 1)    ; \
     T0  <- [S + 2]   ; \
     T1  <- [S + 1]   ; \
     W   <-  T0 Op T1 ; \
@@ -34,7 +34,7 @@
 //
 // !      x a-addr --           store cell in memory
 head(STORE,!):
-    .word . + 1
+    .word (. + 1)
     T0  <- [S + 2]
     T1  <- [S + 1]
     S   <-  S + 2
@@ -46,7 +46,7 @@ head(ADD,+): BINOP(+)
 
 // +!     n/u a-addr --           add cell to memory
 head(ADDMEM,+!):
-    .word . + 1
+    .word (. + 1)
     T0  <- [S + 2]
     T1  <- [S + 1]
     S   <-  S + 2
@@ -66,7 +66,7 @@ head(CMP_EQ,=): BINOP(==)
 
 // >      n1 n2 -- flag           test n1>n2, signed
 head(CMP_GT,>):
-    .word . + 1
+    .word (. + 1)
     T0  <- [S + 2]
     T1  <- [S + 1]
     S   <- S + 1
@@ -76,7 +76,7 @@ head(CMP_GT,>):
 
 // >R     x --   R: -- x        push to return stack
 head(PUSH_R,>R):
-    .word . + 1
+    .word (. + 1)
     W   <- [S + 1]
     W   -> [R]
     R   <-  R - 1
@@ -85,16 +85,17 @@ head(PUSH_R,>R):
 
 // ?DUP   x -- 0 | x x                DUP if nonzero
 head(DUPNZ,?DUP):
-    .word . + 1
+    .word (. + 1)
     T0  <- [S + 1]
-    T1  <- T0 <> 0
+    T1  <- T0 == 0
+    T1  <- ~ T1
     S   <-  S + T1
     T0  -> [S + 1]
     goto(NEXT)
 
 // @      a-addr -- x         fetch cell from memory
 head(FETCH,@):
-    .word . + 1
+    .word (. + 1)
     W   <- [S + 1]
     W   <- [W]
     W   -> [S + 1]
@@ -102,7 +103,7 @@ head(FETCH,@):
 
 // 0<     n -- flag             true if TOS negative
 head(LTZ,0<):
-    .word . + 1
+    .word (. + 1)
     T0  <- [S + 1]
     T0  <- T0 < 0
     T0  -> [S + 1]
@@ -110,7 +111,7 @@ head(LTZ,0<):
 
 // 0=     n/u -- flag           return true if TOS=0
 head(EQZ,0=):
-    .word . + 1
+    .word (. + 1)
     W   <- [S + 1]
     W   <- W == 0
     W   -> [S + 1]
@@ -163,13 +164,13 @@ head(FETCHR,C@):
 
 // DROP   x --                     drop top of stack
 head(DROP,DROP):
-    .word . + 1
+    .word (. + 1)
     S   <- S + 1
     goto(NEXT)
 
 // DUP    x -- x x            duplicate top of stack
 head(DUP,DUP):
-    .word . + 1
+    .word (. + 1)
     W   <- [S + 1]
     S   <- S - 1
     W   -> [S + 1]
@@ -177,7 +178,7 @@ head(DUP,DUP):
 
 // EMIT   c --           output character to console
 head(EMIT,EMIT):
-    .word . + 1
+    .word (. + 1)
     W   <- [S + 1]
     S   <- S + 1
     W   -> SERIAL
@@ -185,7 +186,7 @@ head(EMIT,EMIT):
 
 // EXECUTE   i*x xt -- j*x   execute Forth word 'xt'
 head(EXECUTE,EXECUTE):
-    .word . + 1
+    .word (. + 1)
     push(R,I)
     S   <- S + 1
     W   <- [S]
@@ -210,7 +211,7 @@ L_EXECUTE_trampoline: .word
 
 // FILL   c-addr u c --        fill memory with char
 head(FILL,FILL):
-    .word . + 1
+    .word (. + 1)
     T0 <- [S + 1]       // T0 is char
     T1 <- [S + 2]       // T1 is count
     T2 <- [S + 3]       // T2 is address
@@ -230,7 +231,7 @@ L_FILL_done:
 //                      get the innermost loop index
 // INVERT x1 -- x2                 bitwise inversion
 head(INVERT,INVERT):
-    .word . + 1
+    .word (. + 1)
     W   <- [S + 1]
     W   <- ~ W
     W   -> [S + 1]
@@ -240,7 +241,7 @@ head(INVERT,INVERT):
 //                         get the second loop index
 // KEY    -- c           get character from keyboard
 head(KEY,KEY):
-    .word . + 1
+    .word (. + 1)
     W   <- SERIAL
     S   <- S - 1
     W   -> [S + 1]
@@ -251,7 +252,7 @@ head(LSHIFT,LSHIFT): BINOP(<<)
 
 // NEGATE x1 -- x2                  two's complement
 head(NEGATE,NEGATE):
-    .word . + 1
+    .word (. + 1)
     W   <- [S + 1]
     W   <- A - W
     W   -> [S + 1]
@@ -262,7 +263,7 @@ head(OR,OR): BINOP(|)
 
 // OVER   x1 x2 -- x1 x2 x1        per stack diagram
 head(OVER,OVER):
-    .word . + 1
+    .word (. + 1)
     S   <-  S - 1
     W   <- [S + 3]
     W   -> [S + 1]
@@ -270,7 +271,7 @@ head(OVER,OVER):
 
 // ROT    x1 x2 x3 -- x2 x3 x1     per stack diagram
 head(ROT,ROT):
-    .word . + 1
+    .word (. + 1)
     T0  <- [S + 3]
     T1  <- [S + 2]
     T2  <- [S + 1]
@@ -285,7 +286,7 @@ head(RSHIFT,RSHIFT): BINOP(>>)
 
 // R>     -- x    R: x --      pop from return stack
 head(POP_R,R>):
-    .word . + 1
+    .word (. + 1)
     W   <- [R + 1]
     R   <-  R + 1
     S   <-  S - 1
@@ -294,7 +295,7 @@ head(POP_R,R>):
 
 // R@     -- x    R: x -- x       fetch from rtn stk
 head(FETCH_R,R@):
-    .word . + 1
+    .word (. + 1)
     W   <- [R + 1]
     S   <-  S - 1
     W   -> [S + 1]
@@ -302,7 +303,7 @@ head(FETCH_R,R@):
 
 // SWAP   x1 x2 -- x2 x1          swap top two items
 head(SWAP,SWAP):
-    .word . + 1
+    .word (. + 1)
     T0  <- [S + 2]
     T1  <- [S + 1]
 
@@ -324,7 +325,15 @@ head(XOR,XOR): BINOP(^)
 // specified by the ANS Forth document.
 //
 // <>     x1 x2 -- flag               test not equal
-head(CMP_NE,<>): BINOP(<>)
+head(CMP_NE,<>):
+    .word (. + 1)
+    T0  <- [S + 2]
+    T1  <- [S + 1]
+    W   <-  T0 == T1
+    W   <- ~W
+    S   <-  S + 1
+    W   -> [S + 1]
+    goto(NEXT)
 
 // CMOVE  c-addr1 c-addr2 u --      move from bottom
 // CMOVE> c-addr1 c-addr2 u --         move from top
@@ -332,7 +341,7 @@ head(CMP_NE,<>): BINOP(<>)
 // M+     d1 n -- d2            add single to double
 // NIP    x1 x2 -- x2              per stack diagram
 head(NIP,NIP):
-    .word . + 1
+    .word (. + 1)
     W   <- [S + 1]
     W   -> [S + 2]
     S   <-  S + 1
@@ -340,7 +349,7 @@ head(NIP,NIP):
 
 // TUCK   x1 x2 -- x2 x1 x2        per stack diagram
 head(TUCK,TUCK):
-    .word . + 1
+    .word (. + 1)
     T0  <- [S + 2]
     T1  <- [S + 1]
 

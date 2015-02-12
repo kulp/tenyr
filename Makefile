@@ -83,6 +83,7 @@ distclean:: clobber
 clean clobber::
 	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
+	-$(MAKE) -C $(TOP)/forth $@
 	-$(MAKE) -C $(TOP)/hw/icarus $@
 	-$(MAKE) -C $(TOP)/hw/xilinx $@
 
@@ -156,7 +157,10 @@ coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
 
 check: check_sw check_hw
-check_sw: check_compile check_sim dogfood
+check_sw: check_compile check_sim check_forth dogfood
+check_forth: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+	@$(MAKESTEP) -n "Compiling forth ... "
+	$(SILENCE)$(MAKE) -s -C $(TOP)/forth && $(MAKESTEP) ok
 
 define LOCK
 	$(lockfile) -r2 $(@D)/lock.$(@F)

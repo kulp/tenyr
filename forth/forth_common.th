@@ -54,11 +54,11 @@
 // thing. This probably implies that the link field and the length go after the
 // name, possibly directly before the code.
 #define headstr(Label,Name)                                     \
-    .word .L##Label##_end - .L##Label##_start ; /* offset -1 */ \
+    .word (.L##Label##_end-.L##Label##_start) ; /* offset -1 */ \
     .global Label                             ;                 \
 .L##Label##_start:                                              \
     .word @link                               ; /* offset  0 */ \
-    .set link, . - 1                          ;                 \
+    .set link, (. - 1)                        ;                 \
     .set    L##Label##_compile, 0             ; /* offset  1 */ \
     .word  @L##Label##_compile                ;                 \
     .set    L##Label##_compile, 0             ;                 \

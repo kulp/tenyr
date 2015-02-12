@@ -80,7 +80,7 @@ head(TWO_SWAP,2SWAP): .word
 // 2@     a-addr -- x1 x2              fetch 2 cells
 // ABORT  i*x --   R: j*x --      clear stack & QUIT
 head(ABORT,ABORT):
-    .word . + 1
+    .word (. + 1)
     S   <- [reloc(_PSPinit)]
     R   <- [reloc(_RSPinit)]
     P   <- reloc(__done)
@@ -175,7 +175,7 @@ head(DECIMAL,DECIMAL): .word
 //                  xt  1        ..if immediate
 //                  xt -1        ..if "normal"
 head(FIND,FIND):
-    .word . + 1
+    .word (. + 1)
     T0   <- @dict       // T0 <- addr of dictionary
 L_FIND_top:
     T4   <- [S + 1]     // T4 <- name to look up
@@ -184,7 +184,8 @@ L_FIND_top:
     T6   <- [T6 - 1]    // T6 <- rec length
     T6   <- T6 - 2      // T6 <- test-name length
     T2   <- [T4]        // T2 <- find-name length
-    T2   <- T6 <> T2    // check length match
+    T2   <- T6 == T2    // check length match
+    T2   <- ~ T2
     iftrue(T2,L_FIND_char_bottom)
     T4   <- T4 + 1      // T4 <- addr of test string
 
@@ -197,7 +198,8 @@ L_FIND_char_top:
     // uppercase find-name char
     T3   <- T3 &~ ('a' ^ 'A')
 
-    T2   <- T2 <> T3    // T2 <- char mismatch ?
+    T2   <- T2 == T3    // T2 <- char mismatch ?
+    T2   <- ~ T2
     T3   <- T6 <  1     // T3 <- end of test-name ?
 
     iftrue(T3,L_FIND_match)
@@ -210,10 +212,10 @@ L_FIND_char_top:
 
 L_FIND_char_bottom:
     T0   <- [rel(T0)]   // T0 <- follow link
-    T1   <- T0 <> 0     // T1 <- more words ? .word . + 1
+    T1   <- T0 == 0     // T1 <- more words ? .word (. + 1)
     T2   <- - P + (@L_FIND_top - 3)
     T2   <- rel(T2)
-    T2   <- T2 & T1
+    T2   <- T2 &~ T1
     P    <- P + T2
 
     // If we reach this point, there was a mismatch.
@@ -243,7 +245,7 @@ head(HEAD,HEAD): .word
 // LEAVE  --    L: -- adrs             exit DO..LOOP
 // LITERAL x --      append numeric literal to dict.
 head(LITERAL,LITERAL):
-    .word . + 1
+    .word (. + 1)
     W   <- [I]
     I   <- I + 1
     W   -> [S]
@@ -313,10 +315,10 @@ head(WORD,WORD): .word
     @ADD_1CHAR,             // c TMP+1
     @OVER,                  // c TMP c
     @PARSE_START,           // c TMP c tib
-    @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
+    @LITERAL, (.L_WORD_tmp_end - .L_WORD_tmp),
     @SKIP,                  // c TMP ntib
     @DUP, @PARSE_START, @SUB,
-    @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp,
+    @LITERAL, (.L_WORD_tmp_end - .L_WORD_tmp),
     @SUB, @EQZ,
     IFNOT0(L_WORD_zero_len,L_WORD_top)
 
@@ -367,7 +369,7 @@ L_WORD_tmp:
 head(CLEAR_WORD_TMP,CLEAR-WORD-TMP): .word
     @ENTER,
     @WORD_TMP,
-    @DUP, @LITERAL, .L_WORD_tmp_end - .L_WORD_tmp, @BL, @FILL,
+    @DUP, @LITERAL, (.L_WORD_tmp_end - .L_WORD_tmp), @BL, @FILL,
     @EXIT
 
 // ( char c-addr u -- c-addr )    skip init char up to N
@@ -449,7 +451,7 @@ head(TIB,TIB): .word
 // WITHIN n1|u1 n2|u2 n3|u3 -- f     test n2<=n1<n3?
 // WORDS  --                 list all words in dict.
 head(WORDS,WORDS):
-    .word . + 1
+    .word (. + 1)
     T0   <- @dict       // already relocated
 L_WORDS_top:
     T0   <- rel(T0)     // T0 <- addr of next link
@@ -472,7 +474,8 @@ L_WORDS_char_bottom:
     T1   -> SERIAL
 
     T0   <- [T0]
-    T1   <- T0 <> 0     // T1 <- continue ?
+    T1   <- T0 == 0     // T1 <- continue ?
+    T1   <- ~ T1
 
     iftrue(T1,L_WORDS_top)
 
@@ -483,7 +486,7 @@ L_WORDS_char_bottom:
 // ?NUMBER  c-addr -- n -1    convert string->number
 //                 -- c-addr 0      if convert error
 // TODO change this to >NUMBER and implement ?NUMBER in terms of it
-head(ISNUMBER,?NUMBER): .word . + 1
+head(ISNUMBER,?NUMBER): .word (. + 1)
     // first, put counted string on stack as c-string
     ccpre()             // prepare for C call
     h <- S              // H is local copy of PSP

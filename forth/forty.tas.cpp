@@ -17,7 +17,7 @@ _PSPinit:   .word   ((1 << 13) - 1)
 _RSPinit:   .word   ((1 << 14) - 1)
 
 // TODO smudge internal words
-head(RESET_RSP,RESET_RSP): .word . + 1
+head(RESET_RSP,RESET_RSP): .word (. + 1)
     R <- [reloc(_RSPinit)]
     goto(NEXT)
 
@@ -35,7 +35,7 @@ head(ENTER,ENTER):
     goto(NEXT)
 
 head(EXIT,EXIT):
-    .word . + 1
+    .word (. + 1)
     pop(R,I)
     goto(NEXT)
 
