@@ -8,7 +8,8 @@ struct parse_data {
     int errored;
     struct {
         unsigned savecol;
-        char saveline[LINE_LEN];
+        unsigned swap:1;
+        char saveline[2][LINE_LEN], *savep[2];
     } lexstate;
     struct element_list *top;
     struct deferred_expr {

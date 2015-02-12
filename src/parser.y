@@ -462,7 +462,9 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...)
     int col = locp->first_column + 1;
 
     fflush(stderr);
-    fprintf(stderr, "%s\n", pd->lexstate.saveline);
+    if (col <= 1)
+        fprintf(stderr, "%s\n", pd->lexstate.savep[!pd->lexstate.swap]);
+    fprintf(stderr, "%s\n", pd->lexstate.savep[pd->lexstate.swap]);
     fprintf(stderr, "%*s\n", col, "^");
 
     va_start(vl, fmt);
