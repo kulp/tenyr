@@ -54,10 +54,12 @@ int param_get(struct param_state *pstate, char *key, size_t count, const char *v
 
 int param_set(struct param_state *pstate, char *key, char *val, int replace, int free_value)
 {
-    while (pstate->params_size <= pstate->params_count)
+    if (pstate->params_size <= pstate->params_count) {
+        while (pstate->params_size <= pstate->params_count)
+            pstate->params_size *= 2;
         // technically there is a problem here if realloc() fails
-        pstate->params = realloc(pstate->params,
-                (pstate->params_size *= 2) * sizeof *pstate->params);
+        pstate->params = realloc(pstate->params, pstate->params_size * sizeof *pstate->params);
+    }
 
     struct param_entry p = { .key  = key }; // doesn't have a list yet
     struct param_entry *q = lsearch(&p, pstate->params, &pstate->params_count,

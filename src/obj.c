@@ -9,28 +9,28 @@
 
 #define MAGIC_BYTES "TOV"
 
-#define PUT(What,Where) put_sized(&(What), sizeof (What), Where)
-#define GET(What,Where) get_sized(&(What), sizeof (What), Where)
+#define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
+#define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
 
 #define for_counted_put(Tag,Name,List,Count) \
     for (int _dummy = 0; !_dummy && (Count) > 0; _dummy++) \
         list_foreach(Tag, Name, List)
 
-static inline void get_sized(void *what, size_t size, FILE *where)
+static inline void get_sized(void *what, size_t size, size_t count, FILE *where)
 {
-    if (fread(what, size, 1, where) != 1)
+    if (fread(what, size, count, where) != count)
         fatal(PRINT_ERRNO, "Unknown error in %s while parsing object", __func__);
 }
 
-static inline void put_sized(const void *what, size_t size, FILE *where)
+static inline void put_sized(const void *what, size_t size, size_t count, FILE *where)
 {
-    if (fwrite(what, size, 1, where) != 1)
+    if (fwrite(what, size, count, where) != count)
         fatal(PRINT_ERRNO, "Unknown error in %s while emitting object", __func__);
 }
 
 static int obj_v0_write(struct obj *o, FILE *out)
 {
-    put_sized(MAGIC_BYTES, 3, out);
+    put_sized(MAGIC_BYTES, 3, 1, out);
     PUT(o->magic.parsed.version, out);
     PUT(o->flags, out);
 
@@ -38,8 +38,7 @@ static int obj_v0_write(struct obj *o, FILE *out)
     for_counted_put(objrec, rec, o->records, o->rec_count) {
         PUT(rec->addr, out);
         PUT(rec->size, out);
-        if (fwrite(rec->data, sizeof *rec->data, rec->size, out) != rec->size)
-            fatal(PRINT_ERRNO, "Unknown error in %s while emitting object", __func__);
+        put_sized(rec->data, sizeof *rec->data, rec->size, out);
     }
 
     PUT(o->sym_count, out);
