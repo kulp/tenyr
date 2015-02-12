@@ -34,8 +34,9 @@ syn match   cIncluded   display contained "<[^>]*>"
 syn match   cInclude    display "^\s*\(%:\|#\)\s*include\>\s*["<]" contains=cIncluded
 syn region  cDefine     start="^\s*\(%:\|#\)\s*\(define\|undef\)\>" skip="\\$" end="$" keepend contains=tenyrTodo
 
-syn region tenyrChar start="'" end="'"
-syn region tenyrString start='"' end='"' contained
+syn region tenyrChar start="'" end="'" contains=tenyrEscape
+syn match tenyrEscape contained '\\[\\'0bfnrtv]'
+syn region tenyrString start='"' end='"' contained contains=tenyrEscape
 syn region tenyrStrRegion start="\.\(ascii\|utf32\)\>" end="$" keepend contains=tenyrString,tenyrStrDir
 
 syn match tenyrNumber '-\?\<\d\+\>'
