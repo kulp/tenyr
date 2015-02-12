@@ -158,9 +158,9 @@ coverage_html_%: coverage.info.%
 
 check: check_sw check_hw
 check_sw: check_compile check_sim check_forth dogfood
-check_forth: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
-	$(SILENCE)$(MAKE) $S -C $(TOP)/forth && $(MAKESTEP) ok
+	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
 
 define LOCK
 	$(lockfile) -r2 $(@D)/lock.$(@F)
