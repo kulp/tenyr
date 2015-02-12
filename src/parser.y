@@ -5,12 +5,13 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "parser_global.h"
 #include "parser.h"
 #include "asm.h"
 
-int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
+int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...);
 static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
         const_expr *ce, int mult, uint32_t *dest, int width, int flags);
 static struct const_expr *make_const_expr(enum const_expr_type type, int op,
@@ -455,14 +456,21 @@ eref
 
 %%
 
-int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s)
+int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...)
 {
+    va_list vl;
+    int col = locp->first_column + 1;
+
     fflush(stderr);
     fprintf(stderr, "%s\n", pd->lexstate.saveline);
-    fprintf(stderr, "%*s\n%*s at line %d column %d at `%s'\n",
-            locp->first_column, "^", locp->first_column, s,
-            locp->first_line, locp->first_column,
-            tenyr_get_text(pd->scanner));
+    fprintf(stderr, "%*s\n", col, "^");
+
+    va_start(vl, fmt);
+    vfprintf(stderr, fmt, vl);
+    va_end(vl);
+
+    fprintf(stderr, " at line %d column %d at `%s'\n",
+            locp->first_line, col, tenyr_get_text(pd->scanner));
 
     pd->errored++;
     return 0;
@@ -699,9 +707,7 @@ static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol 
     // diagnostics, though.
     #if CHECK_SYMBOLS_DURING_PARSE
     if (symbol_find(pd->symbols, n->name)) {
-        char buf[128];
-        snprintf(buf, sizeof buf, "Error adding symbol '%s' (already exists ?)", n->name);
-        tenyr_error(locp, pd, buf);
+        tenyr_error(locp, pd, "Error adding symbol '%s' (already exists ?)", n->name);
         return 1;
     } else
     #endif
@@ -814,11 +820,8 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
             free(d);
             break;
         }
-        default: {
-            char buf[128];
-            snprintf(buf, sizeof buf, "Unknown directive type %d in %s", d->type, __func__);
-            tenyr_error(locp, pd, buf);
-        }
+        default:
+            tenyr_error(locp, pd, "Unknown directive type %d in %s", d->type, __func__);
     }
 }
 
