@@ -3,8 +3,6 @@ TOP := $(dir $(makefile_path))
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
-lockfile = lockfile
-
 # ensure directory printing doesn't mess up check rules
 GNUMAKEFLAGS += --no-print-directory
 
@@ -161,14 +159,6 @@ check_sw: check_compile check_sim check_forth dogfood
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
-
-define LOCK
-	$(lockfile) -r2 $(@D)/lock.$(@F)
-endef
-
-define UNLOCK
-	-$(RM) $(@D)/lock.$(@F)
-endef
 
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz

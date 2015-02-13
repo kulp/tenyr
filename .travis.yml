@@ -7,7 +7,7 @@ os:
   - osx
 before_install:
   - sudo pip install cpp-coveralls
-script: "make lockfile= GCOV=1 V=1 SDL=0 && make lockfile= check && make lockfile= local-install"
+script: "make GCOV=1 V=1 SDL=0 && make check && make local-install"
 after_success:
   - coveralls --include src --gcov-options '\-lp'
 notifications:
