@@ -39,8 +39,6 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct element_list *p);
 
-#define YYLEX_PARAM (pd->scanner)
-
 struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
 extern void tenyr_push_state(int st, void *yyscanner);
@@ -57,6 +55,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %code {
     #define YY_HEADER_EXPORT_START_CONDITIONS 1
     #include "lexer.h"
+    #define yyscanner (pd->scanner)
 }
 %parse-param { struct parse_data *pd }
 %name-prefix "tenyr_"
