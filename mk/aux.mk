@@ -116,12 +116,14 @@ test_demo_%: $(TOP)/ex/%_demo.texe PERIODS.mk
 	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
 	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
 
+randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase | fold -w8 | head -n$1 | sed 's/^/.word 0x/;s/$$/;/')
+
 # Op tests are self-testing -- they must leave B with the value 0xffffffff.
 # Use .INTERMEDIATE to indicate that op test files should be deleted after one
 # run -- they have random bits appended which should be regenerated each time.
 .INTERMEDIATE: $(OPS:%=$(TOP)/test/op/%.texe)
 $(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas | tas$(EXE_SUFFIX)
-	$(SILENCE)(cat $< ; hexdump -n12 -e'".word 0x%08x; "' /dev/urandom) | $(BUILDDIR)/tas -o $@ -
+	$(SILENCE)(cat $< ; echo "$(call randwords,3)") | $(BUILDDIR)/tas -o $@ -
 
 test_op_%: $(TOP)/test/op/%.texe PERIODS.mk | tas$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
