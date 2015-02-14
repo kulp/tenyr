@@ -7,11 +7,10 @@ os:
   - osx
 before_install:
   - sudo pip install cpp-coveralls
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libsdl2-image-dev
-script: "make GCOV=1 V=1 && make check && make local-install"
+script: "make GCOV=1 V=1 SDL=0 && make check && make local-install"
 after_success:
-  - coveralls --include src --gcov-options '\-lp'
+  # exclude SDL until Travis has an OS new enough to use SDL2
+  - coveralls --exclude-pattern '.*sdl.*' --include src --gcov-options '\-lp'
 notifications:
     irc:
         channels:
