@@ -76,3 +76,18 @@ BUILD_NAME := $(shell $(GIT) describe --tags --match 'v?.?.?*' 2>/dev/null || $(
 TAS = $(TOOLDIR)/tas
 TLD = $(TOOLDIR)/tld
 
+DEVICES = ram sparseram debugwrap serial spi
+DEVOBJS = $(DEVICES:%=%.o)
+# plugin devices
+PDEVICES += spidummy spisd spi
+PDEVOBJS = $(PDEVICES:%=%,dy.o)
+PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
+
+BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+LIB_TARGETS ?= $(PDEVLIBS)
+TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
+RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
+               $(TOP)/rsrc/font.png \
+               $(wildcard $(TOP)/plugins/*.rcp) \
+               #
+

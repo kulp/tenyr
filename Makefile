@@ -8,13 +8,6 @@ GNUMAKEFLAGS += --no-print-directory
 
 .DEFAULT_GOAL = all
 
-DEVICES = ram sparseram debugwrap serial spi
-DEVOBJS = $(DEVICES:%=%.o)
-# plugin devices
-PDEVICES += spidummy spisd spi
-PDEVOBJS = $(PDEVICES:%=%,dy.o)
-PDEVLIBS = $(PDEVOBJS:%,dy.o=lib%$(DYLIB_SUFFIX))
-
 ifneq ($(SDL),0)
 SDL_VERSION = $(shell sdl2-config --version 2>/dev/null)
 ifneq ($(SDL_VERSION),)
@@ -28,14 +21,6 @@ libsdl%$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
 $(PDEVICES_SDL:%=%,dy.o): PEDANTIC_FLAGS :=
 endif
 endif
-
-BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
-LIB_TARGETS ?= $(PDEVLIBS)
-TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
-RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
-               $(TOP)/rsrc/font.png \
-               $(wildcard $(TOP)/plugins/*.rcp) \
-               #
 
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 # Use := to ensure the expensive underlying call is not repeated
@@ -74,7 +59,7 @@ showbuilddir:
 
 .PHONY: distclean
 distclean:: clobber
-	$(RM) -r install/ build/
+	$(RM) -r install/ build/ dist/
 
 clean clobber::
 	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
@@ -138,7 +123,7 @@ endif
 # non-atomically
 coverage: CFLAGS  += --coverage
 coverage: LDFLAGS += --coverage
-install uninstall doc gzip zip coverage check check_sw check_hw check_sim check_compile dogfood: all
+install local-install uninstall doc gzip zip coverage check check_sw check_hw check_sim check_compile dogfood: all
 	$(MAKE) -f $(TOP)/mk/aux.mk $@
 
 ##############################################################################
