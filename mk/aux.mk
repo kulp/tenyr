@@ -112,7 +112,7 @@ test_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
 test_demo_bsearch: result = 11
 test_demo_trailz:  verify = grep -c good
 test_demo_trailz:  result = 33
-test_demo_%: $(TOP)/ex/%_demo.texe PERIODS.mk
+test_demo_%: $(TOP)/ex/%_demo.texe
 	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
 	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
 
@@ -125,7 +125,7 @@ randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase 
 $(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas | tas$(EXE_SUFFIX)
 	$(SILENCE)(cat $< ; echo "$(call randwords,3)") | $(BUILDDIR)/tas -o $@ -
 
-test_op_%: $(TOP)/test/op/%.texe PERIODS.mk | tas$(EXE_SUFFIX)
+test_op_%: $(TOP)/test/op/%.texe | tas$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
 	$(SILENCE)$(run) && $(MAKESTEP) ok
 
@@ -133,7 +133,7 @@ test_op_%: $(TOP)/test/op/%.texe PERIODS.mk | tas$(EXE_SUFFIX)
 # Use .SECONDARY to indicate that run test files should *not* be deleted after
 # one run, as they do not have random bits appended (yet).
 .SECONDARY: $(RUNS:%=$(TOP)/test/run/%.texe)
-test_run_%: $(TOP)/test/run/%.texe PERIODS.mk | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+test_run_%: $(TOP)/test/run/%.texe | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Running test `printf %-10s "'$*'"` ($(context)) ... "
 	$(SILENCE)$(run) && $(MAKESTEP) ok
 
