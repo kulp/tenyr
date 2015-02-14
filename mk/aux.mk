@@ -143,7 +143,7 @@ check_hw_icarus_pre:
 
 check_sim check_sim_demo check_sim_op check_sim_run: export context=sim
 check_sim_demo check_sim_op check_sim_run: tsim$(EXE_SUFFIX)
-check_sim: check_sim_demo check_sim_op check_sim_run
+check_sim: check_sim_demo check_sim_op check_sim_run check_sim_sdl
 
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre PERIODS.mk
@@ -154,6 +154,15 @@ check_sim_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*
 check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
 check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
 check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
+
+ifeq ($(SDL),0)
+check_sim_sdl: ;
+else
+check_sim_sdl: export SDL_VIDEODRIVER=dummy
+check_sim_sdl: $(TOP)/ex/bm_mults.texe
+	@$(MAKESTEP) -n "Running SDL test $(<F) ... "
+	$(SILENCE)(cd $(TOP) ; $(abspath $(BUILDDIR))/tsim -n --recipe=prealloc -@ $(TOP)/plugins/sdl.rcp $<) && $(ECHO) ok
+endif
 
 # TODO make op tests take a fixed or predictable maximum amount of time
 # The number of cycles necessary to run a code in Verilog simulation is

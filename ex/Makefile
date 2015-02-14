@@ -14,6 +14,7 @@ vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
 TARGETS = \
     bsearch_demo.texe   \
     bm_snake.texe       \
+    bm_mults.texe       \
     compare.texe        \
     fib.texe            \
     fib_iter.texe       \

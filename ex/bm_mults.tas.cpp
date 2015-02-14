@@ -56,7 +56,5 @@ loop_k:
     j <- j + 1          // increment N
     c <- j < 0x27
     jnzrel(c,loop_j)
-halt:
-    goto(halt)
     illegal
 
