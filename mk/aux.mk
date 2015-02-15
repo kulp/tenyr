@@ -69,8 +69,9 @@ coverage: coverage_html_src
 coverage.info: check_sw
 	lcov --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
+COVERAGE_SKIP = spi.c
 coverage.info.trimmed: coverage.info
-	lcov --output-file $@ --remove $< --remove $<
+	lcov --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '*/$f')
 
 coverage.info.%: coverage.info.trimmed
 	lcov --extract $< '*/$*/*' --output-file $@
@@ -79,10 +80,17 @@ coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
 
 check: check_sw check_hw
-check_sw: check_compile check_sim check_forth dogfood
+check_sw: check_args check_compile check_sim check_forth dogfood
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
+
+check_args: check_args_tas check_args_tld check_args_tsim
+check_args_%: %$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* options ... "
+	$(SILENCE)$(BUILDDIR)/$< -V | grep -q version && $(ECHO) "    ... -V ok"
+	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage && $(ECHO) "    ... -h ok"
+	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1 && $(ECHO) "    ... no-args trapped ok"
 
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz
