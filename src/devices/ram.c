@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 #include "common.h"
 #include "device.h"
@@ -15,42 +14,19 @@ struct ram_state {
     uint32_t *mem;
 };
 
-static int ram_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
+static int ram_init(struct plugin_cookie *pcookie, void *cookie)
 {
-    int reset_memsize = 0;
-    size_t memsize = RAM_END + 1;
     struct ram_state *ram = *(void**)cookie;
 
     if (!ram) {
         ram = *(void**)cookie = malloc(sizeof *ram);
-        ram->mem = NULL;
-        // start out by recording that we just used the default size, which can
-        // be overridden explicitly (but an explicitly overridden size will not
-        // be overridden by the default, if the default init() is called after
-        // an explicit init())
-        ram->memsize = 0;
+        ram->memsize = RAM_END + 1;
+        ram->mem = malloc(ram->memsize * sizeof *ram->mem);
         ram->base = RAM_BASE;
     }
 
-    if (nargs > 0) {
-        va_list vl;
-        va_start(vl, nargs);
-
-        memsize = ram->memsize = va_arg(vl, int);
-        reset_memsize = 1;
-        if (nargs > 1)
-            ram->base = va_arg(vl, int);
-
-        va_end(vl);
-    }
-
-    // only reallocate if we were given an explicit size, or if we have no
-    // memory yet
-    if (!ram->mem || reset_memsize)
-        ram->mem = realloc(ram->mem, memsize * sizeof *ram->mem);
-
-    for (unsigned long i = 0; i < memsize; i++)
-        ram->mem[i] = 0xffffffff; // "illlegal" ; will trap
+    for (unsigned long i = 0; i < ram->memsize; i++)
+        ram->mem[i] = 0x0f0f0fff; /* P <- A | P - 1 : will halt in a spin */
 
     return 0;
 }

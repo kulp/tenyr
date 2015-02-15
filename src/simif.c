@@ -85,7 +85,7 @@ int devices_finalise(struct sim_state *s)
 
     for (unsigned i = 0; i < s->machine.devices_count; i++)
         if (s->machine.devices[i])
-            s->machine.devices[i]->ops.init(&s->plugin_cookie, &s->machine.devices[i]->cookie, 0);
+            s->machine.devices[i]->ops.init(&s->plugin_cookie, &s->machine.devices[i]->cookie);
 
     return 0;
 }

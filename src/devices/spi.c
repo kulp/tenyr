@@ -174,7 +174,7 @@ static int plugin_success(void *libhandle, int inst, const char *parent,
     return rc;
 }
 
-static int spi_emu_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
+static int spi_emu_init(struct plugin_cookie *pcookie, void *cookie)
 {
     struct spi_state *spi = *(void**)cookie = calloc(1, sizeof *spi);
     spi_reset_defaults(spi);

@@ -35,7 +35,7 @@ static int tree_compare(const void *_a, const void *_b)
     return b->base - a->base;
 }
 
-static int sparseram_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
+static int sparseram_init(struct plugin_cookie *pcookie, void *cookie)
 {
     struct sparseram_state *sparseram = *(void**)cookie = malloc(sizeof *sparseram);
     sparseram->mem = NULL;

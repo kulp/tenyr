@@ -104,7 +104,7 @@ static void decode_dots(uint32_t data, int dots[4])
         dots[i] = (data >> i) & 1;
 }
 
-static int sdlled_init(struct plugin_cookie *pcookie, void *cookie, int nargs, ...)
+static int sdlled_init(struct plugin_cookie *pcookie, void *cookie)
 {
     struct sdlled_state *state = *(void**)cookie;
 
