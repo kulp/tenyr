@@ -62,7 +62,7 @@ run_%: %.texe tenyr
 	$(IVERILOG)vvp -n -M. tenyr +LOAD=$< $(PLUSARGS)
 
 has-icarus:
-	which $(IVERILOG)iverilog
+	@which $(IVERILOG)iverilog
 
 ##############################################################################
 

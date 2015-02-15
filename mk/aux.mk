@@ -3,6 +3,8 @@ TOP := $(dir $(makefile_path))/..
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
+SHELL := $(shell which bash)
+
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX):
 	$(MAKE) -f $(TOP)/Makefile $@
 
