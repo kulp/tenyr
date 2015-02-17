@@ -389,8 +389,11 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
 {
     int ok = 1;
     ok &= fwrite(&i->insn.u.word, sizeof i->insn.u.word, 1, stream) == 1;
+
+    const int32_t zero = 0;
     for (int c = 1; c < i->insn.size && ok; c++)
-        ok &= fputc(0, stream) == 0;
+        ok &= fwrite(&zero, sizeof zero, 1, stream) == 1;
+
     return ok;
 }
 
