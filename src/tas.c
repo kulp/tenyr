@@ -27,7 +27,6 @@ static const struct option longopts[] = {
     { "format"      , required_argument, NULL, 'f' },
     { "output"      , required_argument, NULL, 'o' },
     { "quiet"       ,       no_argument, NULL, 'q' },
-    { "strict"      ,       no_argument, NULL, 's' },
     { "verbose"     ,       no_argument, NULL, 'v' },
 
     { "help"        ,       no_argument, NULL, 'h' },
@@ -55,7 +54,6 @@ static int usage(const char *me)
            "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"
            "  -q, --quiet           disable disassembly output comments\n"
-           "  -s, --strict          disable syntax sugar in disassembly\n"
            "  -v, --verbose         disable simplified disassembly output\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string `%s'\n"
@@ -93,7 +91,6 @@ int main(int argc, char *argv[])
             case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); opened = 1; break;
             case 'd': disassemble = 1; break;
             case 'q': flags |= ASM_QUIET; break;
-            case 's': flags |= ASM_NO_SUGAR; break;
             case 'v': flags |= ASM_VERBOSE; break;
             case 'f': {
                 lfind_size_t sz = tenyr_asm_formats_count;
