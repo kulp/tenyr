@@ -16,6 +16,7 @@ function fail ()
 	cp -p $file $base.{en,de}.? dogfood_failures/$bn/
 }
 
+fmt=text
 for file in $* ; do
 	trap "rm $base.{en,de}.[123]" EXIT
 	if [[ $file = *.cpp ]] ; then
@@ -23,11 +24,12 @@ for file in $* ; do
 	else
 		pp=cat
 	fi
-	$pp $file | $tas -f text - | tee $base.en.1 | $tas -d -f text - | tee $base.de.1 | $tas -f text - | tee $base.en.2 | $tas -d -f text - | tee $base.de.2 | $tas -f text -o $base.en.3 -
+	$pp $file | $tas -f $fmt - | tee $base.en.1 | $tas -d -f $fmt - | tee $base.de.1 | $tas -f $fmt - | tee $base.en.2 | $tas -d -f $fmt - | tee $base.de.2 | $tas -f $fmt -o $base.en.3 -
 	diff -q $base.en.1 $base.en.2 && diff -q $base.en.2 $base.en.3 && echo $(basename $file): OK || fail $file
 done
 
+fmt=raw
 base=random
-$here/random.sh | tee $base.en.1 | $tas -d -f text - | tee $base $base.de.1 | $tas -f text - | tee $base.en.2 | $tas -d -f text - | tee $base.de.2 | $tas -f text -o $base.en.3 -
+$here/random.sh | tee $base.en.1 | $tas -d -f $fmt - | tee $base $base.de.1 | $tas -f $fmt - | tee $base.en.2 | $tas -d -f $fmt - | tee $base.de.2 | $tas -f $fmt -o $base.en.3 -
 diff -q $base.en.1 $base.en.2 && diff -q $base.en.2 $base.en.3 && echo $(basename $file): OK || fail $base
 
