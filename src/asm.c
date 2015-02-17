@@ -100,30 +100,6 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     int show2 = ((g->p == 1) ? imm != 0 : mid  != 0) || t->op != OP_BITWISE_OR;
     int show3 = ((g->p == 0) ? imm != 0 : t->y != 0);
 
-    // Edge cases : show more operands if the instruction type can't be inferred
-    if (show1 + show2 + show3 < 3) {
-        switch (g->p) {
-            case 0:
-                if (t->op != OP_BITWISE_OR)
-                    break;
-                if (t->x ? t->y == 0 && imm != 0 : t->y)
-                    show1 = show2 = show3 = 1;
-                break;
-            case 1:
-                if (t->x == 0 || t->y != 0 || t->op == OP_BITWISE_OR)
-                    show1 = show2 = show3 = 1;
-                break;
-            case 2:
-                if (imm == 0 || (t->op == OP_BITWISE_OR && t->x == 0))
-                    show1 = show2 = show3 = 1;
-                break;
-        }
-    }
-
-    // Edge case : all operands are 0, but word may not be 0
-    if (!(show1 | show2 | show3))
-        show1 = show2 = show3 = g->p != 0;
-
     if (flags & ASM_VERBOSE)
         show1 = show2 = show3 = hex = 1;
 
@@ -132,11 +108,45 @@ int print_disassembly(FILE *out, struct element *i, int flags)
 
     const char *sA = NULL, *sB = NULL, *sC = NULL;
     switch (g->p) {
-        case 0: sA = s5, sB = s7, sC = s8 ; break;
-        case 1: sA = s5, sB = s8, sC = s7 ; break;
-        case 2: sA = s8, sB = s5, sC = s7 ; break;
-        case 3: sA = s8; show2 = show3 = 0; break;
+        case 0: sA = s5, sB = s7, sC = s8; break;
+        case 1: sA = s5, sB = s8, sC = s7; break;
+        case 2: sA = s8, sB = s5, sC = s7; break;
+        case 3: sA = s8; show1 = 1; show2 = show3 = 0; break;
     }
+
+    // Edge cases : show more operands if the instruction type can't be inferred
+    if (show1 + show2 + show3 < 3) {
+        switch (g->p) {
+            case 0:
+                if (t->op == OP_SUBTRACT && t->x == 0)
+                    sA = " ", show3 = 1; // sugar for `B <- - C + 0`
+                else if (t->op == OP_BITWISE_ORN && t->x == 0)
+                    s6 = "~", sA = " ", show3 = 1; // sugar for `B <- ~ C + 0`
+                else if (t->op == OP_BITWISE_OR && (t->x ? t->y == 0 && imm != 0 : t->y))
+                    show1 = show2 = show3 = 1;
+                break;
+            case 1:
+                if (t->op != OP_BITWISE_OR && t->y == 0)
+                    show1 = show2 = 1;
+                else if (t->x == 0 || t->y != 0 || t->op == OP_BITWISE_OR)
+                    show1 = show2 = show3 = 1;
+                break;
+            case 2:
+                if (t->op == OP_SUBTRACT && imm == 0)
+                    sA = " "; // sugar for `B <- - C`
+                else if (t->op == OP_BITWISE_ORN && imm == 0)
+                    s6 = "~", sA = " "; // sugar for `B <- ~ C`
+                else if (t->op != OP_BITWISE_OR && t->y == 0)
+                    show1 = show2 = 1;
+                else if (imm == 0 || (t->op == OP_BITWISE_OR && t->x == 0))
+                    show1 = show2 = show3 = 1;
+                break;
+        }
+    }
+
+    // Edge case : all operands are 0, but word may not be 0
+    if (g->p != 3 && !(show1 | show2 | show3))
+        show1 = show2 = show3 = g->p != 0;
 
     static const char *fmts[] = {
     //   c0s1c2 s3 c4sA s6  sB   sCc9   //
