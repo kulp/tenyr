@@ -90,19 +90,21 @@ check_forth:
 check_args: check_args_tas check_args_tld check_args_tsim
 check_args_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* options ... "
-	$(SILENCE)$(BUILDDIR)/$< -V | grep -q version && $(ECHO) "    ... -V ok"
-	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage && $(ECHO) "    ... -h ok"
-	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1 && $(ECHO) "    ... no-args trapped ok"
+	$(SILENCE)$(BUILDDIR)/$< -V | grep -q version                                   && $(ECHO) "    ... -V ok"
+	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(ECHO) "    ... -h ok"
+	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(ECHO) "    ... no-args trapped ok"
+	$(SILENCE)$(BUILDDIR)/$< -f invalid /dev/null | grep -q Usage                   && $(ECHO) "    ... -f invalid ok"
+	$(SILENCE)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(ECHO) "    ... non-existent file ok"
 
 check_args_tas: check_args_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* options ... "
-	$(SILENCE)$(BUILDDIR)/$< -V | grep -q version && $(ECHO) "    ... -V ok"
-	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage && $(ECHO) "    ... -h ok"
-	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1 && $(ECHO) "    ... no-args trapped ok"
-	$(SILENCE)$(BUILDDIR)/$< -f invalid /dev/null | grep -q Usage && $(ECHO) "    ... -f invalid ok"
-	$(SILENCE)$(BUILDDIR)/$< -f memh -d /dev/null 2>&1 | grep -q "not support" && $(ECHO) "    ... -d -f memh ok"
+	$(SILENCE)$(BUILDDIR)/$< -V | grep -q version                                   && $(ECHO) "    ... -V ok"
+	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(ECHO) "    ... -h ok"
+	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(ECHO) "    ... no-args trapped ok"
+	$(SILENCE)$(BUILDDIR)/$< -f invalid /dev/null | grep -q Usage                   && $(ECHO) "    ... -f invalid ok"
 	$(SILENCE)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(ECHO) "    ... non-existent file ok"
-	$(SILENCE)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c" && $(ECHO) "    ... -v ok"
+	$(SILENCE)$(BUILDDIR)/$< -f memh -d /dev/null 2>&1 | grep -q "not support"      && $(ECHO) "    ... -d -f memh ok"
+	$(SILENCE)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c"      && $(ECHO) "    ... -v ok"
 
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz
