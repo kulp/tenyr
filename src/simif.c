@@ -74,8 +74,6 @@ int devices_finalise(struct sim_state *s)
         assert(("device to be wrapped is not NULL", s->machine.devices[0] != NULL));
         int debugwrap_wrap_device(struct device **device);
         debugwrap_wrap_device(&s->machine.devices[0]);
-        int debugwrap_unwrap_device(struct device **device);
-        //debugwrap_unwrap_device(&s->machine.devices[0]);
     }
 
     // Devices must be in address order to allow later bsearch. Assume they do

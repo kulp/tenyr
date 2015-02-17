@@ -21,7 +21,6 @@ static int debugwrap_init(struct plugin_cookie *pcookie, void *cookie)
 
 static int debugwrap_fini(void *cookie)
 {
-    // TODO destroy wrapped device ? or unwrap somehow ?
     struct debugwrap_state *debugwrap = cookie;
     debugwrap->wrapped->ops.fini(debugwrap->wrapped->cookie);
     free(debugwrap);
@@ -64,16 +63,6 @@ int debugwrap_wrap_device(struct device **device)
     *copy = **device;
 
     return debugwrap_add_device(device, copy);
-}
-
-int debugwrap_unwrap_device(struct device *device)
-{
-    struct debugwrap_state *debugwrap = device->cookie;
-    struct device *wrapped = debugwrap->wrapped;
-    free(debugwrap);
-    *device = *wrapped;
-
-    return 0;
 }
 
 /* vi: set ts=4 sw=4 et: */
