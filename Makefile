@@ -69,9 +69,9 @@ clean clobber::
 	-$(MAKE) -C $(TOP)/hw/xilinx $@
 
 clobber_FILES += $(BUILDDIR)/*.gc??
-clobber_FILES += $(BUILDDIR)/coverage.info
+clobber_FILES += $(BUILDDIR)/coverage.info*
 clobber_FILES += $(BUILDDIR)/PERIODS.mk
-clobber_FILES += $(BUILDDIR)/coverage_html
+clobber_FILES += $(BUILDDIR)/coverage_html_*
 clobber_FILES += $(TOP)/test/op/*.texe
 clobber_FILES += $(TOP)/test/run/*.texe
 clobber::
