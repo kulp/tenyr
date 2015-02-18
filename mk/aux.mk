@@ -88,21 +88,22 @@ check_forth:
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
 
 check_args: check_args_tas check_args_tld check_args_tsim
-check_args_%: %$(EXE_SUFFIX)
-	@$(MAKESTEP) "Checking $* options ... "
-	$(SILENCE)$(BUILDDIR)/$< -V | grep -q version                                   && $(ECHO) "    ... -V ok"
-	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(ECHO) "    ... -h ok"
-	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(ECHO) "    ... no-args trapped ok"
-	$(SILENCE)$(BUILDDIR)/$< -f invalid /dev/null | grep -q Usage                   && $(ECHO) "    ... -f invalid ok"
-	$(SILENCE)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(ECHO) "    ... non-existent file ok"
+check_args_%: check_args_general_% check_args_specific_% ;
 
-check_args_tas: check_args_%: %$(EXE_SUFFIX)
-	@$(MAKESTEP) "Checking $* options ... "
+check_args_general_%: %$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* general options ... "
 	$(SILENCE)$(BUILDDIR)/$< -V | grep -q version                                   && $(ECHO) "    ... -V ok"
 	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(ECHO) "    ... -h ok"
 	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(ECHO) "    ... no-args trapped ok"
-	$(SILENCE)$(BUILDDIR)/$< -f invalid /dev/null | grep -q Usage                   && $(ECHO) "    ... -f invalid ok"
 	$(SILENCE)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(ECHO) "    ... non-existent file ok"
+	$(SILENCE)$(BUILDDIR)/$< -QRSTU 2>&1 | grep -qi "Invalid option"                && $(ECHO) "    ... bad option prints error ok"
+	$(SILENCE)( ! $(BUILDDIR)/$< -QRSTU &> /dev/null )                              && $(ECHO) "    ... bad option exits non-zero ok"
+
+check_args_specific_%: %$(EXE_SUFFIX) ;
+
+check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* specific options ... "
+	$(SILENCE)$(BUILDDIR)/$< -f invalid /dev/null | grep -q Usage                   && $(ECHO) "    ... -f invalid ok"
 	$(SILENCE)$(BUILDDIR)/$< -f memh -d /dev/null 2>&1 | grep -q "not support"      && $(ECHO) "    ... -d -f memh ok"
 	$(SILENCE)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c"      && $(ECHO) "    ... -v ok"
 
