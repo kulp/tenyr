@@ -104,7 +104,6 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	$(SILENCE)$(BUILDDIR)/$< -f invalid /dev/null | grep -q Usage                   && $(ECHO) "    ... -f invalid ok"
-	$(SILENCE)$(BUILDDIR)/$< -f memh -d /dev/null 2>&1 | grep -q "not support"      && $(ECHO) "    ... -d -f memh ok"
 	$(SILENCE)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c"      && $(ECHO) "    ... -v ok"
 
 vpath %_demo.tas.cpp $(TOP)/ex

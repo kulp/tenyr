@@ -434,12 +434,10 @@ static int text_out(FILE *stream, struct element *i, void *ud)
  */
 static int memh_init(FILE *stream, int flags, void **ud)
 {
-    // Use ud as a "last-address-written" marker. Only write addresses
-    // explicitly when gaps appear. This has not been tested enough, and will
-    // probably require more finesse when gaps do appear, when memh images are
-    // loaded into ram.v's OFFSET RAMs.
-    int *last = *ud = malloc(sizeof *last);
-    *last = -1;
+    // Track last-written (last[0]) and last-marked (last[1])
+    int32_t *last = *ud = malloc(2 * sizeof *last);
+    last[0] = 0;
+    last[1] = 0;
 
     return 0;
 }
@@ -449,6 +447,29 @@ static int memh_fini(FILE *stream, void **ud)
     free(*ud);
     *ud = NULL;
     return 0;
+}
+
+static int memh_in(FILE *stream, struct element *i, void *ud)
+{
+    int32_t *last = ud;
+
+    if (last[1] > last[0]) {
+        i->insn.u.word = 0x0;
+        i->insn.reladdr = last[0]++;
+        return 1;
+    } else if (last[0] == last[1]) {
+        if (fscanf(stream, " @%x", (uint32_t*)&last[1]) == 1)
+            return 0; // let next call handle it
+
+        if (fscanf(stream, " %x", &i->insn.u.word) != 1)
+            return -1;
+
+        i->insn.reladdr = last[0]++;
+        last[1] = last[0];
+        return 1;
+    } else {
+        return -1; // @address moved backward (unsupported)
+    }
 }
 
 static int memh_out(FILE *stream, struct element *i, void *ud)
@@ -472,7 +493,7 @@ const struct format tenyr_asm_formats[] = {
         .reloc = obj_reloc },
     { "raw" , .in = raw_in , .out = raw_out  },
     { "text", .init = text_init, .in = text_in, .out = text_out },
-    { "memh", .init = memh_init, .out = memh_out, .fini = memh_fini },
+    { "memh", .init = memh_init, .in = memh_in, .out = memh_out, .fini = memh_fini },
 };
 
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
