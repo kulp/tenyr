@@ -435,7 +435,9 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
         if (f->init(in, ASM_DISASSEMBLE, &ud))
             fatal(0, "Error during initialisation for format '%s'", f->name);
 
-    while ((rc = f->in(in, &i, ud)) == 1) {
+    while ((rc = f->in(in, &i, ud)) >= 0) {
+        if (rc == 0)
+            continue; // allow a format to emit no instructions
         int len = print_disassembly(out, &i, ASM_AS_INSN | flags);
         if (!(flags & ASM_QUIET)) {
             fprintf(out, "%*s# ", 30 - len, "");

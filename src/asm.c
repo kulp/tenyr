@@ -382,7 +382,7 @@ static int obj_fini(FILE *stream, void **ud)
  */
 static int raw_in(FILE *stream, struct element *i, void *ud)
 {
-    return fread(&i->insn.u.word, 4, 1, stream) == 1;
+    return (fread(&i->insn.u.word, 4, 1, stream) == 1) ? 1 : -1;
 }
 
 static int raw_out(FILE *stream, struct element *i, void *ud)
@@ -394,7 +394,7 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
     for (int c = 1; c < i->insn.size && ok; c++)
         ok &= fwrite(&zero, sizeof zero, 1, stream) == 1;
 
-    return ok;
+    return ok ? 1 : -1;
 }
 
 /*******************************************************************************
@@ -416,8 +416,8 @@ static int text_in(FILE *stream, struct element *i, void *ud)
     // should have been rejected.
     int next_char = fgetc(stream);
     if (!isspace(next_char) && next_char != EOF)
-        return 0;
-    return result;
+        return -1;
+    return result ? 1 : -1;
 }
 
 static int text_out(FILE *stream, struct element *i, void *ud)
@@ -426,7 +426,7 @@ static int text_out(FILE *stream, struct element *i, void *ud)
     ok &= fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
     for (int c = 1; c < i->insn.size && ok; c++)
         ok &= fputs("0x00000000\n", stream) > 0;
-    return ok;
+    return ok ? 1 : -1;
 }
 
 /*******************************************************************************
