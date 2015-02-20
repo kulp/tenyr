@@ -474,12 +474,19 @@ static int memh_in(FILE *stream, struct element *i, void *ud)
 
 static int memh_out(FILE *stream, struct element *i, void *ud)
 {
-    int *last = ud;
-    int diff = i->insn.reladdr - *last;
-    *last = i->insn.reladdr;
-    return diff > 1
-        ? (fprintf(stream, "@%x %08x\n", i->insn.reladdr, i->insn.u.word) > 0)
-        : (fprintf(stream,     "%08x\n",                  i->insn.u.word) > 0);
+    int32_t *last = ud;
+    int32_t addr = i->insn.reladdr;
+    int32_t word = i->insn.u.word;
+    int32_t diff = addr - last[0];
+
+    if (word == 0)
+        return 0; // 0 indicates success but nothing was output
+
+    last[0] = addr;
+    if (diff > 1)
+        return (fprintf(stream, "@%x %08x\n", addr, word) > 0) ? 1 : -1;
+    else
+        return (fprintf(stream,     "%08x\n",       word) > 0) ? 1 : -1;
 }
 
 const struct format tenyr_asm_formats[] = {
