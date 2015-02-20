@@ -54,7 +54,7 @@ function match ()
 }
 
 # TODO support obj when identical objects can be made reliably
-for fmt in raw text ; do # TODO update when memh supports input
+for fmt in memh raw text ; do
 	for file in $* ; do
 		trap "rm $base.$fmt.{en,de}.[0123]" EXIT
 		if [[ $file = *.cpp ]] ; then
