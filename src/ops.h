@@ -102,6 +102,7 @@ struct element {
 struct element_list {
     struct element *elem;
     struct element_list *prev, *next;
+    struct element_list *tail; ///< points to the last non-null element, possibly self
 };
 
 /*

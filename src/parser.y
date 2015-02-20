@@ -37,7 +37,7 @@ static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
 static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
         const struct strbuf *sym, struct const_expr *expr);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
-        directive *d, struct element_list *p);
+        directive *d, struct element_list **context);
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
@@ -107,7 +107,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <imm> immediate
 %type <insn> insn insn_inner
 %type <op> native_op sugar_op sugar_unary_op const_unary_op
-%type <program> program ascii utf32 data string_or_data
+%type <program> program program_elt ascii utf32 data string_or_data
 %type <str> symbol symbol_list
 
 %union {
@@ -136,8 +136,15 @@ extern void tenyr_pop_state(void *yyscanner);
 %%
 
 top
-    : program
-        {   pd->top = $program; }
+    : /* empty */
+        {   pd->top = NULL; pd->top->tail = pd->top; }
+    | program seps
+        {   if (pd->top != NULL) {
+                // Allocate a phantom entry to provide a final context element
+                pd->top->tail->next = calloc(1, sizeof *pd->top->tail);
+                pd->top->tail = pd->top->tail->next;
+            }
+        }
 
 string_or_data
     : ascii
@@ -157,33 +164,41 @@ opt_nl
 
 program
     :   /* empty */
-        {   $$ = calloc(1, sizeof *$$);
-            // dummy instruction permits capturing previous instruction from $$->prev
+        {   $$ = NULL; }
+    | program_elt
+        {   pd->top = $$ = $1; }
+    | program seps program_elt
+        {   struct element_list *p = $1, *d = $program_elt;
+            if (p == NULL) {
+                p = d;
+            } else if (d != NULL) { // an empty string is NULL
+                d->prev = p->tail;
+                p->tail->next = d;
+                p->tail = d->tail;
+            }
+            pd->top = $$ = p;
         }
-    | sep program[inner]
-        {   $$ = $inner; }
-    | string_or_data sep program[inner]
-        {   struct element_list *p = $string_or_data, *i = $inner;
-            if (p) {
-                while (p->next) p = p->next;
-                p->next = i;
-                i->prev = p;
-                $$ = $string_or_data;
-            } else
-                $$ = i; // an empty string is NULL
-        }
-    | directive sep program[inner]
-        {   $$ = $inner;
-            handle_directive(pd, &yylloc, $directive, $inner); }
-    | insn sep program[inner]
-        {   $$ = calloc(1, sizeof *$$);
-            $inner->prev = $$;
-            $$->next = $inner;
-            $$->elem = $insn; }
+    | program seps directive
+        {   handle_directive(pd, &yylloc, $directive, pd->top ? &pd->top->tail->next : &pd->top); }
+    | directive
+        {   assert(pd->top == NULL);
+            pd->top = $$ = NULL;
+            handle_directive(pd, &yylloc, $directive, &pd->top); }
+
+program_elt
+    : string_or_data
+    | insn
+        {   $program_elt = calloc(1, sizeof *$program_elt);
+            $program_elt->elem = $insn;
+            $program_elt->tail = $program_elt; }
 
 sep
     : '\n'
     | ';'
+
+seps
+    : seps sep
+    | sep
 
 insn
     : ILLEGAL
@@ -629,7 +644,7 @@ static struct element_list *make_utf32(struct cstr *cs)
         for (; len > 0; wpos++, spos++, len--) {
             *rp = calloc(1, sizeof **rp);
             (*rp)->prev = t;
-            t = *rp;
+            result->tail = t = *rp;
             rp = &t->next;
             t->elem = calloc(1, sizeof *t->elem);
 
@@ -659,7 +674,7 @@ static struct element_list *make_ascii(struct cstr *cs)
             if (wpos % 4 == 0) {
                 *rp = calloc(1, sizeof **rp);
                 (*rp)->prev = t;
-                t = *rp;
+                result->tail = t = *rp;
                 rp = &t->next;
                 t->elem = calloc(1, sizeof *t->elem);
             }
@@ -717,14 +732,14 @@ static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol 
 
 static struct element_list *make_data(struct parse_data *pd, struct const_expr_list *list)
 {
-    struct element_list *result = NULL, **rp = &result, *last = NULL;
+    struct element_list *result = NULL, **rp = &result;
 
     struct const_expr_list *p = list;
     while (p) {
         *rp = calloc(1, sizeof **rp);
         struct element_list *q = *rp;
-        q->prev = last;
-        last = *rp;
+        q->prev = result->tail;
+        result->tail = *rp;
         rp = &q->next;
 
         q->elem = calloc(1, sizeof *q->elem);
@@ -748,21 +763,18 @@ static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp, str
 
     struct element_list *result = calloc(1, sizeof *result);
     result->elem = calloc(1, sizeof *result->elem);
+    result->tail = result;
     ce_eval(pd, NULL, NULL, size, 0, NULL, NULL, &result->elem->insn.size);
     return result;
 }
-
-struct datum_D_SET {
-    struct symbol *symbol;
-};
 
 static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
         const struct strbuf *symbol)
 {
     struct directive *result = calloc(1, sizeof *result);
     result->type = D_GLOBAL;
-    result->data = malloc(symbol->len + 1);
-    strcopy(result->data, symbol->buf, symbol->len + 1);
+    struct global_list *g = result->data = malloc(sizeof *g);
+    strcopy(g->name, symbol->buf, symbol->len + 1);
     return result;
 }
 
@@ -771,10 +783,8 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
 {
     struct directive *result = calloc(1, sizeof *result);
     result->type = D_SET;
-    // TODO stop allocating datum_D_SET if we don't need it
-    struct datum_D_SET *d = result->data = malloc(sizeof *d);
 
-    struct symbol *n = calloc(1, sizeof *n);
+    struct symbol *n = result->data = calloc(1, sizeof *n);
     n->column   = locp->first_column;
     n->lineno   = locp->first_line;
     n->resolved = 0;
@@ -784,45 +794,30 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
     // symbol length has already been validated by grammar
     strcopy(n->name, symbol->buf, symbol->len + 1);
 
-    d->symbol = n;
-
     add_symbol(locp, pd, n);
 
     return result;
 }
 
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
-        directive *d, struct element_list *p)
+        directive *d, struct element_list **context)
 {
     switch (d->type) {
         case D_GLOBAL: {
-            struct global_list *g = malloc(sizeof *g);
-            strcopy(g->name, d->data, sizeof g->name);
-            free(d->data);
+            struct global_list *g = d->data;
             g->next = pd->globals;
             pd->globals = g;
-            free(d);
             break;
         }
         case D_SET: {
-            struct datum_D_SET *data = d->data;
-            struct element_list **context = NULL;
-
-            // XXX this deferral code is broken
-            if (!p->elem)
-                context = &p->prev; // dummy instruction at end ; defer to prev
-            else if (p->next)
-                context = &p->next->prev; // otherwise, defer to current instruction node
-            else
-                fatal(0, "Illegal instruction context for .set");
-
-            data->symbol->ce->deferred = context;
-            free(data);
-            free(d);
+            struct symbol *sym = d->data;
+            sym->ce->deferred = context;
             break;
         }
         default:
             tenyr_error(locp, pd, "Unknown directive type %d in %s", d->type, __func__);
     }
+
+    free(d);
 }
 
