@@ -1,0 +1,27 @@
+.set link, .
+top:
+.word @link
+.set link, .
+.word @link
+.set link, .
+.word @link
+.set link, .
+.word @link
+.set link, .
+.word @link
+
+B <- 0
+C <- (@top - (. + 1)) + P
+D <- [C + 0]
+B <- B + D
+D <- [C + 1]
+B <- B + D
+D <- [C + 2]
+B <- B + D
+D <- [C + 3]
+B <- B + D
+D <- [C + 4]
+B <- B + D
+B <- B == 10
+illegal
+
