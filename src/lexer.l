@@ -84,7 +84,6 @@ illegal             { return ILLEGAL; }
 }
 
 ".word"{edge}       { PUSH(ignore_nl); return WORD; }
-".ascii"{edge}      { PUSH(ignore_nl); return ASCII; }
 ".utf32"{edge}      { PUSH(ignore_nl); return UTF32; }
 ".global"{edge}     { PUSH(ignore_nl); return GLOBAL; }
 ".set"{edge}        { PUSH(ignore_nl); return SET; }

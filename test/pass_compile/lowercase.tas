@@ -5,6 +5,6 @@ b -> [p + (@where - .)]
 illegal
 
 where:
-    .ascii "ABCD"
+    .utf32 "ABCD"
 lowermask:
     .word 0x20202020

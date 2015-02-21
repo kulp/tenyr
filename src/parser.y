@@ -22,7 +22,6 @@ static struct expr *make_unary(int op, int x, int y, int mult, struct
         const_expr *defexpr);
 static struct element *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
-static struct element_list *make_ascii(struct cstr *cs);
 static struct element_list *make_utf32(struct cstr *cs);
 static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct element *insn,
         const char *symbol);
@@ -92,7 +91,6 @@ extern void tenyr_pop_state(void *yyscanner);
 %token PACK "^^"
 
 %token WORD     ".word"
-%token ASCII    ".ascii"
 %token UTF32    ".utf32"
 %token GLOBAL   ".global"
 %token SET      ".set"
@@ -107,7 +105,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <imm> immediate
 %type <insn> insn insn_inner
 %type <op> native_op sugar_op sugar_unary_op const_unary_op
-%type <program> program program_elt ascii utf32 data string_or_data
+%type <program> program program_elt utf32 data string_or_data
 %type <str> symbol symbol_list
 
 %union {
@@ -147,8 +145,7 @@ top
         }
 
 string_or_data
-    : ascii
-    | utf32
+    : utf32
     | data
     | symbol ':' opt_nl string_or_data[inner]
         {   $$ = $inner;
@@ -254,10 +251,6 @@ string
 utf32
     : ".utf32" string
         {   tenyr_pop_state(pd->scanner); $utf32 = make_utf32($string); }
-
-ascii
-    : ".ascii" string
-        {   tenyr_pop_state(pd->scanner); $ascii = make_ascii($string); }
 
 data
     : ".word" opt_nl reloc_expr_list
@@ -649,37 +642,6 @@ static struct element_list *make_utf32(struct cstr *cs)
             t->elem = calloc(1, sizeof *t->elem);
 
             t->elem->insn.u.word = p->str[spos];
-            t->elem->insn.size = 1;
-        }
-
-        p = p->right;
-    }
-
-    free_cstr(cs, 1);
-
-    return result;
-}
-
-static struct element_list *make_ascii(struct cstr *cs)
-{
-    struct element_list *result = NULL, **rp = &result;
-
-    struct cstr *p = cs;
-    unsigned wpos = 0; // position in the word
-    struct element_list *t = *rp;
-    while (p) {
-        unsigned spos = 0; // position in the string
-        int len = p->len;
-        for (; len > 0; wpos++, spos++, len--) {
-            if (wpos % 4 == 0) {
-                *rp = calloc(1, sizeof **rp);
-                (*rp)->prev = t;
-                result->tail = t = *rp;
-                rp = &t->next;
-                t->elem = calloc(1, sizeof *t->elem);
-            }
-
-            t->elem->insn.u.word |= (p->str[spos] & 0xff) << ((wpos % 4) * 8);
             t->elem->insn.size = 1;
         }
 

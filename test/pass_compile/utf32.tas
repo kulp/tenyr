@@ -1,9 +1,5 @@
 .utf32 "this is a test"
-.ascii "this is a test"
 .utf32
 "test 3"
-.ascii
-"test 4"
 #.utf32"this is a test" // this should not work
-#.ascii"this is a test" // this should not work
 
