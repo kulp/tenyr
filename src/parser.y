@@ -137,7 +137,7 @@ extern void tenyr_pop_state(void *yyscanner);
 
 top
     : /* empty */
-        {   pd->top = NULL; pd->top->tail = pd->top; }
+        {   pd->top = NULL; }
     | program seps
         {   if (pd->top != NULL) {
                 // Allocate a phantom entry to provide a final context element
