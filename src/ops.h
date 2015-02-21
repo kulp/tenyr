@@ -68,7 +68,6 @@ struct insn_or_data {
         } type012;
         struct instruction_type3 {
             unsigned imm : MEDIUM_IMMEDIATE_BITWIDTH; ///< immediate
-            unsigned x   :  4;  ///< operand x
             unsigned z   :  4;  ///< operand z
             unsigned dd  :  2;  ///< dereference
             unsigned p   :  2;  ///< expr type0 or type1
