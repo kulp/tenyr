@@ -1,2 +1,4 @@
 b->c+5 // must fail
 b->c*a // must fail
+[a]->a<-5 // must fail
+b->c+5 // must fail

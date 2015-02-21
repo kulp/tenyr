@@ -37,6 +37,7 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
         const struct strbuf *sym, struct const_expr *expr);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct element_list **context);
+static int is_type3(struct const_expr *ce);
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
@@ -100,10 +101,10 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <cl> reloc_expr_list
 %type <cstr> string
 %type <dctv> directive
-%type <expr> rhs_plain rhs_sugared rhs_deref lhs_plain lhs_deref
+%type <expr> rhs rhs_plain rhs_sugared lhs lhs_plain
 %type <i> arrow regname reloc_op
 %type <imm> immediate
-%type <insn> insn insn_inner
+%type <insn> insn
 %type <op> native_op sugar_op sugar_unary_op const_unary_op
 %type <program> program program_elt utf32 data string_or_data
 %type <str> symbol symbol_list
@@ -201,8 +202,13 @@ insn
     : ILLEGAL
         {   $$ = calloc(1, sizeof *$$);
             $$->insn.size = 1;
-            $$->insn.u.word = 0xcfffffff; /* P <- -1 */ }
-    | insn_inner
+            $$->insn.u.word = 0xffffffff; /* P <- [P + -1] */ }
+    | lhs arrow rhs
+        {   if ($lhs->deref && $rhs->deref)
+                tenyr_error(&yylloc, pd, "Cannot have both left and right sides of an instruction dereferenced");
+            if ($arrow == 1 && !$rhs->deref)
+                tenyr_error(&yylloc, pd, "Right arrows must point to dereferenced right-hand sides");
+            $$ = make_insn_general(pd, $lhs, $arrow, $rhs); }
     | symbol ':' opt_nl insn[inner]
         {   $$ = $inner;
             struct symbol *n = add_symbol_to_insn(&yyloc, $inner, $symbol.buf);
@@ -213,27 +219,6 @@ insn
 symbol
     : SYMBOL
     | LOCAL
-
-insn_inner
-    : lhs_plain tol rhs_plain
-        {   $insn_inner = make_insn_general(pd, $lhs_plain, 0, $rhs_plain);
-            free($rhs_plain);
-            free($lhs_plain); }
-    | lhs_plain tor regname[x]
-        {   struct expr *t0 = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL),
-                        *t1 = make_expr(0, $lhs_plain->x, OP_BITWISE_OR, 0, 0, NULL);
-            $insn_inner = make_insn_general(pd, t0, 0, t1);
-            free(t1);
-            free(t0);
-            free($lhs_plain); }
-    | lhs_plain arrow rhs_deref
-        {   $insn_inner = make_insn_general(pd, $lhs_plain, $arrow, $rhs_deref);
-            free($rhs_deref);
-            free($lhs_plain); }
-    | lhs_deref arrow rhs_plain
-        {   $insn_inner = make_insn_general(pd, $lhs_deref, $arrow, $rhs_plain);
-            free($rhs_plain);
-            free($lhs_deref); }
 
 string
     : STRING
@@ -277,18 +262,23 @@ reloc_expr_list
             $$->right = $inner;
             $$->ce = $expr; }
 
+lhs
+    : lhs_plain
+    | '[' lhs_plain ']'
+        {   $$ = $lhs_plain;
+            $$->deref = 1; }
+
 lhs_plain
     : regname
-        {   /* this isn't semantically the ideal place to start looking for
-               arrows, but it works */
-            tenyr_push_state(needarrow, pd->scanner);
-            ($lhs_plain = malloc(sizeof *$lhs_plain))->x = $regname;
-            $lhs_plain->deref = 0; }
+        {   tenyr_push_state(needarrow, pd->scanner);
+            $$ = calloc(1, sizeof *$$);
+            $$->x = $regname; }
 
-lhs_deref
-    : '[' lhs_plain ']'
-        {   $lhs_deref = $lhs_plain;
-            $lhs_deref->deref = 1; }
+rhs
+    : rhs_plain
+    | '[' rhs_plain ']'
+        {   $$ = $rhs_plain;
+            $$->deref = 1; }
 
 rhs_plain
     /* syntax sugars */
@@ -308,7 +298,8 @@ rhs_plain
     | regname[x] native_op reloc_expr '+' regname[y]
         { $rhs_plain = make_expr(1, $x, $native_op, $y, 1, $reloc_expr); }
     | regname[x] native_op reloc_expr
-        { $rhs_plain = make_expr(1, $x, $native_op, 0, 1, $reloc_expr); }
+        {   int type = ($native_op == OP_ADD && is_type3($reloc_expr)) ? 3 : 1;
+            $rhs_plain = make_expr(type, $x, $native_op, 0, 1, $reloc_expr); }
     | reloc_expr sugar_op regname[x] '+' regname[y]
         { $rhs_plain = make_expr(1, $x, -$sugar_op, $y, 1, $reloc_expr); }
     | reloc_expr sugar_op regname[x]
@@ -324,16 +315,7 @@ rhs_plain
         { $rhs_plain = make_expr(2, $x, -$sugar_op, 0, 1, $reloc_expr); }
     /* type3 */
     | reloc_expr
-        {   struct const_expr *ce = $reloc_expr;
-            int is_bits  = ce->flags & IMM_IS_BITS;
-            int deferred = ce->flags & IS_DEFERRED;
-            /* Large immediates and ones that should be expressed in
-             * hexadecimal use type3 ; others use type0. */
-            int type = 0;
-            if (is_bits || deferred || ce->i != SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,ce->i))
-                type = 3;
-            $rhs_plain = make_expr(type, 0, OP_BITWISE_OR, 0, 1, ce);
-        }
+        { $rhs_plain = make_expr(is_type3($reloc_expr) ? 3 : 0, 0, OP_BITWISE_OR, 0, 1, $reloc_expr); }
 
 rhs_sugared
     : sugar_unary_op regname[x]
@@ -342,11 +324,6 @@ rhs_sugared
         { $rhs_sugared = make_unary($sugar_unary_op, $x, $y, 0, NULL); }
     | sugar_unary_op regname[x] reloc_op reloc_expr
         { $rhs_sugared = make_unary($sugar_unary_op, $x,  0, $reloc_op == '+' ? 1 : -1, $reloc_expr); }
-
-rhs_deref
-    : '[' rhs_plain ']'
-        {   $rhs_deref = $rhs_plain;
-            $rhs_deref->deref = 1; }
 
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
@@ -490,10 +467,8 @@ static struct element *make_insn_general(struct parse_data *pd, struct
 {
     struct element *elem = calloc(1, sizeof *elem);
 
-    int dd = ((lhs->deref | !!arrow) << 1) | expr->deref;
-
     elem->insn.u.typeany.p  = expr->type;
-    elem->insn.u.typeany.dd = dd;
+    elem->insn.u.typeany.dd = ((lhs->deref | (!arrow && expr->deref)) << 1) | expr->deref;
     elem->insn.u.typeany.z  = lhs->x;
     elem->insn.u.typeany.x  = expr->x;
 
@@ -781,5 +756,17 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
     }
 
     free(d);
+}
+
+static int is_type3(struct const_expr *ce)
+{
+    int is_bits  = ce->flags & IMM_IS_BITS;
+    int deferred = ce->flags & IS_DEFERRED;
+    /* Large immediates and ones that should be expressed in
+     * hexadecimal use type3. */
+    if (is_bits || deferred || ce->i != SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,ce->i))
+        return 1;
+
+    return 0;
 }
 

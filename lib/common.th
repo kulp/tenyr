@@ -16,7 +16,7 @@
 #define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
-#define illegal             p <- -1
+#define illegal             .word 0xffffffff /* p <- [p + 0xffffffff] */
 
 #include "push.th"
 

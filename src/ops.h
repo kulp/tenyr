@@ -1,39 +1,24 @@
-// Instructions
-// [TT..............................] TT = instruction type/class
-// all-zero instruction = no-op :
-//  a <- a | a + 0 (and A has sticky value zero and takes no writes)
+// Instruction format
+// [PPDDZZZZXXXXYYYYffffIIIIIIIIIIII]
+// P = 2-bit immediate position selector
+// D = 2-bit dereferencing selector
+// Z = 4-bit register selector
+// X =   "      "        "
+// Y =   "      "        "
+// f = 4-bit operation code
+// I = 12-bit signed two's-complement immediate
+// DD = 00 :     Z  <-  ...
+//      01 :     Z  -> [...]
+//      10 :    [Z] <-  ...
+//      11 :     Z  <- [...]
 //
-// [00DDZZZZXXXXYYYYffffIIIIIIIIIIII]
-// I = sign-extended 12-bit immediate
-// performs
-// DD = 00 :  Z  <-  X f Y + I
-//      10 : [Z] <-  X f Y + I
-//      01 :  Z  <- [X f Y + I]
-//      11 :  Z  -> [X f Y + I]
+// PP = 00 :    [Z] <- [X f Y + I]
+//      01 :    [Z] <- [X f I + Y]
+//      10 :    [Z] <- [I f X + Y]
 //
-// [01DDZZZZXXXXYYYYffffIIIIIIIIIIII]
-// I = sign-extended 12-bit immediate
-// performs
-// DD = 00 :  Z  <-  X f I + Y
-//      10 : [Z] <-  X f I + Y
-//      01 :  Z  <- [X f I + Y]
-//      11 :  Z  -> [X f I + Y]
-//
-// [10DDZZZZXXXXYYYYffffIIIIIIIIIIII]
-// I = sign-extended 12-bit immediate
-// performs
-// DD = 00 :  Z  <-  I f X + Y
-//      10 : [Z] <-  I f X + Y
-//      01 :  Z  <- [I f X + Y]
-//      11 :  Z  -> [I f X + Y]
-//
-// [11DDZZZZIIIIIIIIIIIIIIIIIIIIIIII]
-// I = sign-extended 24-bit immediate
-// performs
-// DD = 00 :  Z  <-  I
-//      10 : [Z] <-  I
-//      01 :  Z  <- [I]
-//      11 :  Z  -> [I]
+// [PPDDZZZZXXXXIIIIIIIIIIIIIIIIIIII]
+// I = sign-extended 20-bit immediate
+// PP = 11 :    [Z] <- [X     + I]
 
 #ifndef OPS_H_
 #define OPS_H_
@@ -43,7 +28,7 @@
 #include <stdint.h>
 
 #define SMALL_IMMEDIATE_BITWIDTH    12
-#define MEDIUM_IMMEDIATE_BITWIDTH   24
+#define MEDIUM_IMMEDIATE_BITWIDTH   20
 #define WORD_BITWIDTH               32
 
 // TODO assumes bits are filled in rightmost-first
@@ -68,6 +53,7 @@ struct insn_or_data {
         } type012;
         struct instruction_type3 {
             unsigned imm : MEDIUM_IMMEDIATE_BITWIDTH; ///< immediate
+            unsigned x   :  4;  ///< operand x
             unsigned z   :  4;  ///< operand z
             unsigned dd  :  2;  ///< dereference
             unsigned p   :  2;  ///< expr type0 or type1

@@ -66,19 +66,21 @@ int print_disassembly(FILE *out, struct element *i, int flags)
 
     struct instruction_typeany *g = &i->insn.u.typeany;
     struct instruction_type012 *t = &i->insn.u.type012;
-    struct instruction_type3   *v = &i->insn.u.type3;
 
-    int width = SMALL_IMMEDIATE_BITWIDTH;
-    int32_t imm = t->imm;
-    if (g->p == 3) {
-        width = MEDIUM_IMMEDIATE_BITWIDTH;
-        imm = v->imm;
+    int32_t imm, width;
+    switch (g->p) {
+        case 0:
+        case 1:
+        case 2: width = SMALL_IMMEDIATE_BITWIDTH;
+                imm   = i->insn.u.type012.imm;      break;
+        case 3: width = MEDIUM_IMMEDIATE_BITWIDTH;
+                imm   = i->insn.u.type3.imm;        break;
     }
 
     static const char regs[16 * 2] =
         "A\0B\0C\0D\0E\0F\0G\0H\0I\0J\0K\0L\0M\0N\0O\0P\0";
     static const char arrows[4 * 4] =
-        "<-\0\0<-\0\0<-\0\0->\0\0";
+        "<-\0\0->\0\0<-\0\0<-\0\0";
     static const char brackets[2][2] =
         { " [", " ]" };
 
@@ -111,7 +113,7 @@ int print_disassembly(FILE *out, struct element *i, int flags)
         case 0: sA = s5, sB = s7, sC = s8; break;
         case 1: sA = s5, sB = s8, sC = s7; break;
         case 2: sA = s8, sB = s5, sC = s7; break;
-        case 3: sA = s8; show1 = 1; show2 = show3 = 0; break;
+        case 3: sB = s5; sC = s8; show3 = 1; show1 = 0; show2 = g->x != 0; break;
     }
 
     // Edge cases : show more operands if the instruction type can't be inferred
@@ -126,7 +128,7 @@ int print_disassembly(FILE *out, struct element *i, int flags)
                     show1 = show2 = show3 = 1;
                 break;
             case 1:
-                if (t->op != OP_BITWISE_OR && t->y == 0)
+                if (t->op != OP_BITWISE_OR && t->op != OP_ADD && t->y == 0)
                     show1 = show2 = 1;
                 else if (t->x == 0 || t->y != 0 || t->op == OP_BITWISE_OR)
                     show1 = show2 = show3 = 1;

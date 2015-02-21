@@ -15,21 +15,24 @@ module Reg(input clk, upZ, output signed[31:0] valZ, valX, valY,
 
 endmodule
 
-module Decode(input[31:0] insn, output[3:0] idxZ, output reg[3:0] idxX, idxY,
+module Decode(input[31:0] insn, output[3:0] idxZ, idxX, output reg[3:0] idxY,
               output reg signed[31:0] valI, output reg[3:0] op,
               output[1:0] kind, output storing, loading, deref_rhs, branching);
 
-    wire [23:0] tI;
+    wire [19:0] tI;
+    wire [1:0] dd;
 
-    assign {kind, storing, deref_rhs, idxZ, tI} = insn;
+    assign {kind, dd, idxZ, idxX, tI} = insn;
 
     always @* case (kind)
-        2'b11:   {idxX,idxY,op,valI[23:0],valI[31:24]} = {32'h0,tI,{8{tI[23]}}};
-        default: {idxX,idxY,op,valI[11:0],valI[31:12]} = {tI,{20{tI[11]}}};
+        default: {idxY,op,valI[11:0],valI[31:12]} = {      tI,{20{tI[11]}}};
+        2'b11:   {idxY,op,valI[23:0],valI[31:20]} = {28'h0,tI,{12{tI[19]}}};
     endcase
 
+    assign storing   = ^dd;
+    assign loading   = &dd;
+    assign deref_rhs = dd[0];
     assign branching = &idxZ & ~storing;
-    assign loading   = deref_rhs & ~storing;
 
 endmodule
 
@@ -37,10 +40,10 @@ module Shuf(input[1:0] kind, input signed[31:0] valX, valY, valI,
                         output reg signed[31:0] valA, valB, valC);
 
     always @* case (kind)
-        2'b00: {valA,valB,valC} = {valX ,valY ,valI};
-        2'b01: {valA,valB,valC} = {valX ,valI ,valY};
-        2'b10: {valA,valB,valC} = {valI ,valX ,valY};
-        2'b11: {valA,valB,valC} = {32'h0,32'h0,valI};
+        2'b00: {valA,valB,valC} = {valX ,valY,valI};
+        2'b01: {valA,valB,valC} = {valX ,valI,valY};
+        2'b10: {valA,valB,valC} = {valI ,valX,valY};
+        2'b11: {valA,valB,valC} = {32'h0,valX,valI};
     endcase
 
 endmodule
@@ -104,7 +107,7 @@ module Core(input clk, reset_n, inout wor `HALTTYPE halt, output strobe,
     Shuf shuf(.kind, .valX, .valA, .valY, .valB, .valI, .valC);
 
     Exec exec(.clk, .en ( state == s0 ), .done ( edone ),
-              .op, .valA, .valB, .valC,  .valZ ( rhs   ));
+              .op,  .valA, .valB, .valC, .valZ ( rhs   ));
 
     assign mem_rw = storing;
     assign strobe = state == s3 && (loading || storing);

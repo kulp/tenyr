@@ -19,7 +19,8 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
             break;
         case 3:
             p[0] = SEXTEND32(MEDIUM_IMMEDIATE_BITWIDTH, I);
-            p[1] = p[2] = 0;
+            p[1] = X;
+            p[2] = 0;
             break;
     }
 
@@ -60,22 +61,19 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 }
 
 static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
-        uint32_t *value, int deref_lhs, int deref_rhs, int reversed)
+        uint32_t *value, int loading, int storing, int arrow_right)
 {
-    int read_mem  = reversed ? deref_lhs : deref_rhs;
-    int write_mem = reversed ? deref_rhs : deref_lhs;
+    int32_t *r = arrow_right ? Z   : rhs;
+    int32_t *w = arrow_right ? rhs : Z  ;
 
-    int32_t *r    = reversed ? Z         : rhs;
-    int32_t *w    = reversed ? rhs       : Z;
-
-    if (read_mem) {
+    if (loading) {
         if (s->dispatch_op(s, OP_DATA_READ, *r, value)) {
             if (s->conf.abort) abort();
         }
     } else
         *value = *r;
 
-    if (write_mem) {
+    if (storing) {
         if (s->dispatch_op(s, OP_WRITE, *w, value)) {
             if (s->conf.abort) abort();
         }
@@ -113,8 +111,8 @@ int run_instruction(struct sim_state *s, struct element *i)
     }
 
     do_op(op, g->p, &rhs, s->machine.regs[g->x], Y, imm);
-    do_common(s, &s->machine.regs[g->z], &rhs, &value, g->dd == 2,
-            g->dd & 1, g->dd == 3);
+    do_common(s, &s->machine.regs[g->z], &rhs, &value, g->dd == 3,
+            g->dd == 1 || g->dd == 2, g->dd == 1);
 
     return 0;
 }
