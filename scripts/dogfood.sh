@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Usage: dogfood.sh tempfile-stem path-to-tas file.tas[.cpp] [ files... ]
-if [[ $V == 1 ]] ; then set -x ; fi
+if [[ $V == 1 ]] ; then ECHO=echo ; else ECHO=true ; fi
 here=`dirname $BASH_SOURCE`
 stem=`basename $1`
 tas=$2
 shift
 shift
 base=`mktemp -t $stem`
+rc=0
 
 function fail ()
 {
@@ -16,6 +17,7 @@ function fail ()
 	echo $bn: FAILED
 	mkdir -p dogfood_failures/$bn
 	cp -p $file $base.$fmt.{en,de}.? dogfood_failures/$bn/
+	rc=1
 }
 
 function en ()
@@ -50,7 +52,7 @@ function match ()
 	fmt=$1
 	typ=$2
 	file=$3
-	check $fmt $typ 1 2 && check $fmt $typ 2 3 && echo $(basename $file) @ $fmt: OK || fail $fmt $file
+	check $fmt $typ 1 2 && check $fmt $typ 2 3 && $ECHO $(basename $file) @ $fmt: OK || fail $fmt $file
 }
 
 # TODO support obj when identical objects can be made reliably
@@ -71,4 +73,6 @@ for fmt in memh raw text ; do
 	$here/random.sh | tee $base | de text 0 | cycle $fmt
 	match $fmt en $file
 done
+
+exit $rc
 
