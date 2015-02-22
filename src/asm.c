@@ -118,7 +118,9 @@ int print_disassembly(FILE *out, struct element *i, int flags)
 
     // Edge cases : show more operands if the instruction type can't be inferred
     if (show1 + show2 + show3 < 3) {
-        switch (g->p) {
+        if (t->op == OP_SUBTRACT && g->p == 1)
+            show1 = show2 = show3 = 1; // avoid ambiguity with type3 substraction idiom
+        else switch (g->p) {
             case 0:
                 if (t->op == OP_SUBTRACT && t->x == 0)
                     sA = " ", show3 = 1; // sugar for `B <- - C + 0`

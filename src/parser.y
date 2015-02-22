@@ -298,8 +298,11 @@ rhs_plain
     | regname[x] native_op reloc_expr '+' regname[y]
         { $rhs_plain = make_expr(1, $x, $native_op, $y, 1, $reloc_expr); }
     | regname[x] native_op reloc_expr
-        {   int type = ($native_op == OP_ADD && is_type3($reloc_expr)) ? 3 : 1;
-            $rhs_plain = make_expr(type, $x, $native_op, 0, 1, $reloc_expr); }
+        {   int t3op = $native_op == OP_ADD || $native_op == OP_SUBTRACT;
+            int mult = ($native_op == OP_SUBTRACT) ? -1 : 1;
+            int op   = (mult < 0) ? OP_ADD : $native_op;
+            int type = (t3op && is_type3($reloc_expr)) ? 3 : 1;
+            $rhs_plain = make_expr(type, $x, op, 0, mult, $reloc_expr); }
     | reloc_expr sugar_op regname[x] '+' regname[y]
         { $rhs_plain = make_expr(1, $x, -$sugar_op, $y, 1, $reloc_expr); }
     | reloc_expr sugar_op regname[x]
