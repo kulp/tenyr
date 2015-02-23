@@ -107,7 +107,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <insn> insn
 %type <op> native_op sugar_op sugar_unary_op const_unary_op
 %type <program> program program_elt utf32 data string_or_data
-%type <str> symbol symbol_list
+%type <str> symbol
 
 %union {
     int32_t i;
@@ -237,13 +237,10 @@ data
         {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, &yylloc, $const_expr); }
 
 directive
-    : ".global" opt_nl symbol_list
-        {   tenyr_pop_state(pd->scanner); $directive = make_global(pd, &yylloc, &$symbol_list); }
+    : ".global" opt_nl SYMBOL
+        {   tenyr_pop_state(pd->scanner); $directive = make_global(pd, &yylloc, &$SYMBOL); }
     | ".set" opt_nl SYMBOL ',' reloc_expr
         {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
-
-symbol_list
-    : SYMBOL /* TODO permit comma-separated symbol lists for GLOBAL */
 
 reloc_expr_list
     : reloc_expr[expr]
