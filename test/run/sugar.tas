@@ -1,0 +1,39 @@
+C <- 3
+D <- 4
+E <- 5
+F <- 4
+
+G <- C < D
+H <- D > C
+I <- D <= E
+J <- E >= D
+
+B <- G + H
+B <- I + B
+B <- J + B
+B <- B == -4
+
+G <- C < 4
+H <- 4 > C
+I <- D <= 5
+J <- 5 >= D
+
+B <- G + B
+B <- H + B
+B <- I + B
+B <- J + B
+B <- B == -5
+
+G <- 3 < D
+H <- D > 3
+I <- 4 <= E
+J <- E >= 4
+
+B <- G + B
+B <- H + B
+B <- I + B
+B <- J + B
+B <- B == -5
+
+illegal
+

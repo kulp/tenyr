@@ -106,7 +106,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <i> arrow regname reloc_op
 %type <imm> immediate
 %type <insn> insn
-%type <op> native_op sugar_op sugar_unary_op const_unary_op
+%type <op> binop native_op sugar_op sugar_unary_op const_unary_op
 %type <program> program program_elt utf32 data string_or_data
 %type <str> symbol
 
@@ -271,38 +271,26 @@ rhs_plain
     /* syntax sugars */
     : rhs_sugared
     /* type0 */
-    | regname[x] native_op regname[y] reloc_op reloc_expr
-        { $rhs_plain = make_expr(0, $x, $native_op, $y, $reloc_op == '+' ? 1 : -1, $reloc_expr); }
-    | regname[x] native_op regname[y]
-        { $rhs_plain = make_expr(0, $x, $native_op, $y, 0, NULL); }
+    | regname[x] binop regname[y] reloc_op reloc_expr
+        { $rhs_plain = make_expr(0, $x, $binop, $y, $reloc_op, $reloc_expr); }
+    | regname[x] binop regname[y]
+        { $rhs_plain = make_expr(0, $x, $binop, $y, 0, NULL); }
     | regname[x]
         { $rhs_plain = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
-    | regname[x] sugar_op regname[y] '+' reloc_expr
-        { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 1, $reloc_expr); }
-    | regname[x] sugar_op regname[y]
-        { $rhs_plain = make_expr(0, $x, -$sugar_op, $y, 0, NULL); }
     /* type1 */
-    | regname[x] native_op reloc_expr '+' regname[y]
-        { $rhs_plain = make_expr(1, $x, $native_op, $y, 1, $reloc_expr); }
-    | regname[x] native_op reloc_expr
-        {   int t3op = $native_op == OP_ADD || $native_op == OP_SUBTRACT;
-            int mult = ($native_op == OP_SUBTRACT) ? -1 : 1;
-            int op   = (mult < 0) ? OP_ADD : $native_op;
+    | regname[x] binop reloc_expr '+' regname[y]
+        { $rhs_plain = make_expr(1, $x, $binop, $y, 1, $reloc_expr); }
+    | regname[x] binop reloc_expr
+        {   int t3op = $binop == OP_ADD || $binop == OP_SUBTRACT;
+            int mult = ($binop == OP_SUBTRACT) ? -1 : 1;
+            int op   = (mult < 0) ? OP_ADD : $binop;
             int type = (t3op && is_type3($reloc_expr)) ? 3 : 1;
             $rhs_plain = make_expr(type, $x, op, 0, mult, $reloc_expr); }
-    | reloc_expr sugar_op regname[x] '+' regname[y]
-        { $rhs_plain = make_expr(1, $x, -$sugar_op, $y, 1, $reloc_expr); }
-    | reloc_expr sugar_op regname[x]
-        { $rhs_plain = make_expr(1, $x, -$sugar_op, 0, 1, $reloc_expr); }
     /* type2 */
-    | reloc_expr native_op regname[x] '+' regname[y]
-        { $rhs_plain = make_expr(2, $x, $native_op, $y, 1, $reloc_expr); }
-    | reloc_expr native_op regname[x]
-        { $rhs_plain = make_expr(2, $x, $native_op, 0, 1, $reloc_expr); }
-    | regname[x] sugar_op reloc_expr '+' regname[y]
-        { $rhs_plain = make_expr(2, $x, -$sugar_op, $y, 1, $reloc_expr); }
-    | regname[x] sugar_op reloc_expr
-        { $rhs_plain = make_expr(2, $x, -$sugar_op, 0, 1, $reloc_expr); }
+    | reloc_expr binop regname[x] '+' regname[y]
+        { $rhs_plain = make_expr(2, $x, $binop, $y, 1, $reloc_expr); }
+    | reloc_expr binop regname[x]
+        { $rhs_plain = make_expr(2, $x, $binop, 0, 1, $reloc_expr); }
     /* type3 */
     | reloc_expr
         { $rhs_plain = make_expr(is_type3($reloc_expr) ? 3 : 0, 0, OP_BITWISE_OR, 0, 1, $reloc_expr); }
@@ -328,6 +316,10 @@ immediate
     | CHARACTER
         {   $immediate.i = $CHARACTER.buf[$CHARACTER.pos - 1];
             $immediate.is_bits = 1; }
+
+binop
+    : native_op
+    | sugar_op
 
 native_op
     : '+'   { $native_op = OP_ADD              ; }
@@ -360,8 +352,8 @@ arrow
     | TOR { $arrow = 1; }
 
 reloc_op
-    : '+' { $reloc_op = '+'; }
-    | '-' { $reloc_op = '-'; }
+    : '+' { $reloc_op = +1; }
+    | '-' { $reloc_op = -1; }
 
 reloc_expr
     : const_atom
@@ -372,7 +364,7 @@ reloc_atom
     | '(' reloc_atom[inner] ')'
         {   $$ = $inner; }
     | '(' eref reloc_op const_expr ')'
-        {   $$ = make_const_expr(CE_OP2, $reloc_op, $eref, $const_expr, 0); }
+        {   $$ = make_const_expr(CE_OP2, "- +"[$reloc_op + 1], $eref, $const_expr, 0); }
 
 eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, &$SYMBOL); }
 
@@ -514,6 +506,17 @@ static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
     e->y     = y;
     e->mult  = mult;
     e->ce    = defexpr;
+
+    if (op < 0) { // syntax sugar, swapping operands
+        assert(type != 3);
+        e->op = -op;
+        switch (type) {
+            case 0: e->x = y; e->y = x; break;
+            case 1: e->type = 2; break;
+            case 2: e->type = 1; break;
+        }
+    }
+
     if (defexpr) {
         if (op == OP_PACK)
             e->ce->flags |= IGNORE_WIDTH;
