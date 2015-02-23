@@ -191,13 +191,8 @@ program_elt
             $program_elt->elem = $insn;
             $program_elt->tail = $program_elt; }
 
-sep
-    : '\n'
-    | ';'
-
-seps
-    : seps sep
-    | sep
+sep  : '\n' | ';'
+seps : seps sep | sep
 
 insn
     : ILLEGAL
@@ -210,6 +205,7 @@ insn
             if ($arrow == 1 && !$rhs->deref)
                 tenyr_error(&yylloc, pd, "Right arrows must point to dereferenced right-hand sides");
             $$ = make_insn_general(pd, $lhs, $arrow, $rhs); }
+
 symbol
     : SYMBOL
     | LOCAL
