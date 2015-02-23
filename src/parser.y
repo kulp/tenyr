@@ -203,7 +203,7 @@ insn
         {   $$ = calloc(1, sizeof *$$);
             $$->insn.size = 1;
             $$->insn.u.word = 0xffffffff; /* P <- [P + -1] */ }
-    | lhs arrow rhs
+    | lhs arrow { tenyr_pop_state(pd->scanner); } rhs
         {   if ($lhs->deref && $rhs->deref)
                 tenyr_error(&yylloc, pd, "Cannot have both left and right sides of an instruction dereferenced");
             if ($arrow == 1 && !$rhs->deref)
@@ -362,11 +362,8 @@ sugar_unary_op
     | '-' { $sugar_unary_op = OP_SUBTRACT; }
 
 arrow
-    : tol { $arrow = 0; }
-    | tor { $arrow = 1; }
-
-tol : TOL { tenyr_pop_state(pd->scanner); }
-tor : TOR { tenyr_pop_state(pd->scanner); }
+    : TOL { $arrow = 0; }
+    | TOR { $arrow = 1; }
 
 reloc_op
     : '+' { $reloc_op = '+'; }
