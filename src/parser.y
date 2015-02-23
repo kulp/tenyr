@@ -57,6 +57,8 @@ extern void tenyr_pop_state(void *yyscanner);
     #define YY_HEADER_EXPORT_START_CONDITIONS 1
     #include "lexer.h"
     #define yyscanner (pd->scanner)
+    #define PUSH(State) tenyr_push_state(State, yyscanner)
+    #define POP         tenyr_pop_state(yyscanner)
 }
 %parse-param { struct parse_data *pd }
 %name-prefix "tenyr_"
@@ -199,7 +201,7 @@ insn
         {   $$ = calloc(1, sizeof *$$);
             $$->insn.size = 1;
             $$->insn.u.word = 0xffffffff; /* P <- [P + -1] */ }
-    | lhs arrow { tenyr_pop_state(pd->scanner); } rhs
+    | lhs { PUSH(needarrow); } arrow { POP; } rhs
         {   if ($lhs->deref && $rhs->deref)
                 tenyr_error(&yylloc, pd, "Cannot have both left and right sides of an instruction dereferenced");
             if ($arrow == 1 && !$rhs->deref)
@@ -225,19 +227,19 @@ string
 
 utf32
     : ".utf32" string
-        {   tenyr_pop_state(pd->scanner); $utf32 = make_utf32($string); }
+        {   POP; $utf32 = make_utf32($string); }
 
 data
     : ".word" opt_nl reloc_expr_list
-        {   tenyr_pop_state(pd->scanner); $data = make_data(pd, $reloc_expr_list); }
+        {   POP; $data = make_data(pd, $reloc_expr_list); }
     | ".zero" opt_nl const_expr
-        {   tenyr_pop_state(pd->scanner); $data = make_zeros(pd, &yylloc, $const_expr); }
+        {   POP; $data = make_zeros(pd, &yylloc, $const_expr); }
 
 directive
     : ".global" opt_nl SYMBOL
-        {   tenyr_pop_state(pd->scanner); $directive = make_global(pd, &yylloc, &$SYMBOL); }
+        {   POP; $directive = make_global(pd, &yylloc, &$SYMBOL); }
     | ".set" opt_nl SYMBOL ',' reloc_expr
-        {   tenyr_pop_state(pd->scanner); $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
+        {   POP; $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
 reloc_expr_list
     : reloc_expr[expr]
@@ -257,8 +259,7 @@ lhs
 
 lhs_plain
     : regname
-        {   tenyr_push_state(needarrow, pd->scanner);
-            $$ = calloc(1, sizeof *$$);
+        {   $$ = calloc(1, sizeof *$$);
             $$->x = $regname; }
 
 rhs
