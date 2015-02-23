@@ -38,6 +38,7 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct element_list **context);
 static int is_type3(struct const_expr *ce);
+static struct const_expr *make_ref(struct parse_data *pd, int type, struct strbuf *symbol);
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
@@ -377,6 +378,8 @@ reloc_atom
     | '(' eref reloc_op const_expr ')'
         {   $$ = make_const_expr(CE_OP2, $reloc_op, $eref, $const_expr, 0); }
 
+eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, &$SYMBOL); }
+
 const_expr
     : const_atom
     | const_binop_expr { ce_eval(pd, NULL, NULL, $$, 0, NULL, NULL, &$$->i); }
@@ -408,25 +411,7 @@ const_atom
     | '.'
         {   $$ = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
-        {   $$ = make_const_expr(CE_SYM, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED);
-            struct symbol *s;
-            if ((s = symbol_find(pd->symbols, $LOCAL.buf))) {
-                $$->symbol = s;
-            } else {
-                strcopy($$->symbolname, $LOCAL.buf, sizeof $$->symbolname);
-            }
-        }
-
-eref
-    : '@' SYMBOL
-        {   $eref = make_const_expr(CE_EXT, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED);
-            struct symbol *s;
-            if ((s = symbol_find(pd->symbols, $SYMBOL.buf))) {
-                $eref->symbol = s;
-            } else {
-                strcopy($eref->symbolname, $SYMBOL.buf, sizeof $eref->symbolname);
-            }
-        }
+        {   $$ = make_ref(pd, CE_SYM, &$LOCAL); }
 
 %%
 
@@ -758,5 +743,18 @@ static int is_type3(struct const_expr *ce)
         return 1;
 
     return 0;
+}
+
+static struct const_expr *make_ref(struct parse_data *pd, int type, struct strbuf *symbol)
+{
+    struct const_expr *eref = make_const_expr(CE_EXT, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED);
+    struct symbol *s;
+    if ((s = symbol_find(pd->symbols, symbol->buf))) {
+        eref->symbol = s;
+    } else {
+        strcopy(eref->symbolname, symbol->buf, sizeof eref->symbolname);
+    }
+
+    return eref;
 }
 
