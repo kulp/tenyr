@@ -144,10 +144,10 @@ randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase 
 # Use .INTERMEDIATE to indicate that op test files should be deleted after one
 # run -- they have random bits appended which should be regenerated each time.
 .INTERMEDIATE: $(OPS:%=$(TOP)/test/op/%.texe)
-$(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas | tas$(EXE_SUFFIX)
+$(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas tas$(EXE_SUFFIX)
 	$(SILENCE)(cat $< ; echo "$(call randwords,3)") | $(BUILDDIR)/tas -o $@ -
 
-test_op_%: $(TOP)/test/op/%.texe | tas$(EXE_SUFFIX)
+test_op_%: $(TOP)/test/op/%.texe tas$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
 	$(SILENCE)$(run) && $(MAKESTEP) ok
 
@@ -155,7 +155,7 @@ test_op_%: $(TOP)/test/op/%.texe | tas$(EXE_SUFFIX)
 # Use .SECONDARY to indicate that run test files should *not* be deleted after
 # one run, as they do not have random bits appended (yet).
 .SECONDARY: $(RUNS:%=$(TOP)/test/run/%.texe)
-test_run_%: $(TOP)/test/run/%.texe | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+test_run_%: $(TOP)/test/run/%.texe tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Running test `printf %-10s "'$*'"` ($(context)) ... "
 	$(SILENCE)$(run) && $(MAKESTEP) ok
 
@@ -192,8 +192,8 @@ endif
 # executed by the number of cycles per instruction (currently 10). A margin of
 # 2x is added to allow testcases not always to take exactly the same number of
 # instructions to complete.
-PERIODS.mk: $(OPS:%=$(TOP)/test/op/%.texe) $(DEMOS:%=$(TOP)/ex/%_demo.texe) $(RUNS:%=$(TOP)/test/run/%.texe) | tsim$(EXE_SUFFIX)
-	$(SILENCE)for f in $^ ; do echo PERIODS_`basename $${f/.texe/}`=`$(BUILDDIR)/tsim$(EXE_SUFFIX) -vv $$f | wc -l | while read b ; do dc -e "$$b 20*p" ; done` ; done > $@
+PERIODS.mk: $(OPS:%=$(TOP)/test/op/%.texe) $(DEMOS:%=$(TOP)/ex/%_demo.texe) $(RUNS:%=$(TOP)/test/run/%.texe) tsim$(EXE_SUFFIX)
+	$(SILENCE)for f in $(filter-out tsim$(EXE_SUFFIX),$^) ; do echo PERIODS_`basename $${f/.texe/}`=`$(BUILDDIR)/tsim$(EXE_SUFFIX) -vv $$f | wc -l | while read b ; do dc -e "$$b 20*p" ; done` ; done > $@
 
 check_sim_op: export stem=op
 check_sim_run: export stem=run
@@ -201,13 +201,13 @@ check_sim_op check_sim_run: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) 
 check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) $S -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
-check_compile: | tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+check_compile: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Building tests from test/ ... "
 	$(SILENCE)$(MAKE) $S -C $(TOP)/test && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Building examples from ex/ ... "
 	$(SILENCE)$(MAKE) $S -C $(TOP)/ex && $(MAKESTEP) ok
 
-dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) | tas$(EXE_SUFFIX)
+dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) tas$(EXE_SUFFIX)
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
-	$(SILENCE)$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $(TAS) $^ && $(ECHO) ok || $(ECHO) FAILED
+	$(SILENCE)$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $(TAS) $(filter-out tas$(EXE_SUFFIX),$^) && $(ECHO) ok || $(ECHO) FAILED
 
