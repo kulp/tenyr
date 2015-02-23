@@ -24,7 +24,7 @@ int plugin_load(const char *path, const char *base,
 {
     int rc = 0;
 
-    const char *impls[16];
+    const void *impls[16];
     int inst = 0;
     do {
         char buf[256], parent[256];
@@ -39,7 +39,7 @@ int plugin_load(const char *path, const char *base,
             const char *implname = impls[i];
             // If implname contains a slash, treat it as a path ; otherwise, stem
             const char *implpath = NULL;
-            const char *implstem = NULL;
+            const void *implstem = NULL;
             snprintf(buf, sizeof buf, "%s[%d].stem", base, inst);
             p->gops.param_get(p, buf, 1, &implstem); // may not be set ; that's OK
             if (strchr(implname, PATH_SEPARATOR_CHAR)) {

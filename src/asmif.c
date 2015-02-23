@@ -360,7 +360,7 @@ static int assembly_fixup_insns(struct parse_data *pd)
     return 0;
 }
 
-static int assembly_inner(struct parse_data *pd, FILE *out, const struct format *f)
+static int assembly_inner(struct parse_data *pd, FILE *out, const struct format *f, void *ud)
 {
     assembly_fixup_insns(pd);
 
@@ -369,11 +369,6 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
         fatal(0, "Error in symbol processing : check for duplicate symbols");
 
     if (!fixup_deferred_exprs(pd)) {
-        void *ud;
-        if (f->init)
-            if (f->init(out, ASM_ASSEMBLE, &ud))
-                fatal(0, "Error during initialisation for format '%s'", f->name);
-
         list_foreach(element_list, Node, pd->top)
             // if !Node->elem, it's a placeholder or some kind of dummy
             if (Node->elem)
@@ -386,9 +381,6 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
         if (f->reloc)
             list_foreach(reloc_list, Node, pd->relocs)
                 f->reloc(out, &Node->reloc, ud);
-
-        if (f->fini)
-            f->fini(out, &ud);
     } else {
         fatal(0, "Error while fixing up deferred expressions");
     }
@@ -398,7 +390,7 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
     return 0;
 }
 
-int do_assembly(FILE *in, FILE *out, const struct format *f)
+int do_assembly(FILE *in, FILE *out, const struct format *f, void *ud)
 {
     struct parse_data _pd = {
         .top = NULL,
@@ -419,22 +411,17 @@ int do_assembly(FILE *in, FILE *out, const struct format *f)
         fatal(0, "Encountered %d error%s while parsing, bailing",
                 pd->errored, &"s"[pd->errored == 1]);
     if (!result && f)
-        assembly_inner(pd, out, f);
+        assembly_inner(pd, out, f, ud);
     tenyr_lex_destroy(pd->scanner);
 
     return result;
 }
 
-int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
+int do_disassembly(FILE *in, FILE *out, const struct format *f, void *ud, int flags)
 {
     int rc = 0;
 
     struct element i;
-    void *ud = NULL;
-    if (f->init)
-        if (f->init(in, ASM_DISASSEMBLE, &ud))
-            fatal(0, "Error during initialisation for format '%s'", f->name);
-
     while ((rc = f->in(in, &i, ud)) >= 0) {
         if (rc == 0)
             continue; // allow a format to emit no instructions
@@ -453,11 +440,6 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, int flags)
     }
 
     rc = feof(in) ? 0 : -1;
-
-    if (f->fini)
-        rc |= f->fini(in, &ud);
-
-    fflush(out);
 
     return rc;
 }

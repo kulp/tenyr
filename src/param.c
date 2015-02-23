@@ -13,10 +13,11 @@ struct param_state {
     size_t params_size;
     struct param_entry {
         char *key;
+        unsigned free_key:1;
         struct string_list {
             struct string_list *next;
-            int free_value; ///< whether value should be free()d
-            char *value;
+            unsigned free_value:1; ///< whether value should be free()d
+            void *value;
         } *list;
     } *params;
 };
@@ -31,8 +32,10 @@ static int params_cmp(const void *_a, const void *_b)
     return strcmp(a->key, b->key);
 }
 
-int param_get(struct param_state *pstate, char *key, size_t count, const char *val[count])
+int param_get(struct param_state *pstate, char *key, size_t count, const void *val[count])
 {
+    if (!pstate) return 0; // permit calling with NULL param set
+
     struct param_entry p = { .key = key };
 
     struct param_entry *q = lfind(&p, pstate->params, &pstate->params_count,
@@ -52,8 +55,10 @@ int param_get(struct param_state *pstate, char *key, size_t count, const char *v
     return i;
 }
 
-int param_set(struct param_state *pstate, char *key, char *val, int replace, int free_value)
+int param_set(struct param_state *pstate, char *key, void *val, int replace, int free_key, int free_value)
 {
+    if (!pstate) return 0; // permit calling with NULL param set
+
     if (pstate->params_size <= pstate->params_count) {
         while (pstate->params_size <= pstate->params_count)
             pstate->params_size *= 2;
@@ -61,7 +66,7 @@ int param_set(struct param_state *pstate, char *key, char *val, int replace, int
         pstate->params = realloc(pstate->params, pstate->params_size * sizeof *pstate->params);
     }
 
-    struct param_entry p = { .key  = key }; // doesn't have a list yet
+    struct param_entry p = { .key  = key, .free_key = free_key }; // doesn't have a list yet
     struct param_entry *q = lsearch(&p, pstate->params, &pstate->params_count,
                                         sizeof *pstate->params, params_cmp);
 
@@ -95,6 +100,8 @@ int param_set(struct param_state *pstate, char *key, char *val, int replace, int
 
 int param_add(struct param_state *pstate, const char *optarg)
 {
+    if (!pstate) return 0; // permit calling with NULL param set
+
     // We can't use getsubopt() here because we don't know what all of our
     // options are ahead of time.
     char *dupped = strdup(optarg);
@@ -111,7 +118,7 @@ int param_add(struct param_state *pstate, const char *optarg)
     if (!replace)
         eq[-1] = '\0';
 
-    return param_set(pstate, dupped, ++eq, replace, 0);
+    return param_set(pstate, dupped, ++eq, replace, 1, 0);
 }
 
 void param_init(struct param_state **pstate)
@@ -133,7 +140,8 @@ void param_destroy(struct param_state *pstate)
 
 static void param_free(struct param_entry *p)
 {
-    free(p->key);
+    if (p->free_key)
+        free(p->key);
     struct string_list *q = p->list;
     while (q) {
         if (q->free_value)

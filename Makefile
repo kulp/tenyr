@@ -42,7 +42,7 @@ clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    random random.*       \
                )#
 
-tas_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o
+tas_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o param.o
 tsim_OBJECTS = common.o simif.o asm.o obj.o plugin.o \
                $(DEVOBJS) sim.o param.o
 tld_OBJECTS  = common.o obj.o

@@ -10,6 +10,7 @@
 #include "asm.h"
 #include "common.h"
 #include "parser_global.h"
+#include "param.h"
 
 // The length (excluding terminating NUL) of an operator length in disassembly
 #define MAX_OP_LEN 3
@@ -217,7 +218,7 @@ int find_format_by_name(const void *_a, const void *_b)
  * Object format : simple section-based objects
  */
 struct obj_fdata {
-    int flags;
+    unsigned assembling:1;
     struct obj *o;
     long syms;
     long rlcs;
@@ -229,16 +230,21 @@ struct obj_fdata {
     uint32_t pos;   ///< position in objrec
 };
 
-static int obj_init(FILE *stream, int flags, void **ud)
+static int obj_init(FILE *stream, struct param_state *p, void **ud)
 {
     int rc = 0;
 
     struct obj_fdata *u = *ud = calloc(1, sizeof *u);
     struct obj *o = u->o = calloc(1, sizeof *o);
 
-    u->flags = flags;
+    const void *val = NULL;
+    if (param_get(p, "assembling", 1, &val)) {
+        assert(val != NULL);
+        // default is not-assembling (could have a NULL parameter set)
+        u->assembling = *(int*)val;
+    }
 
-    if (flags & ASM_ASSEMBLE) {
+    if (u->assembling) {
         // TODO proper multiple-records support
         o->rec_count = 1;
         o->records = calloc(o->rec_count, sizeof *o->records);
@@ -249,7 +255,7 @@ static int obj_init(FILE *stream, int flags, void **ud)
 
         u->next_sym = &o->symbols;
         u->next_rlc = &o->relocs;
-    } else if (flags & ASM_DISASSEMBLE) {
+    } else {
         rc = obj_read(u->o, stream);
         u->curr_rec = o->records;
     }
@@ -365,7 +371,7 @@ static int obj_fini(FILE *stream, void **ud)
     struct obj_fdata *u = *ud;
     struct obj *o = u->o;
 
-    if (u->flags & ASM_ASSEMBLE) {
+    if (u->assembling) {
         o->records[0].size = u->pos;
         o->sym_count = u->syms;
         o->rlc_count = u->rlcs;
@@ -404,7 +410,7 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
 /*******************************************************************************
  * Text format : hexadecimal numbers
  */
-static int text_init(FILE *stream, int flags, void **ud)
+static int text_init(FILE *stream, struct param_state *p, void **ud)
 {
     // This output might be consumed by a tool that needs a line at a time
     return setvbuf(stream, NULL, _IOLBF, 0);
@@ -436,7 +442,7 @@ static int text_out(FILE *stream, struct element *i, void *ud)
 /*******************************************************************************
  * memh format : suitable for use with $readmemh() in Verilog
  */
-static int memh_init(FILE *stream, int flags, void **ud)
+static int memh_init(FILE *stream, struct param_state *p, void **ud)
 {
     // Track last-written (last[0]) and last-marked (last[1])
     int32_t *last = *ud = malloc(2 * sizeof *last);

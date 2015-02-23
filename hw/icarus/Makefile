@@ -39,7 +39,7 @@ tenyr: simtop.v top.v                               \
        ramwrap.v                                    \
        | glue.vpi
 
-glue.vpi: callbacks.o serial.o load.o sim.o asm.o obj.o common.o
+glue.vpi: callbacks.o serial.o load.o sim.o asm.o obj.o common.o param.o
 
 # don't complain about unused values that we might use in asserts
 asm.o sim.o: CFLAGS += -Wno-unused-value

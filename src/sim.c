@@ -1,5 +1,6 @@
 #include "sim.h"
 #include "common.h"
+#include "param.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -142,21 +143,13 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
 }
 
 int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
-        FILE *in, int load_address)
+        void *ud, FILE *in, int load_address)
 {
-    void *ud = NULL;
-    if (f->init)
-        if (f->init(in, ASM_DISASSEMBLE, &ud))
-            fatal(0, "Error during initialisation for format '%s'", f->name);
-
     struct element i;
     while (f->in(in, &i, ud) > 0) {
         if (dispatch(sud, OP_WRITE, load_address + i.insn.reladdr, &i.insn.u.word))
             return -1;
     }
-
-    if (f->fini)
-        f->fini(in, &ud);
 
     return 0;
 }

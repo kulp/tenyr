@@ -15,8 +15,8 @@ struct plugin_cookie;
 struct guest_ops {
     void (* NORETURN fatal)(int code , const char *file, int line, const char *func, const char *fmt, ...);
     void (*          debug)(int level, const char *file, int line, const char *func, const char *fmt, ...);
-    int  (*      param_get)(const struct plugin_cookie *cookie, char *key, size_t count, const char *val[count]);
-    int  (*      param_set)(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_value);
+    int  (*      param_get)(const struct plugin_cookie *cookie, char *key, size_t count, const void *val[count]);
+    int  (*      param_set)(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_key, int free_value);
 };
 
 struct plugin_cookie {

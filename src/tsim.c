@@ -232,14 +232,14 @@ static int add_recipe(struct sim_state *s, const char *name)
     }
 }
 
-static int plugin_param_get(const struct plugin_cookie *cookie, char *key, size_t count, const char *val[count])
+static int plugin_param_get(const struct plugin_cookie *cookie, char *key, size_t count, const void *val[count])
 {
     return param_get(cookie->param, key, count, val);
 }
 
-static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_value)
+static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_key, int free_value)
 {
-    return param_set(cookie->param, key, val, replace, free_value);
+    return param_set(cookie->param, key, val, replace, free_key, free_value);
 }
 
 static int find_format(const char *optarg, const struct format **f)
@@ -358,8 +358,18 @@ int main(int argc, char *argv[])
     run_recipes(s);
     devices_finalise(s);
 
-    if (load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr))
+    param_set(s->conf.params, "assembling", (int[]){ 0 }, true, false, false);
+    void *ud = NULL;
+    const struct format *f = s->conf.fmt;
+    if (f->init)
+        if (f->init(in, s->conf.params, &ud))
+            fatal(0, "Error during initialisation for format '%s'", f->name);
+
+    if (load_sim(s->dispatch_op, s, f, ud, in, s->conf.load_addr))
         fatal(0, "Error while loading state into simulation");
+
+    if (f->fini)
+        f->fini(in, &ud);
 
     s->machine.regs[15] = s->conf.start_addr;
 

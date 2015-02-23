@@ -73,10 +73,19 @@ int tenyr_sim_load(struct tenyr_sim_state *state)
     vpi_free_object(args_iter);
 
     FILE *stream = fopen(filename, "rb");
-    if (stream)
-        load_sim(vpi_dispatch, &data, &tenyr_asm_formats[0], stream, min);
-    else
+    if (!stream)
         return 1;
+
+    void *ud = NULL;
+    const struct format *f = &tenyr_asm_formats[0];
+    if (f->init)
+        if (f->init(stream, NULL, &ud))
+            fatal(0, "Error during initialisation for format '%s'", f->name);
+
+    load_sim(vpi_dispatch, &data, f, ud, stream, min);
+
+    if (f->fini)
+        f->fini(stream, &ud);
 
     return 0;
 }

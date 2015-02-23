@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-enum { ASM_ASSEMBLE = 1, ASM_DISASSEMBLE = 2 };
+#include "param.h"
 
 struct element;
 struct symbol;
@@ -12,7 +12,7 @@ struct reloc_node;
 
 struct format {
     const char *name;
-    int (*init )(FILE *, int flags, void **ud);
+    int (*init )(FILE *, struct param_state *, void **ud);
     int (*in   )(FILE *, struct element *, void *ud);
     int (*out  )(FILE *, struct element *, void *ud);
 

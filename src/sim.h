@@ -64,7 +64,7 @@ struct run_ops {
 int run_instruction(struct sim_state *s, struct element *i);
 int run_sim(struct sim_state *s, struct run_ops *ops);
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
-        FILE *in, int load_address);
+        void *fud, FILE *in, int load_address);
 
 // TODO convert this to an interrupt in the debugger
 #define breakpoint(...) \

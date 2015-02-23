@@ -72,6 +72,9 @@ int main(int argc, char *argv[])
     char outfname[1044];
     FILE * volatile out = stdout;
 
+    struct param_state *params = NULL;
+    param_init(&params);
+
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
@@ -134,21 +137,33 @@ int main(int argc, char *argv[])
                 fatal(PRINT_ERRNO, "Failed to open input file `%s'", argv[i]);
         }
 
+        param_set(params, "assembling", (int[]){ !disassemble }, 1, false, false);
+        void *ud = NULL;
+        FILE *stream = disassemble ? in : out;
+        if (f->init)
+            if (f->init(stream, params, &ud))
+                fatal(0, "Error during initialisation for format '%s'", f->name);
+
         if (disassemble) {
             // This output might be consumed by a tool that needs a line at a time
             setvbuf(out, NULL, _IOLBF, 0);
             if (f->in) {
-                rc = do_disassembly(in, out, f, flags);
+                rc = do_disassembly(in, out, f, ud, flags);
             } else {
                 fatal(0, "Format `%s' does not support disassembly", f->name);
             }
         } else {
             if (f->out) {
-                rc = do_assembly(in, out, f);
+                rc = do_assembly(in, out, f, ud);
             } else {
                 fatal(0, "Format `%s' does not support assembly", f->name);
             }
         }
+
+        if (f->fini)
+            rc |= f->fini(stream, &ud);
+
+        fflush(out);
 
         fclose(in);
     }
