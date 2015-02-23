@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Usage: dogfood.sh tempfile-stem path-to-tas file.tas[.cpp] [ files... ]
+set -o pipefail
 if [[ $V == 1 ]] ; then ECHO=echo ; else ECHO=true ; fi
 here=`dirname $BASH_SOURCE`
 stem=`basename $1`
@@ -25,6 +26,7 @@ function en ()
 	fmt=$1
 	instance=$2
 	$tas -f $fmt - | tee $base.$fmt.en.$instance
+	if [[ $? != 0 ]] ; then return 1 ; fi
 }
 
 function de ()
@@ -32,6 +34,7 @@ function de ()
 	fmt=$1
 	instance=$2
 	$tas -d -f $fmt - | tee $base.$fmt.de.$instance
+	if [[ $? != 0 ]] ; then return 1; fi
 }
 
 function check ()
@@ -45,6 +48,7 @@ function cycle ()
 {
 	fmt=$1
 	en $fmt 1 | de $fmt 1 | en $fmt 2 | de $fmt 2 | en $fmt 3 | de $fmt 3 > /dev/null
+	if [[ $? != 0 ]] ; then return 1 ; fi
 }
 
 function match ()
@@ -65,12 +69,14 @@ for fmt in memh raw text ; do
 			pp=cat
 		fi
 		$pp $file | cycle $fmt
+		if [[ $? != 0 ]] ; then fail $fmt $file ; fi
 		match $fmt en $file
 	done
 
 	base=random
 	file=$base
 	$here/random.sh | tee $base | de text 0 | cycle $fmt
+	if [[ $? != 0 ]] ; then fail $fmt $file ; fi
 	match $fmt en $file
 done
 
