@@ -148,13 +148,6 @@ top
 string_or_data
     : utf32
     | data
-    | symbol ':' opt_nl string_or_data[inner]
-        {   $$ = $inner;
-            struct symbol *n = add_symbol_to_insn(&yyloc, $inner->elem,
-                    $symbol.buf);
-            if (check_add_symbol(&yyloc, pd, n))
-                YYABORT;
-        }
 
 opt_nl
     : '\n' opt_nl
@@ -184,7 +177,14 @@ program
             handle_directive(pd, &yylloc, $directive, &pd->top); }
 
 program_elt
-    : string_or_data
+    : symbol ':' opt_nl program_elt[inner]
+        {   $$ = $inner;
+            struct symbol *n = add_symbol_to_insn(&yyloc, $inner->elem,
+                    $symbol.buf);
+            if (check_add_symbol(&yyloc, pd, n))
+                YYABORT;
+        }
+    | string_or_data
     | insn
         {   $program_elt = calloc(1, sizeof *$program_elt);
             $program_elt->elem = $insn;
@@ -209,13 +209,6 @@ insn
             if ($arrow == 1 && !$rhs->deref)
                 tenyr_error(&yylloc, pd, "Right arrows must point to dereferenced right-hand sides");
             $$ = make_insn_general(pd, $lhs, $arrow, $rhs); }
-    | symbol ':' opt_nl insn[inner]
-        {   $$ = $inner;
-            struct symbol *n = add_symbol_to_insn(&yyloc, $inner, $symbol.buf);
-            if (check_add_symbol(&yyloc, pd, n))
-                YYABORT;
-        }
-
 symbol
     : SYMBOL
     | LOCAL
