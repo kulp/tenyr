@@ -109,7 +109,7 @@ FORCE:
 gen/%.memh: %.texe | $(TAS)
 	$(SILENCE)mkdir -p $(@D)
 	@# TODO document / hoist start address
-	$(SILENCE)$(TAS) -vd $< | $(TAS) -p format.memh.offset=0x1000 -fmemh -o $@ -
+	$(SILENCE)$(TAS) -vd $< | $(TAS) -p format.memh.offset=0x1000 -p format.memh.explicit=1 -fmemh -o $@ -
 
 gen/%.mem: gen/%.memh
 	cp -p $< $@

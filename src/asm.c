@@ -446,6 +446,7 @@ static int text_out(FILE *stream, struct element *i, void *ud)
 struct memh_state {
     int32_t written, marked, offset;
     unsigned first_done:1;
+    unsigned emit_zeros:1;
 };
 
 static int memh_init(FILE *stream, struct param_state *p, void **ud)
@@ -456,6 +457,8 @@ static int memh_init(FILE *stream, struct param_state *p, void **ud)
     state->marked = state->written = 0;
     if (param_get(p, "format.memh.offset", 1, &pval))
         state->marked = state->written = state->offset = strtol(pval, NULL, 0);
+    if (param_get(p, "format.memh.explicit", 1, &pval))
+        state->emit_zeros = !!strtol(pval, NULL, 0);
 
     return 0;
 }
@@ -497,7 +500,7 @@ static int memh_out(FILE *stream, struct element *i, void *ud)
     int32_t word = i->insn.u.word;
     int32_t diff = addr - state->written;
 
-    if (word == 0)
+    if (word == 0 && !state->emit_zeros)
         return 0; // 0 indicates success but nothing was output
 
     state->written = addr;
