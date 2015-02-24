@@ -17,4 +17,3 @@ c <- d - e
 .set baz, .
 .word 10,11
 .word @baz
-.word (@baz)

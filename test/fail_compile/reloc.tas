@@ -1,0 +1,6 @@
+.zero 5
+b <- (@x - . + 1)
+.zero 4
+x: .word 0
+b <- b == 4
+illegal

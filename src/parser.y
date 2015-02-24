@@ -100,8 +100,8 @@ extern void tenyr_pop_state(void *yyscanner);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce> const_expr const_binop_expr reloc_expr reloc_atom const_atom eref
-%type <cl> reloc_expr_list
+%type <ce> const_expr const_binop_expr reloc_expr const_atom eref
+%type <cl> reloc_list
 %type <cstr> string
 %type <dctv> directive
 %type <expr> rhs rhs_plain rhs_sugared lhs lhs_plain
@@ -208,9 +208,9 @@ string
     | STRING string[right]  {   $$ = make_string(&$STRING, $right); }
 
 data
-    : ".word" opt_nl reloc_expr_list    {   POP; $$ = make_data(pd, $reloc_expr_list);      }
-    | ".zero" opt_nl const_expr         {   POP; $$ = make_zeros(pd, &yylloc, $const_expr); }
-    | ".utf32" string                   {   POP; $$ = make_utf32($string);                  }
+    : ".word" opt_nl reloc_list {   POP; $$ = make_data(pd, $reloc_list);      }
+    | ".zero" opt_nl const_expr {   POP; $$ = make_zeros(pd, &yylloc, $const_expr); }
+    | ".utf32" string           {   POP; $$ = make_utf32($string);                  }
 
 directive
     : ".global" opt_nl SYMBOL
@@ -218,10 +218,10 @@ directive
     | ".set" opt_nl SYMBOL ',' reloc_expr
         {   POP; $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
-reloc_expr_list
+reloc_list
     : reloc_expr
         {   $$ = make_reloc_list($reloc_expr, NULL); }
-    | reloc_expr ',' opt_nl reloc_expr_list[right]
+    | reloc_expr ',' opt_nl reloc_list[right]
         {   $$ = make_reloc_list($reloc_expr, $right); }
 
 lhs
@@ -330,15 +330,10 @@ reloc_op
     | '-' { $reloc_op = -1; }
 
 reloc_expr
-    : const_atom
-    | reloc_atom
-
-reloc_atom
     : eref
-    | '(' reloc_atom[inner] ')'
-        {   $$ = $inner; }
-    | '(' eref reloc_op const_expr ')'
-        {   $$ = make_const_expr(CE_OP2, "- +"[$reloc_op + 1], $eref, $const_expr, 0); }
+    | const_atom
+    | '(' eref reloc_op const_atom ')'
+        {   $$ = make_const_expr(CE_OP2, "- +"[$reloc_op + 1], $eref, $const_atom, 0); }
 
 eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, &$SYMBOL); }
 
