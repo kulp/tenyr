@@ -103,9 +103,8 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <expr> rhs rhs_plain rhs_sugared lhs lhs_plain
 %type <i> arrow regname reloc_op
 %type <imm> immediate
-%type <insn> insn
 %type <op> binop native_op sugar_op sugar_unary_op const_unary_op
-%type <program> program program_elt utf32 data string_or_data
+%type <program> program program_elt data insn
 %type <str> symbol
 
 %union {
@@ -115,7 +114,6 @@ extern void tenyr_pop_state(void *yyscanner);
     struct expr *expr;
     struct cstr *cstr;
     struct directive *dctv;
-    struct element *insn;
     struct element_list *program;
     struct immediate {
         int32_t i;
@@ -140,10 +138,6 @@ top
                 pd->top->tail = pd->top->tail->next;
             }
         }
-
-string_or_data
-    : utf32
-    | data
 
 opt_nl
     : '\n' opt_nl
@@ -173,18 +167,14 @@ program
             handle_directive(pd, &yylloc, $directive, &pd->top); }
 
 program_elt
-    : symbol ':' opt_nl program_elt[inner]
+    : data
+    | insn
+    | symbol ':' opt_nl program_elt[inner]
         {   $$ = $inner;
             struct symbol *n = add_symbol_to_insn(&yyloc, $inner->elem,
                     $symbol.buf);
             if (check_add_symbol(&yyloc, pd, n))
-                YYABORT;
-        }
-    | string_or_data
-    | insn
-        {   $program_elt = calloc(1, sizeof *$program_elt);
-            $program_elt->elem = $insn;
-            $program_elt->tail = $program_elt; }
+                YYABORT; }
 
 sep  : '\n' | ';'
 seps : seps sep | sep
@@ -192,14 +182,18 @@ seps : seps sep | sep
 insn
     : ILLEGAL
         {   $$ = calloc(1, sizeof *$$);
-            $$->insn.size = 1;
-            $$->insn.u.word = 0xffffffff; /* P <- [P + -1] */ }
+            $$->elem = calloc(1, sizeof *$$->elem);
+            $$->elem->insn.size = 1;
+            $$->elem->insn.u.word = 0xffffffff; /* P <- [P + -1] */
+            $$->tail = $$; }
     | lhs { PUSH(needarrow); } arrow { POP; } rhs
         {   if ($lhs->deref && $rhs->deref)
                 tenyr_error(&yylloc, pd, "Cannot have both left and right sides of an instruction dereferenced");
             if ($arrow == 1 && !$rhs->deref)
                 tenyr_error(&yylloc, pd, "Right arrows must point to dereferenced right-hand sides");
-            $$ = make_insn_general(pd, $lhs, $arrow, $rhs); }
+            $$ = calloc(1, sizeof *$$);
+            $$->elem = make_insn_general(pd, $lhs, $arrow, $rhs);
+            $$->tail = $$; }
 
 symbol
     : SYMBOL
@@ -218,15 +212,10 @@ string
             strcopy($$->str, $STRING.buf, $$->len + 1);
             $$->right = $inner; }
 
-utf32
-    : ".utf32" string
-        {   POP; $utf32 = make_utf32($string); }
-
 data
-    : ".word" opt_nl reloc_expr_list
-        {   POP; $data = make_data(pd, $reloc_expr_list); }
-    | ".zero" opt_nl const_expr
-        {   POP; $data = make_zeros(pd, &yylloc, $const_expr); }
+    : ".word" opt_nl reloc_expr_list    {   POP; $$ = make_data(pd, $reloc_expr_list);      }
+    | ".zero" opt_nl const_expr         {   POP; $$ = make_zeros(pd, &yylloc, $const_expr); }
+    | ".utf32" string                   {   POP; $$ = make_utf32($string);                  }
 
 directive
     : ".global" opt_nl SYMBOL
