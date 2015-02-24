@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "parser_global.h"
 #include "lexer.h"
+#include "param.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -20,12 +21,13 @@
 #include <io.h>
 #endif
 
-static const char shortopts[] = "df:o:qsv" "hV";
+static const char shortopts[] = "df:o:p:qsv" "hV";
 
 static const struct option longopts[] = {
     { "disassemble" ,       no_argument, NULL, 'd' },
     { "format"      , required_argument, NULL, 'f' },
     { "output"      , required_argument, NULL, 'o' },
+    { "param"       , required_argument, NULL, 'p' },
     { "quiet"       ,       no_argument, NULL, 'q' },
     { "verbose"     ,       no_argument, NULL, 'v' },
 
@@ -93,6 +95,7 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); opened = 1; break;
             case 'd': disassemble = 1; break;
+            case 'p': param_add(params, optarg); break;
             case 'q': flags |= ASM_QUIET; break;
             case 'v': flags |= ASM_VERBOSE; break;
             case 'f': {

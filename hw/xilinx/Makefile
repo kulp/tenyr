@@ -108,11 +108,11 @@ FORCE:
 
 gen/%.memh: %.texe | $(TAS)
 	$(SILENCE)mkdir -p $(@D)
-	$(TAS) -vd $< | $(TAS) -fmemh -o $@ -
+	@# TODO document / hoist start address
+	$(SILENCE)$(TAS) -vd $< | $(TAS) -p format.memh.offset=0x1000 -fmemh -o $@ -
 
 gen/%.mem: gen/%.memh
-	# TODO document / hoist start address
-	echo '@1000' > $@ && cat $< >> $@
+	cp -p $< $@
 
 $(XST_TMPDIR):
 	mkdir -p $@

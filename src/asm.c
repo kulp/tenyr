@@ -442,12 +442,20 @@ static int text_out(FILE *stream, struct element *i, void *ud)
 /*******************************************************************************
  * memh format : suitable for use with $readmemh() in Verilog
  */
+
+struct memh_state {
+    int32_t written, marked, offset;
+    unsigned first_done:1;
+};
+
 static int memh_init(FILE *stream, struct param_state *p, void **ud)
 {
-    // Track last-written (last[0]) and last-marked (last[1])
-    int32_t *last = *ud = malloc(2 * sizeof *last);
-    last[0] = 0;
-    last[1] = 0;
+    struct memh_state *state = *ud = calloc(1, sizeof *state);
+    const void *pval;
+
+    state->marked = state->written = 0;
+    if (param_get(p, "format.memh.offset", 1, &pval))
+        state->marked = state->written = state->offset = strtol(pval, NULL, 0);
 
     return 0;
 }
@@ -461,21 +469,21 @@ static int memh_fini(FILE *stream, void **ud)
 
 static int memh_in(FILE *stream, struct element *i, void *ud)
 {
-    int32_t *last = ud;
+    struct memh_state *state = ud;
 
-    if (last[1] > last[0]) {
+    if (state->marked > state->written) {
         i->insn.u.word = 0x0;
-        i->insn.reladdr = last[0]++;
+        i->insn.reladdr = state->written++;
         return 1;
-    } else if (last[0] == last[1]) {
-        if (fscanf(stream, " @%x", (uint32_t*)&last[1]) == 1)
+    } else if (state->marked == state->written) {
+        if (fscanf(stream, " @%x", (uint32_t*)&state->marked) == 1)
             return 0; // let next call handle it
 
         if (fscanf(stream, " %x", &i->insn.u.word) != 1)
             return -1;
 
-        i->insn.reladdr = last[0]++;
-        last[1] = last[0];
+        i->insn.reladdr = state->written++;
+        state->marked = state->written;
         return 1;
     } else {
         return -1; // @address moved backward (unsupported)
@@ -484,19 +492,22 @@ static int memh_in(FILE *stream, struct element *i, void *ud)
 
 static int memh_out(FILE *stream, struct element *i, void *ud)
 {
-    int32_t *last = ud;
-    int32_t addr = i->insn.reladdr;
+    struct memh_state *state = ud;
+    int32_t addr = i->insn.reladdr + state->offset;
     int32_t word = i->insn.u.word;
-    int32_t diff = addr - last[0];
+    int32_t diff = addr - state->written;
 
     if (word == 0)
         return 0; // 0 indicates success but nothing was output
 
-    last[0] = addr;
-    if (diff > 1)
-        return (fprintf(stream, "@%x %08x\n", addr, word) > 0) ? 1 : -1;
-    else
-        return (fprintf(stream,     "%08x\n",       word) > 0) ? 1 : -1;
+    state->written = addr;
+    int printed = 0;
+    if (diff > 1 || !state->first_done)
+        printed = fprintf(stream, "@%x ", addr) > 2;
+
+    state->first_done = 1;
+
+    return (printed + fprintf(stream, "%08x\n", word) > 3) ? 1 : -1;
 }
 
 const struct format tenyr_asm_formats[] = {
