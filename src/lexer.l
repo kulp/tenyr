@@ -71,7 +71,7 @@ edge    {white}|\n
 \t                  { yycolumn += 7; /* 1 added in YY_USER_ACTION */ }
 illegal             { return ILLEGAL; }
 
-{regname}           { yylval->chr = yytext[0]; return REGISTER; }
+{regname}           { yylval->i = yytext[0]; return REGISTER; }
 {symbol}            { RESETSTR; savestr(yyscanner); return SYMBOL; }
 {local}             { RESETSTR; savestr(yyscanner); return LOCAL; }
 

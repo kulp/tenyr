@@ -74,13 +74,9 @@ extern void tenyr_pop_state(void *yyscanner);
 %left '+' '-'
 %left '*' '/'
 
-%token <chr> '[' ']' '.' '(' ')'
-%token <chr> '+' '-' '*' '~'
-%token <chr> ',' ';'
-%token <arrow> TOL TOR
+%token <i> '[' ']' '.' '(' ')' '+' '-' '*' '~' ',' ';'
+%token <i> TOL TOR INTEGER BITSTRING REGISTER
 %token <str> SYMBOL LOCAL STRING CHARACTER
-%token <i> INTEGER BITSTRING
-%token <chr> REGISTER
 %token ILLEGAL
 
 /* synonyms for literal string tokens */
@@ -114,7 +110,6 @@ extern void tenyr_pop_state(void *yyscanner);
 
 %union {
     int32_t i;
-    uint32_t u;
     struct const_expr *ce;
     struct const_expr_list *cl;
     struct expr *expr;
@@ -130,9 +125,7 @@ extern void tenyr_pop_state(void *yyscanner);
         int pos, len;
         char buf[LINE_LEN];
     } str;
-    char chr;
     signed op; ///< negative ops are used to mark swapped operands
-    int arrow;
 }
 
 %%
