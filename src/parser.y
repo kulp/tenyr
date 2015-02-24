@@ -42,6 +42,7 @@ static struct const_expr *make_ref(struct parse_data *pd, int type,
         struct strbuf *symbol);
 static struct const_expr_list *make_reloc_list(struct const_expr *expr,
         struct const_expr_list *right);
+static struct cstr *make_string(const struct strbuf *str, struct cstr *right);
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
@@ -203,17 +204,8 @@ symbol
     | LOCAL
 
 string
-    : STRING
-        {   $$ = calloc(1, sizeof *$$);
-            $$->len = $STRING.len;
-            $$->str = malloc($$->len + 1);
-            strcopy($$->str, $STRING.buf, $$->len + 1); }
-    | STRING string[inner]
-        {   $$ = calloc(1, sizeof *$$);
-            $$->len = $STRING.len;
-            $$->str = malloc($$->len + 1);
-            strcopy($$->str, $STRING.buf, $$->len + 1);
-            $$->right = $inner; }
+    : STRING                {   $$ = make_string(&$STRING, NULL);   }
+    | STRING string[right]  {   $$ = make_string(&$STRING, $right); }
 
 data
     : ".word" opt_nl reloc_expr_list    {   POP; $$ = make_data(pd, $reloc_expr_list);      }
@@ -744,6 +736,16 @@ static struct const_expr_list *make_reloc_list(struct const_expr *expr, struct c
     struct const_expr_list *result = calloc(1, sizeof *result);
     result->right = right;
     result->ce = expr;
+    return result;
+}
+
+static struct cstr *make_string(const struct strbuf *str, struct cstr *right)
+{
+    struct cstr *result = calloc(1, sizeof *result);
+    result->right = right;
+    result->len = str->len;
+    result->str = malloc(str->len + 1);
+    strcopy(result->str, str->buf, result->len + 1);
     return result;
 }
 
