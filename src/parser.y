@@ -38,7 +38,10 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
         directive *d, struct element_list **context);
 static int is_type3(struct const_expr *ce);
-static struct const_expr *make_ref(struct parse_data *pd, int type, struct strbuf *symbol);
+static struct const_expr *make_ref(struct parse_data *pd, int type,
+        struct strbuf *symbol);
+static struct const_expr_list *make_reloc_list(struct const_expr *expr,
+        struct const_expr_list *right);
 
 struct symbol *symbol_find(struct symbol_list *list, const char *name);
 
@@ -224,14 +227,10 @@ directive
         {   POP; $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
 reloc_expr_list
-    : reloc_expr[expr]
-        {   $$ = calloc(1, sizeof *$$);
-            $$->right = NULL;
-            $$->ce = $expr; }
-    | reloc_expr[expr] ',' opt_nl reloc_expr_list[inner]
-        {   $$ = calloc(1, sizeof *$$);
-            $$->right = $inner;
-            $$->ce = $expr; }
+    : reloc_expr
+        {   $$ = make_reloc_list($reloc_expr, NULL); }
+    | reloc_expr ',' opt_nl reloc_expr_list[right]
+        {   $$ = make_reloc_list($reloc_expr, $right); }
 
 lhs
     : lhs_plain
@@ -738,5 +737,13 @@ static struct const_expr *make_ref(struct parse_data *pd, int type, struct strbu
     }
 
     return eref;
+}
+
+static struct const_expr_list *make_reloc_list(struct const_expr *expr, struct const_expr_list *right)
+{
+    struct const_expr_list *result = calloc(1, sizeof *result);
+    result->right = right;
+    result->ce = expr;
+    return result;
 }
 
