@@ -155,4 +155,4 @@ $(XST_TMPDIR):
 clean_FILES =
 clobber_FILES := $(shell cat .gitignore) $($(GIT) ls-files --others) bin/
 clobber::
-	find . -type d -empty | xargs rmdir -p
+	-find . -type d -empty | xargs rmdir -p
