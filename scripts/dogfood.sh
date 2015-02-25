@@ -71,14 +71,17 @@ for fmt in memh raw text ; do
 		$pp $file | cycle $fmt
 		if [[ $? != 0 ]] ; then fail $fmt $file ; fi
 		match $fmt en $file
-	done
+	done &
+	trap "kill $! 2>/dev/null" EXIT
 
-	base=random
+	( base=random
 	file=$base
 	$here/random.sh | tee $base | de text 0 | cycle $fmt
 	if [[ $? != 0 ]] ; then fail $fmt $file ; fi
-	match $fmt en $file
+	match $fmt en $file ) &
+	trap "kill $! 2>/dev/null" EXIT
 done
+wait
 
 exit $rc
 
