@@ -70,29 +70,29 @@ extern void tenyr_pop_state(void *yyscanner);
 %start top
 
 /* precedence rules only matter in constant expressions */
-%left '|'
-%left '^'
-%left '&' "&~"
-%left "==" '<' '>' "<=" ">="
-%left "<<" ">>" ">>>"
-%left '+' '-'
-%left '*' '/'
+%left           '|'
+%left           '^'
+%left           '&' "&~"
+%left           "==" '<' '>' "<=" ">="
+%left           "<<" ">>" ">>>"
+%left           '+' '-'
+%left           '*' '/'
 
-%token <i> '[' ']' '.' '(' ')' '+' '-' '*' '~' ',' ';'
-%token <i> INTEGER BITSTRING REGISTER
-%token <str> SYMBOL LOCAL STRING CHARACTER
-%token ILLEGAL
+%token <i>      '[' ']' '.' '(' ')' '+' '-' '*' '~' ',' ';'
+%token <i>      INTEGER BITSTRING REGISTER
+%token <str>    SYMBOL LOCAL STRING CHARACTER
+%token          ILLEGAL
 
 /* synonyms for literal string tokens */
-%token LSH  "<<"
-%token RSH  ">>>"
-%token RSHA ">>"
-%token EQ   "=="
-%token GE   ">="
-%token LE   "<="
-%token ORN  "|~"
-%token ANDN "&~"
-%token PACK "^^"
+%token LSH      "<<"
+%token RSH      ">>>"
+%token RSHA     ">>"
+%token EQ       "=="
+%token GE       ">="
+%token LE       "<="
+%token ORN      "|~"
+%token ANDN     "&~"
+%token PACK     "^^"
 
 %token <i> TOL  "<-"
 %token <i> TOR  "->"
@@ -103,25 +103,26 @@ extern void tenyr_pop_state(void *yyscanner);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce> const_expr const_binop_expr reloc_expr const_atom eref
-%type <cl> reloc_list
-%type <cstr> string
-%type <dctv> directive
-%type <expr> rhs rhs_plain rhs_sugared lhs lhs_plain
-%type <i> arrow regname reloc_op
-%type <imm> immediate
-%type <op> binop native_op sugar_op sugar_unary_op const_unary_op
+%type <ce>      const_expr const_binop_expr reloc_expr const_atom eref
+%type <cl>      reloc_list
+%type <cstr>    string
+%type <dctv>    directive
+%type <expr>    rhs rhs_plain rhs_sugared lhs lhs_plain
+%type <i>       arrow regname reloc_op
+%type <imm>     immediate
+%type <op>      binop native_op sugar_op sugar_unary_op const_unary_op
 %type <program> program program_elt data insn
-%type <str> symbol
+%type <str>     symbol
 
 %union {
-    int32_t i;
-    struct const_expr *ce;
+    signed                  op; ///< negative ops mark swapped operands
+    int32_t                 i;
+    struct const_expr      *ce;
     struct const_expr_list *cl;
-    struct expr *expr;
-    struct cstr *cstr;
-    struct directive *dctv;
-    struct element_list *program;
+    struct expr            *expr;
+    struct cstr            *cstr;
+    struct directive       *dctv;
+    struct element_list    *program;
     struct immediate {
         int32_t i;
         int is_bits;    ///< if this immediate should be treated as a bitstring
@@ -130,7 +131,6 @@ extern void tenyr_pop_state(void *yyscanner);
         int pos, len;
         char buf[LINE_LEN];
     } str;
-    signed op; ///< negative ops are used to mark swapped operands
 }
 
 %%
