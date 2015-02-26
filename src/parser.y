@@ -23,10 +23,9 @@ static struct expr *make_unary(int op, int x, int y, int mult, struct
 static struct element *make_insn_general(struct parse_data *pd, struct
         expr *lhs, int arrow, struct expr *expr);
 static struct element_list *make_utf32(struct cstr *cs);
-static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct element *insn,
-        const char *symbol);
+static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
+        struct element *insn, const char *symbol);
 static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
-static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
 static struct element_list *make_data(struct parse_data *pd, struct
         const_expr_list *list);
 static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
@@ -178,11 +177,7 @@ program_elt
     : data
     | insn
     | symbol ':' opt_nl program_elt[inner]
-        {   $$ = $inner;
-            struct symbol *n = add_symbol_to_insn(&yyloc, $inner->elem,
-                    $symbol.buf);
-            if (check_add_symbol(&yyloc, pd, n))
-                YYABORT; }
+        {   add_symbol_to_insn(pd, &yyloc, ($$ = $inner)->elem, $symbol.buf); }
 
 sep  : '\n' | ';'
 seps : seps sep | sep
@@ -579,7 +574,8 @@ static struct element_list *make_utf32(struct cstr *cs)
     return result;
 }
 
-static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct element *insn, const char *symbol)
+static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
+        struct element *insn, const char *symbol)
 {
     struct symbol *n = calloc(1, sizeof *n);
     n->column   = locp->first_column;
@@ -590,7 +586,7 @@ static struct symbol *add_symbol_to_insn(YYLTYPE *locp, struct element *insn, co
     strcopy(n->name, symbol, sizeof n->name);
     insn->symbol = n;
 
-    return n;
+    return add_symbol(locp, pd, n);
 }
 
 static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
@@ -602,20 +598,6 @@ static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
     pd->symbols = l;
 
     return 0;
-}
-
-static int check_add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
-{
-    // TODO we could check for colliding symbols at parse time, but I don't
-    // believe this is reliable right now. It would be much nicer for
-    // diagnostics, though.
-    #if CHECK_SYMBOLS_DURING_PARSE
-    if (symbol_find(pd->symbols, n->name)) {
-        tenyr_error(locp, pd, "Error adding symbol '%s' (already exists ?)", n->name);
-        return 1;
-    } else
-    #endif
-        return add_symbol(locp, pd, n);
 }
 
 static struct element_list *make_data(struct parse_data *pd, struct const_expr_list *list)
