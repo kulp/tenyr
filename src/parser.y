@@ -381,7 +381,11 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...)
     if (col <= 1)
         fprintf(stderr, "%s\n", pd->lexstate.savep[!pd->lexstate.swap]);
     fprintf(stderr, "%s\n", pd->lexstate.savep[pd->lexstate.swap]);
-    fprintf(stderr, "%*s\n", col, "^");
+    fprintf(stderr, "%*s", col, "^");
+    int len = locp->last_column - locp->first_column;
+    while (len-- > 0)
+        fputc('^', stderr);
+    fputc('\n', stderr);
 
     va_start(vl, fmt);
     vfprintf(stderr, fmt, vl);
