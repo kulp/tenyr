@@ -115,7 +115,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <str>     symbol
 
 %union {
-    signed                  op; ///< negative ops mark swapped operands
+    int                     op; ///< negative ops mark swapped operands
     int32_t                 i;
     struct const_expr      *ce;
     struct const_expr_list *cl;
@@ -553,11 +553,11 @@ static struct element_list *make_utf32(struct cstr *cs)
     struct element_list *result = NULL, **rp = &result;
 
     struct cstr *p = cs;
-    unsigned wpos = 0; // position in the word
+    int wpos = 0; // position in the word
     struct element_list *t = *rp;
 
     while (p) {
-        unsigned spos = 0; // position in the string
+        int spos = 0; // position in the string
         int len = p->len;
         for (; len > 0; wpos++, spos++, len--) {
             *rp = calloc(1, sizeof **rp);
