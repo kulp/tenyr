@@ -261,7 +261,7 @@ rhs_plain
         { $$ = make_expr(is_type3($reloc_expr) ? 3 : 0, 0, 0, 0, 1, $reloc_expr); }
     /* syntax sugars */
     | unary_op regname[x] reloc_op reloc_expr
-        { $$ = make_unary($unary_op, $x,  0, $reloc_op == '+' ? 1 : -1, $reloc_expr); }
+        { $$ = make_unary($unary_op, $x,  0, $reloc_op, $reloc_expr); }
     | unary_op regname[x] '+' regname[y]
         { $$ = make_unary($unary_op, $x, $y, 0, NULL); }
     | unary_op regname[x]
