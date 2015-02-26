@@ -143,7 +143,7 @@ top
             *(pd->top ? &pd->top->tail->next : &pd->top) = calloc(1, sizeof *pd->top); }
 
 opt_nl
-    : '\n' opt_nl
+    : opt_nl '\n'
     | /* empty */
 
 program
