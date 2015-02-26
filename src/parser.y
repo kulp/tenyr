@@ -107,10 +107,10 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <cl>      reloc_list
 %type <cstr>    string
 %type <dctv>    directive
-%type <expr>    rhs rhs_plain rhs_sugared lhs lhs_plain
+%type <expr>    rhs rhs_plain lhs lhs_plain
 %type <i>       arrow regname reloc_op
 %type <imm>     immediate
-%type <op>      binop native_op sugar_op sugar_unary_op const_unary_op
+%type <op>      binop unary_op const_unary_op
 %type <program> program program_elt data insn
 %type <str>     symbol
 
@@ -206,7 +206,7 @@ string
     | STRING string[right]  {   $$ = make_string(&$STRING, $right); }
 
 data
-    : ".word" opt_nl reloc_list {   POP; $$ = make_data(pd, $reloc_list);      }
+    : ".word" opt_nl reloc_list {   POP; $$ = make_data(pd, $reloc_list);           }
     | ".zero" opt_nl const_expr {   POP; $$ = make_zeros(pd, &yylloc, $const_expr); }
     | ".utf32" string           {   POP; $$ = make_utf32($string);                  }
 
@@ -240,40 +240,37 @@ rhs
             $$->deref = 1; }
 
 rhs_plain
-    /* syntax sugars */
-    : rhs_sugared
     /* type0 */
-    | regname[x] binop regname[y] reloc_op reloc_expr
-        { $rhs_plain = make_expr(0, $x, $binop, $y, $reloc_op, $reloc_expr); }
+    : regname[x] binop regname[y] reloc_op reloc_expr
+        { $$ = make_expr(0, $x, $binop, $y, $reloc_op, $reloc_expr); }
     | regname[x] binop regname[y]
-        { $rhs_plain = make_expr(0, $x, $binop, $y, 0, NULL); }
+        { $$ = make_expr(0, $x, $binop, $y, 0, NULL); }
     | regname[x]
-        { $rhs_plain = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
+        { $$ = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
     /* type1 */
     | regname[x] binop reloc_expr '+' regname[y]
-        { $rhs_plain = make_expr(1, $x, $binop, $y, 1, $reloc_expr); }
+        { $$ = make_expr(1, $x, $binop, $y, 1, $reloc_expr); }
     | regname[x] binop reloc_expr
         {   int t3op = $binop == OP_ADD || $binop == OP_SUBTRACT;
             int mult = ($binop == OP_SUBTRACT) ? -1 : 1;
             int op   = (mult < 0) ? OP_ADD : $binop;
             int type = (t3op && is_type3($reloc_expr)) ? 3 : 1;
-            $rhs_plain = make_expr(type, $x, op, 0, mult, $reloc_expr); }
+            $$ = make_expr(type, $x, op, 0, mult, $reloc_expr); }
     /* type2 */
     | reloc_expr binop regname[x] '+' regname[y]
-        { $rhs_plain = make_expr(2, $x, $binop, $y, 1, $reloc_expr); }
+        { $$ = make_expr(2, $x, $binop, $y, 1, $reloc_expr); }
     | reloc_expr binop regname[x]
-        { $rhs_plain = make_expr(2, $x, $binop, 0, 1, $reloc_expr); }
+        { $$ = make_expr(2, $x, $binop, 0, 1, $reloc_expr); }
     /* type3 */
     | reloc_expr
-        { $rhs_plain = make_expr(is_type3($reloc_expr) ? 3 : 0, 0, OP_BITWISE_OR, 0, 1, $reloc_expr); }
-
-rhs_sugared
-    : sugar_unary_op regname[x]
-        { $rhs_sugared = make_unary($sugar_unary_op, $x,  0, 0, NULL); }
-    | sugar_unary_op regname[x] '+' regname[y]
-        { $rhs_sugared = make_unary($sugar_unary_op, $x, $y, 0, NULL); }
-    | sugar_unary_op regname[x] reloc_op reloc_expr
-        { $rhs_sugared = make_unary($sugar_unary_op, $x,  0, $reloc_op == '+' ? 1 : -1, $reloc_expr); }
+        { $$ = make_expr(is_type3($reloc_expr) ? 3 : 0, 0, 0, 0, 1, $reloc_expr); }
+    /* syntax sugars */
+    | unary_op regname[x] reloc_op reloc_expr
+        { $$ = make_unary($unary_op, $x,  0, $reloc_op == '+' ? 1 : -1, $reloc_expr); }
+    | unary_op regname[x] '+' regname[y]
+        { $$ = make_unary($unary_op, $x, $y, 0, NULL); }
+    | unary_op regname[x]
+        { $$ = make_unary($unary_op, $x,  0, 0, NULL); }
 
 regname
     : REGISTER { $regname = toupper($REGISTER) - 'A'; }
@@ -290,34 +287,30 @@ immediate
             $immediate.flags = IMM_IS_BITS; }
 
 binop
-    : native_op
-    | sugar_op
+    /* native ops */
+    : '+'   { $$ = OP_ADD              ; }
+    | '-'   { $$ = OP_SUBTRACT         ; }
+    | '*'   { $$ = OP_MULTIPLY         ; }
+    | '<'   { $$ = OP_COMPARE_LT       ; }
+    | "=="  { $$ = OP_COMPARE_EQ       ; }
+    | ">="  { $$ = OP_COMPARE_GE       ; }
+    | '|'   { $$ = OP_BITWISE_OR       ; }
+    | "|~"  { $$ = OP_BITWISE_ORN      ; }
+    | '&'   { $$ = OP_BITWISE_AND      ; }
+    | "&~"  { $$ = OP_BITWISE_ANDN     ; }
+    | '^'   { $$ = OP_BITWISE_XOR      ; }
+    | "<<"  { $$ = OP_SHIFT_LEFT       ; }
+    | ">>"  { $$ = OP_SHIFT_RIGHT_ARITH; }
+    | ">>>" { $$ = OP_SHIFT_RIGHT_LOGIC; }
+    | "^^"  { $$ = OP_PACK             ; }
+    | '@'   { $$ = OP_TEST_BIT         ; }
+    /* ops implemented by syntax sugar */
+    | '>'   { $$ = -OP_COMPARE_LT      ; }
+    | "<="  { $$ = -OP_COMPARE_GE      ; }
 
-native_op
-    : '+'   { $native_op = OP_ADD              ; }
-    | '-'   { $native_op = OP_SUBTRACT         ; }
-    | '*'   { $native_op = OP_MULTIPLY         ; }
-    | '<'   { $native_op = OP_COMPARE_LT       ; }
-    | "=="  { $native_op = OP_COMPARE_EQ       ; }
-    | ">="  { $native_op = OP_COMPARE_GE       ; }
-    | '|'   { $native_op = OP_BITWISE_OR       ; }
-    | "|~"  { $native_op = OP_BITWISE_ORN      ; }
-    | '&'   { $native_op = OP_BITWISE_AND      ; }
-    | "&~"  { $native_op = OP_BITWISE_ANDN     ; }
-    | '^'   { $native_op = OP_BITWISE_XOR      ; }
-    | "<<"  { $native_op = OP_SHIFT_LEFT       ; }
-    | ">>"  { $native_op = OP_SHIFT_RIGHT_ARITH; }
-    | ">>>" { $native_op = OP_SHIFT_RIGHT_LOGIC; }
-    | "^^"  { $native_op = OP_PACK             ; }
-    | '@'   { $native_op = OP_TEST_BIT         ; }
-
-sugar_op
-    : '>'   { $sugar_op = -OP_COMPARE_LT; }
-    | "<="  { $sugar_op = -OP_COMPARE_GE; }
-
-sugar_unary_op
-    : '~' { $sugar_unary_op = OP_BITWISE_ORN; }
-    | '-' { $sugar_unary_op = OP_SUBTRACT; }
+unary_op
+    : '~' { $$ = OP_BITWISE_ORN; }
+    | '-' { $$ = OP_SUBTRACT; }
 
 arrow
     : "<-" { $arrow = 0; }

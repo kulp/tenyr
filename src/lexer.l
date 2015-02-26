@@ -196,13 +196,6 @@ static int translate_escape(int what)
     }
 }
 
-void tenyr_push_state(int st, void *yyscanner)
-{
-    PUSH(st);
-}
-
-void tenyr_pop_state(void *yyscanner)
-{
-    POP;
-}
+void tenyr_push_state(int st, void *yyscanner) { PUSH(st); }
+void tenyr_pop_state (        void *yyscanner) { POP;      }
 
