@@ -63,6 +63,7 @@ extern void tenyr_pop_state(void *yyscanner);
     #define yyscanner (pd->scanner)
     #define PUSH(State) tenyr_push_state(State, yyscanner)
     #define POP         tenyr_pop_state(yyscanner)
+    #define ERR(...)    tenyr_error(&yylloc, pd, __VA_ARGS__)
 }
 %parse-param { struct parse_data *pd }
 %name-prefix "tenyr_"
@@ -195,9 +196,9 @@ insn
             $$->tail = $$; }
     | lhs { PUSH(needarrow); } arrow { POP; } rhs
         {   if ($lhs->deref && $rhs->deref)
-                tenyr_error(&yylloc, pd, "Cannot have both left and right sides of an instruction dereferenced");
+                ERR("Cannot dereference both sides of an arrow");
             if ($arrow == 1 && !$rhs->deref)
-                tenyr_error(&yylloc, pd, "Right arrows must point to dereferenced right-hand sides");
+                ERR("Right arrows must point to dereferenced right-hand sides");
             $$ = calloc(1, sizeof *$$);
             $$->elem = make_insn_general(pd, $lhs, $arrow, $rhs);
             $$->tail = $$; }
