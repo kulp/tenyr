@@ -125,7 +125,7 @@ extern void tenyr_pop_state(void *yyscanner);
     struct element_list    *program;
     struct immediate {
         int32_t i;
-        int is_bits;    ///< if this immediate should be treated as a bitstring
+        int flags;
     } imm;
     struct strbuf {
         int pos, len;
@@ -286,13 +286,13 @@ regname
 immediate
     : INTEGER
         {   $immediate.i = $INTEGER;
-            $immediate.is_bits = 0; }
+            $immediate.flags = 0; }
     | BITSTRING
         {   $immediate.i = $BITSTRING;
-            $immediate.is_bits = 1; }
+            $immediate.flags = IMM_IS_BITS; }
     | CHARACTER
         {   $immediate.i = $CHARACTER.buf[$CHARACTER.pos - 1];
-            $immediate.is_bits = 1; }
+            $immediate.flags = IMM_IS_BITS; }
 
 binop
     : native_op
@@ -366,7 +366,7 @@ const_atom
     | '(' const_expr ')'
         {   $$ = $const_expr; }
     | immediate
-        {   $$ = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.is_bits ? IMM_IS_BITS : 0);
+        {   $$ = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.flags);
             $$->i = $immediate.i; }
     | '.'
         {   $$ = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
