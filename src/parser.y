@@ -136,26 +136,20 @@ extern void tenyr_pop_state(void *yyscanner);
 %%
 
 top
-    : /* empty */
+    : opt_terminators
         {   pd->top = NULL; }
-    | program seps
-        {   if (pd->top != NULL) {
-                // Allocate a phantom entry to provide a final context element
-                pd->top->tail->next = calloc(1, sizeof *pd->top->tail);
-                pd->top->tail = pd->top->tail->next;
-            }
-        }
+    | opt_terminators program
+        {   // Allocate a phantom entry to provide a final context element
+            *(pd->top ? &pd->top->tail->next : &pd->top) = calloc(1, sizeof *pd->top); }
 
 opt_nl
     : '\n' opt_nl
     | /* empty */
 
 program
-    :   /* empty */
-        {   $$ = NULL; }
-    | program_elt
-        {   pd->top = $$ = $1; }
-    | program seps program_elt
+    : program_elt
+        {   pd->top = $$ = $1; pd->top->tail = pd->top; }
+    | program program_elt
         {   struct element_list *p = $1, *d = $program_elt;
             if (p == NULL) {
                 p = d;
@@ -166,20 +160,21 @@ program
             }
             pd->top = $$ = p;
         }
-    | program seps directive
+    | program directive
         {   handle_directive(pd, &yylloc, $directive, pd->top ? &pd->top->tail->next : &pd->top); }
     | directive
         {   pd->top = $$ = NULL;
             handle_directive(pd, &yylloc, $directive, &pd->top); }
 
 program_elt
-    : data
-    | insn
+    : data terminators
+    | insn terminators
     | symbol ':' opt_nl program_elt[inner]
         {   add_symbol_to_insn(pd, &yyloc, ($$ = $inner)->elem, $symbol.buf); }
 
-sep  : '\n' | ';'
-seps : seps sep | sep
+opt_terminators : /* empty */ | terminators
+terminator  : '\n' | ';'
+terminators : terminators terminator | terminator
 
 insn
     : ILLEGAL
@@ -211,9 +206,9 @@ data
     | ".utf32" string           {   POP; $$ = make_utf32($string);                  }
 
 directive
-    : ".global" opt_nl SYMBOL
+    : ".global" opt_nl SYMBOL terminators
         {   POP; $directive = make_global(pd, &yylloc, &$SYMBOL); }
-    | ".set" opt_nl SYMBOL ',' reloc_expr
+    | ".set" opt_nl SYMBOL ',' reloc_expr terminators
         {   POP; $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
 reloc_list
