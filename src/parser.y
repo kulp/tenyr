@@ -169,8 +169,7 @@ program
     | program seps directive
         {   handle_directive(pd, &yylloc, $directive, pd->top ? &pd->top->tail->next : &pd->top); }
     | directive
-        {   assert(pd->top == NULL);
-            pd->top = $$ = NULL;
+        {   pd->top = $$ = NULL;
             handle_directive(pd, &yylloc, $directive, &pd->top); }
 
 program_elt
