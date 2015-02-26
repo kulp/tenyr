@@ -7,7 +7,7 @@ os:
   - osx
 before_install:
   - sudo pip install cpp-coveralls
-script: "make GCOV=1 V=1 SDL=0 && make check && make local-install"
+script: "make GCOV=1 V=1 SDL=0 && make SDL=0 check && make SDL=0 local-install"
 after_success:
   # exclude SDL until Travis has an OS new enough to use SDL2
   - coveralls --exclude-pattern '.*sdl.*' --include src --gcov-options '\-lp'
