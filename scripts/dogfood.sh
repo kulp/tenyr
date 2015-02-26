@@ -25,7 +25,7 @@ function en ()
 {
 	fmt=$1
 	instance=$2
-	$tas -f $fmt - | tee $base.$fmt.en.$instance
+	$tas $flags -f $fmt - | tee $base.$fmt.en.$flags.$instance
 	if [[ $? != 0 ]] ; then return 1 ; fi
 }
 
@@ -33,7 +33,7 @@ function de ()
 {
 	fmt=$1
 	instance=$2
-	$tas -d -f $fmt - | tee $base.$fmt.de.$instance
+	$tas $flags -d -f $fmt - | tee $base.$fmt.de.$flags.$instance
 	if [[ $? != 0 ]] ; then return 1; fi
 }
 
@@ -41,7 +41,7 @@ function check ()
 {
 	fmt=$1
 	typ=$2
-	diff -q $base.$fmt.$typ.$3 $base.$fmt.$typ.$4
+	diff -q $base.$fmt.$typ.$flags.$3 $base.$fmt.$typ.$flags.$4
 }
 
 function cycle ()
@@ -56,30 +56,32 @@ function match ()
 	fmt=$1
 	typ=$2
 	file=$3
-	check $fmt $typ 1 2 && check $fmt $typ 2 3 && $ECHO $(basename $file) @ $fmt: OK || fail $fmt $file
+    check $fmt $typ 1 2 && check $fmt $typ 2 3 && $ECHO "$(basename $file) @ $fmt ($flags) : OK" || fail $fmt $file
 }
 
 # TODO support obj when identical objects can be made reliably
-for fmt in memh raw text ; do
-	for file in $* ; do
-		trap "rm $base.$fmt.{en,de}.[0123]" EXIT
-		if [[ $file = *.cpp ]] ; then
-			pp="cpp -I$here/../lib"
-		else
-			pp=cat
-		fi
-		$pp $file | cycle $fmt
-		if [[ $? != 0 ]] ; then fail $fmt $file ; fi
-		match $fmt en $file
-	done &
-	trap "kill $! 2>/dev/null" EXIT
+for flags in -v "" ; do
+    for fmt in memh raw text ; do
+        for file in $* ; do
+            trap "rm $base.$fmt.{en,de}.[0123]" EXIT
+            if [[ $file = *.cpp ]] ; then
+                pp="cpp -I$here/../lib"
+            else
+                pp=cat
+            fi
+            $pp $file | cycle $fmt
+            if [[ $? != 0 ]] ; then fail $fmt $file ; fi
+            match $fmt en $file
+        done &
+        trap "kill $! 2>/dev/null" EXIT
 
-	( base=random
-	file=$base
-	$here/random.sh | tee $base | de text 0 | cycle $fmt
-	if [[ $? != 0 ]] ; then fail $fmt $file ; fi
-	match $fmt en $file ) &
-	trap "kill $! 2>/dev/null" EXIT
+        ( base=random
+        file=$base
+        $here/random.sh | tee $base | de text 0 | cycle $fmt
+        if [[ $? != 0 ]] ; then fail $fmt $file ; fi
+        match $fmt en $file ) &
+        trap "kill $! 2>/dev/null" EXIT
+    done
 done
 wait
 
