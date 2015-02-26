@@ -79,7 +79,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %left '*' '/'
 
 %token <i> '[' ']' '.' '(' ')' '+' '-' '*' '~' ',' ';'
-%token <i> TOL TOR INTEGER BITSTRING REGISTER
+%token <i> INTEGER BITSTRING REGISTER
 %token <str> SYMBOL LOCAL STRING CHARACTER
 %token ILLEGAL
 
@@ -93,6 +93,9 @@ extern void tenyr_pop_state(void *yyscanner);
 %token ORN  "|~"
 %token ANDN "&~"
 %token PACK "^^"
+
+%token <i> TOL  "<-"
+%token <i> TOR  "->"
 
 %token WORD     ".word"
 %token UTF32    ".utf32"
@@ -322,8 +325,8 @@ sugar_unary_op
     | '-' { $sugar_unary_op = OP_SUBTRACT; }
 
 arrow
-    : TOL { $arrow = 0; }
-    | TOR { $arrow = 1; }
+    : "<-" { $arrow = 0; }
+    | "->" { $arrow = 1; }
 
 reloc_op
     : '+' { $reloc_op = +1; }
