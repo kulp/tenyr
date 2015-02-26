@@ -398,7 +398,8 @@ static int raw_in(FILE *stream, struct element *i, void *ud)
 static int raw_out(FILE *stream, struct element *i, void *ud)
 {
     int ok = 1;
-    ok &= fwrite(&i->insn.u.word, sizeof i->insn.u.word, 1, stream) == 1;
+    if (i->insn.size > 0)
+        ok &= fwrite(&i->insn.u.word, sizeof i->insn.u.word, 1, stream) == 1;
 
     const int32_t zero = 0;
     for (int c = 1; c < i->insn.size && ok; c++)
@@ -433,7 +434,8 @@ static int text_in(FILE *stream, struct element *i, void *ud)
 static int text_out(FILE *stream, struct element *i, void *ud)
 {
     int ok = 1;
-    ok &= fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
+    if (i->insn.size > 0)
+        ok &= fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
     for (int c = 1; c < i->insn.size && ok; c++)
         ok &= fputs("0x00000000\n", stream) > 0;
     return ok ? 1 : -1;
