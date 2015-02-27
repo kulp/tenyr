@@ -152,7 +152,6 @@ program
             if (p == NULL) {
                 p = d;
             } else if (d != NULL) { // an empty string is NULL
-                d->prev = p->tail;
                 p->tail->next = d;
                 p->tail = d->tail;
             }
@@ -542,7 +541,6 @@ static struct element_list *make_utf32(struct cstr *cs)
         int len = p->len;
         for (; len > 0; wpos++, spos++, len--) {
             *rp = calloc(1, sizeof **rp);
-            (*rp)->prev = t;
             result->tail = t = *rp;
             rp = &t->next;
             t->elem = calloc(1, sizeof *t->elem);
@@ -593,7 +591,6 @@ static struct element_list *make_data(struct parse_data *pd, struct const_expr_l
     while (p) {
         *rp = calloc(1, sizeof **rp);
         struct element_list *q = *rp;
-        q->prev = result->tail;
         result->tail = *rp;
         rp = &q->next;
 
