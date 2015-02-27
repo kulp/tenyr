@@ -108,14 +108,12 @@ extern void tenyr_pop_state(void *yyscanner);
 %type <cstr>    string
 %type <dctv>    directive
 %type <expr>    rhs rhs_plain lhs lhs_plain
-%type <i>       arrow regname reloc_op
+%type <i>       arrow regname reloc_op binop unary_op const_unary_op
 %type <imm>     immediate
-%type <op>      binop unary_op const_unary_op
-%type <program> program program_elt data insn
+%type <program> program element data insn
 %type <str>     symbol
 
 %union {
-    int                     op; ///< negative ops mark swapped operands
     int32_t                 i;
     struct const_expr      *ce;
     struct const_expr_list *cl;
@@ -147,10 +145,10 @@ opt_nl
     | /* empty */
 
 program
-    : program_elt
+    : element terminators
         {   pd->top = $$ = $1; pd->top->tail = pd->top; }
-    | program program_elt
-        {   struct element_list *p = $1, *d = $program_elt;
+    | program element terminators
+        {   struct element_list *p = $1, *d = $element;
             if (p == NULL) {
                 p = d;
             } else if (d != NULL) { // an empty string is NULL
@@ -160,16 +158,16 @@ program
             }
             pd->top = $$ = p;
         }
-    | program directive
-        {   handle_directive(pd, &yylloc, $directive, pd->top ? &pd->top->tail->next : &pd->top); }
-    | directive
+    | directive terminators
         {   pd->top = $$ = NULL;
             handle_directive(pd, &yylloc, $directive, &pd->top); }
+    | program directive terminators
+        {   handle_directive(pd, &yylloc, $directive, pd->top ? &pd->top->tail->next : &pd->top); }
 
-program_elt
-    : data terminators
-    | insn terminators
-    | symbol ':' opt_nl program_elt[inner]
+element
+    : data
+    | insn
+    | symbol ':' opt_nl element[inner]
         {   add_symbol_to_insn(pd, &yyloc, ($$ = $inner)->elem, $symbol.buf); }
 
 opt_terminators : /* empty */ | terminators
@@ -201,14 +199,14 @@ string
     | STRING string[right]  {   $$ = make_string(&$STRING, $right); }
 
 data
-    : ".word" opt_nl reloc_list {   POP; $$ = make_data(pd, $reloc_list);           }
-    | ".zero" opt_nl const_expr {   POP; $$ = make_zeros(pd, &yylloc, $const_expr); }
-    | ".utf32" string           {   POP; $$ = make_utf32($string);                  }
+    : ".word"  opt_nl reloc_list {  POP; $$ = make_data(pd, $reloc_list);           }
+    | ".zero"  opt_nl const_expr {  POP; $$ = make_zeros(pd, &yylloc, $const_expr); }
+    | ".utf32" opt_nl string     {  POP; $$ = make_utf32($string);                  }
 
 directive
-    : ".global" opt_nl SYMBOL terminators
+    : ".global" opt_nl SYMBOL
         {   POP; $directive = make_global(pd, &yylloc, &$SYMBOL); }
-    | ".set" opt_nl SYMBOL ',' reloc_expr terminators
+    | ".set" opt_nl SYMBOL ',' reloc_expr
         {   POP; $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
 
 reloc_list
