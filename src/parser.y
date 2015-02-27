@@ -12,39 +12,37 @@
 #include "asm.h"
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...);
-static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
-        const_expr *ce, int mult, uint32_t *dest, int width, int flags);
-static struct const_expr *make_const_expr(enum const_expr_type type, int op,
+static struct const_expr *add_deferred_expr(struct parse_data *pd,
+        struct const_expr *ce, int mult, uint32_t *dest, int width, int flags);
+static struct const_expr *make_cexpr(enum const_expr_type type, int op,
         struct const_expr *left, struct const_expr *right, int flags);
-static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
-        const_expr *defexpr);
-static struct expr *make_unary(int op, int x, int y, int mult, struct
-        const_expr *defexpr);
-static struct element *make_insn_general(struct parse_data *pd, struct
-        expr *lhs, int arrow, struct expr *expr);
+static struct expr *make_expr(int type, int x, int op, int y, int mult,
+        struct const_expr *defexpr);
+static struct expr *make_unary(int op, int x, int y, int mult,
+        struct const_expr *defexpr);
+static struct element *make_insn_general(struct parse_data *pd,
+        struct expr *lhs, int arrow, struct expr *expr);
 static struct element_list *make_utf32(struct cstr *cs);
 static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
         struct element *insn, const char *symbol);
-static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n);
-static struct element_list *make_data(struct parse_data *pd, struct
-        const_expr_list *list);
+static struct element_list *make_data(struct parse_data *pd,
+        struct const_expr_list *list);
 static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
         struct const_expr *size);
 static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
         const struct strbuf *sym);
 static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
         const struct strbuf *sym, struct const_expr *expr);
-static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
-        directive *d, struct element_list **context);
+static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
+        struct directive *d, struct element_list **context);
 static int is_type3(struct const_expr *ce);
 static struct const_expr *make_ref(struct parse_data *pd, int type,
         struct strbuf *symbol);
-static struct const_expr_list *make_reloc_list(struct const_expr *expr,
+static struct const_expr_list *make_expr_list(struct const_expr *expr,
         struct const_expr_list *right);
 static struct cstr *make_string(const struct strbuf *str, struct cstr *right);
 
-struct symbol *symbol_find(struct symbol_list *list, const char *name);
-
+extern struct symbol *symbol_find(struct symbol_list *list, const char *name);
 extern void tenyr_push_state(int st, void *yyscanner);
 extern void tenyr_pop_state(void *yyscanner);
 %}
@@ -103,8 +101,8 @@ extern void tenyr_pop_state(void *yyscanner);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce>      const_expr const_binop_expr reloc_expr const_atom eref
-%type <cl>      reloc_list
+%type <ce>      cexpr const_binop_expr expr catom eref
+%type <cl>      expr_list
 %type <cstr>    string
 %type <dctv>    directive
 %type <expr>    rhs rhs_plain lhs lhs_plain
@@ -138,7 +136,8 @@ top
         {   pd->top = NULL; }
     | opt_terminators program
         {   // Allocate a phantom entry to provide a final context element
-            *(pd->top ? &pd->top->tail->next : &pd->top) = calloc(1, sizeof *pd->top); }
+            *(pd->top ? &pd->top->tail->next : &pd->top) =
+                calloc(1, sizeof *pd->top); }
 
 opt_nl
     : opt_nl '\n'
@@ -161,7 +160,8 @@ program
         {   pd->top = $$ = NULL;
             handle_directive(pd, &yylloc, $directive, &pd->top); }
     | program directive terminators
-        {   handle_directive(pd, &yylloc, $directive, pd->top ? &pd->top->tail->next : &pd->top); }
+        {   handle_directive(pd, &yylloc, $directive,
+                             pd->top ? &pd->top->tail->next : &pd->top); }
 
 element
     : data
@@ -198,21 +198,21 @@ string
     | STRING string[right]  {   $$ = make_string(&$STRING, $right); }
 
 data
-    : ".word"  opt_nl reloc_list {  POP; $$ = make_data(pd, $reloc_list);           }
-    | ".zero"  opt_nl const_expr {  POP; $$ = make_zeros(pd, &yylloc, $const_expr); }
-    | ".utf32" opt_nl string     {  POP; $$ = make_utf32($string);                  }
+    : ".word"  opt_nl expr_list {  POP; $$ = make_data(pd, $expr_list);       }
+    | ".zero"  opt_nl cexpr     {  POP; $$ = make_zeros(pd, &yylloc, $cexpr); }
+    | ".utf32" opt_nl string    {  POP; $$ = make_utf32($string);             }
 
 directive
     : ".global" opt_nl SYMBOL
         {   POP; $directive = make_global(pd, &yylloc, &$SYMBOL); }
-    | ".set" opt_nl SYMBOL ',' reloc_expr
-        {   POP; $directive = make_set(pd, &yylloc, &$SYMBOL, $reloc_expr); }
+    | ".set" opt_nl SYMBOL ',' expr
+        {   POP; $directive = make_set(pd, &yylloc, &$SYMBOL, $expr); }
 
-reloc_list
-    : reloc_expr
-        {   $$ = make_reloc_list($reloc_expr, NULL); }
-    | reloc_expr ',' opt_nl reloc_list[right]
-        {   $$ = make_reloc_list($reloc_expr, $right); }
+expr_list
+    : expr
+        {   $$ = make_expr_list($expr, NULL); }
+    | expr ',' opt_nl expr_list[right]
+        {   $$ = make_expr_list($expr, $right); }
 
 lhs
     : lhs_plain
@@ -233,32 +233,32 @@ rhs
 
 rhs_plain
     /* type0 */
-    : regname[x] binop regname[y] reloc_op reloc_expr
-        { $$ = make_expr(0, $x, $binop, $y, $reloc_op, $reloc_expr); }
+    : regname[x] binop regname[y] reloc_op expr
+        { $$ = make_expr(0, $x, $binop, $y, $reloc_op, $expr); }
     | regname[x] binop regname[y]
         { $$ = make_expr(0, $x, $binop, $y, 0, NULL); }
     | regname[x]
         { $$ = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
     /* type1 */
-    | regname[x] binop reloc_expr '+' regname[y]
-        { $$ = make_expr(1, $x, $binop, $y, 1, $reloc_expr); }
-    | regname[x] binop reloc_expr
+    | regname[x] binop expr '+' regname[y]
+        { $$ = make_expr(1, $x, $binop, $y, 1, $expr); }
+    | regname[x] binop expr
         {   int t3op = $binop == OP_ADD || $binop == OP_SUBTRACT;
             int mult = ($binop == OP_SUBTRACT) ? -1 : 1;
             int op   = (mult < 0) ? OP_ADD : $binop;
-            int type = (t3op && is_type3($reloc_expr)) ? 3 : 1;
-            $$ = make_expr(type, $x, op, 0, mult, $reloc_expr); }
+            int type = (t3op && is_type3($expr)) ? 3 : 1;
+            $$ = make_expr(type, $x, op, 0, mult, $expr); }
     /* type2 */
-    | reloc_expr binop regname[x] '+' regname[y]
-        { $$ = make_expr(2, $x, $binop, $y, 1, $reloc_expr); }
-    | reloc_expr binop regname[x]
-        { $$ = make_expr(2, $x, $binop, 0, 1, $reloc_expr); }
+    | expr binop regname[x] '+' regname[y]
+        { $$ = make_expr(2, $x, $binop, $y, 1, $expr); }
+    | expr binop regname[x]
+        { $$ = make_expr(2, $x, $binop, 0, 1, $expr); }
     /* type3 */
-    | reloc_expr
-        { $$ = make_expr(is_type3($reloc_expr) ? 3 : 0, 0, 0, 0, 1, $reloc_expr); }
+    | expr
+        { $$ = make_expr(is_type3($expr) ? 3 : 0, 0, 0, 0, 1, $expr); }
     /* syntax sugars */
-    | unary_op regname[x] reloc_op reloc_expr
-        { $$ = make_unary($unary_op, $x,  0, $reloc_op, $reloc_expr); }
+    | unary_op regname[x] reloc_op expr
+        { $$ = make_unary($unary_op, $x,  0, $reloc_op, $expr); }
     | unary_op regname[x] '+' regname[y]
         { $$ = make_unary($unary_op, $x, $y, 0, NULL); }
     | unary_op regname[x]
@@ -301,55 +301,55 @@ binop
     | "<="  { $$ = -OP_COMPARE_GE      ; }
 
 unary_op
-    : '~' { $$ = OP_BITWISE_ORN; }
-    | '-' { $$ = OP_SUBTRACT; }
+    : '~'   { $$ = OP_BITWISE_ORN; }
+    | '-'   { $$ = OP_SUBTRACT; }
 
 arrow
-    : "<-" { $arrow = 0; }
-    | "->" { $arrow = 1; }
+    : "<-"  { $$ = 0; }
+    | "->"  { $$ = 1; }
 
 reloc_op
-    : '+' { $reloc_op = +1; }
-    | '-' { $reloc_op = -1; }
+    : '+'   { $$ = +1; }
+    | '-'   { $$ = -1; }
 
-reloc_expr
+expr
     : eref
-    | const_atom
-    | '(' eref reloc_op const_atom ')'
-        {   $$ = make_const_expr(CE_OP2, "- +"[$reloc_op + 1], $eref, $const_atom, 0); }
+    | catom
+    | '(' eref reloc_op catom ')'
+        {   $$ = make_cexpr(CE_OP2, "- +"[$reloc_op + 1], $eref, $catom, 0); }
 
 eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, &$SYMBOL); }
 
-const_expr
-    : const_atom
+cexpr
+    : catom
     | const_binop_expr { ce_eval(pd, NULL, NULL, $$, 0, NULL, NULL, &$$->i); }
 
 const_binop_expr
-    : const_expr[x]  '+'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '+', $x, $y, 0); }
-    | const_expr[x]  '-'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '-', $x, $y, 0); }
-    | const_expr[x]  '*'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '*', $x, $y, 0); }
-    | const_expr[x]  '/'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '/', $x, $y, 0); }
-    | const_expr[x]  '^'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '^', $x, $y, 0); }
-    | const_expr[x]  '&'  const_expr[y] { $$ = make_const_expr(CE_OP2,  '&', $x, $y, 0); }
-    | const_expr[x]  "<<" const_expr[y] { $$ = make_const_expr(CE_OP2,  LSH, $x, $y, 0); }
-    | const_expr[x]  ">>" const_expr[y] { $$ = make_const_expr(CE_OP2, RSHA, $x, $y, 0); }
-    | const_expr[x] ">>>" const_expr[y] { $$ = make_const_expr(CE_OP2,  RSH, $x, $y, 0); }
+    : cexpr[x]  '+'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '+', $x, $y, 0); }
+    | cexpr[x]  '-'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '-', $x, $y, 0); }
+    | cexpr[x]  '*'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '*', $x, $y, 0); }
+    | cexpr[x]  '/'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '/', $x, $y, 0); }
+    | cexpr[x]  '^'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '^', $x, $y, 0); }
+    | cexpr[x]  '&'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '&', $x, $y, 0); }
+    | cexpr[x]  "<<" cexpr[y] { $$ = make_cexpr(CE_OP2,  LSH, $x, $y, 0); }
+    | cexpr[x]  ">>" cexpr[y] { $$ = make_cexpr(CE_OP2, RSHA, $x, $y, 0); }
+    | cexpr[x] ">>>" cexpr[y] { $$ = make_cexpr(CE_OP2,  RSH, $x, $y, 0); }
 
 const_unary_op
-    : '~' { $const_unary_op = '~'; }
-    | '-' { $const_unary_op = '-'; }
+    : '~'   { $$ = '~'; }
+    | '-'   { $$ = '-'; }
 
-const_atom
-    : const_unary_op const_atom[inner]
-        {   $$ = make_const_expr(CE_OP1, $const_unary_op, $inner, NULL, 0);
+catom
+    : const_unary_op catom[inner]
+        {   $$ = make_cexpr(CE_OP1, $const_unary_op, $inner, NULL, 0);
             ce_eval(pd, NULL, NULL, $$, 0, NULL, NULL, &$$->i); }
-    | '(' const_expr ')'
-        {   $$ = $const_expr; }
+    | '(' cexpr ')'
+        {   $$ = $cexpr; }
     | immediate
-        {   $$ = make_const_expr(CE_IMM, 0, NULL, NULL, $immediate.flags);
+        {   $$ = make_cexpr(CE_IMM, 0, NULL, NULL, $immediate.flags);
             $$->i = $immediate.i; }
     | '.'
-        {   $$ = make_const_expr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
+        {   $$ = make_cexpr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
         {   $$ = make_ref(pd, CE_SYM, &$LOCAL); }
 
@@ -381,13 +381,14 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...)
     return 0;
 }
 
-static struct element *make_insn_general(struct parse_data *pd, struct
-        expr *lhs, int arrow, struct expr *expr)
+static struct element *make_insn_general(struct parse_data *pd,
+        struct expr *lhs, int arrow, struct expr *expr)
 {
     struct element *elem = calloc(1, sizeof *elem);
+    int dd = ((lhs->deref | (!arrow && expr->deref)) << 1) | expr->deref;
 
     elem->insn.u.typeany.p  = expr->type;
-    elem->insn.u.typeany.dd = ((lhs->deref | (!arrow && expr->deref)) << 1) | expr->deref;
+    elem->insn.u.typeany.dd = dd;
     elem->insn.u.typeany.z  = lhs->x;
     elem->insn.u.typeany.x  = expr->x;
 
@@ -417,8 +418,8 @@ static struct element *make_insn_general(struct parse_data *pd, struct
     return elem;
 }
 
-static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
-        const_expr *ce, int mult, uint32_t *dest, int width, int flags)
+static struct const_expr *add_deferred_expr(struct parse_data *pd,
+        struct const_expr *ce, int mult, uint32_t *dest, int width, int flags)
 {
     struct deferred_expr *n = calloc(1, sizeof *n);
 
@@ -434,7 +435,7 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd, struct
     return ce;
 }
 
-static struct const_expr *make_const_expr(enum const_expr_type type, int op,
+static struct const_expr *make_cexpr(enum const_expr_type type, int op,
         struct const_expr *left, struct const_expr *right, int flags)
 {
     struct const_expr *n = calloc(1, sizeof *n);
@@ -443,15 +444,15 @@ static struct const_expr *make_const_expr(enum const_expr_type type, int op,
     n->op    = op;
     n->left  = left;
     n->right = right;
-    n->insn  = NULL;    // top const_expr will have its insn filled in
+    n->insn  = NULL;    // top cexpr will have its insn filled in
     n->flags = (left  ? left->flags  : 0) |
                (right ? right->flags : 0) | flags;
 
     return n;
 }
 
-static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
-        const_expr *defexpr)
+static struct expr *make_expr(int type, int x, int op, int y, int mult,
+        struct const_expr *defexpr)
 {
     struct expr *e = calloc(1, sizeof *e);
 
@@ -478,13 +479,13 @@ static struct expr *make_expr(int type, int x, int op, int y, int mult, struct
             e->ce->flags |= IGNORE_WIDTH;
         e->i = 0xfffffbad; // put in a placeholder that must be overwritten
     } else
-        e->i = 0; // there was no const_expr ; zero defined by language
+        e->i = 0; // there was no cexpr ; zero defined by language
 
     return e;
 }
 
-static struct expr *make_unary(int op, int x, int y, int mult, struct
-        const_expr *defexpr)
+static struct expr *make_unary(int op, int x, int y, int mult,
+        struct const_expr *defexpr)
 {
     // tenyr has no true unary ops, but the following sugars are recognised by
     // the assembler and converted into their corresponding binary equivalents :
@@ -510,7 +511,7 @@ static struct expr *make_unary(int op, int x, int y, int mult, struct
         e->type = 2;
         e->x = x;
         e->y = y;
-        e->i = 0; // there was no const_expr ; zero defined by language
+        e->i = 0; // there was no cexpr ; zero defined by language
     }
 
     return e;
@@ -557,6 +558,17 @@ static struct element_list *make_utf32(struct cstr *cs)
     return result;
 }
 
+static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
+{
+    struct symbol_list *l = calloc(1, sizeof *l);
+
+    l->next = pd->symbols;
+    l->symbol = n;
+    pd->symbols = l;
+
+    return 0;
+}
+
 static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
         struct element *insn, const char *symbol)
 {
@@ -572,18 +584,8 @@ static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
     return add_symbol(locp, pd, n);
 }
 
-static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
-{
-    struct symbol_list *l = calloc(1, sizeof *l);
-
-    l->next = pd->symbols;
-    l->symbol = n;
-    pd->symbols = l;
-
-    return 0;
-}
-
-static struct element_list *make_data(struct parse_data *pd, struct const_expr_list *list)
+static struct element_list *make_data(struct parse_data *pd,
+        struct const_expr_list *list)
 {
     struct element_list *result = NULL, **rp = &result;
 
@@ -594,10 +596,10 @@ static struct element_list *make_data(struct parse_data *pd, struct const_expr_l
         result->tail = *rp;
         rp = &q->next;
 
-        q->elem = calloc(1, sizeof *q->elem);
-        q->elem->insn.size = 1;
-        add_deferred_expr(pd, p->ce, 1, &q->elem->insn.u.word, WORD_BITWIDTH, 0);
-        p->ce->insn = q->elem;
+        struct element *e = q->elem = calloc(1, sizeof *q->elem);
+        e->insn.size = 1;
+        add_deferred_expr(pd, p->ce, 1, &e->insn.u.word, WORD_BITWIDTH, 0);
+        p->ce->insn = e;
         struct const_expr_list *temp = p;
         p = p->right;
         free(temp);
@@ -606,10 +608,12 @@ static struct element_list *make_data(struct parse_data *pd, struct const_expr_l
     return result;
 }
 
-static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp, struct const_expr *size)
+static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
+        struct const_expr *size)
 {
     if (size->flags & IS_DEFERRED) {
-        tenyr_error(locp, pd, "size expression for .zero must not depend on symbol values");
+        tenyr_error(locp, pd, "size expression for .zero must not "
+                              "depend on symbol values");
         return NULL;
     }
 
@@ -651,8 +655,8 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
     return result;
 }
 
-static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
-        directive *d, struct element_list **context)
+static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
+        struct directive *d, struct element_list **context)
 {
     switch (d->type) {
         case D_GLOBAL: {
@@ -667,7 +671,8 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp, struct
             break;
         }
         default:
-            tenyr_error(locp, pd, "Unknown directive type %d in %s", d->type, __func__);
+            tenyr_error(locp, pd, "Unknown directive type %d in %s",
+                        d->type, __func__);
     }
 
     free(d);
@@ -677,17 +682,20 @@ static int is_type3(struct const_expr *ce)
 {
     int is_bits  = ce->flags & IMM_IS_BITS;
     int deferred = ce->flags & IS_DEFERRED;
+    int32_t extended = SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,ce->i);
     /* Large immediates and ones that should be expressed in
      * hexadecimal use type3. */
-    if (is_bits || deferred || ce->i != SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,ce->i))
+    if (is_bits || deferred || ce->i != extended)
         return 1;
 
     return 0;
 }
 
-static struct const_expr *make_ref(struct parse_data *pd, int type, struct strbuf *symbol)
+static struct const_expr *make_ref(struct parse_data *pd, int type,
+        struct strbuf *symbol)
 {
-    struct const_expr *eref = make_const_expr(CE_EXT, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED);
+    int flags = IMM_IS_BITS | IS_DEFERRED;
+    struct const_expr *eref = make_cexpr(CE_EXT, 0, NULL, NULL, flags);
     struct symbol *s;
     if ((s = symbol_find(pd->symbols, symbol->buf))) {
         eref->symbol = s;
@@ -698,7 +706,8 @@ static struct const_expr *make_ref(struct parse_data *pd, int type, struct strbu
     return eref;
 }
 
-static struct const_expr_list *make_reloc_list(struct const_expr *expr, struct const_expr_list *right)
+static struct const_expr_list *make_expr_list(struct const_expr *expr,
+        struct const_expr_list *right)
 {
     struct const_expr_list *result = calloc(1, sizeof *result);
     result->right = right;
