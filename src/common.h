@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ops.h"
+
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 #define STR(X) STR_(X)
 #define STR_(X) #X
@@ -43,6 +45,27 @@ extern void (* NORETURN fatal_)(int code, const char *file, int line, const char
 
 extern void (*debug_)(int level, const char *file, int line, const char *func,
     const char *fmt, ...);
+
+struct element {
+    struct insn_or_data insn;
+
+    struct symbol {
+        char name[SYMBOL_LEN];
+        int column;
+        int lineno;
+        int32_t reladdr;
+        uint32_t size;
+
+        unsigned resolved:1;
+        unsigned global:1;
+        unsigned unique:1;  ///< if this symbol comes from a label
+
+        struct const_expr *ce;
+
+        struct symbol *next;
+    } *symbol;
+    struct reloc_node *reloc;
+};
 
 typedef int cmp(const void *, const void*);
 

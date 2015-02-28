@@ -23,8 +23,6 @@
 #ifndef OPS_H_
 #define OPS_H_
 
-#include "common.h"
-
 #include <stdint.h>
 
 #define SMALL_IMMEDIATE_BITWIDTH    12
@@ -61,27 +59,6 @@ struct insn_or_data {
     } u;
     int32_t reladdr;    ///< used for CE_ICI resolving
     int32_t size;       ///< used for data (e.g., .zero 5 -> size == 5)
-};
-
-struct element {
-    struct insn_or_data insn;
-
-    struct symbol {
-        char name[SYMBOL_LEN];
-        int column;
-        int lineno;
-        int32_t reladdr;
-        uint32_t size;
-
-        unsigned resolved:1;
-        unsigned global:1;
-        unsigned unique:1;  ///< if this symbol comes from a label
-
-        struct const_expr *ce;
-
-        struct symbol *next;
-    } *symbol;
-    struct reloc_node *reloc;
 };
 
 struct element_list {

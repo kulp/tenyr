@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "common.h"
 #include "parser_global.h"
 #include "parser.h"
 #include "asm.h"

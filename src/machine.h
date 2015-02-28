@@ -2,6 +2,7 @@
 #define MACHINE_H_
 
 #include <stdint.h>
+#include <stddef.h>
 
 struct machine_state {
     size_t devices_count;   ///< how many device slots are used
