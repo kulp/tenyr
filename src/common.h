@@ -44,16 +44,7 @@ extern void (* NORETURN fatal_)(int code, const char *file, int line, const char
 extern void (*debug_)(int level, const char *file, int line, const char *func,
     const char *fmt, ...);
 
-// represents a most basic linked list, used for collecting nodes with twalk
-struct todo_node  {
-    void *what;
-    struct todo_node *next;
-};
-
 typedef int cmp(const void *, const void*);
-typedef void traverse(const void *node, VISIT order, int level);
-
-int tree_destroy(struct todo_node **todo, void **tree, traverse *trav, cmp *comp);
 
 static inline char *strcopy(char *dest, const char *src, size_t sz)
 {
