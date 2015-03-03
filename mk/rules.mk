@@ -30,6 +30,18 @@ LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 	@$(MAKESTEP) "[ LD ] $@"
 	$(SILENCE)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
+lib%$(DYLIB_SUFFIX): %.cc
+	@$(MAKESTEP) "[ DYLD-CXX ] $@"
+	$(SILENCE)$(LINK.cc) -o $@ $^
+
+%,dy.o: %.c
+	@$(MAKESTEP) "[ DYCC ] $(<F)"
+	$(SILENCE)$(COMPILE.c) -o $@ $<
+
+lib%$(DYLIB_SUFFIX): %,dy.o
+	@$(MAKESTEP) "[ DYLD ] $@"
+	$(SILENCE)$(LINK.c) -shared -o $@ $^ $(LDLIBS)
+
 %.h %.c: %.l
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
 	$(SILENCE)$(FLEX) --header-file=$*.h -o $*.c $<

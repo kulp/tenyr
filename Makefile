@@ -126,14 +126,5 @@ coverage: LDFLAGS += --coverage
 install local-install uninstall doc gzip zip coverage check check_sw check_hw check_sim check_compile dogfood: all
 	$(MAKE) -f $(TOP)/mk/aux.mk $@
 
-##############################################################################
-
-plugin,dy.o pluginimpl,dy.o $(PDEVOBJS): %,dy.o: %.c
-	@$(MAKESTEP) "[ DYCC ] $(<F)"
-	$(SILENCE)$(COMPILE.c) -o $@ $<
-
-$(PDEVLIBS): lib%$(DYLIB_SUFFIX): %,dy.o
-	@$(MAKESTEP) "[ DYLD ] $@"
-	$(SILENCE)$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 endif # BUILDDIR
 
