@@ -121,19 +121,14 @@ int run_instruction(struct sim_state *s, struct element *i)
 int run_sim(struct sim_state *s, struct run_ops *ops)
 {
     while (1) {
-        if (s->machine.regs[15] == (signed)0xffffffff) { // end condition
-            if (s->conf.abort) abort();
-            return -1;
-        }
-
         struct element i;
-        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word)) {
-            if (s->conf.abort) abort();
-        }
-
         if (ops->pre_insn)
             if (ops->pre_insn(s, &i))
                 return 0;
+
+        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word)) {
+            if (s->conf.abort) abort();
+        }
 
         if (run_instruction(s, &i))
             return 1;

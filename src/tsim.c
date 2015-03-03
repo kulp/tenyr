@@ -119,6 +119,11 @@ static int pre_insn(struct sim_state *s, struct element *i)
     if (s->conf.verbose > 0)
         fputs("\n", stdout);
 
+    if (s->machine.regs[15] == (signed)0xffffffff) { // end condition
+        if (s->conf.abort) abort();
+        return -1;
+    }
+
     return 0;
 }
 
