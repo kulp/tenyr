@@ -132,13 +132,15 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
         }
 
         if (ops->pre_insn)
-            ops->pre_insn(s, &i);
+            if (ops->pre_insn(s, &i))
+                return 0;
 
         if (run_instruction(s, &i))
             return 1;
 
         if (ops->post_insn)
-            ops->post_insn(s, &i);
+            if (ops->post_insn(s, &i))
+                return 0;
     }
 }
 
