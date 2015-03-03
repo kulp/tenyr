@@ -15,9 +15,9 @@ ifneq ($(SDL_VERSION),)
 NO_C11_WARN_OPTS := $(call cc_flag_supp,-Wno-c11-extensions)
 PDEVICES_SDL += sdlled sdlvga
 PDEVICES += $(PDEVICES_SDL)
-libsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): \
+libtenyrsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): \
     CPPFLAGS += $(shell sdl2-config --cflags) $(NO_C11_WARN_OPTS)
-libsdl%$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
+libtenyrsdl%$(DYLIB_SUFFIX): LDLIBS += $(shell sdl2-config --libs) -lSDL2_image
 $(PDEVICES_SDL:%=%,dy.o): PEDANTIC_FLAGS :=
 endif
 endif
@@ -104,7 +104,7 @@ tas.o asm.o tsim.o sim.o simif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-v
 # don't complain about unused state
 asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
-$(PDEVLIBS): lib%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o
+$(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter

@@ -30,7 +30,7 @@ LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 	@$(MAKESTEP) "[ LD ] $@"
 	$(SILENCE)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-lib%$(DYLIB_SUFFIX): %.cc
+libtenyr%$(DYLIB_SUFFIX): %.cc
 	@$(MAKESTEP) "[ DYLD-CXX ] $@"
 	$(SILENCE)$(LINK.cc) -o $@ $^
 
@@ -38,7 +38,7 @@ lib%$(DYLIB_SUFFIX): %.cc
 	@$(MAKESTEP) "[ DYCC ] $(<F)"
 	$(SILENCE)$(COMPILE.c) -o $@ $<
 
-lib%$(DYLIB_SUFFIX): %,dy.o
+libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	@$(MAKESTEP) "[ DYLD ] $@"
 	$(SILENCE)$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 

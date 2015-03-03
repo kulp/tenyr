@@ -45,7 +45,7 @@ int plugin_load(const char *path, const char *base,
             if (strchr(implname, PATH_SEPARATOR_CHAR)) {
                 implpath = implname;
             } else {
-                snprintf(buf, sizeof buf, ".%clib%s"DYLIB_SUFFIX,
+                snprintf(buf, sizeof buf, ".%clibtenyr%s"DYLIB_SUFFIX,
                         PATH_SEPARATOR_CHAR, implname);
                 buf[sizeof buf - 1] = 0;
                 implpath = buf;
