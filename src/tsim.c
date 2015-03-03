@@ -177,20 +177,15 @@ DEVICE_RECIPE_TMPL(prealloc,      ram_add_device)
 DEVICE_RECIPE_TMPL(sparse  ,sparseram_add_device)
 DEVICE_RECIPE_TMPL(serial  ,   serial_add_device)
 
-static int run_recipe(struct sim_state *s, recipe r)
-{
-    return r(s);
-}
-
 static int run_recipes(struct sim_state *s)
 {
     if (s->conf.run_defaults) {
-        #define RUN_RECIPE(Recipe) run_recipe(s, recipe_##Recipe);
+        #define RUN_RECIPE(Recipe) recipe_##Recipe(s);
         DEFAULT_RECIPES(RUN_RECIPE);
     }
 
     list_foreach(recipe_book, b, s->recipes) {
-        run_recipe(s, b->recipe);
+        b->recipe(s);
         free(b);
     }
 
