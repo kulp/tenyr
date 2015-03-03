@@ -68,16 +68,14 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     int32_t *w = arrow_right ? rhs : Z  ;
 
     if (loading) {
-        if (s->dispatch_op(s, OP_DATA_READ, *r, value)) {
-            if (s->conf.abort) abort();
-        }
+        if (s->dispatch_op(s, OP_DATA_READ, *r, value))
+            return -1;
     } else
         *value = *r;
 
     if (storing) {
-        if (s->dispatch_op(s, OP_WRITE, *w, value)) {
-            if (s->conf.abort) abort();
-        }
+        if (s->dispatch_op(s, OP_WRITE, *w, value))
+            return -1;
     } else if (w != &s->machine.regs[0])  // throw away write to reg 0
         *w = *value;
 
@@ -112,10 +110,8 @@ int run_instruction(struct sim_state *s, struct element *i)
     }
 
     do_op(op, g->p, &rhs, s->machine.regs[g->x], Y, imm);
-    do_common(s, &s->machine.regs[g->z], &rhs, &value, g->dd == 3,
+    return do_common(s, &s->machine.regs[g->z], &rhs, &value, g->dd == 3,
             g->dd == 1 || g->dd == 2, g->dd == 1);
-
-    return 0;
 }
 
 int run_sim(struct sim_state *s, struct run_ops *ops)
@@ -126,9 +122,8 @@ int run_sim(struct sim_state *s, struct run_ops *ops)
             if (ops->pre_insn(s, &i))
                 return 0;
 
-        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word)) {
-            if (s->conf.abort) abort();
-        }
+        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word))
+            return -1;
 
         if (run_instruction(s, &i))
             return 1;

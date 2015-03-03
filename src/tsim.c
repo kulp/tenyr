@@ -17,7 +17,6 @@
 #include <search.h>
 
 #define RECIPES(_) \
-    _(abort   , "abort() on illegal element or memory address") \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
@@ -94,12 +93,6 @@ static int usage(const char *me)
     return 0;
 }
 
-static int recipe_abort(struct sim_state *s)
-{
-    s->conf.abort = 1;
-    return 0;
-}
-
 static int pre_insn(struct sim_state *s, struct element *i)
 {
     if (s->conf.verbose > 0)
@@ -119,10 +112,8 @@ static int pre_insn(struct sim_state *s, struct element *i)
     if (s->conf.verbose > 0)
         fputs("\n", stdout);
 
-    if (s->machine.regs[15] == (signed)0xffffffff) { // end condition
-        if (s->conf.abort) abort();
+    if (s->machine.regs[15] == (signed)0xffffffff) // end condition
         return -1;
-    }
 
     return 0;
 }
