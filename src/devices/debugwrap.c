@@ -35,7 +35,7 @@ static int debugwrap_op(void *cookie, int op, uint32_t addr,
     struct debugwrap_state *debugwrap = cookie;
 
     debugwrap->wrapped->ops.op(debugwrap->wrapped->cookie, op, addr, data);
-    printf("%-5s @ 0x%08x = %#x\n", (op == OP_WRITE) ? "write" : "read", addr, *data);
+    printf("%-5s @ 0x%08x = 0x%08x\n", (op == OP_WRITE) ? "write" : "read", addr, *data);
 
     return 0;
 }
