@@ -20,6 +20,7 @@ enum memory_op { OP_INSN_READ=0, OP_DATA_READ=1, OP_WRITE=2 };
 
 struct recipe_book {
     recipe *recipe;
+    const char *name;
     struct recipe_book *next;
 };
 

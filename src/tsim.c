@@ -156,7 +156,7 @@ static int recipe_plugin(struct sim_state *s)
     int result = s->plugins_loaded ||
         (s->plugins_loaded = !plugin_load(buf, "plugin", &s->plugin_cookie, plugin_success, s));
     free(buf);
-    return result;
+    return !result;
 }
 
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \
@@ -181,7 +181,8 @@ static int run_recipes(struct sim_state *s)
     }
 
     list_foreach(recipe_book, b, s->recipes) {
-        b->recipe(s);
+        if (b->recipe(s))
+            fatal(PRINT_ERRNO, "Running recipe `%s` failed", b->name);
         free(b);
     }
 
@@ -215,6 +216,7 @@ static int add_recipe(struct sim_state *s, const char *name)
         struct recipe_book *n = malloc(sizeof *n);
         n->next = s->recipes;
         n->recipe = r->recipe;
+        n->name = r->name;
         s->recipes = n;
 
         return 0;
