@@ -50,6 +50,7 @@ endif
 
 ifneq ($(GCOV),)
  CFLAGS  += --coverage -O0
+ CXXFLAGS  += --coverage -O0
  LDFLAGS += --coverage -O0
 endif
 
