@@ -46,8 +46,11 @@ static int sparseram_init(struct plugin_cookie *pcookie, void *cookie)
 static int sparseram_fini(void *cookie)
 {
     struct sparseram_state *sparseram = cookie;
-    while (sparseram->mem)
-        tdelete(*(void**)sparseram->mem, &sparseram->mem, tree_compare);
+    while (sparseram->mem) {
+        struct ram_element **np = sparseram->mem, *p  = *np;
+        tdelete(p, &sparseram->mem, tree_compare);
+        free(p);
+    }
     free(sparseram);
 
     return 0;
