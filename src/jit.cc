@@ -81,37 +81,36 @@ static inline void create_fetch(X86Compiler &cc, X86GpVar &cookie, X86GpVar &add
     call->setRet(0, data);
 }
 
-static void buildOp(X86Compiler &cc, int op, X86GpVar tm[], X86GpVar &A, X86GpVar &B, X86GpVar &C)
+static void buildOp(X86Compiler &cc, int op, X86GpVar &tmp, X86GpVar &A, X86GpVar &B, X86GpVar &C)
 {
     switch (op) {
-        case OP_ADD               : cc.add (A, B);                      break;
-        case OP_SUBTRACT          : cc.sub (A, B);                      break;
-
-        case OP_BITWISE_ANDN      : cc.not_(B); /* FALLTHROUGH */
-        case OP_BITWISE_AND       : cc.and_(A, B);                      break;
-        case OP_BITWISE_ORN       : cc.not_(B); /* FALLTHROUGH */
-        case OP_BITWISE_OR        : cc.or_ (A, B);                      break;
-        case OP_BITWISE_XOR       : cc.xor_(A, B);                      break;
-        case OP_MULTIPLY          : cc.imul(A, B);                      break;
+        case OP_ADD             : cc.add (A, B);    break;
+        case OP_SUBTRACT        : cc.sub (A, B);    break;
+        case OP_BITWISE_ANDN    : cc.not_(B);       /* FALLTHROUGH */
+        case OP_BITWISE_AND     : cc.and_(A, B);    break;
+        case OP_BITWISE_ORN     : cc.not_(B);       /* FALLTHROUGH */
+        case OP_BITWISE_OR      : cc.or_ (A, B);    break;
+        case OP_BITWISE_XOR     : cc.xor_(A, B);    break;
+        case OP_MULTIPLY        : cc.imul(A, B);    break;
 
         case OP_SHIFT_RIGHT_LOGIC :
             cc.shr(A, B);
             cc.and_(B, Imm(~31));
-            cc.mov(tm[0], Imm(0));
-            cc.cmovnz(A, tm[0]);    // zeros if shift-amount is larger than 31
+            cc.mov(tmp, Imm(0));
+            cc.cmovnz(A, tmp);    // zeros if shift-amount is larger than 31
             break;
         case OP_SHIFT_RIGHT_ARITH :
-            cc.mov(tm[0], B);
-            cc.and_(tm[0], Imm(~31));
-            cc.mov(tm[0], 31);
-            cc.cmovnz(B, tm[0]);    // convert to a shift by 31 if > 31
+            cc.mov(tmp, B);
+            cc.and_(tmp, Imm(~31));
+            cc.mov(tmp, 31);
+            cc.cmovnz(B, tmp);    // convert to a shift by 31 if > 31
             cc.sar(A, B);
             break;
         case OP_SHIFT_LEFT        :
             cc.sal(A, B);
             cc.and_(B, Imm(~31));
-            cc.mov(tm[0], Imm(0));
-            cc.cmovnz(A, tm[0]);    // zeros if shift-amount is larger than 31
+            cc.mov(tmp, Imm(0));
+            cc.cmovnz(A, tmp);    // zeros if shift-amount is larger than 31
             break;
 
         case OP_PACK              :
@@ -129,13 +128,13 @@ static void buildOp(X86Compiler &cc, int op, X86GpVar tm[], X86GpVar &A, X86GpVa
         case OP_COMPARE_LT        : /* FALLTHROUGH */
         case OP_COMPARE_EQ        : /* FALLTHROUGH */
         case OP_COMPARE_GE        :
-            cc.mov(tm[0], Imm(-1));
+            cc.mov(tmp, Imm(-1));
             cc.cmp(A, B);
             cc.mov(A, Imm(0)); // don't use xor, it clears the flags we need
             switch (op) {
-                case OP_COMPARE_LT: cc.cmovl (A, tm[0]); break;
-                case OP_COMPARE_EQ: cc.cmove (A, tm[0]); break;
-                case OP_COMPARE_GE: cc.cmovge(A, tm[0]); break;
+                case OP_COMPARE_LT: cc.cmovl (A, tmp); break;
+                case OP_COMPARE_EQ: cc.cmove (A, tmp); break;
+                case OP_COMPARE_GE: cc.cmovge(A, tmp); break;
             }
             break;
 
@@ -147,13 +146,11 @@ static void buildOp(X86Compiler &cc, int op, X86GpVar tm[], X86GpVar &A, X86GpVa
 static int buildInstruction(X86Compiler &cc, X86GpVar &ck, X86GpVar &regs,
         const int32_t &instruction, int32_t offset)
 {
-    X86GpVar tm[] = {
-        X86GpVar(cc, kVarTypeInt32, "temp0"),
-    };
-    X86GpVar x(cc, kVarTypeInt32, "x");
-    X86GpVar y(cc, kVarTypeInt32, "y");
-    X86GpVar i(cc, kVarTypeInt32, "i");
     X86GpVar *a, *b, *c;
+    X86GpVar tmp(cc, kVarTypeInt32, "tmp"),
+               x(cc, kVarTypeInt32, "x"),
+               y(cc, kVarTypeInt32, "y"),
+               i(cc, kVarTypeInt32, "i");
 
     union insn_or_data::insn &u = *(union insn_or_data::insn *)&instruction;
     struct insn_or_data::insn::instruction_type012 &t = u.type012;
@@ -196,14 +193,14 @@ static int buildInstruction(X86Compiler &cc, X86GpVar &ck, X86GpVar &regs,
     // TODO don't do operations that are identity operations with *a
     // TODO don't load registers unless necessary
 
-    buildOp(cc, op, tm, *a, *b, *c);
+    buildOp(cc, op, tmp, *a, *b, *c);
     cc.add(*a, *c);
 
     switch (t.dd) {
-        case 0:                                  if (t.z) cc.mov(Reg(t.z),     *a); break;
-        case 1: cc.mov(tm[0], Reg(t.z));         create_store(cc, ck,   *a, tm[0]); break;
-        case 2: cc.mov(tm[0], Reg(t.z));         create_store(cc, ck,   tm[0], *a); break;
-        case 3: create_fetch(cc, ck, *a, tm[0]); if (t.z) cc.mov(Reg(t.z),  tm[0]); break;
+        case 0:                                if (t.z) cc.mov(Reg(t.z),  *a); break;
+        case 1: cc.mov(tmp, Reg(t.z));         create_store(cc, ck,  *a, tmp); break;
+        case 2: cc.mov(tmp, Reg(t.z));         create_store(cc, ck,  tmp, *a); break;
+        case 3: create_fetch(cc, ck, *a, tmp); if (t.z) cc.mov(Reg(t.z), tmp); break;
     }
 
     return t.z == 15;
