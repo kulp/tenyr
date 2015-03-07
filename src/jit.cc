@@ -93,41 +93,41 @@ static void buildOp(X86Compiler &cc, int op, X86GpVar &tmp, X86GpVar &A, X86GpVa
         case OP_BITWISE_XOR     : cc.xor_(A, B);    break;
         case OP_MULTIPLY        : cc.imul(A, B);    break;
 
-        case OP_SHIFT_RIGHT_LOGIC :
+        case OP_SHIFT_RIGHT_LOGIC:
             cc.shr(A, B);
             cc.and_(B, Imm(~31));
             cc.mov(tmp, Imm(0));
             cc.cmovnz(A, tmp);    // zeros if shift-amount is larger than 31
             break;
-        case OP_SHIFT_RIGHT_ARITH :
+        case OP_SHIFT_RIGHT_ARITH:
             cc.mov(tmp, B);
             cc.and_(tmp, Imm(~31));
             cc.mov(tmp, 31);
             cc.cmovnz(B, tmp);    // convert to a shift by 31 if > 31
             cc.sar(A, B);
             break;
-        case OP_SHIFT_LEFT        :
+        case OP_SHIFT_LEFT:
             cc.sal(A, B);
             cc.and_(B, Imm(~31));
             cc.mov(tmp, Imm(0));
             cc.cmovnz(A, tmp);    // zeros if shift-amount is larger than 31
             break;
 
-        case OP_PACK              :
+        case OP_PACK:
             cc.shl (A, Imm(12));
             cc.and_(B, Imm(0xfff));
             cc.or_ (A, B);
             break;
 
-        case OP_TEST_BIT          :
+        case OP_TEST_BIT:
             cc.bt(A, B);
             cc.mov(A, Imm(0));
             cc.sbb(A, A);
             break;
 
-        case OP_COMPARE_LT        : /* FALLTHROUGH */
-        case OP_COMPARE_EQ        : /* FALLTHROUGH */
-        case OP_COMPARE_GE        :
+        case OP_COMPARE_LT: /* FALLTHROUGH */
+        case OP_COMPARE_EQ: /* FALLTHROUGH */
+        case OP_COMPARE_GE:
             cc.mov(tmp, Imm(-1));
             cc.cmp(A, B);
             cc.mov(A, Imm(0)); // don't use xor, it clears the flags we need
