@@ -48,6 +48,7 @@ struct sim_state {
 
     struct machine_state machine;
     int (*run_sim)(struct sim_state *s, struct run_ops *ops, void **run_data, void *ops_data);
+    uintmax_t insns_executed;
 };
 
 struct run_ops {

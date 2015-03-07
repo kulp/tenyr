@@ -15,6 +15,7 @@
 #include <string.h>
 #include <strings.h>
 #include <search.h>
+#include <inttypes.h>
 
 #define RECIPES(_) \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
@@ -131,6 +132,7 @@ static int post_insn(struct sim_state *s, struct element *i, void *ud)
 {
     (void)i;
     (void)ud;
+    s->insns_executed++;
     return devices_dispatch_cycle(s);
 }
 
@@ -428,6 +430,9 @@ int main(int argc, char *argv[])
     devices_teardown(s);
 
     param_destroy(s->conf.params);
+
+    if (s->conf.debugging > 0)
+        fprintf(stderr, "Instructions executed: %"PRIdMAX"\n", s->insns_executed);
 
     return rc;
 }

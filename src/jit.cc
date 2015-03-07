@@ -30,7 +30,7 @@ struct basic_block {
     int run_count;
     unsigned complete;
     int32_t base;
-    int32_t end;
+    uint32_t len;
     Block *compiled;
     int32_t *cache;
 };
@@ -236,7 +236,7 @@ static int pre_insn_hook(struct sim_state *s, struct element *i, void *ud)
 {
     struct ops_state *o = (struct ops_state*)ud;
     if (!o->curr_bb) {
-        struct basic_block nb = { 0, 0, i->insn.reladdr, -1, NULL, NULL };
+        struct basic_block nb = { 0, 0, i->insn.reladdr, 0, NULL, NULL };
         struct basic_block **f = (struct basic_block**)tsearch(&nb, &o->basic_blocks, bb_by_base);
         if (*f == &nb) {
             *f = (struct basic_block *)malloc(sizeof **f);
@@ -250,15 +250,14 @@ static int pre_insn_hook(struct sim_state *s, struct element *i, void *ud)
     if (bb.compiled)
         return 1; // indicate to jit_run_sim that JIT should be used
 
-    size_t len = (uint32_t)bb.end - (uint32_t)bb.base + 1;
     if (bb.run_count == JIT_RUN_COUNT_THRESHOLD) {
         // Cache the instructions we receive so they are ready for compilation
         if (!bb.cache)
-            bb.cache = new int32_t[len];
+            bb.cache = new int32_t[bb.len];
         bb.cache[(uint32_t)i->insn.reladdr - (uint32_t)bb.base] = i->insn.u.word;
     } else if (bb.run_count > JIT_RUN_COUNT_THRESHOLD) {
         assert(bb.complete);
-        bb.compiled = jit_gen_block(o->js, len, bb.cache);
+        bb.compiled = jit_gen_block(o->js, bb.len, bb.cache);
         delete [] bb.cache;
         return 1; // indicate to jit_run_sim that JIT should be used
     }
@@ -272,10 +271,12 @@ static int post_insn_hook(struct sim_state *s, struct element *i, void *ud)
 
     int dd = i->insn.u.typeany.dd;
     if ((dd == 0 || dd == 3) && i->insn.u.typeany.z == 0xf) { // P is being updated
-        o->curr_bb->end = i->insn.reladdr;
-        o->curr_bb->complete = 1;
-        o->curr_bb->run_count++;
+        struct basic_block &bb = *o->curr_bb;
+        bb.len = (uint32_t)i->insn.reladdr - (uint32_t)bb.base + 1;
+        bb.complete = 1;
+        bb.run_count++;
         o->curr_bb = NULL;
+        o->ops.post_insn(s, i, o->nested_ops_data); // allow hook to run one last time
         return 1;
     }
 
@@ -309,6 +310,7 @@ extern "C" int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_
     do {
         if (o->curr_bb && o->curr_bb->compiled) {
             o->curr_bb->compiled(s, s->machine.regs);
+            s->insns_executed += o->curr_bb->len;
             o->curr_bb->run_count++;
             o->curr_bb = NULL;
         }
