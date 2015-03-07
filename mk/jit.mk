@@ -21,6 +21,8 @@ $(ASMJIT_OBJS): CXXFLAGS := $(filter-out -W%,$(CXXFLAGS))
 
 libtenyrjit$(DYLIB_SUFFIX): CPPFLAGS += -I$(ASMJIT_SRC)
 libtenyrjit$(DYLIB_SUFFIX): LDFLAGS  += -fPIC -shared
+# Compensate for old glibc versions with -lrt
+libtenyrjit$(DYLIB_SUFFIX): LDLIBS_Linux += -lrt
 libtenyrjit$(DYLIB_SUFFIX): $(ASMJIT_OBJS)
 
 CLEAN_FILES += libtenyrjit$(DYLIB_SUFFIX)

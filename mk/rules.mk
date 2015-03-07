@@ -40,7 +40,7 @@ LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 
 libtenyr%$(DYLIB_SUFFIX): %.cc
 	@$(MAKESTEP) "[ DYLD-CXX ] $@"
-	$(SILENCE)$(LINK.cc) -o $@ $^
+	$(SILENCE)$(LINK.cc) -o $@ $^ $(LDLIBS)
 
 %,dy.o: %.c
 	@$(MAKESTEP) "[ DYCC ] $(<F)"

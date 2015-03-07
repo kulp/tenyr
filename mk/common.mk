@@ -24,6 +24,9 @@ INCLUDE_OS = $(TOP)/src/os/$(OS) $(TOP)/src/os/default
 include $(TOP)/mk/os/default.mk
 -include $(TOP)/mk/os/$(OS).mk
 
+LDFLAGS += $(LDFLAGS_$(OS))
+LDLIBS  += $(LDLIBS_$(OS))
+
 CPPFLAGS += -D"PATH_SEPARATOR_CHAR=$(PATH_SEP_CHAR)"
 
 ifeq ($(_32BIT),1)
