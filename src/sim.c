@@ -145,7 +145,7 @@ int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
         void *ud, FILE *in, int load_address)
 {
     struct element i;
-    while (f->in(in, &i, ud) > 0) {
+    while (f->in(in, &i, ud) >= 0) {
         if (dispatch(sud, OP_WRITE, load_address + i.insn.reladdr, &i.insn.u.word))
             return -1;
     }
