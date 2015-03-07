@@ -64,8 +64,8 @@ int plugin_load(const char *path, const char *base,
 #else
             if (!libhandle && path) {
                 char buf[256];
-                snprintf(buf, sizeof buf, "%s%c%s",
-                         path, PATH_SEPARATOR_CHAR, implpath);
+                snprintf(buf, sizeof buf, "%s%s",
+                         path, implpath);
                 libhandle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
             }
 

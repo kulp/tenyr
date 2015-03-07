@@ -21,6 +21,7 @@
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
     _(plugin  , "load plugins specified through param mechanism") \
+    _(jit     , "use a JIT compiler (usually faster, but no -v supported)") \
     //
 
 #define DEFAULT_RECIPES(_) \
@@ -33,6 +34,16 @@
 
 #define UsageDesc(Name,Desc) \
     "  " #Name ": " Desc "\n"
+
+struct sim_state;
+
+typedef int recipe(struct sim_state *s);
+
+struct recipe_book {
+    recipe *recipe;
+    const char *name;
+    struct recipe_book *next;
+};
 
 static const char shortopts[] = "@:a:df:np:r:s:vhV";
 
@@ -93,8 +104,9 @@ static int usage(const char *me)
     return 0;
 }
 
-static int pre_insn(struct sim_state *s, struct element *i)
+static int pre_insn(struct sim_state *s, struct element *i, void *ud)
 {
+    (void)ud;
     if (s->conf.verbose > 0)
         printf("IP = 0x%08x\t", s->machine.regs[15]);
 
@@ -112,15 +124,13 @@ static int pre_insn(struct sim_state *s, struct element *i)
     if (s->conf.verbose > 0)
         fputs("\n", stdout);
 
-    if (s->machine.regs[15] == (signed)0xffffffff) // end condition
-        return -1;
-
     return 0;
 }
 
-static int post_insn(struct sim_state *s, struct element *i)
+static int post_insn(struct sim_state *s, struct element *i, void *ud)
 {
     (void)i;
+    (void)ud;
     return devices_dispatch_cycle(s);
 }
 
@@ -147,16 +157,47 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
     return rc;
 }
 
+static char *build_path(struct sim_state *s, const char *suff)
+{
+    char *dir = strdup(s->conf.tsim_path);
+    char *solidus = strrchr(dir, PATH_SEPARATOR_CHAR);
+    if (solidus)
+        solidus[1] = '\0';
+    if (!suff)
+        return dir;
+
+    size_t dir_len = solidus ? (solidus - dir + 1) : 0;
+    size_t len = dir_len + strlen(suff) + 1;
+    char *buf = malloc(len);
+    snprintf(buf, len, "%slibtenyrjit"DYLIB_SUFFIX, solidus ? dir : "");
+    free(dir);
+    return buf;
+}
+
 static int recipe_plugin(struct sim_state *s)
 {
-    char *buf = strdup(s->conf.tsim_path);
-    char *solidus = strrchr(buf, PATH_SEPARATOR_CHAR);
-    if (solidus)
-        *solidus = '\0';
+    char *buf = build_path(s, NULL);
     int result = s->plugins_loaded ||
         (s->plugins_loaded = !plugin_load(buf, "plugin", &s->plugin_cookie, plugin_success, s));
     free(buf);
     return !result;
+}
+
+static int recipe_jit(struct sim_state *s)
+{
+    char *buf = build_path(s, "libtenyrjit"DYLIB_SUFFIX);
+    void *libhandle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
+    free(buf);
+    if (!libhandle)
+        return 1;
+
+    void *ptr = dlsym(libhandle, "jit_run_sim");
+    if (!ptr)
+        return 1;
+
+    s->run_sim = ALIASING_CAST(sim_runner, ptr);
+
+    return 0;
 }
 
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \
@@ -318,6 +359,7 @@ int main(int argc, char *argv[])
                 .param_set = plugin_param_set,
             },
         },
+        .run_sim = interp_run_sim,
     }, *s = &_s;
 
     param_init(&s->conf.params);
@@ -371,7 +413,8 @@ int main(int argc, char *argv[])
         .post_insn = post_insn,
     };
 
-    run_sim(s, &ops);
+    void *run_ud = NULL;
+    s->run_sim(s, &ops, &run_ud, NULL);
 
     if (in)
         fclose(in);

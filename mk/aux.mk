@@ -83,6 +83,9 @@ coverage_html_%: coverage.info.%
 
 check: check_sw check_hw
 check_sw: check_args check_compile check_sim check_forth dogfood
+ifneq ($(JIT),0)
+check_sw: check_jit
+endif
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
@@ -167,22 +170,27 @@ check_sim check_sim_demo check_sim_op check_sim_run: export context=sim
 check_sim_demo check_sim_op check_sim_run: tsim$(EXE_SUFFIX)
 check_sim: check_sim_demo check_sim_op check_sim_run check_sim_sdl
 
+check_jit check_jit_demo check_jit_op check_jit_run: export context=jit
+check_jit check_jit_demo check_jit_op check_jit_run: export tsim_FLAGS=-rjit
+check_jit_demo check_jit_op check_jit_run: tsim$(EXE_SUFFIX)
+check_jit: check_jit_demo check_jit_op check_jit_run check_jit_sdl
+
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre PERIODS.mk
 
 check_hw_icarus_demo: export run=$(MAKE) $S -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
-check_sim_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(TOP)/ex/$*_demo.texe
+check_sim_demo check_jit_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
-check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
-check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
-check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
+check_sim_demo check_jit_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
+check_sim_op   check_jit_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
+check_sim_run  check_jit_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 
 ifeq ($(SDL),0)
-check_sim_sdl: ;
+check_sim_sdl check_jit_sdl: ;
 else
-check_sim_sdl: export SDL_VIDEODRIVER=dummy
-check_sim_sdl: $(TOP)/ex/bm_mults.texe
-	@$(MAKESTEP) -n "Running SDL test $(<F) ... "
+check_sim_sdl check_jit_sdl: export SDL_VIDEODRIVER=dummy
+check_sim_sdl check_jit_sdl: $(TOP)/ex/bm_mults.texe
+	@$(MAKESTEP) -n "Running SDL test $(<F) ($(subst _sdl,,$(@:check_%=%))) ... "
 	$(SILENCE)(cd $(TOP) ; $(abspath $(BUILDDIR))/tsim -n --recipe=prealloc -@ $(TOP)/plugins/sdl.rcp $<) && $(ECHO) ok
 endif
 
@@ -195,9 +203,9 @@ endif
 PERIODS.mk: $(OPS:%=$(TOP)/test/op/%.texe) $(DEMOS:%=$(TOP)/ex/%_demo.texe) $(RUNS:%=$(TOP)/test/run/%.texe) tsim$(EXE_SUFFIX)
 	$(SILENCE)for f in $(filter-out tsim$(EXE_SUFFIX),$^) ; do echo PERIODS_`basename $${f/.texe/}`=`$(BUILDDIR)/tsim$(EXE_SUFFIX) -vv $$f | wc -l | while read b ; do dc -e "$$b 20*p" ; done` ; done > $@
 
-check_sim_op: export stem=op
-check_sim_run: export stem=run
-check_sim_op check_sim_run: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) -vvvv $(TOP)/test/$(stem)/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_op check_jit_op: export stem=op
+check_sim_run check_jit_run: export stem=run
+check_sim_op check_sim_run check_jit_op check_jit_run: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) $(tsim_FLAGS) -vvvv $(TOP)/test/$(stem)/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) $S -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 

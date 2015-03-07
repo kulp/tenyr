@@ -7,3 +7,6 @@
 [submodule "wiki"]
 	path = wiki
 	url = https://github.com/kulp/tenyr.wiki.git
+[submodule "3rdparty/asmjit"]
+	path = 3rdparty/asmjit
+	url = https://github.com/kulp/asmjit.git

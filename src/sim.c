@@ -82,8 +82,9 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     return 0;
 }
 
-int run_instruction(struct sim_state *s, struct element *i)
+int run_instruction(struct sim_state *s, struct element *i, void *run_data)
 {
+    (void)run_data;
     int32_t *ip = &s->machine.regs[15];
     int32_t rhs = 0;
     uint32_t Y, imm, value;
@@ -114,22 +115,28 @@ int run_instruction(struct sim_state *s, struct element *i)
             g->dd == 1 || g->dd == 2, g->dd == 1);
 }
 
-int run_sim(struct sim_state *s, struct run_ops *ops)
+int interp_run_sim(struct sim_state *s, struct run_ops *ops, void **run_data, void *ops_data)
 {
+    *run_data = NULL; // this runner needs no data yet
     while (1) {
-        struct element i;
-        if (ops->pre_insn)
-            if (ops->pre_insn(s, &i))
-                return 0;
+        if (s->machine.regs[15] == (signed)0xffffffff) // end condition
+            return -1;
 
+        struct element i = { .insn.reladdr = 0 };
         if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word))
             return -1;
 
-        if (run_instruction(s, &i))
+        i.insn.reladdr = s->machine.regs[15];
+
+        if (ops->pre_insn)
+            if (ops->pre_insn(s, &i, ops_data))
+                return 0;
+
+        if (run_instruction(s, &i, *run_data))
             return 1;
 
         if (ops->post_insn)
-            if (ops->post_insn(s, &i))
+            if (ops->post_insn(s, &i, ops_data))
                 return 0;
     }
 }

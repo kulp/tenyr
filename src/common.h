@@ -72,7 +72,8 @@ typedef int cmp(const void *, const void*);
 static inline char *strcopy(char *dest, const char *src, size_t sz)
 {
     // Use memcpy() to copy past embedded NUL characters, but force NUL term
-    char *result = memcpy(dest, src, sz);
+    // Explicit cast to (char*) because this function is included in C++ code
+    char *result = (char*)memcpy(dest, src, sz);
     dest[sz - 1] = '\0';
     return result;
 }

@@ -7,24 +7,17 @@
 #include "plugin.h"
 #include "device.h"
 #include "param.h"
+#include "device.h"
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
 
-struct sim_state;
-
-typedef int recipe(struct sim_state *s);
-
 enum memory_op { OP_INSN_READ=0, OP_DATA_READ=1, OP_WRITE=2 };
 
-struct recipe_book {
-    recipe *recipe;
-    const char *name;
-    struct recipe_book *next;
-};
-
 typedef int op_dispatcher(void *ud, int op, uint32_t addr, uint32_t *data);
+
+struct run_ops;
 
 struct sim_state {
     struct {
@@ -54,19 +47,19 @@ struct sim_state {
     struct recipe_book *recipes;
 
     struct machine_state machine;
+    int (*run_sim)(struct sim_state *s, struct run_ops *ops, void **run_data, void *ops_data);
 };
 
 struct run_ops {
-    int (*pre_insn)(struct sim_state *s, struct element *i);
-    int (*post_insn)(struct sim_state *s, struct element *i);
+    int (*pre_insn)(struct sim_state *s, struct element *i, void *ud);
+    int (*post_insn)(struct sim_state *s, struct element *i, void *ud);
 };
 
-int run_instruction(struct sim_state *s, struct element *i);
-int run_sim(struct sim_state *s, struct run_ops *ops);
+typedef int sim_runner(struct sim_state *s, struct run_ops *ops, void **run_data, void *ops_data);
+extern sim_runner interp_run_sim;
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         void *fud, FILE *in, int load_address);
 
-// TODO convert this to an interrupt in the debugger
 #define breakpoint(...) \
     fatal(0, __VA_ARGS__)
 

@@ -86,11 +86,17 @@ all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
 else
 
+ifneq ($(JIT),0)
+include $(TOP)/mk/jit.mk
+endif
+
 all: $(TARGETS)
 
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
 tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
+
+tsim$(EXE_SUFFIX): LDFLAGS += -rdynamic
 
 asm.o: CFLAGS += -Wno-override-init
 
@@ -123,7 +129,7 @@ endif
 # non-atomically
 coverage: CFLAGS  += --coverage
 coverage: LDFLAGS += --coverage
-install local-install uninstall doc gzip zip coverage check check_sw check_hw check_sim check_compile dogfood: all
+install local-install uninstall doc gzip zip coverage check check_sw check_hw check_sim check_jit check_compile dogfood: all
 	$(MAKE) -f $(TOP)/mk/aux.mk $@
 
 endif # BUILDDIR

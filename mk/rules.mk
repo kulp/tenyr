@@ -25,6 +25,14 @@ COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 	@$(MAKESTEP) "[ CC ] $(<F)"
 	$(SILENCE)$(COMPILE.c) $(OUTPUT_OPTION) $<
 
+%.o: %.cpp
+	@$(MAKESTEP) "[ CXX ] $(<F)"
+	$(SILENCE)$(COMPILE.cc) $(OUTPUT_OPTION) $<
+
+%.o: %.cc
+	@$(MAKESTEP) "[ CXX ] $(<F)"
+	$(SILENCE)$(COMPILE.cc) $(OUTPUT_OPTION) $<
+
 LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"

@@ -13,14 +13,16 @@ typedef int map_op(void *cookie, int op, uint32_t addr, uint32_t *data);
 typedef int map_cycle(void *cookie);
 typedef int map_fini(void *cookie);
 
+struct device_ops {
+    map_init *init;
+    map_op *op;
+    map_cycle *cycle;
+    map_fini *fini;
+};
+
 struct device {
     uint32_t bounds[2]; // lower and upper memory bounds, inclusive
-    struct device_ops {
-        map_init *init;
-        map_op *op;
-        map_cycle *cycle;
-        map_fini *fini;
-    } ops;
+    struct device_ops ops;
     void *cookie;
 };
 

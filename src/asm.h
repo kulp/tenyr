@@ -37,7 +37,7 @@ extern const struct format tenyr_asm_formats[];
 extern const size_t tenyr_asm_formats_count;
 
 int make_format_list(int (*pred)(const struct format *), size_t flen,
-        const struct format fmts[flen], size_t len, char buf[len],
+        const struct format *fmts, size_t len, char *buf,
         const char *sep);
 
 struct parse_data;
