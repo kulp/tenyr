@@ -82,7 +82,7 @@ coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
 
 check: check_sw check_hw
-check_sw: check_args check_compile check_sim check_forth
+check_sw: check_args check_compile check_sim check_forth dogfood
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
