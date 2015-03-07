@@ -187,13 +187,19 @@ static int recipe_jit(struct sim_state *s)
 {
     char *buf = build_path(s, "libtenyrjit"DYLIB_SUFFIX);
     void *libhandle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
+    if (!libhandle) {
+        debug(0, "Failed to load `%s` - %s", buf, dlerror());
+        free(buf);
+        return 1;
+    }
     free(buf);
-    if (!libhandle)
-        return 1;
 
-    void *ptr = dlsym(libhandle, "jit_run_sim");
-    if (!ptr)
+    const char name[] = "jit_run_sim";
+    void *ptr = dlsym(libhandle, name);
+    if (!ptr) {
+        debug(0, "Failed to find symbol `%s` - %s", name, dlerror());
         return 1;
+    }
 
     s->run_sim = ALIASING_CAST(sim_runner, ptr);
 
