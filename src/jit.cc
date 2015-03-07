@@ -149,7 +149,6 @@ static int buildInstruction(X86Compiler &cc, X86GpVar &ck, X86GpVar &regs,
 {
     X86GpVar tm[] = {
         X86GpVar(cc, kVarTypeInt32, "temp0"),
-        X86GpVar(cc, kVarTypeInt32, "temp1"),
     };
     X86GpVar x(cc, kVarTypeInt32, "x");
     X86GpVar y(cc, kVarTypeInt32, "y");
@@ -222,18 +221,8 @@ extern "C" Block *jit_gen_block(void *cookie, int len, int32_t *instructions)
     c.setArg(0, ck);
     c.setArg(1, regs);
 
-    int updatedP = 0;
     for (int i = 0; i < len; i++)
-        updatedP |= buildInstruction(c, ck, regs, instructions[i], i);
-
-    if (!updatedP) {
-        // according to current rules, updatedP should always be true by the
-        // end of a basic block, so this block should never be executed
-        X86GpVar p(c, kVarTypeInt32, "P");
-        c.mov(p, Reg(15));
-        c.add(p, Imm(len));
-        c.mov(Reg(15), p);
-    }
+        buildInstruction(c, ck, regs, instructions[i], i);
 
     c.endFunc();
 
