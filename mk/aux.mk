@@ -168,11 +168,13 @@ tsim_FLAGS_interp =
 ifneq ($(JIT),0)
 tsim_FLAVOURS += jit
 tsim_FLAGS_jit = -rjit
+check_sim::
+	$(MAKE) -f $(TOP)/Makefile libtenyrjit$(DYLIB_SUFFIX)
 endif
 
 check_sim check_sim_demo check_sim_op check_sim_run: export context=sim,$(flavour)
 check_sim_demo check_sim_op check_sim_run: tsim$(EXE_SUFFIX)
-check_sim:
+check_sim::
 	$(foreach f,$(tsim_FLAVOURS),$(MAKE) -f $(makefile_path) check_sim_flavour flavour=$f tsim_FLAGS=$(tsim_FLAGS_$f) &&) true
 check_sim_flavour: check_sim_demo check_sim_op check_sim_run check_sim_sdl
 
