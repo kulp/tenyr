@@ -168,9 +168,8 @@ static int buildInstruction(X86Compiler &cc, X86GpVar &ck, X86GpVar &regs,
     }
 
     if (t.p == 3) {
-        cc.xor_(y, y);
-        cc.mov(i, Imm(SEXTEND32(MEDIUM_IMMEDIATE_BITWIDTH,v.imm)));
-        op = OP_BITWISE_OR;
+        a = &x;
+        cc.add(*a, Imm(SEXTEND32(MEDIUM_IMMEDIATE_BITWIDTH,v.imm)));
     } else {
         if (t.y) {
             cc.mov(y, Reg(t.y));
@@ -180,21 +179,20 @@ static int buildInstruction(X86Compiler &cc, X86GpVar &ck, X86GpVar &regs,
             cc.xor_(y, y);
         }
         cc.mov(i, Imm(SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,t.imm)));
-    }
 
-    switch (t.p) {
-        case 0: a = &x; b = &y; c = &i; break;
-        case 1: a = &x; b = &i; c = &y; break;
-        case 2: a = &i; b = &x; c = &y; break;
-        case 3: a = &x; b = &y; c = &i; break; // y is set to register A above
+        switch (t.p) {
+            case 0: a = &x; b = &y; c = &i; break;
+            case 1: a = &x; b = &i; c = &y; break;
+            case 2: a = &i; b = &x; c = &y; break;
+        }
+
+        buildOp(cc, op, tmp, *a, *b, *c);
+        cc.add(*a, *c);
     }
 
     // TODO don't store registers until we need to
     // TODO don't do operations that are identity operations with *a
     // TODO don't load registers unless necessary
-
-    buildOp(cc, op, tmp, *a, *b, *c);
-    cc.add(*a, *c);
 
     switch (t.dd) {
         case 0:                                if (t.z) cc.mov(Reg(t.z),  *a); break;
