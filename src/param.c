@@ -135,7 +135,7 @@ void param_destroy(struct param_state *pstate)
         param_free(&pstate->params[pstate->params_count]);
 
     free(pstate->params);
-    pstate->params_size = 0;
+    free(pstate);
 }
 
 static void param_free(struct param_entry *p)
@@ -146,7 +146,9 @@ static void param_free(struct param_entry *p)
     while (q) {
         if (q->free_value)
             free(q->value);
+        struct string_list *r = q;
         q = q->next;
+        free(r);
     }
 }
 
