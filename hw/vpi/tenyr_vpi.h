@@ -17,6 +17,16 @@ struct tenyr_sim_state {
         tenyr_sim_call *negedge;      ///< falling edge of clock
         tenyr_sim_call *apocalypse;   ///< end of sim
     } cb;
+    struct {
+        struct {
+            vpiHandle genesis, apocalypse;
+        } cb;
+        struct {
+            vpiHandle tenyr_load,
+                      tenyr_putchar,
+                      tenyr_getchar;
+        } tf;
+    } handle;
     void *extstate; ///< external state possibly used by tenyr_sim_cb's
 };
 
