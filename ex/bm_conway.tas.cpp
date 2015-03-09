@@ -92,9 +92,11 @@ flip_cols:
     n <- 'o' &  b
     b <- ' ' &~ b
     n <- b | n
-    c <- j
-    d <- k
-    call(get_real_offset)
+
+    // convert from inset coordinates to full coordinates
+    b <- j + OFFSET_ROWS
+    b <- b * COLS + k
+    b <- b + OFFSET_COLS
     n -> [b + i] // write to display
 
     k <- k - 1
@@ -176,12 +178,6 @@ neighbour_loop_cols:
 
     b <- m
     popall_ret(e,f,j,k,l,m,n)
-
-get_real_offset:
-    b <- c + OFFSET_ROWS
-    b <- b * COLS + d
-    b <- b + OFFSET_COLS
-    ret
 
 seed: .word 0x99999999
 
