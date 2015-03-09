@@ -13,6 +13,7 @@ vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
 
 TARGETS = \
     bsearch_demo.texe   \
+    bm_conway.texe      \
     bm_snake.texe       \
     bm_mults.texe       \
     compare.texe        \
@@ -47,10 +48,11 @@ bsearch_demo.texe: puts.to
 qsort_demo.texe: qsort.to puts.to memcpy.to
 irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
 parse_hex.texe: strtol.to
-bm_snake.texe: rand.to
+bm_snake.texe bm_conway.texe: rand.to
 bm_fib.texe bm_mults.texe: putnum.to
 clock.texe: sleep.to
 trailz_demo.texe: puts.to trailz.to
+bm_conway.texe: bm_conway_buffer.to
 
 $(patsubst %.tas.cpp,%.tas,$(CPP_FILES)): %.tas: $(TOP)/lib/common.th
 
