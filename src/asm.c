@@ -408,22 +408,50 @@ static int obj_err(void *ud)
 /*******************************************************************************
  * Raw format : raw binary data (host endian)
  */
+static int raw_init(FILE *stream, struct param_state *p, void **ud)
+{
+    int *offset = *ud = malloc(sizeof *offset);
+    *offset = 0;
+    return 0;
+}
+
 static int raw_in(FILE *stream, struct element *i, void *ud)
 {
-    return (fread(&i->insn.u.word, 4, 1, stream) == 1) ? 1 : -1;
+    int *offset = ud;
+    int rc = (fread(&i->insn.u.word, 4, 1, stream) == 1) ? 1 : -1;
+    i->insn.reladdr = (*offset)++;
+    return rc;
 }
 
 static int raw_out(FILE *stream, struct element *i, void *ud)
 {
+    int *offset = ud;
     int ok = 1;
-    if (i->insn.size > 0)
-        ok &= fwrite(&i->insn.u.word, sizeof i->insn.u.word, 1, stream) == 1;
+    static const int32_t zero = 0;
+    while (ok && i->insn.reladdr > *offset) {
+        if (fwrite(&zero, sizeof zero, 1, stream) != 1)
+            return -1;
+        ++*offset;
+    }
 
-    const int32_t zero = 0;
-    for (int c = 1; c < i->insn.size && ok; c++)
-        ok &= fwrite(&zero, sizeof zero, 1, stream) == 1;
+    if (i->insn.size > 0) {
+        if (fwrite(&i->insn.u.word, sizeof i->insn.u.word, 1, stream) != 1)
+            return -1;
+        ++*offset;
+    }
 
-    return ok ? 1 : -1;
+    for (int c = 1; c < i->insn.size && ok; c++, ++*offset)
+        if (fwrite(&zero, sizeof zero, 1, stream) != 1)
+            return -1;
+
+    return 1;
+}
+
+static int raw_fini(FILE *stream, void **ud)
+{
+    free(*ud);
+    *ud = NULL;
+    return 0;
 }
 
 /*******************************************************************************
@@ -544,7 +572,7 @@ const struct format tenyr_asm_formats[] = {
         .sym   = obj_sym,
         .reloc = obj_reloc,
         .err   = obj_err },
-    { "raw" , .in = raw_in , .out = raw_out  },
+    { "raw" , .init = raw_init , .in = raw_in , .out = raw_out , .fini = raw_fini  },
     { "text", .init = text_init, .in = text_in, .out = text_out },
     { "memh", .init = memh_init, .in = memh_in, .out = memh_out, .fini = memh_fini },
 };
