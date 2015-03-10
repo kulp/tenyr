@@ -81,7 +81,7 @@ static inline void create_fetch(X86Compiler &cc, X86GpVar &cookie, X86GpVar &add
     call->setRet(0, data);
 }
 
-static void buildOp(X86Compiler &cc, int op, X86GpVar &tmp, X86GpVar &A, X86GpVar &B, X86GpVar &C)
+static void buildOp(X86Compiler &cc, int op, X86GpVar &T, X86GpVar &A, X86GpVar &B, X86GpVar &C)
 {
     switch (op) {
         case OP_ADD             : cc.add (A, B);    break;
@@ -94,23 +94,23 @@ static void buildOp(X86Compiler &cc, int op, X86GpVar &tmp, X86GpVar &A, X86GpVa
         case OP_MULTIPLY        : cc.imul(A, B);    break;
 
         case OP_SHIFT_RIGHT_LOGIC:
-            cc.shr(A, B);
-            cc.and_(B, Imm(~31));
-            cc.mov(tmp, Imm(0));
-            cc.cmovnz(A, tmp);    // zeros if shift-amount is larger than 31
+            cc.shr   (A, B);
+            cc.and_  (B, Imm(~31));
+            cc.mov   (T, Imm(0));
+            cc.cmovnz(A, T);            // zeros if shift-amount is larger than 31
             break;
         case OP_SHIFT_RIGHT_ARITH:
-            cc.mov(tmp, B);
-            cc.and_(tmp, Imm(~31));
-            cc.mov(tmp, 31);
-            cc.cmovnz(B, tmp);    // convert to a shift by 31 if > 31
-            cc.sar(A, B);
+            cc.mov   (T, B);
+            cc.and_  (T, Imm(~31));
+            cc.mov   (T, 31);
+            cc.cmovnz(B, T);            // convert to a shift by 31 if > 31
+            cc.sar   (A, B);
             break;
         case OP_SHIFT_LEFT:
-            cc.sal(A, B);
-            cc.and_(B, Imm(~31));
-            cc.mov(tmp, Imm(0));
-            cc.cmovnz(A, tmp);    // zeros if shift-amount is larger than 31
+            cc.sal   (A, B);
+            cc.and_  (B, Imm(~31));
+            cc.mov   (T, Imm(0));
+            cc.cmovnz(A, T);            // zeros if shift-amount is larger than 31
             break;
 
         case OP_PACK:
@@ -120,7 +120,7 @@ static void buildOp(X86Compiler &cc, int op, X86GpVar &tmp, X86GpVar &A, X86GpVa
             break;
 
         case OP_TEST_BIT:
-            cc.bt(A, B);
+            cc.bt (A, B);
             cc.mov(A, Imm(0));
             cc.sbb(A, A);
             break;
@@ -128,13 +128,13 @@ static void buildOp(X86Compiler &cc, int op, X86GpVar &tmp, X86GpVar &A, X86GpVa
         case OP_COMPARE_LT: /* FALLTHROUGH */
         case OP_COMPARE_EQ: /* FALLTHROUGH */
         case OP_COMPARE_GE:
-            cc.mov(tmp, Imm(-1));
+            cc.mov(T, Imm(-1));
             cc.cmp(A, B);
             cc.mov(A, Imm(0)); // don't use xor, it clears the flags we need
             switch (op) {
-                case OP_COMPARE_LT: cc.cmovl (A, tmp); break;
-                case OP_COMPARE_EQ: cc.cmove (A, tmp); break;
-                case OP_COMPARE_GE: cc.cmovge(A, tmp); break;
+                case OP_COMPARE_LT: cc.cmovl (A, T); break;
+                case OP_COMPARE_EQ: cc.cmove (A, T); break;
+                case OP_COMPARE_GE: cc.cmovge(A, T); break;
             }
             break;
 
