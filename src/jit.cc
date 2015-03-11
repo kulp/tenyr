@@ -5,9 +5,6 @@
 #include <cassert>
 #include <search.h>
 
-// TODO make this parameterisable
-#define JIT_RUN_COUNT_THRESHOLD 2
-
 using namespace asmjit;
 
 typedef void Block(void *cookie, int32_t *registers);
@@ -16,6 +13,7 @@ struct jit_state {
     void *nested_run_data;
     void *sim_state;
     JitRuntime *runtime;
+    int run_count_threshold;
 };
 
 struct ops_state {
@@ -37,8 +35,9 @@ struct basic_block {
 
 extern "C" void jit_init(struct jit_state **state)
 {
-    *state = new jit_state;
-    (*state)->runtime = new JitRuntime;
+    struct jit_state *s = *state = new jit_state;
+    s->runtime = new JitRuntime;
+    s->run_count_threshold = 10; // arbitrary, reconfigurable
 }
 
 extern "C" void jit_fini(struct jit_state *state)
@@ -246,16 +245,15 @@ static int pre_insn_hook(struct sim_state *s, struct element *i, void *ud)
     }
 
     struct basic_block &bb = *o->curr_bb;
-    assert(JIT_RUN_COUNT_THRESHOLD > 1); // Need time to collect instructions
     if (bb.compiled)
         return 1; // indicate to jit_run_sim that JIT should be used
 
-    if (bb.run_count == JIT_RUN_COUNT_THRESHOLD) {
+    if (bb.run_count == o->js->run_count_threshold) {
         // Cache the instructions we receive so they are ready for compilation
         if (!bb.cache)
             bb.cache = new int32_t[bb.len];
         bb.cache[(uint32_t)i->insn.reladdr - (uint32_t)bb.base] = i->insn.u.word;
-    } else if (bb.run_count > JIT_RUN_COUNT_THRESHOLD) {
+    } else if (bb.run_count > o->js->run_count_threshold) {
         assert(bb.complete);
         bb.compiled = jit_gen_block(o->js, bb.len, bb.cache);
         delete [] bb.cache;
@@ -289,6 +287,14 @@ extern "C" int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_
     jit_init(&js);
     *run_data = js;
     js->sim_state = s;
+
+    const void *val = NULL;
+    if (param_get(s->conf.params, "tsim.jit.run_count_threshold", 1, &val)) {
+        char *next;
+        int v = strtol((char*)val, &next, 0);
+        if (next != val && *next == '\0' && v > 1)
+            js->run_count_threshold = v;
+    }
 
     struct ops_state ops_state = { 0 }, *o = &ops_state;
     o->js = js;

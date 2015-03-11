@@ -32,11 +32,11 @@ static int params_cmp(const void *_a, const void *_b)
     return strcmp(a->key, b->key);
 }
 
-int param_get(struct param_state *pstate, char *key, size_t count, const void *val[count])
+int param_get(struct param_state *pstate, const char *key, size_t count, const void *val[count])
 {
     if (!pstate) return 0; // permit calling with NULL param set
 
-    struct param_entry p = { .key = key };
+    const struct param_entry p = { .key = (char*)key };
 
     struct param_entry *q = lfind(&p, pstate->params, &pstate->params_count,
                                         sizeof *pstate->params, params_cmp);

@@ -23,6 +23,7 @@ libtenyrjit$(DYLIB_SUFFIX): LDFLAGS  += -fPIC -shared
 # Compensate for old glibc versions with -lrt
 libtenyrjit$(DYLIB_SUFFIX): LDLIBS_Linux += -lrt
 libtenyrjit$(DYLIB_SUFFIX): $(ASMJIT_OBJS)
+libtenyrjit$(DYLIB_SUFFIX): param,dy.o
 
 CLEAN_FILES += libtenyrjit$(DYLIB_SUFFIX)
 
