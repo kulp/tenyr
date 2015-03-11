@@ -170,13 +170,15 @@ int print_disassembly(FILE *out, struct element *i, int flags)
 
     #define C_(C,B,A) (((C) << 2) | ((B) << 1) | (A))
     #define PUT(...) return fprintf(out, fmts[show1+show2+show3], __VA_ARGS__)
+    // Some combinations of {show1,show2,show3} are not allowed because they
+    // would result in ambiguous disassembly
     switch (C_(show1,show2,show3)) {
         case C_(0,0,0): PUT(c0,s1,c2,s3,c4,            c9); break;
         case C_(0,0,1): PUT(c0,s1,c2,s3,c4,         sC,c9); break;
-        case C_(0,1,0): PUT(c0,s1,c2,s3,c4,      sB,   c9); break;
+      //case C_(0,1,0): PUT(c0,s1,c2,s3,c4,      sB,   c9); break; // impossible
         case C_(0,1,1): PUT(c0,s1,c2,s3,c4,sB," + ",sC,c9); break;
         case C_(1,0,0): PUT(c0,s1,c2,s3,c4,sA,         c9); break;
-        case C_(1,0,1): PUT(c0,s1,c2,s3,c4,sA," + ",sC,c9); break;
+      //case C_(1,0,1): PUT(c0,s1,c2,s3,c4,sA," + ",sC,c9); break; // impossible
         case C_(1,1,0): PUT(c0,s1,c2,s3,c4,sA,s6,sB,   c9); break;
         case C_(1,1,1): PUT(c0,s1,c2,s3,c4,sA,s6,sB,sC,c9); break;
 
