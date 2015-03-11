@@ -14,6 +14,7 @@ struct jit_state {
     void *sim_state;
     JitRuntime *runtime;
     int run_count_threshold;
+    X86Compiler *cc;
 };
 
 struct ops_state {
@@ -38,10 +39,12 @@ extern "C" void jit_init(struct jit_state **state)
     struct jit_state *s = *state = new jit_state;
     s->runtime = new JitRuntime;
     s->run_count_threshold = 10; // arbitrary, reconfigurable
+    s->cc = new X86Compiler(s->runtime);
 }
 
 extern "C" void jit_fini(struct jit_state *state)
 {
+    delete state->cc;
     delete state->runtime;
     delete state;
 }
@@ -206,7 +209,7 @@ static int buildInstruction(X86Compiler &cc, X86GpVar &ck, X86GpVar &regs,
 extern "C" Block *jit_gen_block(void *cookie, int len, int32_t *instructions)
 {
     struct jit_state *js = (struct jit_state*)cookie;
-    X86Compiler c(js->runtime);
+    X86Compiler &c = *js->cc;
 
     c.addFunc(kFuncConvHost, FuncBuilder2<void, void*, int32_t*>());
 
