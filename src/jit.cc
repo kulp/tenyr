@@ -309,7 +309,7 @@ extern "C" int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_
     typedef int dispatch_cycle(struct sim_state *s);
     dispatch_cycle *pump = (dispatch_cycle*)dlsym(RTLD_DEFAULT, "devices_dispatch_cycle");
     sim_runner *interp = (sim_runner*)dlsym(RTLD_DEFAULT, "interp_run_sim");
-    if (!interp)
+    if (!interp || !pump)
         fatal(PRINT_ERRNO, "Failed to find interpreter");
 
     int rc = 0;
