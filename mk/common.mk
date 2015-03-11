@@ -10,8 +10,9 @@ else
 endif
 
 ifndef NDEBUG
- CFLAGS  += -g
- LDFLAGS += -g
+ CFLAGS   += -g
+ CXXFLAGS += -g
+ LDFLAGS  += -g
 endif
 
 ifeq ($(WIN32),1)
@@ -38,9 +39,12 @@ endif
 ifeq ($(DEBUG),)
  CPPFLAGS += -DNDEBUG
  CFLAGS   += -O3
+ CXXFLAGS += -O3
 else
- CPPFLAGS += -O0 -DDEBUG=$(DEBUG)
+ CPPFLAGS += -DDEBUG=$(DEBUG)
  CFLAGS   += -fstack-protector -Wstack-protector
+ CFLAGS   += -O0
+ CXXFLAGS += -O0
 endif
 
 CFLAGS += -std=c99

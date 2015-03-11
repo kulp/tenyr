@@ -1,7 +1,6 @@
 LIB_TARGETS += libtenyrjit$(DYLIB_SUFFIX)
 
 # TODO keep these changes from affecting Makefiles that include this one
-CXXFLAGS += -g
 CXXFLAGS += -fPIC
 
 ASMJIT_BASE = $(TOP)/3rdparty/asmjit

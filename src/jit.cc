@@ -146,7 +146,7 @@ static void buildOp(X86Compiler &cc, int op, X86GpVar &T, X86GpVar &A, X86GpVar 
 static int buildInstruction(X86Compiler &cc, X86GpVar &ck, X86GpVar &regs,
         const int32_t &instruction, int32_t offset)
 {
-    X86GpVar *a, *b, *c;
+    X86GpVar *a = NULL, *b = NULL, *c = NULL;
     X86GpVar tmp(cc, kVarTypeInt32, "tmp"),
                x(cc, kVarTypeInt32, "x"),
                y(cc, kVarTypeInt32, "y"),
