@@ -78,21 +78,21 @@ int print_disassembly(FILE *out, struct element *i, int flags)
                 imm   = i->insn.u.type3.imm;        break;
     }
 
-    static const char regs[16 * 2] =
-        "A\0B\0C\0D\0E\0F\0G\0H\0I\0J\0K\0L\0M\0N\0O\0P\0";
-    static const char arrows[4 * 4] =
-        "<-\0\0->\0\0<-\0\0<-\0\0";
+    static const char regs[16][2] =
+        { "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P" };
+    static const char arrows[4][4] =    // aligned on 4 for speed
+        { "<-","->","<-","<-" };
     static const char brackets[2][2] =
-        { " [", " ]" };
+        { " ["," ]" };
 
     const char    c0 = brackets[0][g->dd == 2]; // left side dereferenced ?
-    const char   *s1 = &regs[g->z * 2];         // register name for Z
+    const char   *s1 = regs[g->z];              // register name for Z
     const char    c2 = brackets[1][g->dd == 2]; // left side dereferenced ?
-    const char   *s3 = &arrows[g->dd * 4];      // arrow direction
+    const char   *s3 = arrows[g->dd];           // arrow direction
     const char    c4 = brackets[0][g->dd & 1];  // right side dereferenced ?
-    const char   *s5 = &regs[g->x * 2];         // register name for X
+    const char   *s5 = regs[g->x];              // register name for X
     const char   *s6 = op_names[t->op];         // operator name
-    const char   *s7 = &regs[t->y * 2];         // register name for Y
+    const char   *s7 = regs[t->y];              // register name for Y
     const int32_t i8 = SEXTEND32(width,imm);    // immediate value
     const char    c9 = brackets[1][g->dd & 1];  // right side dereferenced ?
 
