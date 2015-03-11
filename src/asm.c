@@ -267,7 +267,6 @@ static int obj_init(FILE *stream, struct param_state *p, void **ud)
 
 static int obj_in(FILE *stream, struct element *i, void *ud)
 {
-    int rc = 1;
     struct obj_fdata *u = ud;
 
     struct objrec *rec = u->curr_rec;
@@ -293,7 +292,7 @@ static int obj_in(FILE *stream, struct element *i, void *ud)
         }
     }
 
-    return rc;
+    return 1;
 }
 
 static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
@@ -317,12 +316,11 @@ static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
 
 static int obj_out(FILE *stream, struct element *i, void *ud)
 {
-    int rc = 1;
     struct obj_fdata *u = ud;
 
     obj_out_insn(i, u, (struct obj*)u->o);
 
-    return rc;
+    return 1;
 }
 
 static int obj_sym(FILE *stream, struct symbol *symbol, void *ud)
@@ -346,7 +344,6 @@ static int obj_sym(FILE *stream, struct symbol *symbol, void *ud)
 
 static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
 {
-    int rc = 1;
     struct obj_fdata *u = ud;
     if (!reloc || !reloc->insn)
         return 0;
@@ -363,13 +360,11 @@ static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
 
     u->rlcs++;
 
-    return rc;
+    return 1;
 }
 
 static int obj_fini(FILE *stream, void **ud)
 {
-    int rc = 0;
-
     struct obj_fdata *u = *ud;
     struct obj *o = u->o;
 
@@ -386,7 +381,7 @@ static int obj_fini(FILE *stream, void **ud)
     free(*ud);
     *ud = NULL;
 
-    return rc;
+    return 0;
 }
 
 /*******************************************************************************
