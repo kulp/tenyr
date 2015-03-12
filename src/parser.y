@@ -323,7 +323,7 @@ eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, &$SYMBOL); }
 
 cexpr
     : catom
-    | const_binop_expr { ce_eval(pd, NULL, NULL, $$, 0, NULL, NULL, &$$->i); }
+    | const_binop_expr { ce_eval(pd, NULL, $$, 0, NULL, NULL, &$$->i); }
 
 const_binop_expr
     : cexpr[x]  '+'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '+', $x, $y, 0); }
@@ -343,7 +343,7 @@ const_unary_op
 catom
     : const_unary_op catom[inner]
         {   $$ = make_cexpr(CE_OP1, $const_unary_op, $inner, NULL, 0);
-            ce_eval(pd, NULL, NULL, $$, 0, NULL, NULL, &$$->i); }
+            ce_eval(pd, NULL, $$, 0, NULL, NULL, &$$->i); }
     | '(' cexpr ')'
         {   $$ = $cexpr; }
     | immediate
@@ -621,7 +621,7 @@ static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
     struct element_list *result = calloc(1, sizeof *result);
     result->elem = calloc(1, sizeof *result->elem);
     result->tail = result;
-    ce_eval(pd, NULL, NULL, size, 0, NULL, NULL, &result->elem->insn.size);
+    ce_eval(pd, NULL, size, 0, NULL, NULL, &result->elem->insn.size);
     return result;
 }
 
