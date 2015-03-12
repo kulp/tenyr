@@ -26,7 +26,7 @@ void *lfind(const void *key, const void *base, size_t *nmemb, size_t size,
         int(*compar)(const void *, const void *));
 #endif
 
-enum { RHS_NEGATE = 1 << 0, NO_NAMED_RELOC = 1 << 1 };
+enum { RHS_NEGATE = 1 << 0, NO_NAMED_RELOC = 1 << 1, DO_RELOCATION = 1 << 2 };
 
 #define version() "tas version " STR(BUILD_NAME)
 
@@ -55,7 +55,7 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 
                 struct element_list **prev = symbol->ce->deferred;
                 struct element *c = (prev && *prev) ? (*prev)->elem : NULL;
-                return ce_eval(pd, c, symbol->ce, 0, NULL, NULL, result);
+                return ce_eval(pd, c, symbol->ce, 0, 0, result);
             } else {
                 *result = symbol->reladdr;
             }
@@ -90,11 +90,8 @@ static int add_relocation(struct parse_data *pd, const char *name,
 }
 
 static int sym_reloc_handler(struct parse_data *pd, struct element *context,
-        int flags, struct const_expr *ce, void *ud)
+        int flags, struct const_expr *ce, int width)
 {
-    int rc = 0;
-    int *width = ud;
-
     int rlc_flags = 0;
 
     if (flags & RHS_NEGATE)
@@ -104,50 +101,50 @@ static int sym_reloc_handler(struct parse_data *pd, struct element *context,
         case CE_SYM:
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
-                return context ? add_relocation(pd, NULL, context, *width, rlc_flags) : 0;
+                return context ? add_relocation(pd, NULL, context, width, rlc_flags) : 0;
             } else if (ce->type == CE_EXT) {
                 const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
                 const char *n = (flags & NO_NAMED_RELOC) ? NULL : name;
-                return add_relocation(pd, n, context, *width, rlc_flags);
+                return add_relocation(pd, n, context, width, rlc_flags);
             }
         case CE_ICI:
-            return add_relocation(pd, NULL, context, *width, rlc_flags);
+            return add_relocation(pd, NULL, context, width, rlc_flags);
         default:
             return 0;
     }
 
-    return rc;
+    return 0;
 }
 
 // ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
 int ce_eval(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, reloc_handler *rhandler,
-        void *rud, int32_t *result)
+        struct const_expr *ce, int flags, int width, int32_t *result)
 {
     int32_t left, right;
+    int relocate = (flags & DO_RELOCATION) != 0;
 
     switch (ce->type) {
         case CE_SYM:
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
                 struct element *dc = (*ce->symbol->ce->deferred)->elem;
-                return ce_eval(pd, dc, ce->symbol->ce, flags, rhandler, rud, result)
-                    || (rhandler ? rhandler(pd, dc, flags, ce, rud) : 0);
+                return ce_eval(pd, dc, ce->symbol->ce, flags, width, result)
+                    || (relocate ? sym_reloc_handler(pd, dc, flags, ce, width) : 0);
             } else {
                 const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
-                int found = symbol_lookup(pd, pd->symbols, name, result);
-                int hflags = flags;
-                if (found)
-                    hflags |= NO_NAMED_RELOC;
-                int handled = (rhandler ? rhandler(pd, context, hflags, ce, rud) : 0);
+                int found   = symbol_lookup(pd, pd->symbols, name, result);
+                int hflags  = flags | (found ? NO_NAMED_RELOC : 0);
+                int handled = relocate ? sym_reloc_handler(pd, context, hflags, ce, width) : 0;
                 return found || handled;
             }
         case CE_ICI:
             *result = context ? context->insn.reladdr : 0;
-            return rhandler ? rhandler(pd, context, flags, ce, rud) : !!context;
+            if (relocate)
+                return sym_reloc_handler(pd, context, flags, ce, width);
+            return !!context;
         case CE_IMM: *result = ce->i; return 1;
         case CE_OP1:
-            if (ce_eval(pd, context, ce->left, flags, rhandler, rud, result)) {
+            if (ce_eval(pd, context, ce->left, flags, width, result)) {
                 switch (ce->op) {
                     case '-': *result = -*result; return 1;
                     case '~': *result = ~*result; return 1;
@@ -156,13 +153,11 @@ int ce_eval(struct parse_data *pd, struct element *context,
             }
             return 0;
         case CE_OP2: {
-            int lhsflags = flags;
             int rhsflags = flags;
             if (ce->op == '-')
                 rhsflags ^= RHS_NEGATE;
-            // TODO what if rhandler doesn't always succeed ? could change lhs but not rhs
-            if (ce_eval(pd, context, ce->left , lhsflags, rhandler, rud, &left) &&
-                ce_eval(pd, context, ce->right, rhsflags, rhandler, rud, &right))
+            if (ce_eval(pd, context, ce->left ,    flags, width, &left ) &&
+                ce_eval(pd, context, ce->right, rhsflags, width, &right))
             {
                 switch (ce->op) {
                     case '+' : *result = left +  right; return 1;
@@ -230,7 +225,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         struct const_expr *ce = r->ce;
 
         int32_t result;
-        if (ce_eval(pd, ce->insn, ce, 0, sym_reloc_handler, &r->width, &result)) {
+        if (ce_eval(pd, ce->insn, ce, DO_RELOCATION, r->width, &result)) {
             result *= r->mult;
 
             // XXX handle too-large values in a 32-bit field
@@ -340,8 +335,7 @@ static int assembly_fixup_insns(struct parse_data *pd)
     list_foreach(symbol_list, li, pd->symbols)
         list_foreach(symbol, l, li->symbol)
             if (!l->resolved)
-                if (ce_eval(pd, NULL, l->ce, 0, sym_reloc_handler,
-                            (int[]){ WORD_BITWIDTH }, &l->reladdr))
+                if (ce_eval(pd, NULL, l->ce, DO_RELOCATION, WORD_BITWIDTH, &l->reladdr))
                     l->resolved = 1;
 
     return 0;

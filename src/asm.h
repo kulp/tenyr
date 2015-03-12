@@ -44,12 +44,8 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
 struct parse_data;
 struct const_expr;
 
-typedef int reloc_handler(struct parse_data *pd, struct element *context,
-        int flags, struct const_expr *ce, void *ud);
-
 int ce_eval(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, reloc_handler *rhandler,
-        void *rud, int32_t *result);
+        struct const_expr *ce, int flags, int width, int32_t *result);
 
 #endif
 
