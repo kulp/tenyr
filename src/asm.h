@@ -19,6 +19,7 @@ struct format {
     int (*sym  )(FILE *, struct symbol *, void *ud);
     int (*reloc)(FILE *, struct reloc_node *, void *ud);
     int (*fini )(FILE *, void **ud);
+    int (*err  )(        void  *ud);
 };
 
 int find_format_by_name(const void *_a, const void *_b);

@@ -230,6 +230,8 @@ struct obj_fdata {
     struct objsym **next_sym;
     struct objrlc **next_rlc;
     uint32_t pos;   ///< position in objrec
+
+    int error;
 };
 
 static int obj_init(FILE *stream, struct param_state *p, void **ud)
@@ -384,6 +386,12 @@ static int obj_fini(FILE *stream, void **ud)
     return 0;
 }
 
+static int obj_err(void *ud)
+{
+    struct obj_fdata *u = ud;
+    return !!u->error;
+}
+
 /*******************************************************************************
  * Raw format : raw binary data (host endian)
  */
@@ -520,7 +528,8 @@ const struct format tenyr_asm_formats[] = {
         .out   = obj_out,
         .fini  = obj_fini,
         .sym   = obj_sym,
-        .reloc = obj_reloc },
+        .reloc = obj_reloc,
+        .err   = obj_err },
     { "raw" , .in = raw_in , .out = raw_out  },
     { "text", .init = text_init, .in = text_in, .out = text_out },
     { "memh", .init = memh_init, .in = memh_in, .out = memh_out, .fini = memh_fini },

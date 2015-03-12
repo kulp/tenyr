@@ -439,9 +439,7 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, void *ud, int fl
         }
     }
 
-    rc = feof(in) ? 0 : -1;
-
-    return rc;
+    return f->err ? f->err(ud) : 0;
 }
 
 /* vi:set ts=4 sw=4 et: */
