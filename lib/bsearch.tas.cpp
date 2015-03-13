@@ -6,6 +6,7 @@
 // f <- size of element
 // g <- comparator
 // b -> pointer or null
+.global bsearch
 bsearch:
     pushall(h,i,j)  // callee-save temps
 

@@ -44,7 +44,7 @@ dynamic.texe: memset.to malloc.to abort.to
 maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/dword_mul.to
 totient.texe: gcd.to
 isprime.texe: umod.to isqrt.to udiv.to
-bsearch_demo.texe: puts.to
+bsearch_demo.texe: bsearch.to puts.to
 qsort_demo.texe: qsort.to puts.to memcpy.to
 irc.texe: puts.to strcmp.to udiv.to umod.to strtol.to
 parse_hex.texe: strtol.to

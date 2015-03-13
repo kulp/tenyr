@@ -43,48 +43,6 @@ loop_exit:
 
     illegal
 
-// c <- key
-// d <- base
-// e <- number of elements (31-bit unsigned)
-// f <- size of element
-// g <- comparator
-// b -> pointer or null
-bsearch:
-    pushall(h,i,j,k)  // callee-save temps
-    h <- d          // base in h
-    k <- c          // save argument to reduce stack traffic
-
-bsearch_loop:
-    // c is the key ptr
-    // h is the first element to consider
-    // e is the number of elements to consider after d
-    i <- e == 0
-    jnzrel(i,bsearch_notfound)
-
-    e <- e >> 1 // consider element halfway between (d) and (d + e)
-    i <- e * f  // count * width
-    j <- h + i  // ptr = base + count * width
-    d <- j
-    callr(g)
-    i <- b      // copy result to temp
-    b <- j      // restore test ptr
-    c <- k      // restore argument
-
-    j <- i == 0
-    jnzrel(j,bsearch_done)
-    j <- i < 0
-    jnzrel(j,bsearch_loop)
-
-    // i > 0 :
-    h <- b + f  // base = ptr + width
-    goto(bsearch_loop)
-
-bsearch_notfound:
-    b <- 0
-bsearch_done:
-    popall(h,i,j,k)
-    ret
-
 // c <- pointer to key
 // d <- pointer to element
 // b -> < 0, 0, > 0
