@@ -144,9 +144,9 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
 {
     UWord reladdr = 0;
 
-    // XXX stop assuming there is only one record per object
+    // TODO support more than one record per object
     if (i->rec_count > 1)
-        debug(0, "Object has more than one record, only using first");
+        fatal(0, "Object has more than one record, unsupported");
     else if (i->rec_count < 1)
         fatal(0, "Object has invalid record count, aborting");
 
