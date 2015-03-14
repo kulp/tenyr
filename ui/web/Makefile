@@ -18,7 +18,7 @@ CHECK_PATHS = src main_build/src $(MAIN_BUILD_DIR) main_build/src/os/Linux
 vpath %.h $(CHECK_PATHS)
 vpath %.c $(CHECK_PATHS) main_build/src/devices
 vpath %.bc pp_build
-INCLUDES += $(CHECK_PATHS)
+INCLUDES += $(CHECK_PATHS) main_build/src/os/default
 
 EMCC = emcc
 
@@ -71,6 +71,12 @@ endif
 ################################################################################
 # Specific rules
 
+parser.h parser.c lexer.c lexer.h:
+	$(MAKE) CC=cc -C $(TOP) $@
+	cp -p $(MAIN_BUILD_DIR)/$(@F) $@
+
+asmif.o emtas.o: parser.h lexer.h
+
 # We have to do our own --pre-js equivalent for now, because the --pre-js
 # content comes before the main code but after the FS-setup code, and we need
 # ours to enclose all modifications to Module.
@@ -104,8 +110,8 @@ tcc.bc:
 # compensate for missing search.h implementation in emscripten environment
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX) tld$(EXE_SUFFIX): emtsearch.o emlsearch.o
-tas$(EXE_SUFFIX): asm.o asmif.o parser.o lexer.o obj.o
-tsim$(EXE_SUFFIX): sim.o simif.o param.o asm.o obj.o ram.o serial.o debugwrap.o
+tas$(EXE_SUFFIX): asm.o asmif.o param.o parser.o lexer.o obj.o
+tsim$(EXE_SUFFIX): sim.o simif.o param.o asm.o obj.o ram.o serial.o debugwrap.o emlsearch.o
 tld$(EXE_SUFFIX): common.o obj.o
 
 tsim.js: CC_OPT = -O2 # -O0 causes failure

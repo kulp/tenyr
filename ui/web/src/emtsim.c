@@ -10,22 +10,19 @@
 
 #include <stdlib.h>
 
-#define EM_RAM_BASE (1ULL << 12)
-#define EM_RAM_SIZE (4 * 1024)
-
-int do_assembly(FILE *in, FILE *out, const struct format *f);
-
-static int pre_insn(struct sim_state *s, struct element *i)
+static int pre_insn(struct sim_state *s, struct element *i, void *ud)
 {
     (void)s;
     (void)i;
+    (void)ud;
     return -1;
 }
 
-static int post_insn(struct sim_state *s, struct element *i)
+static int post_insn(struct sim_state *s, struct element *i, void *ud)
 {
     (void)s;
     (void)i;
+    (void)ud;
     return -1;
 }
 
@@ -44,10 +41,7 @@ static void em_device_setup(struct sim_state *s)
         int index = next_device(s);
         struct device *dev = s->machine.devices[index] = malloc(sizeof *dev);
         ram_add_device(&dev);
-        // manually adjust memory bounds
-        dev->bounds[0] = EM_RAM_BASE;
-        dev->bounds[1] = EM_RAM_BASE + EM_RAM_SIZE;
-        dev->ops.init(&s->plugin_cookie, &dev->cookie, 2, EM_RAM_SIZE, dev->bounds[0]);
+        dev->ops.init(&s->plugin_cookie, &dev->cookie);
     }
 
     {
@@ -55,10 +49,7 @@ static void em_device_setup(struct sim_state *s)
         int index = next_device(s);
         struct device *dev = s->machine.devices[index] = malloc(sizeof *dev);
         ram_add_device(&dev);
-        // manually adjust memory bounds
-        dev->bounds[0] = (1 << 24) - EM_RAM_SIZE;
-        dev->bounds[1] = (1 << 24) - 1;
-        dev->ops.init(&s->plugin_cookie, &dev->cookie, 2, EM_RAM_SIZE, dev->bounds[0]);
+        dev->ops.init(&s->plugin_cookie, &dev->cookie);
     }
     devices_finalise(s);
 }
@@ -97,8 +88,17 @@ int main(void)
     // This clearerr() is necessary to allow multiple runs of main() in
     // emscripten
     clearerr(in);
-    if (load_sim(s->dispatch_op, s, s->conf.fmt, in, s->conf.load_addr))
+    void *ud = NULL;
+    const struct format *f = s->conf.fmt;
+    if (f->init)
+        if (f->init(in, s->conf.params, &ud))
+            fatal(0, "Error during initialisation for format '%s'", f->name);
+
+    if (load_sim(s->dispatch_op, s, f, ud, in, s->conf.load_addr))
         fatal(0, "Error while loading state into simulation");
+
+    if (f->fini)
+        f->fini(in, &ud);
 
     s->machine.regs[15] = s->conf.start_addr;
 
@@ -107,7 +107,8 @@ int main(void)
         .post_insn = post_insn,
     };
 
-    run_sim(s, &ops);
+    void *run_ud = NULL;
+    interp_run_sim(s, &ops, &run_ud, NULL);
 
     //param_destroy(&s->conf.params);
 
