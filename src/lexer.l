@@ -7,7 +7,7 @@
 #include "ops.h"
 #include "parser_global.h"
 
-int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
+int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s, ...);
 
 static struct cstr *resizestr(struct cstr *s, size_t len);
 static int savestr(const char *text, size_t len, yyscan_t yyscanner);
@@ -139,7 +139,7 @@ illegal             { return ILLEGAL; }
 
 <*>\n               { SWAPLINE; saveline[savecol = 0] = 0; return '\n'; }
 
-<*>.                tenyr_error(yylloc, yyextra, "unexpected character");
+<*>.                tenyr_error(yylloc, yyextra, "unexpected character `%c`", yytext[0]);
                     /* LCOV_EXCL_START */
 %%
 /* LCOV_EXCL_STOP LCOV_EXCL_LINE */
