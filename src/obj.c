@@ -94,7 +94,7 @@ static int obj_v0_read(struct obj *o, FILE *in)
         GET(rec->addr, in);
         GET(rec->size, in);
         long here = ftell(in);
-        if (rec->size + here > filesize) {
+        if (rec->size + here > (unsigned)filesize) {
             errno = EMSGSIZE;
             return 1;
         }
