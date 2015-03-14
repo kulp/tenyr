@@ -393,6 +393,8 @@ static struct element *make_insn_general(struct parse_data *pd,
     elem->insn.u.typeany.z  = lhs->x;
     elem->insn.u.typeany.x  = expr->x;
 
+    free(lhs);
+
     switch (expr->type) {
         case 0:
         case 1:
@@ -415,6 +417,8 @@ static struct element *make_insn_general(struct parse_data *pd,
                 width, 0);
         expr->ce->insn = elem;
     }
+
+    free(expr);
 
     return elem;
 }

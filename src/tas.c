@@ -174,6 +174,8 @@ int main(int argc, char *argv[])
     fclose(out);
     out = NULL;
 
+    param_destroy(params);
+
     return rc;
 }
 
