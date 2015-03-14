@@ -1,0 +1,1 @@
+.zero . // cannot have a size-expression depending on relocation

@@ -612,11 +612,14 @@ static struct element_list *make_data(struct parse_data *pd,
 static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
         struct const_expr *size)
 {
-    if (size->flags & IS_DEFERRED) {
+    if (size->flags & IS_DEFERRED)
         tenyr_error(locp, pd, "size expression for .zero must not "
                               "depend on symbol values");
-        return NULL;
-    }
+
+    // Continue even in the error case so we return a real data element so
+    // further errors can be collected and reported. Returning NULL here
+    // without adding additional complexity to data-users in the grammar would
+    // cause a segfault.
 
     struct element_list *result = calloc(1, sizeof *result);
     result->elem = calloc(1, sizeof *result->elem);
