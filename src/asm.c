@@ -52,7 +52,7 @@ static int is_printable(unsigned int ch, size_t len, char buf[len])
     }
 }
 
-int print_disassembly(FILE *out, struct element *i, int flags)
+int print_disassembly(FILE *out, const struct element *i, int flags)
 {
     if (flags & ASM_AS_DATA)
         return fprintf(out, ".word 0x%08x", i->insn.u.word);
@@ -65,8 +65,8 @@ int print_disassembly(FILE *out, struct element *i, int flags)
             return fprintf(out, "          ");
     }
 
-    struct instruction_typeany *g = &i->insn.u.typeany;
-    struct instruction_type012 *t = &i->insn.u.type012;
+    const struct instruction_typeany * const g = &i->insn.u.typeany;
+    const struct instruction_type012 * const t = &i->insn.u.type012;
 
     int32_t imm, width;
     switch (g->p) {
@@ -188,7 +188,7 @@ int print_disassembly(FILE *out, struct element *i, int flags)
     }
 }
 
-int print_registers(FILE *out, int32_t regs[16])
+int print_registers(FILE *out, const int32_t regs[16])
 {
     int i = 0;
     for (; i < 6; i++)

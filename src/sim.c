@@ -64,8 +64,8 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
         uint32_t *value, int loading, int storing, int arrow_right)
 {
-    int32_t *r = arrow_right ? Z   : rhs;
-    int32_t *w = arrow_right ? rhs : Z  ;
+    int32_t * const r = arrow_right ? Z   : rhs;
+    int32_t * const w = arrow_right ? rhs : Z  ;
 
     if (loading) {
         if (s->dispatch_op(s, OP_DATA_READ, *r, value))
@@ -82,18 +82,18 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     return 0;
 }
 
-int run_instruction(struct sim_state *s, struct element *i, void *run_data)
+int run_instruction(struct sim_state *s, const struct element *i, void *run_data)
 {
     (void)run_data;
-    int32_t *ip = &s->machine.regs[15];
+    int32_t * const ip = &s->machine.regs[15];
     int32_t rhs = 0;
     uint32_t Y, imm, value;
     int op;
 
     ++*ip;
 
-    struct instruction_type012 *g = &i->insn.u.type012;
-    struct instruction_type3   *v = &i->insn.u.type3;
+    const struct instruction_type012 * const g = &i->insn.u.type012;
+    const struct instruction_type3   * const v = &i->insn.u.type3;
 
     switch (i->insn.u.typeany.p) {
         case 0:
@@ -115,7 +115,8 @@ int run_instruction(struct sim_state *s, struct element *i, void *run_data)
             g->dd == 1 || g->dd == 2, g->dd == 1);
 }
 
-int interp_run_sim(struct sim_state *s, struct run_ops *ops, void **run_data, void *ops_data)
+int interp_run_sim(struct sim_state *s, const struct run_ops *ops,
+        void **run_data, void *ops_data)
 {
     *run_data = NULL; // this runner needs no data yet
     while (1) {

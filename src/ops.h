@@ -54,7 +54,7 @@ struct insn_or_data {
             unsigned x   :  4;  ///< operand x
             unsigned z   :  4;  ///< operand z
             unsigned dd  :  2;  ///< dereference
-            unsigned p   :  2;  ///< expr type0 or type1
+            unsigned p   :  2;  ///< type code
         } type3;
     } u;
     int32_t reladdr;    ///< used for CE_ICI resolving

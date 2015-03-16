@@ -105,7 +105,7 @@ static int usage(const char *me)
     return 0;
 }
 
-static int pre_insn(struct sim_state *s, struct element *i, void *ud)
+static int pre_insn(struct sim_state *s, const struct element *i, void *ud)
 {
     (void)ud;
     if (s->conf.verbose > 0)
@@ -128,7 +128,7 @@ static int pre_insn(struct sim_state *s, struct element *i, void *ud)
     return 0;
 }
 
-static int post_insn(struct sim_state *s, struct element *i, void *ud)
+static int post_insn(struct sim_state *s, const struct element *i, void *ud)
 {
     (void)i;
     (void)ud;

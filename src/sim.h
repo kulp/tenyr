@@ -47,16 +47,16 @@ struct sim_state {
     struct recipe_book *recipes;
 
     struct machine_state machine;
-    int (*run_sim)(struct sim_state *s, struct run_ops *ops, void **run_data, void *ops_data);
+    int (*run_sim)(struct sim_state *s, const struct run_ops *ops, void **run_data, void *ops_data);
     uintmax_t insns_executed;
 };
 
 struct run_ops {
-    int (*pre_insn)(struct sim_state *s, struct element *i, void *ud);
-    int (*post_insn)(struct sim_state *s, struct element *i, void *ud);
+    int (*pre_insn)(struct sim_state *s, const struct element *i, void *ud);
+    int (*post_insn)(struct sim_state *s, const struct element *i, void *ud);
 };
 
-typedef int sim_runner(struct sim_state *s, struct run_ops *ops, void **run_data, void *ops_data);
+typedef int sim_runner(struct sim_state *s, const struct run_ops *ops, void **run_data, void *ops_data);
 extern sim_runner interp_run_sim;
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         void *fud, FILE *in, int load_address);

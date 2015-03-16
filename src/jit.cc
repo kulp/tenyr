@@ -234,7 +234,7 @@ static int bb_by_base(const void *a_, const void *b_)
     return a->base - b->base;
 }
 
-static int pre_insn_hook(struct sim_state *s, struct element *i, void *ud)
+static int pre_insn_hook(struct sim_state *s, const struct element *i, void *ud)
 {
     struct ops_state *o = (struct ops_state*)ud;
     if (!o->curr_bb) {
@@ -266,7 +266,7 @@ static int pre_insn_hook(struct sim_state *s, struct element *i, void *ud)
     return o->ops.pre_insn(s, i, o->nested_ops_data);
 }
 
-static int post_insn_hook(struct sim_state *s, struct element *i, void *ud)
+static int post_insn_hook(struct sim_state *s, const struct element *i, void *ud)
 {
     struct ops_state *o = (struct ops_state*)ud;
 

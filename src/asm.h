@@ -31,8 +31,8 @@ int find_format_by_name(const void *_a, const void *_b);
 #define ASM_QUIET      16
 
 // returns number of characters printed
-int print_disassembly(FILE *out, struct element *i, int flags);
-int print_registers(FILE *out, int32_t regs[16]);
+int print_disassembly(FILE *out, const struct element *i, int flags);
+int print_registers(FILE *out, const int32_t regs[16]);
 
 extern const struct format tenyr_asm_formats[];
 extern const size_t tenyr_asm_formats_count;
