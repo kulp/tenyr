@@ -38,7 +38,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
         struct directive *d, struct element_list **context);
 static int is_type3(struct const_expr *ce);
 static struct const_expr *make_ref(struct parse_data *pd, int type,
-        struct strbuf *symbol);
+        const struct strbuf *symbol);
 static struct const_expr_list *make_expr_list(struct const_expr *expr,
         struct const_expr_list *right);
 static struct cstr *make_string(const struct strbuf *str, struct cstr *right);
@@ -168,7 +168,7 @@ element
     : data
     | insn
     | symbol ':' opt_nl element[inner]
-        {   add_symbol_to_insn(pd, &yyloc, ($$ = $inner)->elem, $symbol.buf); }
+        {   add_symbol_to_insn(pd, &yylloc, ($$ = $inner)->elem, $symbol.buf); }
 
 opt_terminators : /* empty */ | terminators
 terminator  : '\n' | ';'
@@ -693,7 +693,7 @@ static int is_type3(struct const_expr *ce)
 }
 
 static struct const_expr *make_ref(struct parse_data *pd, int type,
-        struct strbuf *symbol)
+        const struct strbuf *symbol)
 {
     int flags = IMM_IS_BITS | IS_DEFERRED;
     struct const_expr *eref = make_cexpr(CE_EXT, 0, NULL, NULL, flags);
