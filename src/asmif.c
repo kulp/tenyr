@@ -26,8 +26,6 @@ void *lfind(const void *key, const void *base, size_t *nmemb, size_t size,
         int(*compar)(const void *, const void *));
 #endif
 
-enum { RHS_NEGATE = 1 << 0, NO_NAMED_RELOC = 1 << 1, DO_RELOCATION = 1 << 2 };
-
 #define version() "tas version " STR(BUILD_NAME)
 
 static int add_relocation(struct parse_data *pd, const char *name,

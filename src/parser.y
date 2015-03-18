@@ -15,9 +15,10 @@
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...);
 static struct const_expr *add_deferred_expr(struct parse_data *pd,
         struct const_expr *ce, int mult, uint32_t *dest, int width, int flags);
-static struct const_expr *make_cexpr(enum const_expr_type type, int op,
-        struct const_expr *left, struct const_expr *right, int flags);
-static struct expr *make_expr(int type, int x, int op, int y, int mult,
+static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
+        enum const_expr_type type, int op, struct const_expr *left,
+        struct const_expr *right, int flags);
+static struct expr *make_rhs(int type, int x, int op, int y, int mult,
         struct const_expr *defexpr);
 static struct expr *make_unary(int op, int x, int y, int mult,
         struct const_expr *defexpr);
@@ -102,7 +103,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce>      cexpr const_binop_expr expr catom eref
+%type <ce>      binop_expr expr atom eref
 %type <cl>      expr_list
 %type <cstr>    string
 %type <dctv>    directive
@@ -199,9 +200,9 @@ string
     | STRING string[right]  {   $$ = make_string(&$STRING, $right); }
 
 data
-    : ".word"  opt_nl expr_list {  POP; $$ = make_data(pd, $expr_list);       }
-    | ".zero"  opt_nl cexpr     {  POP; $$ = make_zeros(pd, &yylloc, $cexpr); }
-    | ".utf32" opt_nl string    {  POP; $$ = make_utf32($string);             }
+    : ".word"  opt_nl expr_list {  POP; $$ = make_data(pd, $expr_list);      }
+    | ".zero"  opt_nl expr      {  POP; $$ = make_zeros(pd, &yylloc, $expr); }
+    | ".utf32" opt_nl string    {  POP; $$ = make_utf32($string);            }
 
 directive
     : ".global" opt_nl SYMBOL
@@ -234,32 +235,33 @@ rhs
 
 rhs_plain
     /* type0 */
-    : regname[x] binop regname[y] reloc_op expr
-        { $$ = make_expr(0, $x, $binop, $y, $reloc_op, $expr); }
+    : regname[x] binop regname[y] reloc_op atom
+        { $$ = make_rhs(0, $x, $binop, $y, $reloc_op, $atom); }
     | regname[x] binop regname[y]
-        { $$ = make_expr(0, $x, $binop, $y, 0, NULL); }
+        { $$ = make_rhs(0, $x, $binop, $y, 0, NULL); }
     | regname[x]
-        { $$ = make_expr(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
+        { $$ = make_rhs(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
     /* type1 */
-    | regname[x] binop expr '+' regname[y]
-        { $$ = make_expr(1, $x, $binop, $y, 1, $expr); }
-    | regname[x] binop expr
+    | regname[x] binop atom '+' regname[y]
+        { $$ = make_rhs(1, $x, $binop, $y, 1, $atom); }
+    | regname[x] binop atom
         {   int t3op = $binop == OP_ADD || $binop == OP_SUBTRACT;
             int mult = ($binop == OP_SUBTRACT) ? -1 : 1;
             int op   = (mult < 0) ? OP_ADD : $binop;
-            int type = (t3op && is_type3($expr)) ? 3 : 1;
-            $$ = make_expr(type, $x, op, 0, mult, $expr); }
+            int type = (t3op && is_type3($atom)) ? 3 : 1;
+            $$ = make_rhs(type, $x, op, 0, mult, $atom); }
     /* type2 */
-    | expr binop regname[x] '+' regname[y]
-        { $$ = make_expr(2, $x, $binop, $y, 1, $expr); }
-    | expr binop regname[x]
-        { $$ = make_expr(2, $x, $binop, 0, 1, $expr); }
+    | atom binop regname[x] '+' regname[y]
+        { $$ = make_rhs(2, $x, $binop, $y, 1, $atom); }
+    | atom binop regname[x]
+        { $$ = make_rhs(2, $x, $binop, 0, 1, $atom); }
     /* type3 */
-    | expr
-        { $$ = make_expr(is_type3($expr) ? 3 : 0, 0, 0, 0, 1, $expr); }
+    | atom
+        {   ce_eval(pd, NULL, $atom, 0, 0, &$atom->i);
+            $$ = make_rhs(is_type3($atom) ? 3 : 0, 0, 0, 0, 1, $atom); }
     /* syntax sugars */
-    | unary_op regname[x] reloc_op expr
-        { $$ = make_unary($unary_op, $x,  0, $reloc_op, $expr); }
+    | unary_op regname[x] reloc_op atom
+        { $$ = make_unary($unary_op, $x,  0, $reloc_op, $atom); }
     | unary_op regname[x] '+' regname[y]
         { $$ = make_unary($unary_op, $x, $y, 0, NULL); }
     | unary_op regname[x]
@@ -314,43 +316,38 @@ reloc_op
     | '-'   { $$ = -1; }
 
 expr
-    : eref
-    | catom
-    | '(' eref reloc_op catom ')'
-        {   $$ = make_cexpr(CE_OP2, "- +"[$reloc_op + 1], $eref, $catom, 0); }
+    : atom
+    | binop_expr
 
 eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, &$SYMBOL); }
 
-cexpr
-    : catom
-    | const_binop_expr { ce_eval(pd, NULL, $$, 0, 0, &$$->i); }
-
-const_binop_expr
-    : cexpr[x]  '+'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '+', $x, $y, 0); }
-    | cexpr[x]  '-'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '-', $x, $y, 0); }
-    | cexpr[x]  '*'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '*', $x, $y, 0); }
-    | cexpr[x]  '/'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '/', $x, $y, 0); }
-    | cexpr[x]  '^'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '^', $x, $y, 0); }
-    | cexpr[x]  '&'  cexpr[y] { $$ = make_cexpr(CE_OP2,  '&', $x, $y, 0); }
-    | cexpr[x]  "<<" cexpr[y] { $$ = make_cexpr(CE_OP2,  LSH, $x, $y, 0); }
-    | cexpr[x]  ">>" cexpr[y] { $$ = make_cexpr(CE_OP2, RSHA, $x, $y, 0); }
-    | cexpr[x] ">>>" cexpr[y] { $$ = make_cexpr(CE_OP2,  RSH, $x, $y, 0); }
+binop_expr
+    : expr[x]  '+'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '+', $x, $y, 0); }
+    | expr[x]  '-'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '-', $x, $y, RHS_NEGATE); }
+    | expr[x]  '*'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '*', $x, $y, FORBID_LHS); }
+    | expr[x]  '/'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '/', $x, $y, FORBID_LHS); }
+    | expr[x]  '^'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '^', $x, $y, FORBID_LHS); }
+    | expr[x]  '&'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '&', $x, $y, FORBID_LHS); }
+    | expr[x]  "<<" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  LSH, $x, $y, FORBID_LHS); }
+    | expr[x]  ">>" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2, RSHA, $x, $y, FORBID_LHS); }
+    | expr[x] ">>>" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  RSH, $x, $y, FORBID_LHS); }
 
 const_unary_op
     : '~'   { $$ = '~'; }
     | '-'   { $$ = '-'; }
 
-catom
-    : const_unary_op catom[inner]
-        {   $$ = make_cexpr(CE_OP1, $const_unary_op, $inner, NULL, 0);
+atom
+    : eref
+    | '(' expr ')'
+        {   $$ = $expr; }
+    | const_unary_op atom[inner]
+        {   $$ = make_expr(pd, &yylloc, CE_OP1, $const_unary_op, $inner, NULL, 0);
             ce_eval(pd, NULL, $$, 0, 0, &$$->i); }
-    | '(' cexpr ')'
-        {   $$ = $cexpr; }
     | immediate
-        {   $$ = make_cexpr(CE_IMM, 0, NULL, NULL, $immediate.flags);
+        {   $$ = make_expr(pd, &yylloc, CE_IMM, 0, NULL, NULL, $immediate.flags);
             $$->i = $immediate.i; }
     | '.'
-        {   $$ = make_cexpr(CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
+        {   $$ = make_expr(pd, &yylloc, CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
         {   $$ = make_ref(pd, CE_SYM, &$LOCAL); }
 
@@ -440,23 +437,28 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd,
     return ce;
 }
 
-static struct const_expr *make_cexpr(enum const_expr_type type, int op,
-        struct const_expr *left, struct const_expr *right, int flags)
+static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
+        enum const_expr_type type, int op, struct const_expr *left,
+        struct const_expr *right, int flags)
 {
     struct const_expr *n = calloc(1, sizeof *n);
+
+    if (left && (left->flags & IS_EXTERNAL) && (flags & FORBID_LHS))
+        tenyr_error(locp, pd, "Expression contains an invalid use of a "
+                              "deferred expression");
 
     n->type  = type;
     n->op    = op;
     n->left  = left;
     n->right = right;
-    n->insn  = NULL;    // top cexpr will have its insn filled in
+    n->insn  = NULL;    // top expr will have its insn filled in
     n->flags = (left  ? left->flags  : 0) |
                (right ? right->flags : 0) | flags;
 
     return n;
 }
 
-static struct expr *make_expr(int type, int x, int op, int y, int mult,
+static struct expr *make_rhs(int type, int x, int op, int y, int mult,
         struct const_expr *defexpr)
 {
     struct expr *e = calloc(1, sizeof *e);
@@ -484,7 +486,7 @@ static struct expr *make_expr(int type, int x, int op, int y, int mult,
             e->ce->flags |= IGNORE_WIDTH;
         e->i = 0xfffffbad; // put in a placeholder that must be overwritten
     } else
-        e->i = 0; // there was no cexpr ; zero defined by language
+        e->i = 0; // there was no expr ; zero defined by language
 
     return e;
 }
@@ -516,7 +518,7 @@ static struct expr *make_unary(int op, int x, int y, int mult,
         e->type = 2;
         e->x = x;
         e->y = y;
-        e->i = 0; // there was no cexpr ; zero defined by language
+        e->i = 0; // there was no expr ; zero defined by language
     }
 
     return e;
@@ -703,7 +705,9 @@ static struct const_expr *make_ref(struct parse_data *pd, int type,
         const struct strbuf *symbol)
 {
     int flags = IMM_IS_BITS | IS_DEFERRED;
-    struct const_expr *eref = make_cexpr(CE_EXT, 0, NULL, NULL, flags);
+    if (type == CE_EXT)
+        flags |= IS_EXTERNAL;
+    struct const_expr *eref = make_expr(pd, NULL, CE_EXT, 0, NULL, NULL, flags);
     struct symbol *s;
     if ((s = symbol_find(pd->symbols, symbol->buf))) {
         eref->symbol = s;

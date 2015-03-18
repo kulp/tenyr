@@ -46,9 +46,14 @@ struct const_expr {
     int32_t i;
     char symbolname[SYMBOL_LEN];
     int op;
-    #define IMM_IS_BITS  1  ///< treat an immediate as a bitstring instead of as an integer
-    #define IGNORE_WIDTH 2  ///< ignore a too-wide constant (for use with ^^)
-    #define IS_DEFERRED  4  ///< a constant expression's computation is deferred
+    #define IMM_IS_BITS    (1 << 0) ///< treat an immediate as a bitstring instead of as an integer
+    #define IGNORE_WIDTH   (1 << 1) ///< ignore a too-wide constant (for use with ^^)
+    #define IS_DEFERRED    (1 << 2) ///< a constant expression's computation is deferred
+    #define RHS_NEGATE     (1 << 3)
+    #define NO_NAMED_RELOC (1 << 4)
+    #define DO_RELOCATION  (1 << 5)
+    #define FORBID_LHS     (1 << 6)
+    #define IS_EXTERNAL    (1 << 7)
     int flags;  ///< flags are automatically inherited by parents in DAG
     struct element *insn; // for '.'-resolving // TODO rename
     struct element_list **deferred; // for an instruction context not available to me yet
