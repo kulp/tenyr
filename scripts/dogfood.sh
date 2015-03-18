@@ -17,7 +17,7 @@ function fail ()
 	bn=$(basename $file)
 	echo $bn: FAILED
 	mkdir -p dogfood_failures/$bn
-	cp -p $file $base.$fmt.{en,de}.? dogfood_failures/$bn/
+	cp -p $file $base.$fmt.{en,de}.*.? dogfood_failures/$bn/
 	rc=1
 }
 
