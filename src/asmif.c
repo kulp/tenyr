@@ -114,18 +114,36 @@ static int sym_reloc_handler(struct parse_data *pd, struct element *context,
     return 0;
 }
 
+int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
+        int32_t *result)
+{
+    int rc = ce_eval(pd, NULL, ce, 0, 0, result);
+    if (rc == 0) {
+        ce->i = *result;
+        ce->flags |= DONE_EVAL;
+    }
+    return rc;
+}
+
 // ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
 int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int32_t *result)
 {
     int32_t left, right;
     int relocate = (flags & DO_RELOCATION) != 0;
+    if (flags & DONE_EVAL) {
+        *result = ce->i;
+        return 0; // No need to re-evaluate
+    }
 
     switch (ce->type) {
         case CE_SYM:
         case CE_EXT:
             if (ce->symbol && ce->symbol->ce) {
-                struct element *dc = (*ce->symbol->ce->deferred)->elem;
+                struct element_list *deferred = *ce->symbol->ce->deferred;
+                if (!deferred)
+                    return 0; // cannot evaluate yet
+                struct element *dc = deferred->elem;
                 return ce_eval(pd, dc, ce->symbol->ce, flags, width, result)
                     || (relocate ? sym_reloc_handler(pd, dc, flags, ce, width) : 0);
             } else {

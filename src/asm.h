@@ -44,6 +44,8 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
 struct parse_data;
 struct const_expr;
 
+int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
+        int32_t *result);
 int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int32_t *result);
 

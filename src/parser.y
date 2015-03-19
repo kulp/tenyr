@@ -257,8 +257,7 @@ rhs_plain
         { $$ = make_rhs(2, $x, $binop, 0, 1, $atom); }
     /* type3 */
     | atom
-        {   ce_eval(pd, NULL, $atom, 0, 0, &$atom->i);
-            $$ = make_rhs(is_type3($atom) ? 3 : 0, 0, 0, 0, 1, $atom); }
+        {   $$ = make_rhs(is_type3($atom) ? 3 : 0, 0, 0, 0, 1, $atom); }
     /* syntax sugars */
     | unary_op regname[x] reloc_op atom
         { $$ = make_unary($unary_op, $x,  0, $reloc_op, $atom); }
@@ -316,8 +315,8 @@ reloc_op
     | '-'   { $$ = -1; }
 
 expr
-    : atom
-    | binop_expr
+    : atom          {   $$ = $1; ce_eval_const(pd, $1, &$1->i); }
+    | binop_expr    {   $$ = $1; ce_eval_const(pd, $1, &$1->i); }
 
 eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, &$SYMBOL); }
 
@@ -343,7 +342,7 @@ atom
         {   $$ = $expr; }
     | const_unary_op atom[inner]
         {   $$ = make_expr(pd, &yylloc, CE_OP1, $const_unary_op, $inner, NULL, 0);
-            ce_eval(pd, NULL, $$, 0, 0, &$$->i); }
+            ce_eval_const(pd, $$, &$$->i); }
     | immediate
         {   $$ = make_expr(pd, &yylloc, CE_IMM, 0, NULL, NULL, $immediate.flags);
             $$->i = $immediate.i; }
@@ -631,7 +630,7 @@ static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
     struct element_list *result = calloc(1, sizeof *result);
     result->elem = calloc(1, sizeof *result->elem);
     result->tail = result;
-    ce_eval(pd, NULL, size, 0, 0, &result->elem->insn.size);
+    ce_eval_const(pd, size, &result->elem->insn.size);
     return result;
 }
 

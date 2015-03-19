@@ -54,6 +54,7 @@ struct const_expr {
     #define DO_RELOCATION  (1 << 5)
     #define FORBID_LHS     (1 << 6)
     #define IS_EXTERNAL    (1 << 7)
+    #define DONE_EVAL      (1 << 8)
     int flags;  ///< flags are automatically inherited by parents in DAG
     struct element *insn; // for '.'-resolving // TODO rename
     struct element_list **deferred; // for an instruction context not available to me yet
