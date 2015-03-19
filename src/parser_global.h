@@ -67,7 +67,7 @@ struct const_expr_list {
 };
 
 struct expr {
-    int type;   ///< 0=> X op Y + (mult * I) ; 1=> X op I + Y
+    int type;   ///< type{0,1,2,3}
     int deref;
     int x;
     int op;

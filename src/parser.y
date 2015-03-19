@@ -328,6 +328,7 @@ binop_expr
     | expr[x]  '/'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '/', $x, $y, FORBID_LHS); }
     | expr[x]  '^'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '^', $x, $y, FORBID_LHS); }
     | expr[x]  '&'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '&', $x, $y, FORBID_LHS); }
+    | expr[x]  '|'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '|', $x, $y, FORBID_LHS); }
     | expr[x]  "<<" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  LSH, $x, $y, FORBID_LHS); }
     | expr[x]  ">>" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2, RSHA, $x, $y, FORBID_LHS); }
     | expr[x] ">>>" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  RSH, $x, $y, FORBID_LHS); }

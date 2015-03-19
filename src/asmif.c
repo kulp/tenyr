@@ -163,6 +163,7 @@ int ce_eval(struct parse_data *pd, struct element *context,
                     case '*' : *result = left *  right; return 1;
                     case '^' : *result = left ^  right; return 1;
                     case '&' : *result = left &  right; return 1;
+                    case '|' : *result = left |  right; return 1;
                     case LSH : *result = left << right; return 1;
                     case RSHA: *result = left >> right; return 1;
                     case RSH : *result = ((uint32_t)left) >> right; return 1;
