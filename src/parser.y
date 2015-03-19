@@ -38,10 +38,11 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
         struct directive *d, struct element_list **context);
 static int is_type3(struct const_expr *ce);
-static struct const_expr *make_ref(struct parse_data *pd, int type,
-        const struct cstr *symbol);
+static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
+        int type, const struct cstr *symbol);
 static struct const_expr_list *make_expr_list(struct const_expr *expr,
         struct const_expr_list *right);
+static int validate_expr(struct parse_data *pd, struct const_expr *e, int level);
 
 // XXX decide whether this should be called in functions or in grammar actions
 static void free_cstr(struct cstr *cs, int recurse);
@@ -105,7 +106,7 @@ extern void tenyr_pop_state(void *yyscanner);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce>      binop_expr expr atom eref
+%type <ce>      binop_expr expr vexpr atom vatom eref
 %type <cl>      expr_list
 %type <cstr>    string stringelt strspan symbol
 %type <dctv>    directive
@@ -223,10 +224,10 @@ directive
         {   POP; $directive = make_set(pd, &yylloc, $SYMBOL, $expr); free_cstr($SYMBOL, 1); }
 
 expr_list
-    : expr
-        {   $$ = make_expr_list($expr, NULL); }
-    | expr ',' opt_nl expr_list[right]
-        {   $$ = make_expr_list($expr, $right); }
+    : vexpr
+        {   $$ = make_expr_list($vexpr, NULL); }
+    | vexpr ',' opt_nl expr_list[right]
+        {   $$ = make_expr_list($vexpr, $right); }
 
 lhs
     : lhs_plain
@@ -247,32 +248,32 @@ rhs
 
 rhs_plain
     /* type0 */
-    : regname[x] binop regname[y] reloc_op atom
-        { $$ = make_rhs(0, $x, $binop, $y, $reloc_op, $atom); }
+    : regname[x] binop regname[y] reloc_op vatom
+        { $$ = make_rhs(0, $x, $binop, $y, $reloc_op, $vatom); }
     | regname[x] binop regname[y]
         { $$ = make_rhs(0, $x, $binop, $y, 0, NULL); }
     | regname[x]
         { $$ = make_rhs(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
     /* type1 */
-    | regname[x] binop atom '+' regname[y]
-        { $$ = make_rhs(1, $x, $binop, $y, 1, $atom); }
-    | regname[x] binop atom
+    | regname[x] binop vatom '+' regname[y]
+        { $$ = make_rhs(1, $x, $binop, $y, 1, $vatom); }
+    | regname[x] binop vatom
         {   int t3op = $binop == OP_ADD || $binop == OP_SUBTRACT;
             int mult = ($binop == OP_SUBTRACT) ? -1 : 1;
             int op   = (mult < 0) ? OP_ADD : $binop;
-            int type = (t3op && is_type3($atom)) ? 3 : 1;
-            $$ = make_rhs(type, $x, op, 0, mult, $atom); }
+            int type = (t3op && is_type3($vatom)) ? 3 : 1;
+            $$ = make_rhs(type, $x, op, 0, mult, $vatom); }
     /* type2 */
-    | atom binop regname[x] '+' regname[y]
-        { $$ = make_rhs(2, $x, $binop, $y, 1, $atom); }
-    | atom binop regname[x]
-        { $$ = make_rhs(2, $x, $binop, 0, 1, $atom); }
+    | vatom binop regname[x] '+' regname[y]
+        { $$ = make_rhs(2, $x, $binop, $y, 1, $vatom); }
+    | vatom binop regname[x]
+        { $$ = make_rhs(2, $x, $binop, 0, 1, $vatom); }
     /* type3 */
-    | atom
-        { $$ = make_rhs(is_type3($atom) ? 3 : 0, 0, 0, 0, 1, $atom); }
+    | vatom
+        { $$ = make_rhs(is_type3($vatom) ? 3 : 0, 0, 0, 0, 1, $vatom); }
     /* syntax sugars */
-    | unary_op regname[x] reloc_op atom
-        { $$ = make_unary($unary_op, $x,  0, $reloc_op, $atom); }
+    | unary_op regname[x] reloc_op vatom
+        { $$ = make_unary($unary_op, $x,  0, $reloc_op, $vatom); }
     | unary_op regname[x] '+' regname[y]
         { $$ = make_unary($unary_op, $x, $y, 0, NULL); }
     | unary_op regname[x]
@@ -327,11 +328,14 @@ reloc_op
     : '+'   { $$ = +1; }
     | '-'   { $$ = -1; }
 
-expr
-    : atom          {   $$ = $1; ce_eval_const(pd, $1, &$1->i); }
-    | binop_expr    {   $$ = $1; ce_eval_const(pd, $1, &$1->i); }
+vexpr : expr        { $$ = $1; validate_expr(pd, $1, 0); }
+vatom : atom        { $$ = $1; validate_expr(pd, $1, 0); }
 
-eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, $SYMBOL); free_cstr($SYMBOL, 1); }
+expr
+    : atom          { $$ = $1; ce_eval_const(pd, $1, &$1->i); }
+    | binop_expr    { $$ = $1; ce_eval_const(pd, $1, &$1->i); }
+
+eref : '@' SYMBOL { $$ = make_ref(pd, &yylloc, CE_EXT, $SYMBOL); free_cstr($SYMBOL, 1); }
 
 binop_expr
     : expr[x]  '+'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '+', $x, $y, 0); }
@@ -339,10 +343,10 @@ binop_expr
     | expr[x]  '*'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '*', $x, $y, FORBID_LHS); }
     | expr[x]  '/'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '/', $x, $y, FORBID_LHS); }
     | expr[x]  '^'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '^', $x, $y, FORBID_LHS); }
-    | expr[x]  '&'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '&', $x, $y, FORBID_LHS); }
+    | expr[x]  '&'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '&', $x, $y, SPECIAL_LHS); }
     | expr[x]  '|'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '|', $x, $y, FORBID_LHS); }
     | expr[x]  "<<" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  LSH, $x, $y, FORBID_LHS); }
-    | expr[x]  ">>" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2, RSHA, $x, $y, FORBID_LHS); }
+    | expr[x]  ">>" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2, RSHA, $x, $y, SPECIAL_LHS); }
     | expr[x] ">>>" expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  RSH, $x, $y, FORBID_LHS); }
 
 const_unary_op
@@ -362,7 +366,7 @@ atom
     | '.'
         {   $$ = make_expr(pd, &yylloc, CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
-        {   $$ = make_ref(pd, CE_SYM, $LOCAL); }
+        {   $$ = make_ref(pd, &yylloc, CE_SYM, $LOCAL); }
 
 %%
 
@@ -467,6 +471,7 @@ static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
     n->insn  = NULL;    // top expr will have its insn filled in
     n->flags = (left  ? left->flags  : 0) |
                (right ? right->flags : 0) | flags;
+    n->srcloc = *locp;
 
     return n;
 }
@@ -718,13 +723,13 @@ static int is_type3(struct const_expr *ce)
     return 0;
 }
 
-static struct const_expr *make_ref(struct parse_data *pd, int type,
-        const struct cstr *symbol)
+static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
+        int type, const struct cstr *symbol)
 {
     int flags = IMM_IS_BITS | IS_DEFERRED;
     if (type == CE_EXT)
         flags |= IS_EXTERNAL;
-    struct const_expr *eref = make_expr(pd, NULL, CE_EXT, 0, NULL, NULL, flags);
+    struct const_expr *eref = make_expr(pd, locp, CE_EXT, 0, NULL, NULL, flags);
     struct symbol *s;
     if ((s = symbol_find(pd->symbols, symbol->head))) {
         eref->symbol = s;
@@ -742,5 +747,44 @@ static struct const_expr_list *make_expr_list(struct const_expr *expr,
     result->right = right;
     result->ce = expr;
     return result;
+}
+
+static int validate_expr(struct parse_data *pd, struct const_expr *e, int level)
+{
+    int ok = 1;
+
+    if (!e)
+        return 0;
+
+    ok &= validate_expr(pd, e->left , level + 1);
+    ok &= validate_expr(pd, e->right, level + 1);
+
+    // check both left and right to make sure we validate only binary ops
+    if (    e->left && e->right &&
+            (e->left->flags & IS_EXTERNAL) &&
+            (e->flags & SPECIAL_LHS))
+    {
+        // Special rules apply to right-shifts of 12 and masks of 0xfff. This
+        // is how we express breaking down a large offset into a 20-bit chunk
+        // and a 12-bit chunk that we reassemble using OP_PACK.
+        // TODO implement the special relocation types in the linker
+        // XXX how to characterise the legal possibilities ?
+        // B <- ((@xx - .) >> 12) ; C <- B ^^ ((@xx - .) & 0xfff)
+        // B <- ( @xx      >> 12) ; C <- B ^^ ( @xx      & 0xfff)
+        switch (e->op) {
+            case RSHA:  ok &= (level == 0); ok &= e->right->i == 12;    break;
+            case '&':   ok &= (level == 0); ok &= e->right->i == 0xfff; break;
+            default:    ok &= 0; break;
+        }
+
+        if (!ok)
+            // XXX at this point e->srcloc may not correspond to lexstate
+            // TODO make an opaque "where this was" object
+            tenyr_error(&e->srcloc, pd,
+                        "Expression contains an invalid use of a "
+                        "deferred expression");
+    }
+
+    return ok;
 }
 
