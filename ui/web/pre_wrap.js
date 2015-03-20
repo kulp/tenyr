@@ -1,3 +1,4 @@
+var tenyr_state; if (!tenyr_state) tenyr_state = {};
 (function(prefix, tenyr_state){
 var ENVIRONMENT_IS_NODE = typeof process === 'object';
 var ENVIRONMENT_IS_WEB = typeof window === 'object';
