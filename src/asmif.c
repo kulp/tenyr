@@ -395,7 +395,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f, void *ud)
         assembly_inner(pd, out, f, ud);
     tenyr_lex_destroy(pd->scanner);
 
-    return result;
+    return result || pd->errored;
 }
 
 int do_disassembly(FILE *in, FILE *out, const struct format *f, void *ud, int flags)
