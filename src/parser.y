@@ -146,7 +146,7 @@ opt_nl
 
 program
     : element terminators
-        {   pd->top = $$ = $1; pd->top->tail = pd->top; }
+        {   pd->top = $$ = $1; }
     | program element terminators
         {   struct element_list *p = $1, *d = $element;
             if (p == NULL) {
