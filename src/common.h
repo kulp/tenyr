@@ -50,7 +50,7 @@ struct element {
     struct insn_or_data insn;
 
     struct symbol {
-        char name[SYMBOL_LEN];
+        char *name;
         int column;
         int lineno;
         int32_t reladdr;

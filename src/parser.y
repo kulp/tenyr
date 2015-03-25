@@ -26,24 +26,25 @@ static struct element *make_insn_general(struct parse_data *pd,
         struct expr *lhs, int arrow, struct expr *expr);
 static struct element_list *make_utf32(struct cstr *cs);
 static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
-        struct element *insn, const char *symbol);
+        struct element *insn, struct cstr *symbol);
 static struct element_list *make_data(struct parse_data *pd,
         struct const_expr_list *list);
 static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
         struct const_expr *size);
 static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
-        const struct strbuf *sym);
+        const struct cstr *sym);
 static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
-        const struct strbuf *sym, struct const_expr *expr);
+        const struct cstr *sym, struct const_expr *expr);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
         struct directive *d, struct element_list **context);
 static int is_type3(struct const_expr *ce);
 static struct const_expr *make_ref(struct parse_data *pd, int type,
-        const struct strbuf *symbol);
+        const struct cstr *symbol);
 static struct const_expr_list *make_expr_list(struct const_expr *expr,
         struct const_expr_list *right);
-static struct cstr *make_string(const struct strbuf *str, struct cstr *right);
 
+// XXX decide whether this should be called in functions or in grammar actions
+static void free_cstr(struct cstr *cs, int recurse);
 extern struct symbol *symbol_find(struct symbol_list *list, const char *name);
 extern void tenyr_push_state(int st, void *yyscanner);
 extern void tenyr_pop_state(void *yyscanner);
@@ -80,8 +81,9 @@ extern void tenyr_pop_state(void *yyscanner);
 
 %token <i>      '[' ']' '.' '(' ')' '+' '-' '*' '~' ',' ';'
 %token <i>      INTEGER BITSTRING REGISTER
-%token <str>    SYMBOL LOCAL STRING CHARACTER
+%token <cstr>   SYMBOL LOCAL STRSPAN CHARACTER
 %token          ILLEGAL
+%token          OPNQUOTE CLSQUOTE
 
 /* synonyms for literal string tokens */
 %token LSH      "<<"
@@ -105,13 +107,12 @@ extern void tenyr_pop_state(void *yyscanner);
 
 %type <ce>      binop_expr expr atom eref
 %type <cl>      expr_list
-%type <cstr>    string
+%type <cstr>    string stringelt strspan symbol
 %type <dctv>    directive
 %type <expr>    rhs rhs_plain lhs lhs_plain
 %type <i>       arrow regname reloc_op binop unary_op const_unary_op
 %type <imm>     immediate
 %type <program> program element data insn
-%type <str>     symbol
 
 %union {
     int32_t                 i;
@@ -125,10 +126,6 @@ extern void tenyr_pop_state(void *yyscanner);
         int32_t i;
         int flags;
     } imm;
-    struct strbuf {
-        int pos, len;
-        char buf[LINE_LEN];
-    } str;
 }
 
 %%
@@ -169,7 +166,8 @@ element
     : data
     | insn
     | symbol ':' opt_nl element[inner]
-        {   add_symbol_to_insn(pd, &yylloc, ($$ = $inner)->elem, $symbol.buf); }
+        {   add_symbol_to_insn(pd, &yylloc, ($$ = $inner)->elem, $symbol);
+            free_cstr($symbol, 1); }
 
 opt_terminators : /* empty */ | terminators
 terminator  : '\n' | ';'
@@ -196,19 +194,33 @@ symbol
     | LOCAL
 
 string
-    : STRING                {   $$ = make_string(&$STRING, NULL);   }
-    | STRING string[right]  {   $$ = make_string(&$STRING, $right); }
+    : stringelt
+    | string[left] stringelt
+        {   $$ = $left;
+            $$->last->right = $stringelt;
+            if ($stringelt) $$->last = $stringelt; }
+
+stringelt
+    : OPNQUOTE strspan CLSQUOTE {   $$ = $strspan; }
+    | OPNQUOTE CLSQUOTE         {   $$ = NULL; }
+
+strspan
+    : STRSPAN
+    | strspan[left] STRSPAN
+        {   $$ = $left;
+            $$->last->right = $STRSPAN;
+            $$->last = $$->last->right; }
 
 data
-    : ".word"  opt_nl expr_list {  POP; $$ = make_data(pd, $expr_list);      }
+    : ".word"  opt_nl expr_list {  POP; $$ = make_data(pd, $expr_list); }
     | ".zero"  opt_nl expr      {  POP; $$ = make_zeros(pd, &yylloc, $expr); }
-    | ".utf32" opt_nl string    {  POP; $$ = make_utf32($string);            }
+    | ".utf32" opt_nl string    {  POP; $$ = make_utf32($string); free_cstr($string, 1); }
 
 directive
     : ".global" opt_nl SYMBOL
-        {   POP; $directive = make_global(pd, &yylloc, &$SYMBOL); }
+        {   POP; $directive = make_global(pd, &yylloc, $SYMBOL); free_cstr($SYMBOL, 1); }
     | ".set" opt_nl SYMBOL ',' expr
-        {   POP; $directive = make_set(pd, &yylloc, &$SYMBOL, $expr); }
+        {   POP; $directive = make_set(pd, &yylloc, $SYMBOL, $expr); free_cstr($SYMBOL, 1); }
 
 expr_list
     : expr
@@ -277,8 +289,9 @@ immediate
         {   $immediate.i = $BITSTRING;
             $immediate.flags = IMM_IS_BITS; }
     | CHARACTER
-        {   $immediate.i = $CHARACTER.buf[$CHARACTER.pos - 1];
-            $immediate.flags = IMM_IS_BITS; }
+        {   $immediate.i = $CHARACTER->tail[-1];
+            $immediate.flags = IMM_IS_BITS;
+            free_cstr($CHARACTER, 1); }
 
 binop
     /* native ops */
@@ -318,7 +331,7 @@ expr
     : atom          {   $$ = $1; ce_eval_const(pd, $1, &$1->i); }
     | binop_expr    {   $$ = $1; ce_eval_const(pd, $1, &$1->i); }
 
-eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, &$SYMBOL); }
+eref : '@' SYMBOL { $$ = make_ref(pd, CE_EXT, $SYMBOL); free_cstr($SYMBOL, 1); }
 
 binop_expr
     : expr[x]  '+'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '+', $x, $y, 0); }
@@ -349,7 +362,7 @@ atom
     | '.'
         {   $$ = make_expr(pd, &yylloc, CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
-        {   $$ = make_ref(pd, CE_SYM, &$LOCAL); }
+        {   $$ = make_ref(pd, CE_SYM, $LOCAL); }
 
 %%
 
@@ -532,7 +545,7 @@ static void free_cstr(struct cstr *cs, int recurse)
     if (recurse)
         free_cstr(cs->right, recurse);
 
-    free(cs->str);
+    free(cs->head);
     free(cs);
 }
 
@@ -541,26 +554,22 @@ static struct element_list *make_utf32(struct cstr *cs)
     struct element_list *result = NULL, **rp = &result;
 
     struct cstr *p = cs;
-    int wpos = 0; // position in the word
     struct element_list *t = *rp;
 
     while (p) {
-        int spos = 0; // position in the string
-        int len = p->len;
-        for (; len > 0; wpos++, spos++, len--) {
+        char *h = p->head;
+        for (; h < p->tail; h++) {
             *rp = calloc(1, sizeof **rp);
             result->tail = t = *rp;
             rp = &t->next;
             t->elem = calloc(1, sizeof *t->elem);
 
-            t->elem->insn.u.word = p->str[spos];
+            t->elem->insn.u.word = *h;
             t->elem->insn.size = 1;
         }
 
         p = p->right;
     }
-
-    free_cstr(cs, 1);
 
     return result;
 }
@@ -576,8 +585,32 @@ static int add_symbol(YYLTYPE *locp, struct parse_data *pd, struct symbol *n)
     return 0;
 }
 
+static char *coalesce_string(const struct cstr *s)
+{
+    const struct cstr *p = s;
+    size_t len = 0;
+    while (p) {
+        len += p->tail - p->head;
+        p = p->right;
+    }
+
+    char *ret = malloc(len + 1);
+    p = s;
+    len = 0;
+    while (p) {
+        ptrdiff_t size = p->tail - p->head;
+        memcpy(&ret[len], p->head, size);
+        len += size;
+        p = p->right;
+    }
+
+    ret[len] = '\0';
+
+    return ret;
+}
+
 static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
-        struct element *insn, const char *symbol)
+        struct element *insn, struct cstr *symbol)
 {
     struct symbol *n = calloc(1, sizeof *n);
     n->column   = locp->first_column;
@@ -585,7 +618,7 @@ static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
     n->resolved = 0;
     n->next     = insn->symbol;
     n->unique   = 1;
-    strcopy(n->name, symbol, sizeof n->name);
+    n->name     = coalesce_string(symbol);
     insn->symbol = n;
 
     return add_symbol(locp, pd, n);
@@ -635,17 +668,17 @@ static struct element_list *make_zeros(struct parse_data *pd, YYLTYPE *locp,
 }
 
 static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
-        const struct strbuf *symbol)
+        const struct cstr *symbol)
 {
     struct directive *result = calloc(1, sizeof *result);
     result->type = D_GLOBAL;
     struct global_list *g = result->data = malloc(sizeof *g);
-    strcopy(g->name, symbol->buf, symbol->len + 1);
+    strcopy(g->name, symbol->head, symbol->tail - symbol->head + 1);
     return result;
 }
 
 static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
-        const struct strbuf *symbol, struct const_expr *expr)
+        const struct cstr *symbol, struct const_expr *expr)
 {
     struct directive *result = calloc(1, sizeof *result);
     result->type = D_SET;
@@ -657,8 +690,9 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
     n->next     = NULL;
     n->ce       = expr;
     n->unique   = 0;
-    // symbol length has already been validated by grammar
-    strcopy(n->name, symbol->buf, symbol->len + 1);
+    // XXX validate symbol length
+    // XXX free allocated string
+    n->name = coalesce_string(symbol);
 
     add_symbol(locp, pd, n);
 
@@ -702,17 +736,17 @@ static int is_type3(struct const_expr *ce)
 }
 
 static struct const_expr *make_ref(struct parse_data *pd, int type,
-        const struct strbuf *symbol)
+        const struct cstr *symbol)
 {
     int flags = IMM_IS_BITS | IS_DEFERRED;
     if (type == CE_EXT)
         flags |= IS_EXTERNAL;
     struct const_expr *eref = make_expr(pd, NULL, CE_EXT, 0, NULL, NULL, flags);
     struct symbol *s;
-    if ((s = symbol_find(pd->symbols, symbol->buf))) {
+    if ((s = symbol_find(pd->symbols, symbol->head))) {
         eref->symbol = s;
     } else {
-        strcopy(eref->symbolname, symbol->buf, sizeof eref->symbolname);
+        strcopy(eref->symbolname, symbol->head, sizeof eref->symbolname);
     }
 
     return eref;
@@ -724,16 +758,6 @@ static struct const_expr_list *make_expr_list(struct const_expr *expr,
     struct const_expr_list *result = calloc(1, sizeof *result);
     result->right = right;
     result->ce = expr;
-    return result;
-}
-
-static struct cstr *make_string(const struct strbuf *str, struct cstr *right)
-{
-    struct cstr *result = calloc(1, sizeof *result);
-    result->right = right;
-    result->len = str->len;
-    result->str = malloc(str->len + 1);
-    strcopy(result->str, str->buf, result->len + 1);
     return result;
 }
 

@@ -9,13 +9,14 @@
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s);
 
-static int savestr(yyscan_t yyscanner);
-static int savechr(int ch, yyscan_t yyscanner);
+static struct cstr *resizestr(struct cstr *s, size_t len);
+static int savestr(const char *text, size_t len, yyscan_t yyscanner);
+#define savechr(ch,sc) savestr((const char[]){ ch },1,sc)
 static int translate_escape(int what);
 
 #define savecol  (yyextra->lexstate.savecol)
 #define saveline (yyextra->lexstate.savep[yyextra->lexstate.swap])
-#define swapline (yyextra->lexstate.swap ^= 1)
+#define SWAPLINE (yyextra->lexstate.swap ^= 1)
 
 #define YY_USER_ACTION \
     do { \
@@ -28,12 +29,13 @@ static int translate_escape(int what);
         yycolumn += yyleng; \
     } while (0);
 
-#define YSTR        yylval->str
+#define YSTR        yylval->cstr
 #define PUSH(State) yy_push_state(State, yyscanner)
 #define DUP         yy_push_state(yy_top_state(yyscanner), yyscanner)
 #define POP         yy_pop_state(yyscanner)
-#define RESETSTR    YSTR.pos = YSTR.len = 0
-#define DONESTR     do { YSTR.len = YSTR.pos; YSTR.pos = 0; } while (0)
+#define NEWSTR      YSTR = resizestr(NULL, yyleng)
+#define CHKSTR      do { if (YSTR->size < 0) { NEWSTR; } } while (0)
+#define SAVESTR     savestr(yytext, yyleng, yyscanner)
 
 %}
 
@@ -72,15 +74,14 @@ edge    {white}|\n
 illegal             { return ILLEGAL; }
 
 {regname}           { yylval->i = yytext[0]; return REGISTER; }
-{symbol}            { RESETSTR; savestr(yyscanner); return SYMBOL; }
-{local}             { RESETSTR; savestr(yyscanner); return LOCAL; }
+{symbol}            { NEWSTR; SAVESTR; return SYMBOL; }
+{local}             { NEWSTR; SAVESTR; return LOCAL; }
 
-\"                  { RESETSTR; PUSH(string); }
+\"                  { NEWSTR; PUSH(string); return OPNQUOTE; }
 <string>{
-    /* avoid returning STRING multiple times ; build a string here instead */
-    \"              { POP; DONESTR; return STRING; }
-    \\              { DUP; /* because charesc double-POPs */ PUSH(charesc); }
-    [^\\"]+         savestr(yyscanner);
+    \"              { POP; return CLSQUOTE; }
+    \\{escchar}     { CHKSTR; savechr(translate_escape(yytext[1]), yyscanner); YSTR->size = -1; return STRSPAN; }
+    [^\\"]+         { CHKSTR; SAVESTR; YSTR->size = -1; return STRSPAN; }
 }
 
 ".word"{edge}       { PUSH(ignore_nl); return WORD; }
@@ -123,7 +124,7 @@ illegal             { return ILLEGAL; }
     .               ; /* ignored content */
 }
 
-"'"                 { PUSH(charend); PUSH(charlit); DONESTR; }
+"'"                 { PUSH(charend); PUSH(charlit); NEWSTR; }
 <charlit>{
     \\              PUSH(charesc);
     .               { savechr(yytext[0], yyscanner); POP; }
@@ -135,7 +136,7 @@ illegal             { return ILLEGAL; }
 }
 <charend>"'"        { POP; return CHARACTER; }
 
-<*>\n               { swapline; saveline[savecol = 0] = 0; return '\n'; }
+<*>\n               { SWAPLINE; saveline[savecol = 0] = 0; return '\n'; }
 
 <*>.                tenyr_error(yylloc, yyextra, "unexpected character");
                     /* LCOV_EXCL_START */
@@ -145,36 +146,38 @@ illegal             { return ILLEGAL; }
  * XXXREMOVEXXX
  * a line above this one removed to work around a gcov off-by-one-line bug
  */
-static int savestr(yyscan_t yyscanner)
+static struct cstr *resizestr(struct cstr *s, size_t len)
 {
-    // savestr() appends a string piece into a buffer
-    int len          = yyget_leng(yyscanner);
-    YYSTYPE *lval    = yyget_lval(yyscanner);
-    YYLTYPE *lloc    = yyget_lloc(yyscanner);
-    const char *text = yyget_text(yyscanner);
-    void *extra      = yyget_extra(yyscanner);
-    struct strbuf *s = &lval->str;
+    if (!s) {
+        // allocate at least a minimum segment size
+        if (len < 128)
+            len = 128;
 
-    if (s->pos + len >= (signed)sizeof s->buf) {
-        tenyr_error(lloc, extra, "token too long");
-        return 1;
-    } else {
-        memcpy(&s->buf[s->pos], text, len + 1);
-        s->pos += len;
-        s->len += len;
-        return 0;
+        s = malloc(sizeof *s);
+        s->size = len;
+        s->head = s->tail = calloc(s->size, 1);
+        s->last = s;
+        s->right = NULL;
+        return s;
+    } else if (s->tail - s->head + len > s->size) {
+        s->size = s->tail - s->head;        // shorten this string segment
+        s->right = resizestr(NULL, len);    // allocate a new segment
+        s->last = s->right;
+        return s->right;                    // caller keeps original s
     }
+
+    return s;
 }
 
-static int savechr(int ch, yyscan_t yyscanner)
+static int savestr(const char *text, size_t len, yyscan_t yyscanner)
 {
-    // savechr() appends a character into the string-building buffer
-    int len          = 1;
-    YYSTYPE *lval    = yyget_lval(yyscanner);
-    struct strbuf *s = &lval->str;
+    // savestr() appends a string piece into a buffer
+    YYSTYPE *lval  = yyget_lval(yyscanner);
+    struct cstr *s = lval->cstr;
 
-    s->buf[s->pos++] = ch;
-    s->len++;
+    s = resizestr(s, len);
+    memcpy(s->tail, text, len);
+    s->tail += len;
 
     return 0;
 }

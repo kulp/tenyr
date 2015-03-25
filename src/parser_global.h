@@ -79,9 +79,9 @@ struct expr {
 };
 
 struct cstr {
-    int len;
-    char *str;
-    struct cstr *right;
+    int size;
+    char *head, *tail;
+    struct cstr *last, *right;
 };
 
 struct directive {
