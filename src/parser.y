@@ -269,7 +269,7 @@ rhs_plain
         { $$ = make_rhs(2, $x, $binop, 0, 1, $atom); }
     /* type3 */
     | atom
-        {   $$ = make_rhs(is_type3($atom) ? 3 : 0, 0, 0, 0, 1, $atom); }
+        { $$ = make_rhs(is_type3($atom) ? 3 : 0, 0, 0, 0, 1, $atom); }
     /* syntax sugars */
     | unary_op regname[x] reloc_op atom
         { $$ = make_unary($unary_op, $x,  0, $reloc_op, $atom); }
@@ -515,26 +515,10 @@ static struct expr *make_unary(int op, int x, int y, int mult,
     // b <- -b + 2  becomes     b <- a -  b + 2 (type 0)
     // b <- -b + c  becomes     b <- 0 -  b + c (type 2)
 
-    struct expr *e = calloc(1, sizeof *e);
-
-    e->deref = 0;
-    e->op    = op;
-    e->mult  = mult;
-
-    if (defexpr) {
-        e->type = 0;
-        e->x = 0;
-        e->y = x;
-        e->ce = defexpr;
-        e->i = 0xfffffbad; // put in a placeholder that must be overwritten
-    } else {
-        e->type = 2;
-        e->x = x;
-        e->y = y;
-        e->i = 0; // there was no expr ; zero defined by language
-    }
-
-    return e;
+    int type = defexpr ? 0 : 2;
+    int xx   = defexpr ? 0 : x;
+    int yy   = defexpr ? x : y;
+    return make_rhs(type, xx, op, yy, mult, defexpr);
 }
 
 static void free_cstr(struct cstr *cs, int recurse)
