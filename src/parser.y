@@ -675,7 +675,6 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
     n->ce       = expr;
     n->unique   = 0;
     // XXX validate symbol length
-    // XXX free allocated string
     n->name = coalesce_string(symbol);
 
     add_symbol(locp, pd, n);

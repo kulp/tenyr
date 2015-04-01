@@ -316,6 +316,8 @@ static int assembly_cleanup(struct parse_data *pd)
 
     list_foreach(symbol_list, Node, pd->symbols) {
         ce_free(Node->symbol->ce, 1);
+        if (Node->symbol)
+            free(Node->symbol->name);
         free(Node->symbol);
         free(Node);
     }
