@@ -71,7 +71,7 @@ CC := $(CROSS_COMPILE)$(CC)
 FLEX  = flex
 BISON = bison -Werror
 
-cc_flag_supp = $(shell $(CC) $1 -x c /dev/null 2>/dev/null >/dev/null && echo $1)
+cc_flag_supp = $(shell $(CC) $1 -c -x c /dev/null 2>/dev/null >/dev/null && echo $1)
 
 MACHINE := $(shell $(CC) -dumpmachine)
 BUILDDIR = $(TOP)/build/$(MACHINE)

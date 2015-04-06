@@ -237,6 +237,8 @@ static const struct spisd_command {
     SPISD_COMMANDS(SPISD_ARRAY_ENTRY)
 };
 
+#ifdef APP_COMMANDS
+/* not yet used */
 static const struct spisd_app_command {
     enum spisd_app_command_type type;
     int rsp_minbytes, rsp_maxbytes;
@@ -244,6 +246,7 @@ static const struct spisd_app_command {
 } spisd_app_commands[64] = {
     SPISD_APP_COMMANDS(SPISD_APP_ARRAY_ENTRY)
 };
+#endif
 
 static int open_storefile(struct spisd_state *s)
 {
