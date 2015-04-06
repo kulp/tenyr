@@ -68,14 +68,16 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     const struct instruction_typeany * const g = &i->insn.u.typeany;
     const struct instruction_type012 * const t = &i->insn.u.type012;
 
-    int32_t imm, width;
+    int32_t imm, width, op;
     switch (g->p) {
         case 0:
         case 1:
         case 2: width = SMALL_IMMEDIATE_BITWIDTH;
-                imm   = i->insn.u.type012.imm;      break;
+                imm   = i->insn.u.type012.imm;
+                op    = t->op;                      break;
         case 3: width = MEDIUM_IMMEDIATE_BITWIDTH;
-                imm   = i->insn.u.type3.imm;        break;
+                imm   = i->insn.u.type3.imm;
+                op    = OP_BITWISE_OR;              break;
     }
 
     static const char regs[16][2] =
@@ -99,8 +101,8 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     int hex   = g->p == 3;
     int mid   = g->p == 0 ? t->y :
                 g->p == 2 ? t->x : 0;
-    int show1 = ((g->p >  1) ? imm != 0 : t->x != 0) || t->op != OP_BITWISE_OR;
-    int show2 = ((g->p == 1) ? imm != 0 : mid  != 0) || t->op != OP_BITWISE_OR;
+    int show1 = ((g->p >  1) ? imm != 0 : t->x != 0) || op != OP_BITWISE_OR;
+    int show2 = ((g->p == 1) ? imm != 0 : mid  != 0) || op != OP_BITWISE_OR;
     int show3 = ((g->p == 0) ? imm != 0 : t->y != 0);
 
     if (flags & ASM_VERBOSE)
@@ -114,7 +116,7 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
         case 0: sA = s5, sB = s7, sC = s8; break;
         case 1: sA = s5, sB = s8, sC = s7; break;
         case 2: sA = s8, sB = s5, sC = s7; break;
-        case 3: sB = s5; sC = s8; show3 = 1; show1 = 0; show2 = g->x != 0; break;
+        case 3: sB = s5; sC = s8; show3 = 1; show1 = 0; show2 |= g->x != 0; break;
     }
 
     // Edge cases : show more operands if the instruction type can't be inferred
@@ -161,12 +163,10 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
         "%c%s%c %s %c%s %3s %s + %s%c", // [Z] <- [X >>> Y + -0]
     };
 
-    {
-        // Centre a 1-to-3-character op
-        char op[MAX_OP_LEN + 1];
-        snprintf(op, sizeof op, "%-2s", s6);
-        s6 = op;
-    }
+    // Centre a 1-to-3-character op
+    char opstr[MAX_OP_LEN + 1];
+    snprintf(opstr, sizeof opstr, "%-2s", s6);
+    s6 = opstr;
 
     #define C_(C,B,A) (((C) << 2) | ((B) << 1) | (A))
     #define PUT(...) return fprintf(out, fmts[show1+show2+show3], __VA_ARGS__)
