@@ -789,14 +789,22 @@ static int validate_expr(struct parse_data *pd, struct const_expr *e, int level)
     if (!e)
         return 0;
 
-    ok &= validate_expr(pd, e->left , level + 1);
-    ok &= validate_expr(pd, e->right, level + 1);
+    struct const_expr *left  = e->left, *right = e->right;
+    int is_binary = left && right;
+
+    ok &= validate_expr(pd, left , level + 1);
+    ok &= validate_expr(pd, right, level + 1);
+
+    if (is_binary) {
+        if ((left->flags  & IS_EXTERNAL) && (right->flags & IS_EXTERNAL)) {
+            ok = 0;
+            tenyr_error(&e->srcloc, pd, "Expression contains more than one "
+                                        "reference to an external");
+        }
+    }
 
     // check both left and right to make sure we validate only binary ops
-    if (    e->left && e->right &&
-            (e->left->flags & IS_EXTERNAL) &&
-            (e->flags & SPECIAL_LHS))
-    {
+    if (is_binary && (left->flags & IS_EXTERNAL) && (e->flags & SPECIAL_LHS)) {
         // Special rules apply to right-shifts of 12 and masks of 0xfff. This
         // is how we express breaking down a large offset into a 20-bit chunk
         // and a 12-bit chunk that we reassemble using OP_PACK.
