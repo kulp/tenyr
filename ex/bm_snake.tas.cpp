@@ -7,15 +7,11 @@
 #define SIZEOF_SNAKE 4
 
 _start:
-#ifndef SIM
     bare_metal_init()
-#endif
     prologue
 
-#ifndef SIM
     call(init_display)
     call(disable_cursor)
-#endif
 
 #ifdef TEST
     c <- rel(_start) ; call(srand) # seed based on where we are loaded
@@ -92,14 +88,14 @@ L_snake:
     e <- rel(snakes_after)
     j <- n < e
     jnzrel(j,L_snake)
-#ifndef SIM
+
 	j <- 250
 	j <- j * 75
 slow_down:
 	e <- j > 0
 	j <- j - 1
 	jnzrel(e,slow_down)
-#endif
+
     goto(L_loop) // infinite loop
 
 snakes:
