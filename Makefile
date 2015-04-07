@@ -96,8 +96,6 @@ tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
 tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
 
-tsim$(EXE_SUFFIX): LDFLAGS += -rdynamic
-
 asm.o: CFLAGS += -Wno-override-init
 
 %,dy.o: CFLAGS += $(CFLAGS_PIC)
