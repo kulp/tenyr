@@ -27,6 +27,7 @@ struct defn {
     char name[SYMBOL_LEN];
     struct obj *obj;
     UWord reladdr;
+    UWord flags;
 
     struct link_state *state;   ///< state reference used for twalk() support
 };
@@ -129,6 +130,7 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
             strcopy(def->name, sym->name, sizeof def->name);
             def->obj = i;
             def->reladdr = sym->value;
+            def->flags = sym->flags;
 
             struct defn **look = tsearch(def, defns, (cmp*)strcmp);
             if (*look != def)
@@ -166,9 +168,12 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
         struct defn **look = tfind(&def, defns, (cmp*)strcmp);
         if (!look)
             fatal(0, "Missing definition for symbol `%s'", rlc->name);
-        struct objmeta **it = tfind(&(*look)->obj, objtree, ptrcmp);
+        reladdr = (*look)->reladdr;
 
-        reladdr = (*it)->offset + (*look)->reladdr;
+        if (((*look)->flags & RLC_ABSOLUTE) == 0) {
+            struct objmeta **it = tfind(&(*look)->obj, objtree, ptrcmp);
+            reladdr += (*it)->offset ;
+        }
     } else {
         // this is a null relocation ; it just wants us to update the
         // offset

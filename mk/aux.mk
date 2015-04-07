@@ -116,6 +116,9 @@ $(DEMOFILES): %_demo.texe: %_demo.tas.cpp
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(@D) $(@F) && $(MAKESTEP) ok
 
+# This test needs an additional object, as it tests the linker
+$(TOP)/test/run/reloc_set.texe: $(TOP)/test/aux/reloc_set0.to
+
 check_hw:
 	@$(MAKESTEP) -n "Checking for Icarus Verilog ... "
 	$(SILENCE)icarus="$$($(MAKE) --no-print-directory $S -i -C $(TOP)/hw/icarus has-icarus)" ; \

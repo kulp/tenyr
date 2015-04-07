@@ -4,6 +4,7 @@
 #include "obj.h"
 #include "parser.h"
 #include "parser_global.h"
+#include "expr.h"
 #include "lexer.h"
 #include "common.h"
 #include "asm.h"
@@ -374,9 +375,16 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
             if (Node->elem)
                 f->out(out, Node->elem, ud);
 
-        if (f->sym)
-            list_foreach(symbol_list, Node, pd->symbols)
-                f->sym(out, Node->symbol, ud);
+        if (f->sym) {
+            list_foreach(symbol_list, Node, pd->symbols) {
+                int flags = 0;
+                struct symbol *sym = Node->symbol;
+                if (sym->ce && (sym->ce->flags & IS_DEFERRED) == 0)
+                    flags |= RLC_ABSOLUTE;
+
+                f->sym(out, sym, flags, ud);
+            }
+        }
 
         if (f->reloc)
             list_foreach(reloc_list, Node, pd->relocs)

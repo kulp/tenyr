@@ -16,7 +16,7 @@ struct format {
     int (*in   )(FILE *, struct element *, void *ud);
     int (*out  )(FILE *, struct element *, void *ud);
 
-    int (*sym  )(FILE *, struct symbol *, void *ud);
+    int (*sym  )(FILE *, struct symbol *, int, void *ud);
     int (*reloc)(FILE *, struct reloc_node *, void *ud);
     int (*fini )(FILE *, void **ud);
     int (*err  )(        void  *ud);

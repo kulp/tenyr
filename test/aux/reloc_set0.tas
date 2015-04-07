@@ -1,0 +1,2 @@
+.global abc
+.set abc, 0x100

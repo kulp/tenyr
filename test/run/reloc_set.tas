@@ -1,0 +1,4 @@
+C <- @abc
+D <- 0x100
+B <- C == D
+illegal

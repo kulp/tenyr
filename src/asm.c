@@ -325,7 +325,7 @@ static int obj_out(FILE *stream, struct element *i, void *ud)
     return 1;
 }
 
-static int obj_sym(FILE *stream, struct symbol *symbol, void *ud)
+static int obj_sym(FILE *stream, struct symbol *symbol, int flags, void *ud)
 {
     int rc = 1;
     struct obj_fdata *u = ud;
@@ -336,6 +336,7 @@ static int obj_sym(FILE *stream, struct symbol *symbol, void *ud)
         strcopy(sym->name, symbol->name, sizeof sym->name);
         assert(("Symbol address resolved", symbol->resolved != 0));
         sym->value = symbol->reladdr;
+        sym->flags = flags;
 
         u->next_sym = &sym->next;
         u->syms++;

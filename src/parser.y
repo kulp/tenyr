@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "parser_global.h"
+#include "expr.h"
 #include "parser.h"
 #include "asm.h"
 

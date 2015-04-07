@@ -7,9 +7,11 @@
 #include <stdint.h>
 
 // RLC_NEGATE inverts the sign of the relocation adjustment
-#define RLC_NEGATE 1
+#define RLC_NEGATE      1
 // SYM_BSS marks a symbol as belonging to .bss
-#define SYM_BSS    2
+#define SYM_BSS         2
+// RLC_ABSOLUTE marks a symbol as not being relative to the start of its record
+#define RLC_ABSOLUTE    4
 
 typedef uint32_t UWord;
 typedef  int32_t SWord;
@@ -46,7 +48,7 @@ struct obj {
     struct objsym {
         struct objsym *next;
 
-        UWord flags;    ///< unused so far (eventually indicate relocations ?)
+        UWord flags;
         char name[SYMBOL_LEN];
         UWord value;
         UWord size;
