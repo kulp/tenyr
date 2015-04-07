@@ -32,8 +32,6 @@
 #define popall_ret(...)     popall(P,__VA_ARGS__)
 
 #define bare_metal_init() \
-    b <- a ; c <- a ; d <- a ; e <- a ; f <- a ; g <- a ; h <- a ; \
-    i <- a ; j <- a ; k <- a ; l <- a ; m <- a ; n <- a ; o <- a ; \
     //
 
 #endif

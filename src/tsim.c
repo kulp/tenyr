@@ -414,6 +414,7 @@ int main(int argc, char *argv[])
     if (f->fini)
         f->fini(in, &ud);
 
+    memset(s->machine.regs, 0x00, sizeof s->machine.regs);
     s->machine.regs[15] = s->conf.start_addr;
 
     struct run_ops ops = {

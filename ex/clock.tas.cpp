@@ -1,7 +1,6 @@
 #include "common.th"
 
 _start:
-    bare_metal_init()
     prologue
 
 top:

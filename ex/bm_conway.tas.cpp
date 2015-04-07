@@ -11,7 +11,6 @@
 #define INSET_COLS (COLS - (OFFSET_COLS * 2))
 
 _start:
-    bare_metal_init()   // TODO this shouldn't be necessary
     prologue
 
     call(init_display)

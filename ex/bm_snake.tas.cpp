@@ -7,7 +7,6 @@
 #define SIZEOF_SNAKE 4
 
 _start:
-    bare_metal_init()
     prologue
 
     call(init_display)

@@ -7,7 +7,6 @@
 #include "common.th"
 
 _start:
-    bare_metal_init()   // TODO this shouldn't be necessary
     prologue
     c <- 1              // argument
 

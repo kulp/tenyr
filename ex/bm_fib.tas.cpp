@@ -8,7 +8,6 @@
 #define ROWS 40
 
 _start:
-    bare_metal_init()   // TODO this shouldn't be necessary
     c <- 1              // argument
     prologue
 
