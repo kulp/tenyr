@@ -223,8 +223,8 @@ data
 directive
     : ".global" opt_nl SYMBOL
         {   POP; $directive = make_global(pd, &yylloc, $SYMBOL); free_cstr($SYMBOL, 1); }
-    | ".set" opt_nl SYMBOL ',' expr
-        {   POP; $directive = make_set(pd, &yylloc, $SYMBOL, $expr); free_cstr($SYMBOL, 1); }
+    | ".set" opt_nl SYMBOL ',' vexpr
+        {   POP; $directive = make_set(pd, &yylloc, $SYMBOL, $vexpr); free_cstr($SYMBOL, 1); }
     | ".option" opt_nl string[key]
         {   tenyr_pop_state(pd->scanner); $directive = NULL; do_option(pd, &yylloc, $key, NULL); }
     | ".option" opt_nl string[key] ',' string[value]
