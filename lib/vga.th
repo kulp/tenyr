@@ -1,3 +1,3 @@
 #define ROWS 40
 #define COLS 80
-#define VGA_BASE 0x10000
+.set VGA_BASE, 0x10000

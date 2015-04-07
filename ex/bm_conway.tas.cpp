@@ -20,7 +20,7 @@ _start:
     m <- 0
 
     // i is global video base
-    i <- VGA_BASE
+    i <- @VGA_BASE
     // g is global flip buffer
     g <- rel(databuf)
     // h is global flip buffer bit index
