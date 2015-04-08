@@ -70,14 +70,16 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
 
     int32_t imm, width, op;
     switch (g->p) {
-        case 0:
-        case 1:
-        case 2: width = SMALL_IMMEDIATE_BITWIDTH;
-                imm   = i->insn.u.type012.imm;
-                op    = t->op;                      break;
-        case 3: width = MEDIUM_IMMEDIATE_BITWIDTH;
-                imm   = i->insn.u.type3.imm;
-                op    = OP_BITWISE_OR;              break;
+        case 0: case 1: case 2:
+            width = SMALL_IMMEDIATE_BITWIDTH;
+            imm   = i->insn.u.type012.imm;
+            op    = t->op;
+            break;
+        case 3:
+            width = MEDIUM_IMMEDIATE_BITWIDTH;
+            imm   = i->insn.u.type3.imm;
+            op    = OP_BITWISE_OR;
+            break;
     }
 
     static const char regs[16][2] =
@@ -155,6 +157,11 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     if (g->p != 3 && !(show1 | show2 | show3))
         show1 = show2 = show3 = g->p != 0;
 
+    // Centre a 1-to-3-character op
+    char opstr[MAX_OP_LEN + 1];
+    snprintf(opstr, sizeof opstr, "%-2s", s6);
+    s6 = opstr;
+
     static const char *fmts[] = {
     //   c0s1c2 s3 c4sA s6  sB   sCc9   //
         "%c%s%c %s %c"     "0"    "%c", // [Z] <- [      0     ]
@@ -162,17 +169,14 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
         "%c%s%c %s %c%s %3s %s"   "%c", // [Z] <- [X >>> Y     ]
         "%c%s%c %s %c%s %3s %s + %s%c", // [Z] <- [X >>> Y + -0]
     };
+    const char *fmt = fmts[show1 + show2 + show3];
 
-    // Centre a 1-to-3-character op
-    char opstr[MAX_OP_LEN + 1];
-    snprintf(opstr, sizeof opstr, "%-2s", s6);
-    s6 = opstr;
-
+    int len = 0;
     #define C_(C,B,A) (((C) << 2) | ((B) << 1) | (A))
-    #define PUT(...) return fprintf(out, fmts[show1+show2+show3], __VA_ARGS__)
-    // Some combinations of {show1,show2,show3} are not allowed because they
-    // would result in ambiguous disassembly
+    #define PUT(...) (len = fprintf(out, fmt, __VA_ARGS__))
     switch (C_(show1,show2,show3)) {
+        // Some combinations are made impossible by the edge-case logic above
+        // because they would result in ambiguous disassembly
         case C_(0,0,0): PUT(c0,s1,c2,s3,c4,            c9); break;
         case C_(0,0,1): PUT(c0,s1,c2,s3,c4,         sC,c9); break;
       //case C_(0,1,0): PUT(c0,s1,c2,s3,c4,      sB,   c9); break; // impossible
@@ -183,9 +187,11 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
         case C_(1,1,1): PUT(c0,s1,c2,s3,c4,sA,s6,sB,sC,c9); break;
 
         default:
-            fatal(0, "Unsupported hex,kind,show1,show2,show3 %d,%d,%d,%d,%d",
-                    hex,g->p,show1,show2,show3);
+            fatal(0, "Unsupported show1,show2,show3 %d,%d,%d",
+                    show1,show2,show3);
     }
+
+    return len;
 }
 
 int print_registers(FILE *out, const int32_t regs[16])
