@@ -24,6 +24,8 @@ PASS_ASSEMBLE := \
 	#
 
 FAIL_ASSEMBLE := $(call get_obj_name,$(wildcard fail_compile/*))
+# Force re-assembly of assembly-failure tests
+.PHONY: $(FAIL_ASSEMBLE)
 
 clean_FILES += *.to *.texe
 clean_FILES += ops/*.texe
