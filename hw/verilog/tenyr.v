@@ -26,7 +26,7 @@ module Decode(input[31:0] insn, output[3:0] idxZ, idxX, output reg[3:0] idxY,
 
     always @* case (kind)
         default: {idxY,op,valI[11:0],valI[31:12]} = {      tI,{20{tI[11]}}};
-        2'b11:   {idxY,op,valI[23:0],valI[31:20]} = {28'h0,tI,{12{tI[19]}}};
+        2'b11:   {idxY,op,valI[19:0],valI[31:20]} = {24'h0,tI,{12{tI[19]}}};
     endcase
 
     assign storing   = ^dd;
