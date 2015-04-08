@@ -356,7 +356,7 @@ eref : '@' SYMBOL { $$ = make_ref(pd, &yylloc, CE_EXT, $SYMBOL); free_cstr($SYMB
 
 binop_expr
     : expr[x]  '+'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '+', $x, $y, 0); }
-    | expr[x]  '-'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '-', $x, $y, RHS_NEGATE); }
+    | expr[x]  '-'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '-', $x, $y, RHS_NEGATE | SPECIAL_LHS); }
     | expr[x]  '*'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '*', $x, $y, FORBID_LHS); }
     | expr[x]  '/'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '/', $x, $y, FORBID_LHS); }
     | expr[x]  '^'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '^', $x, $y, FORBID_LHS); }
@@ -775,7 +775,7 @@ static int is_type3(struct const_expr *ce)
 static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
         int type, const struct cstr *symbol)
 {
-    int flags = IMM_IS_BITS | IS_DEFERRED;
+    int flags = IMM_IS_BITS | IS_DEFERRED | HAS_LOCAL;
     if (type == CE_EXT)
         flags |= IS_EXTERNAL;
     struct const_expr *eref = make_expr(pd, locp, type, 0, NULL, NULL, flags);
@@ -831,6 +831,8 @@ static int validate_expr(struct parse_data *pd, struct const_expr *e, int level)
         switch (e->op) {
             case RSHA:  ok &= (level == 0); ok &= e->right->i == 12;    break;
             case '&':   ok &= (level == 0); ok &= e->right->i == 0xfff; break;
+            case '-':   ok &= (e->right->flags & HAS_LOCAL) == 0; break;
+            case '+':   /* addition is always valid */; break;
             default:    ok &= 0; break;
         }
 

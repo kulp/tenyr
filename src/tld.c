@@ -171,21 +171,18 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
 
         if (((*look)->flags & RLC_ABSOLUTE) == 0) {
             struct objmeta **it = tfind(&(*look)->obj, objtree, ptrcmp);
-            reladdr += (*it)->offset ;
+            reladdr += (*it)->offset;
         }
     } else {
-        // this is a null relocation ; it just wants us to update the
-        // offset
+        // this is a null relocation ; it just wants us to update the offset
         reladdr = (*me)->offset;
-        // negative null relocations invert the value of the offset
-        if (rlc->flags & RLC_NEGATE)
-            reladdr = -reladdr;
     }
-    // here we actually add the found-symbol's value to the relocation
-    // slot, being careful to trim to the right width
+    // here we actually add the found-symbol's value to the relocation slot,
+    // being careful to trim to the right width
+    SWord mult = (rlc->flags & RLC_NEGATE) ? -1 : +1;
     UWord *dest = &r->data[rlc->addr - r->addr];
     UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
-    UWord updated = (*dest + reladdr) & mask;
+    UWord updated = (*dest + mult * (reladdr >> rlc->shift)) & mask;
     *dest = (*dest & ~mask) | updated;
 
     return 0;

@@ -62,6 +62,7 @@ struct obj {
         char name[SYMBOL_LEN];
         UWord addr;     ///< relative location in the object to update
         UWord width;    ///< width in bits of the right-justified immediate
+        UWord shift;    ///< right-shift in bits of the immediate
     } *relocs;
 };
 

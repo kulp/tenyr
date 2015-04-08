@@ -198,6 +198,7 @@ $(DEMOFILES): %_demo.texe: %_demo.tas.cpp
 $(TOP)/test/run/reloc_set.texe: $(TOP)/test/misc/reloc_set0.to
 # This test needs imul compiled in
 $(TOP)/test/run/test_imul.texe: $(TOP)/lib/imul.to
+$(TOP)/test/run/reloc_shifts.texe: $(TOP)/test/misc/reloc_shifts0.to
 
 check_hw:
 	@$(MAKESTEP) -n "Checking for Icarus Verilog ... "

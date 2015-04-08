@@ -264,6 +264,7 @@ static int obj_init(FILE *stream, struct param_state *p, void **ud)
     struct obj_fdata *u = *ud = calloc(1, sizeof *u);
     struct obj *o = u->o = calloc(1, sizeof *o);
 
+    o->magic.parsed.version = 1;
     param_get_int(p, "assembling", &u->assembling);
 
     if (u->assembling) {
@@ -382,6 +383,7 @@ static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
     rlc->name[sizeof rlc->name - 1] = 0;
     rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;
+    rlc->shift = reloc->shift;
 
     u->next_rlc = &rlc->next;
 

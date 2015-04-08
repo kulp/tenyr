@@ -35,7 +35,7 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
                 fatal(0, "Bad use before definition of symbol `%s'", name);
 
             struct element_list **prev = symbol->ce->deferred;
-            return ce_eval(pd, (*prev)->elem, symbol->ce, 0, 0, result);
+            return ce_eval(pd, (*prev)->elem, symbol->ce, 0, 0, 0, result);
         } else {
             *result = symbol->reladdr;
         }
@@ -50,7 +50,7 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 
 // add_relocation returns 1 on success
 static int add_relocation(struct reloc_list **relocs, const char *name,
-        struct element *insn, int width, int flags)
+        struct element *insn, int width, int shift, int flags)
 {
     if (!insn)
         return 0;
@@ -64,6 +64,7 @@ static int add_relocation(struct reloc_list **relocs, const char *name,
     }
     node->reloc.insn  = insn;
     node->reloc.width = width;
+    node->reloc.shift = shift;
     node->reloc.flags = flags;
 
     node->next = *relocs;
@@ -74,24 +75,25 @@ static int add_relocation(struct reloc_list **relocs, const char *name,
 }
 
 static int sym_reloc_handler(struct reloc_list **relocs, struct element *context,
-        int flags, struct const_expr *ce, int width)
+        int flags, struct const_expr *ce, int width, int shift)
 {
     int rlc_flags    = (flags & RHS_NEGATE    ) ? RLC_NEGATE : 0;
     const char *name = (flags & NO_NAMED_RELOC) ? NULL :
                        ce->symbol               ? ce->symbol->name :
                                                   ce->symbolname;
-    return add_relocation(relocs, name, context, width, rlc_flags);
+
+    return add_relocation(relocs, name, context, width, shift, rlc_flags);
 }
 
 int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
         int32_t *result)
 {
-    int rc = ce_eval(pd, NULL, ce, 0, 0, result);
+    int rc = ce_eval(pd, NULL, ce, 0, 0, 0, result);
     return rc;
 }
 
 static int ce_eval_sym(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result)
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
     int relocate = (flags & DO_RELOCATION) != 0;
     if (ce->symbol && ce->symbol->ce) {
@@ -99,29 +101,31 @@ static int ce_eval_sym(struct parse_data *pd, struct element *context,
         if (!deferred)
             return 0; // cannot evaluate yet
         struct element *dc = deferred->elem;
-        return ce_eval(pd, dc, ce->symbol->ce, flags, width, result)
-            || (relocate ? sym_reloc_handler(&pd->relocs, dc, flags, ce, width) : 0);
+        return ce_eval(pd, dc, ce->symbol->ce, flags, width, shift, result)
+            || (relocate ? sym_reloc_handler(&pd->relocs, dc, flags, ce, width, shift) : 0);
     } else {
         const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
         int found = symbol_lookup(pd, pd->symbols, name, result);
         if (relocate && ce->type == CE_EXT) {
             int hflags = flags | (found ? NO_NAMED_RELOC : 0);
-            return sym_reloc_handler(&pd->relocs, context, hflags, ce, width);
+            return sym_reloc_handler(&pd->relocs, context, hflags, ce, width, shift);
         }
         return found;
     }
 }
 
 static int ce_eval_op2(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result)
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
-    int32_t left = 0, right = 0;
+    int32_t left, right;
     int rhsflags = flags;
     if (ce->op == '-')
         rhsflags ^= RHS_NEGATE;
-    if (ce_eval(pd, context, ce->left ,    flags, width, &left ) &&
-        ce_eval(pd, context, ce->right, rhsflags, width, &right))
-    {
+    // "shift" can only apply to a left-hand-side
+    int rrc = ce_eval(pd, context, ce->right, rhsflags, width,     0, &right);
+    if (ce->op == RSHA) shift += right;
+    int lrc = ce_eval(pd, context, ce->left ,    flags, width, shift, &left );
+    if (rrc && lrc) {
         switch (ce->op) {
             case '+' : *result = left +  right; return 1;
             case '-' : *result = left -  right; return 1;
@@ -145,9 +149,9 @@ static int ce_eval_op2(struct parse_data *pd, struct element *context,
 }
 
 static int ce_eval_op1(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result)
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
-    if (!ce_eval(pd, context, ce->left, flags, width, result))
+    if (!ce_eval(pd, context, ce->left, flags, width, shift, result))
         return 0;
     switch (ce->op) {
         case '-': *result = -*result; return 1;
@@ -157,31 +161,31 @@ static int ce_eval_op1(struct parse_data *pd, struct element *context,
 }
 
 static int ce_eval_ici(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result)
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
     int relocate = (flags & DO_RELOCATION) != 0;
     if (!context)
         return 0;
     *result = context->insn.reladdr;
-    return !relocate || sym_reloc_handler(&pd->relocs, context, flags, ce, width);
+    return !relocate || sym_reloc_handler(&pd->relocs, context, flags, ce, width, shift);
 }
 
 static int ce_eval_imm(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result)
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
     *result = ce->i;
     return 1;
 }
 
 static int ce_eval_bad(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result)
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
     fatal(0, "Bad const_expr type %d", ce->type);
     return -1; // never reached
 }
 
 typedef int ce_evaluator(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result);
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result);
 static ce_evaluator * const ce_eval_dispatch[CE_max] = {
     [CE_BAD] = ce_eval_bad,
 
@@ -195,12 +199,12 @@ static ce_evaluator * const ce_eval_dispatch[CE_max] = {
 
 // ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
 int ce_eval(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result)
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
     if (ce->type >= CE_max)
-        return ce_eval_bad(pd, context, ce, flags, width, result);
+        return ce_eval_bad(pd, context, ce, flags, width, shift, result);
 
-    return ce_eval_dispatch[ce->type](pd, context, ce, flags, width, result);
+    return ce_eval_dispatch[ce->type](pd, context, ce, flags, width, shift, result);
 }
 
 static void ce_free(struct const_expr *ce)
@@ -227,7 +231,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
         struct const_expr *ce = r->ce;
 
         int32_t result;
-        if (ce_eval(pd, ce->insn, ce, DO_RELOCATION, r->width, &result)) {
+        if (ce_eval(pd, ce->insn, ce, DO_RELOCATION, r->width, 0, &result)) {
             result *= r->mult;
 
             // XXX handle too-large values in a 32-bit field
@@ -337,7 +341,7 @@ static int assembly_fixup_insns(struct parse_data *pd)
     list_foreach(symbol_list, li, pd->symbols)
         list_foreach(symbol, l, li->symbol)
             if (!l->resolved)
-                if (ce_eval(pd, NULL, l->ce, DO_RELOCATION, WORD_BITWIDTH, &l->reladdr))
+                if (ce_eval(pd, NULL, l->ce, DO_RELOCATION, WORD_BITWIDTH, 0, &l->reladdr))
                     l->resolved = 1;
 
     return 0;

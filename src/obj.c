@@ -1,5 +1,8 @@
 // TODO make an mmap()-based version of this for systems that support it
 
+// `context` parameters not often used in obj_op
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #include "obj.h"
 
 #include <stdlib.h>
@@ -15,6 +18,29 @@
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
+
+#define for_counted_put(Tag,Name,List,Count) \
+    for (int _dummy = 0; !_dummy && (Count) > 0; _dummy++) \
+        list_foreach(Tag, Name, List)
+
+typedef int obj_op(struct obj *o, FILE *out, void *context);
+
+static obj_op put_recs, put_syms, put_relocs_v0, put_relocs_v1,
+              get_recs, get_syms, get_relocs_v0, get_relocs_v1;
+
+static struct objops {
+    obj_op *put_recs, *put_syms, *put_relocs,
+           *get_recs, *get_syms, *get_relocs;
+} objops[] = {
+    [0] = {
+        .put_recs = put_recs, .put_syms = put_syms, .put_relocs = put_relocs_v0,
+        .get_recs = get_recs, .get_syms = get_syms, .get_relocs = get_relocs_v0,
+    },
+    [1] = {
+        .put_recs = put_recs, .put_syms = put_syms, .put_relocs = put_relocs_v1,
+        .get_recs = get_recs, .get_syms = get_syms, .get_relocs = get_relocs_v1,
+    },
+};
 
 static inline void get_sized_le(void *what, size_t size, size_t count, FILE *where)
 {
@@ -74,12 +100,8 @@ static inline void put_sized_be(const void *what, size_t size, size_t count, FIL
 #define put_sized put_sized_be
 #endif
 
-static int obj_v0_write(struct obj *o, FILE *out)
+static int put_recs(struct obj *o, FILE *out, void *context)
 {
-    put_sized(MAGIC_BYTES, 3, 1, out);
-    PUT(o->magic.parsed.version, out);
-    PUT(o->flags, out);
-
     PUT(o->rec_count, out);
     list_foreach(objrec, rec, o->records) {
         PUT(rec->addr, out);
@@ -87,6 +109,11 @@ static int obj_v0_write(struct obj *o, FILE *out)
         put_sized(rec->data, sizeof *rec->data, rec->size, out);
     }
 
+    return 0;
+}
+
+static int put_syms(struct obj *o, FILE *out, void *context)
+{
     PUT(o->sym_count, out);
     list_foreach(objsym, sym, o->symbols) {
         PUT(sym->flags, out);
@@ -95,8 +122,13 @@ static int obj_v0_write(struct obj *o, FILE *out)
         PUT(sym->size, out);
     }
 
+    return 0;
+}
+
+static int put_relocs_v0(struct obj *o, FILE *out, void *context)
+{
     PUT(o->rlc_count, out);
-    list_foreach(objrlc, rlc, o->relocs) {
+    for_counted_put(objrlc, rlc, o->relocs, o->rlc_count) {
         PUT(rlc->flags, out);
         PUT(rlc->name, out);
         PUT(rlc->addr, out);
@@ -106,12 +138,45 @@ static int obj_v0_write(struct obj *o, FILE *out)
     return 0;
 }
 
+static int put_relocs_v1(struct obj *o, FILE *out, void *context)
+{
+    PUT(o->rlc_count, out);
+    list_foreach(objrlc, rlc, o->relocs) {
+        PUT(rlc->flags, out);
+        PUT(rlc->name, out);
+        PUT(rlc->addr, out);
+        PUT(rlc->width, out);
+        PUT(rlc->shift, out);
+    }
+
+    return 0;
+}
+
+static int obj_vx_write(struct obj *o, FILE *out, struct objops *ops)
+{
+    put_sized(MAGIC_BYTES, 3, 1, out);
+    PUT(o->magic.parsed.version, out);
+    PUT(o->flags, out);
+
+    {
+        int rc = 0;
+        rc = ops->put_recs  (o, out, NULL); if (rc) return rc;
+        rc = ops->put_syms  (o, out, NULL); if (rc) return rc;
+        rc = ops->put_relocs(o, out, NULL); if (rc) return rc;
+    }
+
+    return 0;
+}
+
 int obj_write(struct obj *o, FILE *out)
 {
-    switch (o->magic.parsed.version) {
-        case 0: return obj_v0_write(o, out);
+    int version = o->magic.parsed.version;
+
+    switch (version) {
+        case 0: case 1:
+            return obj_vx_write(o, out, &objops[version]);
         default:
-            fatal(0, "Unhandled version while emitting object");
+            fatal(0, "Unhandled version %d while emitting object", version);
     }
 }
 
@@ -122,17 +187,9 @@ int obj_write(struct obj *o, FILE *out)
             _f++) \
         for (UWord _i = (Count); _i > 0; _l ? (void)(_l->next = Name) : (void)0, _l = Name++, _i--)
 
-static int obj_v0_read(struct obj *o, FILE *in)
+static int get_recs(struct obj *o, FILE *in, void *context)
 {
-    long where = ftell(in);
-    long filesize = LONG_MAX;
-    if (!fseek(in, 0L, SEEK_END)) { // seekable stream
-        filesize = ftell(in);
-        if (where < 0 || fseek(in, where, SEEK_SET))
-            fatal(PRINT_ERRNO, "Failed to seek input stream");
-    }
-
-    GET(o->flags, in);
+    int *filesize = context;
 
     GET(o->rec_count, in);
     if (o->rec_count > OBJ_MAX_REC_CNT) {
@@ -148,7 +205,7 @@ static int obj_v0_read(struct obj *o, FILE *in)
             return 1;
         }
         long here = ftell(in);
-        if (rec->size + here > (unsigned)filesize) {
+        if (rec->size + here > (unsigned)*filesize) {
             errno = EFBIG;
             return 1;
         }
@@ -158,6 +215,11 @@ static int obj_v0_read(struct obj *o, FILE *in)
         get_sized(rec->data, sizeof *rec->data, rec->size, in);
     }
 
+    return 0;
+}
+
+static int get_syms(struct obj *o, FILE *in, void *context)
+{
     GET(o->sym_count, in);
     if (o->sym_count > OBJ_MAX_SYMBOLS) {
         errno = EFBIG;
@@ -171,6 +233,11 @@ static int obj_v0_read(struct obj *o, FILE *in)
         GET(sym->size, in);
     }
 
+    return 0;
+}
+
+static int get_relocs_v0(struct obj *o, FILE *in, void *context)
+{
     GET(o->rlc_count, in);
     if (o->rlc_count > OBJ_MAX_RELOCS) {
         errno = EFBIG;
@@ -182,6 +249,44 @@ static int obj_v0_read(struct obj *o, FILE *in)
         GET(rlc->name, in);
         GET(rlc->addr, in);
         GET(rlc->width, in);
+        rlc->shift = 0;
+    }
+
+    return 0;
+}
+
+static int get_relocs_v1(struct obj *o, FILE *in, void *context)
+{
+    GET(o->rlc_count, in);
+    o->bloc.relocs = 1;
+    for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
+        GET(rlc->flags, in);
+        GET(rlc->name, in);
+        GET(rlc->addr, in);
+        GET(rlc->width, in);
+        GET(rlc->shift, in);
+    }
+
+    return 0;
+}
+
+static int obj_vx_read(struct obj *o, FILE *in, struct objops *ops)
+{
+    long where = ftell(in);
+    long filesize = LONG_MAX;
+    if (!fseek(in, 0L, SEEK_END)) { // seekable stream
+        filesize = ftell(in);
+        if (fseek(in, where, SEEK_SET))
+            fatal(PRINT_ERRNO, "Failed to seek input stream");
+    }
+
+    GET(o->flags, in);
+
+    {
+        int rc = 0;
+        rc = ops->get_recs  (o, in, &filesize); if (rc) return rc;
+        rc = ops->get_syms  (o, in,      NULL); if (rc) return rc;
+        rc = ops->get_relocs(o, in,      NULL); if (rc) return rc;
     }
 
     return 0;
@@ -196,8 +301,10 @@ int obj_read(struct obj *o, FILE *in)
 
     GET(o->magic.parsed.version, in);
 
-    switch (o->magic.parsed.version) {
-        case 0: return obj_v0_read(o, in);
+    int version = o->magic.parsed.version;
+    switch (version) {
+        case 0: case 1:
+            return obj_vx_read(o, in, &objops[version]);
         default:
             fatal(0, "Unhandled version number when loading object");
     }
@@ -226,7 +333,8 @@ static void obj_v0_free(struct obj *o)
 void obj_free(struct obj *o)
 {
     switch (o->magic.parsed.version) {
-        case 0: obj_v0_free(o); break;
+        case 0: case 1:
+            obj_v0_free(o); break;
         default:
             fatal(0, "Unknown version number or corrupt memory while freeing object");
     }

@@ -52,7 +52,7 @@ struct const_expr;
 int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
         int32_t *result);
 int ce_eval(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int32_t *result);
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result);
 
 #endif
 

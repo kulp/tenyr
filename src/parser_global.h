@@ -32,7 +32,8 @@ struct parse_data {
         struct reloc_node {
             char name[SYMBOL_LEN];  ///< can be empty string for non-globals
             struct element *insn;   ///< TODO rename
-            int width;
+            int width;              ///< number of bits wide, LSB-justified
+            int shift;              ///< number of bits shifted down
             long flags;
         } reloc;
         struct reloc_list *next;
