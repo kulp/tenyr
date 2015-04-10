@@ -163,6 +163,9 @@ int main(int argc, char *argv[])
             }
         }
 
+        if (!rc && f->emit)
+            rc |= f->emit(stream, &ud);
+
         if (f->fini)
             rc |= f->fini(stream, &ud);
 

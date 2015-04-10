@@ -372,7 +372,7 @@ static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
     return 1;
 }
 
-static int obj_fini(FILE *stream, void **ud)
+static int obj_emit(FILE *stream, void **ud)
 {
     struct obj_fdata *u = *ud;
     struct obj *o = u->o;
@@ -384,6 +384,13 @@ static int obj_fini(FILE *stream, void **ud)
 
         obj_write(u->o, stream);
     }
+
+    return 0;
+}
+
+static int obj_fini(FILE *stream, void **ud)
+{
+    struct obj_fdata *u = *ud;
 
     obj_free(u->o);
 
@@ -533,6 +540,7 @@ const struct format tenyr_asm_formats[] = {
         .init  = obj_init,
         .in    = obj_in,
         .out   = obj_out,
+        .emit  = obj_emit,
         .fini  = obj_fini,
         .sym   = obj_sym,
         .reloc = obj_reloc,

@@ -18,6 +18,8 @@ struct format {
 
     int (*sym  )(FILE *, struct symbol *, int, void *ud);
     int (*reloc)(FILE *, struct reloc_node *, void *ud);
+
+    int (*emit )(FILE *, void **ud);
     int (*fini )(FILE *, void **ud);
     int (*err  )(        void  *ud);
 };
