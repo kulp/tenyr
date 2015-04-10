@@ -159,7 +159,7 @@ test_op_%: $(TOP)/test/op/%.texe tas$(EXE_SUFFIX)
 # one run, as they do not have random bits appended (yet).
 .SECONDARY: $(RUNS:%=$(TOP)/test/run/%.texe)
 test_run_%: $(TOP)/test/run/%.texe tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
-	@$(MAKESTEP) -n "Running test `printf %-12s "'$*'"` ($(context)) ... "
+	@$(MAKESTEP) -n "Running test `printf %-15s "'$*'"` ($(context)) ... "
 	$(SILENCE)$(run) && $(MAKESTEP) ok
 
 check_hw_icarus_pre:
