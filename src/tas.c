@@ -165,6 +165,8 @@ int main(int argc, char *argv[])
 
         if (!rc && f->emit)
             rc |= f->emit(stream, &ud);
+        else if (rc)
+            remove(outfname); // race condition ?
 
         if (f->fini)
             rc |= f->fini(stream, &ud);
