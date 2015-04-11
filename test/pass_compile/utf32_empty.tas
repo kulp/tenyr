@@ -1,0 +1,4 @@
+.utf32 ""
+.utf32 "bar" ""
+.utf32 "" "quux"
+.utf32 "" "baz" ""

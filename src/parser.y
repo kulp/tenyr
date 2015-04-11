@@ -201,8 +201,8 @@ symbol
 string
     : stringelt
     | string[left] stringelt
-        {   $$ = $left;
-            $$->last->right = $stringelt;
+        {   $$ = $left ? $left : $stringelt;
+            if ($left) $$->last->right = $stringelt;
             if ($stringelt) $$->last = $stringelt; }
 
 stringelt
