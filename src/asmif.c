@@ -74,7 +74,11 @@ static int add_relocation(struct parse_data *pd, const char *name,
 {
     struct reloc_list *node = calloc(1, sizeof *node);
 
-    strcopy(node->reloc.name, name ? name : "", sizeof node->reloc.name);
+    if (name) {
+        strcopy(node->reloc.name, name, sizeof node->reloc.name);
+    } else {
+        memset(node->reloc.name, '\0', sizeof node->reloc.name);
+    }
     node->reloc.insn  = insn;
     node->reloc.width = width;
     node->reloc.flags = flags;
