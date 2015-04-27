@@ -42,10 +42,11 @@ clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    random random.*       \
                )#
 
-tas_OBJECTS  = common.o asmif.o asm.o obj.o parser.o lexer.o param.o
-tsim_OBJECTS = common.o simif.o asm.o obj.o plugin.o \
-               $(DEVOBJS) sim.o param.o
-tld_OBJECTS  = common.o obj.o
+common_OBJECTS = common.o $(patsubst %.c,%.o,$(notdir $(wildcard $(OS_PATHS:%=%/*.c))))
+tas_OBJECTS    = $(common_OBJECTS) asmif.o asm.o obj.o parser.o lexer.o param.o
+tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
+                 $(DEVOBJS) sim.o param.o
+tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 showbuilddir:
 	@echo $(abspath $(BUILDDIR))

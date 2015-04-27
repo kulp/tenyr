@@ -20,7 +20,9 @@ ifeq ($(PLATFORM),mingw)
 else
  OS := $(shell uname -s)
 endif
-INCLUDE_OS = $(TOP)/src/os/$(OS) $(TOP)/src/os/default
+OS_PATHS = $(TOP)/src/os/$(OS) $(TOP)/src/os/default
+INCLUDE_OS = $(OS_PATHS)
+vpath %.c $(OS_PATHS)
 
 include $(TOP)/mk/os/default.mk
 -include $(TOP)/mk/os/$(OS).mk
