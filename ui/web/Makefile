@@ -7,7 +7,7 @@ include $(TOP)/mk/rules.mk
 BIN_TARGETS = tcc.js tas.js tsim.js
 TARGETS = $(BIN_TARGETS)
 EXE_SUFFIX = .bc
-CPPFLAGS += -D"PATH_SEPARATOR_CHAR='/'"
+CPPFLAGS += -D"PATH_COMPONENT_SEPARATOR_CHAR='/'"
 
 .PHONY: all
 all:: $(BIN_TARGETS)

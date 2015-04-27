@@ -42,11 +42,11 @@ int plugin_load(const char *path, const char *base,
             const void *implstem = NULL;
             snprintf(buf, sizeof buf, "%s[%d].stem", base, inst);
             p->gops.param_get(p, buf, 1, &implstem); // may not be set ; that's OK
-            if (strchr(implname, PATH_SEPARATOR_CHAR)) {
+            if (strchr(implname, PATH_COMPONENT_SEPARATOR_CHAR)) {
                 implpath = implname;
             } else {
                 snprintf(buf, sizeof buf, ".%clibtenyr%s"DYLIB_SUFFIX,
-                        PATH_SEPARATOR_CHAR, implname);
+                        PATH_COMPONENT_SEPARATOR_CHAR, implname);
                 buf[sizeof buf - 1] = 0;
                 implpath = buf;
                 if (!implstem)

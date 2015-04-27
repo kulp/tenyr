@@ -170,7 +170,7 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
 static char *build_path(struct sim_state *s, const char *suff)
 {
     char *dir = strdup(s->conf.tsim_path);
-    char *solidus = strrchr(dir, PATH_SEPARATOR_CHAR);
+    char *solidus = strrchr(dir, PATH_COMPONENT_SEPARATOR_CHAR);
     if (solidus)
         solidus[1] = '\0';
     if (!suff)
