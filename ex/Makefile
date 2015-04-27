@@ -5,11 +5,10 @@ include $(TOP)/mk/rules.mk
 .SUFFIXES:
 .SUFFIXES: .tas .to .texe
 
-INCLUDES += -I$(TOP)/lib -I$(TOP)/lib/dword
-CPPFLAGS += $(INCLUDES)
-
 vpath %.tas $(TOP)/lib $(TOP)/lib/dword
 vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
+
+%.tas: INCLUDES += $(TOP)/lib $(TOP)/lib/dword
 
 TARGETS = \
     bsearch_demo.texe   \

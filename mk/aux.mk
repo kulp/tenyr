@@ -197,6 +197,11 @@ ifeq ($(SDL),0)
 check_sim_sdl: ;
 else
 check_sim_sdl: export SDL_VIDEODRIVER=dummy
+# For now we need a special rule to make examples inside their directory to
+# pick up dependency information from ex/Makefile.
+$(TOP)/ex/%.texe:
+	$(MAKE) -C $(@D) $(@F)
+
 check_sim_sdl: $(TOP)/ex/bm_mults.texe
 	@$(MAKESTEP) -n "Running SDL test $(<F) ($(subst _sdl,,$(@:check_%=%))) ... "
 	$(SILENCE)(cd $(TOP) ; $(abspath $(BUILDDIR))/tsim -n --recipe=prealloc -@ $(TOP)/plugins/sdl.rcp $<) && $(ECHO) ok
