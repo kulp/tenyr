@@ -67,9 +67,9 @@ else
 endif
 
 ifneq ($(GCOV),)
- CFLAGS  += --coverage -O0
- CXXFLAGS  += --coverage -O0
- LDFLAGS += --coverage -O0
+ CFLAGS   += --coverage -O0
+ CXXFLAGS += --coverage -O0
+ LDFLAGS  += --coverage -O0
 endif
 
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
