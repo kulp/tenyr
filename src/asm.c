@@ -445,7 +445,7 @@ static int text_in(FILE *stream, struct element *i, void *ud)
     // read "agda"" as "0xa" and subsequently fail, when the whole string
     // should have been rejected.
     int next_char = fgetc(stream);
-    if (!isspace(next_char) && next_char != EOF)
+    if (next_char != EOF && !isspace(next_char))
         return -1;
     return result ? 1 : -1;
 }

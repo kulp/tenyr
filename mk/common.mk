@@ -15,7 +15,7 @@ ifndef NDEBUG
  LDFLAGS  += -g
 endif
 
-ifeq ($(WIN32),1)
+ifeq ($(PLATFORM),mingw)
  OS := Win32
 else
  OS := $(shell uname -s)
@@ -30,7 +30,7 @@ LDLIBS  += $(LDLIBS_$(OS))
 
 CPPFLAGS += -D"PATH_SEPARATOR_CHAR=$(PATH_SEP_CHAR)"
 
-ifeq ($(_32BIT),1)
+ifeq ($(BITS),32)
  CFLAGS  += -m32
  LDFLAGS += -m32
 endif
@@ -67,7 +67,8 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
 GIT = git --git-dir=$(TOP)/.git
-CC := $(CROSS_COMPILE)$(CC)
+CC  := $(CROSS_COMPILE)$(CC)
+CXX := $(CROSS_COMPILE)$(CXX)
 FLEX  = flex
 BISON = bison -Werror
 
@@ -81,10 +82,10 @@ ifeq ($(findstring command,$(origin $(BUILDDIR))),)
   override BUILDDIR := $(TOP)/build/$(MACHINE)
  endif
 endif
-BUILD_NAME := $(shell $(GIT) describe --tags --match 'v?.?.?*' 2>/dev/null || $(ECHO) "unknown")
+BUILD_NAME := $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>/dev/null || $(ECHO) "unknown")
 
-TAS = $(TOOLDIR)/tas
-TLD = $(TOOLDIR)/tld
+TAS = $(TOOLDIR)/tas$(EXE_SUFFIX)
+TLD = $(TOOLDIR)/tld$(EXE_SUFFIX)
 
 DEVICES = ram sparseram debugwrap serial spi
 DEVOBJS = $(DEVICES:%=%.o)

@@ -1,19 +1,53 @@
 language: c
-compiler:
-  - gcc
-  - clang
+matrix:
+  include:
+    - compiler: "gcc-win64"
+      env: PLATFORM=mingw BITS=64 HOST=x86_64 CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+    - compiler: "gcc-win32"
+      env: PLATFORM=mingw BITS=32 HOST=i686   CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+    - compiler: "gcc"
+      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=1
+    - compiler: "clang"
+      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=1
 os:
   - linux
   - osx
-before_install:
-  - sudo pip install cpp-coveralls
-script: "make GCOV=1 V=1 SDL=0 && make SDL=0 check && make SDL=0 local-install"
+install:
+  - sudo -H pip install cpp-coveralls
+  - sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots
+  - sudo apt-get update -qq
+  - sudo apt-get install -y libsdl2 libsdl2-dev libsdl2-image libsdl2-image-dev
+  - |
+    if [[ $PLATFORM = mingw* ]] ; then
+      sudo add-apt-repository --yes ppa:tobydox/mingw-x-precise
+      sudo apt-get update -qq
+      sudo apt-get install -y mingw32 mingw${BITS}-x-binutils mingw${BITS}-x-gcc mingw${BITS}-x-runtime
+      sudo apt-get install -y wine
+      export MINGW=/opt/mingw$BITS
+      export PATH=$MINGW/bin:$PATH
+      export CC=$HOST-w64-mingw32-gcc
+      export CXX=$HOST-w64-mingw32-g++
+    fi
+script:
+  - git fetch --tags
+  - make V=1 all
+  - make $CHECK_RULE
+  - make local-install
+  - make gzip zip
 after_success:
-  # exclude SDL until Travis has an OS new enough to use SDL2
-  - coveralls --exclude-pattern '.*sdl.*' --include src --gcov-options '\-lp'
+  - if [[ -n $GCOV ]] ; then coveralls --include src --gcov-options '\-lp' ; fi
 notifications:
-    irc:
-        channels:
-          - "irc.freenode.org#tenyr"
-        use_notice: true
-        skip_join: true
+  irc:
+    channels:
+      - "irc.freenode.org#tenyr"
+    use_notice: true
+    skip_join: true
+addons:
+  artifacts:
+    paths:
+      - $(find dist -type f | tr "\n" :)
+      - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)
+    target_paths:
+      - build/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
+      - version/$(git describe --always --tags --match 'v?.?.?*' $TRAVIS_COMMIT)
+      - latest/$PLATFORM/$HOST

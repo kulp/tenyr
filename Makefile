@@ -47,13 +47,6 @@ tsim_OBJECTS = common.o simif.o asm.o obj.o plugin.o \
                $(DEVOBJS) sim.o param.o
 tld_OBJECTS  = common.o obj.o
 
-.PHONY: win32 win64
-win32: export _32BIT=1
-win32 win64: export WIN32=1
-# reinvoke make to ensure vars are set early enough
-win32 win64:
-	$(MAKE) $^
-
 showbuilddir:
 	@echo $(abspath $(BUILDDIR))
 

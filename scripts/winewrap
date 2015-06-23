@@ -1,0 +1,3 @@
+#!/bin/bash
+arch=`file -b $1 | grep -q 64 && echo 64 || echo 32`
+WINEARCH=win$arch exec wine $@

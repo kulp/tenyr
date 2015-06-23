@@ -82,10 +82,12 @@ coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
 
 check: check_sw check_hw
-check_sw: check_args check_compile check_sim check_forth dogfood
+check_sw: check_sw_pre_$(OS) check_args check_compile check_sim check_forth dogfood
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
+
+check_sw_pre_$(OS):: ;
 
 check_args: check_args_tas check_args_tld check_args_tsim
 check_args_%: check_args_general_% check_args_specific_% ;
@@ -96,7 +98,7 @@ check_args_general_%: %$(EXE_SUFFIX)
 	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(ECHO) "    ... -h ok"
 	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(ECHO) "    ... no-args trapped ok"
 	$(SILENCE)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(ECHO) "    ... non-existent file ok"
-	$(SILENCE)$(BUILDDIR)/$< -QRSTU 2>&1 | grep -qi "Invalid option"                && $(ECHO) "    ... bad option prints error ok"
+	$(SILENCE)$(BUILDDIR)/$< -QRSTU 2>&1 | egrep -qi "(Invalid|unknown) option"     && $(ECHO) "    ... bad option prints error ok"
 	$(SILENCE)( ! $(BUILDDIR)/$< -QRSTU &> /dev/null )                              && $(ECHO) "    ... bad option exits non-zero ok"
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
@@ -131,7 +133,7 @@ check_hw:
 	fi
 
 # Demos are not self-testing, so they have demo-specific external checkers
-test_demo_qsort:   verify = sed -n 5p
+test_demo_qsort:   verify = sed -n 5p | tr -d '\015'
 test_demo_qsort:   result = eight
 test_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
 test_demo_bsearch: result = 11
@@ -148,7 +150,7 @@ randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase 
 # run -- they have random bits appended which should be regenerated each time.
 .INTERMEDIATE: $(OPS:%=$(TOP)/test/op/%.texe)
 $(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas tas$(EXE_SUFFIX)
-	$(SILENCE)(cat $< ; echo "$(call randwords,3)") | $(BUILDDIR)/tas -o $@ -
+	$(SILENCE)(cat $< ; echo "$(call randwords,3)") | $(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ -
 
 test_op_%: $(TOP)/test/op/%.texe tas$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
