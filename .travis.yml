@@ -35,7 +35,8 @@ script:
   - make local-install
   - make gzip zip
 after_success:
-  - if [[ -n $GCOV ]] ; then coveralls --include src --gcov-options '\-lp' ; fi
+  # skip untested SPI code for now
+  - if [[ -n $GCOV ]] ; then coveralls --exclude-pattern '.*/spi.*' --include src --gcov-options '\-lp' ; fi
 notifications:
   irc:
     channels:
