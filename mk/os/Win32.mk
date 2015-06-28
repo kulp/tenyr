@@ -18,4 +18,4 @@ SDL = 0
 
 check_sw_pre_Win32::
 	@$(MAKESTEP) "Registering EXE files with binfmt_misc ..."
-	$(SILENCE)[[ -e /proc/sys/fs/binfmt_misc/tenyr_wine3 ]] || echo ':tenyr_wine3:M::MZ::'$(TOP)/scripts/winewrap: | sudo tee /proc/sys/fs/binfmt_misc/register > /dev/null
+	$(SILENCE)[[ -e /proc/sys/fs/binfmt_misc/tenyr_wine ]] || echo ':tenyr_wine:M::MZ::'$(TOP)/scripts/winewrap: | sudo tee /proc/sys/fs/binfmt_misc/register > /dev/null
