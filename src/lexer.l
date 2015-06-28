@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "common.h"
 #include "parser.h"
@@ -12,7 +13,7 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s, ...);
 static struct cstr *resizestr(struct cstr *s, size_t len);
 static int savestr(const char *text, size_t len, yyscan_t yyscanner);
 #define savechr(ch,sc) savestr((const char[]){ ch },1,sc)
-static int translate_escape(int what);
+static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 
 #define savecol  (yyextra->lexstate.savecol)
 #define saveline (yyextra->lexstate.savep[yyextra->lexstate.swap])
@@ -80,7 +81,7 @@ illegal             { return ILLEGAL; }
 \"                  { NEWSTR; PUSH(string); return OPNQUOTE; }
 <string>{
     \"              { POP; return CLSQUOTE; }
-    \\{escchar}     { CHKSTR; savechr(translate_escape(yytext[1]), yyscanner); YSTR->size = -1; return STRSPAN; }
+    \\{escchar}     { CHKSTR; savechr(translate_escape(yylloc, yyextra, yytext[1]), yyscanner); YSTR->size = -1; return STRSPAN; }
     [^\\"]+         { CHKSTR; SAVESTR; YSTR->size = -1; return STRSPAN; }
 }
 
@@ -132,7 +133,7 @@ illegal             { return ILLEGAL; }
 }
 <charesc>{
     \r?\n           POP; /* escaped newline */
-    {escchar}       { savechr(translate_escape(yytext[0]), yyscanner); POP; POP; }
+    {escchar}       { savechr(translate_escape(yylloc, yyextra, yytext[0]), yyscanner); POP; POP; }
     .               { tenyr_error(yylloc, yyextra, "bad escape character"); POP; }
 }
 <charend>"'"        { POP; return CHARACTER; }
@@ -183,7 +184,7 @@ static int savestr(const char *text, size_t len, yyscan_t yyscanner)
     return 0;
 }
 
-static int translate_escape(int what)
+static int translate_escape(YYLTYPE *lloc, struct parse_data *extra, int what)
 {
     switch (what) {
         case '\\': return '\\';
@@ -196,7 +197,10 @@ static int translate_escape(int what)
         case 'r' : return '\r';
         case 't' : return '\t';
         case 'v' : return '\v';
-        default: return -1;
+        default:
+            tenyr_error(lloc, extra, "invalid escape \\%c - did you mean \\%c ?",
+                        what, tolower(what));
+            return -1;
     }
 }
 
