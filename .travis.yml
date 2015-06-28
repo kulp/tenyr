@@ -8,7 +8,7 @@ matrix:
     - compiler: "gcc"
       env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=1
     - compiler: "clang"
-      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=1
+      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=
 os:
   - linux
   - osx
