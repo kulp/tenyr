@@ -143,7 +143,7 @@ illegal             { return ILLEGAL; }
                     /* LCOV_EXCL_START */
 %%
 /* LCOV_EXCL_STOP LCOV_EXCL_LINE */
-/*
+/* LCOV_EXCL_LINE
  * XXXREMOVEXXX
  * a line above this one removed to work around a gcov off-by-one-line bug
  */
