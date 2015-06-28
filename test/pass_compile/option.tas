@@ -1,0 +1,3 @@
+.option "garbage"
+.option "this," "that," "the other"
+.option "key", "value"
