@@ -1,7 +1,8 @@
 # this file is included by the main Makefile automatically
 # TODO make this makefile work on win32
 DYLIB_SUFFIX = .dll
-PATH_COMPONENT_SEP_CHAR = '\\\\'
+PATH_COMPONENT_SEP=\\\\
+PATH_SEP_CHAR = ';'
 EXE_SUFFIX = .exe
 CFLAGS_PIC =
 CC := gcc

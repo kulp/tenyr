@@ -1,5 +1,6 @@
 #include "plugin.h"
 #include "common.h"
+#include "os_common.h"
 
 #include <stdio.h>
 
@@ -19,7 +20,7 @@ int tenyr_plugin_host_init(void *libhandle)
     return 0;
 }
 
-int plugin_load(const char *path, const char *base,
+int plugin_load(const char *basepath, const char **paths, const char *base,
         const struct plugin_cookie *p, plugin_success_cb *success, void *ud)
 {
     int rc = 0;
@@ -56,25 +57,23 @@ int plugin_load(const char *path, const char *base,
             // TODO consider using RTLD_NODELETE here
             // (seems to break on Mac OS X)
             // currently we leak library handles
-            void *libhandle = dlopen(implpath, RTLD_NOW | RTLD_LOCAL);
-#if EMSCRIPTEN
-            // emscripten doesn't support RTLD_DEFAULT
-            debug(1, "Could not load %s, bailing", implpath);
-            break;
-#else
-            if (!libhandle && path) {
-                char buf[256];
-                snprintf(buf, sizeof buf, "%s%s",
-                         path, implpath);
-                libhandle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
+            const char **path = paths;
+            void *libhandle = RTLD_DEFAULT;
+            while ((libhandle == RTLD_DEFAULT) && *paths != NULL) {
+                char *resolved = build_path(basepath, "%s%s", *path++, implpath);
+                void *handle = dlopen(resolved, RTLD_NOW | RTLD_LOCAL);
+                if (handle)
+                    libhandle = handle;
+                free(resolved);
             }
 
-            if (!libhandle) {
-                debug(1, "Could not load %s, trying default library search", implpath);
-                libhandle = RTLD_DEFAULT;
+#if EMSCRIPTEN
+            if (libhandle == RTLD_DEFAULT) {
+                // emscripten doesn't support RTLD_DEFAULT
+                debug(1, "Could not load %s, bailing", implpath);
+                break;
             }
 #endif
-
             tenyr_plugin_host_init(libhandle);
 
             success(libhandle, inst, parent, implstem, ud);

@@ -1,7 +1,6 @@
 makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
 TOP := $(dir $(makefile_path))
 include $(TOP)/mk/common.mk
-include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/rules.mk
 
 # ensure directory printing doesn't mess up check rules
@@ -67,10 +66,6 @@ all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
 else
 
-ifneq ($(JIT),0)
-include $(TOP)/mk/jit.mk
-endif
-
 all: $(TARGETS)
 
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
@@ -89,7 +84,7 @@ tas.o asm.o tsim.o sim.o simif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-v
 # don't complain about unused state
 asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
-$(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o
+$(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o $(common_OBJECTS)
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter

@@ -167,42 +167,30 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
     return rc;
 }
 
-static char *build_path(struct sim_state *s, const char *suff)
-{
-    char *dir = strdup(s->conf.tsim_path);
-    char *solidus = strrchr(dir, PATH_COMPONENT_SEPARATOR_CHAR);
-    if (solidus)
-        solidus[1] = '\0';
-    if (!suff)
-        return dir;
-
-    size_t dir_len = solidus ? (solidus - dir + 1) : 0;
-    size_t len = dir_len + strlen(suff) + 1;
-    char *buf = malloc(len);
-    snprintf(buf, len, "%slibtenyrjit"DYLIB_SUFFIX, solidus ? dir : "");
-    free(dir);
-    return buf;
-}
-
 static int recipe_plugin(struct sim_state *s)
 {
-    char *buf = build_path(s, NULL);
+    #define XX PATH_COMPONENT_SEPARATOR_STR
+    static const char *paths[] = { ".."XX"lib"XX, "."XX, "", NULL };
+    #undef XX
     int result = s->plugins_loaded ||
-        (s->plugins_loaded = !plugin_load(buf, "plugin", &s->plugin_cookie, plugin_success, s));
-    free(buf);
+        (s->plugins_loaded = !plugin_load(s->conf.tsim_path, paths, "plugin", &s->plugin_cookie, plugin_success, s));
     return !result;
 }
 
 static int recipe_jit(struct sim_state *s)
 {
-    char *buf = build_path(s, "libtenyrjit"DYLIB_SUFFIX);
-    void *libhandle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
-    if (!libhandle) {
-        debug(0, "Failed to load `%s` - %s", buf, dlerror());
+    #define XX PATH_COMPONENT_SEPARATOR_STR
+    static const char *paths[] = { ".."XX"lib"XX, "."XX, "", NULL };
+    #undef XX
+    const char **path = paths;
+    void *libhandle = RTLD_DEFAULT;
+    while ((libhandle == RTLD_DEFAULT) && *paths != NULL) {
+        char *buf = build_path(s->conf.tsim_path, "%slibtenyrjit"DYLIB_SUFFIX, *path++);
+        void *handle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
+        if (handle)
+            libhandle = handle;
         free(buf);
-        return 1;
     }
-    free(buf);
 
     const char name[] = "jit_run_sim";
     void *ptr = dlsym(libhandle, name);
@@ -311,8 +299,12 @@ static int parse_args(struct sim_state *s, int argc, char *argv[]);
 static int parse_opts_file(struct sim_state *s, const char *filename)
 {
     FILE *f = fopen(filename, "r");
-    if (!f)
-        fatal(PRINT_ERRNO, "Options file `%s' not found", filename);
+    if (!f) {
+        char *b = build_path(s->conf.tsim_path, "../share/tenyr/%s", filename);
+        f = fopen(b, "r");
+        if (!f)
+            fatal(PRINT_ERRNO, "Options file `%s' not found", filename);
+    }
 
     char buf[1024], *p;
     while ((p = fgets(buf, sizeof buf, f))) {
@@ -362,6 +354,8 @@ int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
 
+    extern char *os_find_self(const char *);
+
     struct sim_state _s = {
         .conf = {
             .verbose      = 0,
@@ -370,7 +364,7 @@ int main(int argc, char *argv[])
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
             .fmt          = &tenyr_asm_formats[0],
-            .tsim_path    = argv[0],
+            .tsim_path    = os_find_self(argv[0]),
         },
         .dispatch_op = dispatch_op,
         .plugin_cookie = {
@@ -455,6 +449,8 @@ int main(int argc, char *argv[])
         s->libs = s->libs->next;
         free(t);
     }
+
+    free(s->conf.tsim_path);
 
     return rc;
 }

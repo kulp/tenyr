@@ -35,7 +35,7 @@ int tenyr_plugin_host_init(void *libhandle);
 typedef int plugin_success_cb(void *libhandle, int inst, const char *parent,
         const char *implstem, void *ud);
 
-int plugin_load(const char *path, const char *base,
+int plugin_load(const char *basepath, const char **paths, const char *base,
         const struct plugin_cookie *p, plugin_success_cb *success, void *ud);
 
 #endif

@@ -30,7 +30,9 @@ include $(TOP)/mk/os/default.mk
 LDFLAGS += $(LDFLAGS_$(OS))
 LDLIBS  += $(LDLIBS_$(OS))
 
-CPPFLAGS += -D"PATH_COMPONENT_SEPARATOR_CHAR=$(PATH_COMPONENT_SEP_CHAR)"
+CPPFLAGS += -D"PATH_COMPONENT_SEPARATOR_CHAR='$(PATH_COMPONENT_SEP)'"
+CPPFLAGS += -D'PATH_COMPONENT_SEPARATOR_STR="$(PATH_COMPONENT_SEP)"'
+CPPFLAGS += -D"PATH_SEPARATOR_CHAR=$(PATH_SEP_CHAR)"
 
 ifeq ($(BITS),32)
  CFLAGS  += -m32
@@ -96,11 +98,18 @@ PDEVICES += spidummy spisd spi
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
 PDEVLIBS = $(PDEVICES:%=libtenyr%$(DYLIB_SUFFIX))
 
-BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
-LIB_TARGETS ?= $(PDEVLIBS)
+BIN_TARGETS += tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+LIB_TARGETS += $(PDEVLIBS)
+ifneq ($(JIT),0)
+LIB_TARGETS += libtenyrjit$(DYLIB_SUFFIX)
+endif
+
 TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
 RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
                $(TOP)/rsrc/font.png \
                $(wildcard $(TOP)/plugins/*.rcp) \
                #
+
+include $(TOP)/mk/sdl.mk
+include $(TOP)/mk/jit.mk
 
