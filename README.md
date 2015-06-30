@@ -2,6 +2,7 @@
 [![Build Status](https://travis-ci.org/kulp/tenyr.svg?branch=develop)](https://travis-ci.org/kulp/tenyr)
 [![Coverage Status](https://coveralls.io/repos/kulp/tenyr/badge.svg?branch=develop)](https://coveralls.io/r/kulp/tenyr?branch=develop)
 [![Coverity Scanned](https://img.shields.io/coverity/scan/5645.svg)](https://scan.coverity.com/projects/5645)
+![Latest Tag](https://img.shields.io/github/tag/kulp/tenyr.svg)]
 ![Free Software](https://img.shields.io/github/license/kulp/tenyr.svg)
 
 ## Overview
