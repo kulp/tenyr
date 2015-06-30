@@ -41,6 +41,7 @@ script:
 after_success:
   # skip untested SPI code for now
   - if [[ -n $GCOV ]] ; then coveralls --exclude-pattern '.*/spi.*' --include src --gcov-options '\-lp' ; fi
+  - if [[ -n $GCOV ]] ; then bash <(curl -s https://codecov.io/bash) -g '*/*spi*' -g '*3rdparty/*' -g '*usr/include/*' -g '*/lexer.c' -g '*/parser.c' ; fi
 notifications:
   irc:
     channels:
