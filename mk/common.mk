@@ -94,7 +94,7 @@ DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
 PDEVICES += spidummy spisd spi
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
-PDEVLIBS = $(PDEVOBJS:%,dy.o=libtenyr%$(DYLIB_SUFFIX))
+PDEVLIBS = $(PDEVICES:%=libtenyr%$(DYLIB_SUFFIX))
 
 BIN_TARGETS ?= tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS ?= $(PDEVLIBS)
