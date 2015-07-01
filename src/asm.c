@@ -249,9 +249,8 @@ static int obj_init(FILE *stream, struct param_state *p, void **ud)
 
     const void *val = NULL;
     if (param_get(p, "assembling", 1, &val)) {
-        assert(val != NULL);
         // default is not-assembling (could have a NULL parameter set)
-        u->assembling = *(int*)val;
+        u->assembling = val ? *(int*)val : 0;
     }
 
     if (u->assembling) {
