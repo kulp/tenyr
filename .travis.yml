@@ -1,3 +1,6 @@
+env:
+  global:
+    - secure: "aue8fIHP0tllE3WR/3bGHke88tkWkLpPGFCPrWQsWvLHEZmIG7ARmZEuhT81JoUldfkoKbJed899qUv/6hHSrzz8mI5KdDrh31lTUdV7kBn7du7I1RmOZenU15Inmx3vhw8+x6AQtR3/CDs/G1RLhsJBjL3EnWUPPjwUt/wT/Ow="
 language: c
 matrix:
   include:
@@ -6,7 +9,9 @@ matrix:
     - compiler: "gcc-win32"
       env: PLATFORM=mingw BITS=32 HOST=i686   CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
     - compiler: "gcc"
-      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=1
+      env:
+        -  PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=1
+        -  COVERITY_SCAN_REQUESTED=1
     - compiler: "clang"
       env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=
 os:
@@ -29,9 +34,8 @@ install:
       export CXX=$HOST-w64-mingw32-g++
     fi
 script:
-  - git fetch --tags
   - make V=1 all
-  - make $CHECK_RULE
+  - if [[ $COVERITY_SCAN_BRANCH != 1 ]] ; then make $CHECK_RULE ; fi
   - make local-install
   - make gzip zip
 after_success:
@@ -52,3 +56,10 @@ addons:
       - build/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
       - version/$(git describe --always --tags --match 'v?.?.?*' $TRAVIS_COMMIT)
       - latest/$PLATFORM/$HOST
+  coverity_scan:
+    project:
+      name: $TRAVIS_REPO_SLUG
+    notification_email: coverity@tenyr.info
+    build_script_url: https://raw.githubusercontent.com/$TRAVIS_REPO_SLUG/$TRAVIS_BRANCH/scripts/travis-coverity-scan-build.sh
+    build_command: make
+    branch_pattern: coverity_scan
