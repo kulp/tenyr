@@ -9,6 +9,7 @@
 
 #define MAGIC_BYTES "TOV"
 #define OBJ_MAX_SYMBOLS ((1 << 16) - 1) /* arbitrary safety limit */
+#define OBJ_MAX_REC_SIZE ((1ULL << 31) - 1) /* maximum meaningful size */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
@@ -94,6 +95,10 @@ static int obj_v0_read(struct obj *o, FILE *in)
     for_counted_get(objrec, rec, o->records, o->rec_count) {
         GET(rec->addr, in);
         GET(rec->size, in);
+        if (rec->size > OBJ_MAX_REC_SIZE) {
+            errno = EMSGSIZE;
+            return 1;
+        }
         long here = ftell(in);
         if (rec->size + here > (unsigned)filesize) {
             errno = EMSGSIZE;
