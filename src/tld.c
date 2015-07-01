@@ -267,7 +267,7 @@ static int do_link(struct link_state *s)
 {
     int rc = -1;
 
-    struct obj *o = s->relocated = o = calloc(1, sizeof *o);
+    struct obj *o = s->relocated = calloc(1, sizeof *o);
 
     do_link_process(s);
     do_link_emit(s, o);
