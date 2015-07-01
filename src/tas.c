@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
-            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); opened = 1; break;
+            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname - 1), "wb"); opened = 1; break;
             case 'd': disassemble = 1; break;
             case 'p': param_add(params, optarg); break;
             case 'q': flags |= ASM_QUIET; break;
