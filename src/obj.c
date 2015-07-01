@@ -8,6 +8,7 @@
 #include <limits.h>
 
 #define MAGIC_BYTES "TOV"
+#define OBJ_MAX_SYMBOLS ((1 << 16) - 1) /* arbitrary safety limit */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
@@ -106,6 +107,10 @@ static int obj_v0_read(struct obj *o, FILE *in)
     }
 
     GET(o->sym_count, in);
+    if (o->sym_count > OBJ_MAX_SYMBOLS) {
+        errno = EMSGSIZE;
+        return 1;
+    }
     o->bloc.symbols = 1;
     for_counted_get(objsym, sym, o->symbols, o->sym_count) {
         GET(sym->flags, in);
