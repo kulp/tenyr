@@ -82,7 +82,7 @@ static int obj_v0_read(struct obj *o, FILE *in)
     long filesize = LONG_MAX;
     if (!fseek(in, 0L, SEEK_END)) { // seekable stream
         filesize = ftell(in);
-        if (fseek(in, where, SEEK_SET))
+        if (where < 0 || fseek(in, where, SEEK_SET))
             fatal(PRINT_ERRNO, "Failed to seek input stream");
     }
 
