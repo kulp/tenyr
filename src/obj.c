@@ -8,7 +8,8 @@
 #include <limits.h>
 
 #define MAGIC_BYTES "TOV"
-#define OBJ_MAX_SYMBOLS ((1 << 16) - 1) /* arbitrary safety limit */
+#define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
+#define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_REC_SIZE ((1ULL << 31) - 1) /* maximum meaningful size */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
@@ -125,6 +126,10 @@ static int obj_v0_read(struct obj *o, FILE *in)
     }
 
     GET(o->rlc_count, in);
+    if (o->rlc_count > OBJ_MAX_RELOCS) {
+        errno = EMSGSIZE;
+        return 1;
+    }
     o->bloc.relocs = 1;
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
