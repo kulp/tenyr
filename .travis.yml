@@ -35,7 +35,7 @@ install:
     fi
 script:
   - make V=1 all
-  - if [[ $COVERITY_SCAN_BRANCH != 1 ]] ; then make $CHECK_RULE ; fi
+  - make $CHECK_RULE
   - make local-install
   - make gzip zip
 after_success:
@@ -61,5 +61,5 @@ addons:
       name: $TRAVIS_REPO_SLUG
     notification_email: coverity@tenyr.info
     build_script_url: https://raw.githubusercontent.com/$TRAVIS_REPO_SLUG/$TRAVIS_BRANCH/scripts/travis-coverity-scan-build.sh
-    build_command: make
+    build_command: make V=1
     branch_pattern: coverity_scan
