@@ -153,13 +153,16 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
     char buf[128];
     snprintf(buf, sizeof buf, "%s_add_device", implstem);
     void *ptr = dlsym(libhandle, buf);
+    if (!ptr) {
+        debug(0, "Failed to find symbol `%s` - %s", buf, dlerror());
+        return 1;
+    }
+
     typedef int add_device(struct device **);
     add_device *adder = ALIASING_CAST(add_device,ptr);
-    if (adder) {
-        int index = next_device(s);
-        s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-        rc |= adder(&s->machine.devices[index]);
-    }
+    int index = next_device(s);
+    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
+    rc |= adder(&s->machine.devices[index]);
 
     return rc;
 }
