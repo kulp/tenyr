@@ -46,6 +46,11 @@ struct recipe_book {
     struct recipe_book *next;
 };
 
+struct library_list {
+    struct library_list *next;
+    void *handle;
+};
+
 static const char shortopts[] = "@:a:df:np:r:s:vhV";
 
 static const struct option longopts[] = {
@@ -200,8 +205,14 @@ static int recipe_jit(struct sim_state *s)
     void *ptr = dlsym(libhandle, name);
     if (!ptr) {
         debug(0, "Failed to find symbol `%s` - %s", name, dlerror());
+        dlclose(libhandle);
         return 1;
     }
+
+    struct library_list *t = malloc(sizeof *t);
+    t->next = s->libs;
+    t->handle = libhandle;
+    s->libs = t;
 
     s->run_sim = ALIASING_CAST(sim_runner, ptr);
 
@@ -434,6 +445,13 @@ int main(int argc, char *argv[])
 
     if (s->conf.debugging > 0)
         fprintf(stderr, "Instructions executed: %"PRIdMAX"\n", s->insns_executed);
+
+    while (s->libs) {
+        struct library_list *t = s->libs;
+        dlclose(t->handle);
+        s->libs = s->libs->next;
+        free(t);
+    }
 
     return rc;
 }
