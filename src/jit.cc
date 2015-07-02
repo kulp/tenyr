@@ -293,10 +293,12 @@ extern "C" int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_
 
     const void *val = NULL;
     if (param_get(s->conf.params, "tsim.jit.run_count_threshold", 1, &val)) {
-        char *next;
-        int v = strtol((char*)val, &next, 0);
-        if (next != val && *next == '\0' && v > 1)
-            js->run_count_threshold = v;
+        char *next = NULL;
+        if (val) {
+            int v = strtol((char*)val, &next, 0);
+            if (next != val && next != NULL && *next == '\0' && v > 1)
+                js->run_count_threshold = v;
+        }
     }
 
     struct ops_state ops_state = { 0 }, *o = &ops_state;
