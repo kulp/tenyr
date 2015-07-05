@@ -1,12 +1,14 @@
 #include <unistd.h>
-#include <limits.h>
+#include <stdlib.h>
 
 char *os_find_self(void)
 {
-    // Using PATH_MAX is generally bad, but that's what readlink() says it uses.
-    size_t size = PATH_MAX;
+    // PATH_MAX (used by readlink(2)) is not necessarily available
+    size_t size = 4096;
     char *path = malloc(size);
-    if (readlink("/proc/self/exe", path, size) == 0) {
+    size_t used = readlink("/proc/self/exe", path, size);
+    // need strictly less than size, or else we probably truncated
+    if (used < size) {
         return path;
     } else {
         free(path);
