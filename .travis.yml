@@ -8,12 +8,16 @@ matrix:
       env: PLATFORM=mingw BITS=64 HOST=x86_64 CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
     - compiler: "gcc-win32"
       env: PLATFORM=mingw BITS=32 HOST=i686   CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+    - compiler: "clang"
+      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=
     - compiler: "gcc"
       env:
         -  PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=1
-        -  COVERITY_SCAN_REQUESTED=1
-    - compiler: "clang"
-      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=
+        - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
+        - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
+        - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
+        - COVERITY_SCAN_BUILD_COMMAND="make V=1 all"
+        - COVERITY_SCAN_BUILD_COMMAND_PREPEND=""
 os:
   - linux
   - osx
@@ -33,6 +37,10 @@ install:
       export CC=$HOST-w64-mingw32-gcc
       export CXX=$HOST-w64-mingw32-g++
     fi
+before_script:
+  # implement Coverity Scan with before_script instead of addons.coverity_scan
+  # to work around too-early quota check by the coverity_scan addon
+  - if [[ -n ${!COVERITY_SCAN_*} ]] ; then curl -s https://raw.githubusercontent.com/$TRAVIS_REPO_SLUG/$TRAVIS_BRANCH/scripts/travis-coverity-scan-build.sh | bash || true ; fi
 script:
   - make V=1 all
   - make $CHECK_RULE
@@ -57,10 +65,3 @@ addons:
       - build/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
       - version/$(git describe --always --tags --match 'v?.?.?*' $TRAVIS_COMMIT)
       - latest/$PLATFORM/$HOST
-  coverity_scan:
-    project:
-      name: $TRAVIS_REPO_SLUG
-    notification_email: coverity@tenyr.info
-    build_script_url: https://raw.githubusercontent.com/$TRAVIS_REPO_SLUG/$TRAVIS_BRANCH/scripts/travis-coverity-scan-build.sh
-    build_command: make V=1
-    branch_pattern: coverity_scan
