@@ -8,6 +8,7 @@
 #include "sim.h"
 // for RAM_BASE
 #include "devices/ram.h"
+#include "os_common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
