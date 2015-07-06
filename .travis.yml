@@ -1,6 +1,3 @@
-env:
-  global:
-    - secure: "aue8fIHP0tllE3WR/3bGHke88tkWkLpPGFCPrWQsWvLHEZmIG7ARmZEuhT81JoUldfkoKbJed899qUv/6hHSrzz8mI5KdDrh31lTUdV7kBn7du7I1RmOZenU15Inmx3vhw8+x6AQtR3/CDs/G1RLhsJBjL3EnWUPPjwUt/wT/Ow="
 language: c
 matrix:
   include:
