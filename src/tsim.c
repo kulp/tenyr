@@ -304,6 +304,7 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
         f = fopen(b, "r");
         if (!f)
             fatal(PRINT_ERRNO, "Options file `%s' not found", filename);
+        free(b);
     }
 
     char buf[1024], *p;
