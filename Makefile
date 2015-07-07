@@ -68,6 +68,11 @@ else
 
 all: $(TARGETS)
 
+# the `all_c` and `vpi` targets allow Coverity Scan to cover all C builds
+all_c: all vpi
+vpi:
+	$(MAKE) -C $(TOP)/hw/icarus glue.vpi
+
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
 tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
