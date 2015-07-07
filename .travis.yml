@@ -9,10 +9,11 @@ matrix:
     - compiler: "gcc-win32"
       env: PLATFORM=mingw BITS=32 HOST=i686   CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
     - compiler: "clang"
-      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=
+      # change CHECK_RULE to `check` once we have an iverilog that compiles tenyr.v
+      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check_sw GCOV=
     - compiler: "gcc"
       env:
-        -  PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check    GCOV=1
+        -  PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check_sw GCOV=1
         - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
