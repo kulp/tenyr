@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 700
 #include "os_common.h"
 
 #include <stdlib.h>
