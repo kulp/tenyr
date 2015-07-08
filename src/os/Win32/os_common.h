@@ -9,9 +9,7 @@
  */
 typedef unsigned int lfind_size_t;
 
-// Return nonzero from path_walker to end walking
-typedef int path_walker(size_t len, const char *name, void *ud);
-void os_walk_path_search_list(path_walker walker, void *ud);
+#include "os_base.h"
 
 #endif
 
