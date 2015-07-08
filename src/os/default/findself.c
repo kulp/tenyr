@@ -10,7 +10,7 @@ static int walker(size_t len, const char *name, void *ud)
     char **paths = ud;
     char *argv0 = paths[0];
     size_t alen = strlen(argv0);
-    char *buf = malloc(len + alen + 1 + 1);
+    char *buf = calloc(1,len + alen + 1 + 1);
     strncpy(buf, name, len);
     buf[len] = PATH_COMPONENT_SEPARATOR_CHAR;
     strncpy(&buf[len + 1], argv0, alen);
