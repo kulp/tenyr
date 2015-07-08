@@ -11,6 +11,7 @@
 #define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_REC_SIZE ((1ULL << 31) - 1) /* maximum meaningful size */
+#define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
@@ -92,6 +93,10 @@ static int obj_v0_read(struct obj *o, FILE *in)
     GET(o->flags, in);
 
     GET(o->rec_count, in);
+    if (o->rec_count > OBJ_MAX_REC_CNT) {
+        errno = EMSGSIZE;
+        return 1;
+    }
     o->bloc.records = 1;
     for_counted_get(objrec, rec, o->records, o->rec_count) {
         GET(rec->addr, in);
