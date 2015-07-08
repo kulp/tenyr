@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-static int pre_insn(struct sim_state *s, struct element *i, void *ud)
+static int pre_insn(struct sim_state *s, const struct element *i, void *ud)
 {
     (void)s;
     (void)i;
@@ -18,7 +18,7 @@ static int pre_insn(struct sim_state *s, struct element *i, void *ud)
     return -1;
 }
 
-static int post_insn(struct sim_state *s, struct element *i, void *ud)
+static int post_insn(struct sim_state *s, const struct element *i, void *ud)
 {
     (void)s;
     (void)i;
