@@ -187,7 +187,7 @@ check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_i
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre PERIODS.mk
 
 check_hw_icarus_demo: export run=$(MAKE) $S -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
-check_sim_demo: export run=$(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
+check_sim_demo: export run=$(runwrap) $(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
 check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
 check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
@@ -204,7 +204,7 @@ $(TOP)/ex/%.texe:
 
 check_sim_sdl: $(TOP)/ex/bm_mults.texe
 	@$(MAKESTEP) -n "Running SDL test $(<F) ($(subst _sdl,,$(@:check_%=%))) ... "
-	$(SILENCE)(cd $(TOP) ; $(abspath $(BUILDDIR))/tsim -n --recipe=prealloc -@ $(TOP)/plugins/sdl.rcp $<) && $(ECHO) ok
+	$(SILENCE)(cd $(TOP) ; $(runwrap) $(abspath $(BUILDDIR))/tsim -n --recipe=prealloc -@ $(TOP)/plugins/sdl.rcp $<) && $(ECHO) ok
 endif
 
 # TODO make op tests take a fixed or predictable maximum amount of time
@@ -218,7 +218,7 @@ PERIODS.mk: $(OPS:%=$(TOP)/test/op/%.texe) $(DEMOS:%=$(TOP)/ex/%_demo.texe) $(RU
 
 check_sim_op: export stem=op
 check_sim_run: export stem=run
-check_sim_op check_sim_run: export run=$(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) $(tsim_FLAGS) -vvvv $(TOP)/test/$(stem)/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_op check_sim_run: export run=$(runwrap) $(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) $(tsim_FLAGS) -vvvv $(TOP)/test/$(stem)/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) $S -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 

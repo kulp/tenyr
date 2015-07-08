@@ -15,6 +15,11 @@ ifndef NDEBUG
  LDFLAGS  += -g
 endif
 
+ifeq ($(MEMCHECK),1)
+ VALGRIND := $(shell which valgrind)
+ runwrap = $(VALGRIND) --leak-check=full --track-origins=yes --log-file=memcheck.$$$$
+endif
+
 ifeq ($(PLATFORM),mingw)
  OS := Win32
 else
