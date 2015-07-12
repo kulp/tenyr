@@ -107,6 +107,13 @@ check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	$(SILENCE)(! $(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(ECHO) "    ... -f ok"
 	$(SILENCE)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c"      && $(ECHO) "    ... -v ok"
+	$(SILENCE)echo '.zero 2' | $(BUILDDIR)/$< -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
+	                                                                                && $(ECHO) "    ... memh explicit ok"
+	$(SILENCE)echo '.word 1' | $(BUILDDIR)/$< -fmemh -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
+	                                                                                && $(ECHO) "    ... memh offset ok"
+	$(SILENCE)echo '.word 1' | $(BUILDDIR)/$< -fmemh -p{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z}=1 \
+	                                          -pformat.memh.offset=5 -          | fgrep -q "@5 00000001" \
+	                                                                                && $(ECHO) "    ... params overflow ok"
 
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
