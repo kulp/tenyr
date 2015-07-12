@@ -6,29 +6,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-int os_walk_path_search_list(path_walker walker, void *ud)
-{
-    int found = 0;
-
-    char *pathstr = getenv("PATH");
-    if (pathstr) {
-        while (*pathstr != '\0') {
-            static const char set[] = { PATH_SEPARATOR_CHAR, '\0' };
-            size_t len = strcspn(pathstr, set);
-            if (len == 0) {
-                if (*pathstr != '\0')
-                    pathstr++;
-                continue;
-            }
-            if ((found = walker(len, pathstr, ud)))
-                return found;
-            pathstr += len;
-        }
-    }
-
-    return found;
-}
-
 char *build_path(const char *base, const char *fmt, ...)
 {
     char *dir = strdup(base);
