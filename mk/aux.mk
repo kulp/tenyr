@@ -187,7 +187,7 @@ tsim_FLAVOURS := interp
 tsim_FLAGS_interp =
 ifneq ($(JIT),0)
 tsim_FLAVOURS += jit
-tsim_FLAGS_jit = -rjit
+tsim_FLAGS_jit = -rjit -ptsim.jit.run_count_threshold=2
 check_sim::
 	$(MAKE) -f $(TOP)/Makefile libtenyrjit$(DYLIB_SUFFIX)
 endif
@@ -195,7 +195,7 @@ endif
 check_sim check_sim_demo check_sim_op check_sim_run: export context=sim,$(flavour)
 check_sim_demo check_sim_op check_sim_run: tsim$(EXE_SUFFIX)
 check_sim::
-	$(foreach f,$(tsim_FLAVOURS),$(MAKE) -f $(makefile_path) check_sim_flavour flavour=$f tsim_FLAGS=$(tsim_FLAGS_$f) &&) true
+	$(foreach f,$(tsim_FLAVOURS),$(MAKE) -f $(makefile_path) check_sim_flavour flavour=$f tsim_FLAGS='$(tsim_FLAGS_$f)' &&) true
 check_sim_flavour: check_sim_demo check_sim_op check_sim_run check_sim_sdl
 
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
