@@ -82,7 +82,7 @@ coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
 
 check: check_sw check_hw
-check_sw: check_sw_pre_$(OS) check_args check_compile check_sim check_forth dogfood
+check_sw: check_sw_pre_$(OS) check_args check_compile check_sim check_obj check_forth dogfood
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
@@ -131,6 +131,17 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -vvvv | fgrep -q "P 00001"            && $(ECHO) "    ... -vvvv ok"
 	$(SILENCE)$(BUILDDIR)/$< -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(ECHO) "    ... multple files rejected ok"
 	$(SILENCE)$(BUILDDIR)/$< -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(ECHO) "    ... stdin accepted for input ok"
+
+clean_FILES += check_obj_*.to null.to ff.bin
+null.to: ; $(SILENCE)$(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ /dev/null
+ff.bin:; $(SILENCE)echo -ne '\0377\0377\0377\0377' > $@
+check_obj: check_obj_0 check_obj_2 check_obj_4 check_obj_5 check_obj_6
+check_obj_%: check_obj_%.to | tas$(EXE_SUFFIX)
+	$(SILENCE)(! $(BUILDDIR)/tas$(EXE_SUFFIX) -d $< 2> /dev/null)
+check_obj_%.to: null.to ff.bin
+	$(SILENCE)cp $< $@
+	$(SILENCE)dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
+	$(SILENCE)dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>/dev/null
 
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz
