@@ -287,14 +287,6 @@ static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, 
     return param_set(cookie->param, key, val, replace, free_key, free_value);
 }
 
-static int find_format(const char *optarg, const struct format **f)
-{
-    lfind_size_t sz = tenyr_asm_formats_count;
-    *f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
-            sizeof tenyr_asm_formats[0], find_format_by_name);
-    return !*f;
-}
-
 static int parse_args(struct sim_state *s, int argc, char *argv[]);
 
 static int parse_opts_file(struct sim_state *s, const char *filename)
@@ -333,13 +325,13 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
+            case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
             case 'a': s->conf.load_addr = strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
-            case 'f': if (find_format(optarg, &s->conf.fmt)) exit(usage(argv[0])); break;
-            case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
+            case 'f': if (find_format(optarg, &s->conf.fmt)) usage(argv[0]), exit(EXIT_FAILURE); break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(s->conf.params, optarg); break;
-            case 'r': if (add_recipe(s, optarg)) exit(usage(argv[0])); break;
+            case 'r': if (add_recipe(s, optarg)) usage(argv[0]), exit(EXIT_FAILURE); break;
             case 's': s->conf.start_addr = strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
 

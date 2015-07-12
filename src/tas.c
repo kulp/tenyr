@@ -93,20 +93,13 @@ int main(int argc, char *argv[])
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
-            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname - 1), "wb"); opened = 1; break;
             case 'd': disassemble = 1; break;
+            case 'f': if (find_format(optarg, &f)) usage(argv[0]), exit(EXIT_FAILURE); break;
+            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname - 1), "wb"); opened = 1; break;
             case 'p': param_add(params, optarg); break;
             case 'q': flags |= ASM_QUIET; break;
             case 'v': flags |= ASM_VERBOSE; break;
-            case 'f': {
-                lfind_size_t sz = tenyr_asm_formats_count;
-                f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
-                        sizeof tenyr_asm_formats[0], find_format_by_name);
-                if (!f)
-                    exit(usage(argv[0]));
 
-                break;
-            }
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
                 usage(argv[0]);

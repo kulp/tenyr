@@ -105,8 +105,23 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$(SILENCE)$(BUILDDIR)/$< -f invalid /dev/null | grep -q Usage                   && $(ECHO) "    ... -f invalid ok"
+	$(SILENCE)(! $(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(ECHO) "    ... -f ok"
 	$(SILENCE)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c"      && $(ECHO) "    ... -v ok"
+
+check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* specific options ... "
+	$(SILENCE)$(BUILDDIR)/$< -@ does_not_exist 2>&1 | fgrep -q "not found"          && $(ECHO) "    ... -@ ok"
+	$(SILENCE)$(BUILDDIR)/$< -fraw /dev/zero -a 123 2>&1 | fgrep -q "address 0x7b"  && $(ECHO) "    ... -a ok"
+	$(SILENCE)$(BUILDDIR)/$< -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(ECHO) "    ... -d ok"
+	$(SILENCE)(! $(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(ECHO) "    ... -f ok"
+	$(SILENCE)(! $(BUILDDIR)/$< -r does_not_exist -fraw /dev/null &> /dev/null )    && $(ECHO) "    ... -r ok"
+	$(SILENCE)$(BUILDDIR)/$< -fraw /dev/null -vs 4105 | fgrep -q "IP = 0x00001009"  && $(ECHO) "    ... -s ok"
+	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -v    | fgrep -q "IP ="               && $(ECHO) "    ... -v ok"
+	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -vv   | fgrep -q ".word"              && $(ECHO) "    ... -vv ok"
+	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -vvv  | fgrep -q "read  @"            && $(ECHO) "    ... -vvv ok"
+	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -vvvv | fgrep -q "P 00001"            && $(ECHO) "    ... -vvvv ok"
+	$(SILENCE)$(BUILDDIR)/$< -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(ECHO) "    ... multple files rejected ok"
+	$(SILENCE)$(BUILDDIR)/$< -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(ECHO) "    ... stdin accepted for input ok"
 
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz

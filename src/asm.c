@@ -11,6 +11,7 @@
 #include "common.h"
 #include "parser_global.h"
 #include "param.h"
+#include "os_common.h"
 
 // The length (excluding terminating NUL) of an operator length in disassembly
 #define MAX_OP_LEN 3
@@ -589,6 +590,14 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
             pos += snprintf(&buf[pos], len - pos, "%s%s", pos ? sep : "", f->name);
 
     return pos;
+}
+
+int find_format(const char *optarg, const struct format **f)
+{
+    lfind_size_t sz = tenyr_asm_formats_count;
+    *f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
+            sizeof tenyr_asm_formats[0], find_format_by_name);
+    return !*f;
 }
 
 /* vi: set ts=4 sw=4 et: */

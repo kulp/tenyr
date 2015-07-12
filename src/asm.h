@@ -43,6 +43,8 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format *fmts, size_t len, char *buf,
         const char *sep);
 
+int find_format(const char *optarg, const struct format **f);
+
 struct parse_data;
 struct const_expr;
 
