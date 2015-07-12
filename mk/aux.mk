@@ -105,7 +105,9 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
+	$(SILENCE)echo -n 9876 | $(BUILDDIR)/$< -fraw -d - | fgrep -q ".word 0x3637"    && $(ECHO) "    ... -d ok"
 	$(SILENCE)(! $(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(ECHO) "    ... -f ok"
+	$(SILENCE)echo -n 9876 | $(BUILDDIR)/$< -fraw -d -q - | fgrep -qv ".word 0x363" && $(ECHO) "    ... -q ok"
 	$(SILENCE)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c"      && $(ECHO) "    ... -v ok"
 	$(SILENCE)echo '.zero 2' | $(BUILDDIR)/$< -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
 	                                                                                && $(ECHO) "    ... memh explicit ok"
