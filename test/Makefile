@@ -15,14 +15,7 @@ vpath %.tas pass_compile/ fail_compile/
 
 get_obj_name = $(notdir $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1)))
 
-# TODO run .texe's instead of just compiling them
-PASS_ASSEMBLE := \
-	$(call get_obj_name,$(wildcard pass_compile/*)) \
-	copy.texe \
-	jzrel.texe \
-	test_imul.texe \
-	#
-
+PASS_ASSEMBLE := $(call get_obj_name,$(wildcard pass_compile/*))
 FAIL_ASSEMBLE := $(call get_obj_name,$(wildcard fail_compile/*))
 # Force re-assembly of assembly-failure tests
 .PHONY: $(FAIL_ASSEMBLE)
