@@ -1,16 +1,55 @@
 language: c
+env:
+  global:
+    - SUDO=0
+    - DEPSSRC=$HOME/deps
+    - SDL2_CONFIG="$DEPSSRC/bin/sdl2-config --prefix=$DEPSSRC"
+    - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
 matrix:
   include:
-    - compiler: "gcc-win64"
-      env: PLATFORM=mingw BITS=64 HOST=x86_64 CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
-    - compiler: "gcc-win32"
-      env: PLATFORM=mingw BITS=32 HOST=i686   CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+    - compiler: x86_64-w64-mingw32-gcc
+      env:
+        - PLATFORM=mingw BITS=64 HOST=x86_64
+        - CXX=$HOST-w64-mingw32-g++
+        - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+      addons:
+        apt:
+          packages:
+            - mingw-w64
+            - mingw-w64-dev
+            - gcc-mingw-w64-i686
+            - gcc-mingw-w64-x86-64
+            - g++-mingw-w64-i686
+            - g++-mingw-w64-x86-64
+            - binutils-mingw-w64-i686
+            - binutils-mingw-w64-x86-64
+            - wine
+    - compiler: i686-w64-mingw32-gcc
+      env:
+        - PLATFORM=mingw BITS=32 HOST=i686
+        - CXX=$HOST-w64-mingw32-g++
+        - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+      addons:
+        apt:
+          packages:
+            - mingw-w64
+            - mingw-w64-dev
+            - gcc-mingw-w64-i686
+            - gcc-mingw-w64-x86-64
+            - g++-mingw-w64-i686
+            - g++-mingw-w64-x86-64
+            - binutils-mingw-w64-i686
+            - binutils-mingw-w64-x86-64
+            - wine
     - compiler: "clang"
       # change CHECK_RULE to `check` once we have an iverilog that compiles tenyr.v
-      env: PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check_sw GCOV=
+      env:
+        - PLATFORM=linux BITS=64 HOST=x86_64
+        - CHECK_RULE=check_sw GCOV=
     - compiler: "gcc"
       env:
-        -  PLATFORM=linux BITS=64 HOST=x86_64 CHECK_RULE=check_sw GCOV=1
+        - PLATFORM=linux BITS=64 HOST=x86_64
+        - CHECK_RULE=coverage GCOV=1
         - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
@@ -19,36 +58,26 @@ matrix:
 os:
   - linux
   - osx
+sudo: false
 install:
-  - sudo -H pip install cpp-coveralls
-  - sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq -y libsdl2 libsdl2-dev libsdl2-image libsdl2-image-dev
-  - sudo apt-get install -qq -y iverilog
-  - |
-    if [[ $PLATFORM = mingw* ]] ; then
-      sudo add-apt-repository --yes ppa:tobydox/mingw-x-precise
-      sudo apt-get update -qq
-      sudo apt-get install -y mingw32 mingw${BITS}-x-binutils mingw${BITS}-x-gcc mingw${BITS}-x-runtime
-      sudo apt-get install -y wine
-      export MINGW=/opt/mingw$BITS
-      export PATH=$MINGW/bin:$PATH
-      export CC=$HOST-w64-mingw32-gcc
-      export CXX=$HOST-w64-mingw32-g++
-    fi
+  - gem install coveralls-lcov
 before_script:
   # implement Coverity Scan with before_script instead of addons.coverity_scan
   # to work around too-early quota check by the coverity_scan addon
   - if [[ -n $COVERITY_SCAN_PROJECT_NAME ]] ; then curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true ; fi
+  - mkdir -p $DEPSSRC
+  - curl -s 'http://dl.tenyr.info/deps/libsdl2_2.0.3%2Bimage_2.0.0%2Bdev-precise-binaries.tar.gz' | tar -C $DEPSSRC -zx
 script:
   - make V=1 all
   - make $CHECK_RULE
   - make local-install
   - make gzip zip
 after_success:
-  # skip untested SPI code for now
-  - if [[ -n $GCOV ]] ; then coveralls --exclude-pattern '.*/spi.*' --include src --gcov-options '\-lp' ; fi
-  - if [[ -n $GCOV ]] ; then bash <(curl -s https://codecov.io/bash) -g '*/*spi*' -g '*3rdparty/*' -g '*usr/include/*' -g '*/lexer.c' -g '*/parser.c' ; fi
+  - |
+    if [[ -n $GCOV ]] ; then
+        coveralls-lcov $(make showbuilddir)/coverage.info.trimmed
+        bash <(curl -s https://codecov.io/bash) -f $(make showbuilddir)/coverage.info.trimmed
+    fi
 notifications:
   irc:
     channels:
@@ -56,6 +85,10 @@ notifications:
     use_notice: true
     skip_join: true
 addons:
+  apt:
+    packages:
+      - lcov
+      - iverilog
   artifacts:
     paths:
       - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)

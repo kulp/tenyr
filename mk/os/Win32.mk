@@ -17,6 +17,4 @@ LDFLAGS += -Wl,--kill-at -static-libgcc -static-libstdc++
 # haven't tried SDL Windows build yet
 SDL = 0
 
-check_sw_pre_Win32::
-	@$(MAKESTEP) "Registering EXE files with binfmt_misc ..."
-	$(SILENCE)[[ -e /proc/sys/fs/binfmt_misc/tenyr_wine ]] || echo ':tenyr_wine:M::MZ::'$(TOP)/scripts/winewrap: | sudo tee /proc/sys/fs/binfmt_misc/register > /dev/null
+runwrap := $(TOP)/scripts/winewrap $(runwrap)

@@ -1,4 +1,5 @@
 ECHO := $(shell which echo)
+EMPTY :=#
 
 ifeq ($V,1)
  SILENCE =
@@ -17,7 +18,7 @@ endif
 
 ifeq ($(MEMCHECK),1)
  VALGRIND := $(shell which valgrind)
- runwrap = $(VALGRIND) --leak-check=full --track-origins=yes --log-file=memcheck.$$$$
+ runwrap = $(VALGRIND) --leak-check=full --track-origins=yes --log-file=memcheck.$$$$ $(EMPTY)
 endif
 
 ifeq ($(PLATFORM),mingw)
@@ -93,8 +94,8 @@ ifeq ($(findstring command,$(origin $(BUILDDIR))),)
 endif
 BUILD_NAME := $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>/dev/null || $(ECHO) "unknown")
 
-TAS = $(TOOLDIR)/tas$(EXE_SUFFIX)
-TLD = $(TOOLDIR)/tld$(EXE_SUFFIX)
+TAS = $(runwrap)$(TOOLDIR)/tas$(EXE_SUFFIX)
+TLD = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
 
 DEVICES = ram sparseram debugwrap serial spi
 DEVOBJS = $(DEVICES:%=%.o)

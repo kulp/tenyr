@@ -38,7 +38,7 @@ doc: tas_usage tsim_usage tld_usage
 
 %_usage: %$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Generating usage description for $* ... "
-	$(SILENCE)PATH=$(BUILDDIR) $< --help | \
+	$(SILENCE)PATH=$(BUILDDIR) $(runwrap)$< --help | \
 		sed -e 's/^/    /' \
 		    -e '/version/s/-[0-9][0-9]*-g[[:xdigit:]]\{7\}/$1.../' \
 	        > $(TOP)/wiki/$*--help.md && $(MAKESTEP) ok
@@ -82,62 +82,60 @@ coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
 
 check: check_sw check_hw
-check_sw: check_sw_pre_$(OS) check_args check_compile check_sim check_obj check_forth dogfood
+check_sw: check_args check_compile check_sim check_obj check_forth dogfood
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
-
-check_sw_pre_$(OS):: ;
 
 check_args: check_args_tas check_args_tld check_args_tsim
 check_args_%: check_args_general_% check_args_specific_% ;
 
 check_args_general_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* general options ... "
-	$(SILENCE)$(BUILDDIR)/$< -V | grep -q version                                   && $(ECHO) "    ... -V ok"
-	$(SILENCE)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(ECHO) "    ... -h ok"
-	$(SILENCE)( ! $(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(ECHO) "    ... no-args trapped ok"
-	$(SILENCE)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(ECHO) "    ... non-existent file ok"
-	$(SILENCE)$(BUILDDIR)/$< -QRSTU 2>&1 | egrep -qi "(Invalid|unknown) option"     && $(ECHO) "    ... bad option prints error ok"
-	$(SILENCE)( ! $(BUILDDIR)/$< -QRSTU &> /dev/null )                              && $(ECHO) "    ... bad option exits non-zero ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -V | grep -q version                                   && $(ECHO) "    ... -V ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(ECHO) "    ... -h ok"
+	$(SILENCE)( ! $(runwrap)$(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(ECHO) "    ... no-args trapped ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(ECHO) "    ... non-existent file ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -QRSTU 2>&1 | egrep -qi "(Invalid|unknown) option"     && $(ECHO) "    ... bad option prints error ok"
+	$(SILENCE)( ! $(runwrap)$(BUILDDIR)/$< -QRSTU &> /dev/null )                              && $(ECHO) "    ... bad option exits non-zero ok"
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$(SILENCE)echo -n 9876 | $(BUILDDIR)/$< -fraw -d - | fgrep -q ".word 0x3637"    && $(ECHO) "    ... -d ok"
-	$(SILENCE)(! $(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(ECHO) "    ... -f ok"
-	$(SILENCE)echo -n 9876 | $(BUILDDIR)/$< -fraw -d -q - | fgrep -qv ".word 0x363" && $(ECHO) "    ... -q ok"
-	$(SILENCE)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c"      && $(ECHO) "    ... -v ok"
-	$(SILENCE)echo '.zero 2' | $(BUILDDIR)/$< -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
-	                                                                                && $(ECHO) "    ... memh explicit ok"
-	$(SILENCE)echo '.word 1' | $(BUILDDIR)/$< -fmemh -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
-	                                                                                && $(ECHO) "    ... memh offset ok"
-	$(SILENCE)echo '.word 1' | $(BUILDDIR)/$< -fmemh -p{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z}=1 \
-	                                          -pformat.memh.offset=5 -          | fgrep -q "@5 00000001" \
-	                                                                                && $(ECHO) "    ... params overflow ok"
+	$(SILENCE)echo -n 9876 | $(runwrap)$(BUILDDIR)/$< -fraw -d - | fgrep -q ".word 0x3637"    && $(ECHO) "    ... -d ok"
+	$(SILENCE)(! $(runwrap)$(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(ECHO) "    ... -f ok"
+	$(SILENCE)echo -n 9876 | $(runwrap)$(BUILDDIR)/$< -fraw -d -q - | fgrep -qv ".word 0x363" && $(ECHO) "    ... -q ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -d -ftext - <<<0xc -v | fgrep -q "A + 0x0000000c"      && $(ECHO) "    ... -v ok"
+	$(SILENCE)echo '.zero 2' | $(runwrap)$(BUILDDIR)/$< -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
+	                                                                                          && $(ECHO) "    ... memh explicit ok"
+	$(SILENCE)echo '.word 1' | $(runwrap)$(BUILDDIR)/$< -fmemh -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
+	                                                                                          && $(ECHO) "    ... memh offset ok"
+	$(SILENCE)echo '.word 1' | $(runwrap)$(BUILDDIR)/$< -fmemh -p{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z}=1 \
+	                                                    -pformat.memh.offset=5 -          | fgrep -q "@5 00000001" \
+	                                                                                          && $(ECHO) "    ... params overflow ok"
 
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$(SILENCE)$(BUILDDIR)/$< -@ does_not_exist 2>&1 | fgrep -q "not found"          && $(ECHO) "    ... -@ ok"
-	$(SILENCE)$(BUILDDIR)/$< -fraw /dev/zero -a 123 2>&1 | fgrep -q "address 0x7b"  && $(ECHO) "    ... -a ok"
-	$(SILENCE)$(BUILDDIR)/$< -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(ECHO) "    ... -d ok"
-	$(SILENCE)(! $(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(ECHO) "    ... -f ok"
-	$(SILENCE)(! $(BUILDDIR)/$< -r does_not_exist -fraw /dev/null &> /dev/null )    && $(ECHO) "    ... -r ok"
-	$(SILENCE)$(BUILDDIR)/$< -fraw /dev/null -vs 4105 | fgrep -q "IP = 0x00001009"  && $(ECHO) "    ... -s ok"
-	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -v    | fgrep -q "IP ="               && $(ECHO) "    ... -v ok"
-	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -vv   | fgrep -q ".word"              && $(ECHO) "    ... -vv ok"
-	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -vvv  | fgrep -q "read  @"            && $(ECHO) "    ... -vvv ok"
-	$(SILENCE)$(BUILDDIR)/$< -ftext /dev/null -vvvv | fgrep -q "P 00001"            && $(ECHO) "    ... -vvvv ok"
-	$(SILENCE)$(BUILDDIR)/$< -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(ECHO) "    ... multple files rejected ok"
-	$(SILENCE)$(BUILDDIR)/$< -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(ECHO) "    ... stdin accepted for input ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -@ does_not_exist 2>&1 | fgrep -q "not found"          && $(ECHO) "    ... -@ ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -fraw /dev/zero -a 123 2>&1 | fgrep -q "address 0x7b"  && $(ECHO) "    ... -a ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(ECHO) "    ... -d ok"
+	$(SILENCE)(! $(runwrap)$(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(ECHO) "    ... -f ok"
+	$(SILENCE)(! $(runwrap)$(BUILDDIR)/$< -r does_not_exist -fraw /dev/null &> /dev/null )    && $(ECHO) "    ... -r ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -fraw /dev/null -vs 4105 | fgrep -q "IP = 0x00001009"  && $(ECHO) "    ... -s ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -ftext /dev/null -v    | fgrep -q "IP ="               && $(ECHO) "    ... -v ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -ftext /dev/null -vv   | fgrep -q ".word"              && $(ECHO) "    ... -vv ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -ftext /dev/null -vvv  | fgrep -q "read  @"            && $(ECHO) "    ... -vvv ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -ftext /dev/null -vvvv | fgrep -q "P 00001"            && $(ECHO) "    ... -vvvv ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(ECHO) "    ... multple files rejected ok"
+	$(SILENCE)$(runwrap)$(BUILDDIR)/$< -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(ECHO) "    ... stdin accepted for input ok"
 
 clean_FILES += check_obj_*.to null.to ff.bin
-null.to: ; $(SILENCE)$(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ /dev/null
+null.to: ; $(SILENCE)$(runwrap)$(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ /dev/null
 ff.bin:; $(SILENCE)echo -ne '\0377\0377\0377\0377' > $@
 check_obj: check_obj_0 check_obj_2 check_obj_4 check_obj_5 check_obj_6
 check_obj_%: check_obj_%.to | tas$(EXE_SUFFIX)
-	$(SILENCE)(! $(BUILDDIR)/tas$(EXE_SUFFIX) -d $< 2> /dev/null)
+	$(SILENCE)(! $(runwrap)$(BUILDDIR)/tas$(EXE_SUFFIX) -d $< 2> /dev/null)
 check_obj_%.to: null.to ff.bin
 	$(SILENCE)cp $< $@
 	$(SILENCE)dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
@@ -187,7 +185,7 @@ randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase 
 # run -- they have random bits appended which should be regenerated each time.
 .INTERMEDIATE: $(OPS:%=$(TOP)/test/op/%.texe)
 $(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas tas$(EXE_SUFFIX)
-	$(SILENCE)(cat $< ; echo "$(call randwords,3)") | $(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ -
+	$(SILENCE)(cat $< ; echo "$(call randwords,3)") | $(runwrap)$(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ -
 
 test_op_%: $(TOP)/test/op/%.texe tas$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
@@ -251,7 +249,7 @@ endif
 # 2x is added to allow testcases not always to take exactly the same number of
 # instructions to complete.
 PERIODS.mk: $(OPS:%=$(TOP)/test/op/%.texe) $(DEMOS:%=$(TOP)/ex/%_demo.texe) $(RUNS:%=$(TOP)/test/run/%.texe) tsim$(EXE_SUFFIX)
-	$(SILENCE)for f in $(filter-out tsim$(EXE_SUFFIX),$^) ; do echo PERIODS_`basename $${f/.texe/}`=`$(BUILDDIR)/tsim$(EXE_SUFFIX) -vv $$f | wc -l | while read b ; do dc -e "$$b 20*p" ; done` ; done > $@
+	$(SILENCE)for f in $(filter-out tsim$(EXE_SUFFIX),$^) ; do echo PERIODS_`basename $${f/.texe/}`=`$(runwrap)$(BUILDDIR)/tsim$(EXE_SUFFIX) -vv $$f | wc -l | while read b ; do dc -e "$$b 20*p" ; done` ; done > $@
 
 check_sim_op: export stem=op
 check_sim_run: export stem=run
