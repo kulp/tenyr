@@ -58,7 +58,6 @@ notifications:
 addons:
   artifacts:
     paths:
-      - $(find dist -type f | tr "\n" :)
       - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)
     target_paths:
       - build/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
