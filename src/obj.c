@@ -94,7 +94,7 @@ static int obj_v0_read(struct obj *o, FILE *in)
 
     GET(o->rec_count, in);
     if (o->rec_count > OBJ_MAX_REC_CNT) {
-        errno = EMSGSIZE;
+        errno = EFBIG;
         return 1;
     }
     o->bloc.records = 1;
@@ -102,12 +102,12 @@ static int obj_v0_read(struct obj *o, FILE *in)
         GET(rec->addr, in);
         GET(rec->size, in);
         if (rec->size > OBJ_MAX_REC_SIZE) {
-            errno = EMSGSIZE;
+            errno = EFBIG;
             return 1;
         }
         long here = ftell(in);
         if (rec->size + here > (unsigned)filesize) {
-            errno = EMSGSIZE;
+            errno = EFBIG;
             return 1;
         }
         rec->data = calloc(rec->size, sizeof *rec->data);
@@ -119,7 +119,7 @@ static int obj_v0_read(struct obj *o, FILE *in)
 
     GET(o->sym_count, in);
     if (o->sym_count > OBJ_MAX_SYMBOLS) {
-        errno = EMSGSIZE;
+        errno = EFBIG;
         return 1;
     }
     o->bloc.symbols = 1;
@@ -132,7 +132,7 @@ static int obj_v0_read(struct obj *o, FILE *in)
 
     GET(o->rlc_count, in);
     if (o->rlc_count > OBJ_MAX_RELOCS) {
-        errno = EMSGSIZE;
+        errno = EFBIG;
         return 1;
     }
     o->bloc.relocs = 1;
