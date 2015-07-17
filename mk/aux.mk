@@ -69,15 +69,17 @@ endif
 .SECONDARY: coverage.info.src
 coverage: coverage_html_src
 
+LCOV ?= lcov --rc lcov_branch_coverage=1
+
 coverage.info: check_sw
-	lcov --capture --test-name $< --directory $(BUILDDIR) --output-file $@
+	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
 COVERAGE_SKIP = */spi.c 3rdparty/asmjit/*
 coverage.info.trimmed: coverage.info
-	lcov --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '$f')
+	$(LCOV) --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '$f')
 
 coverage.info.%: coverage.info.trimmed
-	lcov --extract $< '*/$*/*' --output-file $@
+	$(LCOV) --extract $< '*/$*/*' --output-file $@
 
 coverage_html_%: coverage.info.%
 	genhtml $< --output-directory $@
