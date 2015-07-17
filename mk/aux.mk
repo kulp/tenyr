@@ -66,6 +66,7 @@ gzip zip:
 	$(MAKE) -f $(makefile_path) $@
 endif
 
+.SECONDARY: coverage.info.src
 coverage: coverage_html_src
 
 coverage.info: check_sw
