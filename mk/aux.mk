@@ -71,7 +71,7 @@ coverage: coverage_html_src
 coverage.info: check_sw
 	lcov --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
-COVERAGE_SKIP = */devices/*spi*.c 3rdparty/asmjit/* $(BUILDDIR)/* /usr/include/*
+COVERAGE_SKIP = */spi.c 3rdparty/asmjit/*
 coverage.info.trimmed: coverage.info
 	lcov --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '$f')
 
