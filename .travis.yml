@@ -36,9 +36,9 @@ matrix:
             - binutils-mingw-w64-i686
             - wine
     - compiler: "clang"
-      # change CHECK_RULE to `check` once we have an iverilog that compiles tenyr.v
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
+        # change CHECK_RULE to `check` once we have an iverilog that compiles tenyr.v
         - CHECK_RULE=check_sw GCOV=
     - compiler: "gcc"
       env:
@@ -48,7 +48,6 @@ matrix:
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
         - COVERITY_SCAN_BUILD_COMMAND="make V=1 all_c"
-        - COVERITY_SCAN_BUILD_COMMAND_PREPEND=""
 os:
   - linux
   - osx
