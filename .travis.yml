@@ -1,7 +1,6 @@
 language: c
 env:
   global:
-    - SUDO=0
     - DEPSSRC=$HOME/deps
     - SDL2_CONFIG="$DEPSSRC/bin/sdl2-config --prefix=$DEPSSRC"
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
