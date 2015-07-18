@@ -20,17 +20,61 @@
     for (int _dummy = 0; !_dummy && (Count) > 0; _dummy++) \
         list_foreach(Tag, Name, List)
 
-static inline void get_sized(void *what, size_t size, size_t count, FILE *where)
+static inline void get_sized_le(void *what, size_t size, size_t count, FILE *where)
 {
     if (fread(what, size, count, where) != count)
         fatal(PRINT_ERRNO, "Unknown error in %s while parsing object", __func__);
 }
 
-static inline void put_sized(const void *what, size_t size, size_t count, FILE *where)
+static inline void put_sized_le(const void *what, size_t size, size_t count, FILE *where)
 {
     if (fwrite(what, size, count, where) != count)
         fatal(PRINT_ERRNO, "Unknown error in %s while emitting object", __func__);
 }
+
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define get_sized get_sized_le
+#define put_sized put_sized_le
+#else
+static inline UWord swapword(const UWord in)
+{
+    return (((in >> 24) & 0xff) <<  0) |
+           (((in >> 16) & 0xff) <<  8) |
+           (((in >>  8) & 0xff) << 16) |
+           (((in >>  0) & 0xff) << 24);
+}
+
+static inline void get_sized_be(void *what, size_t size, size_t count, FILE *where)
+{
+    get_sized_le(what, size, count, where);
+    // get_sized() isn't as general as it looks - it does bytes, UWords, and
+    // strings.
+    if (size == sizeof(UWord)) {
+        UWord *dest = what;
+        for (size_t i = 0; i < count; i++)
+            dest[i] = swapword(dest[i]);
+    }
+}
+
+static inline void put_sized_be(const void *what, size_t size, size_t count, FILE *where)
+{
+    // put_sized() has an analagous caveat to get_sized()'s, but we only swap
+    // one word at a time so we don't have to allocate arbitrarily-large
+    // buffers.
+    if (size == sizeof(UWord)) {
+        const UWord *src = what;
+        for (size_t i = 0; i < count; i++) {
+            const UWord temp = swapword(src[i]);
+            put_sized_le(&temp, sizeof(UWord), 1, where);
+        }
+    } else {
+        put_sized_le(what, size, count, where);
+    }
+}
+
+#define get_sized get_sized_be
+#define put_sized put_sized_be
+#endif
 
 static int obj_v0_write(struct obj *o, FILE *out)
 {
@@ -113,8 +157,7 @@ static int obj_v0_read(struct obj *o, FILE *in)
         rec->data = calloc(rec->size, sizeof *rec->data);
         if (!rec->data)
             fatal(PRINT_ERRNO, "Failed to allocate record data field");
-        if (fread(rec->data, sizeof *rec->data, rec->size, in) != rec->size)
-            fatal(PRINT_ERRNO, "Unknown error occurred while parsing object");
+        get_sized(rec->data, sizeof *rec->data, rec->size, in);
     }
 
     GET(o->sym_count, in);
