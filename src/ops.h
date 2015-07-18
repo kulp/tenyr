@@ -29,33 +29,59 @@
 #define MEDIUM_IMMEDIATE_BITWIDTH   20
 #define WORD_BITWIDTH               32
 
-// TODO assumes bits are filled in rightmost-first
+#define INSN_type012 \
+    (imm,  SMALL_IMMEDIATE_BITWIDTH), /* immediate   */ \
+    (op ,                         4), /* operation   */ \
+    (y  ,                         4), /* operand y   */ \
+    (x  ,                         4), /* operand x   */ \
+    (z  ,                         4), /* operand z   */ \
+    (dd ,                         2), /* dereference */ \
+    (p  ,                         2)  /* type code   */ \
+    //
+
+#define INSN_type3 \
+    (imm, MEDIUM_IMMEDIATE_BITWIDTH), /* immediate   */ \
+    (x  ,                         4), /* operand x   */ \
+    (z  ,                         4), /* operand z   */ \
+    (dd ,                         2), /* dereference */ \
+    (p  ,                         2)  /* type code   */ \
+    //
+
+#define INSN_any \
+    (   ,                        20), /* undefined   */ \
+    (x  ,                         4), /* operand x   */ \
+    (z  ,                         4), /* operand z   */ \
+    (dd ,                         2), /* dereference */ \
+    (p  ,                         2)  /* type code   */ \
+    //
+
+#define BITFIELD(Name,Width)    unsigned Name:Width;
+#define IGNORE(...)             /**/
+
+#define _ops_1(Pre,Post,Elt    ) Pre Elt                              Post Elt
+#define _ops_2(Pre,Post,Elt,...) Pre Elt _ops_1(Pre,Post,__VA_ARGS__) Post Elt
+#define _ops_3(Pre,Post,Elt,...) Pre Elt _ops_2(Pre,Post,__VA_ARGS__) Post Elt
+#define _ops_4(Pre,Post,Elt,...) Pre Elt _ops_3(Pre,Post,__VA_ARGS__) Post Elt
+#define _ops_5(Pre,Post,Elt,...) Pre Elt _ops_4(Pre,Post,__VA_ARGS__) Post Elt
+#define _ops_6(Pre,Post,Elt,...) Pre Elt _ops_5(Pre,Post,__VA_ARGS__) Post Elt
+#define _ops_7(Pre,Post,Elt,...) Pre Elt _ops_6(Pre,Post,__VA_ARGS__) Post Elt
+
+#define _narg(...) _narg_impl(__VA_ARGS__,9,8,7,6,5,4,3,2,1,0)
+#define _narg_impl(_0,_1,_2,_3,_4,_5,_6,_7,_8,_9,...) _9
+
+#define _paste(X,Y)         _paste_(X,Y)
+#define _paste_(X,Y)        X ## Y
+
+#define FIELDS_1234(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(Op,IGNORE,__VA_ARGS__)
+#define FIELDS_4321(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(IGNORE,Op,__VA_ARGS__)
+#define BITFIELDS(...)      _paste(FIELDS_,__BYTE_ORDER__)(BITFIELD,__VA_ARGS__)
+
 struct insn_or_data {
     union insn {
         uint32_t word;
-        struct instruction_typeany {
-            unsigned     : 20;   ///< differs by type
-            unsigned x   :  4;   ///< operand x
-            unsigned z   :  4;   ///< operand z
-            unsigned dd  :  2;   ///< dereference
-            unsigned p   :  2;   ///< type code
-        } typeany;
-        struct instruction_type012 {
-            unsigned imm : SMALL_IMMEDIATE_BITWIDTH; ///< immediate
-            unsigned op  :  4;  ///< operation
-            unsigned y   :  4;  ///< operand y
-            unsigned x   :  4;  ///< operand x
-            unsigned z   :  4;  ///< operand z
-            unsigned dd  :  2;  ///< dereference
-            unsigned p   :  2;  ///< type code
-        } type012;
-        struct instruction_type3 {
-            unsigned imm : MEDIUM_IMMEDIATE_BITWIDTH; ///< immediate
-            unsigned x   :  4;  ///< operand x
-            unsigned z   :  4;  ///< operand z
-            unsigned dd  :  2;  ///< dereference
-            unsigned p   :  2;  ///< type code
-        } type3;
+        struct instruction_typeany { BITFIELDS(INSN_any)     } typeany;
+        struct instruction_type012 { BITFIELDS(INSN_type012) } type012;
+        struct instruction_type3   { BITFIELDS(INSN_type3)   } type3;
     } u;
     int32_t reladdr;    ///< used for CE_ICI resolving
     int32_t size;       ///< used for data (e.g., .zero 5 -> size == 5)
