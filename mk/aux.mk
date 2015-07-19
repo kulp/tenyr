@@ -69,9 +69,16 @@ endif
 .SECONDARY: coverage.info.src
 coverage: coverage_html_src
 
-LCOV ?= lcov --rc lcov_branch_coverage=1
+LCOV ?= lcov
 
-coverage.info: check_sw
+.PHONY: lcov_setup
+# LCOV 1.9 doesn't support `--rc` or `--config-file` so it is necessary to copy
+# our lcovrc into a home directory. This process will be skipped if an lcovrc
+# already exists.
+lcov_setup:
+	[[ -e ~/.lcovrc ]] || cp $(TOP)/scripts/lcovrc ~/.lcovrc
+
+coverage.info: check_sw | lcov_setup
 	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
 COVERAGE_SKIP = */spi.c 3rdparty/asmjit/*
