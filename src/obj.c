@@ -36,14 +36,6 @@ static inline void put_sized_le(const void *what, size_t size, size_t count, FIL
 #define get_sized get_sized_le
 #define put_sized put_sized_le
 #else
-static inline UWord swapword(const UWord in)
-{
-    return (((in >> 24) & 0xff) <<  0) |
-           (((in >> 16) & 0xff) <<  8) |
-           (((in >>  8) & 0xff) << 16) |
-           (((in >>  0) & 0xff) << 24);
-}
-
 static inline void get_sized_be(void *what, size_t size, size_t count, FILE *where)
 {
     get_sized_le(what, size, count, where);

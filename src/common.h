@@ -78,6 +78,23 @@ static inline char *strcopy(char *dest, const char *src, size_t sz)
     return result;
 }
 
+static inline uint32_t swapword(const uint32_t in)
+{
+    return (((in >> 24) & 0xff) <<  0) |
+           (((in >> 16) & 0xff) <<  8) |
+           (((in >>  8) & 0xff) << 16) |
+           (((in >>  0) & 0xff) << 24);
+}
+
+static inline uint32_t fixup_endian(const uint32_t in)
+{
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    return in;
+#else
+    return swapword(in);
+#endif
+}
+
 long long numberise(char *str, int base);
 
 #define ALIASING_CAST(Type,Expr) \

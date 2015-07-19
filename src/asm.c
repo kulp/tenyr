@@ -420,6 +420,7 @@ static int raw_in(FILE *stream, struct element *i, void *ud)
 {
     int *offset = ud;
     int rc = (fread(&i->insn.u.word, 4, 1, stream) == 1) ? 1 : -1;
+    i->insn.u.word = fixup_endian(i->insn.u.word);
     i->insn.reladdr = (*offset)++;
     return rc;
 }
@@ -436,7 +437,8 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
     }
 
     if (i->insn.size > 0) {
-        if (fwrite(&i->insn.u.word, sizeof i->insn.u.word, 1, stream) != 1)
+        UWord temp = fixup_endian(i->insn.u.word);
+        if (fwrite(&temp, sizeof i->insn.u.word, 1, stream) != 1)
             return -1;
         ++*offset;
     }
