@@ -450,13 +450,6 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
     return 1;
 }
 
-static int raw_fini(FILE *stream, void **ud)
-{
-    free(*ud);
-    *ud = NULL;
-    return 0;
-}
-
 /*******************************************************************************
  * Text format : hexadecimal numbers
  */
@@ -514,13 +507,6 @@ static int memh_init(FILE *stream, struct param_state *p, void **ud)
     return 0;
 }
 
-static int memh_fini(FILE *stream, void **ud)
-{
-    free(*ud);
-    *ud = NULL;
-    return 0;
-}
-
 static int memh_in(FILE *stream, struct element *i, void *ud)
 {
     struct memh_state *state = ud;
@@ -564,6 +550,13 @@ static int memh_out(FILE *stream, struct element *i, void *ud)
     return (printed + fprintf(stream, "%08x\n", word) > 3) ? 1 : -1;
 }
 
+static int gen_fini(FILE *stream, void **ud)
+{
+    free(*ud);
+    *ud = NULL;
+    return 0;
+}
+
 const struct format tenyr_asm_formats[] = {
     // first format is default
     { "obj",
@@ -575,9 +568,9 @@ const struct format tenyr_asm_formats[] = {
         .sym   = obj_sym,
         .reloc = obj_reloc,
         .err   = obj_err },
-    { "raw" , .init = raw_init , .in = raw_in , .out = raw_out , .fini = raw_fini  },
+    { "raw" , .init = raw_init , .in = raw_in , .out = raw_out , .fini = gen_fini },
     { "text", .init = text_init, .in = text_in, .out = text_out },
-    { "memh", .init = memh_init, .in = memh_in, .out = memh_out, .fini = memh_fini },
+    { "memh", .init = memh_init, .in = memh_in, .out = memh_out, .fini = gen_fini },
 };
 
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
