@@ -384,21 +384,27 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...)
     int col = locp->first_column + 1;
 
     fflush(stderr);
-    if (col <= 1)
-        fprintf(stderr, "%s\n", pd->lexstate.savep[!pd->lexstate.swap]);
-    fprintf(stderr, "%s\n", pd->lexstate.savep[pd->lexstate.swap]);
-    fprintf(stderr, "%*s", col, "^");
-    int len = locp->last_column - locp->first_column;
-    while (len-- > 0)
-        fputc('^', stderr);
-    fputc('\n', stderr);
+    // We use first_column as a flag to tell us whether pd->lexstate is valid
+    // enough to provide the diagnostic caret and context.
+    if (locp->first_column >= 0) {
+        if (col <= 1)
+            fprintf(stderr, "%s\n", pd->lexstate.savep[!pd->lexstate.swap]);
+        fprintf(stderr, "%s\n", pd->lexstate.savep[pd->lexstate.swap]);
+        fprintf(stderr, "%*s", col, "^");
+        int len = locp->last_column - locp->first_column;
+        while (len-- > 0)
+            fputc('^', stderr);
+        fputc('\n', stderr);
+    }
 
     va_start(vl, fmt);
     vfprintf(stderr, fmt, vl);
     va_end(vl);
 
-    fprintf(stderr, " at line %d column %d at `%s'\n",
-            locp->first_line, col, tenyr_get_text(pd->scanner));
+    fprintf(stderr, " at line %d", locp->first_line);
+    if (locp->first_column >= 0)
+        fprintf(stderr, " column %d at `%s'", col, tenyr_get_text(pd->scanner));
+    fputc('\n', stderr);
 
     pd->errored++;
     return 0;
@@ -820,8 +826,11 @@ static int validate_expr(struct parse_data *pd, struct const_expr *e, int level)
         }
 
         if (!ok)
-            // XXX at this point e->srcloc may not correspond to lexstate
-            // TODO make an opaque "where this was" object
+            // At this point e->srcloc may not correspond to lexstate. Until we
+            // get around to making a "where this was" object, we inhibit
+            // printing the handy caret, by invalidating the column
+            // information.
+            e->srcloc.first_column = -1;
             tenyr_error(&e->srcloc, pd,
                         "Expression contains an invalid use of a "
                         "deferred expression");
