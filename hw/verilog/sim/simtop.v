@@ -11,15 +11,14 @@ module Top();
 
     always #(`CLOCKPERIOD / 2) clk <= ~clk;
 
-    wire `HALTTYPE halt;
-    assign halt[`HALT_EXTERNAL] = 0;
+    wire halt = 0;
 
     // rhalt and reset timing should be independent of each other, and
     // do indeed appear to be so.
     initial #(1 * 4 * `CLOCKPERIOD) rhalt = 0;
     initial #(1 * 3 * `CLOCKPERIOD) reset = 0;
 
-    Tenyr #(.LOADFILE(LOADFILE)) tenyr(.clk(clk), .reset(reset), .halt(halt));
+    Tenyr #(.LOADFILE(LOADFILE)) tenyr(.clk, .reset, .halt);
 
 `ifdef __ICARUS__
     // TODO The `ifdef guard should really be controlling for VPI availability

@@ -74,8 +74,8 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
 
 endmodule
 
-module Core(input clk, reset_n, inout wor `HALTTYPE halt, output strobe,
-            output reg[31:0] i_addr, input[31:0] i_data, output mem_rw,
+module Core(input clk, reset_n, inout wor halt, output strobe, mem_rw,
+            output reg[31:0] i_addr, input[31:0] i_data,
             output    [31:0] d_addr, input[31:0] d_in  , output[31:0] d_out);
 
     localparam[3:0] s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6;

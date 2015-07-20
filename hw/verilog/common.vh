@@ -2,11 +2,6 @@
 // TODO use proper reset vectors
 `define RESETVECTOR 'h1000
 
-`define HALT_EXTERNAL 0
-`define HALT_LAST `HALT_EXTERNAL
-`define HALTBUSWIDTH `HALT_LAST + 1 // the number of devices supplying halt signals
-`define HALTTYPE [`HALTBUSWIDTH-1:0]
-
 `define VIDEO_ADDR 'h10000
 
 `define TRAP_ADDR       32'hffffffff

@@ -8,7 +8,7 @@ NET "core/exec/clk" TNM = "exec_clk";
 TIMESPEC TS_core_clk = PERIOD "core_clk" 12 ns HIGH 50%;
 TIMESPEC TS_vga_clk  = PERIOD "vga_clk"  40 ns HIGH 50%;
 
-NET "halt[0]" LOC = T10;
+NET "halt" LOC = T10;
 NET "reset"   LOC = A8;
 
 # False path specification
