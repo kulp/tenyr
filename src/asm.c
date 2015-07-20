@@ -224,6 +224,23 @@ int find_format_by_name(const void *_a, const void *_b)
 }
 
 /*******************************************************************************
+ * general hooks
+ */
+static int gen_init(FILE *stream, struct param_state *p, void **ud)
+{
+    int *offset = *ud = malloc(sizeof *offset);
+    *offset = 0;
+    return 0;
+}
+
+static int gen_fini(FILE *stream, void **ud)
+{
+    free(*ud);
+    *ud = NULL;
+    return 0;
+}
+
+/*******************************************************************************
  * Object format : simple section-based objects
  */
 struct obj_fdata {
@@ -409,12 +426,6 @@ static int obj_err(void *ud)
 /*******************************************************************************
  * Raw format : raw binary data (host endian)
  */
-static int raw_init(FILE *stream, struct param_state *p, void **ud)
-{
-    int *offset = *ud = malloc(sizeof *offset);
-    *offset = 0;
-    return 0;
-}
 
 static int raw_in(FILE *stream, struct element *i, void *ud)
 {
@@ -550,13 +561,6 @@ static int memh_out(FILE *stream, struct element *i, void *ud)
     return (printed + fprintf(stream, "%08x\n", word) > 3) ? 1 : -1;
 }
 
-static int gen_fini(FILE *stream, void **ud)
-{
-    free(*ud);
-    *ud = NULL;
-    return 0;
-}
-
 const struct format tenyr_asm_formats[] = {
     // first format is default
     { "obj",
@@ -568,7 +572,7 @@ const struct format tenyr_asm_formats[] = {
         .sym   = obj_sym,
         .reloc = obj_reloc,
         .err   = obj_err },
-    { "raw" , .init = raw_init , .in = raw_in , .out = raw_out , .fini = gen_fini },
+    { "raw" , .init = gen_init , .in = raw_in , .out = raw_out , .fini = gen_fini },
     { "text", .init = text_init, .in = text_in, .out = text_out },
     { "memh", .init = memh_init, .in = memh_in, .out = memh_out, .fini = gen_fini },
 };
