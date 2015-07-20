@@ -466,15 +466,18 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
  */
 static int text_init(FILE *stream, struct param_state *p, void **ud)
 {
+    gen_init(stream, p, ud);
     // This output might be consumed by a tool that needs a line at a time
     return setvbuf(stream, NULL, _IOLBF, 0);
 }
 
 static int text_in(FILE *stream, struct element *i, void *ud)
 {
+    int32_t *offset = ud;
     int result =
         fscanf(stream, "   %x", &i->insn.u.word) == 1 ||
         fscanf(stream, " 0x%x", &i->insn.u.word) == 1;
+    i->insn.reladdr = (*offset)++;
     // Check for whitespace or EOF after the consumed item. This format can
     // read "agda"" as "0xa" and subsequently fail, when the whole string
     // should have been rejected.
@@ -573,7 +576,7 @@ const struct format tenyr_asm_formats[] = {
         .reloc = obj_reloc,
         .err   = obj_err },
     { "raw" , .init = gen_init , .in = raw_in , .out = raw_out , .fini = gen_fini },
-    { "text", .init = text_init, .in = text_in, .out = text_out },
+    { "text", .init = text_init, .in = text_in, .out = text_out, .fini = gen_fini },
     { "memh", .init = memh_init, .in = memh_in, .out = memh_out, .fini = gen_fini },
 };
 
