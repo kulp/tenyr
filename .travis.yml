@@ -1,9 +1,10 @@
 language: c
 env:
   global:
-    - DEPSSRC=$HOME/deps
+    - DEPSSRC=$HOME/local
     - SDL2_CONFIG="$DEPSSRC/bin/sdl2-config --prefix=$DEPSSRC"
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
+    - PATH="$PATH:$DEPSSRC/bin"
 matrix:
   include:
     - compiler: x86_64-w64-mingw32-gcc
@@ -37,11 +38,11 @@ matrix:
     - compiler: "clang"
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
-        # change CHECK_RULE to `check` once we have an iverilog that compiles tenyr.v
-        - CHECK_RULE=check_sw GCOV=
+        - CHECK_RULE=check GCOV=
     - compiler: "gcc"
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
+        # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
         - CHECK_RULE=coverage GCOV=1
         - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
@@ -59,6 +60,7 @@ before_script:
   - if [[ -n $COVERITY_SCAN_PROJECT_NAME ]] ; then curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true ; fi
   - mkdir -p $DEPSSRC
   - curl -s 'http://dl.tenyr.info/deps/libsdl2_2.0.3%2Bimage_2.0.0%2Bdev-precise-binaries.tar.gz' | tar -C $DEPSSRC -zx
+  - curl -s 'https://s3.amazonaws.com/dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx
 script:
   - make V=1 all
   - make $CHECK_RULE
@@ -80,7 +82,7 @@ addons:
   apt:
     packages:
       - lcov
-      - iverilog
+      - dc
   artifacts:
     paths:
       - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)

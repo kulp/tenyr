@@ -168,7 +168,7 @@ $(TOP)/test/run/test_imul.texe: $(TOP)/lib/imul.to
 
 check_hw:
 	@$(MAKESTEP) -n "Checking for Icarus Verilog ... "
-	$(SILENCE)icarus="$$($(MAKE) --no-print-directory $S -i -C $(TOP)/hw/icarus has-icarus)" ; \
+	$(SILENCE)icarus="$$($(MAKE) --no-print-directory -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
 	if [ -x "$$icarus" ] ; then \
 		$(MAKESTEP) $$icarus ; \
 		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) BUILDDIR=$(BUILDDIR) \
@@ -184,9 +184,10 @@ test_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
 test_demo_bsearch: result = 11
 test_demo_trailz:  verify = grep -c good
 test_demo_trailz:  result = 33
+test_demo_%: record = 2> log.$@.err.$$$$ | tee log.$@.out.$$$$
 test_demo_%: $(TOP)/ex/%_demo.texe
 	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
-	$(SILENCE)[ "$$($(call run,$*) | $(verify))" = "$(result)" ] && $(MAKESTEP) ok
+	$(SILENCE)[ "$$(($(call run,$*)) $(record) | $(verify))" = "$(result)" ] && (rm -f log.$@.{out,err}.$$$$ ; $(MAKESTEP) ok) || (cat log.$@.{out,err}.$$$$ ; false)
 
 randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase | fold -w8 | head -n$1 | sed 's/^/.word 0x/;s/$$/;/')
 
@@ -231,7 +232,7 @@ check_sim_flavour: check_sim_demo check_sim_op check_sim_run check_sim_sdl
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre PERIODS.mk
 
-check_hw_icarus_demo: export run=$(MAKE) $S -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_sim_demo: export run=$(runwrap) $(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
 check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
@@ -265,7 +266,7 @@ check_sim_op: export stem=op
 check_sim_run: export stem=run
 check_sim_op check_sim_run: export run=$(runwrap) $(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) $(tsim_FLAGS) -vvvv $(TOP)/test/$(stem)/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 check_hw_icarus_op: PERIODS.mk
-check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) $S -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
 check_compile: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Building tests from test/ ... "

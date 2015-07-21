@@ -59,7 +59,7 @@ run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAU
                    #
 
 run_%: %.texe tenyr
-	$(IVERILOG)vvp -n -M. tenyr +LOAD=$< $(PLUSARGS)
+	$(SILENCE)$(IVERILOG)vvp -n -M. tenyr +LOAD=$< $(PLUSARGS)
 
 has-icarus:
 	@which $(IVERILOG)iverilog
