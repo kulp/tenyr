@@ -9,6 +9,7 @@ shift
 shift
 base=`mktemp -t $stem`
 rc=0
+fail_fast=${FAIL_FAST:-1}
 
 function fail ()
 {
@@ -19,6 +20,7 @@ function fail ()
 	mkdir -p dogfood_failures/$bn
 	cp -p $file $base.$fmt.{en,de}.*.? dogfood_failures/$bn/
 	rc=1
+	if [[ $fail_fast = 1 ]] ; then exit $rc ; fi
 }
 
 function en ()
