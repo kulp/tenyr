@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-struct sim_state;
-
 #include "common.h"
 #include "plugin_portable.h"
 
