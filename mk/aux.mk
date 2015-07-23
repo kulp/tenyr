@@ -279,5 +279,5 @@ check_compile: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 
 dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) tas$(EXE_SUFFIX)
 	@$(ECHO) -n "Checking reversibility of assembly-disassembly ... "
-	$(SILENCE)$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX $(TAS) $(filter-out tas$(EXE_SUFFIX),$^) && $(ECHO) ok || ($(ECHO) FAILED ; false)
+	$(SILENCE)$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX "$(TAS)" $(filter-out tas$(EXE_SUFFIX),$^) && $(ECHO) ok || ($(ECHO) FAILED ; false)
 
