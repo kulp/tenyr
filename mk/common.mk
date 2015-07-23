@@ -18,6 +18,9 @@ endif
 
 ifeq ($(MEMCHECK),1)
  VALGRIND := $(shell which valgrind)
+ ifeq ($(VALGRIND),)
+  $(error MEMCHECK=1 was specified, but valgrind was not found)
+ endif
  runwrap = $(VALGRIND) --leak-check=full --track-origins=yes --log-file=memcheck.$$$$ $(EMPTY)
 endif
 
