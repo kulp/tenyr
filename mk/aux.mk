@@ -76,7 +76,7 @@ LCOV ?= lcov
 # our lcovrc into a home directory. This process will be skipped if an lcovrc
 # already exists.
 lcov_setup:
-	[[ $$CI = "true" ]] && cp $(TOP)/scripts/lcovrc ~/.lcovrc
+	[[ $$CI = "true" ]] && cp $(TOP)/scripts/lcovrc ~/.lcovrc || true
 
 coverage.info: check | lcov_setup
 	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
