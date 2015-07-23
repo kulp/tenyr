@@ -66,8 +66,8 @@ gzip zip:
 	$(MAKE) -f $(makefile_path) $@
 endif
 
-.SECONDARY: coverage.info.src
-coverage: coverage_html_src
+.SECONDARY: coverage.info.src coverage.info.vpi
+coverage: coverage_html_src_vpi
 
 LCOV ?= lcov
 
@@ -88,8 +88,10 @@ coverage.info.trimmed: coverage.info
 coverage.info.%: coverage.info.trimmed
 	$(LCOV) --extract $< '*/$*/*' --output-file $@
 
-coverage_html_%: coverage.info.%
-	genhtml $< --output-directory $@
+coverage_html_src:     coverage.info.src
+coverage_html_src_vpi: coverage.info.src coverage.info.vpi
+coverage_html_%:
+	genhtml --output-directory $@ $^
 
 check: check_sw check_hw
 check_sw: check_args check_compile check_sim check_obj check_forth dogfood

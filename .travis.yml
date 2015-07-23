@@ -69,8 +69,8 @@ script:
 after_success:
   - |
     if [[ -n $GCOV ]] ; then
-        coveralls-lcov $(make showbuilddir)/coverage.info.src
-        bash <(curl -s https://codecov.io/bash) -f $(make showbuilddir)/coverage.info.src
+        coveralls-lcov $(make showbuilddir)/coverage.info.{src,vpi}
+        bash <(curl -s https://codecov.io/bash) -f $(make showbuilddir)/coverage.info.{src,vpi}
     fi
 notifications:
   irc:
