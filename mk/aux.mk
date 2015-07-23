@@ -78,7 +78,7 @@ LCOV ?= lcov
 lcov_setup:
 	[[ $$CI = "true" ]] && cp $(TOP)/scripts/lcovrc ~/.lcovrc
 
-coverage.info: check_sw | lcov_setup
+coverage.info: check | lcov_setup
 	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
 COVERAGE_SKIP = */spi.c 3rdparty/asmjit/*
