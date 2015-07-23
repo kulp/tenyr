@@ -47,7 +47,7 @@ matrix:
         - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
-        - COVERITY_SCAN_BUILD_COMMAND="make V=1 all_c"
+        - COVERITY_SCAN_BUILD_COMMAND="make V=1 all vpi"
 os:
   - linux
   - osx
