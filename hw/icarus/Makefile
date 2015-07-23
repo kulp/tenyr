@@ -4,22 +4,20 @@ include $(TOP)/mk/rules.mk
 
 PERIODS_DEFAULT ?= 32
 
-VPI_CFLAGS := $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
 CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I$(TOP)/src
 
 INCLUDES += $(INCLUDE_OS)
 
-clean_FILES = tenyr glue.vpi *.o
+clean_FILES = tenyr *.o
 clobber_FILES  = *.vcd
 clobber_FILES += *.texe
 clobber_FILES += $(GEN_V)
 
-all: tenyr glue.vpi
+all: tenyr
 
 .SUFFIXES: .v .c
 
-vpath %.c ../vpi $(TOP)/src
 vpath %.v ../verilog ../verilog/sim .
 vpath %.memh ../verilog
 
@@ -37,9 +35,7 @@ tenyr: simtop.v top.v                               \
        simserial.v ram.v simclocks.v                \
        seg7.v hex2segments.v                        \
        ramwrap.v                                    \
-       | glue.vpi
-
-glue.vpi: callbacks.o serial.o load.o sim.o asm.o obj.o common.o param.o
+       #
 
 # don't complain about unused values that we might use in asserts
 asm.o sim.o: CFLAGS += -Wno-unused-value
@@ -59,7 +55,7 @@ run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAU
                    #
 
 run_%: %.texe tenyr
-	$(SILENCE)$(IVERILOG)vvp -n -M. tenyr +LOAD=$< $(PLUSARGS)
+	$(SILENCE)$(IVERILOG)vvp -n -M$(BUILDDIR) tenyr +LOAD=$< $(PLUSARGS)
 
 has-icarus:
 	@which $(IVERILOG)iverilog
@@ -78,7 +74,4 @@ $(GEN_V): %.v: ../verilog/sim/simwrap.v
 	@$(MAKESTEP) "[ IVERILOG ] $@"
 	$(SILENCE)$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
-%.vpi: %.o
-	@$(MAKESTEP) "[ VPI ] $@"
-	$(SILENCE)$(IVERILOG)iverilog-vpi $(OUTPUT_OPTION) $^
 

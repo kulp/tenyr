@@ -52,6 +52,17 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	@$(MAKESTEP) "[ DYLD ] $@"
 	$(SILENCE)$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 
+%.vpi: CFLAGS  += -Wall -Wextra -pedantic-errors -std=c99
+%.vpi: CFLAGS  += $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
+# don't complain about unused values that we might use in asserts
+# it's all right for callbacks not to use all their parameters
+%.vpi: CFLAGS  += -Wno-unused-value -Wno-unused-parameter
+%.vpi: LDFLAGS += $(shell $(IVERILOG)iverilog-vpi --ldflags 2> /dev/null)
+%.vpi: LDLIBS  += $(shell $(IVERILOG)iverilog-vpi --ldlibs 2> /dev/null)
+%.vpi: %,dy.o
+	@$(MAKESTEP) "[ VPI ] $@"
+	$(SILENCE)$(LINK.c) -o $@ $^ $(LDLIBS)
+
 %.h %.c: %.l
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
 	$(SILENCE)$(FLEX) --header-file=$*.h -o $*.c $<

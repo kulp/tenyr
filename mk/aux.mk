@@ -171,6 +171,7 @@ check_hw:
 	$(SILENCE)icarus="$$($(MAKE) --no-print-directory -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
 	if [ -x "$$icarus" ] ; then \
 		$(MAKESTEP) $$icarus ; \
+		$(MAKE) -C $(BUILDDIR) -f $(TOP)/Makefile vpi ; \
 		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) BUILDDIR=$(BUILDDIR) \
 		    check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run; \
 	else \
@@ -232,7 +233,7 @@ check_sim_flavour: check_sim_demo check_sim_op check_sim_run check_sim_sdl
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre PERIODS.mk
 
-check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_sim_demo: export run=$(runwrap) $(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
 check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)

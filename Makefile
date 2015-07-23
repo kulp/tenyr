@@ -15,7 +15,7 @@ CPPFLAGS += $(NO_UNKNOWN_WARN_OPTS)
 
 SOURCEFILES = $(wildcard $(TOP)/src/*.c $(TOP)/src/devices/*.c)
 
-VPATH += $(TOP)/src $(TOP)/src/devices
+VPATH += $(TOP)/src $(TOP)/src/devices $(TOP)/hw/vpi
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
 
 clean_FILES = $(addprefix $(BUILDDIR)/,  \
@@ -52,6 +52,7 @@ clobber_FILES += $(BUILDDIR)/*.gc??
 clobber_FILES += $(BUILDDIR)/coverage.info*
 clobber_FILES += $(BUILDDIR)/PERIODS.mk
 clobber_FILES += $(BUILDDIR)/coverage_html_*
+clobber_FILES += $(BUILDDIR)/vpidevices.vpi
 clobber_FILES += $(TOP)/test/op/*.texe
 clobber_FILES += $(TOP)/test/run/*.texe
 clobber::
@@ -68,10 +69,9 @@ else
 
 all: $(TARGETS)
 
-# the `all_c` and `vpi` targets allow Coverity Scan to cover all C builds
-all_c: all vpi
-vpi:
-	$(MAKE) -C $(TOP)/hw/icarus glue.vpi
+.PHONY: vpi
+vpi: glue.vpi
+glue.vpi: callbacks,dy.o vpiserial,dy.o load,dy.o sim,dy.o asm,dy.o obj,dy.o common,dy.o param,dy.o
 
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
