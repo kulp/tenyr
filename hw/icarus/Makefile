@@ -28,7 +28,7 @@ GEN_V += simserial.v
 SIM_GET_simserial = tenyr_getchar
 SIM_PUT_simserial = tenyr_putchar
 
-tenyr: VFLAGS += -m glue
+tenyr: VFLAGS += -m vpidevices
 tenyr: VFLAGS += -DSIMMEM=GenedBlockMem -DSIMCLK=tenyr_mainclock
 tenyr: VFLAGS += -DSERIAL
 tenyr: simtop.v top.v                               \
