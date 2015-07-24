@@ -8,8 +8,7 @@ tas=$2
 shift
 shift
 base=`mktemp -t $stem`
-rc=0
-fail_fast=${FAIL_FAST:-1}
+pids=()
 
 function fail ()
 {
@@ -19,8 +18,7 @@ function fail ()
     echo $bn: FAILED
     mkdir -p dogfood_failures/$bn
     cp -p $file $base.$fmt.{en,de}.*.? dogfood_failures/$bn/
-    rc=1
-    if [[ $fail_fast = 1 ]] ; then exit $rc ; fi
+    exit 1
 }
 
 function en ()
@@ -74,18 +72,19 @@ for flags in -v "" ; do
             $pp $file | cycle $fmt
             if [[ $? != 0 ]] ; then fail $fmt $file ; fi
             match $fmt en $file
-        done &
+        done & pids+=( $! )
         trap "kill $! 2>/dev/null" EXIT
 
         ( base=random
         file=$base
         $here/random.sh | tee $base | de text 0 | cycle $fmt
         if [[ $? != 0 ]] ; then fail $fmt $file ; fi
-        match $fmt en $file ) &
+        match $fmt en $file ) & pids+=( $! )
         trap "kill $! 2>/dev/null" EXIT
     done
 done
-wait
 
-exit $rc
+for pid in ${pids[@]} ; do
+    wait $pid || exit $?
+done
 
