@@ -10,6 +10,8 @@ else
  MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
 endif
 
+export MAKESTEP
+
 ifndef NDEBUG
  CFLAGS   += -g
  CXXFLAGS += -g

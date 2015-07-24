@@ -170,14 +170,10 @@ $(TOP)/test/run/test_imul.texe: $(TOP)/lib/imul.to
 
 check_hw:
 	@$(MAKESTEP) -n "Checking for Icarus Verilog ... "
-	$(SILENCE)icarus="$$($(MAKE) --no-print-directory -s -i -C $(TOP)/hw/icarus has-icarus)" ; \
-	if [ -x "$$icarus" ] ; then \
-		$(MAKESTEP) $$icarus ; \
+	$(SILENCE)if $(TOP)/scripts/check_icarus.sh "`which $(IVERILOG)iverilog`" ; then \
 		$(MAKE) -C $(BUILDDIR) -f $(TOP)/Makefile vpi ; \
 		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) BUILDDIR=$(BUILDDIR) \
 		    check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run; \
-	else \
-		$(MAKESTEP) "not found" ; \
 	fi
 
 # Demos are not self-testing, so they have demo-specific external checkers
