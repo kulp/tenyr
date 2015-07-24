@@ -13,6 +13,12 @@
 #include "param.h"
 #include "os_common.h"
 
+#if _WIN32
+// TODO change to os_io.h
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 // The length (excluding terminating NUL) of an operator length in disassembly
 #define MAX_OP_LEN 3
 
@@ -427,6 +433,15 @@ static int obj_err(void *ud)
  * Raw format : raw binary data (host endian)
  */
 
+static int raw_init(FILE *stream, struct param_state *p, void **ud)
+{
+    int rc = gen_init(stream, p, ud);
+#if _WIN32
+    rc |= setmode(fileno(stream), O_BINARY) == -1;
+#endif
+    return rc;
+}
+
 static int raw_in(FILE *stream, struct element *i, void *ud)
 {
     int *offset = ud;
@@ -575,7 +590,7 @@ const struct format tenyr_asm_formats[] = {
         .sym   = obj_sym,
         .reloc = obj_reloc,
         .err   = obj_err },
-    { "raw" , .init = gen_init , .in = raw_in , .out = raw_out , .fini = gen_fini },
+    { "raw" , .init = raw_init , .in = raw_in , .out = raw_out , .fini = gen_fini },
     { "text", .init = text_init, .in = text_in, .out = text_out, .fini = gen_fini },
     { "memh", .init = memh_init, .in = memh_in, .out = memh_out, .fini = gen_fini },
 };
