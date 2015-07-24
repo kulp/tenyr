@@ -825,7 +825,7 @@ static int validate_expr(struct parse_data *pd, struct const_expr *e, int level)
             default:    ok &= 0; break;
         }
 
-        if (!ok)
+        if (!ok) {
             // At this point e->srcloc may not correspond to lexstate. Until we
             // get around to making a "where this was" object, we inhibit
             // printing the handy caret, by invalidating the column
@@ -834,6 +834,7 @@ static int validate_expr(struct parse_data *pd, struct const_expr *e, int level)
             tenyr_error(&e->srcloc, pd,
                         "Expression contains an invalid use of a "
                         "deferred expression");
+        }
     }
 
     return ok;
