@@ -16,17 +16,6 @@
 #include <string.h>
 #include <strings.h>
 
-#if _WIN32
-#include <fcntl.h>
-#include <io.h>
-#endif
-
-#if EMSCRIPTEN
-// needed for EMCC so far
-void *lfind(const void *key, const void *base, size_t *nmemb, size_t size,
-        int(*compar)(const void *, const void *));
-#endif
-
 #define version() "tas version " STR(BUILD_NAME)
 
 static int add_relocation(struct parse_data *pd, const char *name,
