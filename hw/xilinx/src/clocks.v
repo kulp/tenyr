@@ -14,9 +14,9 @@ module tenyr_mainclock(input clk_in, reset, output clk_core, clk_vga);
         .LOCKED ( locked_core )
     );
 
-    DCM_CLKGEN #(.CLKFX_DIVIDE(8), .CLKFX_MULTIPLY(2)) clk_gen_vga(
+    DCM_CLKGEN #(.CLKFX_MULTIPLY(4), .CLKFX_DIVIDE(4), .CLKFXDV_DIVIDE(4)) clk_gen_vga(
         .CLKIN  ( clk_in_buf ),
-        .CLKFX  ( clk_vga_un ),
+        .CLKFXDV( clk_vga_un ),
         .RST    ( reset      ),
         .LOCKED ( locked_vga )
     );
