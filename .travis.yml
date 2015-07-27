@@ -55,12 +55,12 @@ sudo: false
 install:
   - gem install coveralls-lcov
 before_script:
-  # implement Coverity Scan with before_script instead of addons.coverity_scan
-  # to work around too-early quota check by the coverity_scan addon
-  - if [[ -n $COVERITY_SCAN_PROJECT_NAME ]] ; then curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true ; fi
   - mkdir -p $DEPSSRC
   - curl -s 'http://dl.tenyr.info/deps/libsdl2_2.0.3%2Bimage_2.0.0%2Bdev-precise-binaries.tar.gz' | tar -C $DEPSSRC -zx
   - curl -s 'http://dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx
+  # implement Coverity Scan with before_script instead of addons.coverity_scan
+  # to work around too-early quota check by the coverity_scan addon
+  - if [[ -n $COVERITY_SCAN_PROJECT_NAME ]] ; then curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true ; fi
 script:
   - make V=1 all
   - make $CHECK_RULE
