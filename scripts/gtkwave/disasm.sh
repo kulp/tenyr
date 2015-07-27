@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 here=$(dirname $0)
 tas="$(make -s -C $here/../.. showbuilddir)/tas"
 # We have to run a loop even in the error condition, to keep gtkwave from hanging

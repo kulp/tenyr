@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 icarus=$1
 need_major=0
 need_minor=10
