@@ -36,6 +36,9 @@ EFFORT       = -ol std
 THREADING    = -mt 2
 XST_TMPDIR   = xst/projnav.tmp
 
+CORE_CLOCK_MHZ ?= 80
+VERILOG_DEFINES = CORE_CLOCK_MHZ=$(CORE_CLOCK_MHZ)
+
 OPTS_xst      = $(FILTER) $(INTSTYLE)
 OPTS_ngdbuild = $(FILTER) $(INTSTYLE)
 OPTS_map      = $(FILTER) $(INTSTYLE) $(EFFORT) $(THREADING) -w
@@ -117,9 +120,11 @@ gen/%.mem: gen/%.memh
 $(XST_TMPDIR):
 	mkdir -p $@
 
+%.defines.xst: %.xst
+	(cat $< ; echo "-define { $(VERILOG_DEFINES) }") > $@
 # Don't automatically regenerate baremetal.memh (use .bmm rules to insert code)
-%.ngc: %.xst | baremetal.memh $(XST_TMPDIR)
-	$(BIN)xst $(OPTS_xst) -ifn $<
+%.ngc: %.defines.xst | baremetal.memh $(XST_TMPDIR)
+	$(BIN)xst $(OPTS_xst) -ifn $< -ofn $*.srp
 
 %.ngd: %.ngc %.bmm %.ucf
 	$(BIN)ngdbuild $(OPTS_ngdbuild) -bm $*.bmm $< $@
@@ -152,7 +157,7 @@ $(XST_TMPDIR):
 %.xsvf: %.impact.in %.bit
 	$(BIN)impact -batch $<
 
-clean_FILES =
+clean_FILES := *.defines.xst
 clobber_FILES := $(shell cat .gitignore) $($(GIT) ls-files --others) bin/
 clobber::
 	-find . -type d -empty | xargs rmdir -p

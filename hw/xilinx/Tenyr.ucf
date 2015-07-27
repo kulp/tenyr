@@ -8,6 +8,9 @@ NET "core/exec/clk" TNM = "exec_clk";
 TIMESPEC TS_core_clk = PERIOD "core_clk" 12 ns HIGH 50%;
 TIMESPEC TS_vga_clk  = PERIOD "vga_clk"  40 ns HIGH 50%;
 
+INST "clocks/clk_gen_core" CLKIN_PERIOD=10 ns;
+INST "clocks/clk_gen_vga"  CLKIN_PERIOD=10 ns;
+
 NET "halt" LOC = T10;
 NET "reset"   LOC = A8;
 

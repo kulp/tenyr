@@ -1,4 +1,9 @@
 `timescale 1ns/1ps
+
+`ifndef CORE_CLOCK_MHZ
+`define CORE_CLOCK_MHZ 80
+`endif
+
 module tenyr_mainclock(input clk_in, reset, output clk_core, clk_vga);
 
     wire clk_sys, clk_in_buf, locked_core, locked_vga, clk_core_un, clk_vga_un;
@@ -7,7 +12,9 @@ module tenyr_mainclock(input clk_in, reset, output clk_core, clk_vga);
     BUFGCE BUFG_clk_core(.I(clk_core_un), .O(clk_core  ), .CE(locked_core));
     BUFGCE BUFG_clk_vga (.I(clk_vga_un ), .O(clk_vga   ), .CE(locked_vga ));
 
-    DCM_CLKGEN #(.CLKFX_DIVIDE(5), .CLKFX_MULTIPLY(4)) clk_gen_core(
+    DCM_CLKGEN #(
+        .CLKFX_MULTIPLY(`CORE_CLOCK_MHZ), .CLKFX_DIVIDE(100), .STARTUP_WAIT(1)
+    ) clk_gen_core(
         .CLKIN  ( clk_in_buf  ),
         .CLKFX  ( clk_core_un ),
         .RST    ( reset       ),
