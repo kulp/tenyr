@@ -9,7 +9,6 @@ addons: &def_addons
     target_paths:
       - build/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
       - version/$(git describe --always --tags --match 'v?.?.?*' $TRAVIS_COMMIT)
-      - latest/$PLATFORM/$HOST
 language: c
 env:
   global:
