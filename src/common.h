@@ -97,6 +97,8 @@ static inline uint32_t fixup_endian(const uint32_t in)
 
 long long numberise(char *str, int base);
 
+char *build_path(const char *base, const char *fmt, ...);
+
 #define ALIASING_CAST(Type,Expr) \
     *(Type * __attribute__((__may_alias__)) *)&(Expr)
 

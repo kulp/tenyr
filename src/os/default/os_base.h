@@ -1,7 +1,6 @@
 #ifndef OS_BASE_H_
 #define OS_BASE_H_
 
-char *build_path(const char *base, const char *fmt, ...);
 // Return nonzero from path_walker to end walking
 typedef int path_walker(size_t len, const char *name, void *ud);
 // Returns walker's last result (stops walking when walker returns true), or
