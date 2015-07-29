@@ -30,29 +30,29 @@
 #define WORD_BITWIDTH               32
 
 #define INSN_type012 \
-    (imm,  SMALL_IMMEDIATE_BITWIDTH), /* immediate   */ \
-    (op ,                         4), /* operation   */ \
-    (y  ,                         4), /* operand y   */ \
-    (x  ,                         4), /* operand x   */ \
-    (z  ,                         4), /* operand z   */ \
+    (p  ,                         2), /* type code   */ \
     (dd ,                         2), /* dereference */ \
-    (p  ,                         2)  /* type code   */ \
+    (z  ,                         4), /* operand z   */ \
+    (x  ,                         4), /* operand x   */ \
+    (y  ,                         4), /* operand y   */ \
+    (op ,                         4), /* operation   */ \
+    (imm,  SMALL_IMMEDIATE_BITWIDTH)  /* immediate   */ \
     //
 
 #define INSN_type3 \
-    (imm, MEDIUM_IMMEDIATE_BITWIDTH), /* immediate   */ \
-    (x  ,                         4), /* operand x   */ \
-    (z  ,                         4), /* operand z   */ \
+    (p  ,                         2), /* type code   */ \
     (dd ,                         2), /* dereference */ \
-    (p  ,                         2)  /* type code   */ \
+    (z  ,                         4), /* operand z   */ \
+    (x  ,                         4), /* operand x   */ \
+    (imm, MEDIUM_IMMEDIATE_BITWIDTH)  /* immediate   */ \
     //
 
 #define INSN_any \
-    (   ,                        20), /* undefined   */ \
-    (x  ,                         4), /* operand x   */ \
-    (z  ,                         4), /* operand z   */ \
+    (p  ,                         2), /* type code   */ \
     (dd ,                         2), /* dereference */ \
-    (p  ,                         2)  /* type code   */ \
+    (z  ,                         4), /* operand z   */ \
+    (x  ,                         4), /* operand x   */ \
+    (   ,                        20)  /* undefined   */ \
     //
 
 #define BITFIELD(Name,Width)    unsigned Name:Width;
@@ -72,8 +72,8 @@
 #define _paste(X,Y)         _paste_(X,Y)
 #define _paste_(X,Y)        X ## Y
 
-#define FIELDS_1234(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(Op,IGNORE,__VA_ARGS__)
-#define FIELDS_4321(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(IGNORE,Op,__VA_ARGS__)
+#define FIELDS_1234(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(IGNORE,Op,__VA_ARGS__)
+#define FIELDS_4321(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(Op,IGNORE,__VA_ARGS__)
 #define BITFIELDS(...)      _paste(FIELDS_,__BYTE_ORDER__)(BITFIELD,__VA_ARGS__)
 
 struct insn_or_data {
