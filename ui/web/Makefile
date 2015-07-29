@@ -111,14 +111,14 @@ tcc.bc:
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): common.o
 tas$(EXE_SUFFIX) tld$(EXE_SUFFIX): emtsearch.o emlsearch.o
 tas$(EXE_SUFFIX): asm.o asmif.o param.o parser.o lexer.o obj.o
-tsim$(EXE_SUFFIX): sim.o simif.o param.o asm.o obj.o ram.o serial.o debugwrap.o emlsearch.o
+tsim$(EXE_SUFFIX): sim.o simif.o param.o asm.o obj.o ram.o serial.o emlsearch.o
 tld$(EXE_SUFFIX): common.o obj.o
 
 tsim.js: CC_OPT = -O2 # -O0 causes failure
 # --closure 1 doesn't work with tcc.js yet - reason not known.
 tcc.js: EMCCFLAGS_LD += --closure 0
 
-asm.o debugwrap.o ram.o serial.o sparseram.o parser.o lexer.o: CFLAGS += -Wno-unused-parameter
+asm.o ram.o serial.o sparseram.o parser.o lexer.o: CFLAGS += -Wno-unused-parameter
 asm.o simif.o: CFLAGS += -Wno-unused-value
 parser.o lexer.o: CFLAGS += -Wno-unused -Wno-sign-compare
 lexer.o: CFLAGS += -Wno-unneeded-internal-declaration

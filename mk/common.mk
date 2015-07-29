@@ -102,7 +102,7 @@ BUILD_NAME := $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>/dev/n
 TAS = $(runwrap)$(TOOLDIR)/tas$(EXE_SUFFIX)
 TLD = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
 
-DEVICES = ram sparseram debugwrap serial spi
+DEVICES = ram sparseram serial spi
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
 PDEVICES += spidummy spisd spi

@@ -42,6 +42,12 @@ int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
         fprintf(stderr, "No device handles address %#x\n", addr);
         return -1;
     }
+
+    if (s->conf.verbose > 2) {
+        printf("%-5s @ 0x%08x = 0x%08x\n",
+               (op == OP_WRITE) ? "write" : "read", addr, *data);
+    }
+
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
     // machine.devices, but it shouldn't see the whole state
@@ -70,12 +76,6 @@ int devices_setup(struct sim_state *s)
 
 int devices_finalise(struct sim_state *s)
 {
-    if (s->conf.verbose > 2) {
-        assert(("device to be wrapped is not NULL", s->machine.devices[0] != NULL));
-        int debugwrap_wrap_device(struct device **device);
-        debugwrap_wrap_device(&s->machine.devices[0]);
-    }
-
     // Devices must be in address order to allow later bsearch. Assume they do
     // not overlap (overlap is illegal).
     qsort(s->machine.devices, s->machine.devices_count,
