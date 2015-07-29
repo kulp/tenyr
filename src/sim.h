@@ -2,7 +2,6 @@
 #define SIM_H_
 
 #include "ops.h"
-#include "machine.h"
 #include "asm.h"
 #include "plugin.h"
 #include "device.h"
@@ -18,6 +17,13 @@ enum memory_op { OP_INSN_READ=0, OP_DATA_READ=1, OP_WRITE=2 };
 typedef int op_dispatcher(void *ud, int op, uint32_t addr, uint32_t *data);
 
 struct run_ops;
+
+struct machine_state {
+    size_t devices_count;   ///< how many device slots are used
+    size_t devices_max;     ///< how many device slots are allocated
+    struct device **devices;
+    int32_t regs[16];
+} machine;
 
 struct sim_state {
     struct {
