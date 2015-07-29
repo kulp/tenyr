@@ -56,7 +56,7 @@
     //
 
 #define BITFIELD(Name,Width)    unsigned Name:Width;
-#define IGNORE(...)             /**/
+#define IGNORE_(...)            /**/
 
 #define _ops_1(Pre,Post,Elt    ) Pre Elt                              Post Elt
 #define _ops_2(Pre,Post,Elt,...) Pre Elt _ops_1(Pre,Post,__VA_ARGS__) Post Elt
@@ -72,8 +72,8 @@
 #define _paste(X,Y)         _paste_(X,Y)
 #define _paste_(X,Y)        X ## Y
 
-#define FIELDS_1234(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(IGNORE,Op,__VA_ARGS__)
-#define FIELDS_4321(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(Op,IGNORE,__VA_ARGS__)
+#define FIELDS_1234(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(IGNORE_,Op,__VA_ARGS__)
+#define FIELDS_4321(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(Op,IGNORE_,__VA_ARGS__)
 #define BITFIELDS(...)      _paste(FIELDS_,__BYTE_ORDER__)(BITFIELD,__VA_ARGS__)
 
 struct insn_or_data {
