@@ -1,3 +1,15 @@
+addons: &def_addons
+  apt:
+    packages:
+      - lcov
+      - dc
+  artifacts:
+    paths:
+      - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)
+    target_paths:
+      - build/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
+      - version/$(git describe --always --tags --match 'v?.?.?*' $TRAVIS_COMMIT)
+      - latest/$PLATFORM/$HOST
 language: c
 env:
   global:
@@ -13,6 +25,7 @@ matrix:
         - CXX=$HOST-w64-mingw32-g++
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
       addons:
+        <<: *def_addons
         apt:
           packages:
             - mingw-w64
@@ -27,6 +40,7 @@ matrix:
         - CXX=$HOST-w64-mingw32-g++
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
       addons:
+        <<: *def_addons
         apt:
           packages:
             - mingw-w64
@@ -79,15 +93,3 @@ notifications:
       - "irc.freenode.org#tenyr"
     use_notice: true
     skip_join: true
-addons:
-  apt:
-    packages:
-      - lcov
-      - dc
-  artifacts:
-    paths:
-      - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)
-    target_paths:
-      - build/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
-      - version/$(git describe --always --tags --match 'v?.?.?*' $TRAVIS_COMMIT)
-      - latest/$PLATFORM/$HOST
