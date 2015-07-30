@@ -55,8 +55,8 @@ module Tenyr(
     wire[3:0] r_sel;
     wire[31:0] r_addr, r_to_slav, r_to_mast;
 
-    ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0),
-        .PBITS(32), .ABITS(RAMABITS), .BASE_A(`RESETVECTOR)
+    BlockRAM #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0),
+        .PBITS(32), .ABITS(RAMABITS), .OFFSET(`RESETVECTOR)
     ) ram(
         .clka  ( clk_core  ), .clkb  ( clk_core  ),
         .ena   ( r_strobe  ), .enb   ( i_strobe  ),
