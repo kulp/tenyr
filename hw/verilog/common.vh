@@ -4,11 +4,6 @@
 
 `define VIDEO_ADDR 'h10000
 
-`define TRAP_ADDR       32'hffffffff
-`define VECTOR_ADDR     32'hffffffc0
-`define ISTACK_BOTTOM   32'hffffffa0
-`define TRAMP_BOTTOM    32'hfffff800
-
 // Check for contained-ness of a BaseBits-wide addr in a AddrBits-wide port addr
 `define IN_RANGE(AddrBits,BaseBits,Base,Addr) \
         (Addr[AddrBits-1:BaseBits+1] == \
