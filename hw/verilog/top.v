@@ -33,10 +33,17 @@ module Tenyr(
     );
 
     Core core(
-        .clk    ( clk_core ), .reset_n ( _reset_n ), .mem_rw ( d_rw      ),
-        .strobe ( d_strobe ), .i_addr  ( i_addr   ), .d_addr ( d_addr    ),
-        .halt   ( halt     ), .i_data  ( i_data   ), .d_in   ( d_to_mast ),
-                                                     .d_out  ( d_to_slav )
+        .clk    ( clk_core   ), .halt   ( halt       ), .reset_n ( _reset_n ),
+        .adrD_o ( d_addr     ), .adrI_o ( i_addr     ),
+        .datD_o ( d_to_slav  ), .datI_o ( /* TODO */ ),
+        .datD_i ( d_to_mast  ), .datI_i ( i_data     ),
+        .wenD_o ( d_rw       ), .wenI_o ( /* TODO */ ),
+        .selD_o ( /* TODO */ ), .selI_o ( /* TODO */ ),
+        .stbD_o ( d_strobe   ), .stbI_o ( /* TODO */ ),
+        .ackD_i ( d_strobe   ), .ackI_i ( /* TODO */ ),
+        .errD_i ( /* TODO */ ), .errI_i ( /* TODO */ ),
+        .rtyD_i ( /* TODO */ ), .rtyI_i ( /* TODO */ ),
+        .cycD_o ( /* TODO */ ), .cycI_o ( /* TODO */ )
     );
 
 // -----------------------------------------------------------------------------

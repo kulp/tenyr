@@ -74,9 +74,21 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
 
 endmodule
 
-module Core(input clk, reset_n, inout wor halt, output strobe, mem_rw,
-            output reg[31:0] i_addr, input[31:0] i_data,
-            output    [31:0] d_addr, input[31:0] d_in  , output[31:0] d_out);
+module Core(
+    input clk, reset_n,
+    /* channel : data    insn    */
+    output[31:0] adrD_o, adrI_o, // address
+    input [31:0] datD_i, datI_i, // data in
+    output[31:0] datD_o, datI_o, // data out
+    output       wenD_o, wenI_o, // write enable
+    output[ 3:0] selD_o, selI_o, // select
+    output       stbD_o, stbI_o, // strobe
+    input        ackD_i, ackI_i, // acknowledge
+    input        errD_i, errI_i, // error
+    input        rtyD_i, rtyI_i, // retry
+    output       cycD_o, cycI_o, // cycle
+    inout wor halt
+);
 
     localparam[3:0] s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6;
 
@@ -84,22 +96,22 @@ module Core(input clk, reset_n, inout wor halt, output strobe, mem_rw,
     wire[3:0] idxX, idxY, idxZ, op;
     wire signed[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
     wire[1:0] kind;
-    reg[31:0] insn, r_data;
-    reg signed[31:0] r_irhs, nextP;
+    reg[31:0] insn, _data, _adrI_o;
+    reg signed[31:0] _irhs, nextP;
     reg[3:0] state = s5;
 
     always @(posedge clk)
         if (!reset_n) begin
-            state  <= s5;
-            i_addr <= `RESETVECTOR;
+            state   <= s5;
+            _adrI_o <= `RESETVECTOR;
         end else case (state)
-            s0: begin state <= halt  ? s0 : s1;                         end
-            s1: begin state <= edone ? s2 : s1; r_irhs <= rhs;          end
-            s2: begin state <= s3; /* compensate for slow memory */     end
-            s3: begin state <= s4; r_data <= d_in;                      end
-            s4: begin state <= s5; i_addr <= branching ? nextZ : nextP; end
-            s5: begin state <= s6; nextP  <= i_addr + 1;                end
-            s6: begin state <= s0; insn   <= i_data; /* why extra ? */  end
+            s0: begin state <= halt  ? s0 : s1;                             end
+            s1: begin state <= edone ? s2 : s1; _irhs <= rhs;               end
+            s2: begin state <= s3; /* compensate for slow memory */         end
+            s3: begin state <= s4; _data   <= datD_i;                       end
+            s4: begin state <= s5; _adrI_o <= branching ? nextZ : nextP;    end
+            s5: begin state <= s6; nextP   <= adrI_o + 1;                   end
+            s6: begin state <= s0; insn    <= datI_i; /* why extra ? */     end
         endcase
 
     Decode decode(.insn, .op, .idxZ, .idxX, .idxY, .valI, .deref_rhs,
@@ -110,11 +122,18 @@ module Core(input clk, reset_n, inout wor halt, output strobe, mem_rw,
     Exec exec(.clk, .en ( state == s0 ), .done ( edone ),
               .op,  .valA, .valB, .valC, .valZ ( rhs   ));
 
-    assign mem_rw = storing;
-    assign strobe = state == s3 && (loading || storing);
-    assign nextZ  = deref_rhs ? r_data : r_irhs;
-    assign d_out  = deref_rhs ? valZ   : r_irhs;
-    assign d_addr = deref_rhs ? r_irhs : valZ;
+    assign wenD_o = storing;
+    assign stbD_o = state == s3 && (loading || storing);
+    assign nextZ  = deref_rhs ? _data : _irhs;
+    assign datD_o = deref_rhs ? valZ  : _irhs;
+    assign adrD_o = deref_rhs ? _irhs : valZ;
+    assign selD_o = 4'hf, selI_o = 4'hf;
+    assign cycD_o = stbD_o;
+    assign stbI_o = state == s4;
+    assign cycI_o = stbI_o;
+    assign adrI_o = _adrI_o;
+    assign wenI_o = 1'b0;
+    assign halt   = errD_i | errI_i | rtyD_i | rtyI_i;
 
     wire upZ = !storing && state == s4;
     Reg regs(.clk, .nextP, .idxX, .idxY, .idxZ,
