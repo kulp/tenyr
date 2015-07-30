@@ -17,11 +17,13 @@ module Tenyr(
     parameter LOADFILE = "default.memh";
     parameter RAMABITS = 13;
 
-    wire d_rw, d_strobe;
+    wire d_rw, d_strobe, d_cycle;
+    wire i_rw, i_strobe, i_cycle;
+    wire[3:0] d_sel, i_sel;
     wire valid_clk, clk_vga, clk_core;
-    wire[31:0] i_addr, i_data;
-    wire[31:0] d_addr, d_to_slav;
-    wor [31:0] d_to_mast;
+    wire[31:0] i_addr;
+    wire[31:0] d_addr, d_to_slav, i_to_slav;
+    wor [31:0] d_to_mast, i_to_mast;
 
     wire _reset_n = ~reset;
 
@@ -33,17 +35,17 @@ module Tenyr(
     );
 
     Core core(
-        .clk    ( clk_core   ), .halt   ( halt       ), .reset_n ( _reset_n ),
-        .adrD_o ( d_addr     ), .adrI_o ( i_addr     ),
-        .datD_o ( d_to_slav  ), .datI_o ( /* TODO */ ),
-        .datD_i ( d_to_mast  ), .datI_i ( i_data     ),
-        .wenD_o ( d_rw       ), .wenI_o ( /* TODO */ ),
-        .selD_o ( /* TODO */ ), .selI_o ( /* TODO */ ),
-        .stbD_o ( d_strobe   ), .stbI_o ( /* TODO */ ),
-        .ackD_i ( d_strobe   ), .ackI_i ( /* TODO */ ),
-        .errD_i ( /* TODO */ ), .errI_i ( /* TODO */ ),
-        .rtyD_i ( /* TODO */ ), .rtyI_i ( /* TODO */ ),
-        .cycD_o ( /* TODO */ ), .cycI_o ( /* TODO */ )
+        .clk    ( clk_core   ), .halt   ( halt      ), .reset_n ( _reset_n ),
+        .adrD_o ( d_addr     ), .adrI_o ( i_addr    ),
+        .datD_o ( d_to_slav  ), .datI_o ( i_to_slav ),
+        .datD_i ( d_to_mast  ), .datI_i ( i_to_mast ),
+        .wenD_o ( d_rw       ), .wenI_o ( i_rw      ),
+        .selD_o ( d_sel      ), .selI_o ( i_sel     ),
+        .stbD_o ( d_strobe   ), .stbI_o ( i_strobe  ),
+        .ackD_i ( d_strobe   ), .ackI_i ( i_strobe  ),
+        .errD_i ( 1'b0       ), .errI_i ( 1'b0      ),
+        .rtyD_i ( 1'b0       ), .rtyI_i ( 1'b0      ),
+        .cycD_o ( d_cycle    ), .cycI_o ( i_cycle   )  // TODO hook up _cycle
     );
 
 // -----------------------------------------------------------------------------
@@ -52,12 +54,12 @@ module Tenyr(
     ramwrap #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .BASE_A(`RESETVECTOR)
     ) ram(
-        .clka  ( clk_core  ), .clkb  ( clk_core ),
-        .ena   ( d_strobe  ), .enb   ( 1'b1     ),
-        .wea   ( d_rw      ), .web   ( 1'b0     ),
-        .addra ( d_addr    ), .addrb ( i_addr   ),
-        .dina  ( d_to_slav ), .dinb  ( 32'b0    ),
-        .douta ( d_to_mast ), .doutb ( i_data   )
+        .clka  ( clk_core  ), .clkb  ( clk_core  ),
+        .ena   ( d_strobe  ), .enb   ( i_strobe  ),
+        .wea   ( d_rw      ), .web   ( i_rw      ),
+        .addra ( d_addr    ), .addrb ( i_addr    ),
+        .dina  ( d_to_slav ), .dinb  ( i_to_slav ),
+        .douta ( d_to_mast ), .doutb ( i_to_mast )
     );
 
 // -----------------------------------------------------------------------------
