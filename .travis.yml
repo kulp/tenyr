@@ -24,6 +24,7 @@ matrix:
         - PLATFORM=mingw BITS=64 HOST=x86_64
         - CXX=$HOST-w64-mingw32-g++
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+        - PKG_RULE=zip
       addons:
         <<: *def_addons
         apt:
@@ -39,6 +40,7 @@ matrix:
         - PLATFORM=mingw BITS=32 HOST=i686
         - CXX=$HOST-w64-mingw32-g++
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+        - PKG_RULE=zip
       addons:
         <<: *def_addons
         apt:
@@ -53,11 +55,13 @@ matrix:
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
         - CHECK_RULE=check GCOV=
+        - PKG_RULE=gzip
     - compiler: "gcc"
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
         # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
         - CHECK_RULE=coverage GCOV=1
+        - PKG_RULE=gzip
         - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
@@ -79,7 +83,7 @@ script:
   - make V=1 all
   - make $CHECK_RULE
   - make local-install
-  - make gzip zip
+  - make $PKG_RULE
 after_success:
   - |
     if [[ -n $GCOV ]] ; then
