@@ -19,9 +19,10 @@ all: tenyr
 .SUFFIXES: .v .c
 
 vpath %.v ../verilog ../verilog/sim .
+vpath %.v $(TOP)/3rdparty/wb_intercon/rtl/verilog
 vpath %.memh ../verilog
 
-VFLAGS += -I../verilog
+VFLAGS += -I../verilog -g2005-sv
 VFLAGS += -DSIM
 
 GEN_V += simserial.v
@@ -35,6 +36,7 @@ tenyr: simtop.v top.v                               \
        simserial.v ram.v simclocks.v                \
        seg7.v hex2segments.v                        \
        ramwrap.v                                    \
+       wb_mux.v                                     \
        #
 
 # don't complain about unused values that we might use in asserts
