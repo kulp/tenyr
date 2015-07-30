@@ -9,8 +9,6 @@
  */
 typedef unsigned int lfind_size_t;
 
-#include "os_base.h"
-
 #endif
 
 /* vi: set ts=4 sw=4 et: */
