@@ -1,6 +1,5 @@
 #include "common.th"
-#define COLS 80
-#define ROWS 40
+#include "vga.th"
 
 // -----------------------------------------------------------------------------
 .global init_display
@@ -22,10 +21,9 @@ init_display_loop:
 .global disable_cursor
 disable_cursor:
     pushall(g,h)
-    h <- 0x110
-    h <- h << 8
-    g <- [h - 1]
+    h <- @VGA_BASE
+    g <- [h + (0x1000 - 1)]
     g <- g & ~(1 << 6)  // unset cursor-enable bit
-    g -> [h - 1]
+    g -> [h + (0x1000 - 1)]
     popall_ret(g,h)
 

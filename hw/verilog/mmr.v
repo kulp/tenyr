@@ -1,7 +1,7 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module mmr(input clk, strobe, rw, reset_n, we, re, output reg[PBITS-1:0] d_out,
+module mmr(input clk, strobe, rw, re, we, output[PBITS-1:0] d_out,
            input[ABITS-1:0] addr, input[PBITS-1:0] d_in, inout[DBITS-1:0] val);
 
     parameter ADDR    = 0;
@@ -14,18 +14,15 @@ module mmr(input clk, strobe, rw, reset_n, we, re, output reg[PBITS-1:0] d_out,
 
     reg[DBITS - 1:0] store = DEFAULT;
 
-    assign val = re ? store : 32'bz;
+    wire active  = strobe && addr == ADDR;
+    assign val   = we              ? store : 32'bz; // high-Z for driving side
+    assign d_out = (active && !rw) ? store : 32'b0; // zero for addressed side
 
     always @(posedge clk)
-        if (strobe && addr == ADDR) begin
-            if (rw && WE)
-                store <= d_in[DBITS-1:0];
-            else if (!rw && RE)
-                d_out <= store;
-        end else begin
-            if (we)
-                store <= val;
-        end
+        if (active && rw && WE)
+            store <= d_in[DBITS-1:0];
+        else if (re && RE)
+            store <= val;
 
 endmodule
 

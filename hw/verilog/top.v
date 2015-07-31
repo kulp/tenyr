@@ -93,7 +93,7 @@ module Tenyr(
 
     wire v_wen, v_stb, v_cyc;
     wire[3:0] v_sel;
-    wire[31:0] v_adr, v_ddn, v_dup; // TODO use v_dup (reading from VGA)
+    wire[31:0] v_adr, v_ddn, v_dup;
     wire v_stbcyc = v_stb & v_cyc;
 
 `ifdef VGA
@@ -101,7 +101,7 @@ module Tenyr(
         .clk_core ( clk_core ), .rw     ( v_wen ), .vgaRed   ( vgaRed   ),
         .clk_vga  ( clk_vga  ), .addr   ( v_adr ), .vgaGreen ( vgaGreen ),
         .en       ( 1'b1     ), .d_in   ( v_ddn ), .vgaBlue  ( vgaBlue  ),
-        .reset_n  ( _reset_n ),                    .hsync    ( hsync    ),
+        .reset_n  ( _reset_n ), .d_out  ( v_dup ), .hsync    ( hsync    ),
         .strobe   ( v_stbcyc ),                    .vsync    ( vsync    )
     );
 `endif
