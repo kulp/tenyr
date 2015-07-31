@@ -45,7 +45,7 @@ module Tenyr(
         .ackD_i ( d_ack     ), .ackI_i ( i_ack     ),
         .errD_i ( 1'b0      ), .errI_i ( 1'b0      ),
         .rtyD_i ( 1'b0      ), .rtyI_i ( 1'b0      ),
-        .cycD_o ( d_cyc     ), .cycI_o ( i_cyc     )  // TODO hook up _cycle
+        .cycD_o ( d_cyc     ), .cycI_o ( i_cyc     )
     );
 
 // -----------------------------------------------------------------------------
