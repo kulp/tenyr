@@ -1,7 +1,6 @@
 verilog work "../verilog/hex2segments.v"
 verilog work "../verilog/mmr.v"
 verilog work "../verilog/ram.v"
-verilog work "../verilog/ramwrap.v"
 verilog work "../verilog/seg7.v"
 verilog work "../verilog/tenyr.v"
 verilog work "../verilog/top.v"

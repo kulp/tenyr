@@ -35,7 +35,6 @@ tenyr: VFLAGS += -DSERIAL
 tenyr: simtop.v top.v                               \
        simserial.v ram.v simclocks.v                \
        seg7.v hex2segments.v                        \
-       ramwrap.v                                    \
        wb_mux.v                                     \
        #
 
