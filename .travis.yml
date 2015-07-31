@@ -2,7 +2,6 @@ addons: &def_addons
   apt:
     packages:
       - lcov
-      - dc
   artifacts:
     paths:
       - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)

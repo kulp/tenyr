@@ -86,9 +86,9 @@ module Tenyr(
     wire g_stbcyc = g_stb & g_cyc;
 
     Seg7 seg7(
-        .clk     ( clk_core ), .rw   ( g_wen ), .seg ( seg ),
-        .reset_n ( _reset_n ), .addr ( g_adr ), .an  ( an  ),
-        .strobe  ( g_stbcyc ), .d_in ( g_ddn )
+        .clk     ( clk_core ), .rw   ( g_wen ), .seg   ( seg   ),
+        .reset_n ( _reset_n ), .addr ( g_adr ), .an    ( an    ),
+        .strobe  ( g_stbcyc ), .d_in ( g_ddn ), .d_out ( g_dup )
     );
 
     wire v_wen, v_stb, v_cyc;

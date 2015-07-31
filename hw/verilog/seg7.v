@@ -2,9 +2,8 @@
 `timescale 1ns/10ps
 
 // basic 7-segment driver
-// TODO permit reads
-module Seg7(input clk, strobe, rw, reset_n, input[31:0] addr, data,
-            output[7:0] seg, output[DIGITS-1:0] an);
+module Seg7(input clk, strobe, rw, reset_n, input[31:0] addr, d_in,
+            output reg[31:0] d_out, output[7:0] seg, output[DIGITS-1:0] an);
 
     parameter       CNT_BITS = 16 + 2; // 80MHz clk => 2ms full screen refresh
     localparam      DIGITS   = 4;
@@ -25,13 +24,22 @@ module Seg7(input clk, strobe, rw, reset_n, input[31:0] addr, data,
             dots    <= 0;
         end else begin
             counter <= counter + 1;
-            if (strobe && rw) begin
-                case (addr[0])
-                    1'b0: store <= data;
-                    1'b1: dots  <= data;
-                endcase
+            if (strobe) begin
+                if (rw) begin
+                    case (addr[0])
+                        1'b0: store <= d_in;
+                        1'b1: dots  <= d_in;
+                    endcase
+                end
             end
         end
+    end
+
+    always @* begin
+        case (addr[0])
+            1'b0: d_out <= store;
+            1'b1: d_out <= dots;
+        endcase
     end
 
 endmodule
