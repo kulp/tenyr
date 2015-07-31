@@ -44,16 +44,15 @@ module VGAwrap(
         .ocrx     ( crx       ), .ocry   ( cry         )
     );
 
-    ramwrap #(
-        .BASE_B(VIDEO_ADDR), .SIZE(ROWS * COLS),
-        .ABITS(12), .DBITS(8), .INIT(1), .ZERO('h20)
+    BlockRAM #(
+        .SIZE(ROWS * COLS), .ABITS(12), .DBITS(8), .INIT(1), .ZERO('h20)
     ) text(
-        .clka  ( clk_vga ), .clkb  ( clk_core ),
-        .ena   ( 1'b1    ), .enb   ( 1'b1     ),
-        .addra ( ram_adA ), .addrb ( addr     ),
-        .dina  ( 8'bx    ), .dinb  ( d_in     ),
+        .clka  ( clk_vga ), .clkb  ( clk_core   ),
+        .ena   ( 1'b1    ), .enb   ( strobe     ),
+        .addra ( ram_adA ), .addrb ( addr[11:0] ),
+        .dina  ( 8'bx    ), .dinb  ( d_in       ),
         .douta ( ram_doA ), //.doutb ( d_out    ),
-        .wea   ( 1'b0    ), .web   ( rw       )
+        .wea   ( 1'b0    ), .web   ( rw         )
     );
 
     BlockRAM #(.LOAD(1), .LOADFILE("lat0-12.memh"),

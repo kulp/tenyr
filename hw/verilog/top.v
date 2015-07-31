@@ -6,7 +6,6 @@
   `define VGA
 `endif
 `endif
-`define SEG7
 
 module Tenyr(
     input clk, reset, inout wor halt,
@@ -69,11 +68,11 @@ module Tenyr(
 // -----------------------------------------------------------------------------
 // DEVICES ---------------------------------------------------------------------
 
-`ifdef SERIAL
     wire s_wen, s_stb, s_cyc;
     wire[3:0] s_sel;
     wire[31:0] s_adr, s_ddn, s_dup;
 
+`ifdef SERIAL
     // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
         .clk ( clk   ), .reset_n ( _reset_n ), .enable ( s_stb ),
@@ -81,41 +80,49 @@ module Tenyr(
     );
 `endif
 
-`ifdef SEG7
-    Seg7 #(.BASE(12'h100)) seg7(
-        .clk     ( clk_core ), .rw   ( d_wen     ), .seg ( seg ),
-        .reset_n ( _reset_n ), .addr ( d_adr     ), .an  ( an  ),
-        .strobe  ( d_stb    ), .data ( d_to_slav )
+    wire g_wen, g_stb, g_cyc;
+    wire[3:0] g_sel;
+    wire[31:0] g_adr, g_ddn, g_dup;
+    wire g_stbcyc = g_stb & g_cyc;
+
+    Seg7 seg7(
+        .clk     ( clk_core ), .rw   ( g_wen ), .seg ( seg ),
+        .reset_n ( _reset_n ), .addr ( g_adr ), .an  ( an  ),
+        .strobe  ( g_stbcyc ), .d_in ( g_ddn )
     );
-`endif
+
+    wire v_wen, v_stb, v_cyc;
+    wire[3:0] v_sel;
+    wire[31:0] v_adr, v_ddn, v_dup; // TODO use v_dup (reading from VGA)
+    wire v_stbcyc = v_stb & v_cyc;
 
 `ifdef VGA
     VGAwrap vga(
-        .clk_core ( clk_core ), .rw     ( d_wen     ), .vgaRed   ( vgaRed   ),
-        .clk_vga  ( clk_vga  ), .addr   ( d_adr     ), .vgaGreen ( vgaGreen ),
-        .en       ( 1'b1     ), .d_in   ( d_to_slav ), .vgaBlue  ( vgaBlue  ),
-        .reset_n  ( _reset_n ), .strobe ( d_stb     ), .hsync    ( hsync    ),
-                                                       .vsync    ( vsync    )
+        .clk_core ( clk_core ), .rw     ( v_wen ), .vgaRed   ( vgaRed   ),
+        .clk_vga  ( clk_vga  ), .addr   ( v_adr ), .vgaGreen ( vgaGreen ),
+        .en       ( 1'b1     ), .d_in   ( v_ddn ), .vgaBlue  ( vgaBlue  ),
+        .reset_n  ( _reset_n ),                    .hsync    ( hsync    ),
+        .strobe   ( v_stbcyc ),                    .vsync    ( vsync    )
     );
 `endif
 
     wb_mux #(
-        .NUM_SLAVES(2),
-        .MATCH_ADDR( { `RESETVECTOR, 32'h00000020 } ),
-        .MATCH_MASK( { 32'hffffd000, 32'hfffffffe } )
+        .NUM_SLAVES(4),
+        .MATCH_ADDR( { 32'h00000100, `VIDEO_ADDR , 32'h00000020, `RESETVECTOR } ),
+        .MATCH_MASK( { 32'hfffffffe, 32'hffff0000, 32'hfffffffe, 32'hffffd000 } )
     ) mux (
         .wb_clk_i  ( clk_core   ),
         .wb_rst_i  ( _reset_n   ),
-        .wbm_adr_i ( d_adr      ), .wbs_adr_o ( { r_adr, s_adr } ),
-        .wbm_dat_i ( d_to_slav  ), .wbs_dat_i ( { r_dup, s_dup } ),
-        .wbm_dat_o ( d_to_mast  ), .wbs_dat_o ( { r_ddn, s_ddn } ),
-        .wbm_we_i  ( d_wen      ), .wbs_we_o  ( { r_wen, s_wen } ),
-        .wbm_sel_i ( d_sel      ), .wbs_sel_o ( { r_sel, s_sel } ),
-        .wbm_stb_i ( d_stb      ), .wbs_stb_o ( { r_stb, s_stb } ),
-        .wbm_ack_o ( d_ack      ), .wbs_ack_i ( { r_stb, s_stb } ),
-        .wbm_err_o ( /* TODO */ ), .wbs_err_i ( { 1'b0 , 1'b0  } ),
-        .wbm_rty_o ( /* TODO */ ), .wbs_rty_i ( { 1'b0 , 1'b0  } ),
-        .wbm_cyc_i ( d_cyc      ), .wbs_cyc_o ( { r_cyc, s_cyc } ),
+        .wbm_adr_i ( d_adr      ), .wbs_adr_o ( { g_adr, v_adr, s_adr, r_adr } ),
+        .wbm_dat_i ( d_to_slav  ), .wbs_dat_i ( { g_dup, v_dup, s_dup, r_dup } ),
+        .wbm_dat_o ( d_to_mast  ), .wbs_dat_o ( { g_ddn, v_ddn, s_ddn, r_ddn } ),
+        .wbm_we_i  ( d_wen      ), .wbs_we_o  ( { g_wen, v_wen, s_wen, r_wen } ),
+        .wbm_sel_i ( d_sel      ), .wbs_sel_o ( { g_sel, v_sel, s_sel, r_sel } ),
+        .wbm_stb_i ( d_stb      ), .wbs_stb_o ( { g_stb, v_stb, s_stb, r_stb } ),
+        .wbm_ack_o ( d_ack      ), .wbs_ack_i ( { g_stb, v_stb, s_stb, r_stb } ),
+        .wbm_err_o ( /* TODO */ ), .wbs_err_i ( { 1'b0 , 1'b0 , 1'b0 , 1'b0  } ),
+        .wbm_rty_o ( /* TODO */ ), .wbs_rty_i ( { 1'b0 , 1'b0 , 1'b0 , 1'b0  } ),
+        .wbm_cyc_i ( d_cyc      ), .wbs_cyc_o ( { g_cyc, v_cyc, s_cyc, r_cyc } ),
         .wbm_cti_i ( 3'bz       ),
         .wbm_bte_i ( 2'bz       )
     );
