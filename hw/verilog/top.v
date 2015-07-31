@@ -115,8 +115,8 @@ module Tenyr(
         .wb_clk_i  ( clk_core   ),
         .wb_rst_i  ( _reset_n   ), //            7-seg  VGA    serial mem
         .wbm_adr_i ( d_adr      ), .wbs_adr_o ({ g_adr, v_adr, s_adr, r_adr }),
-        .wbm_dat_i ( d_to_slav  ), .wbs_dat_i ({ g_dup, v_dup, s_dup, r_dup }),
-        .wbm_dat_o ( d_to_mast  ), .wbs_dat_o ({ g_ddn, v_ddn, s_ddn, r_ddn }),
+        .wbm_dat_i ( d_to_slav  ), .wbs_dat_o ({ g_ddn, v_ddn, s_ddn, r_ddn }),
+        .wbm_dat_o ( d_to_mast  ), .wbs_dat_i ({ g_dup, v_dup, s_dup, r_dup }),
         .wbm_we_i  ( d_wen      ), .wbs_we_o  ({ g_wen, v_wen, s_wen, r_wen }),
         .wbm_sel_i ( d_sel      ), .wbs_sel_o ({ g_sel, v_sel, s_sel, r_sel }),
         .wbm_stb_i ( d_stb      ), .wbs_stb_o ({ g_stb, v_stb, s_stb, r_stb }),
