@@ -75,7 +75,7 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
 endmodule
 
 module Core(
-    input clk, reset_n,
+    input clk, reset,
     /* channel : data    insn    */
     output[31:0] adrD_o, adrI_o, // address
     input [31:0] datD_i, datI_i, // data in
@@ -101,7 +101,7 @@ module Core(
     reg[3:0] state = s5;
 
     always @(posedge clk)
-        if (!reset_n) begin
+        if (reset) begin
             state   <= s5;
             _adrI_o <= `RESETVECTOR;
         end else case (state)

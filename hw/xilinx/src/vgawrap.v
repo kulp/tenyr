@@ -2,7 +2,7 @@
 `timescale 1ns/10ps
 
 module VGAwrap(
-    input clk_core, clk_vga, en, rw, reset_n,
+    input clk_core, clk_vga, en, rw, reset,
     input strobe, input[31:0] addr, input[31:0] d_in, output wor[31:0] d_out,
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
@@ -36,7 +36,7 @@ module VGAwrap(
     ); // cry is 0-based ?
 
     vga80x40 vga(
-        .clk25MHz ( clk_vga   ), .reset  ( ~reset_n    ), .octl ( vga_ctl    ),
+        .clk25MHz ( clk_vga   ), .reset  ( reset       ), .octl ( vga_ctl    ),
         .R        ( vgaRed[2] ), .G      ( vgaGreen[2] ), .B    ( vgaBlue[2] ),
         .hsync    ( hsync     ), .vsync  ( vsync       ),
         .TEXT_A   ( ram_adA   ), .TEXT_D ( ram_doA     ),

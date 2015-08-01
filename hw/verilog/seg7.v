@@ -2,7 +2,7 @@
 `timescale 1ns/10ps
 
 // basic 7-segment driver
-module Seg7(input clk, strobe, rw, reset_n, input[31:0] addr, d_in,
+module Seg7(input clk, strobe, rw, reset, input[31:0] addr, d_in,
             output reg[31:0] d_out, output[7:0] seg, output[DIGITS-1:0] an);
 
     parameter       CNT_BITS = 16 + 2; // 80MHz clk => 2ms full screen refresh
@@ -18,7 +18,7 @@ module Seg7(input clk, strobe, rw, reset_n, input[31:0] addr, d_in,
     Hex2Segments lookup(clk, store[dig * 4 +: 4], seg[6:0]);
 
     always @(posedge clk) begin
-        if (!reset_n) begin
+        if (reset) begin
             counter <= 0;
             store   <= 0;
             dots    <= 0;

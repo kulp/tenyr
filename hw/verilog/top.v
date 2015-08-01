@@ -18,8 +18,6 @@ module Tenyr(
     wire[31:0] d_adr, d_to_slav, i_to_slav;
     wor [31:0] d_to_mast, i_to_mast;
 
-    wire _reset_n = ~reset;
-
     assign Led[7:0] = halt;
 
     tenyr_mainclock clocks(
@@ -28,7 +26,7 @@ module Tenyr(
     );
 
     Core core(
-        .clk    ( clk_core  ), .halt   ( halt      ), .reset_n ( _reset_n ),
+        .clk    ( clk_core  ), .halt   ( halt      ), .reset ( reset ),
         .adrD_o ( d_adr     ), .adrI_o ( i_adr     ),
         .datD_o ( d_to_slav ), .datI_o ( i_to_slav ),
         .datD_i ( d_to_mast ), .datI_i ( i_to_mast ),
@@ -69,8 +67,8 @@ module Tenyr(
 `ifdef SERIAL
     // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
-        .clk ( clk   ), .reset_n ( _reset_n ), .enable ( s_stb ),
-        .rw  ( s_wen ), .addr    ( s_adr    ), .data   ( s_ddn )
+        .clk ( clk   ), .reset ( reset ), .enable ( s_stb ),
+        .rw  ( s_wen ), .addr  ( s_adr ), .data   ( s_ddn )
     );
 `endif
 
@@ -80,9 +78,9 @@ module Tenyr(
     wire g_stbcyc = g_stb & g_cyc;
 
     Seg7 seg7(
-        .clk     ( clk_core ), .rw   ( g_wen ), .seg   ( seg   ),
-        .reset_n ( _reset_n ), .addr ( g_adr ), .an    ( an    ),
-        .strobe  ( g_stbcyc ), .d_in ( g_ddn ), .d_out ( g_dup )
+        .clk    ( clk_core ), .rw   ( g_wen ), .seg   ( seg   ),
+        .reset  ( reset    ), .addr ( g_adr ), .an    ( an    ),
+        .strobe ( g_stbcyc ), .d_in ( g_ddn ), .d_out ( g_dup )
     );
 
     wire v_wen, v_stb, v_cyc;
@@ -95,7 +93,7 @@ module Tenyr(
         .clk_core ( clk_core ), .rw     ( v_wen ), .vgaRed   ( vgaRed   ),
         .clk_vga  ( clk_vga  ), .addr   ( v_adr ), .vgaGreen ( vgaGreen ),
         .en       ( 1'b1     ), .d_in   ( v_ddn ), .vgaBlue  ( vgaBlue  ),
-        .reset_n  ( _reset_n ), .d_out  ( v_dup ), .hsync    ( hsync    ),
+        .reset    ( reset    ), .d_out  ( v_dup ), .hsync    ( hsync    ),
         .strobe   ( v_stbcyc ),                    .vsync    ( vsync    )
     );
 `endif
@@ -107,7 +105,7 @@ module Tenyr(
         .MATCH_MASK({ 32'hfffffffe, 32'hffff0000, 32'hfffffffe, 32'hffffd000 })
     ) mux (
         .wb_clk_i  ( clk_core   ),
-        .wb_rst_i  ( _reset_n   ), //            7-seg  VGA    serial mem
+        .wb_rst_i  ( reset      ), //            7-seg  VGA    serial mem
         .wbm_adr_i ( d_adr      ), .wbs_adr_o ({ g_adr, v_adr, s_adr, r_adr }),
         .wbm_dat_i ( d_to_slav  ), .wbs_dat_o ({ g_ddn, v_ddn, s_ddn, r_ddn }),
         .wbm_dat_o ( d_to_mast  ), .wbs_dat_i ({ g_dup, v_dup, s_dup, r_dup }),

@@ -2,7 +2,7 @@
 `timescale 1ns/10ps
 
 module SimWrap_`STEM(
-    input clk, input enable, input rw, input reset_n,
+    input clk, input enable, input rw, input reset,
     input[31:0] addr, inout[31:0] data
 );
     parameter BASE = 0;
