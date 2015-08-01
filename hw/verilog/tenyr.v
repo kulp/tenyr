@@ -96,22 +96,26 @@ module Core(
     wire[3:0] idxX, idxY, idxZ, op;
     wire signed[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
     wire[1:0] kind;
-    reg[31:0] insn, _data, _adrI_o;
+    reg[31:0] insn, _data, _adrI;
     reg signed[31:0] _irhs, nextP;
     reg[3:0] state = s5;
 
+    wire[31:0] nextI = branching ? nextZ : nextP;
+    wire acked = ackD_i | !memory;
+    wire memory = loading | storing;
+
     always @(posedge clk)
         if (reset) begin
-            state   <= s5;
-            _adrI_o <= `RESETVECTOR;
+            state <= s5;
+            _adrI <= `RESETVECTOR;
         end else case (state)
-            s0: begin state <= halt  ? s0 : s1;                             end
-            s1: begin state <= edone ? s2 : s1; _irhs <= rhs;               end
-            s2: begin state <= s3; /* compensate for slow memory */         end
-            s3: begin state <= s4; _data   <= datD_i;                       end
-            s4: begin state <= s5; _adrI_o <= branching ? nextZ : nextP;    end
-            s5: begin state <= s6; nextP   <= adrI_o + 1;                   end
-            s6: begin state <= s0; insn    <= datI_i; /* why extra ? */     end
+            s0: begin state <= halt   ? s0 : s1;                     end
+            s1: begin state <= edone  ? s2 : s1; _irhs <= rhs;       end
+            s2: begin state <=          s3     ;                     end
+            s3: begin state <= acked  ? s4 : s3; _data <= datD_i;    end
+            s4: begin state <=          s5     ; _adrI <= nextI;     end
+            s5: begin state <= ackI_i ? s6 : s5; nextP <= _adrI + 1; end
+            s6: begin state <=          s0     ; insn  <= datI_i;    end
         endcase
 
     Decode decode(.insn, .op, .idxZ, .idxX, .idxY, .valI, .deref_rhs,
@@ -123,7 +127,7 @@ module Core(
               .op,  .valA, .valB, .valC, .valZ ( rhs   ));
 
     assign wenD_o = storing;
-    assign stbD_o = state == s3 && (loading || storing);
+    assign stbD_o = state == s3 && memory;
     assign nextZ  = deref_rhs ? _data : _irhs;
     assign datD_o = deref_rhs ? valZ  : _irhs;
     assign adrD_o = deref_rhs ? _irhs : valZ;
@@ -131,7 +135,7 @@ module Core(
     assign cycD_o = stbD_o;
     assign stbI_o = state == s5;
     assign cycI_o = stbI_o;
-    assign adrI_o = _adrI_o;
+    assign adrI_o = _adrI;
     assign wenI_o = 1'b0;
     assign halt   = errD_i | errI_i | rtyD_i | rtyI_i;
 
