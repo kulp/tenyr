@@ -1,12 +1,6 @@
 `include "common.vh"
 `timescale 1ms/10us
 
-`ifndef SIM
-`ifndef __QUARTUS__
-  `define VGA
-`endif
-`endif
-
 module Tenyr(
     input clk, reset, inout wor halt,
     output[7:0] Led, output[7:0] seg, output[3:0] an,
