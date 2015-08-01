@@ -129,7 +129,7 @@ module Core(
     assign adrD_o = deref_rhs ? _irhs : valZ;
     assign selD_o = 4'hf, selI_o = 4'hf;
     assign cycD_o = stbD_o;
-    assign stbI_o = state == s4;
+    assign stbI_o = state == s5;
     assign cycI_o = stbI_o;
     assign adrI_o = _adrI_o;
     assign wenI_o = 1'b0;

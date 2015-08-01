@@ -19,6 +19,7 @@ module Tenyr(
     wor [31:0] d_to_mast, i_to_mast;
 
     assign Led[7:0] = halt;
+    assign i_ack = i_stb;
 
     tenyr_mainclock clocks(
         .clk_in ( clk   ), .clk_core ( clk_core ),
