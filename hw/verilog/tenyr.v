@@ -111,7 +111,7 @@ module Core(
         end else case (state)
             s0: begin state <= halt   ? s0 : s1;                     end
             s1: begin state <= edone  ? s2 : s1; _irhs <= rhs;       end
-            s2: begin state <=          s3     ;                     end
+            s2: begin state <= memory ? s3 : s4;                     end
             s3: begin state <= acked  ? s4 : s3; _data <= datD_i;    end
             s4: begin state <=          s5     ; _adrI <= nextI;     end
             s5: begin state <= ackI_i ? s6 : s5; nextP <= _adrI + 1; end
