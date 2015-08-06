@@ -12,5 +12,5 @@
 	url = https://github.com/kulp/asmjit.git
 [submodule "3rdparty/wb_intercon"]
 	path = 3rdparty/wb_intercon
-	url = git@github.com:kulp/wb_intercon.git
+	url = https://github.com/kulp/wb_intercon.git
 	branch = tenyr
