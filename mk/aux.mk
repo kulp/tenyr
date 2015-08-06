@@ -235,6 +235,7 @@ check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/ic
 check_sim_demo: export run=$(runwrap) $(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
 SDL_RUNS = led bm_mults
+vpath %.tas $(TOP)/test/run/sdl
 ifneq ($(SDL),0)
 export SDL_VIDEODRIVER=dummy
 # For now we need a special rule to make examples inside their directory to
@@ -242,7 +243,9 @@ export SDL_VIDEODRIVER=dummy
 $(TOP)/ex/%.texe:
 	$(MAKE) -C $(@D) $(@F)
 
-vpath %.texe $(TOP)/test/run/sdl
+$(TOP)/test/run/sdl/%.texe:
+	$(MAKE) -C $(@D) $(@F)
+
 $(SDL_RUNS:%=test_run_%): tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
 check_sim_run: RUNS += $(SDL_RUNS)
 endif
@@ -251,6 +254,7 @@ check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
 check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
 check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 
+PERIODS.mk: PERIODS_led.mk
 check_hw_icarus_run: test_run_led
 
 # TODO make op tests take a fixed or predictable maximum amount of time

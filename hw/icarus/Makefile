@@ -49,6 +49,7 @@ asm.o: CFLAGS += -Wno-unused-parameter
 vpath %.tas ../verilog
 # TODO ensure .texe get rebuilt correctly from here as needed
 vpath %.texe $(TOP)/ex $(TOP)/test/run/sdl
+vpath %.tas $(TOP)/ex $(TOP)/test/run/sdl
 
 LOGFILE = Top.vcd
 run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAULT)) \
