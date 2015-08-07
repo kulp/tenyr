@@ -19,6 +19,7 @@ env:
 matrix:
   include:
     - compiler: x86_64-w64-mingw32-gcc
+      os: linux
       env:
         - PLATFORM=mingw BITS=64 HOST=x86_64
         - CXX=$HOST-w64-mingw32-g++
@@ -35,6 +36,7 @@ matrix:
             - binutils-mingw-w64-x86-64
             - wine
     - compiler: i686-w64-mingw32-gcc
+      os: linux
       env:
         - PLATFORM=mingw BITS=32 HOST=i686
         - CXX=$HOST-w64-mingw32-g++
@@ -51,11 +53,25 @@ matrix:
             - binutils-mingw-w64-i686
             - wine
     - compiler: "clang"
+      os: osx
+      env:
+        - PLATFORM=osx   BITS=64 HOST=x86_64
+        - CHECK_RULE=check_sw GCOV=
+        - PKG_RULE=gzip
+    - compiler: "gcc"
+      os: osx
+      env:
+        - PLATFORM=osx   BITS=64 HOST=x86_64
+        - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
+        - PKG_RULE=gzip
+    - compiler: "clang"
+      os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
         - CHECK_RULE=check GCOV=
         - PKG_RULE=gzip
     - compiler: "gcc"
+      os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
         # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
@@ -65,9 +81,6 @@ matrix:
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
         - COVERITY_SCAN_BUILD_COMMAND="make V=1 all vpi"
-os:
-  - linux
-  - osx
 sudo: false
 install:
   - gem install coveralls-lcov
@@ -75,6 +88,7 @@ before_script:
   - mkdir -p $DEPSSRC
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/libsdl2_2.0.3%2Bimage_2.0.0%2Bdev-precise-binaries.tar.gz' | tar -C $DEPSSRC -zx ; fi
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx ; fi
+  - if [[ $TRAVIS_OS_NAME = osx ]] ; then brew install bison ; BISONS=(/usr/local/Cellar/bison/*/bin/bison) ; export BISON="${BISONS[${#BISONS[@]}-1]}" ; fi
   # implement Coverity Scan with before_script instead of addons.coverity_scan
   # to work around too-early quota check by the coverity_scan addon
   - if [[ -n $COVERITY_SCAN_PROJECT_NAME ]] ; then curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true ; fi

@@ -84,8 +84,8 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
 GIT = git --git-dir=$(TOP)/.git
 CC  := $(CROSS_COMPILE)$(CC)
 CXX := $(CROSS_COMPILE)$(CXX)
-FLEX  = flex
-BISON = bison -Werror
+FLEX  ?= flex
+BISON ?= bison -Werror
 
 cc_flag_supp = $(shell $(CC) $1 -c -x c /dev/null 2>/dev/null >/dev/null && echo $1)
 
