@@ -65,7 +65,7 @@ for flags in -v "" ; do
         for file in $* ; do
             trap "rm $base.$fmt.{en,de}.[0123]" EXIT
             if [[ $file = *.cpp ]] ; then
-                pp="cpp -I$here/../lib"
+                pp="$CC -E -I$here/../lib"
             else
                 pp=cat
             fi
