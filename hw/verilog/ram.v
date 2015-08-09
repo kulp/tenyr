@@ -2,7 +2,7 @@
 `timescale 1ns/10ps
 
 module BlockRAM(
-    input clka, ena, wea, clkb, enb, web,
+    input clka, ena, wea, clkb, enb, web, output reg acka, ackb,
     input[PBITS-1:0] addra, input[DBITS-1:0] dina, output reg[DBITS-1:0] douta,
     input[PBITS-1:0] addrb, input[DBITS-1:0] dinb, output reg[DBITS-1:0] doutb
 );
@@ -31,12 +31,14 @@ module BlockRAM(
         if (wea && ena)
             store[addra - OFFSET] <= dina;
         douta <= store[addra - OFFSET];
+        acka <= ena;
     end
 
     always @(posedge clkb) begin
         if (web && enb)
             store[addrb - OFFSET] <= dinb;
         doutb <= store[addrb - OFFSET];
+        ackb <= enb;
     end
 
 endmodule

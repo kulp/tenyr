@@ -27,35 +27,38 @@ module Tenyr(
     );
 
     Core core(
-        .clk    ( clk_core  ), .halt   ( halt      ), .reset ( reset ),
-        .adrD_o ( d_adr     ), .adrI_o ( i_adr     ),
-        .datD_o ( d_to_slav ), .datI_o ( i_to_slav ),
-        .datD_i ( d_to_mast ), .datI_i ( i_to_mast ),
-        .wenD_o ( d_wen     ), .wenI_o ( i_wen     ),
-        .selD_o ( d_sel     ), .selI_o ( i_sel     ),
-        .stbD_o ( d_stb     ), .stbI_o ( i_stb     ),
-        .ackD_i ( d_ack     ), .ackI_i ( i_ack     ),
-        .errD_i ( 1'b0      ), .errI_i ( 1'b0      ),
-        .rtyD_i ( 1'b0      ), .rtyI_i ( 1'b0      ),
-        .cycD_o ( d_cyc     ), .cycI_o ( i_cyc     )
+        .clk   ( clk_core  ),
+        .halt  ( halt      ),
+        .reset ( reset     ),
+        .adr_o ( d_adr     ),
+        .dat_o ( d_to_slav ),
+        .dat_i ( d_to_mast ),
+        .wen_o ( d_wen     ),
+        .sel_o ( d_sel     ),
+        .stb_o ( d_stb     ),
+        .ack_i ( d_ack     ),
+        .err_i ( 1'b0      ),
+        .rty_i ( 1'b0      ),
+        .cyc_o ( d_cyc     )
     );
 
 // -----------------------------------------------------------------------------
 // MEMORY ----------------------------------------------------------------------
 
-    wire r_wen, r_stb, r_cyc;
+    wire r_wen, r_stb, r_cyc, r_ack;
     wire[3:0] r_sel;
     wire[31:0] r_adr, r_ddn, r_dup;
 
     BlockRAM #(.LOAD(1), .LOADFILE(LOADFILE), .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .OFFSET(`RESETVECTOR)
     ) ram(
-        .clka  ( clk_core ), .clkb  ( clk_core  ),
-        .ena   ( r_stb    ), .enb   ( i_stb     ),
-        .wea   ( r_wen    ), .web   ( i_wen     ),
-        .addra ( r_adr    ), .addrb ( i_adr     ),
-        .dina  ( r_ddn    ), .dinb  ( i_to_slav ),
-        .douta ( r_dup    ), .doutb ( i_to_mast )
+        .clka  ( clk_core ),
+        .ena   ( r_stb    ),
+        .acka  ( r_ack    ),
+        .wea   ( r_wen    ),
+        .addra ( r_adr    ),
+        .dina  ( r_ddn    ),
+        .douta ( r_dup    )
     );
 
 // -----------------------------------------------------------------------------
@@ -132,7 +135,7 @@ module Tenyr(
         .wbs_we_o  ({ g_wen, v_wen, s_wen, r_wen, x_wen }),
         .wbs_sel_o ({ g_sel, v_sel, s_sel, r_sel, x_sel }),
         .wbs_stb_o ({ g_stb, v_stb, s_stb, r_stb, x_stb }),
-        .wbs_ack_i ({ g_stb, v_stb, s_stb, r_stb, x_stb }),
+        .wbs_ack_i ({ g_stb, v_stb, s_stb, r_ack, x_stb }),
         .wbs_err_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
         .wbs_rty_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
         .wbs_cyc_o ({ g_cyc, v_cyc, s_cyc, r_cyc, x_cyc }),

@@ -55,7 +55,7 @@ module Top();
 
     always #`CLOCKPERIOD begin
         clk_count = clk_count + 1;
-        if (tenyr.core.state == tenyr.core.s6) begin
+        if (tenyr.core.state == tenyr.core.s3) begin
             insn_count = insn_count + 1;
         end
     end

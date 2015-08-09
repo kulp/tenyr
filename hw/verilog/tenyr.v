@@ -76,17 +76,16 @@ endmodule
 
 module Core(
     input clk, reset,
-    /* channel : data    insn    */
-    output[31:0] adrD_o, adrI_o, // address
-    input [31:0] datD_i, datI_i, // data in
-    output[31:0] datD_o, datI_o, // data out
-    output       wenD_o, wenI_o, // write enable
-    output[ 3:0] selD_o, selI_o, // select
-    output       stbD_o, stbI_o, // strobe
-    input        ackD_i, ackI_i, // acknowledge
-    input        errD_i, errI_i, // error
-    input        rtyD_i, rtyI_i, // retry
-    output       cycD_o, cycI_o, // cycle
+    output reg[31:0] adr_o, // address
+    input     [31:0] dat_i, // data in
+    output    [31:0] dat_o, // data out
+    output           wen_o, // write enable
+    output    [ 3:0] sel_o, // select
+    output           stb_o, // strobe
+    input            ack_i, // acknowledge
+    input            err_i, // error
+    input            rty_i, // retry
+    output           cyc_o, // cycle
     inout wor halt
 );
 
@@ -94,28 +93,40 @@ module Core(
 
     wire deref_rhs, branching, storing, loading, edone;
     wire[3:0] idxX, idxY, idxZ, op;
-    wire signed[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs, nextZ;
+    wire signed[31:0] valX, valY, valZ, valI, valA, valB, valC, rhs;
     wire[1:0] kind;
-    reg[31:0] insn, _data, _adrI;
+    reg[31:0] insn, _data;
     reg signed[31:0] _irhs, nextP;
     reg[3:0] state = s5;
 
-    wire[31:0] nextI = branching ? nextZ : nextP;
-    wire acked = ackD_i | !memory;
-    wire memory = loading | storing;
+    wire signed[31:0] nextI = branching ? nextZ : nextP;
+    wire signed[31:0] nextZ = deref_rhs ? _data : _irhs;
+    wire       [31:0] _datD = deref_rhs ? valZ  : _irhs;
+    wire       [31:0] _adrD = deref_rhs ? _irhs : valZ;
+
+    wire   memory = loading | storing;
+    wire   i_strb = state == s5;
+    wire   d_strb = state == s3 &&  memory;
+    wire   upZ    = state == s4 && !storing;
+    assign sel_o  = 4'hf;
+    assign stb_o  = d_strb | i_strb;
+    assign wen_o  = d_strb & storing;
+    assign dat_o  = _datD;
+    assign cyc_o  = stb_o;
+    assign halt   = err_i | rty_i;
 
     always @(posedge clk)
         if (reset) begin
             state <= s5;
-            _adrI <= `RESETVECTOR;
+            adr_o <= `RESETVECTOR;
         end else case (state)
-            s0: begin state <= halt   ? s0 : s1;                     end
-            s1: begin state <= edone  ? s2 : s1; _irhs <= rhs;       end
-            s2: begin state <= memory ? s3 : s4;                     end
-            s3: begin state <= acked  ? s4 : s3; _data <= datD_i;    end
-            s4: begin state <=          s5     ; _adrI <= nextI;     end
-            s5: begin state <= ackI_i ? s6 : s5; nextP <= _adrI + 1; end
-            s6: begin state <=          s0     ; insn  <= datI_i;    end
+            s0: begin state <= !halt  ? s1 : s0;                        end
+            s1: begin state <= edone  ? s2 : s1; _irhs <= rhs;          end
+            s2: begin state <= memory ? s3 : s4; adr_o <= _adrD;        end
+            s3: begin state <= ack_i  ? s4 : s3; _data <= dat_i;        end
+            s4: begin state <=          s5     ; adr_o <= nextI;        end
+            s5: begin state <= ack_i  ? s6 : s5; nextP <= adr_o + 1;    end
+            s6: begin state <=          s0     ; insn  <= dat_i;        end
         endcase
 
     Decode decode(.insn, .op, .idxZ, .idxX, .idxY, .valI, .deref_rhs,
@@ -126,20 +137,6 @@ module Core(
     Exec exec(.clk, .en ( state == s0 ), .done ( edone ),
               .op,  .valA, .valB, .valC, .valZ ( rhs   ));
 
-    assign wenD_o = storing;
-    assign stbD_o = state == s3 && memory;
-    assign nextZ  = deref_rhs ? _data : _irhs;
-    assign datD_o = deref_rhs ? valZ  : _irhs;
-    assign adrD_o = deref_rhs ? _irhs : valZ;
-    assign selD_o = 4'hf, selI_o = 4'hf;
-    assign cycD_o = stbD_o;
-    assign stbI_o = state == s5;
-    assign cycI_o = stbI_o;
-    assign adrI_o = _adrI;
-    assign wenI_o = 1'b0;
-    assign halt   = errD_i | errI_i | rtyD_i | rtyI_i;
-
-    wire upZ = !storing && state == s4;
     Reg regs(.clk, .nextP, .idxX, .idxY, .idxZ,
              .upZ, .nextZ, .valX, .valY, .valZ);
 

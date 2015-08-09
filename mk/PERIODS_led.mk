@@ -1,1 +1,1 @@
-PERIODS_led=110
+PERIODS_led=130
