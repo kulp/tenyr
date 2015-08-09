@@ -132,7 +132,7 @@ module Tenyr(
         .wbs_we_o  ({ g_wen, v_wen, s_wen, r_wen, x_wen }),
         .wbs_sel_o ({ g_sel, v_sel, s_sel, r_sel, x_sel }),
         .wbs_stb_o ({ g_stb, v_stb, s_stb, r_stb, x_stb }),
-        .wbs_ack_i ({ g_stb, v_stb, s_stb, r_stb,  1'bz }),
+        .wbs_ack_i ({ g_stb, v_stb, s_stb, r_stb, x_stb }),
         .wbs_err_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
         .wbs_rty_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
         .wbs_cyc_o ({ g_cyc, v_cyc, s_cyc, r_cyc, x_cyc }),
