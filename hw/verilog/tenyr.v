@@ -78,7 +78,7 @@ module Core(
     input clk, reset,
     output reg[31:0] adr_o, // address
     input     [31:0] dat_i, // data in
-    output    [31:0] dat_o, // data out
+    output reg[31:0] dat_o, // data out
     output           wen_o, // write enable
     output    [ 3:0] sel_o, // select
     output           stb_o, // strobe
@@ -101,7 +101,6 @@ module Core(
 
     wire signed[31:0] nextI = branching ? nextZ : nextP;
     wire signed[31:0] nextZ = deref_rhs ? _data : _irhs;
-    wire       [31:0] _datD = deref_rhs ? valZ  : _irhs;
     wire       [31:0] _adrD = deref_rhs ? _irhs : valZ;
 
     wire   memory = loading | storing;
@@ -111,7 +110,7 @@ module Core(
     assign sel_o  = 4'hf;
     assign stb_o  = d_strb | i_strb;
     assign wen_o  = d_strb & storing;
-    assign dat_o  = _datD;
+    assign dat_o  = deref_rhs ? valZ : _irhs;
     assign cyc_o  = stb_o;
     assign halt   = err_i | rty_i;
 
