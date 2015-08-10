@@ -102,7 +102,6 @@ module Tenyr(
     wire x_wen, x_stb, x_cyc;
     wire[3:0] x_sel;
     wire[31:0] x_adr, x_ddn, x_dup;
-    wire x_stbcyc = x_stb & x_cyc;
     assign x_dup = 32'hffffffff;
 
     wb_mux #(
