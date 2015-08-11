@@ -8,6 +8,7 @@
 
 _start:
     prologue
+    b <- 0              // indicate non-completion to testbench
     c <- 1              // argument
 
     call(init_display)
@@ -55,5 +56,6 @@ loop_k:
     j <- j + 1          // increment N
     c <- j < 0x27
     jnzrel(c,loop_j)
+    b <- -1             // indicate completion to testbench
     illegal
 

@@ -176,6 +176,8 @@ check_hw:
 		    check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run; \
 	fi
 
+test_demo_% test_run_% test_op_%: texe=$<
+
 # Demos are not self-testing, so they have demo-specific external checkers
 test_demo_qsort:   verify = sed -n 5p | tr -d '\015'
 test_demo_qsort:   result = eight
@@ -234,28 +236,34 @@ check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre
 check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_sim_demo: export run=$(runwrap) $(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
+# "SDL-related" tests
+# These tests are really device tests that for now require SDL. Since we don't
+# always have SDL available, we don't want to run the tests if we are asked not
+# to. Hardware tests under Icarus, however, can always run these tests, at
+# least until we start hooking up the SDL devices via VPI.
 SDL_RUNS = led bm_mults
-vpath %.tas $(TOP)/test/run/sdl
-ifneq ($(SDL),0)
-export SDL_VIDEODRIVER=dummy
+vpath %.tas  $(TOP)/test/run/sdl
+vpath %.texe $(TOP)/test/run/sdl
+
+test_run_led: $(TOP)/test/run/sdl/led.texe
+test_run_bm_mults: $(TOP)/ex/bm_mults.texe
 # For now we need a special rule to make examples inside their directory to
 # pick up dependency information from ex/Makefile.
-$(TOP)/ex/%.texe:
-	$(MAKE) -C $(@D) $(@F)
+$(TOP)/ex/%.texe: ; $(MAKE) -C $(@D) $(@F)
+$(TOP)/test/run/sdl/%.texe: ; $(MAKE) -C $(TOP)/test run/sdl/$(@F)
 
-$(TOP)/test/run/sdl/%.texe:
-	$(MAKE) -C $(@D) $(@F)
-
+export SDL_VIDEODRIVER=dummy
 $(SDL_RUNS:%=test_run_%): tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
-check_sim_run: RUNS += $(SDL_RUNS)
+PERIODS.mk: $(SDL_RUNS:%=PERIODS_%.mk)
+check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
+
+ifneq ($(SDL),0)
+RUNS += $(SDL_RUNS)
 endif
 
 check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
 check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
 check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
-
-PERIODS.mk: PERIODS_led.mk
-check_hw_icarus_run: test_run_led
 
 # TODO make op tests take a fixed or predictable maximum amount of time
 # The number of cycles necessary to run a code in Verilog simulation is
@@ -277,9 +285,7 @@ vpath PERIODS_%.mk $(TOP)/mk
 PERIODS.mk: $(patsubst %,PERIODS_%.mk,$(OPS) $(DEMOS:%=%_demo) $(RUNS))
 	$(SILENCE)cat $^ > $@
 
-check_sim_op: export stem=op
-check_sim_run: export stem=run
-check_sim_op check_sim_run: export run=$(runwrap) $(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) $(tsim_FLAGS) -vvvv $(TOP)/test/$(stem)/$*.texe | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_op check_sim_run: export run=$(runwrap) $(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) $(tsim_FLAGS) -vvvv $(texe) | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
