@@ -71,8 +71,8 @@ module Tenyr(
 `ifdef SERIAL
     // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
-        .clk ( clk   ), .reset ( reset ), .enable ( s_stb ),
-        .rw  ( s_wen ), .addr  ( s_adr ), .data   ( s_ddn )
+        .clk ( clk_core ), .reset ( reset ), .enable ( s_stb ),
+        .rw  ( s_wen    ), .addr  ( s_adr ), .data   ( s_ddn )
     );
 `endif
 
