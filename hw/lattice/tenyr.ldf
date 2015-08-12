@@ -18,9 +18,6 @@
         <Source name="../verilog/ram.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
-        <Source name="../verilog/ramwrap.v" type="Verilog" type_short="Verilog">
-            <Options/>
-        </Source>
         <Source name="../verilog/seg7.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
