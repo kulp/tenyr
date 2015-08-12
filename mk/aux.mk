@@ -215,8 +215,9 @@ check_hw_icarus_pre:
 	@$(MAKESTEP) -n "Building hardware simulator ... "
 	$(SILENCE)$(MAKE) $S -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
 
-tsim_FLAVOURS := interp
+tsim_FLAVOURS := interp interp_prealloc
 tsim_FLAGS_interp =
+tsim_FLAGS_interp_prealloc = --scratch --recipe=prealloc --recipe=serial --recipe=plugin
 ifneq ($(JIT),0)
 tsim_FLAVOURS += jit
 tsim_FLAGS_jit = -rjit -ptsim.jit.run_count_threshold=2
