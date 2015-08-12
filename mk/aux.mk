@@ -253,12 +253,13 @@ $(TOP)/ex/%.texe: ; $(MAKE) -C $(@D) $(@F)
 $(TOP)/test/run/sdl/%.texe: ; $(MAKE) -C $(TOP)/test run/sdl/$(@F)
 
 export SDL_VIDEODRIVER=dummy
-$(SDL_RUNS:%=test_run_%): tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
 PERIODS.mk: $(SDL_RUNS:%=PERIODS_%.mk)
 check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
 
 ifneq ($(SDL),0)
 RUNS += $(SDL_RUNS)
+tsim_FLAGS += -p paths.share=$(TOP)
+tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
 endif
 
 check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)

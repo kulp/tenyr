@@ -86,10 +86,15 @@ static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie)
     if (IMG_Init(flags) != flags)
         fatal(0, "sdlvga failed to initialise SDL_Image : %s", IMG_GetError());
 
-    const char filename[] = RESOURCE_DIR "/font.png";
+    const char *share_path = ".";
+    // If the param_get fails, we'll check the current directory
+    pcookie->gops.param_get(pcookie, "paths.share", 1, (void*)&share_path);
+    char *filename = build_path(share_path, RESOURCE_DIR"/font.png");
     SDL_Surface *sprite = IMG_Load(filename);
     if (!sprite)
         fatal(0, "sdlvga failed to load font sprite `%s'", filename);
+
+    free(filename);
 
     state->display = SDL_CreateTexture(state->renderer,
             SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, COLS *

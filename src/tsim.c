@@ -381,6 +381,10 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    char *share_path = build_path(s->conf.tsim_path, "../share/tenyr");
+    // Don't replace any existing share path
+    param_set(s->conf.params, "paths.share", share_path, false, false, true);
+
     parse_args(s, argc, argv);
 
     if (optind >= argc) {
