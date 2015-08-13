@@ -78,7 +78,7 @@ module Core(
     input clk, reset,
     output reg[31:0] adr_o, // address
     input     [31:0] dat_i, // data in
-    output reg[31:0] dat_o, // data out
+    output    [31:0] dat_o, // data out
     output           wen_o, // write enable
     output    [ 3:0] sel_o, // select
     output           stb_o, // strobe
