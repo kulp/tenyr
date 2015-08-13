@@ -67,12 +67,13 @@ module Tenyr(
     wire s_wen, s_stb, s_cyc;
     wire[3:0] s_sel;
     wire[31:0] s_adr, s_ddn, s_dup;
+    wire s_stbcyc = s_stb & s_cyc;
 
 `ifdef SERIAL
     // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
-        .clk ( clk_core ), .reset ( reset ), .enable ( s_stb ),
-        .rw  ( s_wen    ), .addr  ( s_adr ), .data   ( s_ddn )
+        .clk ( clk_core ), .reset ( reset ), .enable ( s_stbcyc ),
+        .rw  ( s_wen    ), .addr  ( s_adr ), .data   ( s_ddn    )
     );
 `endif
 
