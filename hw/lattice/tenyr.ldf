@@ -9,6 +9,9 @@
         <Source name="../verilog/top.v" type="Verilog" type_short="Verilog">
             <Options top_module="Tenyr"/>
         </Source>
+        <Source name="../verilog/gpio.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
         <Source name="../verilog/hex2segments.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>

@@ -3,7 +3,7 @@
 
 module Tenyr(
     input clk, reset, inout wor halt,
-    output[7:0] Led, output[7:0] seg, output[3:0] an,
+    output[7:0] Led, output[7:0] seg, output[3:0] an, inout[23:0] gpio,
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
 
@@ -88,6 +88,17 @@ module Tenyr(
         .strobe ( g_stbcyc ), .d_in ( g_ddn ), .d_out ( g_dup )
     );
 
+    wire o_wen, o_stb, o_cyc;
+    wire[3:0] o_sel;
+    wire[31:0] o_adr, o_ddn, o_dup;
+    wire o_stbcyc = o_stb & o_cyc;
+
+    Gpio #(.COUNT(24)) gio(
+        .clk    ( clk_core ), .rw   ( o_wen ), .gpio   ( gpio  ),
+        .reset  ( reset    ), .addr ( o_adr ), .data_i ( o_ddn ),
+        .strobe ( o_stbcyc ),                  .data_o ( o_dup )
+    );
+
     wire v_wen, v_stb, v_cyc;
     wire[3:0] v_sel;
     wire[31:0] v_adr, v_ddn, v_dup;
@@ -109,12 +120,12 @@ module Tenyr(
     assign x_dup = 32'hffffffff;
 
     wb_mux #(
-        .NUM_SLAVES(5),
+        .NUM_SLAVES(6),
         .MATCH_ADDR({
-        //  7-seg disp.   VGA display   serial port   main memory   default
-            32'h00000100, `VIDEO_ADDR , 32'h00000020, `RESETVECTOR, -32'sd1 }),
+    //  GPIO    7-seg   VGA display  serial port  memory       default
+        32'h200,32'h100,`VIDEO_ADDR ,32'h00000020,`RESETVECTOR,-32'sd1 }),
         .MATCH_MASK({
-            32'hfffffffe, 32'hffff0000, 32'hfffffffe, 32'hffffd000, -32'sd1 })
+        -32'd4 ,-32'd2 ,32'hffff0000,32'hfffffffe,32'hffffd000,-32'sd1 })
     ) mux (
         .wb_clk_i  ( clk_core   ),
         .wb_rst_i  ( reset      ),
@@ -129,17 +140,17 @@ module Tenyr(
         .wbm_rty_o ( /* TODO */ ),
         .wbm_cyc_i ( d_cyc      ),
 
-        //            7-seg  VGA    serial mem    def.
-        .wbs_adr_o ({ g_adr, v_adr, s_adr, r_adr, x_adr }),
-        .wbs_dat_o ({ g_ddn, v_ddn, s_ddn, r_ddn, x_ddn }),
-        .wbs_dat_i ({ g_dup, v_dup, s_dup, r_dup, x_dup }),
-        .wbs_we_o  ({ g_wen, v_wen, s_wen, r_wen, x_wen }),
-        .wbs_sel_o ({ g_sel, v_sel, s_sel, r_sel, x_sel }),
-        .wbs_stb_o ({ g_stb, v_stb, s_stb, r_stb, x_stb }),
-        .wbs_ack_i ({ g_stb, v_stb, s_stb, r_ack, x_stb }),
-        .wbs_err_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
-        .wbs_rty_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
-        .wbs_cyc_o ({ g_cyc, v_cyc, s_cyc, r_cyc, x_cyc }),
+        //            gpio   7-seg  VGA    serial mem    def.
+        .wbs_adr_o ({ o_adr, g_adr, v_adr, s_adr, r_adr, x_adr }),
+        .wbs_dat_o ({ o_ddn, g_ddn, v_ddn, s_ddn, r_ddn, x_ddn }),
+        .wbs_dat_i ({ o_dup, g_dup, v_dup, s_dup, r_dup, x_dup }),
+        .wbs_we_o  ({ o_wen, g_wen, v_wen, s_wen, r_wen, x_wen }),
+        .wbs_sel_o ({ o_sel, g_sel, v_sel, s_sel, r_sel, x_sel }),
+        .wbs_stb_o ({ o_stb, g_stb, v_stb, s_stb, r_stb, x_stb }),
+        .wbs_ack_i ({ o_stb, g_stb, v_stb, s_stb, r_ack, x_stb }),
+        .wbs_err_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
+        .wbs_rty_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
+        .wbs_cyc_o ({ o_cyc, g_cyc, v_cyc, s_cyc, r_cyc, x_cyc }),
 
         // unused ports
         .wbm_cti_i ( 3'bz ),

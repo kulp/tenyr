@@ -1,3 +1,4 @@
+verilog work "../verilog/gpio.v"
 verilog work "../verilog/hex2segments.v"
 verilog work "../verilog/mmr.v"
 verilog work "../verilog/ram.v"
