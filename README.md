@@ -1,9 +1,6 @@
 # tenyr
 [![Build Status](https://travis-ci.org/kulp/tenyr.svg?branch=develop)](https://travis-ci.org/kulp/tenyr)
 [![Coverage Status](https://img.shields.io/codecov/c/github/kulp/tenyr.svg)](https://codecov.io/github/kulp/tenyr)
-[![Coverity Scanned](https://img.shields.io/coverity/scan/5645.svg)](https://scan.coverity.com/projects/5645)
-[![Latest Tag](https://img.shields.io/github/tag/kulp/tenyr.svg)](https://github.com/kulp/tenyr/releases)
-[![Free Software](https://img.shields.io/github/license/kulp/tenyr.svg)](https://github.com/kulp/tenyr/blob/develop/COPYING)
 
 ## Overview
 
