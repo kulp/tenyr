@@ -28,8 +28,6 @@ Someday it will also include :
 * a C compiler based on LCC
 * a novel cooperative real-time operating system
 
-Explore a [simple online demo of the **tenyr** toolset](http://demo.tenyr.info/).
-
 **tenyr**'s documentation can be found in [its
 wiki](https://github.com/kulp/tenyr/wiki). The wiki is far from complete but
 constitutes the best available starting point for understanding **tenyr**. The
