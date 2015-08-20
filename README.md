@@ -28,9 +28,5 @@ Someday it will also include :
 * a C compiler based on LCC
 * a novel cooperative real-time operating system
 
-**tenyr**'s documentation can be found in [its
-wiki](https://github.com/kulp/tenyr/wiki). The wiki is far from complete but
-constitutes the best available starting point for understanding **tenyr**. The
-author would be delighted to answer questions about **tenyr** directed to [his
-email](mailto:darren@kulp.ch).
-
+**tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki).
+Feel free to join our [Gitter IM room](https://gitter.im/kulp/tenyr).
