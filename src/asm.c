@@ -13,12 +13,6 @@
 #include "param.h"
 #include "os_common.h"
 
-#if _WIN32
-// TODO change to os_io.h
-#include <fcntl.h>
-#include <io.h>
-#endif
-
 // The length (excluding terminating NUL) of an operator length in disassembly
 #define MAX_OP_LEN 3
 
@@ -436,9 +430,7 @@ static int obj_err(void *ud)
 static int raw_init(FILE *stream, struct param_state *p, void **ud)
 {
     int rc = gen_init(stream, p, ud);
-#if _WIN32
-    rc |= setmode(fileno(stream), O_BINARY) == -1;
-#endif
+    os_set_binmode(stream);
     return rc;
 }
 

@@ -5,6 +5,13 @@
 
 typedef size_t lfind_size_t;
 
+static inline int os_set_binmode(void *stream)
+{
+    /* no-op */
+    (void)stream;
+    return 0;
+}
+
 #endif
 
 /* vi: set ts=4 sw=4 et: */
