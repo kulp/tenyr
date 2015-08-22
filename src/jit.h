@@ -39,5 +39,10 @@ struct basic_block {
 
 EXTERN_C void jit_init(struct jit_state **state);
 EXTERN_C void jit_fini(struct jit_state *state);
+EXTERN_C Block *jit_gen_block(void *cookie, int len, int32_t *instructions);
+
+// XXX permit fetch to express failure
+EXTERN_C int32_t fetch(void *cookie, int32_t addr);
+EXTERN_C void store(void *cookie, int32_t addr, int32_t value);
 
 #endif

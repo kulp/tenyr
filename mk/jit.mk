@@ -22,6 +22,7 @@ libtenyrjit$(DYLIB_SUFFIX): LDFLAGS  += -fPIC -shared
 libtenyrjit$(DYLIB_SUFFIX): LDLIBS_Linux += -lrt
 libtenyrjit$(DYLIB_SUFFIX): $(ASMJIT_OBJS)
 libtenyrjit$(DYLIB_SUFFIX): param,dy.o
+libtenyrjit$(DYLIB_SUFFIX): cjit,dy.o
 
 CLEAN_FILES += libtenyrjit$(DYLIB_SUFFIX)
 
