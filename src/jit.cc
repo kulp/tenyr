@@ -247,19 +247,19 @@ static int pre_insn_hook(struct sim_state *s, const struct element *i, void *ud)
         o->curr_bb = *f;
     }
 
-    struct basic_block &bb = *o->curr_bb;
-    if (bb.compiled)
+    struct basic_block *bb = o->curr_bb;
+    if (bb->compiled)
         return 1; // indicate to jit_run_sim that JIT should be used
 
-    if (bb.run_count == o->js->run_count_threshold) {
+    if (bb->run_count == o->js->run_count_threshold) {
         // Cache the instructions we receive so they are ready for compilation
-        if (!bb.cache)
-            bb.cache = new int32_t[bb.len];
-        bb.cache[(uint32_t)i->insn.reladdr - (uint32_t)bb.base] = i->insn.u.word;
-    } else if (bb.run_count > o->js->run_count_threshold) {
-        assert(bb.complete);
-        bb.compiled = jit_gen_block(o->js, bb.len, bb.cache);
-        delete [] bb.cache;
+        if (!bb->cache)
+            bb->cache = new int32_t[bb->len];
+        bb->cache[(uint32_t)i->insn.reladdr - (uint32_t)bb->base] = i->insn.u.word;
+    } else if (bb->run_count > o->js->run_count_threshold) {
+        assert(bb->complete);
+        bb->compiled = jit_gen_block(o->js, bb->len, bb->cache);
+        delete [] bb->cache;
         return 1; // indicate to jit_run_sim that JIT should be used
     }
 
@@ -272,10 +272,10 @@ static int post_insn_hook(struct sim_state *s, const struct element *i, void *ud
 
     int dd = i->insn.u.typeany.dd;
     if ((dd == 0 || dd == 3) && i->insn.u.typeany.z == 0xf) { // P is being updated
-        struct basic_block &bb = *o->curr_bb;
-        bb.len = (uint32_t)i->insn.reladdr - (uint32_t)bb.base + 1;
-        bb.complete = 1;
-        bb.run_count++;
+        struct basic_block *bb = o->curr_bb;
+        bb->len = (uint32_t)i->insn.reladdr - (uint32_t)bb->base + 1;
+        bb->complete = 1;
+        bb->run_count++;
         o->curr_bb = NULL;
         o->ops.post_insn(s, i, o->nested_ops_data); // allow hook to run one last time
         return 1;
