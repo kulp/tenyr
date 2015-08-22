@@ -5,34 +5,9 @@
 #include <cassert>
 #include <search.h>
 
+#include "jit.h"
+
 using namespace asmjit;
-
-typedef void Block(void *cookie, int32_t *registers);
-
-struct jit_state {
-    void *nested_run_data;
-    void *sim_state;
-    void *runtime; // actually an asmjit::JitRuntime
-    int run_count_threshold;
-    void *cc; // actually an asmjit::X86Compiler
-};
-
-struct ops_state {
-    struct jit_state *js;
-    struct run_ops ops;
-    void *nested_ops_data;
-    void *basic_blocks;
-    struct basic_block *curr_bb;
-};
-
-struct basic_block {
-    int run_count;
-    unsigned complete;
-    int32_t base;
-    uint32_t len;
-    Block *compiled;
-    int32_t *cache;
-};
 
 extern "C" void jit_init(struct jit_state **state)
 {
@@ -332,4 +307,3 @@ extern "C" int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_
     jit_fini(js);
     return 0;
 }
-
