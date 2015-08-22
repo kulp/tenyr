@@ -12,9 +12,9 @@ typedef void Block(void *cookie, int32_t *registers);
 struct jit_state {
     void *nested_run_data;
     void *sim_state;
-    JitRuntime *runtime;
+    void *runtime; // actually an asmjit::JitRuntime
     int run_count_threshold;
-    X86Compiler *cc;
+    void *cc; // actually an asmjit::X86Compiler
 };
 
 struct ops_state {
@@ -39,13 +39,13 @@ extern "C" void jit_init(struct jit_state **state)
     struct jit_state *s = *state = new jit_state;
     s->runtime = new JitRuntime;
     s->run_count_threshold = 10; // arbitrary, reconfigurable
-    s->cc = new X86Compiler(s->runtime);
+    s->cc = new X86Compiler((JitRuntime*)s->runtime);
 }
 
 extern "C" void jit_fini(struct jit_state *state)
 {
-    delete state->cc;
-    delete state->runtime;
+    delete (X86Compiler*)state->cc;
+    delete (JitRuntime*)state->runtime;
     delete state;
 }
 
@@ -209,7 +209,7 @@ static int buildInstruction(X86Compiler &cc, X86GpVar &ck, X86GpVar &regs,
 extern "C" Block *jit_gen_block(void *cookie, int len, int32_t *instructions)
 {
     struct jit_state *js = (struct jit_state*)cookie;
-    X86Compiler &c = *js->cc;
+    X86Compiler &c = *(X86Compiler*)js->cc;
 
     c.addFunc(kFuncConvHost, FuncBuilder2<void, void*, int32_t*>());
 
