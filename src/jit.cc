@@ -254,12 +254,12 @@ static int pre_insn_hook(struct sim_state *s, const struct element *i, void *ud)
     if (bb->run_count == o->js->run_count_threshold) {
         // Cache the instructions we receive so they are ready for compilation
         if (!bb->cache)
-            bb->cache = new int32_t[bb->len];
+            bb->cache = (int32_t*)calloc(bb->len, sizeof *bb->cache);
         bb->cache[(uint32_t)i->insn.reladdr - (uint32_t)bb->base] = i->insn.u.word;
     } else if (bb->run_count > o->js->run_count_threshold) {
         assert(bb->complete);
         bb->compiled = jit_gen_block(o->js, bb->len, bb->cache);
-        delete [] bb->cache;
+        free(bb->cache);
         return 1; // indicate to jit_run_sim that JIT should be used
     }
 
