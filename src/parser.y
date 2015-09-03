@@ -255,28 +255,35 @@ rhs
             $$->deref = 1; }
 
 rhs_plain
-    /* type0 */
     : regname[x] binop regname[y] reloc_op vatom
         { $$ = make_rhs(0, $x, $binop, $y, $reloc_op, $vatom); }
     | regname[x] binop regname[y]
-        { $$ = make_rhs(0, $x, $binop, $y, 0, NULL); }
+        {   int adding = $binop == OP_ADD;
+            int type   = adding ? 2 : 0;
+            int op     = adding ? OP_BITWISE_OR : $binop;
+            $$ = make_rhs(type, $x, op, $y, 0, NULL); }
     | regname[x]
-        { $$ = make_rhs(0, $x, OP_BITWISE_OR, 0, 0, NULL); }
-    /* type1 */
+        { $$ = make_rhs(1, 0, OP_BITWISE_OR, $x, 0, NULL); }
     | regname[x] binop vatom '+' regname[y]
         { $$ = make_rhs(1, $x, $binop, $y, 1, $vatom); }
     | regname[x] binop vatom
-        {   int t3op = $binop == OP_ADD || $binop == OP_SUBTRACT;
-            int mult = ($binop == OP_SUBTRACT) ? -1 : 1;
-            int op   = (mult < 0) ? OP_ADD : $binop;
-            int type = (t3op && is_type3($vatom)) ? 3 : 1;
-            $$ = make_rhs(type, $x, op, 0, mult, $vatom); }
-    /* type2 */
+        {   int adding = $binop == OP_ADD || $binop == OP_SUBTRACT;
+            int mult   = $binop == OP_SUBTRACT ? -1 : 1;
+            int type   = adding ? is_type3($vatom) ? 3 : 0 : 1;
+            int x      = type == 0 ?  0 : $x;
+            int y      = type == 0 ? $x :  0;
+            int op     = y ? OP_BITWISE_OR : mult < 0 ? OP_ADD : $binop;
+            $$ = make_rhs(type, x, op, y, mult, $vatom); }
     | vatom binop regname[x] '+' regname[y]
         { $$ = make_rhs(2, $x, $binop, $y, 1, $vatom); }
     | vatom binop regname[x]
-        { $$ = make_rhs(2, $x, $binop, 0, 1, $vatom); }
-    /* type3 */
+        {   int adding = $binop == OP_ADD;
+            // encode `B <- 0 + C` differently to `B <- C`
+            int type   = adding && $vatom->i != 0 ? 1 : 2;
+            int x      = type == 1 ?  0 : $x;
+            int y      = type == 1 ? $x :  0;
+            int op     = y ? OP_BITWISE_OR : $binop;
+            $$ = make_rhs(type, x, op, y, 1, $vatom); }
     | vatom
         { $$ = make_rhs(is_type3($vatom) ? 3 : 0, 0, 0, 0, 1, $vatom); }
     /* syntax sugars */

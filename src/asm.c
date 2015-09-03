@@ -89,6 +89,56 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
         { "<-","->","<-","<-" };
     static const char brackets[2][2] =
         { " ["," ]" };
+    enum { TYPE0=0, TYPE1, TYPE2, TYPE3, TYPEx };
+    enum { OP0=0, OP1, OP2, OP3, OPx };
+    static const int op_types[16] = {
+        [OP_BITWISE_OR] = OP1,
+        [OP_SUBTRACT  ] = OP2,
+        [OP_ADD       ] = OP3,
+        // all others   = OP0
+    };
+    // This table defines canonical shorthands for certain encodings
+    static const struct hides { unsigned a:1, b:1, c:1; }
+    hide[TYPEx][OPx] [2][2][2] = {
+        [TYPE0][OP0] [0][0][1] = { 0,0,1 }, // B <- C * D
+        [TYPE0][OP1] [0][0][1] = { 0,0,1 }, // B <- C | D
+        [TYPE0][OP1] [1][0][0] = { 1,0,0 }, // B <-     D + 2
+        [TYPE0][OP1] [1][0][1] = { 1,0,0 }, // B <-     D + 0
+        [TYPE0][OP1] [1][1][0] = { 1,1,0 }, // B <-         2
+        [TYPE0][OP1] [1][1][1] = { 1,1,0 }, // B <-         0
+        [TYPE0][OP2] [0][0][1] = { 0,0,1 }, // B <- C - D
+        [TYPE1][OP0] [0][0][1] = { 0,0,1 }, // B <- C * 2
+        [TYPE1][OP0] [0][1][1] = { 0,0,1 }, // B <- C * 0
+        [TYPE1][OP1] [0][0][1] = { 0,0,1 }, // B <- C | 2
+        [TYPE1][OP1] [1][0][0] = { 1,0,0 }, // B <-     2 + D
+        [TYPE1][OP1] [1][1][0] = { 1,1,0 }, // B <-         D
+        [TYPE1][OP1] [1][1][1] = { 1,1,0 }, // B <-         A
+        [TYPE2][OP0] [0][0][1] = { 0,0,1 }, // B <- 2 * C
+        [TYPE2][OP0] [1][0][1] = { 0,0,1 }, // B <- 0 * C
+        [TYPE2][OP1] [0][0][1] = { 0,0,1 }, // B <- 2 | C
+        [TYPE2][OP1] [1][0][0] = { 1,0,0 }, // B <-     C + D
+        [TYPE2][OP2] [0][0][1] = { 0,0,1 }, // B <- 2 - C
+        [TYPE2][OP2] [1][0][1] = { 0,0,1 }, // B <- 0 - C
+        [TYPE2][OP3] [1][0][1] = { 0,0,1 }, // B <- 0 + C
+        [TYPE3][OP1] [1][1][0] = { 1,1,0 }, // B <-         2
+    };
+
+    static const int asm_op_loc[TYPEx][3] = {
+        [TYPE0] = { 0, 1, 2 },
+        [TYPE1] = { 1, 0, 2 },
+        [TYPE2] = { 1, 2, 0 },
+        [TYPE3] = { 0, 2, 2 },
+    };
+
+    const int fields[3] = { imm, t->y, t->x },
+             *map       = asm_op_loc[g->p],
+              lzero     = fields[map[2]] == 0,
+              mzero     = fields[map[1]] == 0,
+              rzero     = fields[map[0]] == 0;
+
+    const struct hides hid = hide[g->p][op_types[op]][lzero][mzero][rzero];
+
+    const int verbose = !!(flags & ASM_VERBOSE);
 
     const char    c0 = brackets[0][g->dd == 2]; // left side dereferenced ?
     const char   *s1 = regs[g->z];              // register name for Z
@@ -96,101 +146,73 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     const char   *s3 = arrows[g->dd];           // arrow direction
     const char    c4 = brackets[0][g->dd & 1];  // right side dereferenced ?
     const char   *s5 = regs[g->x];              // register name for X
-    const char   *s6 = op_names[t->op];         // operator name
+    const char   *s6 = op_names[op];            // operator name
     const char   *s7 = regs[t->y];              // register name for Y
     const int32_t i8 = SEXTEND32(width,imm);    // immediate value
     const char    c9 = brackets[1][g->dd & 1];  // right side dereferenced ?
 
-    int hex   = g->p == 3;
-    int mid   = g->p == 0 ? t->y :
-                g->p == 2 ? t->x : 0;
-    int show1 = ((g->p >  1) ? imm != 0 : t->x != 0) || op != OP_BITWISE_OR;
-    int show2 = ((g->p == 1) ? imm != 0 : mid  != 0) || op != OP_BITWISE_OR;
-    int show3 = ((g->p == 0) ? imm != 0 : t->y != 0);
+    int show1 = (!hid.a || verbose) && g->p != 3,
+        show2 = (!hid.b || verbose),
+        show3 = (!hid.c || verbose),
+        flip  = g->p == 0 && i8 < 0 && show2 && !verbose;
 
-    if (flags & ASM_VERBOSE)
-        show1 = show2 = show3 = hex = 1;
+    const char *sF = &" + \0 - "[flip * 4];   // operator for last operand
 
     char s8[16];
-    snprintf(s8, sizeof s8, hex ? "0x%08x" : "%d", i8);
+    const char *numfmt = (g->p == 3 || verbose) ? "0x%08x" : "%d";
+    snprintf(s8, sizeof s8, numfmt, flip ? -i8 : i8);
 
-    const char *sA = NULL, *sB = NULL, *sC = NULL;
-    switch (g->p) {
-        case 0: sA = s5, sB = s7, sC = s8; break;
-        case 1: sA = s5, sB = s8, sC = s7; break;
-        case 2: sA = s8, sB = s5, sC = s7; break;
-        case 3: sB = s5; sC = s8; show3 = 1; show1 = 0; show2 |= g->x != 0; break;
-    }
+    const char * const ss[] = { s8, s7, s5 },
+               *sA = ss[map[2]],
+               *sB = ss[map[1]],
+               *sC = ss[map[0]];
 
-    // Edge cases : show more operands if the instruction type can't be inferred
-    if (show1 + show2 + show3 < 3) {
-        if (t->op == OP_SUBTRACT && g->p == 1)
-            show1 = show2 = show3 = 1; // avoid ambiguity with type3 substraction idiom
-        else switch (g->p) {
-            case 0:
-                if (t->op == OP_SUBTRACT && t->x == 0)
-                    sA = " ", show3 = 1; // sugar for `B <- - C + 0`
-                else if (t->op == OP_BITWISE_ORN && t->x == 0)
-                    s6 = "~", sA = " ", show3 = 1; // sugar for `B <- ~ C + 0`
-                else if (t->op == OP_BITWISE_OR && (t->x ? t->y == 0 && imm != 0 : t->y))
-                    show1 = show2 = show3 = 1;
-                break;
-            case 1:
-                if (t->op != OP_BITWISE_OR && t->op != OP_ADD && t->y == 0)
-                    show1 = show2 = 1;
-                else if (t->x == 0 || t->y != 0 || t->op == OP_BITWISE_OR)
-                    show1 = show2 = show3 = 1;
-                break;
-            case 2:
-                if (t->op == OP_SUBTRACT && imm == 0)
-                    sA = " "; // sugar for `B <- - C`
-                else if (t->op == OP_BITWISE_ORN && imm == 0)
-                    s6 = "~", sA = " "; // sugar for `B <- ~ C`
-                else if (t->op != OP_BITWISE_OR && t->y == 0)
-                    show1 = show2 = 1;
-                else if (imm == 0 || (t->op == OP_BITWISE_OR && t->x == 0))
-                    show1 = show2 = show3 = 1;
-                break;
+    // Syntax sugars. type1 is not eligible (~0 and -0 become literals)
+    if (lzero && !verbose && g->p != 1) {
+        switch (op) {
+            case OP_BITWISE_ORN:    // `B <- ~ C`
+                s6 = "~";
+                // FALLTHROUGH
+            case OP_SUBTRACT:       // `B <- - C`
+                sA = " ";
+                show3 |= g->p == 0; // append term to disambiguate type0, type2
         }
     }
-
-    // Edge case : all operands are 0, but word may not be 0
-    if (g->p != 3 && !(show1 | show2 | show3))
-        show1 = show2 = show3 = g->p != 0;
 
     // Centre a 1-to-3-character op
     char opstr[MAX_OP_LEN + 1];
     snprintf(opstr, sizeof opstr, "%-2s", s6);
     s6 = opstr;
 
-    static const char *fmts[] = {
-    //   c0s1c2 s3 c4sA s6  sB   sCc9   //
-        "%c%s%c %s %c"     "0"    "%c", // [Z] <- [      0     ]
-        "%c%s%c %s %c%s"          "%c", // [Z] <- [X           ]
-        "%c%s%c %s %c%s %3s %s"   "%c", // [Z] <- [X >>> Y     ]
-        "%c%s%c %s %c%s %3s %s + %s%c", // [Z] <- [X >>> Y + -0]
+    static const char * const fmts[] = {
+    //         c0s1c2 s3 c4sA s6  sB sF sCc9   //
+    //  [0] = "%c%s%c %s %c"     "0"   "%c", // [Z] <- [      0     ]
+        [1] = "%c%s%c %s %c%s"         "%c", // [Z] <- [X           ]
+        [2] = "%c%s%c %s %c%s %3s %s"  "%c", // [Z] <- [X >>> Y     ]
+        [3] = "%c%s%c %s %c%s %3s %s%s%s%c", // [Z] <- [X >>> Y + -0]
     };
-    const char *fmt = fmts[show1 + show2 + show3];
+    const char * const fmt = fmts[show1 + show2 + show3];
 
     int len = 0;
     #define C_(C,B,A) (((C) << 2) | ((B) << 1) | (A))
-    #define PUT(...) (len = fprintf(out, fmt, __VA_ARGS__))
     switch (C_(show1,show2,show3)) {
-        // Some combinations are made impossible by the edge-case logic above
-        // because they would result in ambiguous disassembly
-        case C_(0,0,0): PUT(c0,s1,c2,s3,c4,            c9); break;
-        case C_(0,0,1): PUT(c0,s1,c2,s3,c4,         sC,c9); break;
-      //case C_(0,1,0): PUT(c0,s1,c2,s3,c4,      sB,   c9); break; // impossible
-        case C_(0,1,1): PUT(c0,s1,c2,s3,c4,sB," + ",sC,c9); break;
-        case C_(1,0,0): PUT(c0,s1,c2,s3,c4,sA,         c9); break;
-      //case C_(1,0,1): PUT(c0,s1,c2,s3,c4,sA," + ",sC,c9); break; // impossible
-        case C_(1,1,0): PUT(c0,s1,c2,s3,c4,sA,s6,sB,   c9); break;
-        case C_(1,1,1): PUT(c0,s1,c2,s3,c4,sA,s6,sB,sC,c9); break;
+        // Some combinations are never generated
+        #define PUT(...) (len = fprintf(out, fmt, __VA_ARGS__))
+    //  case C_(0,0,0): PUT(c0,s1,c2,s3,c4,               c9); break;
+        case C_(0,0,1): PUT(c0,s1,c2,s3,c4,            sC,c9); break;
+    //  case C_(0,1,0): PUT(c0,s1,c2,s3,c4,      sB,      c9); break;
+        case C_(0,1,1): PUT(c0,s1,c2,s3,c4,sB,sF,      sC,c9); break;
+    //  case C_(1,0,0): PUT(c0,s1,c2,s3,c4,sA,            c9); break;
+    //  case C_(1,0,1): PUT(c0,s1,c2,s3,c4,sA,sF,      sC,c9); break;
+        case C_(1,1,0): PUT(c0,s1,c2,s3,c4,sA,s6,sB,      c9); break;
+        case C_(1,1,1): PUT(c0,s1,c2,s3,c4,sA,s6,sB,sF,sC,c9); break;
+        #undef PUT
 
         default:
             fatal(0, "Unsupported show1,show2,show3 %d,%d,%d",
                     show1,show2,show3);
     }
+    #undef C_
 
     return len;
 }

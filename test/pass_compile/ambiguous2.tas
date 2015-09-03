@@ -1,0 +1,2 @@
+ B  <-  D  +  0xfffffffd + A  # .word 0x41304ffd ;            ; .addr 0x00000000
+ B  <-  A  |  D + 0xfffffffd  # .word 0x01030ffd ;            ; .addr 0x00000000
