@@ -197,17 +197,11 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
 
 int print_registers(FILE *out, const int32_t regs[16])
 {
-    int i = 0;
-    for (; i < 6; i++)
+    for (int i = 0; i < 15; i++) {
         fprintf(out, "%c %08x ", 'A' + i, regs[i]);
-    fputs("\n", out);
-
-    for (; i < 12; i++)
-        fprintf(out, "%c %08x ", 'A' + i, regs[i]);
-    fputs("\n", out);
-
-    for (; i < 15; i++)
-        fprintf(out, "%c %08x ", 'A' + i, regs[i]);
+        if (i % 6 == 5)
+            fputc('\n', out);
+    }
 
     // Treat P specially : a read would return IP + 1
     fprintf(out, "%c %08x ", 'A' + 15, regs[15] + 1);
