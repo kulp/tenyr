@@ -112,7 +112,7 @@ int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
         int32_t *result)
 {
     int rc = ce_eval(pd, NULL, ce, 0, 0, result);
-    if (rc == 0) {
+    if (rc == 1) {
         ce->i = *result;
         ce->flags |= DONE_EVAL;
     }
@@ -127,7 +127,7 @@ int ce_eval(struct parse_data *pd, struct element *context,
     int relocate = (flags & DO_RELOCATION) != 0;
     if (flags & DONE_EVAL) {
         *result = ce->i;
-        return 0; // No need to re-evaluate
+        return 1; // No need to re-evaluate
     }
 
     switch (ce->type) {
