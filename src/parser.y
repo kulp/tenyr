@@ -490,8 +490,8 @@ static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
     n->left  = left;
     n->right = right;
     n->insn  = NULL;    // top expr will have its insn filled in
-    n->flags = (left  ? left->flags  : 0) |
-               (right ? right->flags : 0) | flags;
+    n->flags = (((left  ? left->flags  : 0) |
+                 (right ? right->flags : 0)) & ~DONE_EVAL) | flags;
     n->srcloc = *locp;
 
     return n;
