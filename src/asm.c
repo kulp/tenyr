@@ -83,12 +83,9 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
             break;
     }
 
-    static const char regs[16][2] =
-        { "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P" };
-    static const char arrows[4][4] =    // aligned on 4 for speed
-        { "<-","->","<-","<-" };
-    static const char brackets[2][2] =
-        { " ["," ]" };
+    // aligned on 4 for speed
+    static const char arrows[4][4] = { "<-","->","<-","<-" };
+    static const char brackets[2][2] = { " ["," ]" };
     enum { TYPE0=0, TYPE1, TYPE2, TYPE3, TYPEx };
     enum { OP0=0, OP1, OP2, OP3, OPx };
     static const int op_types[16] = {
@@ -140,16 +137,16 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
 
     const int verbose = !!(flags & ASM_VERBOSE);
 
-    const char    c0 = brackets[0][g->dd == 2]; // left side dereferenced ?
-    const char   *s1 = regs[g->z];              // register name for Z
-    const char    c2 = brackets[1][g->dd == 2]; // left side dereferenced ?
-    const char   *s3 = arrows[g->dd];           // arrow direction
-    const char    c4 = brackets[0][g->dd & 1];  // right side dereferenced ?
-    const char   *s5 = regs[g->x];              // register name for X
-    const char   *s6 = op_names[op];            // operator name
-    const char   *s7 = regs[t->y];              // register name for Y
-    const int32_t i8 = SEXTEND32(width,imm);    // immediate value
-    const char    c9 = brackets[1][g->dd & 1];  // right side dereferenced ?
+    const char    c0    = brackets[0][g->dd == 2]; // left side dereferenced ?
+    const char    c1    = 'A' + g->z;              // register name for Z
+    const char    c2    = brackets[1][g->dd == 2]; // left side dereferenced ?
+    const char   *s3    = arrows[g->dd];           // arrow direction
+    const char    c4    = brackets[0][g->dd & 1];  // right side dereferenced ?
+    const char    s5[2] = { 'A' + g->x };          // register name for X
+    const char   *s6    = op_names[op];            // operator name
+    const char    s7[2] = { 'A' + t->y };          // register name for Y
+    const int32_t i8    = SEXTEND32(width,imm);    // immediate value
+    const char    c9    = brackets[1][g->dd & 1];  // right side dereferenced ?
 
     int show1 = (!hid.a || verbose) && g->p != 3,
         show2 = (!hid.b || verbose),
@@ -185,10 +182,10 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
 
     static const char * const fmts[] = {
     //         c0s1c2 s3 c4sA s6  sBsFsCc9   //
-    //  [0] = "%c%s%c %s %c"     "0"   "%c", // [Z] <- [      0     ]
-        [1] = "%c%s%c %s %c%s"         "%c", // [Z] <- [X           ]
-        [2] = "%c%s%c %s %c%s %3s %s"  "%c", // [Z] <- [X >>> Y     ]
-        [3] = "%c%s%c %s %c%s %3s %s%s%s%c", // [Z] <- [X >>> Y + -0]
+    //  [0] = "%c%c%c %s %c"     "0"   "%c", // [Z] <- [      0     ]
+        [1] = "%c%c%c %s %c%s"         "%c", // [Z] <- [X           ]
+        [2] = "%c%c%c %s %c%s %3s %s"  "%c", // [Z] <- [X >>> Y     ]
+        [3] = "%c%c%c %s %c%s %3s %s%s%s%c", // [Z] <- [X >>> Y + -0]
     };
     const char * const fmt = fmts[show1 + show2 + show3];
 
@@ -197,14 +194,14 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     switch (C_(show1,show2,show3)) {
         // Some combinations are never generated
         #define PUT(...) (len = fprintf(out, fmt, __VA_ARGS__))
-    //  case C_(0,0,0): PUT(c0,s1,c2,s3,c4,               c9); break;
-        case C_(0,0,1): PUT(c0,s1,c2,s3,c4,            sC,c9); break;
-    //  case C_(0,1,0): PUT(c0,s1,c2,s3,c4,      sB,      c9); break;
-        case C_(0,1,1): PUT(c0,s1,c2,s3,c4,sB,sF,      sC,c9); break;
-    //  case C_(1,0,0): PUT(c0,s1,c2,s3,c4,sA,            c9); break;
-    //  case C_(1,0,1): PUT(c0,s1,c2,s3,c4,sA,sF,      sC,c9); break;
-        case C_(1,1,0): PUT(c0,s1,c2,s3,c4,sA,s6,sB,      c9); break;
-        case C_(1,1,1): PUT(c0,s1,c2,s3,c4,sA,s6,sB,sF,sC,c9); break;
+    //  case C_(0,0,0): PUT(c0,c1,c2,s3,c4,               c9); break;
+        case C_(0,0,1): PUT(c0,c1,c2,s3,c4,            sC,c9); break;
+    //  case C_(0,1,0): PUT(c0,c1,c2,s3,c4,      sB,      c9); break;
+        case C_(0,1,1): PUT(c0,c1,c2,s3,c4,sB,sF,      sC,c9); break;
+    //  case C_(1,0,0): PUT(c0,c1,c2,s3,c4,sA,            c9); break;
+    //  case C_(1,0,1): PUT(c0,c1,c2,s3,c4,sA,sF,      sC,c9); break;
+        case C_(1,1,0): PUT(c0,c1,c2,s3,c4,sA,s6,sB,      c9); break;
+        case C_(1,1,1): PUT(c0,c1,c2,s3,c4,sA,s6,sB,sF,sC,c9); break;
         #undef PUT
 
         default:
