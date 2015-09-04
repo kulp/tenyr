@@ -43,15 +43,17 @@ int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
         return -1;
     }
 
+    // TODO don't send in the whole simulator state ? the op should have
+    // access to some state, in order to redispatch and potentially use other
+    // machine.devices, but it shouldn't see the whole state
+    int result = (*device)->ops.op((*device)->cookie, op, addr, data);
+
     if (s->conf.verbose > 2) {
         printf("%-5s @ 0x%08x = 0x%08x\n",
                (op == OP_WRITE) ? "write" : "read", addr, *data);
     }
 
-    // TODO don't send in the whole simulator state ? the op should have
-    // access to some state, in order to redispatch and potentially use other
-    // machine.devices, but it shouldn't see the whole state
-    return (*device)->ops.op((*device)->cookie, op, addr, data);
+    return result;
 }
 
 static int compare_devices_by_base(const void *_a, const void *_b)
