@@ -112,10 +112,8 @@ int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
         int32_t *result)
 {
     int rc = ce_eval(pd, NULL, ce, 0, 0, result);
-    if (rc == 1) {
-        ce->i = *result;
+    if (rc == 1)
         ce->flags |= DONE_EVAL;
-    }
     return rc;
 }
 

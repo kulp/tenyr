@@ -272,18 +272,21 @@ rhs_plain
             int type   = adding ? is_type3($vatom) ? 3 : 0 : 1;
             int x      = type == 0 ?  0 : $x;
             int y      = type == 0 ? $x :  0;
-            int op     = y ? OP_BITWISE_OR : mult < 0 ? OP_ADD : $binop;
+            int op     = type == 0 ? OP_BITWISE_OR :
+                         mult <  0 ? OP_ADD        :
+                                     $binop;
             $$ = make_rhs(type, x, op, y, mult, $vatom); }
     | vatom binop regname[x] '+' regname[y]
         { $$ = make_rhs(2, $x, $binop, $y, 1, $vatom); }
     | vatom binop regname[x]
         {   int adding = $binop == OP_ADD;
-            // encode `B <- 0 + C` differently to `B <- C`
-            int type   = adding && $vatom->i != 0 ? 1 : 2;
-            int x      = type == 1 ?  0 : $x;
-            int y      = type == 1 ? $x :  0;
-            int op     = y ? OP_BITWISE_OR : $binop;
-            $$ = make_rhs(type, x, op, y, 1, $vatom); }
+            int done   = $vatom->flags & DONE_EVAL;
+            int right  = adding && (!done || $vatom->i);
+            int x      = right ?  0 : $x;
+            int y      = right ? $x :  0;
+            int op     = right ? OP_BITWISE_OR : $binop;
+            // `B <- 0 + C` is type2, `B <- 2 + C` is type1
+            $$ = make_rhs(right ? 1 : 2, x, op, y, 1, $vatom); }
     | vatom
         { $$ = make_rhs(is_type3($vatom) ? 3 : 0, 0, 0, 0, 1, $vatom); }
     /* syntax sugars */
