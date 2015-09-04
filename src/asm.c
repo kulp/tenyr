@@ -156,16 +156,15 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
         show3 = (!hid.c || verbose),
         flip  = g->p == 0 && i8 < 0 && show2 && !verbose;
 
-    const char *sF = &" + \0 - "[flip * 4];   // operator for last operand
-
     char s8[16];
     const char *numfmt = (g->p == 3 || verbose) ? "0x%08x" : "%d";
     snprintf(s8, sizeof s8, numfmt, flip ? -i8 : i8);
 
     const char * const ss[] = { s8, s7, s5 },
-               *sA = ss[map[2]],
-               *sB = ss[map[1]],
-               *sC = ss[map[0]];
+               *sA   = ss[map[2]],
+               *sB   = ss[map[1]],
+               *sC   = ss[map[0]],
+                sF[] = { ' ', "+-"[flip], ' ', '\0' }; // type0 sugar
 
     // Syntax sugars. type1 is not eligible (~0 and -0 become literals)
     if (lzero && !verbose && g->p != 1) {
@@ -185,7 +184,7 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     s6 = opstr;
 
     static const char * const fmts[] = {
-    //         c0s1c2 s3 c4sA s6  sB sF sCc9   //
+    //         c0s1c2 s3 c4sA s6  sBsFsCc9   //
     //  [0] = "%c%s%c %s %c"     "0"   "%c", // [Z] <- [      0     ]
         [1] = "%c%s%c %s %c%s"         "%c", // [Z] <- [X           ]
         [2] = "%c%s%c %s %c%s %3s %s"  "%c", // [Z] <- [X >>> Y     ]
