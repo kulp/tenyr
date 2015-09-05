@@ -35,6 +35,58 @@ static const char op_names[][MAX_OP_LEN + 1] = {
     [OP_SHIFT_RIGHT_LOGIC] = ">>>",
 };
 
+// aligned on 4 for speed
+static const char arrows[4][4] = { "<-","->","<-","<-" };
+static const char brackets[2][2] = { " ["," ]" };
+enum { TYPE0=0, TYPE1, TYPE2, TYPE3, TYPEx };
+enum { OP0=0, OP1, OP2, OP3, OPx };
+static const int op_types[16] = {
+    [OP_BITWISE_OR] = OP1,
+    [OP_SUBTRACT  ] = OP2,
+    [OP_ADD       ] = OP3,
+    // all others   = OP0
+};
+// This table defines canonical shorthands for certain encodings
+static const struct hides { unsigned a:1, b:1, c:1; }
+hide[TYPEx][OPx] [2][2][2] = {
+    [TYPE0][OP0] [0][0][1] = { 0,0,1 }, // B <- C * D
+    [TYPE0][OP1] [0][0][1] = { 0,0,1 }, // B <- C | D
+    [TYPE0][OP1] [1][0][0] = { 1,0,0 }, // B <-     D + 2
+    [TYPE0][OP1] [1][0][1] = { 1,0,0 }, // B <-     D + 0
+    [TYPE0][OP1] [1][1][0] = { 1,1,0 }, // B <-         2
+    [TYPE0][OP1] [1][1][1] = { 1,1,0 }, // B <-         0
+    [TYPE0][OP2] [0][0][1] = { 0,0,1 }, // B <- C - D
+    [TYPE1][OP0] [0][0][1] = { 0,0,1 }, // B <- C * 2
+    [TYPE1][OP0] [0][1][1] = { 0,0,1 }, // B <- C * 0
+    [TYPE1][OP1] [0][0][1] = { 0,0,1 }, // B <- C | 2
+    [TYPE1][OP1] [1][0][0] = { 1,0,0 }, // B <-     2 + D
+    [TYPE1][OP1] [1][1][0] = { 1,1,0 }, // B <-         D
+    [TYPE1][OP1] [1][1][1] = { 1,1,0 }, // B <-         A
+    [TYPE2][OP0] [0][0][1] = { 0,0,1 }, // B <- 2 * C
+    [TYPE2][OP0] [1][0][1] = { 0,0,1 }, // B <- 0 * C
+    [TYPE2][OP1] [0][0][1] = { 0,0,1 }, // B <- 2 | C
+    [TYPE2][OP1] [1][0][0] = { 1,0,0 }, // B <-     C + D
+    [TYPE2][OP2] [0][0][1] = { 0,0,1 }, // B <- 2 - C
+    [TYPE2][OP2] [1][0][1] = { 0,0,1 }, // B <- 0 - C
+    [TYPE2][OP3] [1][0][1] = { 0,0,1 }, // B <- 0 + C
+    [TYPE3][OP1] [1][1][0] = { 1,1,0 }, // B <-         2
+};
+
+static const int asm_op_loc[TYPEx][3] = {
+    [TYPE0] = { 0, 1, 2 },
+    [TYPE1] = { 1, 0, 2 },
+    [TYPE2] = { 1, 2, 0 },
+    [TYPE3] = { 0, 2, 2 },
+};
+
+static const char * const disasm_fmts[] = {
+//         c0s1c2 s3 c4sA s6  sBsFsCc9   //
+//  [0] = "%c%c%c %s %c"     "0"   "%c", // [Z] <- [      0     ]
+    [1] = "%c%c%c %s %c%s"         "%c", // [Z] <- [X           ]
+    [2] = "%c%c%c %s %c%s %3s %s"  "%c", // [Z] <- [X >>> Y     ]
+    [3] = "%c%c%c %s %c%s %3s %s%s%s%c", // [Z] <- [X >>> Y + -0]
+};
+
 static int is_printable(unsigned int ch, size_t len, char buf[len])
 {
     memset(buf, 0, len);
@@ -69,63 +121,9 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     const struct instruction_typeany * const g = &i->insn.u.typeany;
     const struct instruction_type012 * const t = &i->insn.u.type012;
 
-    int32_t imm, width, op;
-    switch (g->p) {
-        case 0: case 1: case 2:
-            width = SMALL_IMMEDIATE_BITWIDTH;
-            imm   = i->insn.u.type012.imm;
-            op    = t->op;
-            break;
-        case 3:
-            width = MEDIUM_IMMEDIATE_BITWIDTH;
-            imm   = i->insn.u.type3.imm;
-            op    = OP_BITWISE_OR;
-            break;
-    }
-
-    // aligned on 4 for speed
-    static const char arrows[4][4] = { "<-","->","<-","<-" };
-    static const char brackets[2][2] = { " ["," ]" };
-    enum { TYPE0=0, TYPE1, TYPE2, TYPE3, TYPEx };
-    enum { OP0=0, OP1, OP2, OP3, OPx };
-    static const int op_types[16] = {
-        [OP_BITWISE_OR] = OP1,
-        [OP_SUBTRACT  ] = OP2,
-        [OP_ADD       ] = OP3,
-        // all others   = OP0
-    };
-    // This table defines canonical shorthands for certain encodings
-    static const struct hides { unsigned a:1, b:1, c:1; }
-    hide[TYPEx][OPx] [2][2][2] = {
-        [TYPE0][OP0] [0][0][1] = { 0,0,1 }, // B <- C * D
-        [TYPE0][OP1] [0][0][1] = { 0,0,1 }, // B <- C | D
-        [TYPE0][OP1] [1][0][0] = { 1,0,0 }, // B <-     D + 2
-        [TYPE0][OP1] [1][0][1] = { 1,0,0 }, // B <-     D + 0
-        [TYPE0][OP1] [1][1][0] = { 1,1,0 }, // B <-         2
-        [TYPE0][OP1] [1][1][1] = { 1,1,0 }, // B <-         0
-        [TYPE0][OP2] [0][0][1] = { 0,0,1 }, // B <- C - D
-        [TYPE1][OP0] [0][0][1] = { 0,0,1 }, // B <- C * 2
-        [TYPE1][OP0] [0][1][1] = { 0,0,1 }, // B <- C * 0
-        [TYPE1][OP1] [0][0][1] = { 0,0,1 }, // B <- C | 2
-        [TYPE1][OP1] [1][0][0] = { 1,0,0 }, // B <-     2 + D
-        [TYPE1][OP1] [1][1][0] = { 1,1,0 }, // B <-         D
-        [TYPE1][OP1] [1][1][1] = { 1,1,0 }, // B <-         A
-        [TYPE2][OP0] [0][0][1] = { 0,0,1 }, // B <- 2 * C
-        [TYPE2][OP0] [1][0][1] = { 0,0,1 }, // B <- 0 * C
-        [TYPE2][OP1] [0][0][1] = { 0,0,1 }, // B <- 2 | C
-        [TYPE2][OP1] [1][0][0] = { 1,0,0 }, // B <-     C + D
-        [TYPE2][OP2] [0][0][1] = { 0,0,1 }, // B <- 2 - C
-        [TYPE2][OP2] [1][0][1] = { 0,0,1 }, // B <- 0 - C
-        [TYPE2][OP3] [1][0][1] = { 0,0,1 }, // B <- 0 + C
-        [TYPE3][OP1] [1][1][0] = { 1,1,0 }, // B <-         2
-    };
-
-    static const int asm_op_loc[TYPEx][3] = {
-        [TYPE0] = { 0, 1, 2 },
-        [TYPE1] = { 1, 0, 2 },
-        [TYPE2] = { 1, 2, 0 },
-        [TYPE3] = { 0, 2, 2 },
-    };
+    const int32_t imm   = g->p == 3 ? i->insn.u.type3.imm : i->insn.u.type012.imm;
+    const int     width = g->p == 3 ? MEDIUM_IMMEDIATE_BITWIDTH : SMALL_IMMEDIATE_BITWIDTH;
+    const int     op    = g->p == 3 ? OP_BITWISE_OR : t->op;
 
     const int fields[3] = { imm, t->y, t->x },
              *map       = asm_op_loc[g->p],
@@ -180,14 +178,7 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     snprintf(opstr, sizeof opstr, "%-2s", s6);
     s6 = opstr;
 
-    static const char * const fmts[] = {
-    //         c0s1c2 s3 c4sA s6  sBsFsCc9   //
-    //  [0] = "%c%c%c %s %c"     "0"   "%c", // [Z] <- [      0     ]
-        [1] = "%c%c%c %s %c%s"         "%c", // [Z] <- [X           ]
-        [2] = "%c%c%c %s %c%s %3s %s"  "%c", // [Z] <- [X >>> Y     ]
-        [3] = "%c%c%c %s %c%s %3s %s%s%s%c", // [Z] <- [X >>> Y + -0]
-    };
-    const char * const fmt = fmts[show1 + show2 + show3];
+    const char * const fmt = disasm_fmts[show1 + show2 + show3];
 
     int len = 0;
     #define C_(C,B,A) (((C) << 2) | ((B) << 1) | (A))
