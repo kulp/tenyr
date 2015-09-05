@@ -59,6 +59,46 @@ static int usage(const char *me)
     return 0;
 }
 
+static int process_stream(struct param_state *params, const struct format *f,
+    FILE *in, FILE *out, int flags)
+{
+    int rc = 0;
+
+    int disassemble = flags & ASM_DISASSEMBLE;
+    FILE *stream = disassemble ? in : out;
+    void *ud = NULL;
+
+    if (f->init)
+        if (f->init(stream, params, &ud))
+            fatal(0, "Error during initialisation for format '%s'", f->name);
+
+    if (disassemble) {
+        // This output might be consumed by a tool that needs a line at a time
+        setvbuf(out, NULL, _IOLBF, 0);
+        if (f->in) {
+            rc = do_disassembly(in, out, f, ud, flags);
+        } else {
+            fatal(0, "Format `%s' does not support disassembly", f->name);
+        }
+    } else {
+        if (f->out) {
+            rc = do_assembly(in, out, f, ud);
+        } else {
+            fatal(0, "Format `%s' does not support assembly", f->name);
+        }
+    }
+
+    if (!rc && f->emit)
+        rc |= f->emit(stream, &ud);
+
+    if (f->fini)
+        rc |= f->fini(stream, &ud);
+
+    fflush(out);
+
+    return rc;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = 0;
@@ -108,53 +148,32 @@ int main(int argc, char *argv[])
     if (optind >= argc)
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
 
-    for (int i = optind; i < argc; i++) {
-        FILE *in = NULL;
-        if (!out)
-            fatal(PRINT_ERRNO, "Failed to open output file");
+    // TODO don't open output until input has been validated
+    if (!out)
+        fatal(PRINT_ERRNO, "Failed to open output file");
 
-        if (!strcmp(argv[i], "-")) {
+    param_set(params, "assembling", (int[]){ !disassemble }, 1, false, false);
+
+    for (int i = optind; i < argc; i++) {
+        const char *infname = argv[i];
+
+        FILE *in = NULL;
+
+        if (!strcmp(infname, "-")) {
             in = stdin;
         } else {
-            in = fopen(argv[i], "rb");
+            in = fopen(infname, "rb");
             if (!in)
-                fatal(PRINT_ERRNO, "Failed to open input file `%s'", argv[i]);
+                fatal(PRINT_ERRNO, "Failed to open input file `%s'", infname);
         }
 
-        param_set(params, "assembling", (int[]){ !disassemble }, 1, false, false);
-        void *ud = NULL;
-        FILE *stream = disassemble ? in : out;
-        if (f->init)
-            if (f->init(stream, params, &ud))
-                fatal(0, "Error during initialisation for format '%s'", f->name);
-
-        if (disassemble) {
-            // This output might be consumed by a tool that needs a line at a time
-            setvbuf(out, NULL, _IOLBF, 0);
-            if (f->in) {
-                rc = do_disassembly(in, out, f, ud, flags);
-            } else {
-                fatal(0, "Format `%s' does not support disassembly", f->name);
-            }
-        } else {
-            if (f->out) {
-                rc = do_assembly(in, out, f, ud);
-            } else {
-                fatal(0, "Format `%s' does not support assembly", f->name);
-            }
-        }
-
-        if (!rc && f->emit)
-            rc |= f->emit(stream, &ud);
-        else if (rc)
-            remove(outfname); // race condition ?
-
-        if (f->fini)
-            rc |= f->fini(stream, &ud);
-
-        fflush(out);
-
+        if (disassemble)
+            flags |= ASM_DISASSEMBLE;
+        rc = process_stream(params, f, in, out, flags);
         fclose(in);
+
+        if (rc)
+            remove(outfname); // race condition ?
     }
 
     fclose(out);

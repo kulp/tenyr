@@ -26,11 +26,12 @@ struct format {
 
 int find_format_by_name(const void *_a, const void *_b);
 
-#define ASM_AS_INSN     1
-#define ASM_AS_DATA     2
-#define ASM_AS_CHAR     4
-#define ASM_VERBOSE     8
-#define ASM_QUIET      16
+#define ASM_AS_INSN     (1 << 0)
+#define ASM_AS_DATA     (1 << 1)
+#define ASM_AS_CHAR     (1 << 2)
+#define ASM_VERBOSE     (1 << 3)
+#define ASM_QUIET       (1 << 4)
+#define ASM_DISASSEMBLE (1 << 5)
 
 // returns number of characters printed
 int print_disassembly(FILE *out, const struct element *i, int flags);
