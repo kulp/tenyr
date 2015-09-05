@@ -195,33 +195,18 @@ int ce_eval(struct parse_data *pd, struct element *context,
     }
 }
 
-static void ce_free(struct const_expr *ce, int recurse)
+static void ce_free(struct const_expr *ce)
 {
     if (!ce)
         return;
 
-    if (recurse)
-        switch (ce->type) {
-            case CE_EXT:
-            case CE_SYM:
-                if (ce->symbol && ce->symbol->ce) {
-                    ce_free(ce->symbol->ce, recurse);
-                    ce->symbol->ce = NULL;
-                }
-                break;
-            case CE_ICI:
-                break;
-            case CE_IMM:
-                free(ce->left);
-                break;
-            case CE_OP2:
-                ce_free(ce->right, recurse); /* FALLTHROUGH */
-            case CE_OP1:
-                ce_free(ce->left, recurse);
-                break;
-            default:
-                fatal(0, "Unrecognised const_expr type %d", ce->type);
-        }
+    if (ce->symbol) {
+        ce_free(ce->symbol->ce);
+        ce->symbol->ce = NULL;
+    }
+
+    ce_free(ce->right);
+    ce_free(ce->left);
 
     free(ce);
 }
@@ -249,7 +234,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
             uint32_t mask = -1ll << r->width;
             *r->dest &= mask;
             *r->dest |= result & ~mask;
-            ce_free(ce, 1);
+            ce_free(ce);
         } else {
             fatal(0, "Error while fixing up deferred expressions");
             // TODO print out information about the deferred expression
@@ -308,7 +293,7 @@ static int assembly_cleanup(struct parse_data *pd)
 
     list_foreach(symbol_list, Node, pd->symbols) {
         if (Node->symbol) {
-            ce_free(Node->symbol->ce, 1);
+            ce_free(Node->symbol->ce);
             free(Node->symbol->name);
         }
         free(Node->symbol);
