@@ -16,11 +16,6 @@
 #include <string.h>
 #include <strings.h>
 
-#define version() "tas version " STR(BUILD_NAME)
-
-static int add_relocation(struct parse_data *pd, const char *name,
-        struct element *insn, int width, int flags);
-
 struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
     list_foreach(symbol_list, elt, list)
@@ -177,14 +172,13 @@ int ce_eval(struct parse_data *pd, struct element *context,
                     case LSH : *result = left << right; return 1;
                     case RSHA: *result = left >> right; return 1;
                     case RSH : *result = ((uint32_t)left) >> right; return 1;
-                    case '/' : {
-                        if (right != 0)
-                            *result = left / right;
-                        else
+                    case '/' :
+                        if (right == 0)
                             fatal(0, "Constant expression attempted %d/%d", left, right);
+                        *result = left / right;
                         return 1;
-                    }
-                    default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
+                    default:
+                        fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
                 }
             }
             return 0;
