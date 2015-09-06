@@ -346,29 +346,28 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
     if (check_symbols(pd->symbols))
         fatal(0, "Error in symbol processing : check for duplicate symbols");
 
-    if (!fixup_deferred_exprs(pd)) {
-        list_foreach(element_list, Node, pd->top)
-            // if !Node->elem, it's a placeholder or some kind of dummy
-            if (Node->elem)
-                f->out(out, Node->elem, ud);
-
-        if (f->sym) {
-            list_foreach(symbol_list, Node, pd->symbols) {
-                int flags = 0;
-                struct symbol *sym = Node->symbol;
-                if (sym->ce && (sym->ce->flags & IS_DEFERRED) == 0)
-                    flags |= RLC_ABSOLUTE;
-
-                f->sym(out, sym, flags, ud);
-            }
-        }
-
-        if (f->reloc)
-            list_foreach(reloc_list, Node, pd->relocs)
-                f->reloc(out, &Node->reloc, ud);
-    } else {
+    if (fixup_deferred_exprs(pd))
         fatal(0, "Error while fixing up deferred expressions");
+
+    list_foreach(element_list, Node, pd->top)
+        // if !Node->elem, it's a placeholder or some kind of dummy
+        if (Node->elem)
+            f->out(out, Node->elem, ud);
+
+    if (f->sym) {
+        list_foreach(symbol_list, Node, pd->symbols) {
+            int flags = 0;
+            struct symbol *sym = Node->symbol;
+            if (sym->ce && (sym->ce->flags & IS_DEFERRED) == 0)
+                flags |= RLC_ABSOLUTE;
+
+            f->sym(out, sym, flags, ud);
+        }
     }
+
+    if (f->reloc)
+        list_foreach(reloc_list, Node, pd->relocs)
+            f->reloc(out, &Node->reloc, ud);
 
     assembly_cleanup(pd);
 
