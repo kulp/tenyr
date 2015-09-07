@@ -56,6 +56,9 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 static int add_relocation(struct parse_data *pd, const char *name,
         struct element *insn, int width, int flags)
 {
+    if (!insn)
+        return 0;
+
     struct reloc_list *node = calloc(1, sizeof *node);
 
     if (name) {
@@ -69,9 +72,7 @@ static int add_relocation(struct parse_data *pd, const char *name,
 
     node->next = pd->relocs;
     pd->relocs = node;
-
-    if (insn)
-        insn->reloc = &node->reloc;
+    insn->reloc = &node->reloc;
 
     return 1;
 }
