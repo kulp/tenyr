@@ -37,8 +37,7 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
                     fatal(0, "Bad use before definition of symbol `%s'", name);
 
                 struct element_list **prev = symbol->ce->deferred;
-                struct element *c = (prev && *prev) ? (*prev)->elem : NULL;
-                return ce_eval(pd, c, symbol->ce, 0, 0, result);
+                return ce_eval(pd, (*prev)->elem, symbol->ce, 0, 0, result);
             } else {
                 *result = symbol->reladdr;
             }
@@ -53,7 +52,7 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 }
 
 // add_relocation returns 1 on success
-static int add_relocation(struct parse_data *pd, const char *name,
+static int add_relocation(struct reloc_list **relocs, const char *name,
         struct element *insn, int width, int flags)
 {
     if (!insn)
@@ -70,38 +69,21 @@ static int add_relocation(struct parse_data *pd, const char *name,
     node->reloc.width = width;
     node->reloc.flags = flags;
 
-    node->next = pd->relocs;
-    pd->relocs = node;
+    node->next = *relocs;
+    *relocs = node;
     insn->reloc = &node->reloc;
 
     return 1;
 }
 
-static int sym_reloc_handler(struct parse_data *pd, struct element *context,
+static int sym_reloc_handler(struct reloc_list **relocs, struct element *context,
         int flags, struct const_expr *ce, int width)
 {
-    int rlc_flags = 0;
-
-    if (flags & RHS_NEGATE)
-        rlc_flags |= RLC_NEGATE;
-
-    switch (ce->type) {
-        case CE_SYM:
-        case CE_EXT:
-            if (ce->symbol && ce->symbol->ce) {
-                return context ? add_relocation(pd, NULL, context, width, rlc_flags) : 0;
-            } else if (ce->type == CE_EXT) {
-                const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
-                const char *n = (flags & NO_NAMED_RELOC) ? NULL : name;
-                return add_relocation(pd, n, context, width, rlc_flags);
-            }
-        case CE_ICI:
-            return add_relocation(pd, NULL, context, width, rlc_flags);
-        default:
-            return 0;
-    }
-
-    return 0;
+    int rlc_flags    = (flags & RHS_NEGATE    ) ? RLC_NEGATE : 0;
+    const char *name = (flags & NO_NAMED_RELOC) ? NULL :
+                       ce->symbol               ? ce->symbol->name :
+                                                  ce->symbolname;
+    return add_relocation(relocs, name, context, width, rlc_flags);
 }
 
 int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
@@ -135,29 +117,30 @@ int ce_eval(struct parse_data *pd, struct element *context,
                     return 0; // cannot evaluate yet
                 struct element *dc = deferred->elem;
                 return ce_eval(pd, dc, ce->symbol->ce, flags, width, result)
-                    || (relocate ? sym_reloc_handler(pd, dc, flags, ce, width) : 0);
+                    || (relocate ? sym_reloc_handler(&pd->relocs, dc, flags, ce, width) : 0);
             } else {
                 const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
                 int found   = symbol_lookup(pd, pd->symbols, name, result);
                 int hflags  = flags | (found ? NO_NAMED_RELOC : 0);
-                int handled = relocate ? sym_reloc_handler(pd, context, hflags, ce, width) : 0;
+                int handled = relocate ? sym_reloc_handler(&pd->relocs, context, hflags, ce, width) : 0;
                 return found || handled;
             }
         case CE_ICI:
-            *result = context ? context->insn.reladdr : 0;
-            if (relocate)
-                return sym_reloc_handler(pd, context, flags, ce, width);
-            return !!context;
-        case CE_IMM: *result = ce->i; return 1;
+            if (!context)
+                return 0;
+            *result = context->insn.reladdr;
+            return !relocate || sym_reloc_handler(&pd->relocs, context, flags, ce, width);
+        case CE_IMM:
+            *result = ce->i;
+            return 1;
         case CE_OP1:
-            if (ce_eval(pd, context, ce->left, flags, width, result)) {
-                switch (ce->op) {
-                    case '-': *result = -*result; return 1;
-                    case '~': *result = ~*result; return 1;
-                    default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
-                }
+            if (!ce_eval(pd, context, ce->left, flags, width, result))
+                return 0;
+            switch (ce->op) {
+                case '-': *result = -*result; return 1;
+                case '~': *result = ~*result; return 1;
+                default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
             }
-            return 0;
         case CE_OP2: {
             int rhsflags = flags;
             if (ce->op == '-')

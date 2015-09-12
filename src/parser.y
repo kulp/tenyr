@@ -140,8 +140,9 @@ top
         {   pd->top = NULL; }
     | opt_terminators program
         {   // Allocate a phantom entry to provide a final context element
-            *(pd->top ? &pd->top->tail->next : &pd->top) =
-                calloc(1, sizeof *pd->top); }
+            struct const_expr zs = { .type = CE_IMM, .i = 0 };
+            struct element_list **el = pd->top ? &pd->top->tail->next : &pd->top;
+            *el = make_zeros(pd, &yylloc, &zs); }
 
 opt_nl
     : opt_nl '\n'
