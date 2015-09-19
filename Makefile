@@ -85,7 +85,7 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BU
 # don't complain about unused values that we might use in asserts
 tas.o asm.o tsim.o sim.o simif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-value
 # don't complain about unused state
-asm.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
+asm.o asmif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
 $(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o $(common_OBJECTS:%.o=%,dy.o)
 

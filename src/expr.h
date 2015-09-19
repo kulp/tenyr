@@ -5,7 +5,7 @@
 #include "parser.h"
 
 struct const_expr {
-    enum const_expr_type { CE_BAD, CE_OP1, CE_OP2, CE_SYM, CE_EXT, CE_IMM, CE_ICI } type;
+    enum const_expr_type { CE_BAD, CE_OP1, CE_OP2, CE_SYM, CE_EXT, CE_IMM, CE_ICI, CE_max } type;
     int32_t i;
     char symbolname[SYMBOL_LEN];
     int op;

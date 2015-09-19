@@ -97,82 +97,119 @@ int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
     return rc;
 }
 
+static int ce_eval_sym(struct parse_data *pd, struct element *context,
+        struct const_expr *ce, int flags, int width, int32_t *result)
+{
+    int relocate = (flags & DO_RELOCATION) != 0;
+    if (ce->symbol && ce->symbol->ce) {
+        struct element_list *deferred = *ce->symbol->ce->deferred;
+        if (!deferred)
+            return 0; // cannot evaluate yet
+        struct element *dc = deferred->elem;
+        return ce_eval(pd, dc, ce->symbol->ce, flags, width, result)
+            || (relocate ? sym_reloc_handler(&pd->relocs, dc, flags, ce, width) : 0);
+    } else {
+        const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
+        int found   = symbol_lookup(pd, pd->symbols, name, result);
+        int hflags  = flags | (found ? NO_NAMED_RELOC : 0);
+        int handled = relocate ? sym_reloc_handler(&pd->relocs, context, hflags, ce, width) : 0;
+        return found || handled;
+    }
+}
+
+static int ce_eval_op2(struct parse_data *pd, struct element *context,
+        struct const_expr *ce, int flags, int width, int32_t *result)
+{
+    int32_t left, right;
+    int rhsflags = flags;
+    if (ce->op == '-')
+        rhsflags ^= RHS_NEGATE;
+    if (ce_eval(pd, context, ce->left ,    flags, width, &left ) &&
+        ce_eval(pd, context, ce->right, rhsflags, width, &right))
+    {
+        switch (ce->op) {
+            case '+' : *result = left +  right; return 1;
+            case '-' : *result = left -  right; return 1;
+            case '*' : *result = left *  right; return 1;
+            case '^' : *result = left ^  right; return 1;
+            case '&' : *result = left &  right; return 1;
+            case '|' : *result = left |  right; return 1;
+            case LSH : *result = left << right; return 1;
+            case RSHA: *result = left >> right; return 1;
+            case RSH : *result = ((uint32_t)left) >> right; return 1;
+            case '/' :
+                if (right == 0)
+                    fatal(0, "Constant expression attempted %d/%d", left, right);
+                *result = left / right;
+                return 1;
+            default:
+                fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
+        }
+    }
+    return 0;
+}
+
+static int ce_eval_op1(struct parse_data *pd, struct element *context,
+        struct const_expr *ce, int flags, int width, int32_t *result)
+{
+    if (!ce_eval(pd, context, ce->left, flags, width, result))
+        return 0;
+    switch (ce->op) {
+        case '-': *result = -*result; return 1;
+        case '~': *result = ~*result; return 1;
+        default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
+    }
+}
+
+static int ce_eval_ici(struct parse_data *pd, struct element *context,
+        struct const_expr *ce, int flags, int width, int32_t *result)
+{
+    int relocate = (flags & DO_RELOCATION) != 0;
+    if (!context)
+        return 0;
+    *result = context->insn.reladdr;
+    return !relocate || sym_reloc_handler(&pd->relocs, context, flags, ce, width);
+}
+
+static int ce_eval_imm(struct parse_data *pd, struct element *context,
+        struct const_expr *ce, int flags, int width, int32_t *result)
+{
+    *result = ce->i;
+    return 1;
+}
+
+static int ce_eval_bad(struct parse_data *pd, struct element *context,
+        struct const_expr *ce, int flags, int width, int32_t *result)
+{
+    fatal(0, "Bad const_expr type %d", ce->type);
+}
+
+typedef int ce_evaluator(struct parse_data *pd, struct element *context,
+        struct const_expr *ce, int flags, int width, int32_t *result);
+static ce_evaluator * const ce_eval_dispatch[CE_max] = {
+    [CE_BAD] = ce_eval_bad,
+
+    [CE_OP1] = ce_eval_op1,
+    [CE_OP2] = ce_eval_op2,
+    [CE_SYM] = ce_eval_sym,
+    [CE_EXT] = ce_eval_sym,
+    [CE_IMM] = ce_eval_imm,
+    [CE_ICI] = ce_eval_ici,
+};
+
 // ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
 int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int32_t *result)
 {
-    int32_t left, right;
-    int relocate = (flags & DO_RELOCATION) != 0;
     if (flags & DONE_EVAL) {
         *result = ce->i;
         return 1; // No need to re-evaluate
     }
 
-    switch (ce->type) {
-        case CE_SYM:
-        case CE_EXT:
-            if (ce->symbol && ce->symbol->ce) {
-                struct element_list *deferred = *ce->symbol->ce->deferred;
-                if (!deferred)
-                    return 0; // cannot evaluate yet
-                struct element *dc = deferred->elem;
-                return ce_eval(pd, dc, ce->symbol->ce, flags, width, result)
-                    || (relocate ? sym_reloc_handler(&pd->relocs, dc, flags, ce, width) : 0);
-            } else {
-                const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
-                int found   = symbol_lookup(pd, pd->symbols, name, result);
-                int hflags  = flags | (found ? NO_NAMED_RELOC : 0);
-                int handled = relocate ? sym_reloc_handler(&pd->relocs, context, hflags, ce, width) : 0;
-                return found || handled;
-            }
-        case CE_ICI:
-            if (!context)
-                return 0;
-            *result = context->insn.reladdr;
-            return !relocate || sym_reloc_handler(&pd->relocs, context, flags, ce, width);
-        case CE_IMM:
-            *result = ce->i;
-            return 1;
-        case CE_OP1:
-            if (!ce_eval(pd, context, ce->left, flags, width, result))
-                return 0;
-            switch (ce->op) {
-                case '-': *result = -*result; return 1;
-                case '~': *result = ~*result; return 1;
-                default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
-            }
-        case CE_OP2: {
-            int rhsflags = flags;
-            if (ce->op == '-')
-                rhsflags ^= RHS_NEGATE;
-            if (ce_eval(pd, context, ce->left ,    flags, width, &left ) &&
-                ce_eval(pd, context, ce->right, rhsflags, width, &right))
-            {
-                switch (ce->op) {
-                    case '+' : *result = left +  right; return 1;
-                    case '-' : *result = left -  right; return 1;
-                    case '*' : *result = left *  right; return 1;
-                    case '^' : *result = left ^  right; return 1;
-                    case '&' : *result = left &  right; return 1;
-                    case '|' : *result = left |  right; return 1;
-                    case LSH : *result = left << right; return 1;
-                    case RSHA: *result = left >> right; return 1;
-                    case RSH : *result = ((uint32_t)left) >> right; return 1;
-                    case '/' :
-                        if (right == 0)
-                            fatal(0, "Constant expression attempted %d/%d", left, right);
-                        *result = left / right;
-                        return 1;
-                    default:
-                        fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
-                }
-            }
-            return 0;
-        }
-        default:
-            fatal(0, "Unrecognised const_expr type %d", ce->type);
-            return 0;
-    }
+    if (ce->type >= CE_max)
+        fatal(0, "Unrecognised const_expr type %d", ce->type);
+
+    return ce_eval_dispatch[ce->type](pd, context, ce, flags, width, result);
 }
 
 static void ce_free(struct const_expr *ce)
