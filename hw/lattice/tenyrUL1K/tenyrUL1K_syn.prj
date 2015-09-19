@@ -1,0 +1,72 @@
+#--  Synopsys, Inc.
+#--  Version J-2015.03L
+#--  Project file /mnt/kiri-kulp/Documents/Code/C/tenyr/hw/lattice/tenyrUL1K/tenyrUL1K_syn.prj
+#--  Written on Sat Sep 19 09:01:59 2015
+
+
+#project files
+
+
+
+add_file -verilog -lib work "../../verilog/common.vh" 
+add_file -verilog -lib work "../../verilog/gpio.v" 
+add_file -verilog -lib work "../../verilog/hex2segments.v" 
+add_file -verilog -lib work "../../verilog/mmr.v" 
+add_file -verilog -lib work "../../verilog/ram.v" 
+add_file -verilog -lib work "../../verilog/seg7.v" 
+add_file -verilog -lib work "../../verilog/tenyr.v" 
+add_file -verilog -lib work "../../verilog/top.v" 
+add_file -verilog -lib work "../clocks.v" 
+add_file -verilog -lib work "../../../3rdparty/wb_intercon/rtl/verilog/wb_mux.v" 
+#implementation: "tenyrUL1K_Implmnt"
+impl -add tenyrUL1K_Implmnt -type fpga
+
+#
+#implementation attributes
+
+set_option -vlog_std v2001
+set_option -project_relative_includes 1
+set_option -include_path {../verilog/}
+
+#device options
+set_option -technology SBTiCE40UL
+set_option -part iCE40UL1K
+set_option -package CM36A
+set_option -speed_grade 
+set_option -part_companion ""
+
+#compilation/mapping options
+
+# mapper_options
+set_option -frequency auto
+set_option -write_verilog 0
+set_option -write_vhdl 0
+set_option -srs_instrumentation 1
+
+# Lattice iCE40UL
+set_option -maxfan 10000
+set_option -rw_check_on_ram 0
+set_option -disable_io_insertion 0
+set_option -pipe 1
+set_option -retiming 0
+set_option -update_models_cp 0
+set_option -fix_gated_and_generated_clocks 1
+set_option -run_prop_extract 1
+
+# sequential_optimization_options
+set_option -symbolic_fsm_compiler 1
+
+# Compiler Options
+set_option -compiler_compatible 0
+set_option -resource_sharing 1
+
+# Compiler Options
+set_option -auto_infer_blackbox 0
+
+#automatic place and route (vendor) options
+set_option -write_apr_constraint 1
+
+#set result format/file last
+project -result_file "tenyrUL1K_Implmnt/tenyrUL1K.edf"
+impl -active tenyrUL1K_Implmnt
+project -run synthesis -clean
