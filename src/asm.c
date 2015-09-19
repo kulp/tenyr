@@ -87,9 +87,9 @@ static const char * const disasm_fmts[] = {
     [3] = "%c%c%c %s %c%s %3s %s%s%s%c", // [Z] <- [X >>> Y + -0]
 };
 
-static int is_printable(unsigned int ch, size_t len, char buf[len])
+static int is_printable(unsigned int ch, char buf[3])
 {
-    memset(buf, 0, len);
+    buf[1] = buf[2] = '\0';
 
     switch (ch) {
         case ' ' : buf[0] = ' ' ;                return 1;
@@ -111,9 +111,9 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
         return fprintf(out, ".word 0x%08x", i->insn.u.word);
 
     if (flags & ASM_AS_CHAR) {
-        char buf[10];
-        if (is_printable(i->insn.u.word, sizeof buf, buf))
-            return fprintf(out, ".word '%s'%*s", buf, (int)(2 - strlen(buf)), "");
+        char buf[3];
+        if (is_printable(i->insn.u.word, buf))
+            return fprintf(out, ".word '%s'%*s", buf, buf[1] == '\0', "");
         else
             return fprintf(out, "          ");
     }
