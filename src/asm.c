@@ -178,21 +178,19 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     snprintf(opstr, sizeof opstr, "%-2s", s6);
     s6 = opstr;
 
-    const char * const fmt = disasm_fmts[show1 + show2 + show3];
-
-    int len = 0;
     #define C_(C,B,A) (((C) << 2) | ((B) << 1) | (A))
     switch (C_(show1,show2,show3)) {
+        #define PUT(...) \
+            fprintf(out,disasm_fmts[show1 + show2 + show3],__VA_ARGS__)
         // Some combinations are never generated
-        #define PUT(...) (len = fprintf(out, fmt, __VA_ARGS__))
-    //  case C_(0,0,0): PUT(c0,c1,c2,s3,c4,               c9); break;
-        case C_(0,0,1): PUT(c0,c1,c2,s3,c4,            sC,c9); break;
-    //  case C_(0,1,0): PUT(c0,c1,c2,s3,c4,      sB,      c9); break;
-        case C_(0,1,1): PUT(c0,c1,c2,s3,c4,sB,sF,      sC,c9); break;
-    //  case C_(1,0,0): PUT(c0,c1,c2,s3,c4,sA,            c9); break;
-    //  case C_(1,0,1): PUT(c0,c1,c2,s3,c4,sA,sF,      sC,c9); break;
-        case C_(1,1,0): PUT(c0,c1,c2,s3,c4,sA,s6,sB,      c9); break;
-        case C_(1,1,1): PUT(c0,c1,c2,s3,c4,sA,s6,sB,sF,sC,c9); break;
+    //  case C_(0,0,0): return PUT(c0,c1,c2,s3,c4,               c9);
+        case C_(0,0,1): return PUT(c0,c1,c2,s3,c4,            sC,c9);
+    //  case C_(0,1,0): return PUT(c0,c1,c2,s3,c4,      sB,      c9);
+        case C_(0,1,1): return PUT(c0,c1,c2,s3,c4,sB,sF,      sC,c9);
+    //  case C_(1,0,0): return PUT(c0,c1,c2,s3,c4,sA,            c9);
+    //  case C_(1,0,1): return PUT(c0,c1,c2,s3,c4,sA,sF,      sC,c9);
+        case C_(1,1,0): return PUT(c0,c1,c2,s3,c4,sA,s6,sB,      c9);
+        case C_(1,1,1): return PUT(c0,c1,c2,s3,c4,sA,s6,sB,sF,sC,c9);
         #undef PUT
 
         default:
@@ -200,8 +198,6 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
                     show1,show2,show3);
     }
     #undef C_
-
-    return len;
 }
 
 int print_registers(FILE *out, const int32_t regs[16])
