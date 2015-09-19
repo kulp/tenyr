@@ -2,9 +2,8 @@
 `timescale 1ns/10ps
 
 module BlockRAM(
-    input clka, ena, wea, clkb, enb, web, output reg acka, ackb,
-    input[PBITS-1:0] addra, input[DBITS-1:0] dina, output reg[DBITS-1:0] douta,
-    input[PBITS-1:0] addrb, input[DBITS-1:0] dinb, output reg[DBITS-1:0] doutb
+    clka, ena, wea, clkb, enb, web, acka, ackb,
+    addra, dina, douta, addrb, dinb, doutb
 );
 
     parameter INIT     = 0;
@@ -16,6 +15,12 @@ module BlockRAM(
     parameter DBITS    = 32;
     parameter SIZE     = 1 << ABITS;
     parameter OFFSET   = 0;
+
+    input  wire            clka, ena, wea, clkb, enb, web;
+    output reg             acka, ackb;
+    input  wire[PBITS-1:0] addra, addrb;
+    input  wire[DBITS-1:0] dina , dinb;
+    output reg [DBITS-1:0] douta, doutb;
 
     reg[DBITS-1:0] store[SIZE - 1:0];
 

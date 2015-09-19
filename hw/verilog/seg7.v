@@ -2,11 +2,16 @@
 `timescale 1ns/10ps
 
 // basic 7-segment driver
-module Seg7(input clk, strobe, rw, reset, input[31:0] addr, d_in,
-            output reg[31:0] d_out, output[7:0] seg, output[DIGITS-1:0] an);
+module Seg7(clk, strobe, rw, reset, addr, d_in, d_out, seg, an);
 
     parameter       CNT_BITS = 16 + 2; // 80MHz clk => 2ms full screen refresh
     localparam      DIGITS   = 4;
+
+    input wire              clk, strobe, rw, reset;
+    input wire [31:0]       addr, d_in;
+    output reg [31:0]       d_out;
+    output wire[ 7:0]       seg;
+    output wire[DIGITS-1:0] an;
 
     reg[CNT_BITS-1:0] counter = 0;
     reg[DIGITS*4-1:0] store;

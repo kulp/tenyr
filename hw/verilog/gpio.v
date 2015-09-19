@@ -1,9 +1,7 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module Gpio(input clk, strobe, rw, reset,
-            input[31:0] addr, input[31:0] data_i, output reg[31:0] data_o,
-            inout[COUNT-1:0] gpio);
+module Gpio(clk, strobe, rw, reset, addr, data_i, data_o, gpio);
 
     // four registers
     // 0 : enable (1 for enable)
@@ -12,6 +10,11 @@ module Gpio(input clk, strobe, rw, reset,
     // 3 : write state (1 for high)
     parameter COUNT = 32;
     localparam SIZE = 4;
+
+    input  wire            clk, strobe, rw, reset;
+    input  wire[31:0]      addr, data_i;
+    output reg [31:0]      data_o;
+    inout  wire[COUNT-1:0] gpio;
 
     localparam EN = 0, RW = 1, RS = 2, WS = 3;
 
