@@ -182,6 +182,7 @@ static int ce_eval_bad(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int32_t *result)
 {
     fatal(0, "Bad const_expr type %d", ce->type);
+    return -1; // never reached
 }
 
 typedef int ce_evaluator(struct parse_data *pd, struct element *context,
