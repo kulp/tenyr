@@ -14,3 +14,6 @@
 	path = 3rdparty/wb_intercon
 	url = https://github.com/kulp/wb_intercon.git
 	branch = tenyr
+[submodule "3rdparty/ps2core"]
+	path = 3rdparty/ps2core
+	url = https://github.com/kulp/ps2core.git
