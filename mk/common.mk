@@ -72,11 +72,10 @@ else
  PEDANTIC_FLAGS ?= -Werror -pedantic-errors
 endif
 
-ifneq ($(GCOV),)
- CFLAGS   += --coverage -O0
- CXXFLAGS += --coverage -O0
- LDFLAGS  += --coverage -O0
-endif
+COVERAGE_FLAGS = $(if $(GCOV),--coverage -O0)
+CFLAGS   += $(COVERAGE_FLAGS)
+CXXFLAGS += $(COVERAGE_FLAGS)
+LDFLAGS  += $(COVERAGE_FLAGS)
 
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
