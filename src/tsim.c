@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
         fatal(DISPLAY_USAGE, "More than one input file specified on the command line");
     }
 
-    FILE *in = stdin;
+    FILE *in;
 
     if (!strcmp(argv[optind], "-")) {
         in = stdin;

@@ -105,7 +105,6 @@ int main(int argc, char *argv[])
     volatile int disassemble = 0;
     volatile int flags = 0;
 
-    volatile int opened = 0;
     char outfname[1044];
     FILE * volatile out = stdout;
 
@@ -115,7 +114,7 @@ int main(int argc, char *argv[])
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
-        if (opened && out)
+        if (out != stdout)
             // Technically there is a race condition here ; we would like to be
             // able to remove a file by a stream connected to it, but there is
             // apparently no portable way to do this.
@@ -130,7 +129,7 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'd': disassemble = 1; break;
             case 'f': if (find_format(optarg, &f)) usage(argv[0]), exit(EXIT_FAILURE); break;
-            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname - 1), "wb"); opened = 1; break;
+            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname - 1), "wb"); break;
             case 'p': param_add(params, optarg); break;
             case 'q': flags |= ASM_QUIET; break;
             case 'v': flags |= ASM_VERBOSE; break;

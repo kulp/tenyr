@@ -87,8 +87,8 @@ int run_instruction(struct sim_state *s, const struct element *i, void *run_data
     (void)run_data;
     int32_t * const ip = &s->machine.regs[15];
     int32_t rhs = 0;
-    uint32_t Y, imm, value;
-    int op;
+    uint32_t Y = 0, imm = 0, value = 0;
+    int op = OP_BITWISE_OR;
 
     ++*ip;
 

@@ -120,7 +120,7 @@ static int ce_eval_sym(struct parse_data *pd, struct element *context,
 static int ce_eval_op2(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int32_t *result)
 {
-    int32_t left, right;
+    int32_t left = 0, right = 0;
     int rhsflags = flags;
     if (ce->op == '-')
         rhsflags ^= RHS_NEGATE;
@@ -296,7 +296,6 @@ static int check_symbols(struct symbol_list *symbols)
     list_foreach(symbol_list, Node, symbols) {
         if (!tree) break;
         tdelete(Node->symbol, &tree, (cmp*)strcmp);
-        Node = Node->next;
     }
 
     return rc;

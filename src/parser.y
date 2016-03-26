@@ -568,7 +568,7 @@ static struct element_list *make_utf32(struct cstr *cs)
     struct element_list *result = NULL, **rp = &result;
 
     struct cstr *p = cs;
-    struct element_list *t = *rp;
+    struct element_list *t;
 
     while (p) {
         char *h = p->head;
