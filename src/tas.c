@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     volatile int disassemble = 0;
     volatile int flags = 0;
 
-    char outfname[1044];
+    char outfname[1024] = { 0 };
     FILE * volatile out = stdout;
 
     struct param_state *params = NULL;
