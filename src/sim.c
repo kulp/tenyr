@@ -28,7 +28,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     #define Ps(x) ((( int32_t*)p)[x])
     #define Pu(x) (((uint32_t*)p)[x])
     uint32_t pack2 = Pu(2) << 12;
-    uint32_t pack1 = Pu(1) & ~(-1 << 12);
+    uint32_t pack1 = Pu(1) & ~(-1UL << 12);
      int32_t pack0 = Ps(0);
 
     switch (op) {
