@@ -94,13 +94,13 @@ int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_data, void 
         }
     }
 
-    struct ops_state ops_state = { 0 }, *o = &ops_state;
+    struct ops_state ops_state = { .ops.post_insn = 0 }, *o = &ops_state;
     o->js = js;
     o->ops.pre_insn = ops->pre_insn;
     o->ops.post_insn = ops->post_insn;
     o->nested_ops_data = ops_data;
 
-    struct run_ops wrappers = { 0 };
+    struct run_ops wrappers = { .post_insn = 0 };
     wrappers.pre_insn = pre_insn_hook;
     wrappers.post_insn = post_insn_hook;
 
