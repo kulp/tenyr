@@ -123,6 +123,8 @@ illegal             { return ILLEGAL; }
 "/*"                PUSH(comment);
 <comment>{
     "*/"            POP; /* pop comment, reveal INITIAL */
+    <<EOF>>         { tenyr_error(yylloc, yyextra, "End of file reached while inside comment. "
+                        "Did you forget `*/' ?"); POP; }
     .               ; /* ignored content */
 }
 
