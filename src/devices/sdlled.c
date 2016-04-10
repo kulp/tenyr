@@ -195,7 +195,7 @@ static int sdlled_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     if (op == OP_WRITE) {
         state->data[addr - SDLLED_BASE] = *data;
         handle_update(state);
-    } else if (op == OP_INSN_READ || op == OP_DATA_READ) {
+    } else if (op == OP_DATA_READ) {
         int32_t off = addr - SDLLED_BASE;
         switch (off) {
             case 0: *data = state->data[off] & 0x0000ffff; break;
