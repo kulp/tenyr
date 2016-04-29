@@ -2,12 +2,11 @@ ECHO := $(shell which echo)
 EMPTY :=#
 
 ifeq ($V,1)
- SILENCE =
  MAKESTEP = true
 else
  S = -s
- SILENCE = @
  MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+.SILENT:
 endif
 
 export MAKESTEP

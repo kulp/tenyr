@@ -62,11 +62,11 @@ endif
 
 %$(EXE_SUFFIX): em%.o
 	@$(MAKESTEP) "[ LD ] $@"
-	$(SILENCE)$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 %.js: %.bc
 	@$(MAKESTEP) "[ EM-LD ] $@"
-	$(SILENCE)$(EMCC) $(EMCCFLAGS_LD) $< $(LDLIBS) -o $@
+	$(EMCC) $(EMCCFLAGS_LD) $< $(LDLIBS) -o $@
 
 ################################################################################
 # Specific rules

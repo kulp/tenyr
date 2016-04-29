@@ -59,7 +59,7 @@ run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAU
                    #
 
 run_%: %.texe tenyr
-	$(SILENCE)$(IVERILOG)vvp -n -M$(BUILDDIR) tenyr +LOAD=$< $(PLUSARGS)
+	$(IVERILOG)vvp -n -M$(BUILDDIR) tenyr +LOAD=$< $(PLUSARGS)
 
 ##############################################################################
 
@@ -69,10 +69,10 @@ $(GEN_V): VFLAGS += -DPUT='$$$(SIM_PUT_$*)' -DGET='$$$(SIM_GET_$*)' -DSTEM='$*'
 $(GEN_V): VFLAGS += -E
 $(GEN_V): %.v: ../verilog/sim/simwrap.v
 	@$(MAKESTEP) "[ IVERILOG -E ] $@"
-	$(SILENCE)$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+	$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 %: %.v
 	@$(MAKESTEP) "[ IVERILOG ] $@"
-	$(SILENCE)$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+	$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 

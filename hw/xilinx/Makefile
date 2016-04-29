@@ -86,11 +86,11 @@ baremetal.memh: gen/$(DEFAULTSRC).memh
 ifeq ($(BURNTOOL),djtgcfg)
 burn: $(DESIGN)_$(LOADSRC).bit
 	@$(MAKESTEP) $(basename $<): Programming ...
-	$(SILENCE)djtgcfg prog -d Nexys3 -f $< -i 0
+	djtgcfg prog -d Nexys3 -f $< -i 0
 else
 burn: $(DESIGN)_$(LOADSRC).xsvf
 	@$(MAKESTEP) $(basename $<): Programming ...
-	$(SILENCE)flcli --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
+	flcli --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
 endif
 
 include $(DESIGN).md
@@ -101,20 +101,20 @@ include $(DESIGN).md
 FORCE:
 %.texe: %.tas.cpp FORCE | $(TAS) $(TLD)
 	@@$(MAKESTEP) -n "Recursively building $@ from $< ... "
-	$(SILENCE)$(MAKE) -s -C $(<D) $@ TAS=$(TAS) TLD=$(TLD)
-	$(SILENCE)cp -p $(<D)/$(@F) $@
+	$(MAKE) -s -C $(<D) $@ TAS=$(TAS) TLD=$(TLD)
+	cp -p $(<D)/$(@F) $@
 	@@$(MAKESTEP) done
 
 %.texe: %.tas FORCE | $(TAS) $(TLD)
 	@@$(MAKESTEP) -n "Recursively building $@ from $< ... "
-	$(SILENCE)$(MAKE) -s -C $(<D) $@ TAS=$(TAS) TLD=$(TLD)
-	$(SILENCE)cp -p $(<D)/$(@F) $@
+	$(MAKE) -s -C $(<D) $@ TAS=$(TAS) TLD=$(TLD)
+	cp -p $(<D)/$(@F) $@
 	@@$(MAKESTEP) done
 
 gen/%.memh: %.texe | $(TAS)
-	$(SILENCE)mkdir -p $(@D)
+	mkdir -p $(@D)
 	@# TODO document / hoist start address
-	$(SILENCE)$(TAS) -vd $< | $(TAS) -p format.memh.offset=0x1000 -p format.memh.explicit=1 -fmemh -o $@ -
+	$(TAS) -vd $< | $(TAS) -p format.memh.offset=0x1000 -p format.memh.explicit=1 -fmemh -o $@ -
 
 gen/%.mem: gen/%.memh
 	cp -p $< $@
@@ -124,38 +124,38 @@ $(XST_TMPDIR):
 
 %.defines.xst: %.xst
 	@$(MAKESTEP) $*: Generating defines ...
-	$(SILENCE)(cat $< ; echo "-define { $(VERILOG_DEFINES) }") > $@
+	(cat $< ; echo "-define { $(VERILOG_DEFINES) }") > $@
 # Don't automatically regenerate baremetal.memh (use .bmm rules to insert code)
 %.ngc: %.defines.xst | baremetal.memh $(XST_TMPDIR)
 	@$(MAKESTEP) $*: Synthesising ...
-	$(SILENCE)$(BIN)xst $(OPTS_xst) -ifn $< -ofn $*.srp
+	$(BIN)xst $(OPTS_xst) -ifn $< -ofn $*.srp
 
 %.ngd: %.ngc %.bmm %.ucf
 	@$(MAKESTEP) $*: Translating ...
-	$(SILENCE)$(BIN)ngdbuild $(OPTS_ngdbuild) -bm $*.bmm $< $@
+	$(BIN)ngdbuild $(OPTS_ngdbuild) -bm $*.bmm $< $@
 
 %_map.ncd: %.ngd
 	@$(MAKESTEP) $*: Mapping ...
-	$(SILENCE)$(BIN)map $(OPTS_map) -o $@ $< $*.pcf
+	$(BIN)map $(OPTS_map) -o $@ $< $*.pcf
 
 %.ncd: %_map.ncd
 	@$(MAKESTEP) $*: Placing and routing ...
-	$(SILENCE)$(BIN)par $(OPTS_par) $< $@ $*.pcf
+	$(BIN)par $(OPTS_par) $< $@ $*.pcf
 
 %.xdl: %.ncd
 	$(BIN)xdl -ncd2xdl $< $@
 
 %.twx %.twr: %.ncd %.ucf
 	@$(MAKESTEP) $*: Timing ...
-	$(SILENCE)$(BIN)trce $(OPTS_trce) -ucf $*.ucf -xml $*.twx $< -o $*.twr $*.pcf
+	$(BIN)trce $(OPTS_trce) -ucf $*.ucf -xml $*.twx $< -o $*.twr $*.pcf
 
 %.bit %_bd.bmm: %.ncd
 	@$(MAKESTEP) $*: Generating bitstream ...
-	$(SILENCE)$(BIN)bitgen $(OPTS_bitgen) $< $*.bit $*.pcf
+	$(BIN)bitgen $(OPTS_bitgen) $< $*.bit $*.pcf
 
 %_$(LOADSRC).bit: gen/$(LOADSRC).mem %_bd.bmm %.bit
 	@$(MAKESTEP) $*: Inserting $(LOADSRC) into bitstream ...
-	$(SILENCE)$(BIN)data2mem -bd $< -bm $*_bd.bmm -bt $*.bit -o b $@
+	$(BIN)data2mem -bd $< -bm $*_bd.bmm -bt $*.bit -o b $@
 
 %.impact.in: %.bit
 	@echo > $@ "setMode -bs"                       && \
@@ -166,7 +166,7 @@ $(XST_TMPDIR):
 
 %.xsvf: %.impact.in %.bit
 	@$(MAKESTEP) $*: Converting bitstream ...
-	$(SILENCE)$(BIN)impact -batch $<
+	$(BIN)impact -batch $<
 
 clean_FILES := *.defines.xst
 clobber_FILES := $(shell cat .gitignore) $($(GIT) ls-files --others) bin/

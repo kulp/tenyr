@@ -31,8 +31,8 @@ test_imul.texe: imul.to puts.to print_hex.to
 copy.texe: memcpy.to puts.to
 
 $(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
-	@$(ECHO) -n "Assembling $@ (should fail) ... "
+	@$(MAKESTEP) -n "Assembling $@ (should fail) ... "
 	@(! $(TAS) -o$@ $< 2>/dev/null) \
-		&& $(ECHO) "failed as expected" \
-		|| ($(ECHO) "succeeded unexpectedly" ; false)
+		&& $(MAKESTEP) "failed as expected" \
+		|| ($(MAKESTEP) "succeeded unexpectedly" ; false)
 
