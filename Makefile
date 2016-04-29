@@ -106,7 +106,7 @@ endif
 # non-atomically
 coverage: export GCOV=1
 install local-install uninstall doc gzip zip coverage check check_sw check_hw check_sim check_jit check_compile dogfood: all
-	$(MAKE) -f $(TOP)/mk/aux.mk $@
+	$(MAKE) -f $(TOP)/mk/misc.mk $@
 
 endif # BUILDDIR
 
