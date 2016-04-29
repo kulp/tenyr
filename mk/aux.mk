@@ -164,7 +164,7 @@ $(DEMOFILES): %_demo.texe: %_demo.tas.cpp
 	$(SILENCE)$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(@D) $(@F) && $(MAKESTEP) ok
 
 # This test needs an additional object, as it tests the linker
-$(TOP)/test/run/reloc_set.texe: $(TOP)/test/aux/reloc_set0.to
+$(TOP)/test/run/reloc_set.texe: $(TOP)/test/misc/reloc_set0.to
 # This test needs imul compiled in
 $(TOP)/test/run/test_imul.texe: $(TOP)/lib/imul.to
 
