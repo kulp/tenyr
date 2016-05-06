@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Usage: dogfood.sh tempfile-stem path-to-tas file.tas[.cpp] [ files... ]
 set -o pipefail
-if [[ $V == 1 ]] ; then ECHO=echo ; else ECHO=true ; fi
+if (( V > 1 )) ; then ECHO=echo ; else ECHO=true ; fi
 here=`dirname $BASH_SOURCE`
 stem=`basename $1`
 tas=$2

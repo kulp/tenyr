@@ -4,8 +4,7 @@ EMPTY :=#
 ifeq ($V,1)
  MAKESTEP = true
 else
- S = -s
- MAKESTEP := $(if $(findstring s,$(MAKEFLAGS)),true,$(ECHO))
+ MAKESTEP := $(ECHO)
 .SILENT:
 endif
 
