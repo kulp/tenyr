@@ -22,14 +22,24 @@
 
 static inline void get_sized_le(void *what, size_t size, size_t count, FILE *where)
 {
-    if (fread(what, size, count, where) != count)
-        fatal(PRINT_ERRNO, "Unknown error in %s while parsing object", __func__);
+    if (fread(what, size, count, where) != count) {
+        if (feof(where)) {
+            fatal(0, "End of file unexpectedly reached while parsing object");
+        } else {
+            fatal(0, "Unknown error while parsing object");
+        }
+    }
 }
 
 static inline void put_sized_le(const void *what, size_t size, size_t count, FILE *where)
 {
-    if (fwrite(what, size, count, where) != count)
-        fatal(PRINT_ERRNO, "Unknown error in %s while emitting object", __func__);
+    if (fwrite(what, size, count, where) != count) {
+        if (feof(where)) {
+            fatal(0, "End of file unexpectedly reached while emitting object");
+        } else {
+            fatal(0, "Unknown error while emitting object");
+        }
+    }
 }
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
