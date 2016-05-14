@@ -94,7 +94,7 @@ coverage_html_%:
 	genhtml --output-directory $@ $^
 
 check: check_sw check_hw
-check_sw: check_args check_compile check_sim check_obj check_forth dogfood
+check_sw: check_args check_behaviour check_compile check_sim check_obj check_forth dogfood
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
