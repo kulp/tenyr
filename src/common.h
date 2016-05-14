@@ -19,10 +19,14 @@
 #define UNUSED   __attribute__((unused))
 #define NORETURN __attribute__((noreturn))
 
-#define list_foreach(Tag,Node,Object)                                           \
-    for (struct Tag *Next = (Object), *Node = Next;                             \
-            (void)(Node && (Next = Node->next)), Node;                          \
-            Node = Next)                                                        \
+#define CONCAT_(X,Y) X ## Y
+#define CONCAT(X,Y) CONCAT_(X,Y)
+#define LINE(X) CONCAT(X,__LINE__)
+
+#define list_foreach(Tag,Node,Object)                                          \
+    for (struct Tag *LINE(Next) = (Object), *Node = LINE(Next);                            \
+            (void)(Node && (LINE(Next) = Node->next)), Node;                         \
+            Node = LINE(Next))                                                       \
     //
 
 // TODO document fixed lengths or remove the limitations
