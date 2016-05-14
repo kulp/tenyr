@@ -29,7 +29,5 @@ struct tenyr_sim_state {
     void *extstate; ///< external state possibly used by tenyr_sim_cb's
 };
 
-int tenyr_sim_load(struct tenyr_sim_state *state);
-
 #endif
 
