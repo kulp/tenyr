@@ -120,9 +120,8 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
         meta->size = i->records[0].size;
         meta->offset = running;
         running += i->records[0].size;
-        struct objmeta **look = tsearch(meta, objtree, ptrcmp);
-        if (*look != meta)
-            fatal(0, "Duplicate object `%p'", (*look)->obj);
+
+        tsearch(meta, objtree, ptrcmp);
 
         list_foreach(objsym, sym, i->symbols) {
             struct defn *def = calloc(1, sizeof *def);
