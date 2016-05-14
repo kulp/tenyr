@@ -805,7 +805,7 @@ static int validate_expr(struct parse_data *pd, struct const_expr *e, int level)
     int ok = 1;
 
     if (!e)
-        return 0;
+        return 1;
 
     struct const_expr *left  = e->left, *right = e->right;
     int is_binary = left && right;
