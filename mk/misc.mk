@@ -145,6 +145,10 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	$(runwrap)$(BUILDDIR)/$< -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(MAKESTEP) "    ... multiple files rejected ok"
 	$(runwrap)$(BUILDDIR)/$< -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
 
+check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* specific options ... "
+	$(runwrap)$(BUILDDIR)/$< - < $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "TOV"  && $(MAKESTEP) "    ... stdin accepted for input ok"
+
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
 	$(runwrap)$(BUILDDIR)/$< $(TOP)/test/misc/obj/toolarge.to 2>&1 | fgrep -q "too large"          && $(MAKESTEP) "    ... too-large ok"
