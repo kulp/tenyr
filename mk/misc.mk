@@ -153,8 +153,8 @@ check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
 	$(runwrap)$(BUILDDIR)/$< /dev/null 2>&1 | fgrep -qi "end of file"                              && $(MAKESTEP) "    ... too-small ok"
-	$(runwrap)$(BUILDDIR)/$< $(TOP)/test/misc/obj/toolarge.to 2>&1 | fgrep -q "too large"          && $(MAKESTEP) "    ... too-large ok"
-	$(runwrap)$(BUILDDIR)/$< -o $(TOP)/ /dev/null 2>&1 | fgrep -qi "failed to open"                && $(MAKESTEP) "    ... failed to open ok"
+	$(runwrap)$(BUILDDIR)/$< $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                        && $(MAKESTEP) "    ... too-large ok"
+	$(runwrap)$(BUILDDIR)/$< -o $(OBJD) /dev/null 2>&1 | fgrep -qi "failed to open"                && $(MAKESTEP) "    ... failed to open ok"
 	$(runwrap)$(BUILDDIR)/$< $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | fgrep -qi "duplicate"  && $(MAKESTEP) "    ... duplicate symbols ok"
 
 clean_FILES += check_obj_*.to null.to ff.bin
