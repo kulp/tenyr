@@ -99,9 +99,6 @@ check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
 
-check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
-check_behaviour_%: ;
-
 check_args: check_args_tas check_args_tld check_args_tsim
 check_args_%: check_args_general_% check_args_specific_% ;
 
@@ -148,6 +145,13 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	$(runwrap)$(BUILDDIR)/$< - < $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "TOV"  && $(MAKESTEP) "    ... stdin accepted for input ok"
+
+check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
+check_behaviour_%: ;
+
+check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* behaviour ... "
+	$(runwrap)$(BUILDDIR)/$< -o . /dev/null 2>&1 | fgrep -qi "failed to open"                      && $(MAKESTEP) "    ... failed to open ok"
 
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
