@@ -7,13 +7,6 @@ int tenyr_sim_genesis(p_cb_data data)
 {
     struct tenyr_sim_state *d = (void*)data->user_data;
 
-#if DEBUG
-    d->debug = DEBUG;
-#endif
-
-    if (d->debug > 4)
-        vpi_printf("%s ; userdata = %p\n", __func__, (void*)data->user_data);
-
     extern int tenyr_sim_clock(p_cb_data data);
     vpiHandle clock = vpi_handle_by_name("Top.tenyr.clk", NULL);
     s_cb_data cbd = {
@@ -40,8 +33,6 @@ int tenyr_sim_genesis(p_cb_data data)
 int tenyr_sim_apocalypse(p_cb_data data)
 {
     struct tenyr_sim_state *d = (void*)data->user_data;
-    if (d->debug > 4)
-        vpi_printf("%s ; userdata = %p\n", __func__, (void*)data->user_data);
 
     if (d->cb.apocalypse)
         d->cb.apocalypse(d, data);
@@ -53,12 +44,6 @@ int tenyr_sim_clock(p_cb_data data)
 {
     struct tenyr_sim_state *d = (void*)data->user_data;
     int clk = data->value->value.integer;
-
-    if (d->debug > 5) {
-        vpi_printf("clock val %d\n", clk);
-        vpi_printf("vpiSimTime %10lld\n",
-                ((long long)data->time->high << 32) + data->time->low);
-    }
 
     if (clk) {
         if (d->cb.posedge)

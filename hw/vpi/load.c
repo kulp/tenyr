@@ -16,7 +16,6 @@ struct dispatch_userdata {
 static int vpi_dispatch(void *ud, int op, uint32_t addr, uint32_t *data)
 {
     struct dispatch_userdata *d = ud;
-    struct tenyr_sim_state *s = d->state;
 
     vpiHandle word = vpi_handle_by_index(d->array, addr);
     struct t_vpi_value argval = { .format = vpiIntVal };
@@ -24,15 +23,11 @@ static int vpi_dispatch(void *ud, int op, uint32_t addr, uint32_t *data)
         case OP_WRITE:
             argval.value.integer = *data;
             vpi_put_value(word, &argval, NULL, vpiNoDelay);
-            if (s->debug > 4)
-                vpi_printf("put value %#x @ %#x\n", *data, addr);
             break;
         case OP_INSN_READ:
         case OP_DATA_READ:
             vpi_get_value(word, &argval);
             *data = argval.value.integer;
-            if (s->debug > 4)
-                vpi_printf("got value %#x @ %#x\n", *data, addr);
             break;
         default:
             fatal(0, "Invalid op type %d", op);
