@@ -1,0 +1,10 @@
+.zero 5
+aaa: .word .
+.zero 8
+bbb: .word .
+.zero 3
+c <- (@aaa >> 12)
+d <- (@aaa & 0xfff)
+e <- c ^^ d
+b <- e == @aaa
+illegal
