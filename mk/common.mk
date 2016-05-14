@@ -61,8 +61,8 @@ else
 endif
 
 CFLAGS += -std=c99
-CFLAGS += -Wall -Wextra $(PEDANTIC_FLAGS)
-CXXFLAGS += -Wall
+CFLAGS += -Wall -Wextra -Wshadow $(PEDANTIC_FLAGS)
+CXXFLAGS += -Wall -Wshadow
  #-Wextra $(PEDANTIC_FLAGS)
 ifeq ($(PEDANTIC),)
  PEDANTIC_FLAGS ?= -pedantic

@@ -4,7 +4,7 @@ include $(TOP)/mk/rules.mk
 
 PERIODS_DEFAULT ?= 32
 
-CFLAGS += -Wall -Wextra -pedantic-errors -std=c99 $(VPI_CFLAGS)
+CFLAGS += -Wall -Wextra -Wshadow -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I$(TOP)/src
 
 INCLUDES += $(INCLUDE_OS)

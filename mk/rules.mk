@@ -52,7 +52,7 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	@$(MAKESTEP) "[ DYLD ] $@"
 	$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 
-%.vpi: CFLAGS  += -Wall -Wextra -pedantic-errors -std=c99
+%.vpi: CFLAGS  += -Wall -Wextra -Wshadow -pedantic-errors -std=c99
 %.vpi: CFLAGS  += $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
 # don't complain about unused values that we might use in asserts
 # it's all right for callbacks not to use all their parameters
