@@ -156,6 +156,7 @@ check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	$(runwrap)$(BUILDDIR)/$< $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                        && $(MAKESTEP) "    ... too-large ok"
 	$(runwrap)$(BUILDDIR)/$< -o $(OBJD) /dev/null 2>&1 | fgrep -qi "failed to open"                && $(MAKESTEP) "    ... failed to open ok"
 	$(runwrap)$(BUILDDIR)/$< $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | fgrep -qi "duplicate"  && $(MAKESTEP) "    ... duplicate symbols ok"
+	$(runwrap)$(BUILDDIR)/$< $(OBJD)zerorecs.to 2>&1 | fgrep -qi "has no records"                  && $(MAKESTEP) "    ... zero records ok"
 
 clean_FILES += check_obj_*.to null.to ff.bin
 null.to: ; $(runwrap)$(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ /dev/null
