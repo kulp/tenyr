@@ -68,31 +68,21 @@ static int process_stream(struct param_state *params, const struct format *f,
     FILE *stream = disassemble ? in : out;
     void *ud = NULL;
 
-    if (f->init)
-        if (f->init(stream, params, &ud))
-            fatal(0, "Error during initialisation for format '%s'", f->name);
+    if (f->init(stream, params, &ud))
+        fatal(0, "Error during initialisation for format '%s'", f->name);
 
     if (disassemble) {
         // This output might be consumed by a tool that needs a line at a time
         setvbuf(out, NULL, _IOLBF, 0);
-        if (f->in) {
-            rc = do_disassembly(in, out, f, ud, flags);
-        } else {
-            fatal(0, "Format `%s' does not support disassembly", f->name);
-        }
+        rc = do_disassembly(in, out, f, ud, flags);
     } else {
-        if (f->out) {
-            rc = do_assembly(in, out, f, ud);
-        } else {
-            fatal(0, "Format `%s' does not support assembly", f->name);
-        }
+        rc = do_assembly(in, out, f, ud);
     }
 
     if (!rc && f->emit)
         rc |= f->emit(stream, &ud);
 
-    if (f->fini)
-        rc |= f->fini(stream, &ud);
+    rc |= f->fini(stream, &ud);
 
     fflush(out);
 
