@@ -844,7 +844,7 @@ static int validate_expr(struct parse_data *pd, struct const_expr *e, int level)
             e->srcloc.first_column = -1;
             tenyr_error(&e->srcloc, pd,
                         "Expression contains an invalid use of a "
-                        "deferred expression");
+                        "deferred binary expression");
         }
     }
 
