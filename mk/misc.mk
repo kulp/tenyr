@@ -99,6 +99,9 @@ check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
 	$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
 
+check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
+check_behaviour_%: ;
+
 check_args: check_args_tas check_args_tld check_args_tsim
 check_args_%: check_args_general_% check_args_specific_% ;
 
