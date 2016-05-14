@@ -151,6 +151,7 @@ check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
+	$(runwrap)$(BUILDDIR)/$< /dev/null 2>&1 | fgrep -qi "end of file"                              && $(MAKESTEP) "    ... too-small ok"
 	$(runwrap)$(BUILDDIR)/$< $(TOP)/test/misc/obj/toolarge.to 2>&1 | fgrep -q "too large"          && $(MAKESTEP) "    ... too-large ok"
 
 clean_FILES += check_obj_*.to null.to ff.bin
