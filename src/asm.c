@@ -511,6 +511,7 @@ struct memh_state {
     int32_t written, marked, offset;
     unsigned first_done:1;
     unsigned emit_zeros:1;
+    unsigned error:1;
 };
 
 static int memh_init(FILE *stream, struct param_state *p, void **ud)
@@ -546,6 +547,7 @@ static int memh_in(FILE *stream, struct element *i, void *ud)
         state->marked = state->written;
         return 1;
     } else {
+        state->error = 1;
         return -1; // @address moved backward (unsupported)
     }
 }
@@ -568,6 +570,12 @@ static int memh_out(FILE *stream, struct element *i, void *ud)
     state->first_done = 1;
 
     return (printed + fprintf(stream, "%08x\n", word) > 3) ? 1 : -1;
+}
+
+static int memh_err(void *ud)
+{
+    struct memh_state *state = ud;
+    return !!state->error;
 }
 
 const struct format tenyr_asm_formats[] = {
@@ -595,7 +603,8 @@ const struct format tenyr_asm_formats[] = {
         .init  = memh_init,
         .in    = memh_in,
         .out   = memh_out,
-        .fini  = gen_fini },
+        .fini  = gen_fini,
+        .err   = memh_err },
 };
 
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);

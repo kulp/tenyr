@@ -149,9 +149,11 @@ check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
 
+check_behaviour_tas: MEMHD = $(TOP)/test/misc/memh/
 check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
 	$(runwrap)$(BUILDDIR)/$< -o . /dev/null 2>&1 | fgrep -qi "failed to open"                      && $(MAKESTEP) "    ... failed to open ok"
+	$(runwrap)(! $(BUILDDIR)/$< -d -f memh $(MEMHD)backward.memh &>/dev/null )                     && $(MAKESTEP) "    ... validated memh lack of backward support ok"
 
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
