@@ -68,7 +68,7 @@ static int process_stream(struct param_state *params, const struct format *f,
     void *ud = NULL;
 
     if (f->init(stream, params, &ud))
-        fatal(0, "Error during initialisation for format '%s'", f->name);
+        fatal(PRINT_ERRNO, "Error during initialisation for format '%s'", f->name);
 
     if (disassemble) {
         // This output might be consumed by a tool that needs a line at a time
