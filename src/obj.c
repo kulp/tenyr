@@ -16,10 +16,6 @@
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
 
-#define for_counted_put(Tag,Name,List,Count) \
-    for (int _dummy = 0; !_dummy && (Count) > 0; _dummy++) \
-        list_foreach(Tag, Name, List)
-
 static inline void get_sized_le(void *what, size_t size, size_t count, FILE *where)
 {
     if (fread(what, size, count, where) != count) {
@@ -85,14 +81,14 @@ static int obj_v0_write(struct obj *o, FILE *out)
     PUT(o->flags, out);
 
     PUT(o->rec_count, out);
-    for_counted_put(objrec, rec, o->records, o->rec_count) {
+    list_foreach(objrec, rec, o->records) {
         PUT(rec->addr, out);
         PUT(rec->size, out);
         put_sized(rec->data, sizeof *rec->data, rec->size, out);
     }
 
     PUT(o->sym_count, out);
-    for_counted_put(objsym, sym, o->symbols, o->sym_count) {
+    list_foreach(objsym, sym, o->symbols) {
         PUT(sym->flags, out);
         PUT(sym->name, out);
         PUT(sym->value, out);
@@ -100,7 +96,7 @@ static int obj_v0_write(struct obj *o, FILE *out)
     }
 
     PUT(o->rlc_count, out);
-    for_counted_put(objrlc, rlc, o->relocs, o->rlc_count) {
+    list_foreach(objrlc, rlc, o->relocs) {
         PUT(rlc->flags, out);
         PUT(rlc->name, out);
         PUT(rlc->addr, out);
