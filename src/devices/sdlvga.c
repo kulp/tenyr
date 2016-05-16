@@ -1,6 +1,5 @@
 #define _BSD_SOURCE 1
 
-#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>

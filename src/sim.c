@@ -2,7 +2,6 @@
 #include "common.h"
 #include "param.h"
 
-#include <assert.h>
 #include <stdlib.h>
 
 static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,

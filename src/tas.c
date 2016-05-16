@@ -8,7 +8,6 @@
 #include "lexer.h"
 #include "param.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>

@@ -9,7 +9,6 @@
 #include "common.h"
 #include "asm.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <search.h>
