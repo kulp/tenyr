@@ -20,9 +20,12 @@ struct tenyr_sim_state {
             vpiHandle genesis, apocalypse;
         } cb;
         struct {
-            vpiHandle tenyr_load,
-                      tenyr_putchar,
-                      tenyr_getchar;
+            vpiHandle tenyr_load;
+            vpiHandle tenyr_putchar;
+#if 0
+			// XXX this code is not tenyr-correct -- it can block
+            vpiHandle tenyr_getchar;
+#endif
         } tf;
     } handle;
     void *extstate; ///< external state possibly used by tenyr_sim_cb's

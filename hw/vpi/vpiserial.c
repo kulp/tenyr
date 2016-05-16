@@ -16,6 +16,8 @@ int tenyr_sim_putchar(struct tenyr_sim_state *state)
     return 0;
 }
 
+#if 0
+// XXX this code is not tenyr-correct -- it can block
 int tenyr_sim_getchar(struct tenyr_sim_state *state)
 {
     (void)state;
@@ -34,4 +36,5 @@ int tenyr_sim_getchar(struct tenyr_sim_state *state)
 
     return 0;
 }
+#endif
 

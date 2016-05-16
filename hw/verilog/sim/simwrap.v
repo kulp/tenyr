@@ -14,8 +14,11 @@ module SimWrap_`STEM(
         if (enable && in_range) begin
             if (rw)
                 `PUT(data);
+`ifdef BADCODE
+// XXX this code is not tenyr-correct -- it can block
             else
                 `GET(data);
+`endif
         end
     end
 endmodule

@@ -21,20 +21,24 @@ static int serial_fini(void *cookie)
 
 static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
-    int tmp;
+    int rc = -1;
 
     if (op == OP_WRITE) {
         putchar(*data);
         fflush(stdout);
-    } else if (op == OP_DATA_READ) {
+        rc = 0;
+    }
+#if 0
+    // XXX this code is not tenyr-correct -- it can block
+    else if (op == OP_DATA_READ) {
+        int tmp;
         if ((*data = tmp = getchar()) && tmp == EOF) {
             return -1;
         }
-    } else {
-        return 1;
     }
+#endif
 
-    return 0;
+    return rc;
 }
 
 int serial_add_device(struct device **device)

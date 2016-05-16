@@ -27,11 +27,15 @@ static void register_apocalypse(void)
 
 static void register_serial(void)
 {
-    extern int tenyr_sim_putchar(), tenyr_sim_getchar();
+    extern int tenyr_sim_putchar();
     s_vpi_systf_data put = { vpiSysTask, 0, "$tenyr_putchar", tenyr_sim_putchar, NULL, NULL, pud };
     pstate->handle.tf.tenyr_putchar = vpi_register_systf(&put);
+#if 0
+    // XXX this code is not tenyr-correct -- it can block
+    extern int tenyr_sim_getchar();
     s_vpi_systf_data get = { vpiSysTask, 0, "$tenyr_getchar", tenyr_sim_getchar, NULL, NULL, pud };
     pstate->handle.tf.tenyr_getchar = vpi_register_systf(&get);
+#endif
 }
 
 void (*vlog_startup_routines[])() = {
