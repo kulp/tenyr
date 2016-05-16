@@ -15,6 +15,7 @@ struct dispatch_userdata {
 
 static int vpi_dispatch(void *ud, int op, uint32_t addr, uint32_t *data)
 {
+    int rc = -1;
     struct dispatch_userdata *d = ud;
 
     vpiHandle word = vpi_handle_by_index(d->array, addr);
@@ -23,17 +24,18 @@ static int vpi_dispatch(void *ud, int op, uint32_t addr, uint32_t *data)
         case OP_WRITE:
             argval.value.integer = *data;
             vpi_put_value(word, &argval, NULL, vpiNoDelay);
+            rc = 0;
             break;
         case OP_INSN_READ:
         case OP_DATA_READ:
             vpi_get_value(word, &argval);
             *data = argval.value.integer;
+            rc = 0;
             break;
-        default:
-            fatal(0, "Invalid op type %d", op);
+        // default case should be impossible -- leaves -1 in rc
     }
 
-    return 0;
+    return rc;
 }
 
 static int get_range(vpiHandle from, int which)
@@ -46,6 +48,7 @@ static int get_range(vpiHandle from, int which)
 
 int tenyr_sim_load(struct tenyr_sim_state *state)
 {
+    int rc = 0;
     vpiHandle array = vpi_handle_by_name("Top.tenyr.ram.store", NULL);
 
     struct dispatch_userdata data = {
@@ -75,13 +78,13 @@ int tenyr_sim_load(struct tenyr_sim_state *state)
     const struct format *f = &tenyr_asm_formats[0];
     if (f->init)
         if (f->init(stream, NULL, &ud))
-            fatal(0, "Error during initialisation for format '%s'", f->name);
+            return 1;
 
-    load_sim(vpi_dispatch, &data, f, ud, stream, min);
+    rc |= load_sim(vpi_dispatch, &data, f, ud, stream, min);
 
     if (f->fini)
-        f->fini(stream, &ud);
+        rc |= f->fini(stream, &ud);
 
-    return 0;
+    return rc;
 }
 
