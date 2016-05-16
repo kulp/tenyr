@@ -296,8 +296,10 @@ static int obj_in(FILE *stream, struct element *i, void *ud)
     struct objrec *rec = u->curr_rec;
     int done = 0;
     while (!done) {
-        if (!rec)
+        if (!rec) {
+            u->error = 1;
             return -1;
+        }
 
         if (rec->size == 0) {
             while (rec && rec->size == 0)
@@ -321,8 +323,10 @@ static int obj_in(FILE *stream, struct element *i, void *ud)
 
 static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
 {
-    if (i->insn.size <= 0)
+    if (i->insn.size <= 0) {
+        u->error = 1;
         return;
+    }
 
     struct objrec *rec = &o->records[0];
     if (rec->size < u->pos + i->insn.size) {
@@ -370,8 +374,10 @@ static int obj_sym(FILE *stream, struct symbol *symbol, int flags, void *ud)
 static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
 {
     struct obj_fdata *u = ud;
-    if (!reloc || !reloc->insn)
+    if (!reloc || !reloc->insn) {
+        u->error = 1;
         return 0;
+    }
 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
