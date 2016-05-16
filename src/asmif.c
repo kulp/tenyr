@@ -403,15 +403,13 @@ int do_assembly(FILE *in, FILE *out, const struct format *f, void *ud)
 
     tenyr_lex_init(&pd->scanner);
     tenyr_set_extra(pd, pd->scanner);
-
-    if (in)
-        tenyr_set_in(in, pd->scanner);
+    tenyr_set_in(in, pd->scanner);
 
     int result = tenyr_parse(pd);
     if (pd->errored)
         debug(0, "Encountered %d error%s while parsing, bailing",
                 pd->errored, &"s"[pd->errored == 1]);
-    if (!result && !pd->errored && f)
+    if (!result && !pd->errored)
         assembly_inner(pd, out, f, ud);
     tenyr_lex_destroy(pd->scanner);
 

@@ -429,8 +429,7 @@ int main(int argc, char *argv[])
     void *run_ud = NULL;
     s->run_sim(s, &ops, &run_ud, NULL);
 
-    if (in)
-        fclose(in);
+    fclose(in);
 
     devices_teardown(s);
 
