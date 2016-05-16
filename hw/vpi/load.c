@@ -72,14 +72,12 @@ int tenyr_sim_load(struct tenyr_sim_state *state)
 
     void *ud = NULL;
     const struct format *f = &tenyr_asm_formats[0];
-    if (f->init)
-        if (f->init(stream, NULL, &ud))
-            return 1;
+    if (f->init(stream, NULL, &ud))
+        return 1;
 
     rc |= load_sim(vpi_dispatch, &data, f, ud, stream, min);
 
-    if (f->fini)
-        rc |= f->fini(stream, &ud);
+    rc |= f->fini(stream, &ud);
 
     return rc;
 }

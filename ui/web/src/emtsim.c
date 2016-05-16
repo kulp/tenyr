@@ -90,15 +90,13 @@ int main(void)
     clearerr(in);
     void *ud = NULL;
     const struct format *f = s->conf.fmt;
-    if (f->init)
-        if (f->init(in, s->conf.params, &ud))
-            fatal(0, "Error during initialisation for format '%s'", f->name);
+    if (f->init(in, s->conf.params, &ud))
+        fatal(0, "Error during initialisation for format '%s'", f->name);
 
     if (load_sim(s->dispatch_op, s, f, ud, in, s->conf.load_addr))
         fatal(0, "Error while loading state into simulation");
 
-    if (f->fini)
-        f->fini(in, &ud);
+    f->fini(in, &ud);
 
     s->machine.regs[15] = s->conf.start_addr;
 

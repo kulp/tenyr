@@ -15,14 +15,12 @@ int main(void)
     const struct format *f = &tenyr_asm_formats[2]; // text
 
     void *ud = NULL;
-    if (f->init)
-        if (f->init(stdin, NULL, &ud))
-            fatal(0, "Error during initialisation for format '%s'", f->name);
+    if (f->init(stdin, NULL, &ud))
+        fatal(0, "Error during initialisation for format '%s'", f->name);
 
     rc = do_assembly(stdin, stdout, f, ud);
 
-    if (f->fini)
-        f->fini(stdin, &ud);
+    f->fini(stdin, &ud);
 
     return rc;
 }
