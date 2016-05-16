@@ -331,9 +331,6 @@ static int assembly_fixup_insns(struct parse_data *pd)
     int32_t reladdr = 0;
     // first pass, fix up addresses
     list_foreach(element_list, il, pd->top) {
-        if (!il->elem)
-            continue;
-
         il->elem->insn.reladdr = reladdr;
 
         list_foreach(symbol, l, il->elem->symbol) {
@@ -367,9 +364,7 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
         fatal(0, "Error while fixing up deferred expressions");
 
     list_foreach(element_list, Node, pd->top)
-        // if !Node->elem, it's a placeholder or some kind of dummy
-        if (Node->elem)
-            f->out(out, Node->elem, ud);
+        f->out(out, Node->elem, ud);
 
     if (f->sym) {
         list_foreach(symbol_list, Node, pd->symbols) {
