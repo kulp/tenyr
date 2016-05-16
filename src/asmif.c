@@ -334,10 +334,8 @@ static int assembly_fixup_insns(struct parse_data *pd)
         il->elem->insn.reladdr = reladdr;
 
         list_foreach(symbol, l, il->elem->symbol) {
-            if (!l->resolved) {
-                l->reladdr = reladdr;
-                l->resolved = 1;
-            }
+            l->reladdr = reladdr;
+            l->resolved = 1;
         }
 
         reladdr += il->elem->insn.size;
