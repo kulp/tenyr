@@ -157,6 +157,7 @@ check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	(! $(runwrap)$(BUILDDIR)/$< -d -f memh $(MEMHD)backward.memh &>/dev/null )                     && $(MAKESTEP) "    ... validated memh lack of backward support ok"
 	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)bad_version.to 2>&1 | fgrep -qi "unhandled version"        && $(MAKESTEP) "    ... unhandled version ok"
 	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                    && $(MAKESTEP) "    ... too-large ok"
+	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)toolarge2.to 2>&1 | fgrep -q "too large"                   && $(MAKESTEP) "    ... too-large 2 ok"
 
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
