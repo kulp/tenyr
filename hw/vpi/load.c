@@ -1,9 +1,5 @@
-#include "tenyr_vpi.h"
-#include "asm.h"
 #include "sim.h"
-#include "ops.h"
 
-#include <stdlib.h>
 #include <vpi_user.h>
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))

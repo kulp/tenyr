@@ -1,7 +1,5 @@
 #include "tenyr_vpi.h"
 
-#include <vpi_user.h>
-
 int tenyr_sim_putchar(struct tenyr_sim_state *state)
 {
     (void)state;

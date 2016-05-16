@@ -1,7 +1,5 @@
 #include "tenyr_vpi.h"
 
-#include <stdlib.h>
-
 static struct tenyr_sim_state tstate = { .cb.posedge = 0 }, *pstate = &tstate;
 static s_cb_data user_data = { .user_data = (void*)&tstate };
 static void *pud = (void*)&user_data;
