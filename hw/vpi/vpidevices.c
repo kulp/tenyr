@@ -13,7 +13,7 @@ static void register_genesis(void)
 
 static void register_general(void)
 {
-    extern tenyr_sim_tf tenyr_sim_load;
+    extern int tenyr_sim_load();
     s_vpi_systf_data load = { vpiSysTask, 0, "$tenyr_load", (int(*)())tenyr_sim_load, NULL, NULL, pud };
     pstate->handle.tf.tenyr_load = vpi_register_systf(&load);
 }
@@ -27,7 +27,7 @@ static void register_apocalypse(void)
 
 static void register_serial(void)
 {
-    extern tenyr_sim_tf tenyr_sim_putchar, tenyr_sim_getchar;
+    extern int tenyr_sim_putchar(), tenyr_sim_getchar();
     s_vpi_systf_data put = { vpiSysTask, 0, "$tenyr_putchar", tenyr_sim_putchar, NULL, NULL, pud };
     pstate->handle.tf.tenyr_putchar = vpi_register_systf(&put);
     s_vpi_systf_data get = { vpiSysTask, 0, "$tenyr_getchar", tenyr_sim_getchar, NULL, NULL, pud };
