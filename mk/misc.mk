@@ -151,6 +151,7 @@ check_behaviour_%: ;
 
 check_behaviour_tas: MEMHD = $(TOP)/test/misc/memh/
 check_behaviour_tas: OBJD = $(TOP)/test/misc/obj/
+check_behaviour_tas: TASD = $(TOP)/test/misc/
 check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
 	$(runwrap)$(BUILDDIR)/$< -o . /dev/null 2>&1 | fgrep -qi "failed to open"                      && $(MAKESTEP) "    ... failed to open ok"
@@ -158,6 +159,7 @@ check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)bad_version.to 2>&1 | fgrep -qi "unhandled version"        && $(MAKESTEP) "    ... unhandled version ok"
 	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                    && $(MAKESTEP) "    ... too-large ok"
 	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)toolarge2.to 2>&1 | fgrep -q "too large"                   && $(MAKESTEP) "    ... too-large 2 ok"
+	$(runwrap)$(BUILDDIR)/$< $(TASD)missing_global.tas 2>&1 | fgrep -q "not defined"              && $(MAKESTEP) "    ... undefined global ok"
 
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)

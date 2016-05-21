@@ -269,6 +269,9 @@ static int mark_globals(struct symbol_list *symbols, struct global_list *globals
     list_foreach(global_list, g, globals)
         if ((which = symbol_find(symbols, g->name)))
             which->global = 1;
+        else
+            debug(0, "Symbol `%s' was marked as a global, but was not defined",
+                    g->name);
 
     return 0;
 }
