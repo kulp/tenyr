@@ -31,21 +31,21 @@ static void em_device_setup(struct sim_state *s)
     devices_setup(s);
     {
         extern int serial_add_device(struct device *device);
-        serial_add_device(&new_device(s)->device);
+        serial_add_device(new_device(s));
     }
 
     {
         extern int ram_add_device(struct device *device);
-        struct device_list *dl = new_device(s);
-        ram_add_device(&dl->device);
-        dev->ops.init(&s->plugin_cookie, &dl->device.cookie);
+        struct device *dev = new_device(s);
+        ram_add_device(dev);
+        dev->ops.init(&s->plugin_cookie, &dev->cookie);
     }
 
     {
         extern int ram_add_device(struct device *device);
-        struct device *dl = new_device(s);
-        ram_add_device(&dl->device);
-        dev->ops.init(&s->plugin_cookie, &dl->device.cookie);
+        struct device *dev = new_device(s);
+        ram_add_device(dev);
+        dev->ops.init(&s->plugin_cookie, &dev->cookie);
     }
     devices_finalise(s);
 }
