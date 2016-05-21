@@ -38,7 +38,7 @@ int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
     size_t count = s->machine.devices_count;
     struct device **device = bsearch(&addr, s->machine.devices, count, sizeof *device,
             find_device_by_addr);
-    if (device == NULL || *device == NULL) {
+    if (device == NULL) {
         fprintf(stderr, "No device handles address %#x\n", addr);
         return -1;
     }
@@ -84,8 +84,7 @@ int devices_finalise(struct sim_state *s)
             sizeof *s->machine.devices, compare_devices_by_base);
 
     for (unsigned i = 0; i < s->machine.devices_count; i++)
-        if (s->machine.devices[i])
-            s->machine.devices[i]->ops.init(&s->plugin_cookie, &s->machine.devices[i]->cookie);
+        s->machine.devices[i]->ops.init(&s->plugin_cookie, &s->machine.devices[i]->cookie);
 
     return 0;
 }
@@ -104,12 +103,12 @@ int devices_teardown(struct sim_state *s)
 
 int devices_dispatch_cycle(struct sim_state *s)
 {
-    for (size_t i = 0; i < s->machine.devices_count; i++)
+    int rc = 0;
+    for (size_t i = 0; !rc && i < s->machine.devices_count; i++)
         if (s->machine.devices[i]->ops.cycle)
-            if (s->machine.devices[i]->ops.cycle(s->machine.devices[i]->cookie))
-                return 1;
+            rc = s->machine.devices[i]->ops.cycle(s->machine.devices[i]->cookie);
 
-    return 0;
+    return rc;
 }
 
 /* vi: set ts=4 sw=4 et: */
