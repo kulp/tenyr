@@ -207,7 +207,7 @@ int ce_eval(struct parse_data *pd, struct element *context,
     }
 
     if (ce->type >= CE_max)
-        fatal(0, "Unrecognised const_expr type %d", ce->type);
+        return ce_eval_bad(pd, context, ce, flags, width, result);
 
     return ce_eval_dispatch[ce->type](pd, context, ce, flags, width, result);
 }
