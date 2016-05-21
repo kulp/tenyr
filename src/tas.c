@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     if (!out)
         fatal(PRINT_ERRNO, "Failed to open output file");
 
-    param_set(params, "assembling", (int[]){ !disassemble }, 1, false, false);
+    param_set(params, "assembling", &"1\0""0\0"[disassemble], 1, false, false);
 
     for (int i = optind; i < argc; i++) {
         const char *infname = argv[i];

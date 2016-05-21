@@ -32,6 +32,21 @@ static int params_cmp(const void *_a, const void *_b)
     return strcmp(a->key, b->key);
 }
 
+int param_get_int(struct param_state *pstate, const char *key, int *val)
+{
+    const char *str = NULL;
+    char *next = NULL;
+    int test = 0;
+    if (param_get(pstate, key, 1, (const void **)&str))
+        test = strtol(str, &next, 0);
+
+    int good = next > str;
+    if (good)
+        *val = test;
+
+    return good;
+}
+
 int param_get(struct param_state *pstate, const char *key, size_t count, const void *val[count])
 {
     if (!pstate) return 0; // permit calling with NULL param set

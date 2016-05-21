@@ -243,7 +243,7 @@ static int gen_fini(FILE *stream, void **ud)
  * Object format : simple section-based objects
  */
 struct obj_fdata {
-    unsigned assembling:1;
+    int assembling;
     struct obj *o;
     long syms;
     long rlcs;
@@ -264,11 +264,7 @@ static int obj_init(FILE *stream, struct param_state *p, void **ud)
     struct obj_fdata *u = *ud = calloc(1, sizeof *u);
     struct obj *o = u->o = calloc(1, sizeof *o);
 
-    const void *val = NULL;
-    if (param_get(p, "assembling", 1, &val)) {
-        // default is not-assembling (could have a NULL parameter set)
-        u->assembling = val ? *(int*)val : 0;
-    }
+    param_get_int(p, "assembling", &u->assembling);
 
     if (u->assembling) {
         // TODO proper multiple-records support
@@ -516,20 +512,19 @@ static int text_out(FILE *stream, struct element *i, void *ud)
 struct memh_state {
     int32_t written, marked, offset;
     unsigned first_done:1;
-    unsigned emit_zeros:1;
+    int emit_zeros;
     unsigned error:1;
 };
 
 static int memh_init(FILE *stream, struct param_state *p, void **ud)
 {
     struct memh_state *state = *ud = calloc(1, sizeof *state);
-    const void *pval;
 
-    state->marked = state->written = 0;
-    if (param_get(p, "format.memh.offset", 1, &pval))
-        state->marked = state->written = state->offset = strtol(pval, NULL, 0);
-    if (param_get(p, "format.memh.explicit", 1, &pval))
-        state->emit_zeros = !!strtol(pval, NULL, 0);
+    state->offset = 0;
+    param_get_int(p, "format.memh.offset", &state->offset);
+    state->marked = state->written = state->offset;
+
+    param_get_int(p, "format.memh.explicit", &state->emit_zeros);
 
     return 0;
 }

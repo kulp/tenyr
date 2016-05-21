@@ -84,15 +84,7 @@ int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_data, void 
     *run_data = js;
     js->sim_state = s;
 
-    const void *val = NULL;
-    if (param_get(s->conf.params, "tsim.jit.run_count_threshold", 1, &val)) {
-        char *next = NULL;
-        if (val) {
-            int v = strtol((char*)val, &next, 0);
-            if (next != val && next != NULL && *next == '\0' && v > 1)
-                js->run_count_threshold = v;
-        }
-    }
+    param_get_int(s->conf.params, "tsim.jit.run_count_threshold", &js->run_count_threshold);
 
     struct ops_state ops_state = { .ops.post_insn = 0 }, *o = &ops_state;
     o->js = js;

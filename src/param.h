@@ -10,6 +10,7 @@ extern "C" {
 
 struct param_state;
 
+int param_get_int(struct param_state *pstate, const char *key, int *val);
 /// @c param_get() returns true if key is found, false otherwise
 int param_get(struct param_state *pstate, const char *key, size_t count, const void **val);
 int param_set(struct param_state *pstate, char *key, void *val, int replace, int free_key, int free_value);

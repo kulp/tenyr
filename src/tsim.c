@@ -403,7 +403,7 @@ int main(int argc, char *argv[])
     run_recipes(s);
     devices_finalise(s);
 
-    param_set(s->conf.params, "assembling", (int[]){ 0 }, true, false, false);
+    param_set(s->conf.params, "assembling", "0", true, false, false);
     void *ud = NULL;
     const struct format *f = s->conf.fmt;
     if (f->init(in, s->conf.params, &ud))
