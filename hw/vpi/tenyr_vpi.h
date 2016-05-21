@@ -23,7 +23,7 @@ struct tenyr_sim_state {
             vpiHandle tenyr_load;
             vpiHandle tenyr_putchar;
 #if 0
-			// XXX this code is not tenyr-correct -- it can block
+            // XXX this code is not tenyr-correct -- it can block
             vpiHandle tenyr_getchar;
 #endif
         } tf;
