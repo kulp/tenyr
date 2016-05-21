@@ -69,7 +69,7 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
         // first write.
         struct ram_element *node = malloc(PAGESIZE * sizeof *node->space + sizeof *node);
         for (unsigned long i = 0; i < PAGESIZE; i++)
-            node->space[i] = 0xffffffff; // "illlegal" ; will trap
+            node->space[i] = 0xffffffff; // "illegal" ; will trap
 
         *node = (struct ram_element){ addr & ~WORDMASK, cookie };
         *p = node;
