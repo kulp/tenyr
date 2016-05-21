@@ -381,9 +381,9 @@ void EXPORT tenyr_plugin_init(struct guest_ops *ops)
     debug_ = ops->debug;
 }
 
-int EXPORT spi_add_device(struct device **device)
+int EXPORT spi_add_device(struct device *device)
 {
-    **device = (struct device){
+    *device = (struct device){
         .bounds = { SPI_BASE, SPI_END },
         .ops = {
             .op = spi_op,

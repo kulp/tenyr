@@ -88,9 +88,9 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
     return 0;
 }
 
-int sparseram_add_device(struct device **device)
+int sparseram_add_device(struct device *device)
 {
-    **device = (struct device){
+    *device = (struct device){
         .bounds = { RAM_BASE, RAM_END },
         .ops = {
             .op = sparseram_op,

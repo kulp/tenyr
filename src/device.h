@@ -24,6 +24,11 @@ struct device {
     void *cookie;
 };
 
+struct device_list {
+    struct device device;
+    struct device_list *next;
+};
+
 #endif
 
 /* vi: set ts=4 sw=4 et: */

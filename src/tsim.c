@@ -159,11 +159,9 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
         return 1;
     }
 
-    typedef int add_device(struct device **);
+    typedef int add_device(struct device *);
     add_device *adder = ALIASING_CAST(add_device,ptr);
-    int index = next_device(s);
-    s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]);
-    rc |= adder(&s->machine.devices[index]);
+    rc |= adder(new_device(s));
 
     return rc;
 }
@@ -214,10 +212,8 @@ static int recipe_jit(struct sim_state *s)
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \
     static int recipe_##Name(struct sim_state *s)                              \
     {                                                                          \
-        int Func(struct device **device);                                      \
-        int index = next_device(s);                                            \
-        s->machine.devices[index] = malloc(sizeof *s->machine.devices[index]); \
-        return Func(&s->machine.devices[index]);                               \
+        int Func(struct device *device);                                       \
+        return Func(new_device(s));                                            \
     }                                                                          \
     //
 

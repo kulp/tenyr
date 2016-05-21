@@ -40,9 +40,9 @@ static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     return rc;
 }
 
-int serial_add_device(struct device **device)
+int serial_add_device(struct device *device)
 {
-    **device = (struct device){
+    *device = (struct device){
         .bounds = { SERIAL_BASE, SERIAL_BASE + 1 },
         .ops = {
             .op = serial_op,

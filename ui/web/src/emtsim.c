@@ -30,26 +30,22 @@ static void em_device_setup(struct sim_state *s)
 {
     devices_setup(s);
     {
-        extern int serial_add_device(struct device **device);
-        int index = next_device(s);
-        struct device *dev = s->machine.devices[index] = malloc(sizeof *dev);
-        serial_add_device(&dev);
+        extern int serial_add_device(struct device *device);
+        serial_add_device(&new_device(s)->device);
     }
 
     {
-        extern int ram_add_device(struct device **device);
-        int index = next_device(s);
-        struct device *dev = s->machine.devices[index] = malloc(sizeof *dev);
-        ram_add_device(&dev);
-        dev->ops.init(&s->plugin_cookie, &dev->cookie);
+        extern int ram_add_device(struct device *device);
+        struct device_list *dl = new_device(s);
+        ram_add_device(&dl->device);
+        dev->ops.init(&s->plugin_cookie, &dl->device.cookie);
     }
 
     {
-        extern int ram_add_device(struct device **device);
-        int index = next_device(s);
-        struct device *dev = s->machine.devices[index] = malloc(sizeof *dev);
-        ram_add_device(&dev);
-        dev->ops.init(&s->plugin_cookie, &dev->cookie);
+        extern int ram_add_device(struct device *device);
+        struct device *dl = new_device(s);
+        ram_add_device(&dl->device);
+        dev->ops.init(&s->plugin_cookie, &dl->device.cookie);
     }
     devices_finalise(s);
 }

@@ -233,9 +233,9 @@ void EXPORT tenyr_plugin_init(struct guest_ops *ops)
     debug_ = ops->debug;
 }
 
-int EXPORT sdlled_add_device(struct device **device)
+int EXPORT sdlled_add_device(struct device *device)
 {
-    **device = (struct device){
+    *device = (struct device){
         .bounds = { SDLLED_BASE, SDLLED_BASE + 1 },
         .ops = {
             .op = sdlled_op,

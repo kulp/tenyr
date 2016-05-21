@@ -2,27 +2,20 @@
 
 #include <assert.h>
 
-int next_device(struct sim_state *s)
+struct device * new_device(struct sim_state *s)
 {
-    while (s->machine.devices_count >= s->machine.devices_max) {
-        s->machine.devices_max *= 2;
-        s->machine.devices = realloc(s->machine.devices,
-                s->machine.devices_max * sizeof *s->machine.devices);
-    }
-
-    return s->machine.devices_count++;
+    struct device_list *d = calloc(1, sizeof *d);
+    d->next = NULL;
+    struct device_list ***p = &s->machine.last_device;
+    **p = d;
+    *p = &d->next;
+    return &d->device;
 }
 
-static int find_device_by_addr(const void *_test, const void *_in)
+static int devices_does_match(const uint32_t *addr, const struct device *device)
 {
-    const uint32_t *addr = _test;
-    const struct device * const *in = _in;
-
-    if (!*in)
-        return 0;
-
-    if (*addr <= (*in)->bounds[1]) {
-        if (*addr >= (*in)->bounds[0]) {
+    if (*addr <= device->bounds[1]) {
+        if (*addr >= device->bounds[0]) {
             return 0;
         } else {
             return -1;
@@ -35,9 +28,11 @@ static int find_device_by_addr(const void *_test, const void *_in)
 int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
 {
     struct sim_state *s = ud;
-    size_t count = s->machine.devices_count;
-    struct device **device = bsearch(&addr, s->machine.devices, count, sizeof *device,
-            find_device_by_addr);
+    struct device *device = NULL;
+    for (struct device_list *dl = s->machine.devices; dl && !device; dl = dl->next)
+        if (devices_does_match(&addr, &dl->device) == 0)
+            device = &dl->device;
+
     if (device == NULL) {
         fprintf(stderr, "No device handles address %#x\n", addr);
         return -1;
@@ -46,7 +41,7 @@ int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
     // TODO don't send in the whole simulator state ? the op should have
     // access to some state, in order to redispatch and potentially use other
     // machine.devices, but it shouldn't see the whole state
-    int result = (*device)->ops.op((*device)->cookie, op, addr, data);
+    int result = device->ops.op(device->cookie, op, addr, data);
 
     if (s->conf.verbose > 2) {
         printf("%-5s @ 0x%08x = 0x%08x\n",
@@ -56,47 +51,29 @@ int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
     return result;
 }
 
-static int compare_devices_by_base(const void *_a, const void *_b)
-{
-    const struct device * const *a = _a;
-    const struct device * const *b = _b;
-
-    assert(("LHS of device comparison is not NULL", *a != NULL));
-    assert(("RHS of device comparison is not NULL", *b != NULL));
-
-    return (*a)->bounds[0] - (*b)->bounds[0];
-}
-
 int devices_setup(struct sim_state *s)
 {
-    s->machine.devices_count = 0;
-    s->machine.devices_max = 8;
-    s->machine.devices = malloc(s->machine.devices_max * sizeof *s->machine.devices);
+    s->machine.devices = NULL;
+    s->machine.last_device = &s->machine.devices;
 
     return 0;
 }
 
 int devices_finalise(struct sim_state *s)
 {
-    // Devices must be in address order to allow later bsearch. Assume they do
-    // not overlap (overlap is illegal).
-    qsort(s->machine.devices, s->machine.devices_count,
-            sizeof *s->machine.devices, compare_devices_by_base);
-
-    for (unsigned i = 0; i < s->machine.devices_count; i++)
-        s->machine.devices[i]->ops.init(&s->plugin_cookie, &s->machine.devices[i]->cookie);
+    for (struct device_list *d = s->machine.devices; d; d = d->next)
+        d->device.ops.init(&s->plugin_cookie, &d->device.cookie);
 
     return 0;
 }
 
 int devices_teardown(struct sim_state *s)
 {
-    for (unsigned i = 0; i < s->machine.devices_count; i++) {
-        s->machine.devices[i]->ops.fini(s->machine.devices[i]->cookie);
-        free(s->machine.devices[i]);
+    for (struct device_list *d = s->machine.devices, *e; d; d = e) {
+        e = d->next;
+        d->device.ops.fini(d->device.cookie);
+        free(d);
     }
-
-    free(s->machine.devices);
 
     return 0;
 }
@@ -104,9 +81,9 @@ int devices_teardown(struct sim_state *s)
 int devices_dispatch_cycle(struct sim_state *s)
 {
     int rc = 0;
-    for (size_t i = 0; !rc && i < s->machine.devices_count; i++)
-        if (s->machine.devices[i]->ops.cycle)
-            rc = s->machine.devices[i]->ops.cycle(s->machine.devices[i]->cookie);
+    for (struct device_list *d = s->machine.devices; d; d = d->next)
+        if (d->device.ops.cycle)
+            rc = d->device.ops.cycle(d->device.cookie);
 
     return rc;
 }

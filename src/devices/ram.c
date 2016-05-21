@@ -53,9 +53,9 @@ static int ram_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     return 0;
 }
 
-int ram_add_device(struct device **device)
+int ram_add_device(struct device *device)
 {
-    **device = (struct device){
+    *device = (struct device){
         .bounds = { RAM_BASE, RAM_END },
         .ops = {
             .op = ram_op,

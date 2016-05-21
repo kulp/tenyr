@@ -19,11 +19,9 @@ typedef int op_dispatcher(void *ud, int op, uint32_t addr, uint32_t *data);
 struct run_ops;
 
 struct machine_state {
-    size_t devices_count;   ///< how many device slots are used
-    size_t devices_max;     ///< how many device slots are allocated
-    struct device **devices;
+    struct device_list *devices, **last_device;
     int32_t regs[16];
-} machine;
+};
 
 struct sim_state {
     struct {
@@ -72,7 +70,7 @@ int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
 #define breakpoint(...) \
     fatal(0, __VA_ARGS__)
 
-int next_device(struct sim_state *s);
+struct device * new_device(struct sim_state *s);
 int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data);
 int devices_setup(struct sim_state *s);
 int devices_finalise(struct sim_state *s);

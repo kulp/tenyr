@@ -198,9 +198,9 @@ void EXPORT tenyr_plugin_init(struct guest_ops *ops)
     debug_ = ops->debug;
 }
 
-int EXPORT sdlvga_add_device(struct device **device)
+int EXPORT sdlvga_add_device(struct device *device)
 {
-    **device = (struct device){
+    *device = (struct device){
         .bounds = { SDLVGA_BASE, SDLVGA_BASE + 0x1000 - 1 },
         .ops = {
             .op = sdlvga_op,
