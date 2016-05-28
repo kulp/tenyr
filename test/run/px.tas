@@ -1,0 +1,5 @@
+C <- P + 3
+D <- P + C
+E <- D & 0xf
+B <- E == 6
+illegal
