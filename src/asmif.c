@@ -30,23 +30,21 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 {
     struct symbol *symbol = NULL;
     if ((symbol = symbol_find(list, name))) {
-        if (result) {
-            if (symbol->ce) {
-                if (symbol->name && !strcmp(symbol->name, name))
-                    fatal(0, "Bad use before definition of symbol `%s'", name);
+        if (symbol->ce) {
+            if (symbol->name && !strcmp(symbol->name, name))
+                fatal(0, "Bad use before definition of symbol `%s'", name);
 
-                struct element_list **prev = symbol->ce->deferred;
-                return ce_eval(pd, (*prev)->elem, symbol->ce, 0, 0, result);
-            } else {
-                *result = symbol->reladdr;
-            }
+            struct element_list **prev = symbol->ce->deferred;
+            return ce_eval(pd, (*prev)->elem, symbol->ce, 0, 0, result);
+        } else {
+            *result = symbol->reladdr;
         }
         return 1;
     }
 
     // unresolved symbols get a zero value, but this is still success in CE_EXT
     // case (not in CE_SYM case)
-    if (result) *result = 0;
+    *result = 0;
     return 0;
 }
 
