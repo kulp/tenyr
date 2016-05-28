@@ -281,13 +281,11 @@ rhs_plain
         { $$ = make_rhs(2, $x, $binop, $y, 1, $vatom); }
     | vatom binop regname[x]
         {   int adding = $binop == OP_ADD;
-            int done   = $vatom->flags & DONE_EVAL;
-            int right  = adding && (!done || $vatom->i);
-            int x      = right ?  0 : $x;
-            int y      = right ? $x :  0;
-            int op     = right ? OP_BITWISE_OR : $binop;
+            int x      = adding ?  0 : $x;
+            int y      = adding ? $x :  0;
+            int op     = adding ? OP_BITWISE_OR : $binop;
             // `B <- 0 + C` is type2, `B <- 2 + C` is type1
-            $$ = make_rhs(right ? 1 : 2, x, op, y, 1, $vatom); }
+            $$ = make_rhs(adding ? 1 : 2, x, op, y, 1, $vatom); }
     | vatom
         { $$ = make_rhs(is_type3($vatom) ? 3 : 0, 0, 0, 0, 1, $vatom); }
     /* syntax sugars */
@@ -494,8 +492,8 @@ static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
     n->left  = left;
     n->right = right;
     n->insn  = NULL;    // top expr will have its insn filled in
-    n->flags = (((left  ? left->flags  : 0) |
-                 (right ? right->flags : 0)) & ~DONE_EVAL) | flags;
+    n->flags = ((left  ? left->flags  : 0)  |
+                (right ? right->flags : 0)) | flags;
     n->srcloc = *locp;
 
     return n;

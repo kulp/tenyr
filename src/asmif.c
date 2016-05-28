@@ -87,10 +87,6 @@ int ce_eval_const(struct parse_data *pd, struct const_expr *ce,
         int32_t *result)
 {
     int rc = ce_eval(pd, NULL, ce, 0, 0, result);
-    if (rc == 1) {
-        ce->flags |= DONE_EVAL;
-        ce->i = *result;
-    }
     return rc;
 }
 
@@ -199,11 +195,6 @@ static ce_evaluator * const ce_eval_dispatch[CE_max] = {
 int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int32_t *result)
 {
-    if (flags & DONE_EVAL) {
-        *result = ce->i;
-        return 1; // No need to re-evaluate
-    }
-
     if (ce->type >= CE_max)
         return ce_eval_bad(pd, context, ce, flags, width, result);
 
