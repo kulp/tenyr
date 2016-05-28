@@ -239,7 +239,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
                 rc |= 1;
             }
 
-            uint32_t mask = ~((1L << r->width) - 1);
+            uint32_t mask = ~((1LL << r->width) - 1);
             *r->dest &= mask;
             *r->dest |= result & ~mask;
             ce_free(ce);
