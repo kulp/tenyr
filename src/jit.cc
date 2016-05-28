@@ -1,7 +1,6 @@
 #include "ops.h"
 #include "common.h"
 #include "asmjit/asmjit.h"
-#include <cassert>
 
 #include "jit.h"
 
@@ -43,7 +42,7 @@ static inline void create_fetch(X86Compiler &cc, X86GpVar &cookie, X86GpVar &add
 
 static void buildOp(X86Compiler &cc, int op, X86GpVar &T, X86GpVar &A, X86GpVar &B, X86GpVar &C)
 {
-    switch (op) {
+    switch (op & 0xf) {
         case OP_ADD             : cc.add (A, B);    break;
         case OP_SUBTRACT        : cc.sub (A, B);    break;
         case OP_BITWISE_ANDN    : cc.not_(B);       /* FALLTHROUGH */
@@ -91,15 +90,10 @@ static void buildOp(X86Compiler &cc, int op, X86GpVar &T, X86GpVar &A, X86GpVar 
             cc.mov(T, Imm(-1));
             cc.cmp(A, B);
             cc.mov(A, Imm(0)); // don't use xor, it clears the flags we need
-            switch (op) {
-                case OP_COMPARE_LT: cc.cmovl (A, T); break;
-                case OP_COMPARE_EQ: cc.cmove (A, T); break;
-                case OP_COMPARE_GE: cc.cmovge(A, T); break;
-            }
+            if (op == OP_COMPARE_LT) cc.cmovl (A, T);
+            if (op == OP_COMPARE_EQ) cc.cmove (A, T);
+            if (op == OP_COMPARE_GE) cc.cmovge(A, T);
             break;
-
-        default:
-            assert(!"Bad op");
     }
 }
 
