@@ -16,8 +16,6 @@ clobber_FILES += $(GEN_V)
 
 all: tenyr
 
-.SUFFIXES: .v .c
-
 vpath %.v ../verilog ../verilog/sim .
 vpath %.v $(TOP)/3rdparty/wb_intercon/rtl/verilog
 vpath %.memh ../verilog

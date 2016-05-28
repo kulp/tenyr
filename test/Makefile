@@ -3,9 +3,6 @@ TOP := $(abspath $(dir $(makefile_path))/..)
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
-.SUFFIXES:
-.SUFFIXES: .tas .to .texe
-
 CPPFLAGS += -I$(TOP)/lib
 
 vpath %.tas $(TOP)/lib

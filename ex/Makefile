@@ -2,9 +2,6 @@ TOP := $(abspath ..)
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
-.SUFFIXES:
-.SUFFIXES: .tas .to .texe
-
 vpath %.tas $(TOP)/lib $(TOP)/lib/dword
 vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
 

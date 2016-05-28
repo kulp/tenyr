@@ -1,6 +1,4 @@
 TOP := $(abspath ..)
-.SUFFIXES:
-.SUFFIXES: .tas .to .texe
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
