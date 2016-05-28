@@ -778,7 +778,7 @@ static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
     int flags = IMM_IS_BITS | IS_DEFERRED;
     if (type == CE_EXT)
         flags |= IS_EXTERNAL;
-    struct const_expr *eref = make_expr(pd, locp, CE_EXT, 0, NULL, NULL, flags);
+    struct const_expr *eref = make_expr(pd, locp, type, 0, NULL, NULL, flags);
     struct symbol *s;
     if ((s = symbol_find(pd->symbols, symbol->head))) {
         eref->symbol = s;

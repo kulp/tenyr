@@ -103,10 +103,12 @@ static int ce_eval_sym(struct parse_data *pd, struct element *context,
             || (relocate ? sym_reloc_handler(&pd->relocs, dc, flags, ce, width) : 0);
     } else {
         const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
-        int found   = symbol_lookup(pd, pd->symbols, name, result);
-        int hflags  = flags | (found ? NO_NAMED_RELOC : 0);
-        int handled = relocate ? sym_reloc_handler(&pd->relocs, context, hflags, ce, width) : 0;
-        return found || handled;
+        int found = symbol_lookup(pd, pd->symbols, name, result);
+        if (relocate && ce->type == CE_EXT) {
+            int hflags = flags | (found ? NO_NAMED_RELOC : 0);
+            return sym_reloc_handler(&pd->relocs, context, hflags, ce, width);
+        }
+        return found;
     }
 }
 
