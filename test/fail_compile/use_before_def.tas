@@ -1,0 +1,3 @@
+.set foo, (@bar + 1)
+.set bar, 1
+
