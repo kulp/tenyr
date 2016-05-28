@@ -1,0 +1,2 @@
+.set foo, (@ext + 1)
+val: .word @foo

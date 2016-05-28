@@ -1,0 +1,2 @@
+# we should fail to compile when a .Lreference is outstanding
+.word ~(.Lfoo)
