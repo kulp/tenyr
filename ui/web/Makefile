@@ -84,6 +84,8 @@ PREFIX_XFORM = "$(SED_IN_PLACE) -e '1r pre_wrap.js' -e '1N; /{{PRE_RUN_ADDITIONS
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --js-transform $(PREFIX_XFORM)
 tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --post-js $*_post.js
 
+tcc.js: pp_build/tcc.bc
+
 clean_FILES += *_post.js
 %_post.js: post_wrap.js
 	sed 's/TENYR_BINARY_NAME/"$*"/g' $< > $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
@@ -95,9 +97,21 @@ TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
 TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
 tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
-tcc.bc:
-	$(MAKE) -C pp_build DEBUG=$(CC_DEBUG) CC_OPT=$(CC_OPT) $@
-	cp pp_build/$(@F) $@
+pp_build/%:
+	$(MAKE) -C pp_build $*
+
+TH_FILES_RSRC = $(wildcard main_build/rsrc/*.png)
+TH_FLAGS_RSRC = $(addprefix --preload-file ,$(foreach m,$(TH_FILES_RSRC),$m@rsrc/$(notdir $m)))
+tsim.js: $(TH_FILES_RSRC)
+tsim.js: EMCCFLAGS_LD += $(TH_FLAGS_RSRC)
+
+%.js: LDFLAGS =# reset LDFLAGS
+tcc.bc: CFLAGS =# reset CFLAGS
+tcc.bc: CPPFLAGS =# reset CPPFLAGS
+tcc.bc: CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing
+# clang doesn't know we are using old-style variable-sized structs
+tcc.bc: CFLAGS += -Wno-array-bounds
+tcc.bc: LDFLAGS += -O2
 
 # compensate for missing search.h implementation in emscripten environment
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): common.o
