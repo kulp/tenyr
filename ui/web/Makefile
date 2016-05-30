@@ -30,30 +30,21 @@ EMCC = emcc
 %.bc: CPPFLAGS += -DEMSCRIPTEN
 %.bc: CPPFLAGS += -Wno-warn-absolute-paths
 
-%.js: EMCCFLAGS_LD += -s SAFE_HEAP_LINES=0
-
 ifeq ($(DEBUG),)
 CC_OPT = -O2
 CC_DEBUG =
 %.js: EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG) --closure 1
-%.js: EMCCFLAGS_LD += -s ASSERTIONS=0 -s MICRO_OPTS=1 \
-                      -s LABEL_DEBUG=0 -s LIBRARY_DEBUG=0 \
-                      -s CLOSURE_ANNOTATIONS=1 \
-                      -s CHECK_OVERFLOWS=0 \
+%.js: EMCCFLAGS_LD += -s ASSERTIONS=0 \
+                      -s LIBRARY_DEBUG=0 \
                       -s DISABLE_EXCEPTION_CATCHING=1 \
-                      # TODO make relooping work \
-                      #-s RELOOP=1 \
                       #
 else
 CC_OPT = -O0
 CC_DEBUG = -g
 %.js: EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG)
-%.js: EMCCFLAGS_LD += -s ASSERTIONS=2 -s MICRO_OPTS=0 \
-                      -s LABEL_DEBUG=0 \
+%.js: EMCCFLAGS_LD += -s ASSERTIONS=2 \
                       -s LIBRARY_DEBUG=0 \
                       -s WARN_ON_UNDEFINED_SYMBOLS=1 \
-                      #-s CHECK_SIGNS=1 \
-                      #-s VERBOSE=1 \
                       #
 endif
 
