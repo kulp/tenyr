@@ -75,6 +75,7 @@ parser.h parser.c lexer.c lexer.h:
 	$(MAKE) CC=cc -C $(TOP) $@
 	cp -p $(MAIN_BUILD_DIR)/$(@F) $@
 
+asmif.o: CFLAGS += -Wno-unused-parameter
 asmif.o emtas.o: parser.h lexer.h
 
 # We have to do our own --pre-js equivalent for now, because the --pre-js
