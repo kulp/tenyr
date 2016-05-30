@@ -1,3 +1,0 @@
-/* hack around invisibility of FS due to wrapping all code in an extra function
- * scope to permit multiple emscripten scripts in one HTML page */
-Module['_set_up_fs'](FS);

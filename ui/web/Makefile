@@ -30,6 +30,8 @@ EMCC = emcc
 %.bc: CPPFLAGS += -DEMSCRIPTEN
 %.bc: CPPFLAGS += -Wno-warn-absolute-paths
 
+EMCCFLAGS_LD += -s MODULARIZE=1
+
 ifeq ($(DEBUG),)
 CC_OPT = -O2
 CC_DEBUG =
@@ -51,6 +53,8 @@ endif
 # TODO obviate this hack
 %.js: EMCCFLAGS_LD += --memory-init-file 0
 
+%.js: EMCCFLAGS_LD += -s "EXPORT_NAME='Module_$*'"
+
 %$(EXE_SUFFIX): em%.o
 	@$(MAKESTEP) "[ LD ] $@"
 	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
@@ -69,28 +73,7 @@ parser.h parser.c lexer.c lexer.h:
 asmif.o: CFLAGS += -Wno-unused-parameter
 asmif.o emtas.o: parser.h lexer.h
 
-# We have to do our own --pre-js equivalent for now, because the --pre-js
-# content comes before the main code but after the FS-setup code, and we need
-# ours to enclose all modifications to Module.
-# We would like to use `-i ''` on MacOS X and `-i` on Linux but they are
-# mutually incompatible
-HAVE_GNU_SED := $(shell sed --version 2>&1 | grep -c GNU)
-ifneq ($(HAVE_GNU_SED),0)
-SED_IN_PLACE = sed -i.bak
-else
-SED_IN_PLACE = sed -i ''
-endif
-PREFIX_XFORM = "$(SED_IN_PLACE) -e '1r pre_wrap.js' -e '1N; /{{PRE_RUN_ADDITIONS}}/r fsify.txt'"
-tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --js-transform $(PREFIX_XFORM)
-tcc.js tas.js tsim.js tld.js: EMCCFLAGS_LD += --post-js $*_post.js
-
 tcc.js: pp_build/tcc.bc
-
-clean_FILES += *_post.js
-%_post.js: post_wrap.js
-	sed 's/TENYR_BINARY_NAME/"$*"/g' $< > $@.$$$$ && mv $@.$$$$ $@ || rm $@.$$$$
-
-tcc.js tas.js tsim.js tld.js: %.js: pre_wrap.js %_post.js
 
 TENYR_LIB_DIR ?= lib
 TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
