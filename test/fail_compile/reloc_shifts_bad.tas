@@ -1,0 +1,7 @@
+    C <- ((@bb + @bb) >> 12)
+    D <- C ^^ ((@bb + @bb) & 0xfff)
+    E <- (4099 + 5 * 2)
+    B <- D == E
+    illegal
+.Laa:
+    .zero 4099
