@@ -4,7 +4,7 @@ TOP ?= $(HERE)/main_build
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
-BIN_TARGETS = tcc.js tas.js tsim.js
+BIN_TARGETS = tcc.js tas.js tsim.js tld.js
 TARGETS = $(BIN_TARGETS)
 EXE_SUFFIX = .bc
 CPPFLAGS += -D"PATH_COMPONENT_SEPARATOR_CHAR='/'"
@@ -55,7 +55,7 @@ endif
 
 %.js: EMCCFLAGS_LD += -s "EXPORT_NAME='Module_$*'"
 
-%$(EXE_SUFFIX): em%.o
+%$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
 	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
@@ -71,7 +71,7 @@ parser.h parser.c lexer.c lexer.h:
 	cp -p $(MAIN_BUILD_DIR)/$(@F) $@
 
 asmif.o: CFLAGS += -Wno-unused-parameter
-asmif.o emtas.o: parser.h lexer.h
+asmif.o tas.o: parser.h lexer.h
 
 tcc.js: pp_build/tcc.bc
 
