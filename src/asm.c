@@ -484,9 +484,14 @@ static int text_init(FILE *stream, struct param_state *p, void **ud)
 static int text_in(FILE *stream, struct element *i, void *ud)
 {
     int32_t *offset = ud;
-    int result =
-        fscanf(stream, "   %x", &i->insn.u.word) == 1 ||
-        fscanf(stream, " 0x%x", &i->insn.u.word) == 1;
+    int result = fscanf(stream, "  %x", &i->insn.u.word) == 1;
+    if (!result) {
+        if (feof(stream))
+            return -1;
+        result = fscanf(stream, " 0x%x", &i->insn.u.word) == 1;
+        if (!result && feof(stream))
+            return -1;
+    }
     i->insn.reladdr = (*offset)++;
     // Check for whitespace or EOF after the consumed item. This format can
     // read "agda"" as "0xa" and subsequently fail, when the whole string
