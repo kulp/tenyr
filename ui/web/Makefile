@@ -122,7 +122,7 @@ param.o: CPPFLAGS += -include src/em.h
 # flex-generated code needs POSIX source for fileno()
 lexer.o: CPPFLAGS += -D_POSIX_SOURCE
 
-clean_FILES += *.bc *.o *.js.mem tsim.js tas.js tld.js tcc.js tcc.data lexer.[ch] parser.[ch]
+clean_FILES += *.bc *.o *.js.mem tsim.js tas.js tld.js tcc.js tcc.data lexer.[ch] parser.[ch] tsim.data
 
 clean clobber::
 	$(MAKE) EXE_SUFFIX=.bc -C pp_build $@
