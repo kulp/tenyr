@@ -412,6 +412,8 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, void *ud, int fl
 
     struct element i;
     while ((rc = f->in(in, &i, ud)) >= 0) {
+        if (feof(in))
+            break;
         if (rc == 0)
             continue; // allow a format to emit no instructions
         int len = print_disassembly(out, &i, ASM_AS_INSN | flags);
