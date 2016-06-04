@@ -123,6 +123,8 @@ asm.o simif.o: CFLAGS += -Wno-unused-value
 parser.o lexer.o: CFLAGS += -Wno-unused -Wno-sign-compare
 lexer.o: CFLAGS += -Wno-unneeded-internal-declaration
 param.o: CPPFLAGS += -include src/em.h
+# flex-generated code needs POSIX source for fileno()
+lexer.o: CPPFLAGS += -D_POSIX_SOURCE
 
 clean_FILES += *.bc *.o *.js.mem tsim.js tas.js tld.js tcc.js tcc.data
 

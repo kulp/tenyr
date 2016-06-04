@@ -41,7 +41,7 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 %}
 
 %option reentrant bison-bridge bison-locations stack
-%option noyywrap never-interactive yylineno batch
+%option noyywrap yylineno batch
 %option case-insensitive
 %option extra-type="struct parse_data *"
 %option prefix="tenyr_"

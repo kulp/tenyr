@@ -91,6 +91,8 @@ $(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o plugin,dy.o $(common_OBJE
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
+# flex-generated code needs POSIX source for fileno()
+lexer.o: CPPFLAGS += -D_POSIX_SOURCE
 
 lexer.o asmif.o tas.o: parser.h
 parser.h parser.c: lexer.h
