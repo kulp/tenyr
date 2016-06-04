@@ -58,8 +58,8 @@ endif
 
 # TODO obviate this hack
 %.js: EMCCFLAGS_LD += --memory-init-file 0
-
 %.js: EMCCFLAGS_LD += -s "EXPORT_NAME='Module_$*'"
+%.js: EMCCFLAGS_LD += -s INVOKE_RUN=0 -s NO_EXIT_RUNTIME=1
 
 %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
@@ -96,8 +96,6 @@ tsim.js: EMCCFLAGS_LD += $(TH_FLAGS_RSRC)
 tsim.js: EMCCFLAGS_LD += --js-library os.js
 
 %.js: LDFLAGS =# reset LDFLAGS
-%.js: EMCCFLAGS_LD += -s INVOKE_RUN=0
-
 tcc.bc: CFLAGS =# reset CFLAGS
 tcc.bc: CPPFLAGS =# reset CPPFLAGS
 tcc.bc: CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing
