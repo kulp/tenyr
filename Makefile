@@ -34,6 +34,12 @@ tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
                  $(DEVOBJS) sim.o param.o
 tld_OBJECTS    = $(common_OBJECTS) obj.o
 
+ifeq ($(USE_OWN_SEARCH),1)
+tas_OBJECTS   += lsearch.o tsearch.o
+tld_OBJECTS   += lsearch.o tsearch.o
+tsim_OBJECTS  += lsearch.o
+endif
+
 showbuilddir:
 	@echo $(abspath $(BUILDDIR))
 

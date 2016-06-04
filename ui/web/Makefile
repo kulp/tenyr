@@ -109,9 +109,9 @@ tcc.bc:
 
 # compensate for missing search.h implementation in emscripten environment
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX): common.o
-tas$(EXE_SUFFIX) tld$(EXE_SUFFIX): emtsearch.o emlsearch.o
+tas$(EXE_SUFFIX) tld$(EXE_SUFFIX): tsearch.o lsearch.o
 tas$(EXE_SUFFIX): asm.o asmif.o param.o parser.o lexer.o obj.o
-tsim$(EXE_SUFFIX): sim.o simif.o param.o asm.o obj.o ram.o serial.o emlsearch.o
+tsim$(EXE_SUFFIX): sim.o simif.o param.o asm.o obj.o ram.o serial.o lsearch.o
 tld$(EXE_SUFFIX): common.o obj.o
 
 tsim.js: CC_OPT = -O2 # -O0 causes failure

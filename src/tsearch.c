@@ -63,7 +63,7 @@ void *tdelete(const void *restrict key, void **restrict rootp, cmp *compar)
 {
     struct tree *parent = NULL;
     struct tree **q = traverse(key, (void*)rootp, compar, 0, &parent);
-    if (!(*q)->datum)
+    if (!*q || !(*q)->datum)
         return NULL;
 
     struct tree *t = *q;
@@ -73,22 +73,22 @@ void *tdelete(const void *restrict key, void **restrict rootp, cmp *compar)
             break;
         }
 
-        struct tree **r = &t->right;
-        if (!(*r)->left) {
-            (*r)->left = t->left;
-            *q = *r;
+        struct tree *r = t->right;
+        if (!r->left) {
+            r->left = t->left;
+            *q = r;
             break;
         }
 
-        struct tree **s = &(*r)->left;
-        while ((*s)->left) {
+        struct tree *s = r->left;
+        while (s->left) {
             r = s;
-            s = &(*r)->left;
+            s = r->left;
         }
-        (*s)->left = t->left;
-        (*r)->left = (*s)->right;
-        (*s)->right = t->right;
-        *q = *s;
+        s->left = t->left;
+        r->left = s->right;
+        s->right = t->right;
+        *q = s;
     } while (0);
 
     free(t);
