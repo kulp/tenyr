@@ -88,6 +88,7 @@ TH_FILES_RSRC = $(wildcard main_build/rsrc/*.png)
 TH_FLAGS_RSRC = $(addprefix --preload-file ,$(foreach m,$(TH_FILES_RSRC),$m@rsrc/$(notdir $m)))
 tsim.js: $(TH_FILES_RSRC)
 tsim.js: EMCCFLAGS_LD += $(TH_FLAGS_RSRC)
+tsim.js: EMCCFLAGS_LD += --js-library os.js
 
 %.js: LDFLAGS =# reset LDFLAGS
 tcc.bc: CFLAGS =# reset CFLAGS
