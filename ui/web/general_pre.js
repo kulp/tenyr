@@ -9,6 +9,10 @@
     tenyr_state.tsim_get_line_char = make_char_getter(tenyr_state.tas_out_area);
 //};
 
+tenyr_state.tcc = { };
+tenyr_state.tas = { };
+tenyr_state.tsim = { };
+
 function make_char_getter(area)
 {
     return function() {

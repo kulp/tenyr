@@ -90,7 +90,7 @@ puts_done:
         <div class="box">
             <span>Assembled output :</span>
             <textarea id="output" rows="20"></textarea>
-            <button onclick="tenyr_state.tsim_entry()">Simulate &rarr;</button>
+            <button onclick="tenyr_state.tsim.app.callMain(tenyr_state.tsim.args)">Simulate &rarr;</button>
         </div>
         <div class="box">
             <span>Simulator output :</span>
@@ -102,5 +102,6 @@ puts_done:
     <script type='text/javascript' src="tcc.js"></script>
     <script type='text/javascript' src="tas.js"></script>
     <script type='text/javascript' src="tsim.js"></script>
+    <script type='text/javascript' src="general_post.js"></script>
   </body>
 </html>

@@ -9,6 +9,7 @@ TARGETS = $(BIN_TARGETS)
 EXE_SUFFIX = .bc
 CPPFLAGS += -D"PATH_COMPONENT_SEPARATOR_CHAR='/'"
 CPPFLAGS += -D'BUILD_NAME=$(BUILD_NAME)'
+CPPFLAGS += -D'DYLIB_SUFFIX=".so"'
 
 .PHONY: all
 all:: $(BIN_TARGETS)
@@ -22,6 +23,10 @@ vpath %.bc pp_build
 INCLUDES += $(CHECK_PATHS) main_build/src/os/default
 
 EMCC = emcc
+
+ifeq ($(EMRUN),1)
+EMCCFLAGS_LD += --emrun
+endif
 
 ################################################################################
 # General rules
@@ -91,6 +96,8 @@ tsim.js: EMCCFLAGS_LD += $(TH_FLAGS_RSRC)
 tsim.js: EMCCFLAGS_LD += --js-library os.js
 
 %.js: LDFLAGS =# reset LDFLAGS
+%.js: EMCCFLAGS_LD += -s INVOKE_RUN=0
+
 tcc.bc: CFLAGS =# reset CFLAGS
 tcc.bc: CPPFLAGS =# reset CPPFLAGS
 tcc.bc: CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing
