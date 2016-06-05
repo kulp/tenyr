@@ -1,17 +1,15 @@
-//document.onload = function() {
-    tenyr_state.tcc_in_area  = document.getElementById('input');
-    tenyr_state.tcc_out_area = tenyr_state.tas_in_area  = document.getElementById('preprocessed');
-    tenyr_state.tas_out_area = tenyr_state.tsim_in_area = document.getElementById('output');
-    tenyr_state.tsim_out_area = document.getElementById('simoutput');
-
-    tenyr_state.tcc_get_line_char = make_char_getter(tenyr_state.tcc_in_area);
-    tenyr_state.tas_get_line_char = make_char_getter(tenyr_state.tas_in_area);
-    tenyr_state.tsim_get_line_char = make_char_getter(tenyr_state.tas_out_area);
-//};
-
 tenyr_state.tcc = { };
 tenyr_state.tas = { };
 tenyr_state.tsim = { };
+
+tenyr_state.tcc.in_area  = document.getElementById('input');
+tenyr_state.tcc.out_area = tenyr_state.tas.in_area  = document.getElementById('preprocessed');
+tenyr_state.tas.out_area = tenyr_state.tsim.in_area = document.getElementById('output');
+tenyr_state.tsim.out_area = document.getElementById('simoutput');
+
+tenyr_state.tcc.get_line_char = make_char_getter(tenyr_state.tcc.in_area);
+tenyr_state.tas.get_line_char = make_char_getter(tenyr_state.tas.in_area);
+tenyr_state.tsim.get_line_char = make_char_getter(tenyr_state.tas.out_area);
 
 function make_char_getter(area)
 {
