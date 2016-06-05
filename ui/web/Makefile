@@ -41,20 +41,22 @@ EMCCFLAGS_LD += -s MODULARIZE=1
 ifeq ($(DEBUG),)
 CC_OPT = -O2
 CC_DEBUG =
-%.js: EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG) --closure 1
+CLOSURE_FLAGS = --closure 1
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=0 \
                       -s LIBRARY_DEBUG=0 \
                       -s DISABLE_EXCEPTION_CATCHING=1 \
+                      -s WARN_ON_UNDEFINED_SYMBOLS=0 \
                       #
 else
 CC_OPT = -O0
 CC_DEBUG = -g
-%.js: EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG)
+CLOSURE_FLAGS = --closure 0
 %.js: EMCCFLAGS_LD += -s ASSERTIONS=2 \
                       -s LIBRARY_DEBUG=0 \
-                      -s WARN_ON_UNDEFINED_SYMBOLS=1 \
                       #
 endif
+%.js: EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG)
+%.js: EMCCFLAGS_LD += $(CLOSURE_FLAGS)
 
 # TODO obviate this hack
 %.js: EMCCFLAGS_LD += --memory-init-file 0
@@ -111,8 +113,9 @@ tsim$(EXE_SUFFIX): sim.o simif.o param.o asm.o obj.o ram.o serial.o lsearch.o
 tld$(EXE_SUFFIX): common.o obj.o
 
 tsim.js: CC_OPT = -O2 # -O0 causes failure
-# --closure 1 doesn't work with tcc.js yet - reason not known.
-tcc.js: EMCCFLAGS_LD += --closure 0
+
+# Disable closure compiler for now
+tcc.js tas.js tsim.js tld.js: CLOSURE_FLAGS :=# empty
 
 asm.o ram.o serial.o sparseram.o parser.o lexer.o: CFLAGS += -Wno-unused-parameter
 asm.o simif.o: CFLAGS += -Wno-unused-value
