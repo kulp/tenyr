@@ -65,14 +65,7 @@ head(CMP_LT,<): BINOP(<)
 head(CMP_EQ,=): BINOP(==)
 
 // >      n1 n2 -- flag           test n1>n2, signed
-head(CMP_GT,>):
-    .word (. + 1)
-    T0  <- [S + 2]
-    T1  <- [S + 1]
-    S   <- S + 1
-    T2  <- T1 < T0
-    T2  -> [S + 1]
-    goto(NEXT)
+head(CMP_GT,>): BINOP(>)
 
 // >R     x --   R: -- x        push to return stack
 head(PUSH_R,>R):
