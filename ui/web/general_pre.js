@@ -9,12 +9,12 @@ tenyr_state.tsim.out_area = document.getElementById('simoutput');
 
 tenyr_state.tcc.get_line_char = make_char_getter(tenyr_state.tcc.in_area);
 tenyr_state.tas.get_line_char = make_char_getter(tenyr_state.tas.in_area);
-tenyr_state.tsim.get_line_char = make_char_getter(tenyr_state.tas.out_area);
+tenyr_state.tsim.get_line_char = make_char_getter(tenyr_state.tsim.in_area);
 
 function make_char_getter(area)
 {
     return function() {
-        me = arguments.callee;
+        var me = arguments.callee;
         if (typeof me.i == 'undefined') {
             me.i = 0;
         }

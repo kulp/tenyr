@@ -1,38 +1,34 @@
-function make_go(prefix) {
+var GLOBALS = (typeof window !== 'undefined' ? window : global);
+
+function make_go(state,prefix) {
     return function() {
-        tenyr_state[prefix].out_area.value = "";
-        tenyr_state[prefix].get_line_char.i = 0;
-        return tenyr_state[prefix].app.callMain(tenyr_state[prefix].args);
+        state[prefix].out_area.value = "";
+        state[prefix].get_line_char.i = 0;
+        return state[prefix].app.callMain(state[prefix].args);
     };
 }
 
-tenyr_state.tcc.args = ['-n', '-rprealloc', '-rserial', '-ftext', '-'];
-tenyr_state.tcc.app = Module_tcc({
-    'thisProgram':'tcc',
-    'stdin':tenyr_state.tcc.get_line_char,
-    'stdout':function(ch) {
-        tenyr_state.tcc.out_area.value += String.fromCharCode(ch);
-    }
-});
-tenyr_state.tcc.go = make_go('tcc');
+function make_mod(prefix) {
+    return {
+        'thisProgram': prefix,
+        'stdin': tenyr_state[prefix].get_line_char,
+        'stdout': function(ch) {
+            tenyr_state[prefix].out_area.value += String.fromCharCode(ch);
+        }
+    };
+}
+
+function set_up(state,prefix) {
+    state[prefix].args = [];
+    state[prefix].mod = make_mod(prefix);
+    state[prefix].app = GLOBALS['Module_' + prefix](state[prefix].mod);
+    state[prefix].go = make_go(state,prefix);
+}
+
+set_up(tenyr_state,'tcc');
+set_up(tenyr_state,'tas');
+set_up(tenyr_state,'tsim');
 
 tenyr_state.tas.args = ['-ftext', '-'];
-tenyr_state.tas.app = Module_tas({
-    'thisProgram':'tas',
-    'stdin':tenyr_state.tas.get_line_char,
-    'stdout':function(ch) {
-        tenyr_state.tas.out_area.value += String.fromCharCode(ch);
-    }
-});
-tenyr_state.tas.go = make_go('tas');
-
 tenyr_state.tsim.args = ['-n', '-rprealloc', '-rserial', '-ftext', '-'];
-tenyr_state.tsim.app = Module_tsim({
-    'thisProgram':'tsim',
-    'stdin':tenyr_state.tsim.get_line_char,
-    'stdout':function(ch) {
-        tenyr_state.tsim.out_area.value += String.fromCharCode(ch);
-    }
-});
-tenyr_state.tsim.go = make_go('tsim');
 
