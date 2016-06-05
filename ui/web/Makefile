@@ -58,8 +58,6 @@ endif
 %.js: EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG)
 %.js: EMCCFLAGS_LD += $(CLOSURE_FLAGS)
 
-# TODO obviate this hack
-%.js: EMCCFLAGS_LD += --memory-init-file 0
 %.js: EMCCFLAGS_LD += -s "EXPORT_NAME='Module_$*'"
 %.js: EMCCFLAGS_LD += -s INVOKE_RUN=0 -s NO_EXIT_RUNTIME=1
 
