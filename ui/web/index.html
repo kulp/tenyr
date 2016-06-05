@@ -80,17 +80,17 @@ puts_loop:
 puts_done:
     pop(d)
     ret</textarea>
-            <button onclick="tenyr_state.tcc.app.callMain(tenyr_state.tcc.args)">Preprocess &rarr;</button>
+            <button onclick="tenyr_state.tcc.go()">Preprocess &rarr;</button>
         </div>
         <div class="box">
             <span>Preprocessed input :</span>
             <textarea id="preprocessed" rows="20"></textarea>
-            <button onclick="tenyr_state.tas.app.callMain(tenyr_state.tas.args)">Assemble &rarr;</button>
+            <button onclick="tenyr_state.tas.go()">Assemble &rarr;</button>
         </div>
         <div class="box">
             <span>Assembled output :</span>
             <textarea id="output" rows="20"></textarea>
-            <button onclick="tenyr_state.tsim.app.callMain(tenyr_state.tsim.args)">Simulate &rarr;</button>
+            <button onclick="tenyr_state.tsim.go()">Simulate &rarr;</button>
         </div>
         <div class="box">
             <span>Simulator output :</span>

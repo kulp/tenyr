@@ -318,6 +318,10 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
 
 static int parse_args(struct sim_state *s, int argc, char *argv[])
 {
+    // Explicitly reset optind for cases where main() is called more than once
+    // (emscripten)
+    optind = 0;
+
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
@@ -398,6 +402,10 @@ int main(int argc, char *argv[])
         if (!in)
             fatal(PRINT_ERRNO, "Failed to open input file `%s'", argv[optind]);
     }
+
+    // Explicitly clear errors and EOF in case we run main() twice
+    // (emscripten)
+    clearerr(in);
 
     devices_setup(s);
     run_recipes(s);

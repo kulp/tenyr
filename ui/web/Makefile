@@ -115,6 +115,9 @@ tsim.js: CC_OPT = -O2 # -O0 causes failure
 # Disable closure compiler for now
 tcc.js tas.js tsim.js tld.js: CLOSURE_FLAGS :=# empty
 
+# Disable closing of streams so that the same code can run again
+tas.bc tsim.bc tld.bc: CPPFLAGS += '-Dfclose=fflush'
+
 asm.o ram.o serial.o sparseram.o parser.o lexer.o: CFLAGS += -Wno-unused-parameter
 asm.o simif.o: CFLAGS += -Wno-unused-value
 parser.o lexer.o: CFLAGS += -Wno-unused -Wno-sign-compare

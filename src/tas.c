@@ -113,6 +113,10 @@ int main(int argc, char *argv[])
 
     const struct format *f = &tenyr_asm_formats[0];
 
+    // Explicitly reset optind for cases where main() is called more than once
+    // (emscripten)
+    optind = 0;
+
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
@@ -154,6 +158,10 @@ int main(int argc, char *argv[])
             if (!in)
                 fatal(PRINT_ERRNO, "Failed to open input file `%s'", infname);
         }
+
+        // Explicitly clear errors and EOF in case we run main() twice
+        // (emscripten)
+        clearerr(in);
 
         if (disassemble)
             flags |= ASM_DISASSEMBLE;

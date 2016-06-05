@@ -295,6 +295,10 @@ int do_load_all(struct link_state *s, int count, char *names[count])
                 fatal(PRINT_ERRNO, "Failed to open input file `%s'", names[i]);
         }
 
+        // Explicitly clear errors and EOF in case we run main() twice
+        // (emscripten)
+        clearerr(in);
+
         rc = do_load(s, in);
 
         fclose(in);
@@ -328,6 +332,10 @@ int main(int argc, char *argv[])
             remove(outfname);
         return EXIT_FAILURE;
     }
+
+    // Explicitly reset optind for cases where main() is called more than once
+    // (emscripten)
+    optind = 0;
 
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
