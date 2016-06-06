@@ -63,7 +63,7 @@ struct run_ops {
 };
 
 typedef int sim_runner(struct sim_state *s, const struct run_ops *ops, void **run_data, void *ops_data);
-extern sim_runner interp_run_sim;
+extern sim_runner interp_run_sim, interp_step_sim;
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         void *fud, FILE *in, int load_address);
 

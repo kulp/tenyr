@@ -18,12 +18,15 @@
 #include <search.h>
 #include <inttypes.h>
 
+int recipe_emscript(struct sim_state *s); // linked in externally
+
 #define RECIPES(_) \
     _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
     _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
     _(serial  , "enable simple serial device and connect to stdio") \
     _(plugin  , "load plugins specified through param mechanism") \
     _(jit     , "use a JIT compiler (usually faster, but no -v supported)") \
+    _(emscript, "change behaviour to use an event loop for emscripten") \
     //
 
 #define DEFAULT_RECIPES(_) \

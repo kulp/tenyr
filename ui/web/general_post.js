@@ -30,5 +30,5 @@ set_up(tenyr_state,'tas');
 set_up(tenyr_state,'tsim');
 
 tenyr_state.tas.args = ['-ftext', '-'];
-tenyr_state.tsim.args = ['-n', '-rprealloc', '-rserial', '-ftext', '-'];
+tenyr_state.tsim.args = ['-n', '-rprealloc', '-rserial', '-remscript', '-ftext', '-'];
 
