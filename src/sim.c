@@ -114,31 +114,46 @@ int run_instruction(struct sim_state *s, const struct element *i, void *run_data
             g->dd == 1 || g->dd == 2, g->dd == 1);
 }
 
+int interp_step_sim(struct sim_state *s, const struct run_ops *ops,
+        void **run_data, void *ops_data)
+{
+    if (s->machine.regs[15] == (signed)0xffffffff) // end condition
+        return -1;
+
+    struct element i = { .insn.reladdr = 0 };
+    if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word))
+        return -1;
+
+    i.insn.reladdr = s->machine.regs[15];
+
+    if (ops->pre_insn)
+        if (ops->pre_insn(s, &i, ops_data))
+            return 0;
+
+    if (run_instruction(s, &i, *run_data))
+        return -1;
+
+    if (ops->post_insn)
+        if (ops->post_insn(s, &i, ops_data))
+            return 0;
+
+    // return  1 means "successful step, can continue as-is"
+    // return  0 means "stopped because a hook told us to stop"
+    // return -1 means "stopped because some error occurred"
+    return 1;
+}
+
 int interp_run_sim(struct sim_state *s, const struct run_ops *ops,
         void **run_data, void *ops_data)
 {
+    int rc = 0;
+
     *run_data = NULL; // this runner needs no data yet
-    while (1) {
-        if (s->machine.regs[15] == (signed)0xffffffff) // end condition
-            return -1;
+    do {
+        rc = interp_step_sim(s, ops, run_data, ops_data);
+    } while (rc > 0);
 
-        struct element i = { .insn.reladdr = 0 };
-        if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word))
-            return -1;
-
-        i.insn.reladdr = s->machine.regs[15];
-
-        if (ops->pre_insn)
-            if (ops->pre_insn(s, &i, ops_data))
-                return 0;
-
-        if (run_instruction(s, &i, *run_data))
-            return 1;
-
-        if (ops->post_insn)
-            if (ops->post_insn(s, &i, ops_data))
-                return 0;
-    }
+    return rc;
 }
 
 int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
