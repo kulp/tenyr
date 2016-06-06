@@ -27,8 +27,11 @@ function set_up(state,prefix) {
 
 set_up(tenyr_state,'tcc');
 set_up(tenyr_state,'tas');
+Module_tdis = Module_tas;
+set_up(tenyr_state,'tdis');
 set_up(tenyr_state,'tsim');
 
 tenyr_state.tas.args = ['-ftext', '-'];
+tenyr_state.tdis.args = ['-ftext', '-qd', '-'];
 tenyr_state.tsim.args = ['-n', '-rprealloc', '-rserial', '-remscript', '-ftext', '-'];
 
