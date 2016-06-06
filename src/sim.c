@@ -114,6 +114,12 @@ int run_instruction(struct sim_state *s, const struct element *i, void *run_data
             g->dd == 1 || g->dd == 2, g->dd == 1);
 }
 
+static int updates_P(const struct insn_or_data i)
+{
+    struct instruction_typeany t = i.u.typeany;
+    return (t.z == 15) && (t.dd == 0 || t.dd == 3);
+}
+
 int interp_step_sim(struct sim_state *s, const struct run_ops *ops,
         void **run_data, void *ops_data)
 {
@@ -137,10 +143,25 @@ int interp_step_sim(struct sim_state *s, const struct run_ops *ops,
         if (ops->post_insn(s, &i, ops_data))
             return 0;
 
+    // return  2 means "successful step, updated P register"
     // return  1 means "successful step, can continue as-is"
     // return  0 means "stopped because a hook told us to stop"
     // return -1 means "stopped because some error occurred"
-    return 1;
+    // TODO use an enumeration
+    return updates_P(i.insn) ? 2 : 1;
+}
+
+int interp_run_sim_block(struct sim_state *s, const struct run_ops *ops,
+        void **run_data, void *ops_data)
+{
+    int rc = 0;
+
+    *run_data = NULL; // this runner needs no data yet
+    do {
+        rc = interp_step_sim(s, ops, run_data, ops_data);
+    } while (rc > 0 && rc != 2);
+
+    return rc;
 }
 
 int interp_run_sim(struct sim_state *s, const struct run_ops *ops,
