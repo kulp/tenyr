@@ -1,9 +1,0 @@
-src/gen
-*.bc
-tcc.js
-tas.js
-tsim.js
-tld.js
-tcc.data
-tsim.data
-*.js.mem
