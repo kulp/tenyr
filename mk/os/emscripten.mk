@@ -11,6 +11,8 @@ JIT = 0
 USE_OWN_SEARCH = 1
 EMCCFLAGS_LD += -s MODULARIZE=1
 
+BUILDDIR = $(TOP)/ui/web/build
+
 BIN_TARGETS := $(BIN_TARGETS:$(EXE_SUFFIX)=.js) tcc.js
 
 SDL_OPTS = \
@@ -53,10 +55,12 @@ tcc.js tas.js tsim.js tld.js: CLOSURE_FLAGS :=# empty
 tas.bc tsim.bc tld.bc: CPPFLAGS += '-Dfclose=fflush'
 
 PP_BUILD = $(TOP)/3rdparty/tinypp
-vpath %.bc $(PP_BUILD)
-tcc.js: $(PP_BUILD)/tcc.bc
-$(PP_BUILD)/%:
-	$(MAKE) -C $(@D) $*
+tcc.o: libtcc.c tccpp.c tccgen.c tcc.h libtcc.h tcctok.h
+tcc.bc: CFLAGS := $(CC_DEBUG) -Wall
+tcc.bc: CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing -Wno-shift-negative-value
+tcc.bc: CFLAGS += $(CC_OPT)
+vpath %.c $(PP_BUILD)
+vpath %.h $(PP_BUILD)
 
 TENYR_LIB_DIR ?= $(TOP)/lib
 TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
@@ -68,6 +72,5 @@ RSRC_FLAGS = $(addprefix --preload-file ,$(foreach m,$(RSRC_FILES),$m@rsrc/$(not
 tsim.js: $(RSRC_FILES)
 tsim.js: EMCCFLAGS_LD += $(RSRC_FLAGS)
 
-clean_FILES += *.bc *.js.mem tsim.js tas.js tld.js tcc.js tcc.data tsim.data
-clean_FILES += $(PP_BUILD)/*.o $(PP_BUILD)/*.bc
+clean_FILES += $(BUILDDIR)/*.bc $(BUILDDIR)/*.js.mem $(BUILDDIR)/*.js $(BUILDDIR)/*.data
 

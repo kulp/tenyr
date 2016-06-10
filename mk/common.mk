@@ -111,7 +111,7 @@ include $(TOP)/mk/jit.mk
 
 # These definitions must come after OS includes
 MACHINE := $(shell $(CC) -dumpmachine)
-BUILDDIR = $(TOP)/build/$(MACHINE)
+BUILDDIR ?= $(TOP)/build/$(MACHINE)
 TOOLDIR := $(BUILDDIR)
 ifeq ($(findstring command,$(origin $(BUILDDIR))),)
  ifeq ($(BUILDDIR),)

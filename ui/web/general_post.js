@@ -10,6 +10,8 @@ function make_go(state,prefix) {
 
 function make_mod(prefix) {
     return {
+        'memoryInitializerPrefixURL': 'build/',
+        'filePackagePrefixURL': 'build/',
         'thisProgram': prefix,
         'stdin': tenyr_state[prefix].get_line_char,
         'stdout': function(ch) {
