@@ -48,7 +48,7 @@ distclean:: clobber
 	-$(RM) -r install/ build/ dist/
 
 clean clobber::
-	-rmdir $(BUILDDIR) build # fail, ignore if non-empty
+	-rmdir $(BUILDDIR)/devices $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
 	-$(MAKE) -C $(TOP)/forth $@
 	-$(MAKE) -C $(TOP)/hw/icarus $@
