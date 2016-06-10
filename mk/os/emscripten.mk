@@ -5,6 +5,8 @@ EMCC = emcc
 CC := $(EMCC)
 JIT = 0
 
+BIN_TARGETS := $(BIN_TARGETS:$(EXE_SUFFIX)=.js)
+
 #runwrap := node $(runwrap)
 
 %.bc: USE_OWN_SEARCH = 1
