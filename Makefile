@@ -66,7 +66,7 @@ clobber::
 
 ################################################################################
 # Rerun make inside $(BUILDDIR) if we are not already building in the $(PWD)
-DROP_TARGETS = win% showbuilddir clean clobber distclean
+DROP_TARGETS = showbuilddir clean clobber distclean
 ifneq ($(BUILDDIR),.)
 all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	mkdir -p $(BUILDDIR)
