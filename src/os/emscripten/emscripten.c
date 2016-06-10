@@ -29,7 +29,7 @@ static int emscripten_setup(struct sim_state *s, const struct run_ops *ops,
     };
 
     emscripten_cancel_main_loop(); // In case we get called more than once
-    emscripten_set_main_loop_arg(emscripten_wrap_step, &data, 1000, 1);
+    emscripten_set_main_loop_arg(emscripten_wrap_step, &data, 0, 1);
 
     return data.rc;
 }

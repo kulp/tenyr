@@ -26,15 +26,14 @@ endif
 
 ifeq ($(PLATFORM),mingw)
  OS := Win32
+else ifeq ($(PLATFORM),emscripten)
+ OS := emscripten
 else
  OS := $(shell uname -s)
 endif
 OS_PATHS = $(TOP)/src/os/$(OS) $(TOP)/src/os/default
 INCLUDE_OS = $(OS_PATHS)
 vpath %.c $(OS_PATHS)
-
-include $(TOP)/mk/os/default.mk
--include $(TOP)/mk/os/$(OS).mk
 
 LDFLAGS += $(LDFLAGS_$(OS))
 LDLIBS  += $(LDLIBS_$(OS))
@@ -86,16 +85,6 @@ BISON ?= bison -Werror
 
 cc_flag_supp = $(shell $(CC) $1 -c -x c -o /dev/null /dev/null 2>/dev/null >/dev/null && echo $1)
 
-MACHINE := $(shell $(CC) -dumpmachine)
-BUILDDIR = $(TOP)/build/$(MACHINE)
-TOOLDIR := $(BUILDDIR)
-ifeq ($(findstring command,$(origin $(BUILDDIR))),)
- ifeq ($(BUILDDIR),)
-  override BUILDDIR := $(TOP)/build/$(MACHINE)
- endif
-endif
-BUILD_NAME := $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>/dev/null || $(ECHO) "unknown")
-
 TAS = $(runwrap)$(TOOLDIR)/tas$(EXE_SUFFIX)
 TLD = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
 
@@ -108,9 +97,6 @@ PDEVLIBS = $(PDEVICES:%=libtenyr%$(DYLIB_SUFFIX))
 
 BIN_TARGETS += tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS += $(PDEVLIBS)
-ifneq ($(JIT),0)
-LIB_TARGETS += libtenyrjit$(DYLIB_SUFFIX)
-endif
 
 TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
 RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
@@ -118,6 +104,19 @@ RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
                $(wildcard $(TOP)/plugins/*.rcp) \
                #
 
+include $(TOP)/mk/os/default.mk
+-include $(TOP)/mk/os/$(OS).mk
 include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/jit.mk
+
+# These definitions must come after OS includes
+MACHINE := $(shell $(CC) -dumpmachine)
+BUILDDIR = $(TOP)/build/$(MACHINE)
+TOOLDIR := $(BUILDDIR)
+ifeq ($(findstring command,$(origin $(BUILDDIR))),)
+ ifeq ($(BUILDDIR),)
+  override BUILDDIR := $(TOP)/build/$(MACHINE)
+ endif
+endif
+BUILD_NAME := $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>/dev/null || $(ECHO) "unknown")
 
