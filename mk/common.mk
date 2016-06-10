@@ -104,8 +104,8 @@ RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
                $(wildcard $(TOP)/plugins/*.rcp) \
                #
 
-include $(TOP)/mk/os/default.mk
--include $(TOP)/mk/os/$(OS).mk
+include $(TOP)/mk/os/vars/default.mk
+-include $(TOP)/mk/os/vars/$(OS).mk
 include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/jit.mk
 

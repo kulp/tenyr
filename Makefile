@@ -75,6 +75,8 @@ else
 
 all: $(TARGETS)
 
+-include $(TOP)/mk/os/rules/$(OS).mk
+
 .PHONY: vpi
 vpi: vpidevices.vpi
 vpidevices.vpi: callbacks,dy.o vpiserial,dy.o load,dy.o sim,dy.o asm,dy.o obj,dy.o common,dy.o param,dy.o
