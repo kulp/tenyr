@@ -71,6 +71,11 @@ TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
 TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
 tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
+RSRC_FILES = $(wildcard $(TOP)/rsrc/*.png)
+RSRC_FLAGS = $(addprefix --preload-file ,$(foreach m,$(RSRC_FILES),$m@rsrc/$(notdir $m)))
+tsim.js: $(RSRC_FILES)
+tsim.js: EMCCFLAGS_LD += $(RSRC_FLAGS)
+
 clean_FILES += *.bc *.js.mem tsim.js tas.js tld.js tcc.js tcc.data tsim.data
 clean_FILES += $(PP_BUILD)/*.o $(PP_BUILD)/*.bc
 
