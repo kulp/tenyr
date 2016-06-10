@@ -1,11 +1,14 @@
 # this file is included by the main Makefile automatically
-EXE_SUFFIX = .bc
-#CFLAGS_PIC =
+export EXE_SUFFIX = .bc
+CFLAGS_PIC  = -s SIDE_MODULE=1
+LDFLAGS_PIC = -s SIDE_MODULE=1
+CPPFLAGS += -DEMSCRIPTEN
 EMCC = emcc
-CC := $(EMCC)
+export CC := $(EMCC)
 JIT = 0
 
 BIN_TARGETS := $(BIN_TARGETS:$(EXE_SUFFIX)=.js)
+BIN_TARGETS := $(BIN_TARGETS:$(EXE_SUFFIX)=.js) tcc.js
 
 #runwrap := node $(runwrap)
 
@@ -57,5 +60,17 @@ tcc.js tas.js tsim.js tld.js: CLOSURE_FLAGS :=# empty
 # Disable closing of streams so that the same code can run again
 tas.bc tsim.bc tld.bc: CPPFLAGS += '-Dfclose=fflush'
 
+PP_BUILD = $(TOP)/3rdparty/tinypp
+vpath %.bc $(PP_BUILD)
+tcc.js: $(PP_BUILD)/tcc.bc
+$(PP_BUILD)/%:
+	$(MAKE) -C $(@D) $*
+
+TENYR_LIB_DIR ?= $(TOP)/lib
+TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
+TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
+tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
+
 clean_FILES += *.bc *.js.mem tsim.js tas.js tld.js tcc.js tcc.data tsim.data
+clean_FILES += $(PP_BUILD)/*.o $(PP_BUILD)/*.bc
 
