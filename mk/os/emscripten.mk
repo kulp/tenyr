@@ -1,25 +1,17 @@
 # this file is included by the main Makefile automatically
 export EXE_SUFFIX = .bc
-CFLAGS_PIC  = -s SIDE_MODULE=1
-LDFLAGS_PIC = -s SIDE_MODULE=1
+CFLAGS_PIC   = -s SIDE_MODULE=1
+LDFLAGS_PIC  = -s SIDE_MODULE=1
+EMCCFLAGS_LD = -s SIDE_MODULE=1
 CPPFLAGS += -DEMSCRIPTEN
 EMCC = emcc
 export CC := $(EMCC)
 JIT = 0
 
-BIN_TARGETS := $(BIN_TARGETS:$(EXE_SUFFIX)=.js)
-BIN_TARGETS := $(BIN_TARGETS:$(EXE_SUFFIX)=.js) tcc.js
-
-#runwrap := node $(runwrap)
-
-%.bc: USE_OWN_SEARCH = 1
-
-%.bc: export CC = $(EMCC)
-%.bc: export EXE_SUFFIX = .bc
-%.bc: CPPFLAGS += -DEMSCRIPTEN
-%.bc: CPPFLAGS += -Wno-warn-absolute-paths
-
+USE_OWN_SEARCH = 1
 EMCCFLAGS_LD += -s MODULARIZE=1
+
+BIN_TARGETS := $(BIN_TARGETS:$(EXE_SUFFIX)=.js) tcc.js
 
 SDL_OPTS = \
 	-s USE_SDL=2 \
