@@ -1,7 +1,13 @@
+# Cannot use closure compiler on shared libraries
+$(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): CLOSURE_FLAGS =# empty
+$(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): LDFLAGS       = -s SIDE_MODULE=1
+$(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): EMCCFLAGS_LD  = -s SIDE_MODULE=1
+
 tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
 tsim.js: $(RSRC_FILES)
 tsim.js: EMCCFLAGS_LD += $(RSRC_FLAGS)
+tsim.js: EMCCFLAGS_LD += -s MAIN_MODULE=1
 
 vpath %.c $(PP_BUILD)
 vpath %.h $(PP_BUILD)

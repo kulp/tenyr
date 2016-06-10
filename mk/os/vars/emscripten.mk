@@ -1,18 +1,19 @@
 # this file is included by the main Makefile automatically
 export EXE_SUFFIX = .bc
-CFLAGS_PIC   = -s SIDE_MODULE=1
-LDFLAGS_PIC  = -s SIDE_MODULE=1
-EMCCFLAGS_LD = -s SIDE_MODULE=1
 CPPFLAGS += -DEMSCRIPTEN
 EMCC = emcc
 export CC := $(EMCC)
 JIT = 0
 USE_OWN_SEARCH = 1
 EMCCFLAGS_LD += -s MODULARIZE=1
+DYLIB_SUFFIX = .bc
 
 BUILDDIR = $(TOP)/ui/web/build
 
-BIN_TARGETS := $(BIN_TARGETS:$(EXE_SUFFIX)=.js) tcc.js
+TARGETS =# empty
+TARGETS += $(BIN_TARGETS:$(EXE_SUFFIX)=.js) tcc.js
+TARGETS += tcc.js
+TARGETS += $(LIB_TARGETS:$(DYLIB_SUFFIX)=.js)
 
 SDL_OPTS = \
 	-s USE_SDL=2 \
