@@ -1,11 +1,6 @@
 // tsearch() since emscripten doesn't have one
 // From Algorithms T and D, Knuth, TAoCP Vol. 3 (6.2.2)
-#if EMSCRIPTEN
-// emscripten's includes are not compatible with our prototype for tfind()
-typedef enum { preorder, postorder, endorder, leaf } VISIT;
-#else
 #include <search.h>
-#endif
 #include <stdlib.h>
 
 struct tree {

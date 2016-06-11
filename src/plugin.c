@@ -66,13 +66,6 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
                 free(resolved);
             }
 
-#if EMSCRIPTEN
-            if (libhandle == RTLD_DEFAULT) {
-                // emscripten doesn't support RTLD_DEFAULT
-                debug(1, "Could not load %s, bailing", implpath);
-                break;
-            }
-#endif
             tenyr_plugin_host_init(libhandle);
 
             success(libhandle, inst, parent, implstem, ud);

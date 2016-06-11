@@ -1,6 +1,5 @@
 # this file is included by the main Makefile automatically
 export EXE_SUFFIX = .bc
-CPPFLAGS += -DEMSCRIPTEN
 EMCC = emcc
 export CC := $(EMCC)
 JIT = 0
