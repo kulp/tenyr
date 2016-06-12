@@ -151,19 +151,6 @@ int interp_step_sim(struct sim_state *s, const struct run_ops *ops,
     return updates_P(i.insn) ? 2 : 1;
 }
 
-int interp_run_sim_block(struct sim_state *s, const struct run_ops *ops,
-        void **run_data, void *ops_data)
-{
-    int rc = 0;
-
-    *run_data = NULL; // this runner needs no data yet
-    do {
-        rc = interp_step_sim(s, ops, run_data, ops_data);
-    } while (rc > 0 && rc != 2);
-
-    return rc;
-}
-
 int interp_run_sim(struct sim_state *s, const struct run_ops *ops,
         void **run_data, void *ops_data)
 {

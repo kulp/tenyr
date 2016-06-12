@@ -12,7 +12,10 @@ struct emscripten_wrap {
 static void emscripten_wrap_step(void *data_)
 {
     struct emscripten_wrap *d = data_;
-    d->rc = interp_run_sim_block(d->s, d->ops, d->run_data, d->ops_data);
+    int runs = 0;
+    do {
+        d->rc = interp_step_sim(d->s, d->ops, d->run_data, d->ops_data);
+    } while (d->rc > 0 && runs++ < 10000); // TODO make number of instructions configurable
 }
 
 static int emscripten_setup(struct sim_state *s, const struct run_ops *ops,
