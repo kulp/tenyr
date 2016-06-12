@@ -1,6 +1,5 @@
 #include "sim.h"
 #include "common.h"
-#include "param.h"
 
 #include <stdlib.h>
 
