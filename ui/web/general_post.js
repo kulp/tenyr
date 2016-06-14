@@ -35,5 +35,5 @@ set_up(tenyr_state,'tsim');
 
 tenyr_state.tas.args = ['-ftext', '-'];
 tenyr_state.tdis.args = ['-ftext', '-qd', '-'];
-tenyr_state.tsim.args = ['-n', '-rprealloc', '-rserial', '-remscript', '-ftext', '-'];
+tenyr_state.tsim.args = ['-n', '-rprealloc', '-rserial', '-remscript', '-ftext', '--param=emscripten.insns_per_anim_frame=1000', '-'];
 
