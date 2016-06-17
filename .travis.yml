@@ -58,6 +58,7 @@ matrix:
         - PLATFORM=osx   BITS=64 HOST=x86_64
         - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
+        - CXX=clang++
     - compiler: "gcc"
       os: osx
       env:
@@ -70,6 +71,7 @@ matrix:
         - PLATFORM=linux BITS=64 HOST=x86_64
         - CHECK_RULE=check GCOV=
         - PKG_RULE=gzip
+        - CXX=clang++
     - compiler: "gcc"
       os: linux
       env:
