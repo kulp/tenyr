@@ -373,6 +373,8 @@ int main(int argc, char *argv[])
             },
         },
         .run_sim = interp_run_sim,
+        .interp  = interp_run_sim,
+        .pump    = devices_dispatch_cycle,
     }, *s = &_s;
 
     param_init(&s->conf.params);

@@ -1,8 +1,6 @@
-#define _GNU_SOURCE 1 /* for RTLD_DEFAULT */
 #include "jit.h"
 
 #include <assert.h>
-#include <dlfcn.h>
 #include <search.h>
 
 // XXX permit fetch to express failure
@@ -96,14 +94,6 @@ int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_data, void 
     wrappers.pre_insn = pre_insn_hook;
     wrappers.post_insn = post_insn_hook;
 
-    typedef int dispatch_cycle(struct sim_state *s);
-    void *pv = dlsym(RTLD_DEFAULT, "devices_dispatch_cycle");
-    void *iv = dlsym(RTLD_DEFAULT, "interp_run_sim");
-    dispatch_cycle *pump   = ALIASING_CAST(dispatch_cycle, pv);
-    sim_runner     *interp = ALIASING_CAST(sim_runner, iv);
-    if (!interp || !pump)
-        fatal(PRINT_ERRNO, "Failed to find interpreter");
-
     int rc = 0;
     do {
         if (o->curr_bb && o->curr_bb->compiled) {
@@ -112,8 +102,8 @@ int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_data, void 
             o->curr_bb->run_count++;
             o->curr_bb = NULL;
         }
-        rc = interp(s, &wrappers, &js->nested_run_data, o);
-        pump(s); // no longer a "cycle" but periodic
+        rc = s->interp(s, &wrappers, &js->nested_run_data, o);
+        s->pump(s); // no longer a "cycle" but periodic
     } while (rc >= 0);
 
     jit_fini(js);

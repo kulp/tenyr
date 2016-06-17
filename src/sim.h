@@ -23,6 +23,11 @@ struct machine_state {
     int32_t regs[16];
 };
 
+struct sim_state;
+
+typedef int sim_runner(struct sim_state *s, const struct run_ops *ops, void **run_data, void *ops_data);
+typedef int dispatch_cycle(struct sim_state *s);
+
 struct sim_state {
     struct {
         int verbose;
@@ -51,7 +56,8 @@ struct sim_state {
     struct recipe_book *recipes;
 
     struct machine_state machine;
-    int (*run_sim)(struct sim_state *s, const struct run_ops *ops, void **run_data, void *ops_data);
+    sim_runner *run_sim, *interp;
+    dispatch_cycle *pump;
     uintmax_t insns_executed;
 
     struct library_list *libs; // opaque linked list of open libraries to dispose
@@ -62,7 +68,6 @@ struct run_ops {
     int (*post_insn)(struct sim_state *s, const struct element *i, void *ud);
 };
 
-typedef int sim_runner(struct sim_state *s, const struct run_ops *ops, void **run_data, void *ops_data);
 extern sim_runner interp_run_sim, interp_step_sim;
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         void *fud, FILE *in, int load_address);
