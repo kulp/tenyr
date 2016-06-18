@@ -23,10 +23,10 @@
 #define CONCAT(X,Y) CONCAT_(X,Y)
 #define LINE(X) CONCAT(X,__LINE__)
 
-#define list_foreach(Tag,Node,Object)                                          \
-    for (struct Tag *LINE(Next) = (Object), *Node = LINE(Next);                            \
-            (void)(Node && (LINE(Next) = Node->next)), Node;                         \
-            Node = LINE(Next))                                                       \
+#define list_foreach(Tag,Node,Object)                                       \
+    for (struct Tag *LINE(Next) = (Object), *Node = LINE(Next);             \
+            (void)(Node && (LINE(Next) = Node->next)), Node;                \
+            Node = LINE(Next))                                              \
     //
 
 // TODO document fixed lengths or remove the limitations
