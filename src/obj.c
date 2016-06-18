@@ -180,12 +180,19 @@ int obj_write(struct obj *o, FILE *out)
     }
 }
 
+// CREATE_SCOPE uses a C99 for-loop to create a variable whose lifetime is only
+// the statement following the CREATE_SCOPE (which may or may not be a compound
+// statement)
+#define CREATE_SCOPE(Type,Var,...) \
+    for (   Type Var __VA_ARGS__, *Sentinel_ = (void*)&Var; \
+            Sentinel_; \
+            Sentinel_ = NULL) \
+//
+
 #define for_counted_get(Tag,Name,List,Count) \
-    if (((List) = NULL)) {} else for (struct Tag *_f = NULL, *_l = NULL, *Name = NULL; \
-            ((Count) ? Name ? !!(Count) : (!!(Name = List = calloc(Count, sizeof *Name)) || \
-                (fatal(PRINT_ERRNO, "Failed to allocate %d records for %s", Count, #List),0)) : 0) && !_f; \
-            _f++) \
-        for (UWord _i = (Count); _i > 0; _l ? (void)(_l->next = Name) : (void)0, _l = Name++, _i--)
+    CREATE_SCOPE(struct Tag*,Name,=calloc(Count,sizeof *Name),**Prev_ = &List) \
+    for (UWord i_ = Count; i_ > 0; *Prev_ = Name, Prev_ = &Name++->next, i_--) \
+//
 
 static int get_recs(struct obj *o, FILE *in, void *context)
 {
