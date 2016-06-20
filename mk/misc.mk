@@ -142,6 +142,7 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	$(runwrap)$(BUILDDIR)/$< -ftext /dev/null -vvvv | fgrep -q "P 00001"            && $(MAKESTEP) "    ... -vvvv ok"
 	$(runwrap)$(BUILDDIR)/$< -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(MAKESTEP) "    ... multiple files rejected ok"
 	$(runwrap)$(BUILDDIR)/$< -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
+	(! $(runwrap)$(BUILDDIR)/$< -remscript - &> /dev/null )                         && $(MAKESTEP) "    ... emscripten recipe rejected ok"
 
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
