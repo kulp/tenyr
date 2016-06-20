@@ -78,8 +78,6 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
 GIT = git --git-dir=$(TOP)/.git
-CC  := $(CROSS_COMPILE)$(CC)
-CXX := $(CROSS_COMPILE)$(CXX)
 FLEX  ?= flex
 BISON ?= bison -Werror
 
@@ -106,6 +104,12 @@ RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
 
 include $(TOP)/mk/os/vars/default.mk
 -include $(TOP)/mk/os/vars/$(OS).mk
+
+# OS Makefiles might have set CROSS_COMPILE. Since we are using `:=` instead of
+# `=`, order of assignment of variables matters.
+CC  := $(CROSS_COMPILE)$(CC)
+CXX := $(CROSS_COMPILE)$(CXX)
+
 include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/jit.mk
 
