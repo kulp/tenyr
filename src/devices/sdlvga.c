@@ -181,7 +181,6 @@ static int sdlvga_pump(void *cookie)
             switch (event.type) {
                 case SDL_QUIT:
                     state->status = STOPPED;
-                    debug(0, "sdlvga requested quit");
                     exit(0);
                 default:
                     break;

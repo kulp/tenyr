@@ -162,12 +162,6 @@ static int handle_update(struct sdlled_state *state)
     decode_led(state->data[0], digits);
     decode_dots(state->data[1], dots);
 
-    debug(5, "sdlled : %x%c%x%c%x%c%x%c\n",
-             digits[3], dots[3] ? '.' : ' ',
-             digits[2], dots[2] ? '.' : ' ',
-             digits[1], dots[1] ? '.' : ' ',
-             digits[0], dots[0] ? '.' : ' ');
-
     for (unsigned i = 0; i < 4; i++) {
         put_digit(state, i, digits[3 - i]);
         put_dot(state, i, dots[3 - i]);
@@ -216,7 +210,6 @@ static int sdlled_pump(void *cookie)
             switch (event.type) {
                 case SDL_QUIT:
                     state->status = STOPPED;
-                    debug(0, "sdlled requested quit");
                     exit(0);
                 default:
                     break;
