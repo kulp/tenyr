@@ -19,10 +19,6 @@
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
 
-#define for_counted_put(Tag,Name,List,Count) \
-    for (int _dummy = 0; !_dummy && (Count) > 0; _dummy++) \
-        list_foreach(Tag, Name, List)
-
 typedef int obj_op(struct obj *o, FILE *out, void *context);
 
 static obj_op put_recs, put_syms, put_relocs_v0, put_relocs_v1,
@@ -128,7 +124,7 @@ static int put_syms(struct obj *o, FILE *out, void *context)
 static int put_relocs_v0(struct obj *o, FILE *out, void *context)
 {
     PUT(o->rlc_count, out);
-    for_counted_put(objrlc, rlc, o->relocs, o->rlc_count) {
+    list_foreach(objrlc, rlc, o->relocs) {
         PUT(rlc->flags, out);
         PUT(rlc->name, out);
         PUT(rlc->addr, out);
