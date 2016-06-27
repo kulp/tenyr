@@ -14,6 +14,8 @@ TARGETS += $(BIN_TARGETS:$(EXE_SUFFIX)=.js) tcc.js
 TARGETS += tcc.js
 TARGETS += $(LIB_TARGETS:$(DYLIB_SUFFIX)=.js)
 
+EXPORTED_FUNCTIONS += main
+
 SDL_OPTS = \
 	-s USE_SDL=2 \
 	-s USE_SDL_IMAGE=2 \
@@ -28,17 +30,21 @@ EMCCFLAGS_LD += -s ASSERTIONS=0 \
                 -s LIBRARY_DEBUG=0 \
                 -s DISABLE_EXCEPTION_CATCHING=1 \
                 -s WARN_ON_UNDEFINED_SYMBOLS=0 \
+                -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
                 #
+
 else
 CC_OPT = -O0
 CC_DEBUG = -g
 CLOSURE_FLAGS = --closure 0
 EMCCFLAGS_LD += -s ASSERTIONS=2 \
                 -s LIBRARY_DEBUG=0 \
+                -s WARN_ON_UNDEFINED_SYMBOLS=1 \
                 #
 endif
 EMCCFLAGS_LD += -s "EXPORT_NAME='Module_$*'"
 EMCCFLAGS_LD += -s INVOKE_RUN=0 -s NO_EXIT_RUNTIME=1
+EMCCFLAGS_LD += -s "EXPORTED_FUNCTIONS=[$(foreach f,$(EXPORTED_FUNCTIONS),'_$f',)]"
 
 EMCCFLAGS_LD += $(CC_OPT) $(CC_DEBUG)
 EMCCFLAGS_LD += $(CLOSURE_FLAGS)

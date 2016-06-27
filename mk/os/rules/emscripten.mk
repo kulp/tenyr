@@ -7,7 +7,7 @@ tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
 tsim.js: $(RSRC_FILES)
 tsim.js: EMCCFLAGS_LD += $(RSRC_FLAGS)
-tsim.js: EMCCFLAGS_LD += -s MAIN_MODULE=1
+tsim.js: EMCCFLAGS_LD += -s MAIN_MODULE=2
 
 vpath %.c $(PP_BUILD)
 vpath %.h $(PP_BUILD)
