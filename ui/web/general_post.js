@@ -10,6 +10,8 @@ function make_go(state,prefix) {
 
 function make_mod(prefix) {
     return {
+        'noInitialRun': true,
+        'noExitRuntime': true,
         'memoryInitializerPrefixURL': 'build/',
         'filePackagePrefixURL': 'build/',
         'thisProgram': prefix,
