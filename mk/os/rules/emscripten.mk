@@ -19,6 +19,7 @@ tcc.bc: CFLAGS += $(CC_OPT)
 %.js: %.bc
 	@$(MAKESTEP) "[ EM-LD ] $@"
 	$(EMCC) $(EMCCFLAGS_LD) $< $(LDLIBS) -o $@
+	echo "if (!INHIBIT_RUN) Module_$*();" >> $@
 
 # Disable closure compiler for now
 tcc.js tas.js tsim.js tld.js: CLOSURE_FLAGS :=# empty

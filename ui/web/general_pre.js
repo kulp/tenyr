@@ -1,3 +1,5 @@
+var INHIBIT_RUN = true;
+
 tenyr_state.tcc = { };
 tenyr_state.tas = { };
 tenyr_state.tdis = { };
