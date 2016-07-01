@@ -3,6 +3,8 @@ $(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): CLOSURE_FLAGS =# empty
 $(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): LDFLAGS       = -s SIDE_MODULE=1
 $(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): EMCCFLAGS_LD  = -s SIDE_MODULE=1
 
+preamble.o preamble,dy.o: CFLAGS += -Wno-dollar-in-identifier-extension
+
 tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
 
 tsim.js: $(RSRC_FILES)

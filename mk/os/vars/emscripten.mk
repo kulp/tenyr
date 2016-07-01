@@ -16,6 +16,8 @@ TARGETS += $(LIB_TARGETS:$(DYLIB_SUFFIX)=.js)
 
 EXPORTED_FUNCTIONS += main
 
+DEFINES += 'MOUNT_POINT="/nodefs"'
+
 SDL_OPTS = \
 	-s USE_SDL=2 \
 	-s USE_SDL_IMAGE=2 \

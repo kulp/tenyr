@@ -11,6 +11,8 @@
 #include <string.h>
 #include <strings.h>
 
+extern FILE *os_fopen(const char *, const char *);
+
 struct link_state {
     UWord addr;     ///< current address
     int obj_count;
@@ -293,7 +295,7 @@ int do_load_all(struct link_state *s, int count, char *names[count])
         if (!strcmp(names[i], "-")) {
             in = stdin;
         } else {
-            in = fopen(names[i], "rb");
+            in = os_fopen(names[i], "rb");
             if (!in)
                 fatal(PRINT_ERRNO, "Failed to open input file `%s'", names[i]);
         }
@@ -316,6 +318,8 @@ int do_load_all(struct link_state *s, int count, char *names[count])
 int main(int argc, char *argv[])
 {
     int rc = 0;
+
+    extern int os_preamble();
 
     struct link_state _s = {
         .addr = 0,
@@ -361,8 +365,10 @@ int main(int argc, char *argv[])
     if (optind >= argc)
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
 
+    os_preamble(params);
+
     if (outfname)
-        out = fopen(outfname, "wb");
+        out = os_fopen(outfname, "wb");
     if (!out)
         fatal(PRINT_ERRNO, "Failed to open output file `%s'", outfname ? outfname : "<stdout>");
 

@@ -18,6 +18,8 @@
 #include <search.h>
 #include <inttypes.h>
 
+extern FILE *os_fopen(const char *, const char *);
+
 int recipe_emscript(struct sim_state *s); // linked in externally
 
 #define RECIPES(_) \
@@ -290,10 +292,10 @@ static int parse_args(struct sim_state *s, int argc, char *argv[]);
 
 static int parse_opts_file(struct sim_state *s, const char *filename)
 {
-    FILE *f = fopen(filename, "r");
+    FILE *f = os_fopen(filename, "r");
     if (!f) {
         char *b = build_path(s->conf.tsim_path, "../share/tenyr/%s", filename);
-        f = fopen(b, "r");
+        f = os_fopen(b, "r");
         if (!f)
             fatal(PRINT_ERRNO, "Options file `%s' not found", filename);
         free(b);
@@ -352,6 +354,7 @@ int main(int argc, char *argv[])
     int rc = EXIT_SUCCESS;
 
     extern char *os_find_self(const char *);
+    extern int os_preamble();
 
     struct sim_state _s = {
         .conf = {
@@ -392,6 +395,8 @@ int main(int argc, char *argv[])
 
     parse_args(s, argc, argv);
 
+    os_preamble(s->conf.params);
+
     if (optind >= argc) {
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
     } else if (argc - optind > 1) {
@@ -403,7 +408,7 @@ int main(int argc, char *argv[])
     if (!strcmp(argv[optind], "-")) {
         in = stdin;
     } else {
-        in = fopen(argv[optind], "rb");
+        in = os_fopen(argv[optind], "rb");
         if (!in)
             fatal(PRINT_ERRNO, "Failed to open input file `%s'", argv[optind]);
     }

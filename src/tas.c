@@ -95,6 +95,9 @@ int main(int argc, char *argv[])
     volatile int disassemble = 0;
     volatile int flags = 0;
 
+    extern int os_preamble(struct param_state *);
+    extern FILE *os_fopen(const char *, const char *);
+
     char * volatile outfname = NULL;
     FILE * volatile out = stdout;
 
@@ -141,13 +144,15 @@ int main(int argc, char *argv[])
     if (optind >= argc)
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
 
+    param_set(params, "assembling", &"1\0""0\0"[disassemble], 1, false, false);
+
+    os_preamble(params);
+
     // TODO don't open output until input has been validated
     if (outfname)
         out = os_fopen(outfname, "wb");
     if (!out)
         fatal(PRINT_ERRNO, "Failed to open output file `%s'", outfname ? outfname : "<stdout>");
-
-    param_set(params, "assembling", &"1\0""0\0"[disassemble], 1, false, false);
 
     for (int i = optind; i < argc; i++) {
         const char *infname = argv[i];
@@ -157,7 +162,7 @@ int main(int argc, char *argv[])
         if (!strcmp(infname, "-")) {
             in = stdin;
         } else {
-            in = fopen(infname, "rb");
+            in = os_fopen(infname, "rb");
             if (!in)
                 fatal(PRINT_ERRNO, "Failed to open input file `%s'", infname);
         }
