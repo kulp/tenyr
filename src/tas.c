@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
     volatile int disassemble = 0;
     volatile int flags = 0;
 
-    char outfname[1024] = { 0 };
+    char * volatile outfname = NULL;
     FILE * volatile out = stdout;
 
     struct param_state *params = NULL;
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'd': disassemble = 1; break;
             case 'f': if (find_format(optarg, &f)) usage(argv[0]), exit(EXIT_FAILURE); break;
-            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname - 1), "wb"); break;
+            case 'o': outfname = optarg; break;
             case 'p': param_add(params, optarg); break;
             case 'q': flags |= ASM_QUIET; break;
             case 'v': flags |= ASM_VERBOSE; break;
@@ -141,8 +141,10 @@ int main(int argc, char *argv[])
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
 
     // TODO don't open output until input has been validated
+    if (outfname)
+        out = os_fopen(outfname, "wb");
     if (!out)
-        fatal(PRINT_ERRNO, "Failed to open output file");
+        fatal(PRINT_ERRNO, "Failed to open output file `%s'", outfname ? outfname : "<stdout>");
 
     param_set(params, "assembling", &"1\0""0\0"[disassemble], 1, false, false);
 

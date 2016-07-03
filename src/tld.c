@@ -319,13 +319,13 @@ int main(int argc, char *argv[])
         .next_obj = &_s.objs,
     }, *s = &_s;
 
-    char outfname[1024] = { 0 };
+    char * volatile outfname = NULL;
     FILE * volatile out = stdout;
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
-        if (outfname[0] && out)
+        if (out != stdout)
             // Technically there is a race condition here ; we would like to be
             // able to remove a file by a stream connected to it, but there is
             // apparently no portable way to do this.
@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
     int ch;
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
-            case 'o': out = fopen(strncpy(outfname, optarg, sizeof outfname), "wb"); break;
+            case 'o': outfname = optarg; break;
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
                 usage(argv[0]);
@@ -354,8 +354,10 @@ int main(int argc, char *argv[])
     if (optind >= argc)
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
 
+    if (outfname)
+        out = fopen(outfname, "wb");
     if (!out)
-        fatal(PRINT_ERRNO, "Failed to open output file");
+        fatal(PRINT_ERRNO, "Failed to open output file `%s'", outfname ? outfname : "<stdout>");
 
     rc = do_load_all(s, argc - optind, &argv[optind]);
     if (rc)
