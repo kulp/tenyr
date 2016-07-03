@@ -53,10 +53,10 @@ PP_BUILD = $(TOP)/3rdparty/tinypp
 
 TENYR_LIB_DIR ?= $(TOP)/lib
 TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
-TH_FLAGS = $(addprefix --preload-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
+TH_FLAGS = $(addprefix --embed-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
 
 RSRC_FILES = $(wildcard $(TOP)/rsrc/*.png)
-RSRC_FLAGS = $(addprefix --preload-file ,$(foreach m,$(RSRC_FILES),$m@rsrc/$(notdir $m)))
+RSRC_FLAGS = $(addprefix --embed-file ,$(foreach m,$(RSRC_FILES),$m@rsrc/$(notdir $m)))
 
 clean_FILES += $(BUILDDIR)/*.bc $(BUILDDIR)/*.js.mem $(BUILDDIR)/*.js $(BUILDDIR)/*.data
 
