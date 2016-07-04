@@ -7,6 +7,8 @@ int os_preamble(struct param_state *params)
 {
     char *here = NULL;
 
+    if (access("/dev/zero", R_OK))
+        EM_ASM({ FS.createDevice('/dev', 'zero', function () { return 0; }); });
     if (param_get(params, "paths.cwd", 1, (const void **)&here) > 0) {
         EM_ASM_({
             var mnt = Pointer_stringify($0);
