@@ -85,6 +85,7 @@ cc_flag_supp = $(shell $(CC) $1 -c -x c -o /dev/null /dev/null 2>/dev/null >/dev
 
 TAS = $(runwrap)$(TOOLDIR)/tas$(EXE_SUFFIX)
 TLD = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
+TPP = $(CPP)
 
 DEVICES = ram sparseram serial spi
 DEVOBJS = $(DEVICES:%=%.o)
