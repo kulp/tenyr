@@ -2,6 +2,7 @@
 // for RAM_BASE
 #include "devices/ram.h"
 #include "common.h"
+#include "param.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -40,10 +41,11 @@ struct objmeta {
     struct link_state *state;   ///< state reference used for twalk() support
 };
 
-static const char shortopts[] = "o:hV";
+static const char shortopts[] = "o:p:hV";
 
 static const struct option longopts[] = {
     { "output"      , required_argument, NULL, 'o' },
+    { "param"       , required_argument, NULL, 'p' },
 
     { "help"        ,       no_argument, NULL, 'h' },
     { "version"     ,       no_argument, NULL, 'V' },
@@ -58,6 +60,7 @@ static int usage(const char *me)
     printf("Usage: %s [ OPTIONS ] image-file [ image-file ... ] \n"
            "Options:\n"
            "  -o, --output=X        write output to filename X\n"
+           "  -p, --param=X=Y       set parameter X to value Y\n"
            "  -h, --help            display this message\n"
            "  -V, --version         print the string `%s'\n"
            , me, version());
@@ -333,6 +336,9 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    struct param_state *params = NULL;
+    param_init(&params);
+
     // Explicitly reset optind for cases where main() is called more than once
     // (emscripten)
     optind = 0;
@@ -341,6 +347,7 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'o': outfname = optarg; break;
+            case 'p': param_add(params, optarg); break;
             case 'V': puts(version()); return EXIT_SUCCESS;
             case 'h':
                 usage(argv[0]);

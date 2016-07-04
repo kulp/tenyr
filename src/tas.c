@@ -49,6 +49,7 @@ static int usage(const char *me)
            "  -d, --disassemble     disassemble (default is to assemble)\n"
            "  -f, --format=F        select output format (%s)\n"
            "  -o, --output=X        write output to filename X\n"
+           "  -p, --param=X=Y       set parameter X to value Y\n"
            "  -q, --quiet           disable disassembly output comments\n"
            "  -v, --verbose         disable simplified disassembly output\n"
            "  -h, --help            display this message\n"

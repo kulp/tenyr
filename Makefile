@@ -28,10 +28,10 @@ clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    random random.*       \
                )#
 
-common_OBJECTS = common.o $(patsubst %.c,%.o,$(notdir $(wildcard $(OS_PATHS:%=%/*.c))))
-tas_OBJECTS    = $(common_OBJECTS) asmif.o asm.o obj.o parser.o lexer.o param.o
+common_OBJECTS = common.o param.o $(patsubst %.c,%.o,$(notdir $(wildcard $(OS_PATHS:%=%/*.c))))
+tas_OBJECTS    = $(common_OBJECTS) asmif.o asm.o obj.o parser.o lexer.o
 tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
-                 $(DEVOBJS) sim.o param.o emscripten.o
+                 $(DEVOBJS) sim.o emscripten.o
 tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ifeq ($(USE_OWN_SEARCH),1)
