@@ -19,8 +19,7 @@ tenyr_state.tsim.get_line_char = make_char_getter(tenyr_state.tsim.in_area);
 
 function make_char_getter(area)
 {
-    return function() {
-        var me = arguments.callee;
+    return function me () {
         if (typeof me.i == 'undefined') {
             me.i = 0;
         }
