@@ -208,7 +208,9 @@ static int get_recs(struct obj *o, FILE *in, void *context)
             return 1;
         }
         long here = ftell(in);
-        if (rec->size + here > (unsigned)*filesize) {
+        if (here < 0) {
+            // not a seekable stream -- forge ahead recklessly
+        } else if (rec->size + here > (unsigned)*filesize) {
             errno = EFBIG;
             return 1;
         }
