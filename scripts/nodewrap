@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+NODE=node # or nodejs
+exec $NODE $1 -p paths.cwd=$PWD "${@:2}"
