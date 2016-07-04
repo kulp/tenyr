@@ -109,7 +109,7 @@ check_args_general_%: %$(EXE_SUFFIX)
 	$(runwrap)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(MAKESTEP) "    ... -h ok"
 	( ! $(runwrap)$(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(MAKESTEP) "    ... no-args trapped ok"
 	$(runwrap)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(MAKESTEP) "    ... non-existent file ok"
-	$(runwrap)$(BUILDDIR)/$< -QRSTU 2>&1 | egrep -qi "(Invalid|unknown) option"     && $(MAKESTEP) "    ... bad option prints error ok"
+	$(runwrap)$(BUILDDIR)/$< -QRSTU 2>&1 | egrep -qi "(Invalid|unknown|illegal) op" && $(MAKESTEP) "    ... bad option prints error ok"
 	( ! $(runwrap)$(BUILDDIR)/$< -QRSTU &> /dev/null )                              && $(MAKESTEP) "    ... bad option exits non-zero ok"
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
