@@ -1,30 +1,28 @@
 # Cannot use closure compiler on shared libraries
-$(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): CLOSURE_FLAGS =# empty
-$(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): LDFLAGS       = -s SIDE_MODULE=1
-$(LIB_TARGETS:$(DYLIB_SUFFIX)=.js): EMCCFLAGS_LD  = -s SIDE_MODULE=1
-
+$(LIB_TARGETS): CLOSURE_FLAGS =# empty
+$(LIB_TARGETS): LDFLAGS       = -s SIDE_MODULE=1
 preamble.o preamble,dy.o: CFLAGS += -Wno-dollar-in-identifier-extension
 
-tcc.js: EMCCFLAGS_LD += $(TH_FLAGS)
+tcc.js: LDFLAGS += $(TH_FLAGS)
 
 tsim.js: $(RSRC_FILES)
-tsim.js: EMCCFLAGS_LD += $(RSRC_FLAGS)
-tsim.js: EMCCFLAGS_LD += -s MAIN_MODULE=2
+tsim.js: LDFLAGS += $(RSRC_FLAGS)
+tsim.js: LDFLAGS += -s MAIN_MODULE=2
 
 vpath %.c $(PP_BUILD)
 vpath %.h $(PP_BUILD)
 tcc.o: libtcc.c tccpp.c tccgen.c tcc.h libtcc.h tcctok.h
-tcc.bc: CFLAGS := $(CC_DEBUG) -Wall
-tcc.bc: CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing -Wno-shift-negative-value
-tcc.bc: CFLAGS += $(CC_OPT)
+tcc$(EXE_SUFFIX): CFLAGS := $(CC_DEBUG) -Wall
+tcc$(EXE_SUFFIX): CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing -Wno-shift-negative-value
+tcc$(EXE_SUFFIX): CFLAGS += $(CC_OPT)
 
-%.js: %.bc
-	@$(MAKESTEP) "[ EM-LD ] $@"
-	$(EMCC) $(EMCCFLAGS_LD) $< $(LDLIBS) -o $@
+$(BIN_TARGETS): %$(EXE_SUFFIX): %.o
+	@$(MAKESTEP) "[ LD ] $@"
+	$(LINK.c) -o $@ $(filter %.o,$^) $(LDLIBS)
 	echo "if (!INHIBIT_RUN) Module_$*();" >> $@
 
 # Disable closure compiler for now
-tcc.js tas.js tsim.js tld.js: CLOSURE_FLAGS :=# empty
+$(BIN_TARGETS): CLOSURE_FLAGS :=# empty
 
 # Disable closing of streams so that the same code can run again
-tas.bc tsim.bc tld.bc: CPPFLAGS += '-Dfclose=fflush'
+$(BIN_TARGETS): CPPFLAGS += '-Dfclose=fflush'
