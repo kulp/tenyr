@@ -83,9 +83,10 @@ BISON ?= bison -Werror
 
 cc_flag_supp = $(shell $(CC) $1 -c -x c -o /dev/null /dev/null 2>/dev/null >/dev/null && echo $1)
 
-TAS = $(runwrap)$(TOOLDIR)/tas$(EXE_SUFFIX)
-TLD = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
-TPP = $(CPP)
+tas  = $(runwrap)$(TOOLDIR)/tas$(EXE_SUFFIX)
+tld  = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
+tsim = $(runwrap)$(TOOLDIR)/tsim$(EXE_SUFFIX)
+tpp  = $(CPP)
 
 DEVICES = ram sparseram serial spi
 DEVOBJS = $(DEVICES:%=%.o)

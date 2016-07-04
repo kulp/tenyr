@@ -3,21 +3,21 @@
 %.tas: %.tas.cpp
 	@$(MAKESTEP) "[ TPP ] $(<F)"
 	mkdir -p $(*D)
-	$(TPP) $(CPPFLAGS) - < $< -o $@
+	$(tpp) $(CPPFLAGS) - < $< -o $@
 
 %.to: %.tas
 	@$(MAKESTEP) "[ TAS ] $(<F)"
 	mkdir -p $(*D)
-	$(TAS) -o$@ $<
+	$(tas) -o$@ $<
 
 %.texe: %.to
 	@$(MAKESTEP) "[ TLD ] $(@F)"
 	@mkdir -p $(*D)
-	$(TLD) -o$@ $^
+	$(tld) -o$@ $^
 
 %.memh: %.texe
 	@$(MAKESTEP) "[ MEMH ] $(<F)"
-	$(TAS) -vd $< | $(TAS) -fmemh -o $@ -
+	$(tas) -vd $< | $(tas) -fmemh -o $@ -
 
 OUTPUT_OPTION ?= -o $@
 COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c

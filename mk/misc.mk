@@ -38,7 +38,7 @@ doc: tas_usage tsim_usage tld_usage
 
 %_usage: %$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Generating usage description for $* ... "
-	PATH=$(BUILDDIR) $(runwrap)$< --help | \
+	$($*) --help | \
 		sed -e 's/^/    /' \
 		    -e '/version/s/-[0-9][0-9]*-g[[:xdigit:]]\{7\}/$1.../' \
 	        > $(TOP)/wiki/$*--help.md && $(MAKESTEP) ok
@@ -105,48 +105,48 @@ check_args_%: check_args_general_% check_args_specific_% ;
 
 check_args_general_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* general options ... "
-	$(runwrap)$(BUILDDIR)/$< -V | grep -q version                                   && $(MAKESTEP) "    ... -V ok"
-	$(runwrap)$(BUILDDIR)/$< -h | grep -q Usage                                     && $(MAKESTEP) "    ... -h ok"
-	( ! $(runwrap)$(BUILDDIR)/$< ) > /dev/null 2>&1                                 && $(MAKESTEP) "    ... no-args trapped ok"
-	$(runwrap)$(BUILDDIR)/$< /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(MAKESTEP) "    ... non-existent file ok"
-	$(runwrap)$(BUILDDIR)/$< -QRSTU 2>&1 | egrep -qi "(Invalid|unknown|illegal) op" && $(MAKESTEP) "    ... bad option prints error ok"
-	( ! $(runwrap)$(BUILDDIR)/$< -QRSTU &> /dev/null )                              && $(MAKESTEP) "    ... bad option exits non-zero ok"
+	$($*) -V | grep -q version                                   && $(MAKESTEP) "    ... -V ok"
+	$($*) -h | grep -q Usage                                     && $(MAKESTEP) "    ... -h ok"
+	( ! $($*) ) > /dev/null 2>&1                                 && $(MAKESTEP) "    ... no-args trapped ok"
+	$($*) /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(MAKESTEP) "    ... non-existent file ok"
+	$($*) -QRSTU 2>&1 | egrep -qi "(Invalid|unknown|illegal) op" && $(MAKESTEP) "    ... bad option prints error ok"
+	( ! $($*) -QRSTU &> /dev/null )                              && $(MAKESTEP) "    ... bad option exits non-zero ok"
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	echo -n 9876 | $(runwrap)$(BUILDDIR)/$< -fraw -d - | fgrep -q ".word 0x3637"    && $(MAKESTEP) "    ... -d ok"
-	(! $(runwrap)$(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
-	echo -n 9876 | $(runwrap)$(BUILDDIR)/$< -fraw -d -q - | fgrep -qv "word 0x3637" && $(MAKESTEP) "    ... -q ok"
-	$(runwrap)$(BUILDDIR)/$< -d -ftext -v - <<<0xc | fgrep -q "A + 0x0000000c"      && $(MAKESTEP) "    ... -v ok"
-	echo '.zero 2' | $(runwrap)$(BUILDDIR)/$< -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
-	                                                                                          && $(MAKESTEP) "    ... memh explicit ok"
-	echo '.word 1' | $(runwrap)$(BUILDDIR)/$< -fmemh -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
-	                                                                                          && $(MAKESTEP) "    ... memh offset ok"
-	echo '.word 1' | $(runwrap)$(BUILDDIR)/$< -fmemh -p{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z}=1 \
-	                                                    -pformat.memh.offset=5 -          | fgrep -q "@5 00000001" \
-	                                                                                          && $(MAKESTEP) "    ... params overflow ok"
+	echo -n 9876 | $($*) -fraw -d - | fgrep -q ".word 0x3637"    && $(MAKESTEP) "    ... -d ok"
+	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
+	echo -n 9876 | $($*) -fraw -d -q - | fgrep -qv "word 0x3637" && $(MAKESTEP) "    ... -q ok"
+	$($*) -d -ftext -v - <<<0xc | fgrep -q "A + 0x0000000c"      && $(MAKESTEP) "    ... -v ok"
+	echo '.zero 2' | $($*) -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
+	                                                             && $(MAKESTEP) "    ... memh explicit ok"
+	echo '.word 1' | $($*) -fmemh -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
+	                                                             && $(MAKESTEP) "    ... memh offset ok"
+	echo '.word 1' | $($*) -fmemh -p{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z}=1 \
+	                              -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
+	                                                             && $(MAKESTEP) "    ... params overflow ok"
 
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$(runwrap)$(BUILDDIR)/$< -@ does_not_exist 2>&1 | fgrep -q "not found"          && $(MAKESTEP) "    ... -@ ok"
-	$(runwrap)$(BUILDDIR)/$< -fraw -a 123 /dev/zero 2>&1 | fgrep -q "address 0x7b"  && $(MAKESTEP) "    ... -a ok"
-	$(runwrap)$(BUILDDIR)/$< -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(MAKESTEP) "    ... -d ok"
-	(! $(runwrap)$(BUILDDIR)/$< -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
-	(! $(runwrap)$(BUILDDIR)/$< -r does_not_exist -fraw /dev/null &> /dev/null )    && $(MAKESTEP) "    ... -r ok"
-	$(runwrap)$(BUILDDIR)/$< -fraw  -vs 4105 /dev/null | fgrep -q "IP = 0x00001009" && $(MAKESTEP) "    ... -s ok"
-	$(runwrap)$(BUILDDIR)/$< -ftext -v       /dev/null | fgrep -q "IP ="            && $(MAKESTEP) "    ... -v ok"
-	$(runwrap)$(BUILDDIR)/$< -ftext -vv      /dev/null | fgrep -q ".word"           && $(MAKESTEP) "    ... -vv ok"
-	$(runwrap)$(BUILDDIR)/$< -ftext -vvv     /dev/null | fgrep -q "read  @"         && $(MAKESTEP) "    ... -vvv ok"
-	$(runwrap)$(BUILDDIR)/$< -ftext -vvvv    /dev/null | fgrep -q "P 00001"         && $(MAKESTEP) "    ... -vvvv ok"
-	$(runwrap)$(BUILDDIR)/$< -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(MAKESTEP) "    ... multiple files rejected ok"
-	$(runwrap)$(BUILDDIR)/$< -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
-	(! $(runwrap)$(BUILDDIR)/$< -remscript - &> /dev/null )                         && $(MAKESTEP) "    ... emscripten recipe rejected ok"
+	$($*) -@ does_not_exist 2>&1 | fgrep -q "not found"          && $(MAKESTEP) "    ... -@ ok"
+	$($*) -fraw -a 123 /dev/zero 2>&1 | fgrep -q "address 0x7b"  && $(MAKESTEP) "    ... -a ok"
+	$($*) -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(MAKESTEP) "    ... -d ok"
+	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
+	(! $($*) -r does_not_exist -fraw /dev/null &> /dev/null )    && $(MAKESTEP) "    ... -r ok"
+	$($*) -fraw  -vs 4105 /dev/null | fgrep -q "IP = 0x00001009" && $(MAKESTEP) "    ... -s ok"
+	$($*) -ftext -v       /dev/null | fgrep -q "IP ="            && $(MAKESTEP) "    ... -v ok"
+	$($*) -ftext -vv      /dev/null | fgrep -q ".word"           && $(MAKESTEP) "    ... -vv ok"
+	$($*) -ftext -vvv     /dev/null | fgrep -q "read  @"         && $(MAKESTEP) "    ... -vvv ok"
+	$($*) -ftext -vvvv    /dev/null | fgrep -q "P 00001"         && $(MAKESTEP) "    ... -vvvv ok"
+	$($*) -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(MAKESTEP) "    ... multiple files rejected ok"
+	$($*) -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
+	(! $($*) -remscript - &> /dev/null )                         && $(MAKESTEP) "    ... emscripten recipe rejected ok"
 
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$(runwrap)$(BUILDDIR)/$< - < $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "TOV"  && $(MAKESTEP) "    ... stdin accepted for input ok"
+	$($*) - < $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "TOV"  && $(MAKESTEP) "    ... stdin accepted for input ok"
 
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
@@ -156,30 +156,30 @@ check_behaviour_tas: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tas: TASD = $(TOP)/test/misc/
 check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
-	$(runwrap)$(BUILDDIR)/$< -o . /dev/null 2>&1 | fgrep -qi "failed to open"                      && $(MAKESTEP) "    ... failed to open ok"
-	(! $(runwrap)$(BUILDDIR)/$< -d -f memh $(MEMHD)backward.memh &>/dev/null )                     && $(MAKESTEP) "    ... validated memh lack of backward support ok"
-	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)bad_version.to 2>&1 | fgrep -qi "unhandled version"        && $(MAKESTEP) "    ... unhandled version ok"
-	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                    && $(MAKESTEP) "    ... too-large ok"
-	$(runwrap)$(BUILDDIR)/$< -d $(OBJD)toolarge2.to 2>&1 | fgrep -q "too large"                   && $(MAKESTEP) "    ... too-large 2 ok"
-	$(runwrap)$(BUILDDIR)/$< $(TASD)missing_global.tas 2>&1 | fgrep -q "not defined"              && $(MAKESTEP) "    ... undefined global ok"
+	$($*) -o . /dev/null 2>&1 | fgrep -qi "failed to open"                     && $(MAKESTEP) "    ... failed to open ok"
+	(! $($*) -d -f memh $(MEMHD)backward.memh &>/dev/null )                    && $(MAKESTEP) "    ... validated memh lack of backward support ok"
+	$($*) -d $(OBJD)bad_version.to 2>&1 | fgrep -qi "unhandled version"        && $(MAKESTEP) "    ... unhandled version ok"
+	$($*) -d $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                    && $(MAKESTEP) "    ... too-large ok"
+	$($*) -d $(OBJD)toolarge2.to 2>&1 | fgrep -q "too large"                   && $(MAKESTEP) "    ... too-large 2 ok"
+	$($*) $(TASD)missing_global.tas 2>&1 | fgrep -q "not defined"              && $(MAKESTEP) "    ... undefined global ok"
 
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
-	$(runwrap)$(BUILDDIR)/$< /dev/null 2>&1 | fgrep -qi "end of file"                              && $(MAKESTEP) "    ... too-small ok"
-	$(runwrap)$(BUILDDIR)/$< $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                        && $(MAKESTEP) "    ... too-large ok"
-	$(runwrap)$(BUILDDIR)/$< -o $(OBJD) /dev/null 2>&1 | fgrep -qi "failed to open"                && $(MAKESTEP) "    ... failed to open ok"
-	$(runwrap)$(BUILDDIR)/$< $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | fgrep -qi "duplicate"  && $(MAKESTEP) "    ... duplicate symbols ok"
-	$(runwrap)$(BUILDDIR)/$< $(OBJD)zerorecs.to 2>&1 | fgrep -qi "has no records"                  && $(MAKESTEP) "    ... zero records ok"
-	$(runwrap)$(BUILDDIR)/$< $(OBJD)tworecs.to 2>&1 | fgrep -qi "more than one record"             && $(MAKESTEP) "    ... multiple records ok"
-	$(runwrap)$(BUILDDIR)/$< $(OBJD)unresolved.to 2>&1 | fgrep -qi "missing definition"            && $(MAKESTEP) "    ... unresolved ok"
+	$($*) /dev/null 2>&1 | fgrep -qi "end of file"                              && $(MAKESTEP) "    ... too-small ok"
+	$($*) $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                        && $(MAKESTEP) "    ... too-large ok"
+	$($*) -o $(OBJD) /dev/null 2>&1 | fgrep -qi "failed to open"                && $(MAKESTEP) "    ... failed to open ok"
+	$($*) $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | fgrep -qi "duplicate"  && $(MAKESTEP) "    ... duplicate symbols ok"
+	$($*) $(OBJD)zerorecs.to 2>&1 | fgrep -qi "has no records"                  && $(MAKESTEP) "    ... zero records ok"
+	$($*) $(OBJD)tworecs.to 2>&1 | fgrep -qi "more than one record"             && $(MAKESTEP) "    ... multiple records ok"
+	$($*) $(OBJD)unresolved.to 2>&1 | fgrep -qi "missing definition"            && $(MAKESTEP) "    ... unresolved ok"
 
 clean_FILES += check_obj_*.to null.to ff.bin
-null.to: ; $(runwrap)$(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ /dev/null
+null.to: ; $(tas) -o $@ /dev/null
 ff.bin:; echo -ne '\0377\0377\0377\0377' > $@
 check_obj: check_obj_0 check_obj_2 check_obj_4 check_obj_5 check_obj_6
 check_obj_%: check_obj_%.to | tas$(EXE_SUFFIX)
-	(! $(runwrap)$(BUILDDIR)/tas$(EXE_SUFFIX) -d $< 2> /dev/null)
+	(! $(tas) -d $< 2> /dev/null)
 check_obj_%.to: null.to ff.bin
 	cp $< $@
 	dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
@@ -230,7 +230,7 @@ randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase 
 # run -- they have random bits appended which should be regenerated each time.
 .INTERMEDIATE: $(OPS:%=$(TOP)/test/op/%.texe)
 $(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas tas$(EXE_SUFFIX)
-	(cat $< ; echo "$(call randwords,3)") | $(runwrap)$(BUILDDIR)/tas$(EXE_SUFFIX) -o $@ -
+	(cat $< ; echo "$(call randwords,3)") | $(tas) -o $@ -
 
 test_op_%: $(TOP)/test/op/%.texe tas$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
@@ -268,7 +268,7 @@ check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_i
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre PERIODS.mk
 
 check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
-check_sim_demo: export run=$(runwrap) $(abspath $(BUILDDIR))/tsim$(EXE_SUFFIX) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
+check_sim_demo: export run=$(tsim) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
 # "SDL-related" tests
 # These tests are really device tests that for now require SDL. Since we don't
@@ -308,7 +308,6 @@ check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 # instructions to complete.
 vpath %.texe $(TOP)/test/op $(TOP)/ex $(TOP)/test/run
 clean_FILES += $(BUILDDIR)/PERIODS_*.mk
-PERIODS_%.mk: tsim = $(runwrap)$(BUILDDIR)/tsim$(EXE_SUFFIX)
 PERIODS_%.mk: %.texe tsim$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Computing cycle count for '$*' ... "
 	$(ECHO) -n PERIODS_$*= > $@
@@ -320,7 +319,7 @@ vpath PERIODS_%.mk $(TOP)/mk
 PERIODS.mk: $(patsubst %,PERIODS_%.mk,$(OPS) $(DEMOS:%=%_demo) $(RUNS))
 	cat $^ > $@
 
-check_sim_op check_sim_run: export run=$(runwrap) $(abspath $(BUILDDIR)/tsim$(EXE_SUFFIX)) $(tsim_FLAGS) -vvvv $(texe) | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -vvvv $(texe) | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
@@ -332,5 +331,5 @@ check_compile: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 
 dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) tas$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Checking reversibility of assembly-disassembly ... "
-	$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX "$(TAS)" $(filter-out tas$(EXE_SUFFIX),$^) && $(MAKESTEP) ok || ($(MAKESTEP) FAILED ; false)
+	$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX "$(tas)" $(filter-out tas$(EXE_SUFFIX),$^) && $(MAKESTEP) ok || ($(MAKESTEP) FAILED ; false)
 

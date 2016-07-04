@@ -59,4 +59,9 @@ RSRC_FLAGS = $(addprefix --embed-file ,$(foreach m,$(RSRC_FILES),$m@rsrc/$(notdi
 
 clean_FILES += $(BUILDDIR)/*.js.mem $(BUILDDIR)/*.js $(BUILDDIR)/*.data
 
-runwrap := $(TOP)/scripts/nodewrap $(runwrap)
+# runwrap might be nodejs on Debian
+runwrap := node # trailing space required
+wrapargs = --param=paths.cwd=$(shell pwd)
+tas  += $(wrapargs)
+tld  += $(wrapargs)
+tsim += $(wrapargs)
