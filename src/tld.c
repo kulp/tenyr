@@ -10,6 +10,7 @@
 #include <search.h>
 #include <string.h>
 #include <strings.h>
+#include <errno.h>
 
 extern FILE *os_fopen(const char *, const char *);
 
@@ -305,9 +306,11 @@ int do_load_all(struct link_state *s, int count, char *names[count])
         clearerr(in);
 
         rc = do_load(s, in);
+        int saved = errno;
 
         fclose(in);
 
+        errno = saved;
         if (rc)
             return rc;
     }
