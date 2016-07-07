@@ -263,6 +263,10 @@ static int get_relocs_v0(struct obj *o, FILE *in, void *context)
 static int get_relocs_v1(struct obj *o, FILE *in, void *context)
 {
     GET(o->rlc_count, in);
+    if (o->rlc_count > OBJ_MAX_RELOCS) {
+        errno = EFBIG;
+        return 1;
+    }
     o->bloc.relocs = 1;
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
