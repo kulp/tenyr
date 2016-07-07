@@ -88,10 +88,9 @@ tld  = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
 tsim = $(runwrap)$(TOOLDIR)/tsim$(EXE_SUFFIX)
 tpp  = $(CPP)
 
-DEVICES = ram sparseram serial spi
+DEVICES = ram sparseram serial
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
-PDEVICES += spidummy spisd spi
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
 PDEVLIBS = $(PDEVICES:%=libtenyr%$(DYLIB_SUFFIX))
 
