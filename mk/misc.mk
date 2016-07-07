@@ -19,7 +19,7 @@ install:: $(BIN_TARGETS)
 
 install:: $(LIB_TARGETS)
 	install -d $(INSTALL_DIR)/lib
-	install $^ $(INSTALL_DIR)/lib
+	$(if $(LIB_TARGETS),install $^ $(INSTALL_DIR)/lib)
 
 install:: $(RESOURCES)
 	install -d $(subst $(TOP)/,$(INSTALL_DIR)/share/tenyr/,$(^D))
