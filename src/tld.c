@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
-        if (out != stdout)
+        if (out != stdout && outfname != NULL)
             // Technically there is a race condition here ; we would like to be
             // able to remove a file by a stream connected to it, but there is
             // apparently no portable way to do this.
