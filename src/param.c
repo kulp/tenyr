@@ -37,7 +37,7 @@ int param_get_int(struct param_state *pstate, const char *key, int *val)
     const char *str = NULL;
     char *next = NULL;
     int test = 0;
-    if (param_get(pstate, key, 1, (const void **)&str))
+    if (param_get(pstate, key, 1, (const void **)&str) && str != NULL)
         test = strtol(str, &next, 0);
 
     int good = next > str;
