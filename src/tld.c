@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
             // Technically there is a race condition here ; we would like to be
             // able to remove a file by a stream connected to it, but there is
             // apparently no portable way to do this.
-            remove(outfname);
+            (void)remove(outfname);
         return EXIT_FAILURE;
     }
 
