@@ -16,5 +16,7 @@ endif
 LDFLAGS += -Wl,--kill-at -static-libgcc -static-libstdc++
 # haven't tried SDL Windows build yet
 SDL = 0
+# JIT on Windows doesn't work yet
+JIT = 0
 
 runwrap := $(TOP)/scripts/winewrap $(runwrap)
