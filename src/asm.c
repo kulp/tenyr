@@ -123,7 +123,7 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
 
     const int32_t imm   = g->p == 3 ? i->insn.u.type3.imm : i->insn.u.type012.imm;
     const int     width = g->p == 3 ? MEDIUM_IMMEDIATE_BITWIDTH : SMALL_IMMEDIATE_BITWIDTH;
-    const int     op    = g->p == 3 ? OP_BITWISE_OR : t->op;
+    const enum op op    = g->p == 3 ? OP_BITWISE_OR : t->op;
 
     const int fields[3] = { imm, t->y, t->x },
              *map       = asm_op_loc[g->p],
@@ -170,6 +170,9 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
             case OP_SUBTRACT:       // `B <- - C`
                 sA = " ";
                 show3 |= g->p == 0; // append term to disambiguate type0, type2
+                break;
+            default:
+                break;
         }
     }
 
