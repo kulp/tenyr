@@ -21,7 +21,7 @@ $(BIN_TARGETS): LDFLAGS += --pre-js $(TOP)/ui/web/pre.js
 $(BIN_TARGETS): %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
 	$(LINK.c) -o $@ $(filter %.o,$^) $(LDLIBS)
-	echo "if (!INHIBIT_RUN) Module_$*();" >> $@
+	echo "var INHIBIT_RUN; if (!INHIBIT_RUN) Module_$*();" >> $@
 
 # Disable closure compiler for now
 $(BIN_TARGETS): CLOSURE_FLAGS :=# empty
