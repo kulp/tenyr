@@ -125,41 +125,41 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     const int     width = g->p == 3 ? MEDIUM_IMMEDIATE_BITWIDTH : SMALL_IMMEDIATE_BITWIDTH;
     const enum op op    = g->p == 3 ? OP_BITWISE_OR : t->op;
 
-    const int fields[3] = { imm, t->y, t->x },
-             *map       = asm_op_loc[g->p],
-              lzero     = fields[map[2]] == 0,
-              mzero     = fields[map[1]] == 0,
-              rzero     = fields[map[0]] == 0;
+    const int fields[3]   = { imm, t->y, t->x };
+    const int * const map = asm_op_loc[g->p];
+    const int lzero       = fields[map[2]] == 0;
+    const int mzero       = fields[map[1]] == 0;
+    const int rzero       = fields[map[0]] == 0;
 
     const struct hides hid = hide[g->p][op_types[op]][lzero][mzero][rzero];
 
     const int verbose = !!(flags & ASM_VERBOSE);
 
-    const char    c0    = brackets[0][g->dd == 2]; // left side dereferenced ?
-    const char    c1    = 'A' + g->z;              // register name for Z
-    const char    c2    = brackets[1][g->dd == 2]; // left side dereferenced ?
-    const char   *s3    = arrows[g->dd];           // arrow direction
-    const char    c4    = brackets[0][g->dd & 1];  // right side dereferenced ?
-    const char    s5[2] = { 'A' + g->x };          // register name for X
-    const char   *s6    = op_names[op];            // operator name
-    const char    s7[2] = { 'A' + t->y };          // register name for Y
-    const int32_t i8    = SEXTEND32(width,imm);    // immediate value
-    const char    c9    = brackets[1][g->dd & 1];  // right side dereferenced ?
+    const char           c0    = brackets[0][g->dd == 2]; // left side deref ?
+    const char           c1    = 'A' + g->z;              // register name for Z
+    const char           c2    = brackets[1][g->dd == 2]; // left side deref ?
+    const char   * const s3    = arrows[g->dd];           // arrow direction
+    const char           c4    = brackets[0][g->dd & 1];  // right side deref ?
+    const char           s5[2] = { 'A' + g->x };          // register name for X
+    const char   *       s6    = op_names[op];            // operator name
+    const char           s7[2] = { 'A' + t->y };          // register name for Y
+    const int32_t        i8    = SEXTEND32(width,imm);    // immediate value
+    const char           c9    = brackets[1][g->dd & 1];  // right side deref ?
 
-    int show1 = (!hid.a || verbose) && g->p != 3,
-        show2 = (!hid.b || verbose),
-        show3 = (!hid.c || verbose),
-        flip  = g->p == 0 && i8 < 0 && show2 && !verbose;
+    const int show1 = (!hid.a || verbose) && g->p != 3;
+    const int show2 = (!hid.b || verbose);
+          int show3 = (!hid.c || verbose);
+    const int flip  = g->p == 0 && i8 < 0 && show2 && !verbose;
 
     char s8[16];
-    const char *numfmt = (g->p == 3 || verbose) ? "0x%08x" : "%d";
+    const char * const numfmt = (g->p == 3 || verbose) ? "0x%08x" : "%d";
     snprintf(s8, sizeof s8, numfmt, flip ? -i8 : i8);
 
     const char * const ss[] = { s8, s7, s5 },
-               *sA   = ss[map[2]],
-               *sB   = ss[map[1]],
-               *sC   = ss[map[0]],
-                sF[] = { ' ', "+-"[flip], ' ', '\0' }; // type0 sugar
+               *       sA   = ss[map[2]], // can be overwritten by syntax sugar
+               * const sB   = ss[map[1]],
+               * const sC   = ss[map[0]],
+                       sF[] = { ' ', "+-"[flip], ' ', '\0' }; // type0 sugar
 
     // Syntax sugars. type1 is not eligible (~0 and -0 become literals)
     if (lzero && !verbose && g->p != 1) {
