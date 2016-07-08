@@ -155,11 +155,11 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     const char * const numfmt = (g->p == 3 || verbose) ? "0x%08x" : "%d";
     snprintf(s8, sizeof s8, numfmt, flip ? -i8 : i8);
 
-    const char * const ss[] = { s8, s7, s5 },
-               *       sA   = ss[map[2]], // can be overwritten by syntax sugar
-               * const sB   = ss[map[1]],
-               * const sC   = ss[map[0]],
-                       sF[] = { ' ', "+-"[flip], ' ', '\0' }; // type0 sugar
+    const char * const ss[] = { s8, s7, s5 };
+    const char *       sA   = ss[map[2]]; // can be overwritten by syntax sugar
+    const char * const sB   = ss[map[1]];
+    const char * const sC   = ss[map[0]];
+    const char         sF[] = { ' ', "+-"[flip], ' ', '\0' }; // type0 sugar
 
     // Syntax sugars. type1 is not eligible (~0 and -0 become literals)
     if (lzero && !verbose && g->p != 1) {
