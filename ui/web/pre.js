@@ -10,7 +10,16 @@ Module['preInit'].push(function () {
         var buf = new Buffer(BUFSIZE, 'binary');
         var fd = process.stdin.fd;
 
-        var bytesRead = fs.readSync(fd, buf, 0, BUFSIZE, null);
+        var again = false;
+        var bytesRead = 0;
+        do {
+          try {
+            bytesRead = fs.readSync(fd, buf, 0, BUFSIZE, null);
+            again = false;
+          } catch (e) {
+            again = -e.errno == ERRNO_CODES.EAGAIN;
+          }
+        } while (again);
 
         if (bytesRead > 0) {
           result = buf.slice(0, bytesRead);
