@@ -11,6 +11,7 @@
 #include "SDL.h"
 #include "SDL_image.h"
 
+#include "os_common.h"
 #include "common.h"
 #include "device.h"
 #include "sim.h"

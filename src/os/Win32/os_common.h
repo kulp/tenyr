@@ -17,6 +17,18 @@ static inline int os_set_binmode(FILE *stream)
     return setmode(fileno(stream), O_BINARY) == -1;
 }
 
+// timeradd doesn't exist on MinGW
+#ifndef timeradd
+#define timeradd(a, b, result) \
+    do { \
+        (result)->tv_sec  = (a)->tv_sec  + (b)->tv_sec; \
+        (result)->tv_usec = (a)->tv_usec + (b)->tv_usec; \
+        (result)->tv_sec += (result)->tv_usec / 1000000; \
+        (result)->tv_usec %= 1000000; \
+    } while (0) \
+    //
+#endif
+
 #endif
 
 /* vi: set ts=4 sw=4 et: */
