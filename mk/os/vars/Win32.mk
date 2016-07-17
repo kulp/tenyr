@@ -19,4 +19,10 @@ SDL = 0
 # JIT on Windows doesn't work yet
 JIT = 0
 
+URL_SDL2_image = https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.1-mingw.tar.gz
+URL_SDL2       = https://www.libsdl.org/release/SDL2-devel-2.0.4-mingw.tar.gz
+
+DL_DIR_SDL2       = $(TOP)/3rdparty/sdl2
+DL_DIR_SDL2_image = $(TOP)/3rdparty/sdl2
+
 runwrap := $(TOP)/scripts/winewrap $(runwrap)

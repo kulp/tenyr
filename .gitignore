@@ -18,3 +18,4 @@ tmp/
 gen/
 build/
 dist/
+3rdparty/sdl2
