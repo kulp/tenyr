@@ -40,6 +40,8 @@ matrix:
       env:
         - PLATFORM=mingw BITS=32 HOST=i686
         - CXX=$HOST-w64-mingw32-g++
+        # SDL can be built under MinGW and run on Windows, but running under
+        # Wine, the libtenyrsdl* libraries fail to be found, so don't test yet
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
         - PKG_RULE=zip
       addons:

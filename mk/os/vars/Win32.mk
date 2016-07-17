@@ -14,8 +14,6 @@ else
  CROSS_COMPILE ?= x86_64-w64-mingw32-
 endif
 LDFLAGS += -Wl,--kill-at -static-libgcc -static-libstdc++
-# haven't tried SDL Windows build yet
-SDL = 0
 # JIT on Windows doesn't work yet
 JIT = 0
 
@@ -24,5 +22,7 @@ URL_SDL2       = https://www.libsdl.org/release/SDL2-devel-2.0.4-mingw.tar.gz
 
 DL_DIR_SDL2       = $(TOP)/3rdparty/sdl2
 DL_DIR_SDL2_image = $(TOP)/3rdparty/sdl2
+
+SDL2_PKGCONFIG = PKG_CONFIG_PATH=$(TOP)/3rdparty/sdl2/$(MACHINE)/lib/pkgconfig pkg-config --define-variable=prefix=$(TOP)/3rdparty/sdl2/$(MACHINE)
 
 runwrap := $(TOP)/scripts/winewrap $(runwrap)
