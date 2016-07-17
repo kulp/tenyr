@@ -7,7 +7,6 @@ PDEVICES += $(PDEVICES_SDL)
 libtenyrsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): \
     CPPFLAGS += $(call sdl2_pkg_config,--cflags,sdl2 SDL2_image)
 libtenyrsdl%$(DYLIB_SUFFIX): LDLIBS += $(call sdl2_pkg_config,--libs,sdl2 SDL2_image)
-$(PDEVICES_SDL:%=%,dy.o): PEDANTIC_FLAGS :=
 endif
 endif
 
