@@ -9,8 +9,6 @@ CC := gcc
 ifeq ($(BITS),32)
  CROSS_COMPILE ?= i686-w64-mingw32-
 else
- # lfind() complains about size_t* vs. unsigned int* ; ignore for now
- PEDANTIC =
  CROSS_COMPILE ?= x86_64-w64-mingw32-
 endif
 LDFLAGS += -Wl,--kill-at -static-libgcc -static-libstdc++
