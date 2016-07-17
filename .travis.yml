@@ -13,7 +13,6 @@ language: c
 env:
   global:
     - DEPSSRC=$HOME/local
-    - SDL2_CONFIG="$DEPSSRC/bin/sdl2-config --prefix=$DEPSSRC"
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
     - PATH="$PATH:$DEPSSRC/bin"
 matrix:
@@ -71,6 +70,9 @@ matrix:
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
+        # Travis doesn't have SDL2 installed, so we have to tell it where we
+        # downloaded a version
+        - SDL2_PKGCONFIG="PKG_CONFIG_PATH=$DEPSSRC/lib/x86_64-linux-gnu/pkgconfig pkg-config --define-variable=prefix=$DEPSSRC"
         - CHECK_RULE=check GCOV=
         - PKG_RULE=gzip
         - CXX=clang++
@@ -78,6 +80,9 @@ matrix:
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
+        # Travis doesn't have SDL2 installed, so we have to tell it where we
+        # downloaded a version
+        - SDL2_PKGCONFIG="PKG_CONFIG_PATH=$DEPSSRC/lib/x86_64-linux-gnu/pkgconfig pkg-config --define-variable=prefix=$DEPSSRC"
         # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
         - CHECK_RULE=coverage GCOV=1
         - PKG_RULE=gzip
