@@ -4,4 +4,5 @@ PATH_COMPONENT_SEP = /
 PATH_SEP_CHAR=':'
 DYLIB_SUFFIX = .so
 EXE_SUFFIX =
-SDL2_PKGCONFIG = pkg-config
+# Respect SDL2_PKGCONFIG from environment
+SDL2_PKGCONFIG ?= pkg-config
