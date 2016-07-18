@@ -95,11 +95,8 @@ before_script:
   - mkdir -p $DEPSSRC
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/libsdl2_2.0.3%2Bimage_2.0.0%2Bdev-precise-binaries.tar.gz' | tar -C $DEPSSRC -zx ; fi
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx ; fi
-  - if [[ $PLATFORM = mingw ]] ; then curl -s 'https://www.libsdl.org/release/SDL2-devel-2.0.4-mingw.tar.gz' | tar -C $DEPSSRC --wildcards --strip-components 1 -zx '**/*.dll' ; fi
-  - if [[ $PLATFORM = mingw ]] ; then curl -s 'https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.1-mingw.tar.gz' | tar -C $DEPSSRC --wildcards --strip-components 1 -zx '**/*.dll' ; fi
-  # This triple-escaping of backslashes is truly disgusting
-  - if [[ $PLATFORM = mingw ]] ; then sed "s#{{{}}}#z:$(echo $DEPSSRC | sed 's#/#\\\\\\\\#g')\\\\\\\\$HOST-w64-mingw32#" scripts/winepath.reg > scripts/winepath2.reg ; wine regedit scripts/winepath2.reg ; fi
-  - if [[ $PLATFORM = mingw ]] ; then curl -s 'https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.1-mingw.tar.gz' | tar -C $DEPSSRC --wildcards --strip-components 1 -zx SDL2_image-2.0.1/x86_64-w64-mingw32/* SDL2_image-2.0.1/i686-w64-mingw32/* ; fi
+  - if [[ $PLATFORM = mingw ]] ; then make download-all-sdl2 ; fi
+  - if [[ $PLATFORM = mingw ]] ; then sed "s#{{{}}}#z:$(echo $PWD/3rdparty/sdl2/$HOST-w64-mingw32/bin | sed 's#/#\\\\\\\\#g')#" scripts/winepath.reg > scripts/winepath2.reg ; wine regedit scripts/winepath2.reg ; fi
   - if [[ $TRAVIS_OS_NAME = osx ]] ; then brew install bison ; BISONS=(/usr/local/Cellar/bison/*/bin/bison) ; export BISON="${BISONS[${#BISONS[@]}-1]}" ; fi
   # implement Coverity Scan with before_script instead of addons.coverity_scan
   # to work around too-early quota check by the coverity_scan addon
