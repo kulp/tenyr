@@ -25,4 +25,6 @@ DL_DIR_SDL2_image = $(TOP)/3rdparty/sdl2
 
 SDL2_PKGCONFIG = PKG_CONFIG_PATH=$(TOP)/3rdparty/sdl2/$(MACHINE)/lib/pkgconfig pkg-config --define-variable=prefix=$(TOP)/3rdparty/sdl2/$(MACHINE)
 
+# Create Wine path for a given UNIX path
+os_path = z:$(subst /,\\,$1)
 runwrap := $(TOP)/scripts/winewrap $(runwrap)
