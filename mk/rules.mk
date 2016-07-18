@@ -42,7 +42,7 @@ libtenyr%$(DYLIB_SUFFIX): %.cc
 	@$(MAKESTEP) "[ DYLD-CXX ] $@"
 	$(LINK.cc) -o $@ $^ $(LDLIBS)
 
-%,dy.o: CXXFLAGS += $(CFLAGS_PIC)
+%,dy.o: CXXFLAGS += $(CXXFLAGS_PIC)
 %,dy.o: CFLAGS += $(CFLAGS_PIC)
 %,dy.o: %.c
 	@$(MAKESTEP) "[ DYCC ] $(<F)"

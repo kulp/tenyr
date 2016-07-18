@@ -5,6 +5,8 @@ PATH_COMPONENT_SEP=\\\\
 PATH_SEP_CHAR = ';'
 EXE_SUFFIX = .exe
 CFLAGS_PIC =
+CXXFLAGS_PIC =
+CXXFLAGS += -fpermissive
 CC := gcc
 ifeq ($(BITS),32)
  CROSS_COMPILE ?= i686-w64-mingw32-

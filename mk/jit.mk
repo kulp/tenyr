@@ -1,6 +1,3 @@
-# TODO keep these changes from affecting Makefiles that include this one
-CXXFLAGS += -fPIC
-
 ASMJIT_BASE = $(TOP)/3rdparty/asmjit
 ASMJIT_SRC = $(ASMJIT_BASE)/src
 vpath %.cpp $(ASMJIT_SRC)/asmjit/base
@@ -15,9 +12,10 @@ ASMJIT_OBJS = \
 
 # Suppress warnings on code we do not control
 $(ASMJIT_OBJS): CXXFLAGS := $(filter-out -W%,$(CXXFLAGS))
+$(ASMJIT_OBJS): CXXFLAGS += $(CXXFLAGS_PIC)
 
 libtenyrjit$(DYLIB_SUFFIX): CPPFLAGS += -I$(ASMJIT_SRC)
-libtenyrjit$(DYLIB_SUFFIX): LDFLAGS  += -fPIC -shared
+libtenyrjit$(DYLIB_SUFFIX): LDFLAGS  += $(CXXFLAGS_PIC) -shared
 # Compensate for old glibc versions with -lrt
 libtenyrjit$(DYLIB_SUFFIX): LDLIBS_Linux += -lrt
 libtenyrjit$(DYLIB_SUFFIX): $(ASMJIT_OBJS)
