@@ -12,6 +12,7 @@
 
 #include "os_common.h"
 #include "common.h"
+#include "param.h"
 #include "device.h"
 #include "sim.h"
 
@@ -27,6 +28,7 @@
 #define PUMP_CYCLES 2048
 
 struct sdlled_state {
+    struct plugin_cookie *pcookie;
     uint32_t data[2];
     SDL_Window *window;
     SDL_Renderer *renderer;
@@ -53,11 +55,18 @@ static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
 
     SDL_Texture *num = state->digits[digit];
     if (!num) {
-        char filename[1024];
-        snprintf(filename, sizeof filename, RESOURCE_DIR "/%d/%c.png",
+        const char *share_path = ".";
+        // If the param_get fails, we'll check the current directory
+        state->pcookie->gops.param_get(state->pcookie, "paths.share", 1, (void*)&share_path);
+        char *filename = build_path(share_path, RESOURCE_DIR "/%d/%c.png",
                 DIGIT_HEIGHT, "0123456789ABCDEF"[digit]);
 
         SDL_Surface *surf = IMG_Load(filename);
+        if (!surf)
+            fatal(0, "sdlled failed to load sprite `%s' : %s", filename, IMG_GetError());
+
+        free(filename);
+
         num = state->digits[digit] = SDL_CreateTextureFromSurface(state->renderer, surf);
         SDL_FreeSurface(surf);
     }
@@ -78,11 +87,18 @@ static int put_dot(struct sdlled_state *state, unsigned index, unsigned on)
 
     SDL_Texture *dot = state->dots[on];
     if (!dot) {
-        char filename[1024];
-        snprintf(filename, sizeof filename, RESOURCE_DIR "/%d/dot_%s.png",
+        const char *share_path = ".";
+        // If the param_get fails, we'll check the current directory
+        state->pcookie->gops.param_get(state->pcookie, "paths.share", 1, (void*)&share_path);
+        char *filename = build_path(share_path, RESOURCE_DIR "/%d/dot_%s.png",
                 DIGIT_HEIGHT, on ? "on" : "off");
 
         SDL_Surface *surf = IMG_Load(filename);
+        if (!surf)
+            fatal(0, "sdlled failed to load sprite `%s' : %s", filename, IMG_GetError());
+
+        free(filename);
+
         dot = state->dots[on] = SDL_CreateTextureFromSurface(state->renderer, surf);
         SDL_FreeSurface(surf);
     }
@@ -112,6 +128,8 @@ static int sdlled_init(struct plugin_cookie *pcookie, void *cookie)
         state = *(void**)cookie = malloc(sizeof *state);
 
     *state = (struct sdlled_state){ .status = RUNNING };
+
+    state->pcookie = pcookie;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         fatal(0, "Unable to init SDL: %s", SDL_GetError());

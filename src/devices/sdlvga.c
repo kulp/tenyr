@@ -13,6 +13,7 @@
 
 #include "os_common.h"
 #include "common.h"
+#include "param.h"
 #include "device.h"
 #include "sim.h"
 
