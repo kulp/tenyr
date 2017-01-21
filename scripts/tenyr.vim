@@ -10,7 +10,7 @@
 syn keyword tenyrRegister A B C D E F G H I J K L M N O P
 syn keyword tenyrRegister a b c d e f g h i j k l m n o p
 
-syn keyword tenyrDelim '[[]' '[]]'
+syn match tenyrDelim '[][]'
 
 "syn keyword tenyrArrow <- ->
 syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|<<<\|>>\|>>>\|<>\|!=\|==\|>=\|<=\||\~\|&\~\|\^\^\)\([[:space:]]\|$\)\@='
