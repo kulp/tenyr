@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdint.h>
 #include <search.h>
 #include <stdlib.h>
@@ -79,7 +78,6 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
         *p = node;
     }
 
-    assert(("Sparse page address is non-NULL", *p != NULL));
     uint32_t *where = &(*p)->space[addr & sparseram->mask];
 
     if (op == OP_WRITE)
