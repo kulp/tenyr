@@ -23,7 +23,7 @@ struct sparseram_state {
 };
 
 struct ram_element {
-    int32_t base : 24;
+    int32_t base;
     struct sparseram_state *state;  ///< twalk() support
     uint32_t space[];
 };
