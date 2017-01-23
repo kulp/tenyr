@@ -18,8 +18,6 @@
 #include <search.h>
 #include <inttypes.h>
 
-extern FILE *os_fopen(const char *, const char *);
-
 int recipe_emscript(struct sim_state *s); // linked in externally
 
 #define RECIPES(_) \
@@ -352,9 +350,6 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
-
-    extern char *os_find_self(const char *);
-    extern int os_preamble();
 
     struct sim_state _s = {
         .conf = {

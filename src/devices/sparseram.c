@@ -34,7 +34,6 @@ static int tree_compare(const void *_a, const void *_b)
 
 static int sparseram_init(struct plugin_cookie *pcookie, void *cookie)
 {
-    extern long os_getpagesize();
     struct sparseram_state *sparseram = *(void**)cookie = malloc(sizeof *sparseram);
     sparseram->mem = NULL;
     sparseram->pagesize = os_getpagesize();

@@ -29,6 +29,13 @@ static inline int os_set_binmode(FILE *stream)
     //
 #endif
 
+struct param_state;
+
+char *os_find_self(const char *);
+FILE *os_fopen(const char *, const char *);
+long os_getpagesize();
+int os_preamble(struct param_state *);
+
 #endif
 
 /* vi: set ts=4 sw=4 et: */

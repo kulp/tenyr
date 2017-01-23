@@ -95,9 +95,6 @@ int main(int argc, char *argv[])
     volatile int disassemble = 0;
     volatile int flags = 0;
 
-    extern int os_preamble(struct param_state *);
-    extern FILE *os_fopen(const char *, const char *);
-
     char * volatile outfname = NULL;
     FILE * volatile out = stdout;
 

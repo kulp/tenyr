@@ -2,6 +2,7 @@
 // for RAM_BASE
 #include "devices/ram.h"
 #include "common.h"
+#include "os_common.h"
 #include "param.h"
 
 #include <stdlib.h>
@@ -11,8 +12,6 @@
 #include <string.h>
 #include <strings.h>
 #include <errno.h>
-
-extern FILE *os_fopen(const char *, const char *);
 
 struct link_state {
     UWord addr;     ///< current address
@@ -321,8 +320,6 @@ int do_load_all(struct link_state *s, int count, char *names[count])
 int main(int argc, char *argv[])
 {
     int rc = 0;
-
-    extern int os_preamble();
 
     struct link_state _s = {
         .addr = 0,
