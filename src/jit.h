@@ -24,7 +24,6 @@ struct ops_state {
 
 struct basic_block {
     int run_count;
-    unsigned complete;
     int32_t base;
     uint32_t len;
     Block *compiled;

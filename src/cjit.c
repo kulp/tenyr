@@ -28,7 +28,7 @@ static int pre_insn_hook(struct sim_state *s, const struct element *i, void *ud)
 {
     struct ops_state *o = (struct ops_state*)ud;
     if (!o->curr_bb) {
-        struct basic_block nb = { 0, 0, i->insn.reladdr, 0, NULL, NULL };
+        struct basic_block nb = { 0, 0, i->insn.reladdr, 0, NULL };
         struct basic_block **f = tsearch(&nb, &o->basic_blocks, bb_by_base);
         if (*f == &nb) {
             *f = malloc(sizeof **f);
@@ -63,7 +63,6 @@ static int post_insn_hook(struct sim_state *s, const struct element *i, void *ud
     if ((dd == 0 || dd == 3) && i->insn.u.typeany.z == 0xf) { // P is being updated
         struct basic_block *bb = o->curr_bb;
         bb->len = (uint32_t)i->insn.reladdr - (uint32_t)bb->base + 1;
-        bb->complete = 1;
         bb->run_count++;
         o->curr_bb = NULL;
         o->ops.post_insn(s, i, o->nested_ops_data); // allow hook to run one last time
