@@ -2,9 +2,9 @@
 #include <search.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "common.h"
+#include "os_common.h"
 #include "device.h"
 #include "sim.h"
 #include "ram.h"
@@ -34,9 +34,10 @@ static int tree_compare(const void *_a, const void *_b)
 
 static int sparseram_init(struct plugin_cookie *pcookie, void *cookie)
 {
+    extern long os_getpagesize();
     struct sparseram_state *sparseram = *(void**)cookie = malloc(sizeof *sparseram);
     sparseram->mem = NULL;
-    sparseram->pagesize = sysconf(_SC_PAGESIZE);
+    sparseram->pagesize = os_getpagesize();
     // `mask` has only the bits set that address *within* a page
     sparseram->mask = sparseram->pagesize / sizeof(uint32_t) - 1;
 
