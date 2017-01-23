@@ -1,6 +1,5 @@
 #include "jit.h"
 
-#include <assert.h>
 #include <search.h>
 
 // XXX permit fetch to express failure
@@ -48,7 +47,6 @@ static int pre_insn_hook(struct sim_state *s, const struct element *i, void *ud)
             bb->cache = calloc(bb->len, sizeof *bb->cache);
         bb->cache[(uint32_t)i->insn.reladdr - (uint32_t)bb->base] = i->insn.u.word;
     } else if (bb->run_count > o->js->run_count_threshold) {
-        assert(bb->complete);
         bb->compiled = jit_gen_block(o->js, bb->len, bb->cache);
         free(bb->cache);
         return 1; // indicate to jit_run_sim that JIT should be used
