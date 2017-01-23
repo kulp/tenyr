@@ -54,9 +54,8 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 
 %.vpi: CFLAGS  += $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
 %.vpi: CFLAGS  += -Wno-strict-prototypes
-# don't complain about unused values that we might use in asserts
 # it's all right for callbacks not to use all their parameters
-%.vpi: CFLAGS  += -Wno-unused-value -Wno-unused-parameter
+%.vpi: CFLAGS  += -Wno-unused-parameter
 %.vpi: LDFLAGS += $(shell $(IVERILOG)iverilog-vpi --ldflags 2> /dev/null)
 %.vpi: LDLIBS  += $(shell $(IVERILOG)iverilog-vpi --ldlibs 2> /dev/null)
 %.vpi: %,dy.o

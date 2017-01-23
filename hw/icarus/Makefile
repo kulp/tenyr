@@ -37,8 +37,6 @@ tenyr: simtop.v top.v                               \
        wb_mux.v                                     \
        #
 
-# don't complain about unused values that we might use in asserts
-asm.o sim.o: CFLAGS += -Wno-unused-value
 # it's all right for callbacks not to use all their parameters
 asm.o: CFLAGS += -Wno-unused-parameter
 
