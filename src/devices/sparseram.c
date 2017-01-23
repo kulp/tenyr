@@ -24,7 +24,6 @@ struct sparseram_state {
 
 struct ram_element {
     int32_t base;
-    struct sparseram_state *state;  ///< twalk() support
     uint32_t space[];
 };
 
@@ -61,7 +60,7 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
 {
     struct sparseram_state *sparseram = cookie;
 
-    struct ram_element key = (struct ram_element){ addr & ~WORDMASK, NULL };
+    struct ram_element key = (struct ram_element){ addr & ~WORDMASK };
     struct ram_element **p = tsearch(&key, &sparseram->mem, tree_compare);
     if (*p == &key) {
         // Currently, a page is allocated even on a read. It is not a very
@@ -71,7 +70,7 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
         for (unsigned long i = 0; i < PAGESIZE; i++)
             node->space[i] = 0xffffffff; // "illegal" ; will trap
 
-        *node = (struct ram_element){ addr & ~WORDMASK, cookie };
+        *node = (struct ram_element){ addr & ~WORDMASK };
         *p = node;
     }
 
