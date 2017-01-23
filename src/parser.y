@@ -1,5 +1,4 @@
 %{
-#include <assert.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -513,7 +512,7 @@ static struct expr *make_rhs(int type, int x, int op, int y, int mult,
     e->ce    = defexpr;
 
     if (op < 0) { // syntax sugar, swapping operands
-        assert(type != 3);
+        // `type` must not be e at this point (can't swap operands in type 3)
         e->op = -op;
         switch (type) {
             case 0: e->x = y; e->y = x; break;
