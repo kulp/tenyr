@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -360,7 +359,7 @@ static int obj_sym(FILE *stream, struct symbol *symbol, int flags, void *ud)
         struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
         strcopy(sym->name, symbol->name, sizeof sym->name);
-        assert(("Symbol address resolved", symbol->resolved != 0));
+        // `symbol->resolved` must be true by this point
         sym->value = symbol->reladdr;
         sym->flags = flags;
 
