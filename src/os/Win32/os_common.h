@@ -35,6 +35,7 @@ char *os_find_self(const char *);
 FILE *os_fopen(const char *, const char *);
 long os_getpagesize();
 int os_preamble(struct param_state *);
+int os_set_buffering(FILE *stream, int mode);
 
 #endif
 

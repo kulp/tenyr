@@ -478,9 +478,9 @@ static int raw_out(FILE *stream, struct element *i, void *ud)
  */
 static int text_init(FILE *stream, struct param_state *p, void **ud)
 {
-    gen_init(stream, p, ud);
     // This output might be consumed by a tool that needs a line at a time
-    return setvbuf(stream, NULL, _IOLBF, 0);
+    return gen_init(stream, p, ud)
+        || os_set_buffering(stream, _IOLBF);
 }
 
 static int text_in(FILE *stream, struct element *i, void *ud)

@@ -73,7 +73,7 @@ static int process_stream(struct param_state *params, const struct format *f,
 
     if (disassemble) {
         // This output might be consumed by a tool that needs a line at a time
-        setvbuf(out, NULL, _IOLBF, 0);
+        os_set_buffering(out, _IOLBF);
         rc = do_disassembly(in, out, f, ud, flags);
     } else {
         rc = do_assembly(in, out, f, ud);
