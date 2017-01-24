@@ -22,7 +22,7 @@ matrix:
       env:
         - PLATFORM=mingw BITS=64 HOST=x86_64
         - CXX=$HOST-w64-mingw32-g++
-        - CHECK_RULE=check_sw GCOV=  JIT=0
+        - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
         - PKG_RULE=zip
       addons:
         <<: *def_addons
@@ -39,7 +39,7 @@ matrix:
       env:
         - PLATFORM=mingw BITS=32 HOST=i686
         - CXX=$HOST-w64-mingw32-g++
-        - CHECK_RULE=check_sw GCOV=  JIT=0
+        - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
         - PKG_RULE=zip
       addons:
         <<: *def_addons
