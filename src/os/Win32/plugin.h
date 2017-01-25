@@ -8,7 +8,6 @@
 #define EXPORT __declspec(dllexport) EXPORT_CALLING
 
 // just defined to make compilation work ; ignored
-#define RTLD_DEFAULT NULL
 #define RTLD_LOCAL   -1
 #define RTLD_LAZY    -1
 #define RTLD_NOW     -1

@@ -57,8 +57,8 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
             // (seems to break on Mac OS X)
             // currently we leak library handles
             const char **path = paths;
-            void *libhandle = RTLD_DEFAULT;
-            while ((libhandle == RTLD_DEFAULT) && *path != NULL) {
+            void *libhandle = NULL;
+            while ((libhandle == NULL) && *path != NULL) {
                 char *resolved = build_path(basepath, "%s%s", *path++, implpath);
                 void *handle = dlopen(resolved, RTLD_NOW | RTLD_LOCAL);
                 if (handle)
