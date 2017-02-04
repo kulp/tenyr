@@ -26,8 +26,10 @@ function make_char_getter(area)
 
         var what = area.value;
         if (me.i < what.length) {
-            var result = what.charCodeAt(me.i++);
-            return result;
+            return what.charCodeAt(me.i++);
+        } else if (me.i++ == what.length) {
+            // Supply a final newline to ensure parse succeeds
+            return '\n'.charCodeAt(0);
         }
 
         return null;
