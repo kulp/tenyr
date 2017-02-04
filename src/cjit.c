@@ -28,7 +28,7 @@ static int pre_insn_hook(struct sim_state *s, const struct element *i, void *ud)
 {
     struct ops_state *o = (struct ops_state*)ud;
     if (!o->curr_bb) {
-        struct basic_block nb = { 0, 0, i->insn.reladdr, 0, NULL };
+        struct basic_block nb = { .base = i->insn.reladdr };
         struct basic_block **f = tsearch(&nb, &o->basic_blocks, bb_by_base);
         if (*f == &nb) {
             *f = malloc(sizeof **f);
