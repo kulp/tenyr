@@ -67,6 +67,11 @@ $(GEN_V): %.v: ../verilog/sim/simwrap.v
 	@$(MAKESTEP) "[ IVERILOG -E ] $@"
 	$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
+%.vhdl: VFLAGS += -t vhdl
+%.vhdl: %.v
+	@$(MAKESTEP) "[ VHDL ] $@"
+	$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
+
 %: %.v
 	@$(MAKESTEP) "[ IVERILOG ] $@"
 	$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
