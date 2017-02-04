@@ -125,7 +125,7 @@ int interp_step_sim(struct sim_state *s, const struct run_ops *ops,
     if (s->machine.regs[15] == (signed)0xffffffff) // end condition
         return -1;
 
-    struct element i = { .insn.reladdr = 0 };
+    struct element i = { .insn = { .reladdr = 0 } };
     if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word))
         return -1;
 
