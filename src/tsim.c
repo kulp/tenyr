@@ -384,7 +384,9 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    char *share_path = build_path(s->conf.tsim_path, "../share/tenyr");
+    // Trailing slash is required, because `build_path` strips off last path
+    // component (so that it works when passed a path to a file)
+    char *share_path = build_path(s->conf.tsim_path, "../share/tenyr/");
     // Don't replace any existing share path
     param_set(s->conf.params, "paths.share", share_path, false, false, true);
 
