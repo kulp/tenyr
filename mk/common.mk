@@ -123,5 +123,22 @@ ifeq ($(findstring command,$(origin $(BUILDDIR))),)
   override BUILDDIR := $(TOP)/build/$(MACHINE)
  endif
 endif
-BUILD_NAME := $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>/dev/null || $(ECHO) "unknown")
+# BUILD_DIR_NAME is used to guess version number when downloaded as a source
+# tarball from GitHub
+BUILD_DIR_NAME = $(notdir $(CURDIR))
+# BUILD_DIR_VERS results in either a `vX.Y.Z` tag based on BUILD_DIR_NAME, or
+# an empty string
+BUILD_DIR_VERS = $(if $(findstring .,$(BUILD_DIR_NAME)),$(patsubst tenyr-%,v%,$(BUILD_DIR_NAME)))
+# BUILD_DIR_DATE is a last-ditch effort to identify the build, by using the
+# modification time of the build directory in unpunctuated ISO-8601 format.
+# This is useful for builds that are not Git repositories and do not correspond
+# to a GitHub release -- for example, a branch .ZIP download from GitHub.
+BUILD_DIR_DATE = $(shell date -r "$(CURDIR)" +%Y%M%dT%H%M%S)
+# BUILD_NAME prefers more precise measures, and falls back
+BUILD_NAME := $(firstword \
+        $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>/dev/null) \
+        $(BUILD_DIR_VERS) \
+        $(BUILD_DIR_DATE) \
+        unknown \
+    )
 
