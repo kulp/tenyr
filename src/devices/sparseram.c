@@ -63,7 +63,7 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
     struct sparseram_state *sparseram = cookie;
 
     uint32_t page_base = addr & ~sparseram->mask;
-    struct ram_element key = (struct ram_element){ page_base, NULL };
+    struct ram_element key = (struct ram_element){ .base = page_base };
     struct ram_element **p = tsearch(&key, &sparseram->mem, tree_compare);
     if (*p == &key) {
         // Currently, a page is allocated even on a read. It is not a very
