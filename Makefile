@@ -74,7 +74,13 @@ all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
 else
 
-all: $(TARGETS)
+all: $(TARGETS) | $(TOP)/build/share/tenyr/rsrc
+
+# Create symlinks for share-items in $(TOP)
+$(TOP)/build/share/tenyr/%:
+	@$(MAKESTEP) [ LN ] $*
+	mkdir -p $(@D)
+	ln -sf ../../../$* $@
 
 -include $(TOP)/mk/os/rules/$(OS).mk
 
