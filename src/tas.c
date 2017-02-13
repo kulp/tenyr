@@ -31,7 +31,10 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
-#define version() "tas version " STR(BUILD_NAME)
+static const char *version()
+{
+    return "tas version " STR(BUILD_NAME) " built " __DATE__;
+}
 
 static int format_has_output(const struct format *f)
 {

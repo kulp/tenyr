@@ -55,7 +55,11 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
-#define version() "tld version " STR(BUILD_NAME)
+static const char *version()
+{
+    return "tld version " STR(BUILD_NAME) " built " __DATE__;
+}
+
 
 static int usage(const char *me)
 {

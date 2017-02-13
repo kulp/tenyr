@@ -76,7 +76,7 @@ static const struct option longopts[] = {
 
 static const char *version()
 {
-    return "tsim version " STR(BUILD_NAME);
+    return "tsim version " STR(BUILD_NAME) " built " __DATE__;
 }
 
 static int format_has_input(const struct format *f)
