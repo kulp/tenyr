@@ -9,13 +9,13 @@ OPT := 1
 # Verbosity off by default
 V   :=#
 
-TAS = $(abspath .)/bin/tas
-TLD = $(abspath .)/bin/tld
+tas = $(abspath .)/bin/tas
+tld = $(abspath .)/bin/tld
 
-export TAS
-export TLD
+export tas
+export tld
 
-$(TAS) $(TLD): $(TOP)/Makefile
+$(tas) $(tld): $(TOP)/Makefile
 	mkdir -p $(@D)
 	$(MAKE) BUILDDIR=$(@D) -f $< $(@F)
 
@@ -99,22 +99,22 @@ include $(DESIGN).md
 
 # force remaking %.texe because we don't have actual dependency information here
 FORCE:
-%.texe: %.tas.cpp FORCE | $(TAS) $(TLD)
+%.texe: %.tas.cpp FORCE | $(tas) $(tld)
 	@@$(MAKESTEP) -n "Recursively building $@ from $< ... "
-	$(MAKE) -s -C $(<D) $@ TAS=$(TAS) TLD=$(TLD)
+	$(MAKE) -s -C $(<D) $@ tas=$(tas) tld=$(tld)
 	cp -p $(<D)/$(@F) $@
 	@@$(MAKESTEP) done
 
-%.texe: %.tas FORCE | $(TAS) $(TLD)
+%.texe: %.tas FORCE | $(tas) $(tld)
 	@@$(MAKESTEP) -n "Recursively building $@ from $< ... "
-	$(MAKE) -s -C $(<D) $@ TAS=$(TAS) TLD=$(TLD)
+	$(MAKE) -s -C $(<D) $@ tas=$(tas) tld=$(tld)
 	cp -p $(<D)/$(@F) $@
 	@@$(MAKESTEP) done
 
-gen/%.memh: %.texe | $(TAS)
+gen/%.memh: %.texe | $(tas)
 	mkdir -p $(@D)
 	@# TODO document / hoist start address
-	$(TAS) -vd $< | $(TAS) -p format.memh.offset=0x1000 -p format.memh.explicit=1 -fmemh -o $@ -
+	$(tas) -vd $< | $(tas) -p format.memh.offset=0x1000 -p format.memh.explicit=1 -fmemh -o $@ -
 
 gen/%.mem: gen/%.memh
 	cp -p $< $@
