@@ -11,6 +11,7 @@
 #include "os_common.h"
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -28,9 +29,11 @@ int recipe_emscript(struct sim_state *s); // linked in externally
     _(plugin  , "load plugins specified through param mechanism") \
     _(jit     , "use a JIT compiler (usually faster, but no -v supported)") \
     _(emscript, "change behaviour to use an event loop for emscripten") \
+    _(tsimrc  , "parse tsimrc, after command-line args") \
     //
 
 #define DEFAULT_RECIPES(_) \
+    _(tsimrc)   \
     _(sparse)   \
     _(serial)   \
     _(plugin)   \
@@ -213,6 +216,28 @@ static int recipe_jit(struct sim_state *s)
     return 0;
 }
 
+static int parse_opts_file(struct sim_state *s, const char *filename);
+
+static int recipe_tsimrc(struct sim_state *s)
+{
+    size_t size = 128;
+    char *path = NULL;
+    int rc;
+    do {
+        path = realloc(path, size);
+        rc = os_get_tsimrc_path(path, size);
+        size *= 2;
+    } while (rc && errno == ENOSPC);
+
+    if (!rc)
+        rc = parse_opts_file(s, path);
+
+    free(path);
+
+    // silently ignore lack of existence
+    return (errno == ENOENT) ? 0 : rc;
+}
+
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \
     static int recipe_##Name(struct sim_state *s)                              \
     {                                                                          \
@@ -295,9 +320,9 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
     if (!f) {
         char *b = build_path(s->conf.tsim_path, "../share/tenyr/%s", filename);
         f = os_fopen(b, "r");
-        if (!f)
-            fatal(PRINT_ERRNO, "Options file `%s' not found", filename);
         free(b);
+        if (!f)
+            return 1;
     }
 
     char buf[1024], *p;

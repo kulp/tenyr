@@ -130,7 +130,7 @@ check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$($*) -@ does_not_exist 2>&1 | fgrep -q "not found"          && $(MAKESTEP) "    ... -@ ok"
+	$($*) -@ does_not_exist 2>&1 | fgrep -q "No such"            && $(MAKESTEP) "    ... -@ ok"
 	$($*) -fraw -a 123 /dev/zero 2>&1 | fgrep -q "address 0x7b"  && $(MAKESTEP) "    ... -a ok"
 	$($*) -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(MAKESTEP) "    ... -d ok"
 	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"

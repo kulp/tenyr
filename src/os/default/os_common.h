@@ -15,6 +15,7 @@ static inline int os_set_binmode(void *stream)
 
 char *os_find_self(const char *);
 FILE *os_fopen(const char *, const char *);
+int os_get_tsimrc_path(char buf[], size_t sz);
 long os_getpagesize();
 int os_preamble();
 int os_set_buffering(FILE *stream, int mode);
