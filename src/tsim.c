@@ -10,6 +10,7 @@
 #include "devices/ram.h"
 #include "os_common.h"
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
@@ -306,10 +307,28 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
         if (buf[len - 1] == '\n')
             buf[len - 1] = '\0';
 
+        // Split words by first space character found. This approximates, but
+        // does not replicate, behaviour of the shell on the command line.
+        // There doesn't need to be a space at all, in which case the second
+        // word pointer is NULL.
+        char *word0 = buf;
+        char *word1 = NULL;
+
+        // Update p to the end of the first word
+        while (*p != '\0' && !isspace(*p)) {
+            p++;
+        }
+
+        // If there are spaces, squash them and point word1 past them
+        while (*p != '\0' &&  isspace(*p)) {
+            *p++ = '\0';
+            word1 = p;
+        }
+
         int oi = optind;
         optind = 0;
-        char *pbuf[] = { NULL, buf, NULL };
-        parse_args(s, 2, pbuf);
+        char *pbuf[] = { NULL, word0, word1, NULL };
+        parse_args(s, 2 + (word1 != NULL), pbuf);
         optind = oi;
     }
 
