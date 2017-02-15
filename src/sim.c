@@ -66,8 +66,15 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     int32_t * const w = arrow_right ? rhs : Z  ;
 
     if (loading) {
-        if (s->dispatch_op(s, OP_DATA_READ, *r, value))
-            return -1;
+        int rc = s->dispatch_op(s, OP_DATA_READ, *r, value);
+        if (rc) {
+            if (s->conf.flags & SIM_CONTINUE_ON_FAILED_MEM_OP) {
+                // silently swallow error for now
+                // this is in the critical path, so don't add a verbose message
+            } else {
+                return -1;
+            }
+        }
     } else
         *value = *r;
 

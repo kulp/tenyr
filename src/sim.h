@@ -16,6 +16,7 @@ enum memory_op { OP_INSN_READ=0, OP_DATA_READ=1, OP_WRITE=2 };
 
 // used with sim_state.conf.flags
 #define SIM_CONTINUE_ON_INVALID_DEVICE  (1 << 0)
+#define SIM_CONTINUE_ON_FAILED_MEM_OP   (1 << 1)
 
 typedef int op_dispatcher(void *ud, int op, uint32_t addr, uint32_t *data);
 
