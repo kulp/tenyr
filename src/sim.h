@@ -53,7 +53,8 @@ struct sim_state {
 
     op_dispatcher *dispatch_op;
 
-    struct recipe_book *recipes;
+    struct recipe_book  *recipes_head;
+    struct recipe_book **recipes_tail;
 
     struct machine_state machine;
     sim_runner *run_sim, *interp;

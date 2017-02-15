@@ -257,7 +257,7 @@ static int run_recipes(struct sim_state *s)
         DEFAULT_RECIPES(RUN_RECIPE);
     }
 
-    list_foreach(recipe_book, b, s->recipes) {
+    list_foreach(recipe_book, b, s->recipes_head) {
         if (b->recipe(s))
             fatal(PRINT_ERRNO, "Running recipe `%s` failed", b->name);
         free(b);
@@ -290,11 +290,11 @@ static int add_recipe(struct sim_state *s, const char *name)
             find_recipe_by_name);
 
     if (r) {
-        struct recipe_book *n = malloc(sizeof *n);
-        n->next = s->recipes;
+        struct recipe_book *n = *s->recipes_tail = malloc(sizeof *n);
+        n->next = NULL;
         n->recipe = r->recipe;
         n->name = r->name;
-        s->recipes = n;
+        s->recipes_tail = &n->next;
 
         return 0;
     } else {
@@ -414,9 +414,10 @@ int main(int argc, char *argv[])
                 .param_set = plugin_param_set,
             },
         },
-        .run_sim = interp_run_sim,
-        .interp  = interp_run_sim,
-        .pump    = devices_dispatch_cycle,
+        .run_sim      = interp_run_sim,
+        .interp       = interp_run_sim,
+        .pump         = devices_dispatch_cycle,
+        .recipes_tail = &_s.recipes_head,
     }, *s = &_s;
 
     param_init(&s->conf.params);
