@@ -23,12 +23,13 @@
 int recipe_emscript(struct sim_state *s); // linked in externally
 
 #define RECIPES(_) \
-    _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
-    _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
-    _(serial  , "enable simple serial device and connect to stdio") \
-    _(plugin  , "load plugins specified through param mechanism") \
-    _(jit     , "use a JIT compiler (usually faster, but no -v supported)") \
     _(emscript, "change behaviour to use an event loop for emscripten") \
+    _(jit     , "use a JIT compiler (usually faster, but no -v supported)") \
+    _(plugin  , "load plugins specified through param mechanism") \
+    _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
+    _(serial  , "enable simple serial device and connect to stdio") \
+    _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
+    _(top_page, "map a page at the highest addresses in memory") \
     _(tsimrc  , "parse tsimrc, after command-line args") \
     //
 
@@ -108,9 +109,9 @@ static int usage(const char *me)
            "  -h, --help            display this message\n"
            "  -V, --version         print the string `%s'\n"
            "\n"
-           "Available recipes:\n"
+           "Available recipes (in alphabetical order):\n"
            RECIPES(UsageDesc)
-           "Default recipes:\n"
+           "Default recipes (in order of execution):\n"
            "  " DEFAULT_RECIPES(Space)
            "\n"
            , me, format_list, version());
