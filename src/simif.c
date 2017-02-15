@@ -31,19 +31,32 @@ int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
         if (devices_does_match(&addr, &dl->device) == 0)
             device = &dl->device;
 
-    if (device == NULL) {
+    int result = -1;
+    if (device) {
+        // TODO don't send in the whole simulator state ? the op should have
+        // access to some state, in order to redispatch and potentially use
+        // other machine.devices, but it shouldn't see the whole state
+        result = device->ops.op(device->cookie, op, addr, data);
+
+        if (s->conf.verbose > 2) {
+            printf("%-5s @ 0x%08x = 0x%08x\n",
+                    (op == OP_WRITE) ? "write" : "read", addr, *data);
+        }
+
+    } else if (s->conf.flags & SIM_CONTINUE_ON_INVALID_DEVICE) {
+        // Unavailable memory returns all ones by architectural decision
+        // TODO document this in the machine model
+        if (op != OP_WRITE)
+            *data = 0xffffffff;
+
+        if (s->conf.verbose > 2) {
+            printf("%-5s @ 0x%08x %s due to invalid device\n",
+                    (op == OP_WRITE) ? "write" : "read", addr,
+                    (op == OP_WRITE) ? "silently ignored" : "returning 0xffffffff");
+        }
+    } else {
         fprintf(stderr, "No device handles address %#x\n", addr);
         return -1;
-    }
-
-    // TODO don't send in the whole simulator state ? the op should have
-    // access to some state, in order to redispatch and potentially use other
-    // machine.devices, but it shouldn't see the whole state
-    int result = device->ops.op(device->cookie, op, addr, data);
-
-    if (s->conf.verbose > 2) {
-        printf("%-5s @ 0x%08x = 0x%08x\n",
-               (op == OP_WRITE) ? "write" : "read", addr, *data);
     }
 
     return result;
