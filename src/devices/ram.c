@@ -24,8 +24,8 @@ static int ram_init(struct plugin_cookie *pcookie, void *cookie)
         ram->base = RAM_BASE;
     }
 
-    for (unsigned long i = 0; i < ram->memsize; i++)
-        ram->mem[i] = 0x0f0f0fff; /* P <- A | P - 1 : will halt in a spin */
+    // set all 32-bit words to 0xffffffff, the trap instruction
+    memset(ram->mem, 0xff, ram->memsize * sizeof *ram->mem);
 
     return 0;
 }
