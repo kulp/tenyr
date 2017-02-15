@@ -70,8 +70,9 @@ struct sim_state {
 };
 
 struct run_ops {
-    int (*pre_insn)(struct sim_state *s, const struct element *i, void *ud);
-    int (*post_insn)(struct sim_state *s, const struct element *i, void *ud);
+    int (*pre_fetch)(struct sim_state *s, void *ud); ///< before instruction fetch
+    int (*pre_insn)(struct sim_state *s, const struct element *i, void *ud); ///< before instruction execute
+    int (*post_insn)(struct sim_state *s, const struct element *i, void *ud); ///< after instruction execute
 };
 
 extern sim_runner interp_run_sim, interp_step_sim;

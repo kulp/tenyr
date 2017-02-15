@@ -129,8 +129,9 @@ static int updates_P(const struct insn_or_data i)
 int interp_step_sim(struct sim_state *s, const struct run_ops *ops,
         void **run_data, void *ops_data)
 {
-    if (s->machine.regs[15] == (signed)0xffffffff) // end condition
-        return -1;
+    if (ops->pre_fetch)
+        if (ops->pre_fetch(s, ops_data))
+            return 0;
 
     struct element i = { .insn = { .reladdr = 0 } };
     if (s->dispatch_op(s, OP_INSN_READ, s->machine.regs[15], &i.insn.u.word))

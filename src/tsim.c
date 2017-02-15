@@ -119,6 +119,16 @@ static int usage(const char *me)
     return 0;
 }
 
+static int pre_fetch(struct sim_state *s, void *ud)
+{
+    (void)ud;
+    // Exit simulation when P is the highest address in memory
+    if (s->machine.regs[15] == (signed)0xffffffff)
+        return 1;
+
+    return 0;
+}
+
 static int pre_insn(struct sim_state *s, const struct element *i, void *ud)
 {
     (void)ud;
@@ -498,6 +508,7 @@ int main(int argc, char *argv[])
     s->machine.regs[15] = s->conf.start_addr;
 
     struct run_ops ops = {
+        .pre_fetch = pre_fetch,
         .pre_insn = pre_insn,
         .post_insn = post_insn,
     };
