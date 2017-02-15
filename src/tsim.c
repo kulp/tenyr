@@ -38,6 +38,7 @@ int recipe_emscript(struct sim_state *s); // linked in externally
     _(sparse)   \
     _(serial)   \
     _(plugin)   \
+    _(top_page) \
     //
 
 #define Space(X) STR(X) " "
@@ -247,6 +248,11 @@ static int recipe_tsimrc(struct sim_state *s)
 
     // silently ignore lack of existence
     return (errno == ENOENT) ? 0 : rc;
+}
+
+static int recipe_top_page(struct sim_state *s)
+{
+    return ram_add_device_sized(new_device(s), (uint32_t)-4096, 4096);
 }
 
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \

@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,10 +17,12 @@ static int ram_init(struct plugin_cookie *pcookie, struct device *device, void *
     struct ram_state *ram = *(void**)cookie;
 
     if (!ram) {
+        uint32_t base = device->bounds[0];
+        uint32_t end  = device->bounds[1];
         ram = *(void**)cookie = malloc(sizeof *ram);
-        ram->memsize = RAM_END + 1;
+        ram->memsize = end + 1;
         ram->mem = malloc(ram->memsize * sizeof *ram->mem);
-        ram->base = RAM_BASE;
+        ram->base = base;
     }
 
     // set all 32-bit words to 0xffffffff, the trap instruction
@@ -53,10 +54,10 @@ static int ram_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     return 0;
 }
 
-int ram_add_device(struct device *device)
+int ram_add_device_sized(struct device *device, uint32_t base, uint32_t len)
 {
     *device = (struct device){
-        .bounds = { RAM_BASE, RAM_END },
+        .bounds = { base, base + len - 1 },
         .ops = {
             .op = ram_op,
             .init = ram_init,
@@ -65,6 +66,11 @@ int ram_add_device(struct device *device)
     };
 
     return 0;
+}
+
+int ram_add_device(struct device *device)
+{
+    return ram_add_device_sized(device, RAM_BASE, RAM_END - RAM_BASE + 1);
 }
 
 /* vi: set ts=4 sw=4 et: */
