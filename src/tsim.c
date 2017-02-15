@@ -483,7 +483,9 @@ int main(int argc, char *argv[])
     };
 
     void *run_ud = NULL;
-    s->run_sim(s, &ops, &run_ud, NULL);
+    rc = s->run_sim(s, &ops, &run_ud, NULL);
+    if (rc < 0)
+        fprintf(stderr, "Error during simulation, P=0x%08x\n", s->machine.regs[15]);
 
     fclose(in);
 
