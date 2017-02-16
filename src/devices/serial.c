@@ -8,7 +8,7 @@
 
 #define SERIAL_BASE (1ULL << 5)
 
-static int serial_init(struct plugin_cookie *pcookie, void *cookie)
+static int serial_init(struct plugin_cookie *pcookie, struct device *device, void *cookie)
 {
     return 0;
 }

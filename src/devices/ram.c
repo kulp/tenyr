@@ -13,7 +13,7 @@ struct ram_state {
     uint32_t *mem;
 };
 
-static int ram_init(struct plugin_cookie *pcookie, void *cookie)
+static int ram_init(struct plugin_cookie *pcookie, struct device *device, void *cookie)
 {
     struct ram_state *ram = *(void**)cookie;
 

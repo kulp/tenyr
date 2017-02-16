@@ -6,7 +6,9 @@
 #include "common.h"
 #include "plugin_portable.h"
 
-typedef int map_init(struct plugin_cookie *pcookie, void *ud);
+struct device;
+
+typedef int map_init(struct plugin_cookie *pcookie, struct device *device, void *ud);
 typedef int map_op(void *cookie, int op, uint32_t addr, uint32_t *data);
 typedef int map_cycle(void *cookie);
 typedef int map_fini(void *cookie);

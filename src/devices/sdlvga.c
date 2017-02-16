@@ -61,7 +61,7 @@ static int put_character(struct sdlvga_state *state, unsigned row,
     return 0;
 }
 
-static int sdlvga_init(struct plugin_cookie *pcookie, void *cookie)
+static int sdlvga_init(struct plugin_cookie *pcookie, struct device *device, void *cookie)
 {
     struct sdlvga_state *state = *(void**)cookie;
 
