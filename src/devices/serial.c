@@ -5,37 +5,52 @@
 #include "common.h"
 #include "device.h"
 #include "sim.h"
+#include "os_common.h"
 
 #define SERIAL_BASE (1ULL << 5)
 
+struct serial_state {
+    FILE *in;
+    FILE *out;
+};
+
 static int serial_init(struct plugin_cookie *pcookie, struct device *device, void *cookie)
 {
-    return 0;
+    // Assume that serial_init will not be called more than once per serial_fini
+    struct serial_state *s = *(void**)cookie = malloc(sizeof *s);
+    s->in  = stdin;
+    s->out = stdout;
+
+    // TODO make it possible to select different streams
+    return os_set_non_blocking(s->in);
 }
 
 static int serial_fini(void *cookie)
 {
+    free(cookie);
+    // TODO close streams if they were not standard ones
     return 0;
 }
 
 static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
 {
+    struct serial_state *s = cookie;
     int rc = -1;
 
     if (op == OP_WRITE) {
-        putchar(*data);
-        fflush(stdout);
-        rc = 0;
-    }
-#if 0
-    // XXX this code is not tenyr-correct -- it can block
-    else if (op == OP_DATA_READ) {
+        fputc(*data, s->out);
+        fflush(s->out);
+        rc = ferror(s->out);
+    } else if (op == OP_DATA_READ) {
         int tmp;
-        if ((*data = tmp = getchar()) && tmp == EOF) {
-            return -1;
+        if ((tmp = fgetc(s->in)) && tmp == EOF) {
+            *data = SERIAL_NO_CHARACTER;
+            rc = 0;
+        } else {
+            *data = tmp;
+            rc = ferror(s->in);
         }
     }
-#endif
 
     return rc;
 }
