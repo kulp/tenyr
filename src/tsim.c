@@ -324,6 +324,11 @@ static int plugin_param_get(const struct plugin_cookie *cookie, const char *key,
     return param_get(cookie->param, key, count, val);
 }
 
+static int plugin_param_get_int(const struct plugin_cookie *cookie, const char *key, int *val)
+{
+    return param_get_int(cookie->param, key, val);
+}
+
 static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_key, int free_value)
 {
     return param_set(cookie->param, key, val, replace, free_key, free_value);
@@ -447,6 +452,7 @@ int main(int argc, char *argv[])
                 .fatal = fatal_,
                 .debug = debug_,
                 .param_get = plugin_param_get,
+                .param_get_int = plugin_param_get_int,
                 .param_set = plugin_param_set,
             },
         },
