@@ -319,7 +319,7 @@ static int add_recipe(struct sim_state *s, const char *name)
     }
 }
 
-static int plugin_param_get(const struct plugin_cookie *cookie, char *key, size_t count, const void *val[count])
+static int plugin_param_get(const struct plugin_cookie *cookie, const char *key, size_t count, const void *val[count])
 {
     return param_get(cookie->param, key, count, val);
 }
