@@ -8,6 +8,7 @@
 #include "os_common.h"
 
 #define SERIAL_BASE (1ULL << 5)
+#define SERIAL_NO_CHARACTER 0x80000000ull
 
 struct serial_state {
     FILE *in;
@@ -16,13 +17,28 @@ struct serial_state {
 
 static int serial_init(struct plugin_cookie *pcookie, struct device *device, void *cookie)
 {
+    int rc = 0;
     // Assume that serial_init will not be called more than once per serial_fini
     struct serial_state *s = *(void**)cookie = malloc(sizeof *s);
     s->in  = stdin;
     s->out = stdout;
 
     // TODO make it possible to select different streams
-    return os_set_non_blocking(s->in);
+
+    // By default, we don't set non-blocking on the input stream, even though
+    // that would be the best behaviour. If we set non-blocking on stdin, we
+    // could affect behaviour even after tsim exits. The default behaviour,
+    // blocking on input from stdin, results in simulation pausing until data
+    // is available. This is not realistic, but represents an acceptable
+    // compromise for now, without adding significant complexity to add
+    // correct cross-platform non-blocking behaviour. User (i.e. tenyr
+    // assembly) code should always be written to check for
+    // SERIAL_NO_CHARACTER.
+    int nb;
+    if (pcookie->gops.param_get_int(pcookie, "tsim.serial.set_non_blocking", &nb) && nb)
+        rc = os_set_non_blocking(s->in);
+
+    return rc;
 }
 
 static int serial_fini(void *cookie)
