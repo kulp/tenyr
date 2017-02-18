@@ -72,10 +72,12 @@ int devices_setup(struct sim_state *s)
 
 int devices_finalise(struct sim_state *s)
 {
-    for (struct device_list *d = s->machine.devices; d; d = d->next)
-        d->device.ops.init(&s->plugin_cookie, &d->device, &d->device.cookie);
+    int rc = 0;
 
-    return 0;
+    for (struct device_list *d = s->machine.devices; d; d = d->next)
+        rc |= d->device.ops.init(&s->plugin_cookie, &d->device, &d->device.cookie);
+
+    return rc;
 }
 
 int devices_teardown(struct sim_state *s)

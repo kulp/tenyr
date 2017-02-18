@@ -497,7 +497,8 @@ int main(int argc, char *argv[])
 
     devices_setup(s);
     run_recipes(s);
-    devices_finalise(s);
+    if (devices_finalise(s))
+        fatal(0, "Error while finalising devices setup");
 
     param_set(s->conf.params, "assembling", "0", true, false, false);
     void *ud = NULL;
