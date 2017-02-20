@@ -202,7 +202,7 @@ static int recipe_jit(struct sim_state *s)
     #undef XX
     const char **path = paths;
     void *libhandle = NULL;
-    while ((libhandle == NULL) && *paths != NULL) {
+    while ((libhandle == NULL) && *path != NULL) {
         char *buf = build_path(s->conf.tsim_path, "%slibtenyrjit"DYLIB_SUFFIX, *path++);
         void *handle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
         if (handle)
