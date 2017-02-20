@@ -195,7 +195,7 @@ static int recipe_plugin(struct sim_state *s)
     return !result;
 }
 
-static int recipe_jit(struct sim_state *s)
+static int recipe_runner(struct sim_state *s, const char *prefix)
 {
     #define XX PATH_COMPONENT_SEPARATOR_STR
     static const char *paths[] = { ".."XX"lib"XX, "."XX, "", NULL };
@@ -203,14 +203,19 @@ static int recipe_jit(struct sim_state *s)
     const char **path = paths;
     void *libhandle = NULL;
     while ((libhandle == NULL) && *path != NULL) {
-        char *buf = build_path(s->conf.tsim_path, "%slibtenyrjit"DYLIB_SUFFIX, *path++);
+        char *buf = build_path(s->conf.tsim_path, "%slibtenyr%s"DYLIB_SUFFIX, *path++, prefix);
         void *handle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
         if (handle)
             libhandle = handle;
         free(buf);
     }
 
-    const char name[] = "jit_run_sim";
+    char name[128];
+    if (snprintf(name, sizeof name, "%s_run_sim", prefix) >= (long)sizeof name) {
+        debug(0, "Library name prefix too long");
+        return 1;
+    }
+
     void *ptr = dlsym(libhandle, name);
     if (!ptr) {
         debug(0, "Failed to find symbol `%s` - %s", name, dlerror());
@@ -226,6 +231,11 @@ static int recipe_jit(struct sim_state *s)
     s->run_sim = ALIASING_CAST(sim_runner, ptr);
 
     return 0;
+}
+
+static int recipe_jit(struct sim_state *s)
+{
+    return recipe_runner(s, "jit");
 }
 
 static int parse_opts_file(struct sim_state *s, const char *filename);
