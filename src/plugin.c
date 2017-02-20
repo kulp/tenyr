@@ -68,7 +68,7 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
 
             tenyr_plugin_host_init(libhandle);
 
-            success(libhandle, inst, parent, implstem, ud);
+            rc |= success(libhandle, inst, parent, implstem, ud);
 
             // if RTLD_NODELETE worked and were standard, we would dlclose() here
         }
