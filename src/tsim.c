@@ -80,6 +80,13 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
+static const char *library_search_paths[] = {
+    ".." PATH_COMPONENT_SEPARATOR_STR "lib" PATH_COMPONENT_SEPARATOR_STR,
+    "." PATH_COMPONENT_SEPARATOR_STR,
+    "",
+    NULL
+};
+
 static const char *version()
 {
     return "tsim version " STR(BUILD_NAME) " built " __DATE__;
@@ -187,20 +194,14 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
 
 static int recipe_plugin(struct sim_state *s)
 {
-    #define XX PATH_COMPONENT_SEPARATOR_STR
-    static const char *paths[] = { ".."XX"lib"XX, "."XX, "", NULL };
-    #undef XX
     int result = s->plugins_loaded ||
-        (s->plugins_loaded = !plugin_load(s->conf.tsim_path, paths, "plugin", &s->plugin_cookie, plugin_success, s));
+        (s->plugins_loaded = !plugin_load(s->conf.tsim_path, library_search_paths, "plugin", &s->plugin_cookie, plugin_success, s));
     return !result;
 }
 
 static int recipe_runner(struct sim_state *s, const char *prefix)
 {
-    #define XX PATH_COMPONENT_SEPARATOR_STR
-    static const char *paths[] = { ".."XX"lib"XX, "."XX, "", NULL };
-    #undef XX
-    const char **path = paths;
+    const char **path = library_search_paths;
     void *libhandle = NULL;
     while ((libhandle == NULL) && *path != NULL) {
         char *buf = build_path(s->conf.tsim_path, "%slibtenyr%s"DYLIB_SUFFIX, *path++, prefix);
