@@ -59,13 +59,9 @@ int param_get(struct param_state *pstate, const char *key, size_t count, const v
     if (!q)
         return 0;
 
-    struct string_list *r = q->list;
     size_t i = 0;
-    for (; r; i++) {
-        if (i < count)
-            val[i] = r->value;
-        r = r->next;
-    }
+    for (struct string_list *r = q->list; r && i < count; r = r->next)
+        val[i++] = r->value;
 
     return i;
 }
