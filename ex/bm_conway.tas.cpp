@@ -4,8 +4,8 @@
 #define THRESHOLD 64
 
 // The operations later only work if INSET_{ROW,COL}S end up to be a power of 2
-#define OFFSET_ROWS 4
-#define OFFSET_COLS 8
+#define OFFSET_ROWS 0
+#define OFFSET_COLS 0
 
 #define INSET_ROWS (ROWS - (OFFSET_ROWS * 2))
 #define INSET_COLS (COLS - (OFFSET_COLS * 2))
