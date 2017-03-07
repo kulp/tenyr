@@ -1,9 +1,8 @@
 // This file doesn't adhere to the standard EABI !
 
 #include "common.th"
+#include "vga.th"
 
-#define ROWS 40
-#define COLS 80
 #define SIZEOF_SNAKE 4
 
 _start:
@@ -22,8 +21,8 @@ init:
     call(rand)
     j <- b >>> 27 // 5 bits
     k <- b >>> 21 ; k <- k & 0x3f // 6 bits
-    j <- j + ((40 - 32) / 2) ; j -> [n + 2]
-    k <- k + ((80 - 64) / 2) ; k -> [n + 3]
+    j -> [n + 2]
+    k -> [n + 3]
 
     n <- n + SIZEOF_SNAKE
     j <- n < e
@@ -78,7 +77,7 @@ L_snake:
     c <- c &~ h
     h <- [n + 0]
     c <- c + h
-    d <- j * 80 + k     // d is offset into display
+    d <- j * COLS + k   // d is offset into display
     e <- 0x100
     e <- e << 8         // e is video base
     c -> [e + d]        // e is d characters past start of text region
