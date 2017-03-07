@@ -2,9 +2,10 @@
 //  O is the stack pointer (post-decrement)
 //  B is the (so far only) return register
 //  C is the (so far only) argument register
-//  N is the relative-jump temp register
+//  N is the condition register
 
 #include "common.th"
+#include "vga.th"
 
 _start:
     prologue
@@ -14,8 +15,10 @@ _start:
     call(init_display)
     call(disable_cursor)
 
-    j <- 0              // multiplier (0 -> 0x26)
-    k <- 0              // multiplicand (0 -> 0x12)
+restart:
+    j <- 0              // multiplier
+    k <- 0              // multiplicand
+    g <- 2              // screen columns consumed
 
     c <- 0b0100         // decimal point between J and K
     c -> [0x101]
@@ -23,39 +26,49 @@ _start:
     // write the top row first
 loop_top:
     f <- 4              // field width
-    e <- k * f + 3      // column is multiplicand * field width + header width
+    n <- k <= (0x100 / (ROWS - 2))
+    f <- f + n          // conditionally shrink field width
+    e <- k + g          // column is multiplicand + filled width
     d <- 0              // row is 0
     c <- k              // number to print is multiplicand
     call(putnum)
     k <- k + 1
-    c <- k < 0x13
+    g <- g + f - 1
+    c <- k <= 16
     jnzrel(c,loop_top)
 
     // outer loop is j (multiplier, corresponds to row)
 loop_j:
     k <- 0
+    g <- 0
     // print row header
-    f <- 2              // field width 2
+    f <- 2              // field width
     e <- 0              // column is 0
     d <- j + 1          // row (J + 1)
     c <- j
     call(putnum)
+    g <- g + f
 
 loop_k:
-    f <- 4              // field width 3
-    e <- k * f + 3      // E is column (0 - 79)
+    f <- 4              // field width
+    n <- k <= (0x100 / (ROWS - 2))
+    f <- f + n          // conditionally shrink field width
+    e <- k + g          // column is multiplicand + filled width
     d <- j + 1
     c <- j * k
     call(putnum)
     c <- 0x100          // write {J,K} to LEDs
     [c] <- j << 8 + k
     k <- k + 1
-    c <- k < 0x13
+    g <- g + f - 1
+    c <- k <= 16
     jnzrel(c,loop_k)
 
     j <- j + 1          // increment N
-    c <- j < 0x27
+    c <- j < ROWS
     jnzrel(c,loop_j)
     b <- -1             // indicate completion to testbench
+
+    //goto(restart)     // restartable, but exits to testbench by default
     illegal
 

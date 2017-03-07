@@ -5,7 +5,7 @@
 //  N is the relative-jump temp register
 
 #include "common.th"
-#define ROWS 40
+#include "vga.th"
 
 _start:
     c <- 1              // argument
@@ -14,11 +14,11 @@ _start:
     call(init_display)
     call(disable_cursor)
 
-    j <- 0              // row (0 - 39)
+    j <- 0              // row (0 - 31)
     k <- 0              // column (0 - 3)
 
 loop:
-    l <- k * 20         // column (0 - 79)
+    l <- k * 16         // column (0 - 63)
 
     // compute fib(N)
     push(c)
