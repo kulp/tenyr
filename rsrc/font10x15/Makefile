@@ -5,7 +5,7 @@ RAWS = $(XPMS:%=%.raw)
 NUMS = $(shell seq 0 255)
 ALLPNGS = $(NUMS:%=%.png)
 
-all: font.png
+all: font-invert.png
 
 %.gen.xpm: make_xpm.pl
 	$(realpath $<) $* > $@
@@ -15,6 +15,9 @@ all: font.png
 
 font.png: $(ALLPNGS)
 	montage $^ -tile $(words $^)x1 -geometry +0+0 $@
+
+%-invert.png: %.png
+	convert -negate $< $@
 
 raw: $(RAWS)
 
