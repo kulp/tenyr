@@ -1,6 +1,11 @@
-PNGS = $(wildcard *.png)
+PNGS = $(wildcard ??.png ???.png)
 XPMS = $(PNGS:%.png=%.xpm)
 RAWS = $(XPMS:%=%.raw)
+
+all: font.png
+
+font.png: $(PNGS)
+	montage $^ -tile $(words $^)x1 -geometry +0+0 $@
 
 raw: $(RAWS)
 
