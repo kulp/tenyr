@@ -22,10 +22,10 @@
 
 #define RESOURCE_DIR    "rsrc"
 
-#define ROWS 40
-#define COLS 80
-#define FONT_HEIGHT 12
-#define FONT_WIDTH  8
+#define ROWS 32
+#define COLS 64
+#define FONT_HEIGHT 15
+#define FONT_WIDTH  10
 
 #define PUMP_CYCLES 2048
 
@@ -90,7 +90,7 @@ static int sdlvga_init(struct plugin_cookie *pcookie, struct device *device, voi
     const char *share_path = ".";
     // If the param_get fails, we'll check the current directory
     pcookie->gops.param_get(pcookie, "paths.share", 1, (void*)&share_path);
-    char *filename = build_path(share_path, RESOURCE_DIR"/font.png");
+    char *filename = build_path(share_path, RESOURCE_DIR"/font10x15/font-invert.png");
     SDL_Surface *sprite = IMG_Load(filename);
     if (!sprite)
         fatal(0, "sdlvga failed to load font sprite `%s' : %s", filename, IMG_GetError());
