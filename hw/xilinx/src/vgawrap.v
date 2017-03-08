@@ -8,10 +8,11 @@ module VGAwrap(
 );
 
     parameter[31:0] VIDEO_ADDR = `VIDEO_ADDR;
-    localparam[31:0] ROWS = 40, COLS = 80;
+    localparam[31:0] ROWS = 32, COLS = 64;
+    localparam[31:0] FONT_ROWS = 15, FONT_COLS = 10;
 
     wire[11:0] ram_adA, rom_adA;
-    wire[ 7:0] crx, cry, vga_ctl, ram_doA, rom_doA;
+    wire[ 9:0] crx, cry, vga_ctl, ram_doA, rom_doA;
 
     assign vgaRed  [1:0] = {2{vgaRed  [2]}};
     assign vgaGreen[1:0] = {2{vgaGreen[2]}};
@@ -35,7 +36,7 @@ module VGAwrap(
         .re  ( 1'b0     ), .we     ( 1'b1   ), .val   ( cry   )
     ); // cry is 0-based ?
 
-    vga80x40 vga(
+    vga64x32 vga(
         .clk25MHz ( clk_vga   ), .reset  ( reset       ), .octl ( vga_ctl    ),
         .R        ( vgaRed[2] ), .G      ( vgaGreen[2] ), .B    ( vgaBlue[2] ),
         .hsync    ( hsync     ), .vsync  ( vsync       ),
@@ -45,18 +46,18 @@ module VGAwrap(
     );
 
     BlockRAM #(
-        .SIZE(ROWS * COLS), .ABITS(12), .DBITS(8), .INIT(1), .ZERO('h20)
+        .SIZE(ROWS * COLS), .ABITS($clog2(ROWS * COLS) + 1), .DBITS(8), .INIT(1), .ZERO('h20)
     ) text(
-        .clka  ( clk_vga ), .clkb  ( clk_core   ),
-        .ena   ( 1'b1    ), .enb   ( strobe     ),
-        .addra ( ram_adA ), .addrb ( addr[11:0] ),
-        .dina  ( 8'bx    ), .dinb  ( d_in       ),
-        .douta ( ram_doA ), .doutb ( d_out      ),
-        .wea   ( 1'b0    ), .web   ( rw         )
+        .clka  ( clk_vga ), .clkb  ( clk_core ),
+        .ena   ( 1'b1    ), .enb   ( strobe   ),
+        .addra ( ram_adA ), .addrb ( addr     ),
+        .dina  ( 8'bx    ), .dinb  ( d_in     ),
+        .douta ( ram_doA ), .doutb ( d_out    ),
+        .wea   ( 1'b0    ), .web   ( rw       )
     );
 
-    BlockRAM #(.LOAD(1), .LOADFILE("lat0-12.memh"),
-               .SIZE(256 * 12), .DBITS(8))
+    BlockRAM #(.LOAD(1), .LOADFILE("../../rsrc/font10x15/font10x15.memh"),
+               .SIZE(256 * FONT_ROWS), .DBITS(FONT_COLS))
     font(
         .clka  ( clk_vga ), .ena   ( 1'b1    ), .wea  ( 1'b0 ),
         .addra ( rom_adA ), .douta ( rom_doA ), .clkb ( 1'b0 )

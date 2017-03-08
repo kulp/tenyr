@@ -2,9 +2,10 @@
 ----------------------------------------------------------------------------------------------------
 --
 -- Monocrome Text Mode Video Controller VHDL Macro
--- 80x40 characters. Pixel resolution is 640x480/60Hz
+-- 64x32 characters. Pixel resolution is 640x480/60Hz
 --
 -- Copyright (c) 2007 Javier Valcarce García, javier.valcarce@gmail.com
+-- Copyright (c) 2017 Darren Kulp, darren@kulp.ch
 -- $Id$
 --
 ----------------------------------------------------------------------------------------------------
@@ -27,14 +28,14 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 
-entity vga80x40 is
+entity vga64x32 is
   port (
     reset       : in  std_logic;
     clk25MHz    : in  std_logic;
-    TEXT_A      : out std_logic_vector(11 downto 0); -- text buffer
+    TEXT_A      : out std_logic_vector(10 downto 0); -- text buffer
     TEXT_D      : in  std_logic_vector(07 downto 0);
     FONT_A      : out std_logic_vector(11 downto 0); -- font buffer
-    FONT_D      : in  std_logic_vector(07 downto 0);
+    FONT_D      : in  std_logic_vector(09 downto 0);
     --
     ocrx        : in  std_logic_vector(07 downto 0); -- OUTPUT regs
     ocry        : in  std_logic_vector(07 downto 0);
@@ -46,11 +47,11 @@ entity vga80x40 is
     hsync       : out std_logic;
     vsync       : out std_logic
     );
-end vga80x40;
+end vga64x32;
 
 
 
-architecture rtl of vga80x40 is
+architecture rtl of vga64x32 is
 
   signal R_int : std_logic;
   signal G_int : std_logic;
@@ -62,10 +63,10 @@ architecture rtl of vga80x40 is
   signal hctr  : integer range 793 downto 0;
   signal vctr  : integer range 524 downto 0;
   -- character/pixel position on the screen
-  signal scry  : integer range 039 downto 0;  -- chr row   < 40 (6 bits)
-  signal scrx  : integer range 079 downto 0;  -- chr col   < 80 (7 bits)
-  signal chry  : integer range 011 downto 0;  -- chr high  < 12 (4 bits)
-  signal chrx  : integer range 007 downto 0;  -- chr width < 08 (3 bits)
+  signal scry  : integer range 031 downto 0;  -- chr row   < 32 (5 bits)
+  signal scrx  : integer range 063 downto 0;  -- chr col   < 64 (6 bits)
+  signal chry  : integer range 014 downto 0;  -- chr high  < 15 (4 bits)
+  signal chrx  : integer range 009 downto 0;  -- chr width < 10 (4 bits)
 
   signal losr_ce : std_logic;
   signal losr_ld : std_logic;
@@ -200,12 +201,12 @@ begin
 
     signal hctr_639 : std_logic;
     signal vctr_479 : std_logic;
-    signal chrx_007 : std_logic;
-    signal chry_011 : std_logic;
+    signal chrx_009 : std_logic;
+    signal chry_014 : std_logic;
 
     -- RAM read, ROM read
-    signal ram_tmp : integer range 3200 downto 0;  --12 bits
-    signal rom_tmp : integer range 3070 downto 0;
+    signal ram_tmp : integer range 2047 downto 0;  --11 bits
+    signal rom_tmp : integer range 3839 downto 0;  --12 bits
 
   begin
 
@@ -219,31 +220,30 @@ begin
     vctr_ce <= '1' when hctr = 663 else '0';
     vctr_rs <= '1' when vctr = 524 else '0';
 
-    U_CHRX: ctrm generic map (M => 008) port map (reset, clk25MHz, chrx_ce, chrx_rs, chrx);
-    U_CHRY: ctrm generic map (M => 012) port map (reset, clk25MHz, chry_ce, chry_rs, chry);
-    U_SCRX: ctrm generic map (M => 080) port map (reset, clk25MHz, scrx_ce, scrx_rs, scrx);
-    U_SCRY: ctrm generic map (M => 040) port map (reset, clk25MHz, scry_ce, scry_rs, scry);
+    U_CHRX: ctrm generic map (M => 010) port map (reset, clk25MHz, chrx_ce, chrx_rs, chrx);
+    U_CHRY: ctrm generic map (M => 015) port map (reset, clk25MHz, chry_ce, chry_rs, chry);
+    U_SCRX: ctrm generic map (M => 064) port map (reset, clk25MHz, scrx_ce, scrx_rs, scrx);
+    U_SCRY: ctrm generic map (M => 032) port map (reset, clk25MHz, scry_ce, scry_rs, scry);
 
     hctr_639 <= '1' when hctr = 639 else '0';
     vctr_479 <= '1' when vctr = 479 else '0';
-    chrx_007 <= '1' when chrx = 007 else '0';
-    chry_011 <= '1' when chry = 011 else '0';
+    chrx_009 <= '1' when chrx = 009 else '0';
+    chry_014 <= '1' when chry = 014 else '0';
 
-    chrx_rs <= chrx_007 or hctr_639;
-    chry_rs <= chry_011 or vctr_479;
+    chrx_rs <= chrx_009 or hctr_639;
+    chry_rs <= chry_014 or vctr_479;
     scrx_rs <= hctr_639;
     scry_rs <= vctr_479;
 
     chrx_ce <= '1' and blank;
-    scrx_ce <= chrx_007;
+    scrx_ce <= chrx_009;
     chry_ce <= hctr_639 and blank;
-    scry_ce <= chry_011 and hctr_639;
+    scry_ce <= chry_014 and hctr_639;
 
-    ram_tmp <= scry * 80 + scrx;
+    ram_tmp <= scry * 64 + scrx;
+    TEXT_A <= std_logic_vector(TO_UNSIGNED(ram_tmp, 11));
 
-    TEXT_A <= std_logic_vector(TO_UNSIGNED(ram_tmp, 12));
-
-    rom_tmp <= TO_INTEGER(unsigned(TEXT_D)) * 12 + chry;
+    rom_tmp <= TO_INTEGER(unsigned(TEXT_D)) * 15 + chry;
     FONT_A <= std_logic_vector(TO_UNSIGNED(rom_tmp, 12));
 
   end block;
@@ -251,11 +251,11 @@ begin
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-  U_LOSR : losr generic map (N => 8)
+  U_LOSR : losr generic map (N => 10)
     port map (reset, clk25MHz, losr_ld, losr_ce, losr_do, FONT_D);
 
   losr_ce <= blank;
-  losr_ld <= '1' when (chrx = 007) else '0';
+  losr_ld <= '1' when (chrx = 009) else '0';
 
   -- video out, vga_en control signal enable/disable vga signal
   R_int <= (ctl_r and y) and blank;
@@ -276,10 +276,8 @@ begin
     signal slowclk : std_logic;
     signal curpos  : std_logic;
     signal yint    : std_logic;
-    signal crx_tmp : integer range 079 downto 0;
-    signal cry_tmp : integer range 039 downto 0;
-    signal crx     : integer range 079 downto 0;
-    signal cry     : integer range 039 downto 0;
+    signal crx     : integer range 063 downto 0;
+    signal cry     : integer range 031 downto 0;
     signal counter : unsigned(22 downto 0);
   begin
 
@@ -287,8 +285,8 @@ begin
     counter <= counter + 1 when rising_edge(clk25MHz);
     slowclk <= counter(22); --2.98Hz
 
-    crx <= TO_INTEGER(unsigned(ocrx(6 downto 0)));
-    cry <= TO_INTEGER(unsigned(ocry(5 downto 0)));
+    crx <= TO_INTEGER(unsigned(ocrx(5 downto 0)));
+    cry <= TO_INTEGER(unsigned(ocry(4 downto 0)));
 
     --
     curpos <= '1' when (scry = cry) and (scrx = crx) else '0';

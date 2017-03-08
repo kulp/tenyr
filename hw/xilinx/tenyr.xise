@@ -29,7 +29,7 @@
     <file xil_pn:name="src/losr.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="Implementation"/>
     </file>
-    <file xil_pn:name="src/vga80x40_col1fixed.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="src/vga64x32.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="Implementation"/>
     </file>
     <file xil_pn:name="../verilog/mmr.v" xil_pn:type="FILE_VERILOG">

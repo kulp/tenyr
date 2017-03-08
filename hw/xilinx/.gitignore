@@ -49,7 +49,6 @@ impact.xsl
 impact_impact.xwbt
 pa.fromHdl.tcl
 pa.fromNetlist.tcl
-vga80x40.vhd
 *.cmd
 isim/
 Decode_isim_translate1.wdb
