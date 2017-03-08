@@ -5,7 +5,7 @@ RAWS = $(XPMS:%=%.raw)
 NUMS = $(shell seq 0 255)
 ALLPNGS = $(NUMS:%=%.png)
 
-all: font-invert.png
+all: font-invert.png font10x15.memb
 
 %.gen.xpm: make_xpm.pl
 	$(realpath $<) $* > $@
@@ -24,8 +24,11 @@ raw: $(RAWS)
 %.xpm: %.png
 	convert $< $@
 
-%.xpm.raw: %.xpm
-	sed -n '/pixels/,22{/^"/p;}' $< | tr -d '",' | tr ' .' '.x' > $@ || rm $@
+%.memb: %.xpm
+	sed -n '/pixels/,22{/^"/p;}' $< | tr -d '",' | tr ' .' '01' > $@ || rm $@
+
+font10x15.memb: $(NUMS:%=%.memb)
+	cat $^ > $@
 
 clean:
-	$(RM) *.xpm *.xpm.raw
+	$(RM) *.xpm *.memb

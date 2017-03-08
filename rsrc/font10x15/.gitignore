@@ -1,2 +1,5 @@
 *.xpm.raw
 font.png
+?.memb
+??.memb
+???.memb
