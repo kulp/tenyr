@@ -22,6 +22,12 @@ crush: $(PNGS)
 font.png: $(ALLPNGS)
 	montage $^ -tile $(words $^)x1 -geometry +0+0 $@
 
+sentence.png: NUMS = $(shell perl -le 'print ord for split //, qq($(PHRASE))')
+# We could use .SECONDEXPANSION and then use $+ instead of repeating $(ALLPNGS)
+# below, but this way we avoid introducing .SECONDEXPANSION for just one rule
+sentence.png: $(ALLPNGS)
+	montage $(ALLPNGS) -tile $(words $(ALLPNGS))x1 -geometry +0+0 $@
+
 %-invert.png: %.png
 	convert -negate $< $@
 
