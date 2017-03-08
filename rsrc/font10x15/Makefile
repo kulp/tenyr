@@ -10,6 +10,9 @@ all: font-invert.png font10x15.memb
 count: $(RAWS)
 	sort $^ | uniq -c | sort -k2 | wc -l
 
+crush: $(PNGS)
+	for p in $^ ; do pngcrush -ow $p ; done
+
 %.gen.xpm: make_xpm.pl
 	$(realpath $<) $* > $@
 
