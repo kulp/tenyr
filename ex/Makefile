@@ -9,6 +9,7 @@ vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
 
 TARGETS = \
     bsearch_demo.texe   \
+    bm_chars.texe       \
     bm_conway.texe      \
     bm_snake.texe       \
     bm_mults.texe       \
