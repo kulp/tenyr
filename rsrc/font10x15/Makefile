@@ -7,6 +7,9 @@ ALLPNGS = $(NUMS:%=%.png)
 
 all: font-invert.png font10x15.memb
 
+show: $(RAWS)
+	sort $^ | uniq -c | sort -g
+
 count: $(RAWS)
 	sort $^ | uniq -c | sort -k2 | wc -l
 
