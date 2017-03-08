@@ -1,4 +1,4 @@
-PNGS = $(wildcard ??.png ???.png)
+PNGS = $(wildcard 3[2-9].png [4-9]?.png 1[01]?.png 12[0-7].png) # 32 - 127
 XPMS = $(PNGS:%.png=%.xpm)
 RAWS = $(XPMS:%=%.raw)
 
