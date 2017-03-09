@@ -51,9 +51,7 @@ end vga64x32;
 
 architecture rtl of vga64x32 is
 
-  signal R_int : std_logic;
-  signal G_int : std_logic;
-  signal B_int : std_logic;
+  signal W_int : std_logic;
   signal hsync_int : std_logic;
   signal vsync_int : std_logic;
 
@@ -157,9 +155,9 @@ begin
       G <= '0';
       B <= '0';
     elsif rising_edge(clk25MHz) then
-      R <= R_int;
-      G <= G_int;
-      B <= B_int;
+      R <= W_int;
+      G <= W_int;
+      B <= W_int;
     end if;
   end process;
 
@@ -170,9 +168,6 @@ begin
 -------------------------------------------------------------------------------
   -- Control register. Individual control signal
   vga_en    <= octl(7);
-  ctl_r     <= octl(2);
-  ctl_g     <= octl(1);
-  ctl_b     <= octl(0);
 
   -- counters, hctr, vctr, srcx, srcy, chrx, chry
   -- TODO: OPTIMIZE THIS
@@ -249,10 +244,7 @@ begin
   losr_ce <= blank;
   losr_ld <= '1' when (chrx = 009) else '0';
 
-  -- video out, vga_en control signal enable/disable vga signal
-  R_int <= (ctl_r and y) and blank;
-  G_int <= (ctl_g and y) and blank;
-  B_int <= (ctl_b and y) and blank;
+  W_int <= y and blank;
 
   hsync <= hsync_int and vga_en;
   vsync <= vsync_int and vga_en;
