@@ -51,6 +51,14 @@ end vga64x32;
 
 architecture rtl of vga64x32 is
 
+  constant PixlCols : integer := 640;
+  constant PixlRows : integer := 480;
+  constant CellCols : integer := 64;
+  constant CellRows : integer := 32;
+  constant FontCols : integer := 10;
+  constant FontRows : integer := 15;
+  constant GlyphCount : integer := 256;
+
   signal W_int : std_logic;
   signal hsync_int : std_logic;
   signal vsync_int : std_logic;
@@ -59,10 +67,10 @@ architecture rtl of vga64x32 is
   signal hctr  : integer range 793 downto 0;
   signal vctr  : integer range 524 downto 0;
   -- character/pixel position on the screen
-  signal scry  : integer range 031 downto 0;  -- chr row   < 32 (5 bits)
-  signal scrx  : integer range 063 downto 0;  -- chr col   < 64 (6 bits)
-  signal chry  : integer range 014 downto 0;  -- chr high  < 15 (4 bits)
-  signal chrx  : integer range 009 downto 0;  -- chr width < 10 (4 bits)
+  signal scry  : integer range (CellRows - 1) downto 0;  -- chr row
+  signal scrx  : integer range (CellCols - 1) downto 0;  -- chr col
+  signal chry  : integer range (FontRows - 1) downto 0;  -- chr high
+  signal chrx  : integer range (FontCols - 1) downto 0;  -- chr width
 
   signal losr_ce : std_logic;
   signal losr_ld : std_logic;
@@ -78,7 +86,7 @@ architecture rtl of vga64x32 is
 
   component ctrm
     generic (
-      M : integer := 08);
+      M : integer);
     port (
       reset : in  std_logic;            -- asyncronous reset
       clk   : in  std_logic;
@@ -90,7 +98,7 @@ architecture rtl of vga64x32 is
 
   component losr
     generic (
-      N : integer := 04);
+      N : integer);
     port (
       reset : in  std_logic;
       clk   : in  std_logic;
@@ -186,14 +194,14 @@ begin
     signal scry_ce : std_logic;
     signal scry_rs : std_logic;
 
-    signal hctr_639 : std_logic;
-    signal vctr_479 : std_logic;
-    signal chrx_009 : std_logic;
-    signal chry_014 : std_logic;
+    signal hctr_end : std_logic;
+    signal vctr_end : std_logic;
+    signal chrx_end : std_logic;
+    signal chry_end : std_logic;
 
     -- RAM read, ROM read
-    signal ram_tmp : integer range 2047 downto 0;  --11 bits
-    signal rom_tmp : integer range 3839 downto 0;  --12 bits
+    signal ram_tmp : integer range (CellCols * CellCols - 1) downto 0;  --11 bits
+    signal rom_tmp : integer range (FontRows * GlyphCount - 1) downto 0;  --12 bits
 
   begin
 
@@ -207,30 +215,30 @@ begin
     vctr_ce <= '1' when hctr = 663 else '0';
     vctr_rs <= '1' when vctr = 524 else '0';
 
-    U_CHRX: ctrm generic map (M => 010) port map (reset, clk25MHz, chrx_ce, chrx_rs, chrx);
-    U_CHRY: ctrm generic map (M => 015) port map (reset, clk25MHz, chry_ce, chry_rs, chry);
-    U_SCRX: ctrm generic map (M => 064) port map (reset, clk25MHz, scrx_ce, scrx_rs, scrx);
-    U_SCRY: ctrm generic map (M => 032) port map (reset, clk25MHz, scry_ce, scry_rs, scry);
+    U_CHRX: ctrm generic map (M => FontCols) port map (reset, clk25MHz, chrx_ce, chrx_rs, chrx);
+    U_CHRY: ctrm generic map (M => FontRows) port map (reset, clk25MHz, chry_ce, chry_rs, chry);
+    U_SCRX: ctrm generic map (M => CellCols) port map (reset, clk25MHz, scrx_ce, scrx_rs, scrx);
+    U_SCRY: ctrm generic map (M => CellRows) port map (reset, clk25MHz, scry_ce, scry_rs, scry);
 
-    hctr_639 <= '1' when hctr = 639 else '0';
-    vctr_479 <= '1' when vctr = 479 else '0';
-    chrx_009 <= '1' when chrx = 009 else '0';
-    chry_014 <= '1' when chry = 014 else '0';
+    hctr_end <= '1' when hctr = (PixlCols - 1) else '0';
+    vctr_end <= '1' when vctr = (PixlRows - 1) else '0';
+    chrx_end <= '1' when chrx = (FontCols - 1) else '0';
+    chry_end <= '1' when chry = (FontRows - 1) else '0';
 
-    chrx_rs <= chrx_009 or hctr_639;
-    chry_rs <= chry_014 or vctr_479;
-    scrx_rs <= hctr_639;
-    scry_rs <= vctr_479;
+    chrx_rs <= chrx_end or hctr_end;
+    chry_rs <= chry_end or vctr_end;
+    scrx_rs <= hctr_end;
+    scry_rs <= vctr_end;
 
     chrx_ce <= '1' and blank;
-    scrx_ce <= chrx_009;
-    chry_ce <= hctr_639 and blank;
-    scry_ce <= chry_014 and hctr_639;
+    scrx_ce <= chrx_end;
+    chry_ce <= hctr_end and blank;
+    scry_ce <= chry_end and hctr_end;
 
-    ram_tmp <= scry * 64 + scrx;
+    ram_tmp <= scry * CellCols + scrx;
     TEXT_A <= std_logic_vector(TO_UNSIGNED(ram_tmp, 11));
 
-    rom_tmp <= TO_INTEGER(unsigned(TEXT_D)) * 15 + chry;
+    rom_tmp <= TO_INTEGER(unsigned(TEXT_D)) * FontRows + chry;
     FONT_A <= std_logic_vector(TO_UNSIGNED(rom_tmp, 12));
 
   end block;
@@ -238,11 +246,11 @@ begin
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-  U_LOSR : losr generic map (N => 10)
+  U_LOSR : losr generic map (N => FontCols)
     port map (reset, clk25MHz, losr_ld, losr_ce, losr_do, FONT_D);
 
   losr_ce <= blank;
-  losr_ld <= '1' when (chrx = 009) else '0';
+  losr_ld <= '1' when (chrx = (FontCols - 1)) else '0';
 
   W_int <= y and blank;
 
