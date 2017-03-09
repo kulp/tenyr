@@ -3,13 +3,6 @@
 
 #define THRESHOLD 64
 
-// The operations later only work if INSET_{ROW,COL}S end up to be a power of 2
-#define OFFSET_ROWS 0
-#define OFFSET_COLS 0
-
-#define INSET_ROWS (ROWS - (OFFSET_ROWS * 2))
-#define INSET_COLS (COLS - (OFFSET_COLS * 2))
-
 _start:
     prologue
 
@@ -57,16 +50,16 @@ randomise_board:
     pushall(j,k,c,d,l,n)
     c <- [rel(seed)]
     call(srand)
-    j <- (INSET_ROWS - 1)
+    j <- (ROWS - 1)
 randomise_board_rows:
-    k <- (INSET_COLS - 1)
+    k <- (COLS - 1)
 randomise_board_cols:
     call(rand)
     b <- b >> 23
 
     l <- b >= THRESHOLD
 
-    b <- j * INSET_COLS + k
+    b <- j * COLS + k
     l -> [b + g] // write to buf0
 
     k <- k - 1
@@ -79,11 +72,11 @@ randomise_board_cols:
 
 flip:
     pushall(j,k,n)
-    j <- (INSET_ROWS - 1)
+    j <- (ROWS - 1)
 flip_rows:
-    k <- (INSET_COLS - 1)
+    k <- (COLS - 1)
 flip_cols:
-    b <- j * INSET_COLS + k
+    b <- j * COLS + k
     b <- [b + g] // read from buf0
 
     b <- b @ h
@@ -93,9 +86,7 @@ flip_cols:
     n <- b | n
 
     // convert from inset coordinates to full coordinates
-    b <- j + OFFSET_ROWS
-    b <- b * COLS + k
-    b <- b + OFFSET_COLS
+    b <- j * COLS + k
     n -> [b + i] // write to display
 
     k <- k - 1
@@ -110,9 +101,9 @@ flip_cols:
 
 compute:
     pushall(c,d,e,f,j,k,l)
-    j <- (INSET_ROWS - 1)
+    j <- (ROWS - 1)
 compute_rows:
-    k <- (INSET_COLS - 1)
+    k <- (COLS - 1)
 compute_cols:
 
     c <- j
@@ -120,7 +111,7 @@ compute_cols:
     call(get_neighbour_count)
     e <- b
 
-    b <- j * INSET_COLS + k
+    b <- j * COLS + k
     f <- [b + g] // read from buf1
     // E is neighbour count, F is current state
     c <- h ^ 1
@@ -154,10 +145,10 @@ neighbour_loop_rows:
     f <- -1
 neighbour_loop_cols:
     // essentially doing `(a + 31) % 32` to get `a - 1` safely
-    c <- j + e + INSET_ROWS ; c <- c & (INSET_ROWS - 1)
-    d <- k + f + INSET_COLS ; d <- d & (INSET_COLS - 1)
+    c <- j + e + ROWS ; c <- c & (ROWS - 1)
+    d <- k + f + COLS ; d <- d & (COLS - 1)
 
-    b <- c * INSET_COLS + d
+    b <- c * COLS + d
     l <- [b + g]
     n <- e | f
     n <- n == 0
