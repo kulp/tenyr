@@ -7,7 +7,6 @@ _start:
     prologue
 
     call(init_display)
-    call(disable_cursor)
 
     // m is generation
     m <- 0

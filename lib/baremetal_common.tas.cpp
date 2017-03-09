@@ -18,12 +18,3 @@ init_display_loop:
 
     popall_ret(h,k,n)
 
-.global disable_cursor
-disable_cursor:
-    pushall(g,h)
-    h <- @VGA_BASE
-    g <- [h + (0x1000 - 1)]
-    g <- g & ~(1 << 6)  // unset cursor-enable bit
-    g -> [h + (0x1000 - 1)]
-    popall_ret(g,h)
-

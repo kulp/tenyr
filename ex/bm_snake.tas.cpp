@@ -9,7 +9,6 @@ _start:
     prologue
 
     call(init_display)
-    call(disable_cursor)
 
 #ifdef TEST
     c <- rel(_start) ; call(srand) # seed based on where we are loaded

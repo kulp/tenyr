@@ -6,7 +6,6 @@ _start:
     b <- 0              // indicate non-completion to testbench
 
     call(init_display)
-    call(disable_cursor)
 
 restart:
     c <- 0

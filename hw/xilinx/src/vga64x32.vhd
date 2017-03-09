@@ -37,8 +37,6 @@ entity vga64x32 is
     FONT_A      : out std_logic_vector(11 downto 0); -- font buffer
     FONT_D      : in  std_logic_vector(09 downto 0);
     --
-    ocrx        : in  std_logic_vector(07 downto 0); -- OUTPUT regs
-    ocry        : in  std_logic_vector(07 downto 0);
     octl        : in  std_logic_vector(07 downto 0);
     --
     R           : out std_logic;
@@ -76,9 +74,6 @@ architecture rtl of vga64x32 is
   -- control io register
   signal ctl       : std_logic_vector(7 downto 0);
   signal vga_en    : std_logic;
-  signal cur_en    : std_logic;
-  signal cur_mode  : std_logic;
-  signal cur_blink : std_logic;
   signal ctl_r     : std_logic;
   signal ctl_g     : std_logic;
   signal ctl_b     : std_logic;
@@ -174,9 +169,6 @@ begin
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
   -- Control register. Individual control signal
-  cur_mode  <= octl(4);
-  cur_blink <= octl(5);
-  cur_en    <= octl(6);
   vga_en    <= octl(7);
   ctl_r     <= octl(2);
   ctl_g     <= octl(1);
@@ -264,37 +256,6 @@ begin
 
   hsync <= hsync_int and vga_en;
   vsync <= vsync_int and vga_en;
-
--------------------------------------------------------------------------------
--------------------------------------------------------------------------------
--------------------------------------------------------------------------------
-
-  -- Hardware Cursor
-  hw_cursor : block
-    signal small   : std_logic;
-    signal curen2  : std_logic;
-    signal slowclk : std_logic;
-    signal curpos  : std_logic;
-    signal yint    : std_logic;
-    signal crx     : integer range 063 downto 0;
-    signal cry     : integer range 031 downto 0;
-    signal counter : unsigned(22 downto 0);
-  begin
-
-    -- slowclk for blink hardware cursor
-    counter <= counter + 1 when rising_edge(clk25MHz);
-    slowclk <= counter(22); --2.98Hz
-
-    crx <= TO_INTEGER(unsigned(ocrx(5 downto 0)));
-    cry <= TO_INTEGER(unsigned(ocry(4 downto 0)));
-
-    --
-    curpos <= '1' when (scry = cry) and (scrx = crx) else '0';
-    small  <= '1' when (chry > 8)                    else '0';
-    curen2 <= (slowclk or (not cur_blink)) and cur_en;
-    yint   <= '1' when cur_mode = '0'                else small;
-    y      <= (yint and curpos and curen2) xor losr_do;
-
-  end block;
+  y     <= losr_do;
 
 end rtl;

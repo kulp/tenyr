@@ -12,7 +12,6 @@ _start:
     prologue
 
     call(init_display)
-    call(disable_cursor)
 
     j <- 0              // row (0 - 31)
     k <- 0              // column (0 - 3)

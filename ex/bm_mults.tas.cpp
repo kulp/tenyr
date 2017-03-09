@@ -13,7 +13,6 @@ _start:
     c <- 1              // argument
 
     call(init_display)
-    call(disable_cursor)
 
 restart:
     j <- 0              // multiplier
