@@ -115,7 +115,7 @@ begin
     if rising_edge(clk25MHz) then
       if reset = '1' then
         hsync_int <= '1';
-      elsif (hctr > 663) and (hctr < 757) then
+      elsif (hctr > 663) and (hctr < 721) then
         hsync_int <= '0';
       else
         hsync_int <= '1';
@@ -132,7 +132,7 @@ begin
     if rising_edge(clk25MHz) then
       if reset = '1' then
         vsync_int <= '1';
-      elsif (vctr > 499) and (vctr < 502) then
+      elsif (vctr > 483) and (vctr < 487) then
         vsync_int <= '0';
       else
         vsync_int <= '1';
@@ -200,15 +200,15 @@ begin
 
   begin
 
-    U_HCTR : ctrm generic map (M => 794) port map (
+    U_HCTR : ctrm generic map (M => 800) port map (
       reset =>reset, clk=>clk25MHz, ce =>hctr_ce, rs =>hctr_rs, do => hctr);
 
-    U_VCTR : ctrm generic map (M => 525) port map (reset, clk25MHz, vctr_ce, vctr_rs, vctr);
+    U_VCTR : ctrm generic map (M => 501) port map (reset, clk25MHz, vctr_ce, vctr_rs, vctr);
 
     hctr_ce <= '1';
-    hctr_rs <= '1' when hctr = 793 else '0';
+    hctr_rs <= '1' when hctr = 799 else '0';
     vctr_ce <= '1' when hctr = 663 else '0';
-    vctr_rs <= '1' when vctr = 524 else '0';
+    vctr_rs <= '1' when vctr = 500 else '0';
 
     U_CHRX: ctrm generic map (M => FontCols) port map (reset, clk25MHz, chrx_ce, chrx_rs, chrx);
     U_CHRY: ctrm generic map (M => FontRows) port map (reset, clk25MHz, chry_ce, chry_rs, chry);
