@@ -37,8 +37,6 @@ entity vga64x32 is
     FONT_A      : out std_logic_vector(11 downto 0); -- font buffer
     FONT_D      : in  std_logic_vector(09 downto 0);
     --
-    octl        : in  std_logic_vector(07 downto 0);
-    --
     R           : out std_logic;
     G           : out std_logic;
     B           : out std_logic;
@@ -79,7 +77,6 @@ architecture rtl of vga64x32 is
 
   -- control io register
   signal ctl       : std_logic_vector(7 downto 0);
-  signal vga_en    : std_logic;
   signal ctl_r     : std_logic;
   signal ctl_g     : std_logic;
   signal ctl_b     : std_logic;
@@ -174,8 +171,6 @@ begin
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
-  -- Control register. Individual control signal
-  vga_en    <= octl(7);
 
   -- counters, hctr, vctr, srcx, srcy, chrx, chry
   -- TODO: OPTIMIZE THIS
@@ -254,8 +249,8 @@ begin
 
   W_int <= y and blank;
 
-  hsync <= hsync_int and vga_en;
-  vsync <= vsync_int and vga_en;
+  hsync <= hsync_int;
+  vsync <= vsync_int;
   y     <= losr_do;
 
 end rtl;
