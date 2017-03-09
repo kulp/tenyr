@@ -107,16 +107,14 @@ begin
 -- hsync generator, initialized with '1'
   process (reset, clk25MHz)
   begin
-    if reset = '1' then
-      hsync_int <= '1';
-    elsif rising_edge(clk25MHz) then
-
-      if (hctr > 663) and (hctr < 757) then
+    if rising_edge(clk25MHz) then
+      if reset = '1' then
+        hsync_int <= '1';
+      elsif (hctr > 663) and (hctr < 757) then
         hsync_int <= '0';
       else
         hsync_int <= '1';
       end if;
-
     end if;
   end process;
 
@@ -126,10 +124,10 @@ begin
 -- vsync generator, initialized with '1'
   process (reset, clk25MHz)
   begin
-    if reset = '1' then
-      vsync_int <= '1';
-    elsif rising_edge(clk25MHz) then
-      if (vctr > 499) and (vctr < 502) then
+    if rising_edge(clk25MHz) then
+      if reset = '1' then
+        vsync_int <= '1';
+      elsif (vctr > 499) and (vctr < 502) then
         vsync_int <= '0';
       else
         vsync_int <= '1';
@@ -150,14 +148,16 @@ begin
 -- flip-flips for sync of R, G y B signal, initialized with '0'
   process (reset, clk25MHz)
   begin
-    if reset = '1' then
-      R <= '0';
-      G <= '0';
-      B <= '0';
-    elsif rising_edge(clk25MHz) then
-      R <= W_int;
-      G <= W_int;
-      B <= W_int;
+    if rising_edge(clk25MHz) then
+      if reset = '1' then
+        R <= '0';
+        G <= '0';
+        B <= '0';
+      else
+        R <= W_int;
+        G <= W_int;
+        B <= W_int;
+      end if;
     end if;
   end process;
 
