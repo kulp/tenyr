@@ -8,7 +8,8 @@ module BlockRAM(
 
     parameter INIT     = 0;
     parameter ZERO     = 0;
-    parameter LOAD     = 0;
+    parameter LOADH    = 0;
+    parameter LOADB    = 0;
     parameter LOADFILE = "default.memh";
     parameter PBITS    = 32; // port address bits
     parameter ABITS    = 10; // internal address bits
@@ -29,7 +30,8 @@ module BlockRAM(
         if (INIT)
             for (i = 0; i < SIZE; i = i + 1)
                 store[i] = ZERO;
-        if (LOAD) $readmemh(LOADFILE, store);
+        if (LOADH) $readmemh(LOADFILE, store);
+        if (LOADB) $readmemb(LOADFILE, store);
     end
 
     always @(posedge clka) begin
