@@ -1,3 +1,29 @@
+module range_counter(
+    /*  input */ clk, reset, en,
+    /* output */ out, wrap
+  );
+
+  parameter integer MIN = 0;
+  parameter integer MAX = 255;
+
+  input clk, reset, en;
+  output integer out;
+  output reg wrap;
+
+  always @(posedge clk)
+    if (reset)
+      out <= MIN;
+    else if (en)
+      if (out == MAX) begin
+        out <= MIN;
+        wrap <= 1;
+      end else begin
+        out <= out + 1;
+        wrap <= 0;
+      end
+
+endmodule
+
 module vga64x32(
         /*  input */ reset, clk25MHz, TEXT_A, TEXT_D, FONT_A, FONT_D,
         /* output */ R, G, B, hsync, vsync
@@ -25,7 +51,8 @@ module vga64x32(
     sHBack  = 3, // | v
     sVFront = 4, // |
     sVSync  = 5, // | frame
-    sVBack  = 6; // v
+    sVBack  = 6, // v
+    sInit   = 7; // initialization
 
   input reset, clk25MHz; // TODO use or explicitly ignore reset
   output reg [$clog2(TextCols * TextRows):1] TEXT_A; // 1-indexed
@@ -34,19 +61,19 @@ module vga64x32(
   input      [FontCols:1] FONT_D; // FontCols-wide row of pixels
   output R, G, B, hsync, vsync;
 
-  reg [3:0] state = sActive;
+  reg [3:0] state = sInit;
 
-  reg [$clog2(LineCols):1] hctr = 0;
-  reg [$clog2(FramRows):1] vctr = 0;
-  reg [$clog2(TextCols):1] tcol = 0;
-  reg [$clog2(TextRows):1] trow = 0;
-  reg [$clog2(FontCols):1] fcol = 0;
-  reg [$clog2(FontRows):1] frow = 0;
+  wire [$clog2(LineCols):1] hctr;
+  wire [$clog2(FramRows):1] vctr;
+  wire [$clog2(TextCols):1] tcol;
+  wire [$clog2(TextRows):1] trow;
+  wire [$clog2(FontCols):1] fcol;
+  wire [$clog2(FontRows):1] frow;
 
   reg [FontCols:1] pixels;
 
   wire y = pixels & 1; // luminance
-  wire W = y && state == sActive;
+  wire W = y && active;
   assign R = W;
   assign G = W;
   assign B = W;
@@ -58,37 +85,44 @@ module vga64x32(
   wire VFront_done = vctr == VSynStrt;
   wire HSync_done  = hctr == HSynStop;
   wire VSync_done  = vctr == VSynStop;
-  wire HBack_done  = hctr == LineCols - 1;
-  wire VBack_done  = vctr == FramRows - 1;
-  wire Char_done   = fcol == FontCols - 1;
+  wire HBack_done, VBack_done, Height_done, Width_done;
+
+  wire init   = state == sInit;
+  wire active = state == sActive;
+
+  // Pixels counters
+  range_counter #(.MAX(LineCols - 1)) horz_pixels(
+        .clk(clk25MHz), .reset(init), .en(1),
+        .out(hctr), .wrap(HBack_done)
+      );
+  range_counter #(.MAX(FramRows - 1)) vert_pixels(
+        .clk(clk25MHz), .reset(init), .en(HBack_done),
+        .out(vctr), .wrap(VBack_done)
+      );
+
+  // Font counters
+  range_counter #(.MAX(FontCols - 1)) font_cols(
+        .clk(clk25MHz), .reset(init || HBack_done), .en(active),
+        .out(fcol), .wrap(Width_done)
+      );
+  range_counter #(.MAX(FontRows - 1)) font_rows(
+        .clk(clk25MHz), .reset(init || VBack_done), .en(HBack_done),
+        .out(frow), .wrap(Height_done)
+      );
+
+  // Text counters
+  range_counter #(.MAX(TextCols - 1)) text_cols(
+        .clk(clk25MHz), .reset(init || HBack_done), .en(Width_done),
+        .out(tcol)
+      );
+  range_counter #(.MAX(TextRows - 1)) text_rows(
+        .clk(clk25MHz), .reset(init || VBack_done), .en(Height_done),
+        .out(trow)
+      );
 
   always @(posedge clk25MHz) begin
-    pixels <= Char_done ? FONT_D : pixels >> 1;
+    pixels <= Width_done ? FONT_D : pixels >> 1;
     FONT_A <= {TEXT_D,frow};
-    hctr <= HBack_done ? 0 : hctr + 1;
-
-    if (HBack_done) begin
-      vctr <= VBack_done ? 0 : vctr + 1;
-      if (frow == FontRows - 1)
-        frow <= 0;
-      else
-        frow <= frow + 1;
-
-      if (VBack_done || trow == TextRows - 1)
-        trow <= 0;
-      else
-        trow <= trow + 1;
-    end
-
-    if (HBack_done || tcol == TextCols - 1)
-      tcol <= 0;
-    else
-      tcol <= tcol + 1;
-
-    if (fcol == FontCols - 1)
-      fcol <= 0;
-    else
-      fcol <= fcol + 1;
 
     case (state)
       sActive: state <= Active_done ? sHFront : sActive; // ^ ^
@@ -98,15 +132,11 @@ module vga64x32(
       sVFront: state <= VFront_done ? sVSync  : sVFront; // |
       sVSync : state <= VSync_done  ? sVBack  : sVSync;  // | frame
       sVBack : state <= VBack_done  ? sHSync  : sVBack;  // v
-      default: begin // recovery
+      sInit  : begin
+        pixels <= 0;
         state <= sActive;
-        hctr <= 0;
-        vctr <= 0;
-        tcol <= 0;
-        trow <= 0;
-        fcol <= 0;
-        frow <= 0;
       end
+      default: state <= sInit;
     endcase
   end
 
