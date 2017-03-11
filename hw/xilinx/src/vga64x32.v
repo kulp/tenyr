@@ -59,7 +59,9 @@ module vga64x32(
   output reg [$clog2(FontRows):1] FONT_A;
   input      [7:0] TEXT_D; // 8-bit characters
   input      [FontCols:1] FONT_D; // FontCols-wide row of pixels
-  output R, G, B, hsync, vsync;
+  output R, G, B;
+  output reg hsync, vsync;
+  reg W; // white pixel value
 
   reg [3:0] state = sInit;
 
@@ -72,13 +74,9 @@ module vga64x32(
 
   reg [FontCols:1] pixels;
 
-  wire y = pixels & 1; // luminance
-  wire W = y && active;
   assign R = W;
   assign G = W;
   assign B = W;
-  wire hsync = HFront_done && !HSync_done;
-  wire vsync = VFront_done && !VSync_done;
 
   // All _done signals are true for exactly one cycle of clk25MHz
   wire Active_done = hctr == ScrnCols;
@@ -123,8 +121,12 @@ module vga64x32(
       );
 
   always @(posedge clk25MHz) begin
-    pixels <= Width_done ? FONT_D : pixels >> 1;
+    TEXT_A <= {trow,tcol}; // this assumes power of two sizes
     FONT_A <= {TEXT_D,frow};
+    pixels <= Width_done ? FONT_D : pixels >> 1;
+    W <= pixels & active & 1;
+    hsync <= HFront_done && !HSync_done;
+    vsync <= VFront_done && !VSync_done;
 
     case (state)
       sActive: state <= Active_done ? sHFront : sActive; // ^ ^
