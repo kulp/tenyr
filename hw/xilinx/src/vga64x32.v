@@ -29,20 +29,20 @@ module vga64x32(
         /* output */ R, G, B, hsync, vsync
     );
 
-  localparam [9:0] ScrnCols = 640;
-  localparam [8:0] ScrnRows = 480;
-  localparam [6:0] TextCols = 64;
-  localparam [5:0] TextRows = 32;
-  localparam [3:0] FontCols = 10;
-  localparam [3:0] FontRows = 15;
+  localparam integer ScrnCols = 640;
+  localparam integer ScrnRows = 480;
+  localparam integer TextCols = 64;
+  localparam integer TextRows = 32;
+  localparam integer FontCols = 10;
+  localparam integer FontRows = 15;
 
-  localparam [9:0] HSynStrt = 656;
-  localparam [9:0] HSynStop = 720;
-  localparam [9:0] LineCols = 800;
+  localparam integer HSynStrt = 656;
+  localparam integer HSynStop = 720;
+  localparam integer LineCols = 800;
 
-  localparam [9:0] VSynStrt = 483;
-  localparam [9:0] VSynStop = 487;
-  localparam [9:0] FramRows = 501;
+  localparam integer VSynStrt = 483;
+  localparam integer VSynStop = 487;
+  localparam integer FramRows = 501;
 
   localparam [3:0]
     sActive = 0, // ^ ^
