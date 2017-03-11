@@ -24,6 +24,26 @@ module range_counter(
 
 endmodule
 
+module shift_reg(
+    /*  input */ clk, en, in,
+    /* output */ out
+  );
+
+  parameter integer LEN = 16;
+
+  input clk, en, in;
+  output out;
+
+  reg [LEN:1] store;
+
+  assign out = store & 1;
+
+  always @(posedge clk)
+    if (en)
+      store <= {in,store[LEN:2]};
+
+endmodule
+
 module vga64x32(
         /*  input */ reset, clk25MHz, TEXT_A, TEXT_D, FONT_A, FONT_D,
         /* output */ R, G, B, hsync, vsync
@@ -59,8 +79,7 @@ module vga64x32(
   output reg [$clog2(FontRows):1] FONT_A;
   input      [7:0] TEXT_D; // 8-bit characters
   input      [FontCols:1] FONT_D; // FontCols-wide row of pixels
-  output R, G, B;
-  output reg hsync, vsync;
+  output R, G, B, hsync, vsync;
   reg W; // white pixel value
 
   reg [3:0] state = sInit;
@@ -120,13 +139,21 @@ module vga64x32(
         .out(trow)
       );
 
+  // pipeline alignment to make syncs match pixels
+  shift_reg #(.LEN(3)) hsync_delay(
+        .clk(clk25MHz), .en(1), .in(HFront_done && !HSync_done),
+        .out(hsync)
+      );
+  shift_reg #(.LEN(3)) vsync_delay(
+        .clk(clk25MHz), .en(1), .in(VFront_done && !VSync_done),
+        .out(vsync)
+      );
+
   always @(posedge clk25MHz) begin
     TEXT_A <= trow * TextCols + tcol;
     FONT_A <= TEXT_D * FontRows + frow;
     pixels <= Width_done ? FONT_D : pixels >> 1;
     W <= pixels & active & 1;
-    hsync <= HFront_done && !HSync_done;
-    vsync <= VFront_done && !VSync_done;
 
     case (state)
       sActive: state <= Active_done ? sHFront : sActive; // ^ ^
