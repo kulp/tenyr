@@ -77,6 +77,8 @@ module vga64x32(
   assign R = W;
   assign G = W;
   assign B = W;
+  wire hsync = HFront_done && !HSync_done;
+  wire vsync = VFront_done && !VSync_done;
 
   // All _done signals are true for exactly one cycle of clk25MHz
   wire Active_done = hctr == ScrnCols;
