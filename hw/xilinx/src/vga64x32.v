@@ -45,8 +45,8 @@ module shift_reg(
 endmodule
 
 module vga64x32(
-        /*  input */ reset, clk25MHz, TEXT_A, TEXT_D, FONT_A, FONT_D,
-        /* output */ R, G, B, hsync, vsync
+        /*  input */ reset, clk25MHz, TEXT_D, FONT_D,
+        /* output */ R, G, B, hsync, vsync, TEXT_A, FONT_A
     );
 
   localparam integer ScrnCols = 640;
