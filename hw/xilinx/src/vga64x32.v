@@ -121,8 +121,8 @@ module vga64x32(
       );
 
   always @(posedge clk25MHz) begin
-    TEXT_A <= {trow,tcol}; // this assumes power of two sizes
-    FONT_A <= {TEXT_D,frow};
+    TEXT_A <= trow * TextCols + tcol;
+    FONT_A <= TEXT_D * FontRows + frow;
     pixels <= Width_done ? FONT_D : pixels >> 1;
     W <= pixels & active & 1;
     hsync <= HFront_done && !HSync_done;
