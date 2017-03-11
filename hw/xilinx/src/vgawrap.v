@@ -18,7 +18,7 @@ module VGAwrap(
     assign vgaGreen[1:0] = {2{vgaGreen[2]}};
     assign vgaBlue [1  ] = {1{vgaBlue [2]}};
 
-    vga64x32 vga(
+    vga_text display(
         .clk      ( clk_vga   ), .reset  ( reset       ),
         .R        ( vgaRed[2] ), .G      ( vgaGreen[2] ), .B ( vgaBlue[2] ),
         .hsync    ( hsync     ), .vsync  ( vsync       ),

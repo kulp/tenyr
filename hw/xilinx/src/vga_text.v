@@ -44,7 +44,7 @@ module shift_reg(
 
 endmodule
 
-module vga64x32(
+module vga_text(
         /*  input */ reset, clk, TEXT_D, FONT_D,
         /* output */ R, G, B, hsync, vsync, TEXT_A, FONT_A
     );
