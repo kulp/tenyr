@@ -19,8 +19,8 @@ module VGAwrap(
     assign vgaBlue [1  ] = {1{vgaBlue [2]}};
 
     vga64x32 vga(
-        .clk25MHz ( clk_vga   ), .reset  ( reset       ),
-        .R        ( vgaRed[2] ), .G      ( vgaGreen[2] ), .B    ( vgaBlue[2] ),
+        .clk      ( clk_vga   ), .reset  ( reset       ),
+        .R        ( vgaRed[2] ), .G      ( vgaGreen[2] ), .B ( vgaBlue[2] ),
         .hsync    ( hsync     ), .vsync  ( vsync       ),
         .TEXT_A   ( ram_adA   ), .TEXT_D ( ram_doA     ),
         .FONT_A   ( rom_adA   ), .FONT_D ( rom_doA     )

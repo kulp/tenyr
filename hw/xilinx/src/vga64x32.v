@@ -45,7 +45,7 @@ module shift_reg(
 endmodule
 
 module vga64x32(
-        /*  input */ reset, clk25MHz, TEXT_D, FONT_D,
+        /*  input */ reset, clk, TEXT_D, FONT_D,
         /* output */ R, G, B, hsync, vsync, TEXT_A, FONT_A
     );
 
@@ -74,7 +74,7 @@ module vga64x32(
     sVBack  = 6, // v
     sInit   = 7; // initialization
 
-  input reset, clk25MHz; // TODO use or explicitly ignore reset
+  input reset, clk; // TODO use or explicitly ignore reset
   output reg [$clog2(TextCols * TextRows):1] TEXT_A; // 1-indexed
   output reg [$clog2(FontRows):1] FONT_A;
   input      [7:0] TEXT_D; // 8-bit characters
@@ -97,7 +97,7 @@ module vga64x32(
   assign G = W;
   assign B = W;
 
-  // All _done signals are true for exactly one cycle of clk25MHz
+  // All _done signals are true for exactly one cycle of clk
   wire Active_done = hctr == ScrnCols;
   wire Frame_done  = vctr == ScrnRows;
   wire HFront_done = hctr == HSynStrt;
@@ -111,45 +111,45 @@ module vga64x32(
 
   // Pixels counters
   range_counter #(.MAX(LineCols - 1)) horz_pixels(
-        .clk(clk25MHz), .reset(init), .en(1),
+        .clk(clk), .reset(init), .en(1),
         .out(hctr), .wrap(HBack_done)
       );
   range_counter #(.MAX(FramRows - 1)) vert_pixels(
-        .clk(clk25MHz), .reset(init), .en(HBack_done),
+        .clk(clk), .reset(init), .en(HBack_done),
         .out(vctr), .wrap(VBack_done)
       );
 
   // Font counters
   range_counter #(.MAX(FontCols - 1)) font_cols(
-        .clk(clk25MHz), .reset(init || HBack_done), .en(active),
+        .clk(clk), .reset(init || HBack_done), .en(active),
         .out(fcol), .wrap(Width_done)
       );
   range_counter #(.MAX(FontRows - 1)) font_rows(
-        .clk(clk25MHz), .reset(init || VBack_done), .en(HBack_done),
+        .clk(clk), .reset(init || VBack_done), .en(HBack_done),
         .out(frow), .wrap(Height_done)
       );
 
   // Text counters
   range_counter #(.MAX(TextCols - 1)) text_cols(
-        .clk(clk25MHz), .reset(init || HBack_done), .en(Width_done),
+        .clk(clk), .reset(init || HBack_done), .en(Width_done),
         .out(tcol)
       );
   range_counter #(.MAX(TextRows - 1)) text_rows(
-        .clk(clk25MHz), .reset(init || VBack_done), .en(Height_done),
+        .clk(clk), .reset(init || VBack_done), .en(Height_done),
         .out(trow)
       );
 
   // pipeline alignment to make syncs match pixels
   shift_reg #(.LEN(3)) hsync_delay(
-        .clk(clk25MHz), .en(1), .in(HFront_done && !HSync_done),
+        .clk(clk), .en(1), .in(HFront_done && !HSync_done),
         .out(hsync)
       );
   shift_reg #(.LEN(3)) vsync_delay(
-        .clk(clk25MHz), .en(1), .in(VFront_done && !VSync_done),
+        .clk(clk), .en(1), .in(VFront_done && !VSync_done),
         .out(vsync)
       );
 
-  always @(posedge clk25MHz) begin
+  always @(posedge clk) begin
     TEXT_A <= trow * TextCols + tcol;
     FONT_A <= TEXT_D * FontRows + frow;
     pixels <= Width_done ? FONT_D : pixels >> 1;
