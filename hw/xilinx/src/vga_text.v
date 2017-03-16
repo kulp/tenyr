@@ -8,12 +8,12 @@ module range_counter(
 
   input clk, reset, en;
   output integer out;
-  output reg wrap;
+  output reg wrap; // true for at most one cycle
 
   always @(posedge clk)
     if (reset)
       out <= MIN;
-    else if (en)
+    else if (en) begin
       if (out == MAX) begin
         out <= MIN;
         wrap <= 1;
@@ -21,6 +21,9 @@ module range_counter(
         out <= out + 1;
         wrap <= 0;
       end
+    end else begin
+      wrap <= 0;
+    end
 
 endmodule
 
