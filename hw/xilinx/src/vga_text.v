@@ -83,7 +83,10 @@ module vga_text(
   input      [7:0] TEXT_D; // 8-bit characters
   input      [FontCols:1] FONT_D; // FontCols-wide row of pixels
   output R, G, B, hsync, vsync;
+  wire hsync_p, vsync_p; // positive-going versions
   reg W; // white pixel value
+  assign hsync = ~hsync_p; // need negative polarity
+  assign vsync = ~vsync_p; // need negative polarity
 
   reg [3:0] state = sInit;
 
@@ -145,11 +148,11 @@ module vga_text(
   // pipeline alignment to make syncs match pixels
   shift_reg #(.LEN(3)) hsync_delay(
         .clk(clk), .en(1), .in(HFront_done && !HSync_done),
-        .out(hsync)
+        .out(hsync_p)
       );
   shift_reg #(.LEN(3)) vsync_delay(
         .clk(clk), .en(1), .in(VFront_done && !VSync_done),
-        .out(vsync)
+        .out(vsync_p)
       );
 
   always @(posedge clk) begin
