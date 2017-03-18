@@ -8,8 +8,8 @@ module VGAwrap(
 );
 
     parameter[31:0] VIDEO_ADDR = `VIDEO_ADDR;
-    localparam[31:0] ROWS = 32, COLS = 64;
-    localparam[31:0] FONT_ROWS = 15, FONT_COLS = 10;
+    localparam integer ROWS = 32, COLS = 64;
+    localparam integer FONT_ROWS = 15, FONT_COLS = 10;
 
     wire[11:0] ram_adA, rom_adA;
     wire[ 9:0] ram_doA, rom_doA;
