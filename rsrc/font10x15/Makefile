@@ -34,6 +34,10 @@ sentence.png: $(ALLPNGS)
 %-invert.png: %.png
 	convert -negate $< $@
 
+# reverse order of bits
+rev-%: %
+	rev $< > $@
+
 raw: $(RAWS)
 
 %.xpm: %.png
@@ -42,7 +46,7 @@ raw: $(RAWS)
 %.memb: %.xpm
 	sed -n '/pixels/,22{/^"/p;}' $< | tr -d '",' | tr ' .' '01' > $@ || rm $@
 
-font10x15.memb: $(NUMS:%=%.memb)
+font10x15.memb: $(NUMS:%=rev-%.memb)
 	cat $^ > $@
 
 clean:
