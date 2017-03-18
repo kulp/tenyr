@@ -79,7 +79,7 @@ module vga_text(
 
   input reset, clk; // TODO use or explicitly ignore reset
   output reg [$clog2(TextCols * TextRows):1] TEXT_A; // 1-indexed
-  output reg [$clog2(FontRows):1] FONT_A;
+  output reg [$clog2(256 * FontRows):1] FONT_A;
   input      [7:0] TEXT_D; // 8-bit characters
   input      [FontCols:1] FONT_D; // FontCols-wide row of pixels
   output R, G, B, hsync, vsync;
