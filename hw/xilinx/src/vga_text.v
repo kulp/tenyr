@@ -67,7 +67,7 @@ module vga_text(
   parameter integer VSynStop = 487;
   parameter integer FramRows = 501;
 
-  localparam [3:0]
+  localparam integer
     sActive = 0, // ^ ^
     sHFront = 1, // | | line
     sHSync  = 2, // | |
