@@ -98,7 +98,7 @@ burn: $(DESIGN)_$(LOADSRC).bit
 else
 burn: $(DESIGN)_$(LOADSRC).xsvf
 	@$(MAKESTEP) $(basename $<): Programming ...
-	flcli --vp=1443:0007 --ivp=1443:0007 --xsvf=$<
+	flcli --vp=1443:0007 --ivp=1443:0007 --program J:D0D2D3D4:$<
 endif
 
 include $(DESIGN).md
