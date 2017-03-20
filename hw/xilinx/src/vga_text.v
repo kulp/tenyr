@@ -126,17 +126,17 @@ module vga_text(
         .out(fcol), .wrap(Width_done)
       );
   range_counter #(.MAX(FontRows - 1)) font_rows(
-        .clk(clk), .reset(init || VBack_done), .en(HBack_done),
+        .clk(clk), .reset(init || VBack_done), .en(active && HBack_done),
         .out(frow), .wrap(Height_done)
       );
 
   // Text counters
   range_counter #(.MAX(TextCols - 1)) text_cols(
-        .clk(clk), .reset(init || HBack_done), .en(Width_done),
+        .clk(clk), .reset(init || HBack_done), .en(active && Width_done),
         .out(tcol)
       );
   range_counter #(.MAX(TextRows - 1)) text_rows(
-        .clk(clk), .reset(init || VBack_done), .en(Height_done),
+        .clk(clk), .reset(init || VBack_done), .en(active && Height_done),
         .out(trow)
       );
 
