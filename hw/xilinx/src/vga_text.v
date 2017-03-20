@@ -85,6 +85,7 @@ module vga_text(
 
   reg [3:0] state = sInit;
 
+  // TODO change to integers
   wire [$clog2(LineCols):1] hctr;
   wire [$clog2(FramRows):1] vctr;
   wire [$clog2(TextCols):1] tcol;
