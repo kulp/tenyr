@@ -113,7 +113,7 @@ module vga_text(
   wire VFront_done = vctr == VSynStrt - 1;
   wire HSync_done  = hctr == HSynStop - 1;
   wire VSync_done  = vctr == VSynStop - 1;
-  wire HBack_done, VBack_done, Height_done, Width_done;
+  wire Line_start, Frame_start, HBack_done, VBack_done, Height_done, Width_done;
 
   wire init   = state == sInit;
   wire active = state == sActive;
@@ -121,11 +121,11 @@ module vga_text(
   // Pixels counters
   range_counter #(.MAX(LineCols - 1)) horz_pixels(
         .clk(clk), .reset(init), .en(1),
-        .out(hctr), .full(HBack_done)
+        .out(hctr), .empty(Line_start), .full(HBack_done)
       );
   range_counter #(.MAX(FramRows - 1)) vert_pixels(
         .clk(clk), .reset(init), .en(HBack_done),
-        .out(vctr), .full(VBack_done)
+        .out(vctr), .empty(Frame_start), .full(VBack_done)
       );
 
   // Font counters
@@ -134,7 +134,7 @@ module vga_text(
         .out(fcol), .full(Width_done)
       );
   range_counter #(.MAX(FontRows - 1)) font_rows(
-        .clk(clk), .reset(init || VBack_done), .en(active && HBack_done),
+        .clk(clk), .reset(init || Frame_start), .en(active && Line_start),
         .out(frow), .full(Height_done)
       );
 
