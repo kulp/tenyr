@@ -99,12 +99,12 @@ module vga_text(
   assign B = W;
 
   // All _done signals are true for exactly one cycle of clk
-  wire Active_done = hctr == ScrnCols;
-  wire Frame_done  = vctr == ScrnRows;
-  wire HFront_done = hctr == HSynStrt;
-  wire VFront_done = vctr == VSynStrt;
-  wire HSync_done  = hctr == HSynStop;
-  wire VSync_done  = vctr == VSynStop;
+  wire Active_done = hctr == ScrnCols - 1;
+  wire Frame_done  = vctr == ScrnRows - 1;
+  wire HFront_done = hctr == HSynStrt - 1;
+  wire VFront_done = vctr == VSynStrt - 1;
+  wire HSync_done  = hctr == HSynStop - 1;
+  wire VSync_done  = vctr == VSynStop - 1;
   wire HBack_done, VBack_done, Height_done, Width_done;
 
   wire init   = state == sInit;
