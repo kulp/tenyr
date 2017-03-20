@@ -14,13 +14,8 @@ module range_counter(
     if (reset)
       out <= MIN;
     else if (en) begin
-      if (out == MAX) begin
-        out <= MIN;
-        wrap <= 1;
-      end else begin
-        out <= out + 1;
-        wrap <= 0;
-      end
+      wrap <= (out == MAX - 1);
+      out  <= (out == MAX) ? MIN : out + 1;
     end else begin
       wrap <= 0;
     end
