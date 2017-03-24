@@ -82,8 +82,11 @@ xsvf:     $(DESIGN).xsvf
 
 xst: ../../rsrc/font10x15/font10x15.memb
 
-../../rsrc/font10x15/%:
+../../rsrc/font10x15/%: FORCE
 	$(MAKE) -C $(@D) $(@F)
+
+.PHONY: FORCE
+FORCE: ; # empty rule that forces targets dependent on it to be built
 
 baremetal.memh: gen/$(DEFAULTSRC).memh
 	cp -p $< $@
