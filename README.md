@@ -15,7 +15,7 @@ should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
 
 * an [instruction set architecture (ISA)](https://github.com/kulp/tenyr/wiki/Assembly-language)
 * an [implementation in FPGA hardware](https://github.com/kulp/tenyr/tree/develop/hw/verilog) with device support
-  * VGA text output at 80x25 resolution is supported
+  * VGA text output at 64x32 resolution is supported
   * no input devices are currently implemented in hardware &ndash; help appreciated !
 * tools for building software
   * [assembler (tas)](https://github.com/kulp/tenyr/wiki/Assembler)
