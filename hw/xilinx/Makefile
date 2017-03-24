@@ -80,6 +80,11 @@ trce:     $(DESIGN).twr
 bit:      $(DESIGN).bit
 xsvf:     $(DESIGN).xsvf
 
+xst: ../../rsrc/font10x15/font10x15.memb
+
+../../rsrc/font10x15/%:
+	$(MAKE) -C $(@D) $(@F)
+
 baremetal.memh: gen/$(DEFAULTSRC).memh
 	cp -p $< $@
 
