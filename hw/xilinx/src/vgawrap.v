@@ -37,7 +37,7 @@ module VGAwrap(
         .wea   ( 1'b0    ), .web   ( rw       )
     );
 
-    BlockRAM #(.LOADB(1), .LOADFILE("../../rsrc/font10x15/font10x15.memb"),
+    BlockRAM #(.LOADB(1), .LOADFILE("../../rsrc/font10x15/rev-font10x15.memb"),
                .SIZE(256 * FONT_ROWS), .DBITS(FONT_COLS))
     font(
         .clka  ( clk_vga ), .ena   ( 1'b1    ), .wea  ( 1'b0 ),

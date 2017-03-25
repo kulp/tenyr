@@ -4,8 +4,9 @@ MEMS = $(XPMS:.xpm=.memb)
 
 NUMS = $(shell seq 0 255)
 ALLPNGS = $(NUMS:%=%.png)
+ALLMEMS = $(NUMS:%=%.memb)
 
-all: font-invert.png font10x15.memb
+all: font-invert.png rev-font10x15.memb
 
 index.memb: $(MEMS)
 	sort $^ | uniq | sort > $@ || rm $@
@@ -44,7 +45,7 @@ rev-%: %
 %.memb: %.xpm
 	sed -n '/pixels/,22{/^"/p;}' $< | tr -d '",' | tr ' .' '01' > $@ || rm $@
 
-font10x15.memb: $(NUMS:%=rev-%.memb)
+font10x15.memb: $(ALLMEMS)
 	cat $^ > $@ || rm $@
 
 encoded.%.memb: %.memb index.memb | encoder.pl
