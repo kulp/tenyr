@@ -7,11 +7,11 @@ ALLPNGS = $(NUMS:%=%.png)
 
 all: font-invert.png font10x15.memb
 
-show: $(MEMS)
-	sort $^ | uniq -c | sort -g
+index.memb: $(MEMS)
+	sort $^ | uniq | sort > $@ || rm $@
 
-count: $(MEMS)
-	sort $^ | uniq -c | sort -k2 | wc -l
+count: index.memb
+	wc -l $^
 
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
