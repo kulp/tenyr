@@ -17,7 +17,7 @@ crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
 
 %.gen.xpm: make_xpm.pl
-	$(realpath $<) $* > $@
+	$(realpath $<) $* > $@ || rm $@
 
 %.png: %.gen.xpm
 	convert $< $@
@@ -36,7 +36,7 @@ sentence.png: $(ALLPNGS)
 
 # reverse order of bits
 rev-%: %
-	rev $< > $@
+	rev $< > $@ || rm $@
 
 %.xpm: %.png
 	convert $< $@
@@ -45,7 +45,7 @@ rev-%: %
 	sed -n '/pixels/,22{/^"/p;}' $< | tr -d '",' | tr ' .' '01' > $@ || rm $@
 
 font10x15.memb: $(NUMS:%=rev-%.memb)
-	cat $^ > $@
+	cat $^ > $@ || rm $@
 
 encoded.%.memb: %.memb index.memb | encoder.pl
 	perl encoder.pl $< > $@ || rm $@
