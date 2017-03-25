@@ -47,5 +47,11 @@ rev-%: %
 font10x15.memb: $(NUMS:%=rev-%.memb)
 	cat $^ > $@
 
+encoded.%.memb: %.memb index.memb | encoder.pl
+	perl encoder.pl $< > $@ || rm $@
+
+decoded.%.memb: encoded.%.memb index.memb | decoder.pl
+	perl decoder.pl $< > $@ || rm $@
+
 clean:
 	$(RM) *.xpm *.memb
