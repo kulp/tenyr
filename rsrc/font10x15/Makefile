@@ -1,16 +1,16 @@
 PNGS = $(wildcard 3[2-9].png [4-9]?.png 1[01]?.png 12[0-7].png) # 32 - 127
 XPMS = $(PNGS:%.png=%.xpm)
-RAWS = $(XPMS:%=%.raw)
+MEMS = $(XPMS:.xpm=.memb)
 
 NUMS = $(shell seq 0 255)
 ALLPNGS = $(NUMS:%=%.png)
 
 all: font-invert.png font10x15.memb
 
-show: $(RAWS)
+show: $(MEMS)
 	sort $^ | uniq -c | sort -g
 
-count: $(RAWS)
+count: $(MEMS)
 	sort $^ | uniq -c | sort -k2 | wc -l
 
 crush: $(PNGS)
@@ -37,8 +37,6 @@ sentence.png: $(ALLPNGS)
 # reverse order of bits
 rev-%: %
 	rev $< > $@
-
-raw: $(RAWS)
 
 %.xpm: %.png
 	convert $< $@
