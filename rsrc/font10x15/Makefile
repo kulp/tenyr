@@ -14,6 +14,12 @@ index.memb: $(MEMS)
 count: index.memb
 	wc -l $^
 
+pairs.%: %
+	cat $< | (while read a && read b ; do echo "$$a-$$b" ; done) | sort | uniq > $@ || rm $@
+
+pairs: $(MEMS:%=pairs.%)
+	sort --merge $^ | uniq > $@ || rm $@
+
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
 
