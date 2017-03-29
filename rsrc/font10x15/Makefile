@@ -20,6 +20,14 @@ pairs.%: %
 pairs: $(MEMS:%=pairs.%)
 	sort --merge $^ | uniq > $@ || rm $@
 
+# Flip polarity of first 9 bits, forcing last column to 0
+flip.%: %
+	perl -pe 's{\b([01]{9})}{ chomp(local $$_ = $$1); y/01/10/; $$_ }ge' $< > $@ || rm $@
+
+# needs GNU head for --quiet
+flips: $(MEMS:%=flip.%)
+	ghead --quiet --lines=14 $^ > $@ || rm $@
+
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
 
