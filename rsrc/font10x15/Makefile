@@ -28,6 +28,10 @@ flip.%: %
 flips: $(MEMS:%=flip.%)
 	ghead --quiet --lines=14 $^ > $@ || rm $@
 
+# maps something to its negative (with caveats for last column and row being forced to 0)
+map.%: % flip.%
+	paste $^ > $@ || rm $@
+
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
 
