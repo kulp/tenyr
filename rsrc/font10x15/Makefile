@@ -1,3 +1,6 @@
+# Turn off built-in old-style suffix rules
+.SUFFIXES:
+
 PNGS = $(wildcard ?.png ??.png ???.png)
 XPMS = $(PNGS:.png=.xpm)
 MEMS = $(XPMS:.xpm=.memb)
