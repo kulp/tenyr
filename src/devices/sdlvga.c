@@ -90,7 +90,7 @@ static int sdlvga_init(struct plugin_cookie *pcookie, struct device *device, voi
     const char *share_path = ".";
     // If the param_get fails, we'll check the current directory
     pcookie->gops.param_get(pcookie, "paths.share", 1, (void*)&share_path);
-    char *filename = build_path(share_path, RESOURCE_DIR"/font10x15/font-invert.png");
+    char *filename = build_path(share_path, RESOURCE_DIR"/font10x15/invert.font10x15.png");
     SDL_Surface *sprite = IMG_Load(filename);
     if (!sprite)
         fatal(0, "sdlvga failed to load font sprite `%s' : %s", filename, IMG_GetError());

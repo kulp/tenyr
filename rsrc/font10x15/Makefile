@@ -6,7 +6,7 @@ NUMS = $(shell seq 0 255)
 ALLPNGS = $(NUMS:%=%.png)
 ALLMEMS = $(NUMS:%=%.memb)
 
-all: font-invert.png rev.font10x15.memb encoded.font10x15.memb
+all: invert.font10x15.png rev.font10x15.memb encoded.font10x15.memb
 
 index.memb: $(MEMS)
 	sort $^ | uniq | sort > $@ || rm $@
@@ -41,7 +41,7 @@ crush: $(PNGS)
 %.png: %.gen.xpm
 	convert $< $@
 
-font.png: $(ALLPNGS)
+font10x15.png: $(ALLPNGS)
 	montage $^ -tile $(words $^)x1 -geometry +0+0 $@
 
 sentence.png: NUMS = $(shell perl -le 'print ord for split //, qq($(PHRASE))')
@@ -50,7 +50,7 @@ sentence.png: NUMS = $(shell perl -le 'print ord for split //, qq($(PHRASE))')
 sentence.png: $(ALLPNGS)
 	montage $(ALLPNGS) -tile $(words $(ALLPNGS))x1 -geometry +0+0 $@
 
-%-invert.png: %.png
+invert.%.png: %.png
 	convert -negate $< $@
 
 # reverse order of bits
