@@ -25,6 +25,14 @@ flip.%: %
 flips: $(MEMS:%=flip.%)
 	ghead --quiet --lines=14 $^ > $@ || rm $@
 
+# retain only bitstrings that begin with `1`
+pre1.%: %
+	grep '^1' $< > $@ || rm $@
+
+# find bitstrings that are redundant with their flips
+dups.%: % flip.pre1.%
+	sort $^ | uniq -d > $@ || rm $@
+
 # maps something to its negative (with caveats for last column and row being forced to 0)
 map.%: % flip.%
 	paste $^ > $@ || rm $@
