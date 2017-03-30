@@ -80,7 +80,7 @@ trce:     $(DESIGN).twr
 bit:      $(DESIGN).bit
 xsvf:     $(DESIGN).xsvf
 
-xst: ../../rsrc/font10x15/rev-font10x15.memb
+xst: ../../rsrc/font10x15/rev.font10x15.memb
 
 ../../rsrc/font10x15/%: FORCE
 	$(MAKE) -C $(@D) $(@F)

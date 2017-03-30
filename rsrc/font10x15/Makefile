@@ -6,7 +6,7 @@ NUMS = $(shell seq 0 255)
 ALLPNGS = $(NUMS:%=%.png)
 ALLMEMS = $(NUMS:%=%.memb)
 
-all: font-invert.png rev-font10x15.memb encoded.font10x15.memb
+all: font-invert.png rev.font10x15.memb encoded.font10x15.memb
 
 index.memb: $(MEMS)
 	sort $^ | uniq | sort > $@ || rm $@
@@ -54,7 +54,7 @@ sentence.png: $(ALLPNGS)
 	convert -negate $< $@
 
 # reverse order of bits
-rev-%: %
+rev.%.memb: %.memb
 	rev $< > $@ || rm $@
 
 %.xpm: %.png
