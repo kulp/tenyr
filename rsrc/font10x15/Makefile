@@ -36,14 +36,16 @@ dups.%: % flip.pre1.%
 map.%: % flip.%
 	paste $^ > $@ || rm $@
 
+# turn a tab-separated `map` pair into a sed script that does replacements
+sed.%: map.%
+	sed 's#^#s/\\<#; s#	#\\>/#; s#$$#/g#;' $< > $@ || rm $@
+
 # deduplicates lines in % by substituting in the `flip` version based on `map`.
 # We would prefer to use `%` and `map.flip.dups.%` as targets, but Make refuses
 # to recurse through the `flip.%` rule, even though the `%` is different at the
 # different call sites
-swap.%: flip.% map.dups.%
-	cp $< $@ || rm $@
-	cat $(word 2,$^) | while read a b ; do sed -i.bak "s/$$a/$$b/g" $@ ; done || rm $@
-	-$(RM) $@.bak
+swap.%: flip.% sed.dups.%
+	sed -f $(word 2,$^) $< > $@ || rm $@
 
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
