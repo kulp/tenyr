@@ -46,12 +46,6 @@ swap.%: % map.flip.dups.%
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
 
-%.gen.xpm: make_xpm.pl
-	$(realpath $<) $* > $@ || rm $@
-
-%.png: %.gen.xpm
-	convert $< $@
-
 font10x15.png: $(ALLPNGS)
 	montage $^ -tile $(words $^)x1 -geometry +0+0 $@
 
