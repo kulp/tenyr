@@ -1,5 +1,5 @@
 PNGS = $(wildcard 3[2-9].png [4-9]?.png 1[01]?.png 12[0-7].png) # 32 - 127
-XPMS = $(PNGS:%.png=%.xpm)
+XPMS = $(PNGS:.png=.xpm)
 MEMS = $(XPMS:.xpm=.memb)
 
 NUMS = $(shell seq 0 255)
@@ -9,10 +9,7 @@ ALLMEMS = $(NUMS:%=%.memb)
 all: invert.font10x15.png rev.font10x15.memb encoded.font10x15.memb
 
 index.memb: $(MEMS)
-	sort $^ | uniq | sort > $@ || rm $@
-
-count: index.memb
-	wc -l $^
+	sort $^ | uniq > $@ || rm $@
 
 pairs.%: %
 	cat $< | (while read a && read b ; do echo "$$a-$$b" ; done) | sort | uniq > $@ || rm $@
