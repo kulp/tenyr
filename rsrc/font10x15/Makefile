@@ -36,10 +36,13 @@ dups.%: % flip.pre1.%
 map.%: % flip.%
 	paste $^ > $@ || rm $@
 
-# deduplicates lines in % by substituting in the `flip` version based on `map`
-swap.%: % map.flip.dups.%
+# deduplicates lines in % by substituting in the `flip` version based on `map`.
+# We would prefer to use `%` and `map.flip.dups.%` as targets, but Make refuses
+# to recurse through the `flip.%` rule, even though the `%` is different at the
+# different call sites
+swap.%: flip.% map.dups.%
 	cp $< $@ || rm $@
-	cat map.flip.dups.$* | while read a b ; do sed -i.bak "s/$$a/$$b/g" $@ ; done || rm $@
+	cat map.dups.$* | while read a b ; do sed -i.bak "s/$$a/$$b/g" $@ ; done || rm $@
 	-$(RM) $@.bak
 
 crush: $(PNGS)
