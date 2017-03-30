@@ -42,7 +42,7 @@ map.%: % flip.%
 # different call sites
 swap.%: flip.% map.dups.%
 	cp $< $@ || rm $@
-	cat map.dups.$* | while read a b ; do sed -i.bak "s/$$a/$$b/g" $@ ; done || rm $@
+	cat $(word 2,$^) | while read a b ; do sed -i.bak "s/$$a/$$b/g" $@ ; done || rm $@
 	-$(RM) $@.bak
 
 crush: $(PNGS)
