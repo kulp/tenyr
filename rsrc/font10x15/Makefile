@@ -59,6 +59,10 @@ col1.%: % indexswap.%
 differ.%: % col1.%
 	fgrep -n -f $(word 2,$^) $< | cut -d: -f1 > $@ || rm $@
 
+# turn line numbers of differences into 1-bits
+bitcol1.%: % differ.%
+	(seq 1 $(firstword $(shell wc -l $<)) ; cat $(word 2,$^)) | sort -g | uniq -c | while read a b ; do echo $$(( a == 2 )) ; done > $@ || rm $@
+
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
 
