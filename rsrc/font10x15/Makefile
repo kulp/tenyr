@@ -48,11 +48,11 @@ rewrite.%: map.%
 swap.%: flip.% rewrite.dups.%
 	perl -p $(word 2,$^) $< > $@ || rm $@
 
-pairlist.swapped: pairlist rewrite.dups.index.memb
+indexswap.%: % rewrite.dups.index.memb
 	perl -p $(word 2,$^) $< > $@ || rm $@
 
 # find lines that are only in the first file
-col1.%: % %.swapped
+col1.%: % indexswap.%
 	comm -2 -3 $^ > $@ || rm $@
 
 # find line numbers of lines that are only in the first file
