@@ -47,6 +47,9 @@ rewrite.%: map.%
 swap.%: flip.% rewrite.dups.%
 	perl -p $(word 2,$^) $< > $@ || rm $@
 
+pairlist.swapped: pairlist rewrite.dups.index.memb
+	perl -p $(word 2,$^) $< > $@ || rm $@
+
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
 
