@@ -51,6 +51,14 @@ swap.%: flip.% rewrite.dups.%
 pairlist.swapped: pairlist rewrite.dups.index.memb
 	perl -p $(word 2,$^) $< > $@ || rm $@
 
+# find lines that are only in the first file
+col1.%: % %.swapped
+	comm -2 -3 $^ > $@ || rm $@
+
+# find line numbers of lines that are only in the first file
+differ.%: % col1.%
+	fgrep -n -f $(word 2,$^) $< | cut -d: -f1 > $@ || rm $@
+
 crush: $(PNGS)
 	for p in $^ ; do pngcrush -ow $p ; done
 
