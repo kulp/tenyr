@@ -1,3 +1,5 @@
+SHELL = /usr/bin/env bash
+
 # Turn off built-in old-style suffix rules
 .SUFFIXES:
 
