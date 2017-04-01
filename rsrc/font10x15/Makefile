@@ -33,8 +33,9 @@ dups.%: % flip.pre1.%
 	sort $^ | uniq -d > $@ || rm $@
 
 # maps something to its negative (with caveats for last column and row being forced to 0)
+# order of the dependencies matters to recursion, so manually swap back the ordering
 map.%: % flip.%
-	paste $^ > $@ || rm $@
+	paste $(word 2,$^) $< > $@ || rm $@
 
 # turn a tab-separated `map` pair into a perl script that does replacements
 rewrite.%: map.%
