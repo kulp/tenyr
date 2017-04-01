@@ -11,9 +11,9 @@ index.memb: $(MEMS)
 	sort $^ | uniq > $@ || rm $@
 
 pairs.%: %
-	cat $< | (while read a && read b ; do echo "$$a-$$b" ; done) | sort | uniq > $@ || rm $@
+	cat $< | (while read a && read b ; do echo "$$a	$$b" ; done) | sort | uniq > $@ || rm $@
 
-pairs: $(MEMS:%=pairs.%)
+pairlist: $(MEMS:%=pairs.%)
 	sort --merge $^ | uniq > $@ || rm $@
 
 # Flip polarity of first 9 bits, forcing last column to 0
