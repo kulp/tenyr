@@ -19,9 +19,9 @@ pairs.%: %
 pairlist: $(MEMS:%=pairs.%)
 	sort --merge $^ | uniq > $@ || rm $@
 
-# Flip polarity of first 9 bits, forcing last column to 0
+# flip polarity of first 9 bits, leaving any 10th bit alone
 flip.%: %
-	perl -pe 's{\b([01]{9})}{ chomp(local $$_ = $$1); y/01/10/; $$_ }ge' $< > $@ || rm $@
+	perl -pe 's{([01]{9})([01]|\b)}{ chomp(local $$_ = $$1); y/01/10/; $$_.$$2 }ge' $< > $@ || rm $@
 
 # needs GNU head for --quiet
 flips: $(MEMS:%=flip.%)
