@@ -7,7 +7,8 @@ PNGS = $(wildcard ?.png ??.png ???.png)
 XPMS = $(PNGS:.png=.xpm)
 MEMS = $(XPMS:.xpm=.memb)
 
-all: invert.font10x15.png rev.font10x15.memb encoded.font10x15.memb
+TARGETS = invert.font10x15.png rev.font10x15.memb encoded.font10x15.memb
+all: $(TARGETS)
 
 index.memb: $(MEMS)
 	sort $^ | uniq > $@ || rm $@
@@ -100,4 +101,4 @@ decoded.%.memb: encoded.%.memb index.memb | decoder.pl
 	perl decoder.pl $< > $@ || rm $@
 
 clean:
-	$(RM) *.xpm *.memb
+	$(RM) *.xpm *.memb $(TARGETS)
