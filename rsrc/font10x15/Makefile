@@ -13,8 +13,11 @@ all: $(TARGETS)
 index.memb: $(MEMS)
 	sort $^ | uniq > $@ || rm $@
 
-pairs.%: %
-	cat $< | (while read a && read b ; do echo "$$a	$$b" ; done) | sort | uniq > $@ || rm $@
+pairs.%: allpairs.%
+	sort $^ | uniq > $@ || rm $@
+
+allpairs.%: %
+	cat $< | (while read a && read b ; do echo "$$a	$$b" ; done) > $@ || rm $@
 
 pairlist: $(MEMS:%=pairs.%)
 	sort --merge $^ | uniq > $@ || rm $@
