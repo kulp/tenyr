@@ -54,6 +54,9 @@ swap.%: flip.% rewrite.dups.%
 indexswap.%: % rewrite.dups.index.memb
 	perl -p $(word 2,$^) $< > $@ || rm $@
 
+pairindex.memb: indexswap.pairlist
+	sort $^ | uniq > $@ || rm $@
+
 # find lines that are only in the first file
 col1.%: % indexswap.%
 	comm -2 -3 $^ > $@ || rm $@
