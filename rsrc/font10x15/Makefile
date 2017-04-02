@@ -65,6 +65,13 @@ PAIRINDEX_BITS = $(shell perl -MPOSIX=ceil -e '@a=<>, print ceil(log(@a)/log(2))
 paircoded.%.memb: indexswap.allpairs.%.memb pairindex.memb
 	cat $< | while read b ; do fgrep -hn "$$b" $(word 2,$^) ; done | cut -d: -f1 | perl -lne 'chomp, print unpack "b$(PAIRINDEX_BITS)", pack "C", $$_-1' > $@ || rm $@
 
+# XXX this is not quite right, because we don't have information about
+# indexswap (compressed pairindex vs uncompressed pairindex)
+# TODO keep track during encoding of when we used a flipped index entry, so
+# that we can correctly reconstruct here
+pairdecode.%.memb: paircoded.%.memb pairindex.memb
+	perl -lne 'chomp, print 1+unpack "C", pack "b$(PAIRINDEX_BITS)", $$_' $< | sed 's/$$/p/' | while read b ; do sed -n $$b $(word 2,$^) ; done | tr '\t' '\n' > $@ || rm $@
+
 # find lines that are only in the first file
 col1.%: % indexswap.%
 	comm -2 -3 $^ > $@ || rm $@
