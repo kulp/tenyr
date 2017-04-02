@@ -60,6 +60,11 @@ indexswap.%: % rewrite.dups.index.memb
 pairindex.memb: indexswap.pairlist
 	sort $^ | uniq > $@ || rm $@
 
+# encode a .memb file pairwise with reference to pairindex.memb
+paircoded.%.memb: BITS = $(shell perl -MPOSIX=ceil -e '@a=<>, print ceil(log(@a)/log(2))' pairindex.memb)
+paircoded.%.memb: indexswap.allpairs.%.memb pairindex.memb
+	cat $< | while read b ; do fgrep -hn "$$b" $(word 2,$^) ; done | cut -d: -f1 | perl -lne 'chomp, print unpack "b$(BITS)", pack "C", $$_-1' > $@ || rm $@
+
 # find lines that are only in the first file
 col1.%: % indexswap.%
 	comm -2 -3 $^ > $@ || rm $@
