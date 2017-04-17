@@ -1,4 +1,6 @@
 # tenyr
+
+[![Join the chat at https://gitter.im/kulp/tenyr](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kulp/tenyr?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/kulp/tenyr.svg?branch=develop)](https://travis-ci.org/kulp/tenyr)
 [![Coverage Status](https://img.shields.io/codecov/c/github/kulp/tenyr.svg)](https://codecov.io/github/kulp/tenyr)
 
