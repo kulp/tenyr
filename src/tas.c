@@ -92,6 +92,30 @@ static int process_stream(struct param_state *params, const struct format *f,
     return rc;
 }
 
+static int process_file(struct param_state *params, int flags,
+        const struct format *fmt, const char *infname, FILE *out)
+{
+    int rc = 0;
+    FILE *in = NULL;
+
+    if (!strcmp(infname, "-")) {
+        in = stdin;
+    } else {
+        in = os_fopen(infname, "rb");
+        if (!in)
+            fatal(PRINT_ERRNO, "Failed to open input file `%s'", infname);
+    }
+
+    // Explicitly clear errors and EOF in case we run main() twice
+    // (emscripten)
+    clearerr(in);
+
+    rc = process_stream(params, fmt, in, out, flags);
+    fclose(in);
+
+    return rc;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = 0;
@@ -115,7 +139,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    const struct format *f = &tenyr_asm_formats[0];
+    const struct format *fmt = &tenyr_asm_formats[0];
 
     // Explicitly reset optind for cases where main() is called more than once
     // (emscripten)
@@ -125,7 +149,7 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'd': disassemble = 1; break;
-            case 'f': if (find_format(optarg, &f)) usage(argv[0]), exit(EXIT_FAILURE); break;
+            case 'f': if (find_format(optarg, &fmt)) usage(argv[0]), exit(EXIT_FAILURE); break;
             case 'o': outfname = optarg; break;
             case 'p': param_add(params, optarg); break;
             case 'q': flags |= ASM_QUIET; break;
@@ -154,28 +178,11 @@ int main(int argc, char *argv[])
     if (!out)
         fatal(PRINT_ERRNO, "Failed to open output file `%s'", outfname ? outfname : "<stdout>");
 
+    if (disassemble)
+        flags |= ASM_DISASSEMBLE;
+
     for (int i = optind; i < argc; i++) {
-        const char *infname = argv[i];
-
-        FILE *in = NULL;
-
-        if (!strcmp(infname, "-")) {
-            in = stdin;
-        } else {
-            in = os_fopen(infname, "rb");
-            if (!in)
-                fatal(PRINT_ERRNO, "Failed to open input file `%s'", infname);
-        }
-
-        // Explicitly clear errors and EOF in case we run main() twice
-        // (emscripten)
-        clearerr(in);
-
-        if (disassemble)
-            flags |= ASM_DISASSEMBLE;
-        rc = process_stream(params, f, in, out, flags);
-        fclose(in);
-
+        rc = process_file(params, flags, fmt, argv[i], out);
         if (rc && outfname != NULL)
             (void)remove(outfname); // race condition ?
     }
