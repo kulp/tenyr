@@ -382,7 +382,7 @@ atom
     | '.'
         {   $$ = make_expr(pd, &yylloc, CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
-        {   $$ = make_ref(pd, &yylloc, CE_SYM, $LOCAL); }
+        {   $$ = make_ref(pd, &yylloc, CE_SYM, $LOCAL); free_cstr($LOCAL, 1); }
 
 %%
 
