@@ -7,7 +7,8 @@
 struct const_expr {
     enum const_expr_type { CE_BAD, CE_OP1, CE_OP2, CE_SYM, CE_EXT, CE_IMM, CE_ICI, CE_max } type;
     int32_t i;
-    char symbolname[SYMBOL_LEN];
+    char **symbol_name;     ///< points to either `deferred_name` or `symbol->name`
+    char *deferred_name;    ///< possibly pointed to by `symbol_name`
     int op;
     #define IMM_IS_BITS     (1 << 0)    ///< immediate is a bitstring instead of an integer
     #define IGNORE_WIDTH    (1 << 1)    ///< ignore a too-wide constant (for use with ^^)

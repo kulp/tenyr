@@ -494,6 +494,8 @@ static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
     n->flags = ((left  ? left->flags  : 0)  |
                 (right ? right->flags : 0)) | flags;
     n->srcloc = *locp;
+    n->deferred_name = NULL;
+    n->symbol_name = &n->deferred_name;
 
     return n;
 }
@@ -779,10 +781,14 @@ static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
         flags |= IS_EXTERNAL;
     struct const_expr *eref = make_expr(pd, locp, type, 0, NULL, NULL, flags);
     struct symbol *s;
-    if ((s = symbol_find(pd->symbols, symbol->head))) {
+    char *name = coalesce_string(symbol);
+    if ((s = symbol_find(pd->symbols, name))) {
         eref->symbol = s;
+        eref->symbol_name = &eref->symbol->name;
+        free(name);
     } else {
-        strcopy(eref->symbolname, symbol->head, sizeof eref->symbolname);
+        eref->deferred_name = name;
+        eref->symbol_name = &eref->deferred_name;
     }
 
     return eref;

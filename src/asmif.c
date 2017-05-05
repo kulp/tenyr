@@ -78,9 +78,7 @@ static int sym_reloc_handler(struct reloc_list **relocs, struct element *context
         int flags, struct const_expr *ce, int width, int shift)
 {
     int rlc_flags    = (flags & RHS_NEGATE    ) ? RLC_NEGATE : 0;
-    const char *name = (flags & NO_NAMED_RELOC) ? NULL :
-                       ce->symbol               ? ce->symbol->name :
-                                                  ce->symbolname;
+    const char *name = (flags & NO_NAMED_RELOC) ? NULL : *ce->symbol_name;
 
     return add_relocation(relocs, name, context, width, shift, rlc_flags);
 }
@@ -104,8 +102,7 @@ static int ce_eval_sym(struct parse_data *pd, struct element *context,
         return ce_eval(pd, dc, ce->symbol->ce, flags, width, shift, result)
             || (relocate ? sym_reloc_handler(&pd->relocs, dc, flags, ce, width, shift) : 0);
     } else {
-        const char *name = ce->symbol ? ce->symbol->name : ce->symbolname;
-        int found = symbol_lookup(pd, pd->symbols, name, result);
+        int found = symbol_lookup(pd, pd->symbols, *ce->symbol_name, result);
         if (relocate && ce->type == CE_EXT) {
             int hflags = flags | (found ? NO_NAMED_RELOC : 0);
             return sym_reloc_handler(&pd->relocs, context, hflags, ce, width, shift);
@@ -211,6 +208,8 @@ static void ce_free(struct const_expr *ce)
 {
     if (!ce)
         return;
+
+    free(ce->deferred_name);
 
     if (ce->symbol) {
         ce_free(ce->symbol->ce);
