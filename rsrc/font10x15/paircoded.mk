@@ -27,8 +27,8 @@ dups.%: % flip.pre1.%
 
 # maps something to its negative (with caveats for last column and row being forced to 0)
 # order of the dependencies matters to recursion, so manually swap back the ordering
-map.%: % flip.%
-	paste $(word 2,$^) $< $(>@)
+map.%: flip.% %
+	paste $^ $(>@)
 
 # turn a tab-separated `map` pair into a perl script that does replacements
 rewrite.%: map.%
@@ -38,8 +38,8 @@ rewrite.%: map.%
 # We would prefer to use `%` and `map.flip.dups.%` as targets, but Make refuses
 # to recurse through the `flip.%` rule, even though the `%` is different at the
 # different call sites
-swap.%: flip.% rewrite.dups.%
-	perl -p $(word 2,$^) $< $(>@)
+swap.%: rewrite.dups.% flip.%
+	perl -p $^ $(>@)
 
 # indexswap.% executes a generated script against % (an index) to replace
 # flippable bitstrings with their flips
@@ -63,8 +63,8 @@ col1.%: % indexswap.%
 	comm -2 -3 $^ $(>@)
 
 # find line numbers of lines that are only in the first file
-differ.%: % col1.%
-	fgrep -n -f $(word 2,$^) $< | cut -d: -f1 $(>@)
+differ.%: col1.% %
+	fgrep -n -f $^ | cut -d: -f1 $(>@)
 
 # turn line numbers of differences into 1-bits
 bitcol1.%: % differ.%
