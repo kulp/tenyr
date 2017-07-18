@@ -1,11 +1,11 @@
-pairs.%: allpairs.%
+uniq.%: %
 	sort $^ | uniq $(>@)
 
 # allpairs.% assumes even number of input lines
 allpairs.%: %
 	cat $< | (while read a && read b ; do echo "$$a	$$b" ; done) $(>@)
 
-pairlist: $(MEMS:%=pairs.%)
+pairlist.memb: $(MEMS:%=uniq.allpairs.%)
 	sort --merge $^ | uniq $(>@)
 
 # flip polarity of first 9 bits, leaving any 10th bit alone (because we assume
@@ -46,19 +46,16 @@ swap.%: flip.% rewrite.dups.%
 indexswap.%: rewrite.dups.index.memb %
 	perl -p $^ $(>@)
 
-pairindex.memb: indexswap.pairlist
-	sort $^ | uniq $(>@)
-
-# encode a .memb file pairwise with reference to pairindex.memb
-PAIRINDEX_BITS = $(shell perl -MPOSIX=ceil -e '@a=<>, print ceil(log(@a)/log(2))' pairindex.memb)
-paircoded.%.memb: indexswap.allpairs.%.memb pairindex.memb
+# encode a .memb file pairwise with reference to uniq.indexswap.pairlist.memb
+PAIRINDEX_BITS = $(shell perl -MPOSIX=ceil -e '@a=<>, print ceil(log(@a)/log(2))' uniq.indexswap.pairlist.memb)
+paircoded.%.memb: indexswap.allpairs.%.memb uniq.indexswap.pairlist.memb
 	cat $< | while read b ; do fgrep -hn "$$b" $(word 2,$^) ; done | cut -d: -f1 | perl -lne 'chomp, print unpack "b$(PAIRINDEX_BITS)", pack "C", $$_-1' $(>@)
 
 # XXX this is not quite right, because we don't have information about
 # indexswap (compressed pairindex vs uncompressed pairindex)
 # TODO keep track during encoding of when we used a flipped index entry, so
 # that we can correctly reconstruct here
-pairdecode.%.memb: paircoded.%.memb pairindex.memb
+pairdecode.%.memb: paircoded.%.memb uniq.indexswap.pairlist.memb
 	perl -lne 'chomp, print 1+unpack "C", pack "b$(PAIRINDEX_BITS)", $$_' $< | sed 's/$$/p/' | while read b ; do sed -n $$b $(word 2,$^) ; done | tr '\t' '\n' $(>@)
 
 # find lines that are only in the first file
@@ -74,4 +71,4 @@ bitcol1.%: % differ.%
 	(seq 1 $(firstword $(shell wc -l $<)) ; cat $(word 2,$^)) | sort -g | uniq -c | while read a b ; do echo $$(( a == 2 )) ; done $(>@)
 
 clean::
-	$(RM) pairindex.memb pairlist indexswap.pairlist
+	$(RM) uniq.indexswap.pairlist.memb pairlist.memb indexswap.pairlist.memb
