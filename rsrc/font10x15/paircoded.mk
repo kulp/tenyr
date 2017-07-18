@@ -74,4 +74,4 @@ bitcol1.%: % differ.%
 	(seq 1 $(firstword $(shell wc -l $<)) ; cat $(word 2,$^)) | sort -g | uniq -c | while read a b ; do echo $$(( a == 2 )) ; done $(>@)
 
 clean::
-	$(RM) pairindex.memb
+	$(RM) pairindex.memb pairlist indexswap.pairlist
