@@ -9,6 +9,8 @@ MEMS = $(XPMS:.xpm=.memb)
 
 >@ = > $@ || (rm $@; false)
 
+include coded.mk paircoded.mk
+
 TARGETS = invert.font10x15.png rev.font10x15.memb
 all: $(TARGETS)
 
@@ -40,5 +42,5 @@ rev.%.memb: %.memb
 font10x15.memb: $(MEMS)
 	cat $^ $(>@)
 
-clean:
+clean::
 	$(RM) *.xpm *.memb $(TARGETS)

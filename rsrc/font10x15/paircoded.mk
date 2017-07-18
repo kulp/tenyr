@@ -1,17 +1,3 @@
-SHELL = /usr/bin/env bash
-
-# Turn off built-in old-style suffix rules
-.SUFFIXES:
-
-PNGS = $(wildcard ?.png ??.png ???.png)
-XPMS = $(PNGS:.png=.xpm)
-MEMS = $(XPMS:.xpm=.memb)
-
->@ = > $@ || (rm $@; false)
-
-TARGETS = paircoded.font10x15.memb
-all: $(TARGETS)
-
 pairs.%: allpairs.%
 	sort $^ | uniq $(>@)
 
@@ -87,5 +73,5 @@ differ.%: % col1.%
 bitcol1.%: % differ.%
 	(seq 1 $(firstword $(shell wc -l $<)) ; cat $(word 2,$^)) | sort -g | uniq -c | while read a b ; do echo $$(( a == 2 )) ; done $(>@)
 
-clean:
-	$(RM) pairindex.memb $(TARGETS)
+clean::
+	$(RM) pairindex.memb
