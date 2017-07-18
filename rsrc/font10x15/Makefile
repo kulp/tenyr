@@ -16,13 +16,15 @@ index.memb: $(MEMS)
 pairs.%: allpairs.%
 	sort $^ | uniq > $@ || rm $@
 
+# allpairs.% assumes even number of input lines
 allpairs.%: %
 	cat $< | (while read a && read b ; do echo "$$a	$$b" ; done) > $@ || rm $@
 
 pairlist: $(MEMS:%=pairs.%)
 	sort --merge $^ | uniq > $@ || rm $@
 
-# flip polarity of first 9 bits, leaving any 10th bit alone
+# flip polarity of first 9 bits, leaving any 10th bit alone (because we assume
+# the 10th bit is always zero as a padding column between glyphs)
 flip.%: %
 	perl -pe 's{([01]{9})([01]|\b)}{ chomp(local $$_ = $$1); y/01/10/; $$_.$$2 }ge' $< > $@ || rm $@
 
@@ -54,8 +56,10 @@ rewrite.%: map.%
 swap.%: flip.% rewrite.dups.%
 	perl -p $(word 2,$^) $< > $@ || rm $@
 
-indexswap.%: % rewrite.dups.index.memb
-	perl -p $(word 2,$^) $< > $@ || rm $@
+# indexswap.% executes a generated script against % (an index) to replace
+# flippable bitstrings with their flips
+indexswap.%: rewrite.dups.index.memb %
+	perl -p $^ > $@ || rm $@
 
 pairindex.memb: indexswap.pairlist
 	sort $^ | uniq > $@ || rm $@
