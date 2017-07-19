@@ -99,7 +99,7 @@ LIB_TARGETS += $(PDEVLIBS)
 
 TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
 RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
-               $(TOP)/rsrc/font.png \
+               $(TOP)/rsrc/font10x15/invert.font10x15.png \
                $(wildcard $(TOP)/plugins/*.rcp) \
                #
 
