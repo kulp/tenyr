@@ -1,3 +1,5 @@
+all: uniq.pairlist.memb paircoded.font10x15.memb
+
 uniq.%: %
 	sort $^ | uniq $(>@)
 
