@@ -1,8 +1,13 @@
 *.xpm.raw
-font10x15.png
+*15to16.*.memb
 ?.memb
 ??.memb
 ???.memb
-rev.?.memb
-rev.??.memb
-rev.???.memb
+encoded.*.memb
+font10x15.memb
+font10x15.png
+index.memb
+paircoded.*.memb
+pairlist.memb
+rev.*.memb
+uniq.pairlist.memb
