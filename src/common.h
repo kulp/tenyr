@@ -3,7 +3,6 @@
 
 #include <setjmp.h>
 #include <search.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "ops.h"

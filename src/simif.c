@@ -1,5 +1,7 @@
 #include "sim.h"
 
+#include <stdlib.h>
+
 struct device * new_device(struct sim_state *s)
 {
     struct device_list *d = calloc(1, sizeof *d);

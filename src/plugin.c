@@ -3,6 +3,7 @@
 #include "os_common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 int tenyr_plugin_host_init(void *libhandle)
 {
