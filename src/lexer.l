@@ -140,7 +140,7 @@ illegal             { return ILLEGAL; }
 }
 <charend>"'"        { POP; return CHARACTER; }
 
-<*>\n               { SWAPLINE; saveline[savecol = 0] = 0; return '\n'; }
+<*>\n               { SWAPLINE; saveline[savecol = 0] = 0; yycolumn = 0; return '\n'; }
 
 <*>.                tenyr_error(yylloc, yyextra, "unexpected character `%c`", yytext[0]);
                     /* LCOV_EXCL_START */
