@@ -128,6 +128,8 @@ check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	                              -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
 	                                                             && $(MAKESTEP) "    ... params overflow ok"
 
+check_args_specific_tsim: s = 4105
+check_args_specific_tsim: sx = $(shell printf 0x%08x $(s))
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	$($*) -@ does_not_exist 2>&1 | fgrep -q "No such"            && $(MAKESTEP) "    ... -@ ok"
@@ -135,11 +137,11 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	$($*) -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(MAKESTEP) "    ... -d ok"
 	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
 	(! $($*) -r does_not_exist -fraw /dev/null &> /dev/null )    && $(MAKESTEP) "    ... -r ok"
-	$($*) -fraw  -vs 4105 /dev/null | fgrep -q "IP = 0x00001009" && $(MAKESTEP) "    ... -s ok"
-	$($*) -ftext -v       /dev/null | fgrep -q "IP ="            && $(MAKESTEP) "    ... -v ok"
-	$($*) -ftext -vv      /dev/null | fgrep -q ".word"           && $(MAKESTEP) "    ... -vv ok"
-	$($*) -ftext -vvv     /dev/null | fgrep -q "read  @"         && $(MAKESTEP) "    ... -vvv ok"
-	$($*) -ftext -vvvv    /dev/null | fgrep -q "P 00001"         && $(MAKESTEP) "    ... -vvvv ok"
+	$($*) -fraw  -vs $(s) /dev/null 2>&1 | fgrep -q "IP = $(sx)" && $(MAKESTEP) "    ... -s ok"
+	$($*) -ftext -v       /dev/null 2>&1 | fgrep -q "IP ="       && $(MAKESTEP) "    ... -v ok"
+	$($*) -ftext -vv      /dev/null 2>&1 | fgrep -q ".word"      && $(MAKESTEP) "    ... -vv ok"
+	$($*) -ftext -vvv     /dev/null 2>&1 | fgrep -q "read  @"    && $(MAKESTEP) "    ... -vvv ok"
+	$($*) -ftext -vvvv    /dev/null 2>&1 | fgrep -q "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
 	$($*) -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(MAKESTEP) "    ... multiple files rejected ok"
 	$($*) -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
 	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> /dev/null )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
@@ -319,7 +321,7 @@ vpath PERIODS_%.mk $(TOP)/mk
 PERIODS.mk: $(patsubst %,PERIODS_%.mk,$(OPS) $(DEMOS:%=%_demo) $(RUNS))
 	cat $^ > $@
 
-check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -vvvv $(texe) | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -vvvv $(texe) 2>&1 | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 

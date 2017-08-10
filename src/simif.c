@@ -41,7 +41,7 @@ int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
         result = device->ops.op(device->cookie, op, addr, data);
 
         if (s->conf.verbose > 2) {
-            printf("%-5s @ 0x%08x = 0x%08x\n",
+            fprintf(stderr, "%-5s @ 0x%08x = 0x%08x\n",
                     (op == OP_WRITE) ? "write" : "read", addr, *data);
         }
 
@@ -52,7 +52,7 @@ int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
             *data = 0xffffffff;
 
         if (s->conf.verbose > 2) {
-            printf("%-5s @ 0x%08x %s due to invalid device\n",
+            fprintf(stderr, "%-5s @ 0x%08x %s due to invalid device\n",
                     (op == OP_WRITE) ? "write" : "read", addr,
                     (op == OP_WRITE) ? "silently ignored" : "returning 0xffffffff");
         }

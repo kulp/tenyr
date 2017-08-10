@@ -141,21 +141,21 @@ static int pre_insn(struct sim_state *s, const struct element *i, void *ud)
 {
     (void)ud;
     if (s->conf.verbose > 0)
-        printf("IP = 0x%08x\t", s->machine.regs[15]);
+        fprintf(stderr, "IP = 0x%08x\t", s->machine.regs[15]);
 
     if (s->conf.verbose > 1) {
-        int len = print_disassembly(stdout, i, ASM_AS_INSN);
-        fprintf(stdout, "%*s# ", 30 - len, "");
-        print_disassembly(stdout, i, ASM_AS_DATA);
+        int len = print_disassembly(stderr, i, ASM_AS_INSN);
+        fprintf(stderr, "%*s# ", 30 - len, "");
+        print_disassembly(stderr, i, ASM_AS_DATA);
     }
 
     if (s->conf.verbose > 3) {
-        fputs("\n", stdout);
-        print_registers(stdout, s->machine.regs);
+        fputs("\n", stderr);
+        print_registers(stderr, s->machine.regs);
     }
 
     if (s->conf.verbose > 0)
-        fputs("\n", stdout);
+        fputs("\n", stderr);
 
     return 0;
 }
