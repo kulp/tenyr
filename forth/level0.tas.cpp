@@ -318,15 +318,8 @@ head(XOR,XOR): BINOP(^)
 // specified by the ANS Forth document.
 //
 // <>     x1 x2 -- flag               test not equal
-head(CMP_NE,<>):
-    .word (. + 1)
-    T0  <- [S + 2]
-    T1  <- [S + 1]
-    W   <-  T0 == T1
-    W   <- ~W
-    S   <-  S + 1
-    W   -> [S + 1]
-    goto(NEXT)
+head(CMP_NE,<>): .word
+    @ENTER, @CMP_EQ, @INVERT, @EXIT
 
 // CMOVE  c-addr1 c-addr2 u --      move from bottom
 // CMOVE> c-addr1 c-addr2 u --         move from top
