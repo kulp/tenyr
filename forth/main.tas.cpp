@@ -1,5 +1,4 @@
 #include "forth_common.th"
-#define TEST_LOOKUP 0
 
 .set link, @level1_link
 
