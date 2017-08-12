@@ -128,6 +128,7 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
         meta->obj = i;
         meta->size = i->records[0].size;
         meta->offset = running;
+        debug(1, "Object %p adds record size %d @ %#x", i, meta->size, meta->offset);
         running += i->records[0].size;
 
         tsearch(meta, objtree, ptrcmp);
@@ -139,6 +140,7 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
             def->obj = i;
             def->reladdr = sym->value;
             def->flags = sym->flags;
+            debug(2, "Object %p adds symbol `%s` @ %#x", i, def->name, def->reladdr);
 
             struct defn **look = tsearch(def, defns, (cmp*)strcmp);
             if (*look != def)
@@ -171,6 +173,7 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
 
     struct objmeta **me = tfind(&i, objtree, ptrcmp);
     if (rlc->name[0]) {
+        debug(1, "Object %p relocating name `%s` from %#x to %#x", i, rlc->name, rlc->addr, reladdr);
         struct defn def;
         strcopy(def.name, rlc->name, sizeof def.name);
         struct defn **look = tfind(&def, defns, (cmp*)strcmp);
@@ -183,6 +186,7 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
             reladdr += (*it)->offset;
         }
     } else {
+        debug(1, "Object %p relocating . @ %#x", i, rlc->addr);
         // this is a null relocation ; it just wants us to update the offset
         reladdr = (*me)->offset;
     }
