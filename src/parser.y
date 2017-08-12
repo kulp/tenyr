@@ -115,7 +115,7 @@ static void free_cstr(struct cstr *cs, int recurse);
 %token ZERO     ".zero"
 %token OPTION   ".option"
 
-%type <ce>      binop_expr expr vexpr atom vatom eref
+%type <ce>      binop_expr expr vexpr atom vatom eref vref
 %type <cl>      expr_list
 %type <cstr>    string stringelt strspan symbol
 %type <dctv>    directive
@@ -363,6 +363,8 @@ eref
     | '@' '=' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 0); free_cstr($SYMBOL, 1); }
     | '@' '+' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 1); free_cstr($SYMBOL, 1); }
 
+vref : '$' SYMBOL       { $$ = make_ref (pd, &yylloc, CE_VAR, $SYMBOL);    free_cstr($SYMBOL, 1); }
+
 binop_expr
     : expr[x]  '+'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '+', $x, $y, 0); }
     | expr[x]  '-'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '-', $x, $y, RHS_NEGATE); }
@@ -381,6 +383,7 @@ const_unary_op
 
 atom
     : eref
+    | vref
     | '(' expr ')'
         {   $$ = $expr; }
     | const_unary_op atom[inner]

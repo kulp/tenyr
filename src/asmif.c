@@ -188,6 +188,7 @@ static ce_evaluator * const ce_eval_dispatch[CE_max] = {
     [CE_OP2] = ce_eval_op2,
     [CE_SYM] = ce_eval_sym,
     [CE_EXT] = ce_eval_sym,
+    [CE_VAR] = ce_eval_sym,
     [CE_IMM] = ce_eval_imm,
     [CE_ICI] = ce_eval_ici,
 };

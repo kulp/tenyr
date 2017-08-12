@@ -12,6 +12,7 @@ struct const_expr {
         CE_OP2,
         CE_SYM,
         CE_EXT,
+        CE_VAR,
         CE_IMM,
         CE_ICI,
 

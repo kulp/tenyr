@@ -62,7 +62,7 @@ octnum  "0"[0-7_]+
 binnum  "0b"[01_]+
 decnum  [0-9_]+
 bitstr  {hexnum}|{octnum}|{binnum}
-self    [][|&+*^><.,:@()~;=/-]
+self    [][|&+*^><.,:@()~;=/$-]
 strcon  ([^"]|\\\")
 escchar [\\"'0nbrtfv]
 white   [\t\f\v\r ]
