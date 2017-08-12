@@ -5,7 +5,18 @@
 #include "parser.h"
 
 struct const_expr {
-    enum const_expr_type { CE_BAD, CE_OP1, CE_OP2, CE_SYM, CE_EXT, CE_IMM, CE_ICI, CE_max } type;
+    enum const_expr_type {
+        CE_BAD,
+
+        CE_OP1,
+        CE_OP2,
+        CE_SYM,
+        CE_EXT,
+        CE_IMM,
+        CE_ICI,
+
+        CE_max
+    } type;
     int32_t i;
     char **symbol_name;     ///< points to either `deferred_name` or `symbol->name`
     char *deferred_name;    ///< possibly pointed to by `symbol_name`
