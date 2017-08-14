@@ -6,7 +6,7 @@ B <- C >>> D
 E <- 0
 M <- 0
 loop:
-F <- (@masks - (. + 1)) + E + P
+F <- @+masks + E + P
 G <- [F]		// G is output mask
 H <- [F + D]	// H is input mask
 I <- C & H
@@ -17,7 +17,7 @@ M <- M | I
 O <- 32 - D
 E <- E + 1
 N <- E < O
-P <- (@loop - (. + 1)) & N + P
+P <- @+loop & N + P
 
 B <- B == M
 illegal

@@ -14,7 +14,7 @@ B <- C < D
 F <- C >> 31    // get sign bit
 G <- D >> 31    // get sign bit
 H <- F ^ G      // check sign bit inequality
-P <- (@signs_differ - (. + 1)) & H + P
+P <- @+signs_differ & H + P
 
 // signs are the same, subtraction will be not overflow
 E <- C - D

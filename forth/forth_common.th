@@ -36,7 +36,7 @@
 #define ccall(Loc)  push(o,p + 2); goto(Loc)
 #define ccpost()    popregs(o)
 
-#define reloc(Label)        (@Label - (. + 1)) + p
+#define reloc(Label)        @+Label + p
 #define rel(X)              X + reloc(__zero)
 #define unrel(X)            X - p + (. + 1)
 #define goto(Label)         p <- reloc(Label)

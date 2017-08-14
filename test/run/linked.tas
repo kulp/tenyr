@@ -11,7 +11,7 @@ top:
 .word @link
 
 B <- 0
-C <- (@top - (. + 1)) + P
+C <- @+top + P
 D <- [C + 0]
 B <- B + D
 D <- [C + 1]

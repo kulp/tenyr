@@ -6,7 +6,7 @@ B <- C >> D
 E <- 0
 M <- 0
 loop:
-F <- (@masks - (. + 1)) + E + P
+F <- @+masks + E + P
 G <- [F]		// G is output mask
 H <- [F + D]	// H is input mask
 I <- C & H
@@ -16,20 +16,20 @@ M <- M | I
 O <- 32 - D
 E <- E + 1
 N <- E < O
-P <- (@loop - (. + 1)) & N + P
+P <- @+loop & N + P
 
 // fill in sign bits
 loop2:
 N <- E < 32
-P <- (@done - (. + 1)) &~ N + P
+P <- @+done &~ N + P
 O <- [(@masks - (. + 1 - 31)) + P]
-G <- [(@masks - (. + 1)) + E + P]
+G <- [@+masks + E + P]
 I <- C & O
 I <- I == 0
 I <- G &~ I
 M <- M | I
 E <- E + 1
-P <- (@loop2 - (. + 1)) + P
+P <- @+loop2 + P
 
 done:
 B <- B == M

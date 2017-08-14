@@ -820,7 +820,7 @@ static struct const_expr *make_eref(struct parse_data *pd, YYLTYPE *locp,
             make_ref(pd, locp, CE_EXT, symbol),
             make_expr(pd, locp, CE_OP2, '+',
                 make_expr(pd, locp, CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED),
-                make_expr(pd, locp, CE_IMM, 0, NULL, NULL, 0),
+                make_imm(pd, locp, offset, 0),
                 0),
             0);
 }

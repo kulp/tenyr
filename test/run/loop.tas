@@ -8,7 +8,7 @@ B <- D >> 11
 N <- B @ 21
 O <- B >= (1 << 10)
 N <- N | O
-P <- (@top - . - 1) &~ N + P
+P <- @+top &~ N + P
 
 B <- B == 0x00000400
 illegal
