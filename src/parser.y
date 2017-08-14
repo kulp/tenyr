@@ -42,6 +42,8 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
 static int is_type3(struct const_expr *ce);
 static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
         int type, const struct cstr *symbol);
+static struct const_expr *make_eref(struct parse_data *pd, YYLTYPE *locp,
+        const struct cstr *symbol, int offset);
 static struct const_expr_list *make_expr_list(struct const_expr *expr,
         struct const_expr_list *right);
 static int validate_expr(struct parse_data *pd, struct const_expr *e, int level);
@@ -353,7 +355,11 @@ expr
     : atom          { $$ = $1; ce_eval_const(pd, $1, &$1->i); }
     | binop_expr    { $$ = $1; ce_eval_const(pd, $1, &$1->i); }
 
-eref : '@' SYMBOL { $$ = make_ref(pd, &yylloc, CE_EXT, $SYMBOL); free_cstr($SYMBOL, 1); }
+eref
+    : '@'     SYMBOL    { $$ = make_ref (pd, &yylloc, CE_EXT, $SYMBOL);    free_cstr($SYMBOL, 1); }
+    /* syntax sugars */
+    | '@' '=' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 0); free_cstr($SYMBOL, 1); }
+    | '@' '+' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 1); free_cstr($SYMBOL, 1); }
 
 binop_expr
     : expr[x]  '+'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '+', $x, $y, 0); }
@@ -801,6 +807,22 @@ static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
     }
 
     return eref;
+}
+
+// make_eref implements syntax sugar :
+//  `@=var` expands to `@var - (. + 0)`
+//  `@+var` expands to `@var - (. + 1)`
+static struct const_expr *make_eref(struct parse_data *pd, YYLTYPE *locp,
+        const struct cstr *symbol, int offset)
+{
+    return
+        make_expr(pd, locp, CE_OP2, '-',
+            make_ref(pd, locp, CE_EXT, symbol),
+            make_expr(pd, locp, CE_OP2, '+',
+                make_expr(pd, locp, CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED),
+                make_expr(pd, locp, CE_IMM, 0, NULL, NULL, 0),
+                0),
+            0);
 }
 
 static struct const_expr_list *make_expr_list(struct const_expr *expr,

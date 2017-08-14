@@ -1,0 +1,15 @@
+B <- (@var - (. + 1))
+C <- @+var
+D <- C + 1
+E <- B == D
+
+B <- (@var - .)
+C <- @=var
+D <- C + 1
+F <- B == D
+
+B <- E & F
+
+var:
+illegal
+
