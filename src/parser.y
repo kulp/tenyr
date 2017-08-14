@@ -18,6 +18,8 @@ static struct const_expr *add_deferred_expr(struct parse_data *pd,
 static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
         enum const_expr_type type, int op, struct const_expr *left,
         struct const_expr *right, int flags);
+static struct const_expr *make_imm(struct parse_data *pd, YYLTYPE *locp,
+        int val, int flags);
 static struct expr *make_rhs(int type, int x, int op, int y, int mult,
         struct const_expr *defexpr);
 static struct expr *make_unary(int op, int x, int y, int mult,
@@ -377,8 +379,7 @@ atom
         {   $$ = make_expr(pd, &yylloc, CE_OP1, $const_unary_op, $inner, NULL, 0);
             ce_eval_const(pd, $$, &$$->i); }
     | immediate
-        {   $$ = make_expr(pd, &yylloc, CE_IMM, 0, NULL, NULL, $immediate.flags);
-            $$->i = $immediate.i; }
+        {   $$ = make_imm(pd, &yylloc, $immediate.i, $immediate.flags); }
     | '.'
         {   $$ = make_expr(pd, &yylloc, CE_ICI, 0, NULL, NULL, IMM_IS_BITS | IS_DEFERRED); }
     | LOCAL
@@ -498,6 +499,14 @@ static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
     n->symbol_name = &n->deferred_name;
 
     return n;
+}
+
+static struct const_expr *make_imm(struct parse_data *pd, YYLTYPE *locp,
+        int val, int flags)
+{
+    struct const_expr *imm = make_expr(pd, locp, CE_IMM, 0, NULL, NULL, flags);
+    imm->i = val;
+    return imm;
 }
 
 static struct expr *make_rhs(int type, int x, int op, int y, int mult,
