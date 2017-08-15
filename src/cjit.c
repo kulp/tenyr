@@ -1,6 +1,7 @@
 #include "jit.h"
 
 #include <search.h>
+#include <stdlib.h>
 
 // XXX permit fetch to express failure
 int32_t fetch(void *cookie, int32_t addr)
