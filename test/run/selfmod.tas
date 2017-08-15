@@ -1,0 +1,14 @@
+G <- 0xdead
+G <- 0xbeef
+B <- 6 // index of G
+C <- 7 // index of H
+
+D <- B << 4 + C
+D <- D << 8
+[P] <- D ^^ 0
+illegal // gets overwritten
+// now the register indexed by B has the value of the register indexed by C
+
+B <- G == H
+illegal
+
