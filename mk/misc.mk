@@ -5,7 +5,7 @@ include $(TOP)/mk/rules.mk
 
 SHELL := $(shell which bash)
 
-tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX):
+$(tas) $(tsim) $(tld):
 	$(MAKE) -f $(TOP)/Makefile $@
 
 INSTALL_DIR ?= /usr/local
@@ -180,7 +180,7 @@ clean_FILES += check_obj_*.to null.to ff.bin
 null.to: ; $(tas) -o $@ /dev/null
 ff.bin:; echo -ne '\0377\0377\0377\0377' > $@
 check_obj: check_obj_0 check_obj_2 check_obj_4 check_obj_5 check_obj_6
-check_obj_%: check_obj_%.to | tas$(EXE_SUFFIX)
+check_obj_%: check_obj_%.to | $(tas)
 	(! $(tas) -d $< 2> /dev/null)
 check_obj_%.to: null.to ff.bin
 	cp $< $@
@@ -231,10 +231,10 @@ randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase 
 # Use .INTERMEDIATE to indicate that op test files should be deleted after one
 # run -- they have random bits appended which should be regenerated each time.
 .INTERMEDIATE: $(OPS:%=$(TOP)/test/op/%.texe)
-$(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas tas$(EXE_SUFFIX)
+$(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas $(tas)
 	(cat $< ; echo "$(call randwords,3)") | $(tas) -o $@ -
 
-test_op_%: $(TOP)/test/op/%.texe tas$(EXE_SUFFIX)
+test_op_%: $(TOP)/test/op/%.texe $(tas)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
@@ -242,7 +242,7 @@ test_op_%: $(TOP)/test/op/%.texe tas$(EXE_SUFFIX)
 # Use .SECONDARY to indicate that run test files should *not* be deleted after
 # one run, as they do not have random bits appended (yet).
 .SECONDARY: $(RUNS:%=$(TOP)/test/run/%.texe)
-test_run_%: %.texe tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+test_run_%: %.texe $(tas) $(tld)
 	@$(MAKESTEP) -n "Running test `printf %-15s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
@@ -261,7 +261,7 @@ check_sim::
 endif
 
 check_sim check_sim_demo check_sim_op check_sim_run: export context=sim,$(flavour)
-check_sim_demo check_sim_op check_sim_run: tsim$(EXE_SUFFIX)
+check_sim_demo check_sim_op check_sim_run: $(tsim)
 check_sim::
 	$(foreach f,$(tsim_FLAVOURS),$(MAKE) -f $(makefile_path) check_sim_flavour flavour=$f tsim_FLAGS='$(tsim_FLAGS) $(tsim_FLAGS_$f)' &&) true
 check_sim_flavour: check_sim_demo check_sim_op check_sim_run
@@ -310,7 +310,7 @@ check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 # instructions to complete.
 vpath %.texe $(TOP)/test/op $(TOP)/ex $(TOP)/test/run
 clean_FILES += $(BUILDDIR)/PERIODS_*.mk
-PERIODS_%.mk: %.texe tsim$(EXE_SUFFIX)
+PERIODS_%.mk: %.texe $(tsim)
 	@$(MAKESTEP) -n "Computing cycle count for '$*' ... "
 	$(ECHO) -n PERIODS_$*= > $@
 	echo $$(($$($(tsim) -d $< 2>&1 | sed -En '/^.*executed: ([0-9]+)/{s//\1/;p;}') * 20)) >> $@
@@ -325,13 +325,13 @@ check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -vvvv $(texe) 2>&1 
 check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
-check_compile: tas$(EXE_SUFFIX) tld$(EXE_SUFFIX)
+check_compile: $(tas) $(tld)
 	@$(MAKESTEP) -n "Building tests from test/ ... "
 	$(MAKE) $S -C $(TOP)/test && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Building examples from ex/ ... "
 	$(MAKE) $S -C $(TOP)/ex && $(MAKESTEP) ok
 
-dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) tas$(EXE_SUFFIX)
+dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) $(tas)
 	@$(MAKESTEP) -n "Checking reversibility of assembly-disassembly ... "
-	$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX "$(tas)" $(filter-out tas$(EXE_SUFFIX),$^) && $(MAKESTEP) ok || ($(MAKESTEP) FAILED ; false)
+	$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX "$(tas)" $(filter-out $(tas),$^) && $(MAKESTEP) ok || ($(MAKESTEP) FAILED ; false)
 
