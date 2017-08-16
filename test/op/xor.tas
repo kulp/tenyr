@@ -9,4 +9,3 @@ H <- E &~ F
 B <- B == H
 illegal
 
-args:

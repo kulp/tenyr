@@ -191,6 +191,7 @@ vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz
 DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
 OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/op/*.tas)))
+OPS += $(subst .tas.cpp,,$(notdir $(wildcard $(TOP)/test/op/*.tas.cpp)))
 RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
 #TESTS = $(patsubst $(TOP)/test/%.tas,%,$(wildcard $(TOP)/test/*/*.tas))
 $(DEMOFILES): %_demo.texe: %_demo.tas.cpp
@@ -227,12 +228,13 @@ test_demo_%: $(TOP)/ex/%_demo.texe
 
 randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase | fold -w8 | head -n$1 | sed 's/^/.word 0x/;s/$$/;/')
 
-# Op tests are self-testing -- they must leave B with the value 0xffffffff.
-# Use .INTERMEDIATE to indicate that op test files should be deleted after one
-# run -- they have random bits appended which should be regenerated each time.
-.INTERMEDIATE: $(OPS:%=$(TOP)/test/op/%.texe)
-$(TOP)/test/op/%.texe: $(TOP)/test/op/%.tas $(tas)
-	(cat $< ; echo "$(call randwords,3)") | $(tas) -o $@ -
+# Op tests are self-testing -- they must leave B with the value 0xffffffff if successful.
+$(OPS:%=$(TOP)/test/op/%.texe): $(TOP)/test/op/%.texe: $(TOP)/test/op/%.to $(TOP)/test/op/args.to | $(tas)
+
+# Use .INTERMEDIATE to cause op args files to be deleted after one run
+.INTERMEDIATE: $(TOP)/test/op/args.to
+$(TOP)/test/op/args.to: | $(tas)
+	echo ".global args ; args: $(call randwords,3)" | $(tas) -o $@ -
 
 test_op_%: $(TOP)/test/op/%.texe $(tas)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "

@@ -15,4 +15,3 @@ H <- ~ H
 B <- B == H
 illegal
 
-args:

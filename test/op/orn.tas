@@ -9,4 +9,3 @@ E <- E + F
 
 B <- B == E
 illegal
-args:

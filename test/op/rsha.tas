@@ -35,7 +35,6 @@ done:
 B <- B == M
 illegal
 
-args:
 masks:
 .word (1 << 0),
       (1 << 1),

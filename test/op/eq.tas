@@ -37,4 +37,3 @@ B <- B ^ H
 // B is -1 (matches) or 0 (mismatches)
 illegal
 
-args:

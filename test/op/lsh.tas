@@ -25,4 +25,3 @@ done:
 B <- B == C
 illegal
 
-args:
