@@ -1,7 +1,10 @@
-C <- [(@args + (0 + 0x1000))]
-D <- [(@args + (1 + 0x1000))]
-B <- C ^^ D
+C <- [P + (@=args + 0)]
+D <- [P + (@=args + 1)]
 
+// passing until proven broken
+B <- -1
+
+// test type 0
 E <- 12
 F <- 1 << E
 F <- F - 1
@@ -9,6 +12,33 @@ E <- C << 12
 F <- D & F
 H <- E | F
 
-B <- B == H
+I <- C ^^ D
+I <- I == H
+B <- B & I
+
+// test type 1
+E <- 12
+F <- 1 << E
+F <- F - 1
+E <- C << 12
+F <- -123 & F
+H <- E | F
+
+I <- C ^^ -123
+I <- I == H
+B <- B & I
+
+// test type 2
+E <- 12
+F <- 1 << E
+F <- F - 1
+E <- (123 << 12)
+F <- D & F
+H <- E | F
+
+I <- 123 ^^ D
+I <- I == H
+B <- B & I
+
 illegal
 

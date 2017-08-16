@@ -2,26 +2,68 @@ C <- [(@args + (0 + 0x1000))]
 D <- [(@args + (1 + 0x1000))]
 E <- [(@args + (2 + 0x1000))]
 
+// passing until proven broken
+B <- -1
+
 // precondition numbers to be equal to each other with about 1/16 probability
 F <- E & 31
 F <- 0xf << F
 F <- D & F
 D <- C ^ F
-B <- C >= D
 
+// test type 0
 // compute inequality
 // TODO compute inequality without using subtraction
-F <- C >> 31	// get sign bit
-G <- D >> 31	// get sign bit
+F <- C >> 31    // get sign bit
+G <- D >> 31    // get sign bit
 H <- F ^ G      // check sign bit inequality
-P <- @+signs_differ & H + P
+P <- @+signs_differ0 & H + P
 
 // signs are the same, subtraction will not overflow
 E <- C - D
 F <- E >> 31
 
-signs_differ:
-B <- B ^ F
-// B is -1 (matches) or 0 (mismatches)
+signs_differ0:
+I <- C >= D
+I <- I ^ F
+// I is -1 (matches) or 0 (mismatches)
+B <- B & I
+
+// test type 1
+// compute inequality
+// TODO compute inequality without using subtraction
+F <- C >> 31        // get sign bit
+G <- (123 >> 31)    // get sign bit
+H <- F ^ G          // check sign bit inequality
+P <- @+signs_differ1 & H + P
+
+// signs are the same, subtraction will not overflow
+E <- C - 123
+F <- E >> 31
+
+signs_differ1:
+I <- C >= 123
+I <- I ^ F
+// I is -1 (matches) or 0 (mismatches)
+B <- B & I
+
+// test type 2
+// compute inequality
+// TODO compute inequality without using subtraction
+F <- (-234 >> 31)   // get sign bit
+G <- D >> 31        // get sign bit
+H <- F ^ G          // check sign bit inequality
+P <- @+signs_differ2 & H + P
+
+// signs are the same, subtraction will not overflow
+E <- -234 - D
+F <- E >> 31
+
+signs_differ2:
+I <- -234 >= D
+I <- I ^ F
+// I is -1 (matches) or 0 (mismatches)
+B <- B & I
+
 illegal
 

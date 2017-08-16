@@ -1,11 +1,14 @@
-C <- [(@args + (0 + 0x1000))]
-D <- [(@args + (1 + 0x1000))]
+C <- [P + (@=args + 0)]
+D <- [P + (@=args + 1)]
 D <- D & 31	// doesn't support overshifting yet
-B <- C >> D
 
+// passing until proven broken
+B <- -1
+
+// test type 0
 E <- 0
 M <- 0
-loop:
+loopa0:
 F <- @+masks + E + P
 G <- [F]		// G is output mask
 H <- [F + D]	// H is input mask
@@ -16,12 +19,12 @@ M <- M | I
 O <- 32 - D
 E <- E + 1
 N <- E < O
-P <- @+loop & N + P
+P <- @+loopa0 & N + P
 
 // fill in sign bits
-loop2:
+loopb0:
 N <- E < 32
-P <- @+done &~ N + P
+P <- @+done0 &~ N + P
 O <- [(@masks - (. + 1 - 31)) + P]
 G <- [@+masks + E + P]
 I <- C & O
@@ -29,43 +32,114 @@ I <- I == 0
 I <- G &~ I
 M <- M | I
 E <- E + 1
-P <- @+loop2 + P
+P <- @+loopb0 + P
 
-done:
-B <- B == M
+done0:
+I <- C >> D
+I <- I == M
+B <- B & I
+
+// test type 1
+E <- 0
+M <- 0
+loopa1:
+F <- @+masks + E + P
+G <- [F]		// G is output mask
+H <- [F + 12]	// H is input mask
+I <- C & H
+I <- I == 0
+I <- G &~ I
+M <- M | I
+O <- (32 - 12)
+E <- E + 1
+N <- E < O
+P <- @+loopa1 & N + P
+
+// fill in sign bits
+loopb1:
+N <- E < 32
+P <- @+done1 &~ N + P
+O <- [(@masks - (. + 1 - 31)) + P]
+G <- [@+masks + E + P]
+I <- C & O
+I <- I == 0
+I <- G &~ I
+M <- M | I
+E <- E + 1
+P <- @+loopb1 + P
+
+done1:
+I <- C >> 12
+I <- I == M
+B <- B & I
+
+// test type 2
+E <- 0
+M <- 0
+loopa2:
+F <- @+masks + E + P
+G <- [F]		// G is output mask
+H <- [F + D]	// H is input mask
+I <- -234 & H
+I <- I == 0
+I <- G &~ I
+M <- M | I
+O <- 32 - D
+E <- E + 1
+N <- E < O
+P <- @+loopa2 & N + P
+
+// fill in sign bits
+loopb2:
+N <- E < 32
+P <- @+done2 &~ N + P
+O <- [(@masks - (. + 1 - 31)) + P]
+G <- [@+masks + E + P]
+I <- -234 & O
+I <- I == 0
+I <- G &~ I
+M <- M | I
+E <- E + 1
+P <- @+loopb2 + P
+
+done2:
+I <- -234 >> D
+I <- I == M
+B <- B & I
+
 illegal
 
 masks:
 .word (1 << 0),
-      (1 << 1),
-      (1 << 2),
-      (1 << 3),
-      (1 << 4),
-      (1 << 5),
-      (1 << 6),
-      (1 << 7),
-      (1 << 8),
-      (1 << 9),
-      (1 << 10),
-      (1 << 11),
-      (1 << 12),
-      (1 << 13),
-      (1 << 14),
-      (1 << 15),
-      (1 << 16),
-      (1 << 17),
-      (1 << 18),
-      (1 << 19),
-      (1 << 20),
-      (1 << 21),
-      (1 << 22),
-      (1 << 23),
-      (1 << 24),
-      (1 << 25),
-      (1 << 26),
-      (1 << 27),
-      (1 << 28),
-      (1 << 29),
-      (1 << 30),
-      (1 << 31)
+	  (1 << 1),
+	  (1 << 2),
+	  (1 << 3),
+	  (1 << 4),
+	  (1 << 5),
+	  (1 << 6),
+	  (1 << 7),
+	  (1 << 8),
+	  (1 << 9),
+	  (1 << 10),
+	  (1 << 11),
+	  (1 << 12),
+	  (1 << 13),
+	  (1 << 14),
+	  (1 << 15),
+	  (1 << 16),
+	  (1 << 17),
+	  (1 << 18),
+	  (1 << 19),
+	  (1 << 20),
+	  (1 << 21),
+	  (1 << 22),
+	  (1 << 23),
+	  (1 << 24),
+	  (1 << 25),
+	  (1 << 26),
+	  (1 << 27),
+	  (1 << 28),
+	  (1 << 29),
+	  (1 << 30),
+	  (1 << 31)
 

@@ -1,27 +1,88 @@
-C <- [(@args + (0 + 0x1000))]
-D <- [(@args + (1 + 0x1000))]
-D <- D & 63
-B <- C << D
-F <- 63
+C <- [P + (@=args + 0)]
+D <- [P + (@=args + 1)]
 
-loop:
+D <- D & 63
+
+// passing until proven broken
+B <- -1
+
+// test type 0
+I <- C
+J <- D
+F <- 63
+loop0:
 N <- F == 0
-P <- @+done & N + P
+P <- @+done0 & N + P
 F <- F - 1
 
-// stop decrementing D when it reaches 0
-M <- D == 0
-D <- D - 1
-D <- D &~ M
+// stop decrementing J when it reaches 0
+M <- J == 0
+J <- J - 1
+J <- J &~ M
 
-E <- C + C
+E <- I + I
 G <- E &~ M
-H <- C & M
-C <- G + H
+H <- I & M
+I <- G + H
 // loop for a predictable number of instructions, to help hardware testing
-P <- @+loop + P
+P <- @+loop0 + P
 
-done:
-B <- B == C
+done0:
+J <- C << D
+I <- I == J
+B <- B & I
+
+// test type 1
+I <- C
+J <- 23
+F <- 63
+loop1:
+N <- F == 0
+P <- @+done1 & N + P
+F <- F - 1
+
+// stop decrementing J when it reaches 0
+M <- J == 0
+J <- J - 1
+J <- J &~ M
+
+E <- I + I
+G <- E &~ M
+H <- I & M
+I <- G + H
+// loop for a predictable number of instructions, to help hardware testing
+P <- @+loop1 + P
+
+done1:
+J <- C << 23
+I <- I == J
+B <- B & I
+
+// test type 2
+I <- -234
+J <- D
+F <- 63
+loop2:
+N <- F == 0
+P <- @+done2 & N + P
+F <- F - 1
+
+// stop decrementing J when it reaches 0
+M <- J == 0
+J <- J - 1
+J <- J &~ M
+
+E <- I + I
+G <- E &~ M
+H <- I & M
+I <- G + H
+// loop for a predictable number of instructions, to help hardware testing
+P <- @+loop2 + P
+
+done2:
+J <- -234 << D
+I <- I == J
+B <- B & I
+
 illegal
 

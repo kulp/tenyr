@@ -1,13 +1,16 @@
-C <- [(@args + (0 + 0x1000))]
-D <- [(@args + (1 + 0x1000))]
-E <- [(@args + (2 + 0x1000))]
+C <- [P + (@=args + 0)]
+D <- [P + (@=args + 1)]
+E <- [P + (@=args + 2)]
 
+// passing until proven broken
+B <- -1
+
+// test type 0
 // precondition numbers to be equal to each other with about 25% probability
 F <- E & 31
 F <- 3 << F
 F <- D & F
 D <- C ^ F
-B <- C == D
 
 // compute equality
 H <- C ^ D
@@ -30,10 +33,81 @@ I <- H >>> 1
 H <- H & 0x1
 H <- H | I
 
+I <- C == D
 // H is 1 (unequal) or 0 (equal)
 H <- - H
 // H is -1 (unequal) or 0 (equal)
-B <- B ^ H
-// B is -1 (matches) or 0 (mismatches)
+I <- I ^ H
+// I is -1 (matches) or 0 (mismatches)
+B <- B & I
+
+// test type 1
+// precondition numbers to be equal to each other with about 25% probability
+F <- E & 31
+F <- 3 << F
+F <- D & F
+D <- 123 ^ F
+
+// compute equality
+H <- 123 ^ D
+
+// OR reduction to find bits that differed
+G <- 0xffff
+I <- H >>> 16
+H <- H & G
+H <- H | I
+I <- H >>> 8
+H <- H & 0xff
+H <- H | I
+I <- H >>> 4
+H <- H & 0xf
+H <- H | I
+I <- H >>> 2
+H <- H & 0x3
+H <- H | I
+I <- H >>> 1
+H <- H & 0x1
+H <- H | I
+
+I <- 123 == D
+// H is 1 (unequal) or 0 (equal)
+H <- - H
+// H is -1 (unequal) or 0 (equal)
+I <- I ^ H
+// I is -1 (matches) or 0 (mismatches)
+B <- B & I
+
+// test type 2
+C <- D ^ -234
+
+// compute equality
+H <- C ^ -234
+
+// OR reduction to find bits that differed
+G <- 0xffff
+I <- H >>> 16
+H <- H & G
+H <- H | I
+I <- H >>> 8
+H <- H & 0xff
+H <- H | I
+I <- H >>> 4
+H <- H & 0xf
+H <- H | I
+I <- H >>> 2
+H <- H & 0x3
+H <- H | I
+I <- H >>> 1
+H <- H & 0x1
+H <- H | I
+
+I <- C == -234
+// H is 1 (unequal) or 0 (equal)
+H <- - H
+// H is -1 (unequal) or 0 (equal)
+I <- I ^ H
+// I is -1 (matches) or 0 (mismatches)
+B <- B & I
+
 illegal
 

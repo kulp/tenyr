@@ -1,12 +1,33 @@
 C <- [(@args + (0 + 0x1000))]
 D <- [(@args + (1 + 0x1000))]
 D <- D & 31	// doesn't support overshifting yet
-B <- C @ D
 
+// passing until proven broken
+B <- -1
+
+I <- C @ D
+// test type 0
 E <- C >>> D
 E <- E & 1
 E <- E == 1
+I <- I == E
+B <- B & I
 
-B <- B == E
+I <- C @ 3
+// test type 1
+E <- C >>> 3
+E <- E & 1
+E <- E == 1
+I <- I == E
+B <- B & I
+
+I <- 0x7ef @ D
+// test type 2
+E <- 0x7ef >>> D
+E <- E & 1
+E <- E == 1
+I <- I == E
+B <- B & I
+
 illegal
 

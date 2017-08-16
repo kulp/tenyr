@@ -1,17 +1,48 @@
-C <- [(@args + (0 + 0x1000))]
-D <- [(@args + (1 + 0x1000))]
-B <- C &~ D
+C <- [P + (@=args + 0)]
+D <- [P + (@=args + 1)]
 
 // TODO rewrite without reference to ~, as this may be implemented in hardware
 // common between |~ and &~
-D <- ~ D
-E <- C ^ D
+G <- ~ D
+
+// passing until proven broken
+B <- -1
+
+// test type 0
+E <- C ^ G
 F <- ~ E
 E <- F ^ C
-F <- F ^ D
+F <- F ^ G
 H <- E | F
 H <- ~ H
 
-B <- B == H
+I <- C &~ D
+I <- I == H
+B <- B & I
+
+// test type 1
+E <- C ^ ~-123
+F <- ~ E
+E <- F ^ C
+F <- F ^ ~-123
+H <- E | F
+H <- ~ H
+
+I <- C &~ -123
+I <- I == H
+B <- B & I
+
+// test type 2
+E <- 234 ^ G
+F <- ~ E
+E <- F ^ 234
+F <- F ^ G
+H <- E | F
+H <- ~ H
+
+I <- 234 &~ D
+I <- I == H
+B <- B & I
+
 illegal
 

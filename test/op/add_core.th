@@ -1,0 +1,42 @@
+#define Andx(A,B,C) A <-  B &  C
+#define Lshx(A,B,C) A <-  B << C
+#define Xorx(A,B,C) A <-  B ^  C
+
+// in:   F, G
+// out:  F
+// temp: E
+#define block_add(And,Lsh,Xor) \
+Xor(E,F,G) ; \
+And(G,F,G) ; \
+Lsh(G,G,1) ; \
+Xor(F,E,G) ; \
+And(G,E,G) ; \
+Lsh(G,G,1) ; \
+//
+
+#define _x16(X) X X X X X X X X X X X X X X X X
+
+// test type 0
+F <- C
+G <- D
+_x16( block_add(Andx,Lshx,Xorx) )
+I <- C + D
+I <- I == F
+B <- B & I
+
+// test type 1
+F <- C
+G <- -123
+_x16( block_add(Andx,Lshx,Xorx) )
+I <- C + -123
+I <- I == F
+B <- B & I
+
+// test type 2
+F <- 234
+G <- D
+_x16( block_add(Andx,Lshx,Xorx) )
+I <- 234 + D
+I <- I == F
+B <- B & I
+

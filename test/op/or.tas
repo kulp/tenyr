@@ -1,10 +1,30 @@
 C <- [(@args + (0 + 0x1000))]
 D <- [(@args + (1 + 0x1000))]
 
+# test type 0
 E <- C ^ D
 F <- C & D
 E <- E + F
 
 B <- C | D
 B <- B == E
+
+# test type 1
+E <- C ^ 123
+F <- C & 123
+E <- E + F
+
+F <- C | 123
+F <- F == E
+B <- B & F
+
+# test type 2
+E <- 234 ^ D
+F <- 234 & D
+E <- E + F
+
+F <- 234 | D
+F <- F == E
+B <- B & F
+
 illegal
