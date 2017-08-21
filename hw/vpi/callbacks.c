@@ -1,6 +1,7 @@
 #include "tenyr_vpi.h"
 
 #include "common.h"
+#include <stdlib.h>
 
 int tenyr_sim_genesis(p_cb_data data)
 {
