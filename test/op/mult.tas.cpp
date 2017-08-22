@@ -1,5 +1,5 @@
-C <- [P + (@=args + 0)]
-D <- [P + (@=args + 1)]
+C <- [P + (@+args + 0)]
+D <- [P + (@+args + 1)]
 
 #define Andx(A,B,C) A <-  B &  C
 #define Tstx(A,B,C) A <-  B == C

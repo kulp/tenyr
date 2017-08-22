@@ -1,5 +1,5 @@
-C <- [P + (@=args + 0)]
-D <- [P + (@=args + 1)]
+C <- [P + (@+args + 0)]
+D <- [P + (@+args + 1)]
 
 // passing until proven broken
 B <- -1

@@ -1,5 +1,5 @@
-C <- [P + (@=args + 0)]
-D <- [P + (@=args + 1)]
+C <- [P + (@+args + 0)]
+D <- [P + (@+args + 1)]
 
 // TODO rewrite without reference to ~, as this may be implemented in hardware
 // common between |~ and &~
