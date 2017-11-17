@@ -57,7 +57,7 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
     reg add, act, staged;
 
     function Bit(input[31:0] rA, rB);
-        return rA >> rB;
+        Bit = rA >> rB;
     endfunction
 
     always @(posedge clk) begin
