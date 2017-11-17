@@ -16,7 +16,7 @@ module Tenyr(
     wire valid_clk, clk_vga, clk_core;
     wire[31:0] i_adr;
     wire[31:0] d_adr, d_to_slav, i_to_slav;
-    wor [31:0] d_to_mast, i_to_mast;
+    wire[31:0] d_to_mast, i_to_mast;
 
     assign Led[7:0] = halt;
     assign i_ack = i_stb;
