@@ -2,6 +2,8 @@
 $(LIB_TARGETS): CLOSURE_FLAGS =# empty
 $(LIB_TARGETS): LDFLAGS       = -s SIDE_MODULE=1
 preamble.o preamble,dy.o: CFLAGS += -Wno-dollar-in-identifier-extension
+# Disable closure compiler for tools using shared libraries
+tsim$(EXE_SUFFIX): CLOSURE_FLAGS :=# empty
 
 tcc.js: LDFLAGS += $(TH_FLAGS)
 
@@ -23,8 +25,8 @@ $(BIN_TARGETS): %$(EXE_SUFFIX): %.o
 	$(LINK.c) -o $@ $(filter %.o,$^) $(LDLIBS)
 	echo "var INHIBIT_RUN; if (!INHIBIT_RUN) Module_$*();" >> $@
 
-# Disable closure compiler for now
-$(BIN_TARGETS): CLOSURE_FLAGS :=# empty
+# Disable closure compiler until it works
+tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): CLOSURE_FLAGS :=# empty
 
 # Disable closing of streams so that the same code can run again
 $(BIN_TARGETS): CPPFLAGS += '-Dfclose=fflush'
