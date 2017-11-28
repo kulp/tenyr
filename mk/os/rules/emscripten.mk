@@ -18,6 +18,7 @@ tcc$(EXE_SUFFIX): CFLAGS := $(CC_DEBUG) -Wall
 tcc$(EXE_SUFFIX): CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing -Wno-shift-negative-value
 tcc$(EXE_SUFFIX): CFLAGS += $(CC_OPT)
 
+$(BIN_TARGETS): $(TOP)/ui/web/pre.js
 $(BIN_TARGETS): LDFLAGS += --pre-js $(TOP)/ui/web/pre.js
 
 $(BIN_TARGETS): %$(EXE_SUFFIX): %.o
