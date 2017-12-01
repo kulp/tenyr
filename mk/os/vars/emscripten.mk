@@ -61,7 +61,3 @@ clean_FILES += $(BUILDDIR)/*.js.mem $(BUILDDIR)/*.js $(BUILDDIR)/*.data
 
 # runwrap might be nodejs on Debian
 runwrap := node # trailing space required
-wrapargs = --param=paths.cwd=$(shell pwd)
-tas  += $(wrapargs)
-tld  += $(wrapargs)
-tsim += $(wrapargs)
