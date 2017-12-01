@@ -5,7 +5,7 @@ include $(TOP)/mk/rules.mk
 
 SHELL := $(shell which bash)
 
-$(tas) $(tsim) $(tld):
+$(build_tas) $(build_tsim) $(build_tld):
 	$(MAKE) -f $(TOP)/Makefile $@
 
 INSTALL_DIR ?= /usr/local
@@ -180,7 +180,7 @@ clean_FILES += check_obj_*.to null.to ff.bin
 null.to: ; $(tas) -o $@ /dev/null
 ff.bin:; echo -ne '\0377\0377\0377\0377' > $@
 check_obj: check_obj_0 check_obj_2 check_obj_4 check_obj_5 check_obj_6
-check_obj_%: check_obj_%.to | $(tas)
+check_obj_%: check_obj_%.to | $(build_tas)
 	(! $(tas) -d $< 2> /dev/null)
 check_obj_%.to: null.to ff.bin
 	cp $< $@
@@ -230,14 +230,14 @@ randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase 
 
 # Op tests are self-testing -- they must leave B with the value 0xffffffff if successful.
 $(OPS:%=$(TOP)/test/op/%.texe): INCLUDES += $(TOP)/test/op
-$(OPS:%=$(TOP)/test/op/%.texe): $(TOP)/test/op/%.texe: $(TOP)/test/op/%.to $(TOP)/test/op/args.to | $(tas)
+$(OPS:%=$(TOP)/test/op/%.texe): $(TOP)/test/op/%.texe: $(TOP)/test/op/%.to $(TOP)/test/op/args.to | $(build_tas)
 
 # Use .INTERMEDIATE to cause op args files to be deleted after one run
 .INTERMEDIATE: $(TOP)/test/op/args.to
-$(TOP)/test/op/args.to: | $(tas)
+$(TOP)/test/op/args.to: | $(build_tas)
 	echo ".global args ; args: $(call randwords,3)" | $(tas) -o $@ -
 
-test_op_%: $(TOP)/test/op/%.texe $(tas)
+test_op_%: $(TOP)/test/op/%.texe $(build_tas)
 	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
@@ -245,7 +245,7 @@ test_op_%: $(TOP)/test/op/%.texe $(tas)
 # Use .SECONDARY to indicate that run test files should *not* be deleted after
 # one run, as they do not have random bits appended (yet).
 .SECONDARY: $(RUNS:%=$(TOP)/test/run/%.texe)
-test_run_%: %.texe $(tas) $(tld)
+test_run_%: %.texe $(build_tas) $(build_tld)
 	@$(MAKESTEP) -n "Running test `printf %-15s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
@@ -264,7 +264,7 @@ check_sim::
 endif
 
 check_sim check_sim_demo check_sim_op check_sim_run: export context=sim,$(flavour)
-check_sim_demo check_sim_op check_sim_run: $(tsim)
+check_sim_demo check_sim_op check_sim_run: $(build_tsim)
 check_sim::
 	$(foreach f,$(tsim_FLAVOURS),$(MAKE) -f $(makefile_path) check_sim_flavour flavour=$f tsim_FLAGS='$(tsim_FLAGS) $(tsim_FLAGS_$f)' &&) true
 check_sim_flavour: check_sim_demo check_sim_op check_sim_run
@@ -313,7 +313,7 @@ check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 # instructions to complete.
 vpath %.texe $(TOP)/test/op $(TOP)/ex $(TOP)/test/run
 clean_FILES += $(BUILDDIR)/PERIODS_*.mk
-PERIODS_%.mk: %.texe $(tsim)
+PERIODS_%.mk: %.texe $(build_tsim)
 	@$(MAKESTEP) -n "Computing cycle count for '$*' ... "
 	$(ECHO) -n PERIODS_$*= > $@
 	echo $$(($$($(tsim) -d $< 2>&1 | sed -En '/^.*executed: ([0-9]+)/{s//\1/;p;}') * 20)) >> $@
@@ -328,13 +328,13 @@ check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -vvvv $(texe) 2>&1 
 check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
-check_compile: $(tas) $(tld)
+check_compile: $(build_tas) $(build_tld)
 	@$(MAKESTEP) -n "Building tests from test/ ... "
 	$(MAKE) $S -C $(TOP)/test && $(MAKESTEP) ok
 	@$(MAKESTEP) -n "Building examples from ex/ ... "
 	$(MAKE) $S -C $(TOP)/ex && $(MAKESTEP) ok
 
-dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) $(tas)
+dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) $(build_tas)
 	@$(MAKESTEP) -n "Checking reversibility of assembly-disassembly ... "
-	$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX "$(tas)" $(filter-out $(tas),$^) && $(MAKESTEP) ok || ($(MAKESTEP) FAILED ; false)
+	$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX "$(tas)" $(filter-out $(build_tas),$^) && $(MAKESTEP) ok || ($(MAKESTEP) FAILED ; false)
 

@@ -83,6 +83,12 @@ BISON ?= bison -Werror
 
 cc_flag_supp = $(shell $(CC) $1 -c -x c -o /dev/null /dev/null 2>/dev/null >/dev/null && echo $1)
 
+# In the presence of a non-null runwrap, $(build_tas) and $(tas) differ, so be
+# careful to use the correct variable
+build_tas  = $(TOOLDIR)/tas$(EXE_SUFFIX)
+build_tld  = $(TOOLDIR)/tld$(EXE_SUFFIX)
+build_tsim = $(TOOLDIR)/tsim$(EXE_SUFFIX)
+
 tas  = $(runwrap)$(TOOLDIR)/tas$(EXE_SUFFIX)
 tld  = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
 tsim = $(runwrap)$(TOOLDIR)/tsim$(EXE_SUFFIX)
