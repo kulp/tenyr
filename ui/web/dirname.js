@@ -1,0 +1,2 @@
+Module['memoryInitializerPrefixURL'] = __dirname + '/';
+

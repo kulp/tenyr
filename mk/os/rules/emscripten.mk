@@ -22,6 +22,11 @@ tcc$(EXE_SUFFIX): CFLAGS += $(CC_OPT)
 $(BIN_TARGETS): $(TOP)/ui/web/pre.js
 $(BIN_TARGETS): LDFLAGS += --js-transform "$(TOP)/ui/web/inject_file.sh '{{PRE_RUN_ADDITIONS}}' $(TOP)/ui/web/pre.js"
 
+# dirname.js is needed for node.js to find memory initialization files if they
+# are not in the current directory
+$(BIN_TARGETS): $(TOP)/ui/web/dirname.js
+$(BIN_TARGETS): LDFLAGS += --js-transform "$(TOP)/ui/web/inject_file.sh '{{PREAMBLE_ADDITIONS}}' $(TOP)/ui/web/dirname.js"
+
 $(BIN_TARGETS): %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
 	$(LINK.c) -o $@ $(filter %.o,$^) $(LDLIBS)
