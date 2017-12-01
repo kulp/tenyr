@@ -17,6 +17,8 @@ LDFLAGS += -Wl,--kill-at -static-libgcc -static-libstdc++
 # JIT on Windows doesn't work yet
 JIT = 0
 
+sim.o tsim.o common.o: CPPFLAGS += -Wno-misleading-indentation
+
 URL_SDL2_image = https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.0.1-mingw.tar.gz
 URL_SDL2       = https://www.libsdl.org/release/SDL2-devel-2.0.4-mingw.tar.gz
 

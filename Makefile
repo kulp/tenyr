@@ -92,8 +92,6 @@ tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
 tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
 
-asm.o: CFLAGS += -Wno-override-init
-
 # used to apply to .o only but some make versions built directly from .c
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
