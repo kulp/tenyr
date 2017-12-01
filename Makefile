@@ -9,9 +9,6 @@ GNUMAKEFLAGS += --no-print-directory
 .DEFAULT_GOAL = all
 
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
-# Use := to ensure the expensive underlying call is not repeated
-NO_UNKNOWN_WARN_OPTS := $(call cc_flag_supp,-Wno-unknown-warning-option)
-CPPFLAGS += $(NO_UNKNOWN_WARN_OPTS)
 
 SOURCEFILES = $(wildcard $(TOP)/src/*.c $(TOP)/src/devices/*.c)
 
