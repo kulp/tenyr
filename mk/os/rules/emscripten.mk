@@ -20,7 +20,7 @@ tcc$(EXE_SUFFIX): CFLAGS += $(CC_OPT)
 
 # pre.js is needed for node.js support of blocking stdin
 $(BIN_TARGETS): $(TOP)/ui/web/pre.js
-$(BIN_TARGETS): LDFLAGS += --pre-js $(TOP)/ui/web/pre.js
+$(BIN_TARGETS): LDFLAGS += --js-transform "$(TOP)/ui/web/inject_file.sh '{{PRE_RUN_ADDITIONS}}' $(TOP)/ui/web/pre.js"
 
 $(BIN_TARGETS): %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
