@@ -18,9 +18,9 @@ tcc$(EXE_SUFFIX): CFLAGS := $(CC_DEBUG) -Wall
 tcc$(EXE_SUFFIX): CFLAGS += -Wno-pointer-sign -Wno-sign-compare -fno-strict-aliasing -Wno-shift-negative-value
 tcc$(EXE_SUFFIX): CFLAGS += $(CC_OPT)
 
-# pre.js is needed for node.js support, currently non-working and disabled
-#$(BIN_TARGETS): $(TOP)/ui/web/pre.js
-#$(BIN_TARGETS): LDFLAGS += --pre-js $(TOP)/ui/web/pre.js
+# pre.js is needed for node.js support of blocking stdin
+$(BIN_TARGETS): $(TOP)/ui/web/pre.js
+$(BIN_TARGETS): LDFLAGS += --pre-js $(TOP)/ui/web/pre.js
 
 $(BIN_TARGETS): %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"

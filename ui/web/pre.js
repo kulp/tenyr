@@ -3,36 +3,37 @@ Module['preInit'].push(function () {
   if (ENVIRONMENT_IS_NODE) {
     Module['stdout'] = function(x) { process.stdout.write(String.fromCharCode(x & 255), 'binary'); };
     Module['stdin'] = function stdin_reader () {
-      if (!stdin_reader.input || stdin_reader.input.length == 0) {
-        var fs = require('fs');
+      var me = stdin_reader;
+      if (!me.input || me.input.length == 0) {
+        me.fs = me.fs || require('fs');
         var result = null;
         var BUFSIZE = 256;
-        var buf = new Buffer(BUFSIZE, 'binary');
-        var fd = process.stdin.fd;
+        me.buf = me.buf || Buffer.alloc(BUFSIZE, 0, 'binary');
+        me.fd = me.fd || me.fs.openSync('/dev/stdin', 'r');
 
         var again = false;
         var bytesRead = 0;
         do {
           try {
-            bytesRead = fs.readSync(fd, buf, 0, BUFSIZE, null);
+            bytesRead = me.fs.readSync(me.fd, me.buf, 0, BUFSIZE, null);
             again = false;
           } catch (e) {
-            again = -e.errno == ERRNO_CODES.EAGAIN;
+            again = e.toString().indexOf('EAGAIN') != -1;
           }
         } while (again);
 
         if (bytesRead > 0) {
-          result = buf.slice(0, bytesRead);
+          result = me.buf.slice(0, bytesRead);
         } else {
           result = null;
         }
 
-        stdin_reader.input = result;
+        me.input = result;
       }
 
-      if (stdin_reader.input && stdin_reader.input.length > 0) {
-        var result = stdin_reader.input[0];
-        stdin_reader.input = stdin_reader.input.slice(1);
+      if (me.input && me.input.length > 0) {
+        var result = me.input[0];
+        me.input = me.input.slice(1);
         return result;
       } else {
         return null;
