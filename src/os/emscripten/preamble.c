@@ -10,10 +10,12 @@ int os_preamble(struct param_state *params)
         EM_ASM({ FS.createDevice('/dev', 'zero', function () { return 0; }); });
 
     EM_ASM_({
-        var mnt = Pointer_stringify($0);
-        FS.mkdir(mnt);
-        FS.mount(NODEFS, { root: '/' }, mnt);
-        FS.chdir(mnt + process.cwd());
+        if (ENVIRONMENT_IS_NODE) {
+            var mnt = Pointer_stringify($0);
+            FS.mkdir(mnt);
+            FS.mount(NODEFS, { root: '/' }, mnt);
+            FS.chdir(mnt + process.cwd());
+        }
     }, MOUNT_POINT);
 
     return 0;
