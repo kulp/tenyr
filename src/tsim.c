@@ -473,6 +473,8 @@ int main(int argc, char *argv[])
         .recipes_tail = &_s.recipes_head,
     }, *s = &_s;
 
+    os_preamble();
+
     param_init(&s->conf.params);
     s->plugin_cookie.param = s->conf.params;
 
@@ -489,8 +491,6 @@ int main(int argc, char *argv[])
     param_set(s->conf.params, "paths.share", share_path, false, false, true);
 
     parse_args(s, argc, argv);
-
-    os_preamble(s->conf.params);
 
     if (optind >= argc) {
         fatal(DISPLAY_USAGE, "No input files specified on the command line");

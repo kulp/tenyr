@@ -3,9 +3,8 @@
 #include <unistd.h>
 #include "param.h"
 
-int os_preamble(struct param_state *params)
+int os_preamble()
 {
-    (void)params;
     if (access("/dev/zero", R_OK))
         EM_ASM({ FS.createDevice('/dev', 'zero', function () { return 0; }); });
 

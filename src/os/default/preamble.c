@@ -1,9 +1,8 @@
 #include "param.h"
 
-int os_preamble(struct param_state *params)
+int os_preamble()
 {
     // no action required in default case
-    (void)params;
     return 0;
 }
 
