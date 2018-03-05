@@ -379,7 +379,8 @@ static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
     rlc->flags = reloc->flags;
-    strcopy(rlc->name, reloc->name, sizeof rlc->name);
+    rlc->name[0] = '\0';
+    if (reloc->name) strcopy(rlc->name, reloc->name, sizeof rlc->name);
     rlc->name[sizeof rlc->name - 1] = 0;
     rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;

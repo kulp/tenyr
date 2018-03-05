@@ -18,7 +18,7 @@
 struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
     list_foreach(symbol_list, elt, list)
-        if (!strncmp(elt->symbol->name, name, SYMBOL_LEN))
+        if (!strcmp(elt->symbol->name, name))
             return elt->symbol;
 
     return NULL;
@@ -57,11 +57,7 @@ static int add_relocation(struct reloc_list **relocs, const char *name,
 
     struct reloc_list *node = calloc(1, sizeof *node);
 
-    if (name) {
-        strcopy(node->reloc.name, name, sizeof node->reloc.name);
-    } else {
-        memset(node->reloc.name, '\0', sizeof node->reloc.name);
-    }
+    node->reloc.name  = name ? strdup(name) : NULL;
     node->reloc.insn  = insn;
     node->reloc.width = width;
     node->reloc.shift = shift;

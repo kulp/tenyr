@@ -700,7 +700,9 @@ static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
 {
     struct directive *result = calloc(1, sizeof *result);
     result->type = D_GLOBAL;
+    // TODO try to eliminate string copy
     struct global_list *g = result->data = malloc(sizeof *g);
+    g->name = malloc(symbol->tail - symbol->head + 1);
     strcopy(g->name, symbol->head, symbol->tail - symbol->head + 1);
     return result;
 }

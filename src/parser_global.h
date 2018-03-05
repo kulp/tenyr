@@ -25,12 +25,12 @@ struct parse_data {
         struct symbol_list *next;
     } *symbols;
     struct global_list {
-        char name[SYMBOL_LEN];
+        char *name;
         struct global_list *next;
     } *globals;
     struct reloc_list {
         struct reloc_node {
-            char name[SYMBOL_LEN];  ///< can be empty string for non-globals
+            char *name;             ///< can be NULL
             struct element *insn;   ///< TODO rename
             int width;              ///< number of bits wide, LSB-justified
             int shift;              ///< number of bits shifted down
