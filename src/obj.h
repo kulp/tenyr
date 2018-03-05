@@ -49,7 +49,7 @@ struct obj {
         struct objsym *next;
 
         UWord flags;
-        char name[SYMBOL_LEN];
+        char name[SYMBOL_LEN_V1];
         UWord value;
         UWord size;
     } *symbols;
@@ -59,7 +59,7 @@ struct obj {
         struct objrlc *next;
 
         UWord flags;
-        char name[SYMBOL_LEN];
+        char name[SYMBOL_LEN_V1];
         UWord addr;     ///< relative location in the object to update
         UWord width;    ///< width in bits of the right-justified immediate
         UWord shift;    ///< right-shift in bits of the immediate

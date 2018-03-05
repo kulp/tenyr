@@ -28,9 +28,9 @@
             Node = LINE(Next))                                              \
     //
 
+#define SYMBOL_LEN_V1   32   /* only applies in object version 1 and before */
 // TODO document fixed lengths or remove the limitations
-#define SYMBOL_LEN   32
-#define LINE_LEN    512
+#define LINE_LEN        512
 
 #define PRINT_ERRNO 0x80
 
