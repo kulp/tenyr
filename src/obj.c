@@ -21,20 +21,30 @@
 
 typedef int obj_op(struct obj *o, FILE *out, void *context);
 
-static obj_op put_recs, put_syms, put_relocs_v0, put_relocs_v1,
-              get_recs, get_syms, get_relocs_v0, get_relocs_v1;
+static obj_op
+    put_recs     , get_recs     ,
+    put_syms_v0  , get_syms_v0  ,
+    put_syms_v1  , get_syms_v1  ,
+    put_syms_v2  , get_syms_v2  ,
+    put_relocs_v0, get_relocs_v0,
+    put_relocs_v1, get_relocs_v1,
+    put_relocs_v2, get_relocs_v2;
 
 static struct objops {
     obj_op *put_recs, *put_syms, *put_relocs,
            *get_recs, *get_syms, *get_relocs;
 } objops[] = {
     [0] = {
-        .put_recs = put_recs, .put_syms = put_syms, .put_relocs = put_relocs_v0,
-        .get_recs = get_recs, .get_syms = get_syms, .get_relocs = get_relocs_v0,
+        .put_recs = put_recs, .put_syms = put_syms_v0, .put_relocs = put_relocs_v0,
+        .get_recs = get_recs, .get_syms = get_syms_v0, .get_relocs = get_relocs_v0,
     },
     [1] = {
-        .put_recs = put_recs, .put_syms = put_syms, .put_relocs = put_relocs_v1,
-        .get_recs = get_recs, .get_syms = get_syms, .get_relocs = get_relocs_v1,
+        .put_recs = put_recs, .put_syms = put_syms_v1, .put_relocs = put_relocs_v1,
+        .get_recs = get_recs, .get_syms = get_syms_v1, .get_relocs = get_relocs_v1,
+    },
+    [2] = {
+        .put_recs = put_recs, .put_syms = put_syms_v2, .put_relocs = put_relocs_v2,
+        .get_recs = get_recs, .get_syms = get_syms_v2, .get_relocs = get_relocs_v2,
     },
 };
 
@@ -108,12 +118,33 @@ static int put_recs(struct obj *o, FILE *out, void *context)
     return 0;
 }
 
-static int put_syms(struct obj *o, FILE *out, void *context)
+static int put_syms_v0(struct obj *o, FILE *out, void *context)
+{
+    return put_syms_v1(o, out, context);
+}
+
+static int put_syms_v1(struct obj *o, FILE *out, void *context)
 {
     PUT(o->sym_count, out);
     list_foreach(objsym, sym, o->symbols) {
         PUT(sym->flags, out);
-        PUT(sym->name, out);
+        char buf[SYMBOL_LEN_V1] = { 0 };
+        if (sym->name.str) strncpy(buf, sym->name.str, sizeof buf);
+        PUT(buf, out);
+        PUT(sym->value, out);
+        PUT(sym->size, out);
+    }
+
+    return 0;
+}
+
+static int put_syms_v2(struct obj *o, FILE *out, void *context)
+{
+    PUT(o->sym_count, out);
+    list_foreach(objsym, sym, o->symbols) {
+        PUT(sym->flags, out);
+        PUT(sym->name.len, out);
+        put_sized(sym->name.str, sym->name.len, 1, out);
         PUT(sym->value, out);
         PUT(sym->size, out);
     }
@@ -126,7 +157,9 @@ static int put_relocs_v0(struct obj *o, FILE *out, void *context)
     PUT(o->rlc_count, out);
     list_foreach(objrlc, rlc, o->relocs) {
         PUT(rlc->flags, out);
-        PUT(rlc->name, out);
+        char buf[SYMBOL_LEN_V1] = { 0 };
+        if (rlc->name.str) strncpy(buf, rlc->name.str, sizeof buf);
+        PUT(buf, out);
         PUT(rlc->addr, out);
         PUT(rlc->width, out);
     }
@@ -139,7 +172,24 @@ static int put_relocs_v1(struct obj *o, FILE *out, void *context)
     PUT(o->rlc_count, out);
     list_foreach(objrlc, rlc, o->relocs) {
         PUT(rlc->flags, out);
-        PUT(rlc->name, out);
+        char buf[SYMBOL_LEN_V1] = { 0 };
+        if (rlc->name.str) strncpy(buf, rlc->name.str, sizeof buf);
+        PUT(buf, out);
+        PUT(rlc->addr, out);
+        PUT(rlc->width, out);
+        PUT(rlc->shift, out);
+    }
+
+    return 0;
+}
+
+static int put_relocs_v2(struct obj *o, FILE *out, void *context)
+{
+    PUT(o->rlc_count, out);
+    list_foreach(objrlc, rlc, o->relocs) {
+        PUT(rlc->flags, out);
+        PUT(rlc->name.len, out);
+        put_sized(rlc->name.str, rlc->name.len, 1, out);
         PUT(rlc->addr, out);
         PUT(rlc->width, out);
         PUT(rlc->shift, out);
@@ -223,7 +273,12 @@ static int get_recs(struct obj *o, FILE *in, void *context)
     return 0;
 }
 
-static int get_syms(struct obj *o, FILE *in, void *context)
+static int get_syms_v0(struct obj *o, FILE *in, void *context)
+{
+    return get_syms_v1(o, in, context);
+}
+
+static int get_syms_v1(struct obj *o, FILE *in, void *context)
 {
     GET(o->sym_count, in);
     if (o->sym_count > OBJ_MAX_SYMBOLS) {
@@ -233,7 +288,29 @@ static int get_syms(struct obj *o, FILE *in, void *context)
     o->bloc.symbols = 1;
     for_counted_get(objsym, sym, o->symbols, o->sym_count) {
         GET(sym->flags, in);
-        GET(sym->name, in);
+        sym->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
+        get_sized(sym->name.str, SYMBOL_LEN_V1, 1, in);
+        sym->name.len = strlen(sym->name.str);
+        GET(sym->value, in);
+        GET(sym->size, in);
+    }
+
+    return 0;
+}
+
+static int get_syms_v2(struct obj *o, FILE *in, void *context)
+{
+    GET(o->sym_count, in);
+    if (o->sym_count > OBJ_MAX_SYMBOLS) {
+        errno = EFBIG;
+        return 1;
+    }
+    o->bloc.symbols = 1;
+    for_counted_get(objsym, sym, o->symbols, o->sym_count) {
+        GET(sym->flags, in);
+        GET(sym->name.len, in);
+        sym->name.str = malloc(sym->name.len + sizeof '\0');
+        get_sized(sym->name.str, sym->name.len, 1, in);
         GET(sym->value, in);
         GET(sym->size, in);
     }
@@ -251,10 +328,33 @@ static int get_relocs_v0(struct obj *o, FILE *in, void *context)
     o->bloc.relocs = 1;
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
-        GET(rlc->name, in);
+        rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
+        get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
+        rlc->name.len = strlen(rlc->name.str);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         rlc->shift = 0;
+    }
+
+    return 0;
+}
+
+static int get_relocs_v2(struct obj *o, FILE *in, void *context)
+{
+    GET(o->rlc_count, in);
+    if (o->rlc_count > OBJ_MAX_RELOCS) {
+        errno = EFBIG;
+        return 1;
+    }
+    o->bloc.relocs = 1;
+    for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
+        GET(rlc->flags, in);
+        GET(rlc->name.len, in);
+        rlc->name.str = malloc(rlc->name.len + sizeof '\0');
+        get_sized(rlc->name.str, rlc->name.len, 1, in);
+        GET(rlc->addr, in);
+        GET(rlc->width, in);
+        GET(rlc->shift, in);
     }
 
     return 0;
@@ -270,7 +370,9 @@ static int get_relocs_v1(struct obj *o, FILE *in, void *context)
     o->bloc.relocs = 1;
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
-        GET(rlc->name, in);
+        rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
+        get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
+        rlc->name.len = strlen(rlc->name.str);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         GET(rlc->shift, in);
@@ -339,11 +441,39 @@ static void obj_v0_free(struct obj *o)
     free(o);
 }
 
+static void obj_v2_free(struct obj *o)
+{
+    UWord remaining = o->rec_count;
+    list_foreach(objrec, rec, o->records) {
+        if (remaining-- <= 0) break;
+        free(rec->data);
+    }
+
+    if (o->bloc.relocs) free(o->relocs);
+    else list_foreach(objrlc,rlc,o->relocs) {
+        free(rlc->name.str);
+        free(rlc);
+    }
+
+    if (o->bloc.symbols) free(o->symbols);
+    else list_foreach(objsym,sym,o->symbols) {
+        free(sym->name.str);
+        free(sym);
+    }
+
+    if (o->bloc.records) free(o->records);
+    else list_foreach(objrec,rec,o->records) free(rec);
+
+    free(o);
+}
+
 void obj_free(struct obj *o)
 {
     switch (o->magic.parsed.version) {
         case 0: case 1:
             obj_v0_free(o); break;
+        case 2:
+            obj_v2_free(o); break;
         default:
             fatal(0, "Unknown version number or corrupt memory while freeing object");
     }

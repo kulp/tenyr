@@ -142,7 +142,7 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
         list_foreach(objsym, sym, i->symbols) {
             struct defn *def = calloc(1, sizeof *def);
             def->state = s;
-            def->name = strdup(sym->name);
+            def->name = strdup(sym->name.str);
             def->obj = i;
             def->reladdr = sym->value;
             def->flags = sym->flags;
@@ -178,13 +178,13 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     }
 
     struct objmeta **me = tfind(&i, objtree, ptrcmp);
-    if (rlc->name[0]) {
-        debug(1, "Object %p relocating name `%s` from %#x to %#x", i, rlc->name, rlc->addr, reladdr);
+    if (rlc->name.len) { // TODO use length
+        debug(1, "Object %p relocating name `%s` from %#x to %#x", i, rlc->name.str, rlc->addr, reladdr);
         struct defn def;
-        def.name = strdup(rlc->name);
+        def.name = strdup(rlc->name.str);
         struct defn **look = tfind(&def, defns, def_str_cmp);
         if (!look)
-            fatal(0, "Missing definition for symbol `%s'", rlc->name);
+            fatal(0, "Missing definition for symbol `%s'", rlc->name.str);
         reladdr = (*look)->reladdr;
 
         if (((*look)->flags & RLC_ABSOLUTE) == 0) {

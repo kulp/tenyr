@@ -356,7 +356,8 @@ static int obj_sym(FILE *stream, struct symbol *symbol, int flags, void *ud)
     if (symbol->global) {
         struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
-        strcopy(sym->name, symbol->name, sizeof sym->name);
+        sym->name.str = strdup(symbol->name);
+        sym->name.len = strlen(symbol->name);
         // `symbol->resolved` must be true by this point
         sym->value = symbol->reladdr;
         sym->flags = flags;
@@ -379,9 +380,8 @@ static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
     rlc->flags = reloc->flags;
-    rlc->name[0] = '\0';
-    if (reloc->name) strcopy(rlc->name, reloc->name, sizeof rlc->name);
-    rlc->name[sizeof rlc->name - 1] = 0;
+    rlc->name.str  = reloc->name ? strdup(reloc->name) : NULL;
+    rlc->name.len  = reloc->name ? strlen(reloc->name) : 0;
     rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;
     rlc->shift = reloc->shift;

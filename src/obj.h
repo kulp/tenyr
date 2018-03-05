@@ -16,6 +16,11 @@
 typedef uint32_t UWord;
 typedef  int32_t SWord;
 
+struct name {
+    UWord len;
+    char *str;
+};
+
 struct obj {
     union {
         UWord word;     ///< big-endian "TOVn" ; n is a version byte starting at \0
@@ -49,7 +54,7 @@ struct obj {
         struct objsym *next;
 
         UWord flags;
-        char name[SYMBOL_LEN_V1];
+        struct name name;
         UWord value;
         UWord size;
     } *symbols;
@@ -59,7 +64,7 @@ struct obj {
         struct objrlc *next;
 
         UWord flags;
-        char name[SYMBOL_LEN_V1];
+        struct name name;
         UWord addr;     ///< relative location in the object to update
         UWord width;    ///< width in bits of the right-justified immediate
         UWord shift;    ///< right-shift in bits of the immediate
