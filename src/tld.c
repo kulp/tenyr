@@ -27,7 +27,7 @@ struct link_state {
 };
 
 struct defn {
-    char name[SYMBOL_LEN];
+    char *name;
     struct obj *obj;
     UWord reladdr;
     UWord flags;
@@ -106,6 +106,12 @@ static int ptrcmp(const void *a, const void *b)
     return *(const char**)a - *(const char**)b;
 }
 
+static int def_str_cmp(const void *a, const void *b)
+{
+	const struct defn *aa = a, *bb = b;
+    return strcmp(aa->name, bb->name);
+}
+
 static int do_link_build_state(struct link_state *s, void **objtree, void **defns)
 {
     // running offset, tracking where to pack objects tightly one after another
@@ -136,13 +142,13 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
         list_foreach(objsym, sym, i->symbols) {
             struct defn *def = calloc(1, sizeof *def);
             def->state = s;
-            strcopy(def->name, sym->name, sizeof def->name);
+            def->name = strdup(sym->name);
             def->obj = i;
             def->reladdr = sym->value;
             def->flags = sym->flags;
             debug(2, "Object %p adds symbol `%s` @ %#x", i, def->name, def->reladdr);
 
-            struct defn **look = tsearch(def, defns, (cmp*)strcmp);
+            struct defn **look = tsearch(def, defns, def_str_cmp);
             if (*look != def)
                 fatal(0, "Duplicate definition for symbol `%s'", def->name);
         }
@@ -175,8 +181,8 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     if (rlc->name[0]) {
         debug(1, "Object %p relocating name `%s` from %#x to %#x", i, rlc->name, rlc->addr, reladdr);
         struct defn def;
-        strcopy(def.name, rlc->name, sizeof def.name);
-        struct defn **look = tfind(&def, defns, (cmp*)strcmp);
+        def.name = strdup(rlc->name);
+        struct defn **look = tfind(&def, defns, def_str_cmp);
         if (!look)
             fatal(0, "Missing definition for symbol `%s'", rlc->name);
         reladdr = (*look)->reladdr;
@@ -229,8 +235,11 @@ static int do_link_process(struct link_state *s)
 
     while (objtree)
         tdelete(*(void**)objtree, &objtree, ptrcmp);
-    while (defns)
-        tdelete(*(void**)defns, &defns, (cmp*)strcmp);
+    while (defns) {
+        struct defn *d = defns;
+        free(d->name);
+        tdelete(*(void**)defns, &defns, def_str_cmp);
+    }
 
     return 0;
 }
