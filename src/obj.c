@@ -19,6 +19,12 @@
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
 
+static inline size_t round_up_to_word(size_t x)
+{
+    // e.g. (x + 3) & ~3
+    return (x + (sizeof(UWord) - 1)) & ~(sizeof(UWord) - 1);
+}
+
 typedef int obj_op(struct obj *o, FILE *out, void *context);
 
 static obj_op
@@ -144,7 +150,7 @@ static int put_syms_v2(struct obj *o, FILE *out, void *context)
     list_foreach(objsym, sym, o->symbols) {
         PUT(sym->flags, out);
         PUT(sym->name.len, out);
-        put_sized(sym->name.str, sym->name.len, 1, out);
+        put_sized(sym->name.str, round_up_to_word(sym->name.len), 1, out);
         PUT(sym->value, out);
         PUT(sym->size, out);
     }
@@ -189,7 +195,7 @@ static int put_relocs_v2(struct obj *o, FILE *out, void *context)
     list_foreach(objrlc, rlc, o->relocs) {
         PUT(rlc->flags, out);
         PUT(rlc->name.len, out);
-        put_sized(rlc->name.str, rlc->name.len, 1, out);
+        put_sized(rlc->name.str, round_up_to_word(rlc->name.len), 1, out);
         PUT(rlc->addr, out);
         PUT(rlc->width, out);
         PUT(rlc->shift, out);
@@ -309,8 +315,8 @@ static int get_syms_v2(struct obj *o, FILE *in, void *context)
     for_counted_get(objsym, sym, o->symbols, o->sym_count) {
         GET(sym->flags, in);
         GET(sym->name.len, in);
-        sym->name.str = malloc(sym->name.len + sizeof '\0');
-        get_sized(sym->name.str, sym->name.len, 1, in);
+        sym->name.str = malloc(round_up_to_word(sym->name.len) + sizeof '\0');
+        get_sized(sym->name.str, round_up_to_word(sym->name.len), 1, in);
         GET(sym->value, in);
         GET(sym->size, in);
     }
@@ -350,8 +356,8 @@ static int get_relocs_v2(struct obj *o, FILE *in, void *context)
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
         GET(rlc->name.len, in);
-        rlc->name.str = malloc(rlc->name.len + sizeof '\0');
-        get_sized(rlc->name.str, rlc->name.len, 1, in);
+        rlc->name.str = malloc(round_up_to_word(rlc->name.len) + sizeof '\0');
+        get_sized(rlc->name.str, round_up_to_word(rlc->name.len), 1, in);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         GET(rlc->shift, in);
