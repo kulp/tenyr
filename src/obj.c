@@ -56,6 +56,9 @@ static struct objops {
 
 static inline void get_sized_le(void *what, size_t size, size_t count, FILE *where)
 {
+    if (size * count == 0) {
+        return;
+    }
     if (fread(what, size, count, where) != count) {
         if (feof(where)) {
             fatal(0, "End of file unexpectedly reached while parsing object");
@@ -67,6 +70,9 @@ static inline void get_sized_le(void *what, size_t size, size_t count, FILE *whe
 
 static inline void put_sized_le(const void *what, size_t size, size_t count, FILE *where)
 {
+    if (size * count == 0) {
+        return;
+    }
     if (fwrite(what, size, count, where) != count) {
         if (feof(where)) {
             fatal(0, "End of file unexpectedly reached while emitting object");
