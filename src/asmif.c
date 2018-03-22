@@ -380,10 +380,6 @@ int do_assembly(FILE *in, FILE *out, const struct format *f, void *ud)
 {
     struct parse_data _pd = {
         .top = NULL,
-        .lexstate.savep = {
-            _pd.lexstate.saveline[0],
-            _pd.lexstate.saveline[1],
-        },
     }, *pd = &_pd;
 
     tenyr_lex_init(&pd->scanner);

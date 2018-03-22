@@ -402,9 +402,7 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...)
     // We use first_column as a flag to tell us whether pd->lexstate is valid
     // enough to provide the diagnostic caret and context.
     if (locp->first_column >= 0) {
-        if (col <= 1)
-            fprintf(stderr, "%s\n", pd->lexstate.savep[!pd->lexstate.swap]);
-        fprintf(stderr, "%s\n", pd->lexstate.savep[pd->lexstate.swap]);
+        fprintf(stderr, "%s\n", pd->lexstate.saveline);
         fprintf(stderr, "%*s", col, "^");
         int len = locp->last_column - locp->first_column;
         while (len-- > 0)

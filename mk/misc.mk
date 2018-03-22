@@ -164,6 +164,7 @@ check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	$($*) -d $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                    && $(MAKESTEP) "    ... too-large ok"
 	$($*) -d $(OBJD)toolarge2.to 2>&1 | fgrep -q "too large"                   && $(MAKESTEP) "    ... too-large 2 ok"
 	$($*) $(TASD)missing_global.tas 2>&1 | fgrep -q "not defined"              && $(MAKESTEP) "    ... undefined global ok"
+	$($*) $(TOP)/test/fail_compile/error_capture.tas 2>&1 | fgrep -q "@q"      && $(MAKESTEP) "    ... error message ok"
 
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)

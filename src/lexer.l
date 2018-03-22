@@ -16,8 +16,7 @@ static int savestr(const char *text, size_t len, yyscan_t yyscanner);
 static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 
 #define savecol  (yyextra->lexstate.savecol)
-#define saveline (yyextra->lexstate.savep[yyextra->lexstate.swap])
-#define SWAPLINE (yyextra->lexstate.swap ^= 1)
+#define saveline (yyextra->lexstate.saveline)
 
 #define YY_USER_ACTION \
     do { \
@@ -140,7 +139,7 @@ illegal             { return ILLEGAL; }
 }
 <charend>"'"        { POP; return CHARACTER; }
 
-<*>\n               { SWAPLINE; saveline[savecol = 0] = 0; yycolumn = 0; return '\n'; }
+<*>\n               { savecol = 0; yycolumn = 0; return '\n'; }
 
 <*>.                tenyr_error(yylloc, yyextra, "unexpected character `%c`", yytext[0]);
                     /* LCOV_EXCL_START */
