@@ -1,0 +1,6 @@
+# coloncolon::slash/exclamation_point!question_mark?
+.global _10coloncolon02_3a3a5slash01_2f17exclamation_point01_2113question_mark01_3f
+_10coloncolon02_3a3a5slash01_2f17exclamation_point01_2113question_mark01_3f:
+	B <- -1
+	illegal
+

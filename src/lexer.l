@@ -53,9 +53,9 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 
 regname [A-P]
 /* don't permit collision with regname */
-symbol  [A-Z_][A-Z0-9_]{1,30}|[Q-Z_][A-Z0-9_]{0,30}
+symbol  [A-Z_][A-Z0-9_]+|[Q-Z_][A-Z0-9_]*
 /* local symbols start with ".L" */
-local   \.L[A-Z0-9_]{1,31}
+local   \.L[A-Z0-9_]+
 string  ([^"]|\\\")+
 hexnum  "0x"[0-9a-f_]+
 octnum  "0"[0-7_]+
