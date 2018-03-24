@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 700 /* for fileno */
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>

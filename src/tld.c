@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE (700) /* for strdup */
+
 #include "obj.h"
 // for RAM_BASE
 #include "devices/ram.h"

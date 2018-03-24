@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE (700) /* for strdup */
+
 #include "asmif.h"
 #include "ops.h"
 // obj.h is included for RLC_* flags ; reconsider their location

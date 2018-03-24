@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE (700) /* for strdup */
+
 #include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
