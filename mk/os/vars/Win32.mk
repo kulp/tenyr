@@ -13,7 +13,7 @@ ifeq ($(BITS),32)
 else
  CROSS_COMPILE ?= x86_64-w64-mingw32-
 endif
-LDFLAGS += -Wl,--kill-at -static-libgcc -static-libstdc++
+LDFLAGS += -Wl,--kill-at -static-libgcc -static-libstdc++ -static
 # JIT on Windows doesn't work yet
 JIT = 0
 
