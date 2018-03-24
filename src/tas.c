@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 
     param_set(params, "assembling", &"1\0""0\0"[disassemble], 1, false, false);
 
-    os_preamble(params);
+    os_preamble();
 
     // TODO don't open output until input has been validated
     if (outfname)

@@ -382,7 +382,7 @@ int main(int argc, char *argv[])
     if (optind >= argc)
         fatal(DISPLAY_USAGE, "No input files specified on the command line");
 
-    os_preamble(params);
+    os_preamble();
 
     if (outfname)
         out = os_fopen(outfname, "wb");
