@@ -64,9 +64,6 @@ matrix:
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
-        # Travis doesn't have SDL2 installed, so we have to tell it where we
-        # downloaded a version
-        - SDL2_PKGCONFIG="PKG_CONFIG_PATH=$DEPSSRC/lib/x86_64-linux-gnu/pkgconfig pkg-config --define-variable=prefix=$DEPSSRC"
         - CHECK_RULE=check GCOV=
         - PKG_RULE=gzip
         - CXX=clang++
@@ -74,9 +71,6 @@ matrix:
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
-        # Travis doesn't have SDL2 installed, so we have to tell it where we
-        # downloaded a version
-        - SDL2_PKGCONFIG="PKG_CONFIG_PATH=$DEPSSRC/lib/x86_64-linux-gnu/pkgconfig pkg-config --define-variable=prefix=$DEPSSRC"
         # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
         - CHECK_RULE=coverage GCOV=1
         - PKG_RULE=gzip
@@ -89,7 +83,6 @@ install:
   - gem install coveralls-lcov
 before_script:
   - mkdir -p $DEPSSRC
-  - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/libsdl2_2.0.3%2Bimage_2.0.0%2Bdev-precise-binaries.tar.gz' | tar -C $DEPSSRC -zx ; fi
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx ; fi
   - if [[ $PLATFORM = mingw ]] ; then make download-all-sdl2 ; fi
   - if [[ $PLATFORM = mingw ]] ; then sed "s#{{{}}}#z:$(echo $PWD/3rdparty/sdl2/$HOST-w64-mingw32/bin | sed 's#/#\\\\\\\\#g')#" scripts/winepath.reg > scripts/winepath2.reg ; wine regedit scripts/winepath2.reg ; fi
