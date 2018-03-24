@@ -1,7 +1,4 @@
 addons: &def_addons
-  apt:
-    packages:
-      - lcov
   artifacts:
     paths:
       - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)
@@ -67,6 +64,12 @@ matrix:
         - CHECK_RULE=check GCOV=
         - PKG_RULE=gzip
         - CXX=clang++
+      addons:
+        <<: *def_addons
+        apt:
+          packages:
+            - libsdl2-dev
+            - libsdl2-image-dev
     - compiler: "gcc"
       os: linux
       env:
@@ -78,6 +81,13 @@ matrix:
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
         - COVERITY_SCAN_BUILD_COMMAND="make V=1 all vpi"
+      addons:
+        <<: *def_addons
+        apt:
+          packages:
+            - lcov
+            - libsdl2-dev
+            - libsdl2-image-dev
 sudo: false
 install:
   - gem install coveralls-lcov
