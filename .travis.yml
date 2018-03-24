@@ -28,11 +28,8 @@ matrix:
         <<: *def_addons
         apt:
           packages:
-            - mingw-w64
-            - mingw-w64-x86-64-dev
             - gcc-mingw-w64-x86-64
             - g++-mingw-w64-x86-64
-            - binutils-mingw-w64-x86-64
             - wine
     - compiler: i686-w64-mingw32-gcc
       os: linux
@@ -45,11 +42,8 @@ matrix:
         <<: *def_addons
         apt:
           packages:
-            - mingw-w64
-            - mingw-w64-x86-64-dev
             - gcc-mingw-w64-i686
             - g++-mingw-w64-i686
-            - binutils-mingw-w64-i686
             - wine
     - compiler: "clang"
       os: osx
