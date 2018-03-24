@@ -231,7 +231,7 @@ int obj_write(struct obj *o, FILE *out)
     int version = o->magic.parsed.version;
 
     switch (version) {
-        case 0: case 1: case 2:
+        case 0: case 1:
             return obj_vx_write(o, out, &objops[version]);
         default:
             fatal(0, "Unhandled version %d while emitting object", version);
@@ -429,7 +429,7 @@ int obj_read(struct obj *o, FILE *in)
 
     int version = o->magic.parsed.version;
     switch (version) {
-        case 0: case 1: case 2:
+        case 0: case 1:
             return obj_vx_read(o, in, &objops[version]);
         default:
             fatal(0, "Unhandled version number when loading object");

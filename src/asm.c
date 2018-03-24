@@ -266,7 +266,7 @@ static int obj_init(FILE *stream, struct param_state *p, void **ud)
     struct obj_fdata *u = *ud = calloc(1, sizeof *u);
     struct obj *o = u->o = calloc(1, sizeof *o);
 
-    o->magic.parsed.version = 2;
+    o->magic.parsed.version = 1;
     param_get_int(p, "assembling", &u->assembling);
 
     if (u->assembling) {
