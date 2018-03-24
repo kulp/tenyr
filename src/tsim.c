@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
     param_destroy(s->conf.params);
 
     if (s->conf.debugging > 0)
-        fprintf(stderr, "Instructions executed: %"PRIdMAX"\n", s->insns_executed);
+        fprintf(stderr, "Instructions executed: %llu\n", s->insns_executed);
 
     while (s->libs) {
         struct library_list *t = s->libs;
