@@ -62,8 +62,12 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
             while ((libhandle == NULL) && *path != NULL) {
                 char *resolved = build_path(basepath, "%s%s", *path++, implpath);
                 void *handle = dlopen(resolved, RTLD_NOW | RTLD_LOCAL);
-                if (handle)
+                if (handle) {
                     libhandle = handle;
+                    debug(3, "handle %p for %s", handle, resolved);
+                } else {
+                    debug(3, "no handle for %s: %s", resolved, dlerror());
+                }
                 free(resolved);
             }
 
