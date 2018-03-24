@@ -214,6 +214,7 @@ static int recipe_runner(struct sim_state *s, const char *prefix)
     char name[128];
     if (snprintf(name, sizeof name, "%s_run_sim", prefix) >= (long)sizeof name) {
         debug(0, "Library name prefix too long");
+        dlclose(libhandle);
         return 1;
     }
 
