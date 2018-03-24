@@ -18,6 +18,7 @@ env:
 matrix:
   include:
     - compiler: x86_64-w64-mingw32-gcc
+      sudo: required
       os: linux
       env:
         - PLATFORM=mingw BITS=64 HOST=x86_64
@@ -32,6 +33,7 @@ matrix:
             - g++-mingw-w64-x86-64
             - wine
     - compiler: i686-w64-mingw32-gcc
+      sudo: required
       os: linux
       env:
         - PLATFORM=mingw BITS=32 HOST=i686
