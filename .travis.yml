@@ -6,7 +6,6 @@ addons: &def_addons
     target_paths:
       - build/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER
       - version/$(git describe --always --tags --match 'v?.?.?*' $TRAVIS_COMMIT)
-language: c
 env:
   global:
     - DEPSSRC=$HOME/local
@@ -15,6 +14,7 @@ env:
 matrix:
   include:
     - compiler: x86_64-w64-mingw32-gcc
+      language: c
       sudo: required
       os: linux
       env:
@@ -30,6 +30,7 @@ matrix:
             - g++-mingw-w64-x86-64
             - wine
     - compiler: i686-w64-mingw32-gcc
+      language: c
       sudo: required
       os: linux
       env:
@@ -45,6 +46,7 @@ matrix:
             - g++-mingw-w64-i686
             - wine
     - compiler: "clang"
+      language: c
       os: osx
       env:
         - PLATFORM=osx   BITS=64 HOST=x86_64
@@ -52,12 +54,14 @@ matrix:
         - PKG_RULE=gzip
         - CXX=clang++
     - compiler: "gcc"
+      language: c
       os: osx
       env:
         - PLATFORM=osx   BITS=64 HOST=x86_64
         - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
         - PKG_RULE=gzip
     - compiler: "clang"
+      language: c
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
@@ -71,6 +75,7 @@ matrix:
             - libsdl2-dev
             - libsdl2-image-dev
     - compiler: "gcc"
+      language: c
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
