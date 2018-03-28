@@ -324,6 +324,7 @@ static int get_syms_v2(struct obj *o, FILE *in, void *context)
         GET(sym->name.len, in);
         sym->name.str = malloc(round_up_to_word(sym->name.len) + sizeof '\0');
         get_sized(sym->name.str, round_up_to_word(sym->name.len), 1, in);
+        sym->name.str[sym->name.len] = '\0';
         GET(sym->value, in);
         GET(sym->size, in);
     }
@@ -366,6 +367,7 @@ static int get_relocs_v2(struct obj *o, FILE *in, void *context)
         GET(rlc->name.len, in);
         rlc->name.str = malloc(round_up_to_word(rlc->name.len) + sizeof '\0');
         get_sized(rlc->name.str, round_up_to_word(rlc->name.len), 1, in);
+        rlc->name.str[rlc->name.len] = '\0';
         GET(rlc->addr, in);
         GET(rlc->width, in);
         GET(rlc->shift, in);
