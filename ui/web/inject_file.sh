@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Takes (2 * N) + 1 arguments : (search token, injected contents) * N, plus
 # destination file
 # Newline is necessary to delimit filename
