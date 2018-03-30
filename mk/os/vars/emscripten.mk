@@ -6,7 +6,7 @@ JIT = 0
 USE_OWN_SEARCH = 1
 LDFLAGS += -s MODULARIZE=1
 DYLIB_SUFFIX = .js
-TPP = cpp
+tpp = cpp
 
 BUILDDIR = $(TOP)/ui/web/build
 
