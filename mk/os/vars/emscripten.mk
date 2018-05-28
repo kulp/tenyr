@@ -44,7 +44,10 @@ LDFLAGS += -s ASSERTIONS=2 \
            #
 endif
 LDFLAGS += -s "EXPORT_NAME='Module_$*'"
-LDFLAGS += -s "EXPORTED_FUNCTIONS=[$(foreach f,$(EXPORTED_FUNCTIONS),'_$f',)]"
+null :=#
+space :=$(null) $(null)#
+comma :=$(null),#
+LDFLAGS += -s "EXPORTED_FUNCTIONS=[$(subst $(space),$(comma),$(foreach f,$(EXPORTED_FUNCTIONS),'_$f'))]"
 
 LDFLAGS += $(CC_OPT) $(CC_DEBUG)
 LDFLAGS += $(CLOSURE_FLAGS)
