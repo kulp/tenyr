@@ -59,13 +59,17 @@ extern void tenyr_push_state(int st, void *yyscanner);
 extern void tenyr_pop_state(void *yyscanner);
 %}
 
-%error-verbose
-%pure-parser
+%define parse.error verbose
+%define api.pure
 %locations
 %define parse.lac full
 %lex-param { void *yyscanner }
 /* declare parse_data struct as opaque for bison 2.6 */
-%code requires { struct parse_data; }
+%code requires {
+    #define YYSTYPE     TENYR_STYPE
+    #define YYLTYPE     TENYR_LTYPE
+    struct parse_data;
+}
 %code {
     #define yyscanner (pd->scanner)
     #define PUSH(State) tenyr_push_state(State, yyscanner)
@@ -73,7 +77,7 @@ extern void tenyr_pop_state(void *yyscanner);
     #define ERR(...)    tenyr_error(&yylloc, pd, __VA_ARGS__)
 }
 %parse-param { struct parse_data *pd }
-%name-prefix "tenyr_"
+%define api.prefix {tenyr_}
 
 %start top
 
