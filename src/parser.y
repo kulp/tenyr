@@ -10,6 +10,8 @@
 #include "parser_global.h"
 #include "expr.h"
 #include "parser.h"
+#define YY_HEADER_EXPORT_START_CONDITIONS 1
+#include "lexer.h"
 #include "asm.h"
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...);
@@ -65,8 +67,6 @@ extern void tenyr_pop_state(void *yyscanner);
 /* declare parse_data struct as opaque for bison 2.6 */
 %code requires { struct parse_data; }
 %code {
-    #define YY_HEADER_EXPORT_START_CONDITIONS 1
-    #include "lexer.h"
     #define yyscanner (pd->scanner)
     #define PUSH(State) tenyr_push_state(State, yyscanner)
     #define POP         tenyr_pop_state(yyscanner)
