@@ -29,6 +29,7 @@
     //
 
 #define SYMBOL_LEN_V1   32   /* only applies in object version 1 and before */
+#define SYMBOL_LEN_V2   2048 /* arbitrary large limit to avoid bad behavior with extreme values */
 // TODO document fixed lengths or remove the limitations
 #define LINE_LEN        512
 

@@ -322,8 +322,13 @@ static int get_syms_v2(struct obj *o, FILE *in, void *context)
     for_counted_get(objsym, sym, o->symbols, o->sym_count) {
         GET(sym->flags, in);
         GET(sym->name.len, in);
-        sym->name.str = malloc(round_up_to_word(sym->name.len) + sizeof '\0');
-        get_sized(sym->name.str, round_up_to_word(sym->name.len), 1, in);
+        if (sym->name.len > SYMBOL_LEN_V2) {
+            errno = EFBIG;
+            return 1;
+        }
+        size_t rounded_len = round_up_to_word(sym->name.len);
+        sym->name.str = malloc(rounded_len + sizeof '\0');
+        get_sized(sym->name.str, rounded_len, 1, in);
         sym->name.str[sym->name.len] = '\0';
         GET(sym->value, in);
         GET(sym->size, in);
@@ -365,8 +370,13 @@ static int get_relocs_v2(struct obj *o, FILE *in, void *context)
     for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
         GET(rlc->flags, in);
         GET(rlc->name.len, in);
-        rlc->name.str = malloc(round_up_to_word(rlc->name.len) + sizeof '\0');
-        get_sized(rlc->name.str, round_up_to_word(rlc->name.len), 1, in);
+        if (rlc->name.len > SYMBOL_LEN_V2) {
+            errno = EFBIG;
+            return 1;
+        }
+        size_t rounded_len = round_up_to_word(rlc->name.len);
+        rlc->name.str = malloc(rounded_len + sizeof '\0');
+        get_sized(rlc->name.str, rounded_len, 1, in);
         rlc->name.str[rlc->name.len] = '\0';
         GET(rlc->addr, in);
         GET(rlc->width, in);
