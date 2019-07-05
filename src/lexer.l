@@ -182,6 +182,8 @@ static int savestr(const char *text, size_t len, yyscan_t yyscanner)
     memcpy(s->tail, text, len);
     s->tail += len;
 
+    lval->cstr = s;
+
     return 0;
 }
 
