@@ -30,7 +30,6 @@ struct const_expr {
     #define DO_RELOCATION   (1 << 6)
     #define FORBID_LHS      (1 << 7)
     #define SPECIAL_LHS     (1 << 8)
-    #define HAS_LOCAL       (1 << 9)    ///< whether we have a LOCAL (.Llabel)
     int flags;  ///< flags are automatically inherited by parents in DAG
     struct element *insn; // for '.'-resolving // TODO rename
     struct element_list **deferred; // for an instruction context not available to me yet

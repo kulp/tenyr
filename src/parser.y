@@ -795,7 +795,7 @@ static int is_type3(struct const_expr *ce)
 static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
         int type, const struct cstr *symbol)
 {
-    int flags = IMM_IS_BITS | IS_DEFERRED | HAS_LOCAL;
+    int flags = IMM_IS_BITS | IS_DEFERRED;
     if (type == CE_EXT)
         flags |= IS_EXTERNAL;
     struct const_expr *eref = make_expr(pd, locp, type, 0, NULL, NULL, flags);
