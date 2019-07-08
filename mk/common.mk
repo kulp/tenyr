@@ -19,6 +19,12 @@ ifndef NDEBUG
  LDFLAGS  += -g
 endif
 
+# Set up -fsanitize= options
+SANITIZE_FLAGS += $(SANITIZE:%=-fsanitize=%)
+CFLAGS   += $(SANITIZE_FLAGS)
+CXXFLAGS += $(SANITIZE_FLAGS)
+LDFLAGS  += $(SANITIZE_FLAGS)
+
 ifeq ($(MEMCHECK),1)
  VALGRIND := $(shell which valgrind)
  ifeq ($(VALGRIND),)
