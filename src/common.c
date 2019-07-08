@@ -21,7 +21,7 @@ static const char *notdir(const char *file)
     if (slash)
         file = slash + 1; // if we found a slash, start after it
 
-	return file;
+    return file;
 }
 
 static void NORETURN main_fatal_(int code, const char *file, int line,

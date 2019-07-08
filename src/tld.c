@@ -110,7 +110,7 @@ static int ptrcmp(const void *a, const void *b)
 
 static int def_str_cmp(const void *a, const void *b)
 {
-	const struct defn *aa = a, *bb = b;
+    const struct defn *aa = a, *bb = b;
     return strcmp(aa->name, bb->name);
 }
 
