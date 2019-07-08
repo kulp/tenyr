@@ -237,10 +237,26 @@ static int do_link_process(struct link_state *s)
 
     while (objtree)
         tdelete(*(void**)objtree, &objtree, ptrcmp);
+
+    struct delete_list {
+        void *todo;
+        struct delete_list *next;
+    } *deletions = NULL;
+
     while (defns) {
         struct defn *d = defns;
-        free(d->name);
+        // Need to collect names to delete without deleting them, since
+        // def_str_cmp still needs the names to do a correct tdelete
+        struct delete_list *node = malloc(sizeof *node);
+        node->todo = d->name;
+        node->next = deletions;
+        deletions = node;
         tdelete(*(void**)defns, &defns, def_str_cmp);
+    }
+
+    list_foreach(delete_list, node, deletions) {
+        free(node->todo);
+        free(node);
     }
 
     return 0;
