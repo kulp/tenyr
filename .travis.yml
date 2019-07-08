@@ -65,6 +65,22 @@ matrix:
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
+        - CHECK_RULE=check_sw GCOV=
+        - PKG_RULE=gzip
+        - CXX=clang++
+        - SANITIZE=address
+        - ASAN_OPTIONS=detect_leaks=0 # TODO enable leak detection by removing this line
+      addons:
+        <<: *def_addons
+        apt:
+          packages:
+            - libsdl2-dev
+            - libsdl2-image-dev
+    - compiler: "clang"
+      language: c
+      os: linux
+      env:
+        - PLATFORM=linux BITS=64 HOST=x86_64
         - CHECK_RULE=check GCOV=
         - PKG_RULE=gzip
         - CXX=clang++
