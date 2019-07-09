@@ -93,6 +93,9 @@ tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
 # used to apply to .o only but some make versions built directly from .c
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
+# Exempt ourselves from string-related warnings we have manually vetted
+asm.o: CFLAGS += -Wno-stringop-overflow
+obj.o: CFLAGS += -Wno-stringop-truncation
 # don't complain about unused state
 asm.o asmif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
