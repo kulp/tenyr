@@ -155,13 +155,18 @@ int main(int argc, char *argv[])
             case 'q': flags |= ASM_QUIET; break;
             case 'v': flags |= ASM_VERBOSE; break;
 
-            case 'V': puts(version()); return EXIT_SUCCESS;
+            case 'V':
+                puts(version());
+                rc = EXIT_SUCCESS;
+                goto cleanup;
             case 'h':
                 usage(argv[0]);
-                return EXIT_FAILURE;
+                rc = EXIT_FAILURE;
+                goto cleanup;
             default:
                 usage(argv[0]);
-                return EXIT_FAILURE;
+                rc = EXIT_FAILURE;
+                goto cleanup;
         }
     }
 
@@ -190,6 +195,7 @@ int main(int argc, char *argv[])
     fclose(out);
     out = NULL;
 
+cleanup:
     param_destroy(params);
 
     return rc;
