@@ -387,13 +387,19 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'o': outfname = optarg; break;
             case 'p': param_add(params, optarg); break;
-            case 'V': puts(version()); return EXIT_SUCCESS;
+
+            case 'V':
+                puts(version());
+                rc = EXIT_SUCCESS;
+                goto cleanup;
             case 'h':
                 usage(argv[0]);
-                return EXIT_FAILURE;
+                rc = EXIT_FAILURE;
+                goto cleanup;
             default:
                 usage(argv[0]);
-                return EXIT_FAILURE;
+                rc = EXIT_FAILURE;
+                goto cleanup;
         }
     }
 
@@ -421,6 +427,9 @@ int main(int argc, char *argv[])
 
     fclose(out);
     out = NULL;
+
+cleanup:
+    param_destroy(params);
 
     return rc;
 }
