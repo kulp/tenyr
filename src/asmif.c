@@ -312,8 +312,10 @@ static int assembly_cleanup(struct parse_data *pd)
     list_foreach(global_list, Node, pd->globals)
         free(Node);
 
-    list_foreach(reloc_list, Node, pd->relocs)
+    list_foreach(reloc_list, Node, pd->relocs) {
+        free(Node->reloc.name);
         free(Node);
+    }
 
     return 0;
 }
