@@ -226,7 +226,7 @@ strspan
 
 data
     : ".word"  opt_nl expr_list {  POP; $$ = make_data(pd, $expr_list); }
-    | ".zero"  opt_nl expr      {  POP; $$ = make_zeros(pd, &yylloc, $expr); }
+    | ".zero"  opt_nl expr      {  POP; $$ = make_zeros(pd, &yylloc, $expr); ce_free($expr); }
     | ".utf32" opt_nl string    {  POP; $$ = make_utf32($string); free_cstr($string, 1); }
 
 directive

@@ -202,7 +202,7 @@ int ce_eval(struct parse_data *pd, struct element *context,
     return ce_eval_dispatch[ce->type](pd, context, ce, flags, width, shift, result);
 }
 
-static void ce_free(struct const_expr *ce)
+void ce_free(struct const_expr *ce)
 {
     if (!ce)
         return;
