@@ -286,11 +286,9 @@ static int check_symbols(struct symbol_list *symbols)
         }
     }
 
-    // delete from tree what we added to it
-    list_foreach(symbol_list, Node, symbols) {
-        if (!tree) break;
-        tdelete(Node->symbol, &tree, (cmp*)strcmp);
-    }
+    // delete entire tree
+    while (tree)
+        tdelete(*(void**)tree, &tree, (cmp*)strcmp);
 
     return rc;
 }
