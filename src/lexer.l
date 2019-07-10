@@ -34,7 +34,7 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 #define DUP         yy_push_state(yy_top_state(yyscanner), yyscanner)
 #define POP         yy_pop_state(yyscanner)
 #define NEWSTR      YSTR = resizestr(NULL, yyleng)
-#define CHKSTR      do { if (YSTR->size < 0) { NEWSTR; } } while (0)
+#define CHKSTR      do { if (!YSTR || YSTR->size < 0) { NEWSTR; } } while (0)
 #define SAVESTR     savestr(yytext, yyleng, yyscanner)
 
 %}
@@ -77,7 +77,7 @@ illegal             { return ILLEGAL; }
 {symbol}            { NEWSTR; SAVESTR; return SYMBOL; }
 {local}             { NEWSTR; SAVESTR; return LOCAL; }
 
-\"                  { NEWSTR; PUSH(string); return OPNQUOTE; }
+\"                  { YSTR = NULL; PUSH(string); return OPNQUOTE; }
 <string>{
     \"              { POP; return CLSQUOTE; }
     \\{escchar}     { CHKSTR; savechr(translate_escape(yylloc, yyextra, yytext[1]), yyscanner); YSTR->size = -1; return STRSPAN; }
