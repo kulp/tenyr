@@ -1,3 +1,6 @@
+# delete all build products built by a rule that exits nonzero
+.DELETE_ON_ERROR:
+
 ECHO := $(shell which echo)
 EMPTY :=#
 
