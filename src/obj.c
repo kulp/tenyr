@@ -242,6 +242,7 @@ int obj_write(struct obj *o, FILE *out)
 //
 
 #define for_counted_get(Tag,Name,List,Count) \
+    if (!(Count)) { /* avoid calloc when Count is zero */ } else \
     CREATE_SCOPE(struct Tag*,Name,=calloc(Count,sizeof *Name),**Prev_ = &List) \
     for (UWord i_ = Count; i_ > 0; *Prev_ = Name, Prev_ = &Name++->next, i_--) \
 //
