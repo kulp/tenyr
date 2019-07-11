@@ -470,26 +470,21 @@ static void obj_v0_free(struct obj *o)
 
 static void obj_v2_free(struct obj *o)
 {
-    UWord remaining = o->rec_count;
-    list_foreach(objrec, rec, o->records) {
-        if (remaining-- <= 0) break;
-        free(rec->data);
-    }
+#define obj_v2_free_helper(Tag, Field, Action)  \
+    do {                                        \
+        list_foreach(Tag, item, o->Field) {     \
+            Action;                             \
+            if (!o->bloc.Field)                 \
+                free(item);                     \
+        }                                       \
+        if (o->bloc.Field)                      \
+            free(o->Field);                     \
+    } while (0)                                 \
+    // end obj_v2_free_helper
 
-    if (o->bloc.relocs) free(o->relocs);
-    else list_foreach(objrlc,rlc,o->relocs) {
-        free(rlc->name.str);
-        free(rlc);
-    }
-
-    if (o->bloc.symbols) free(o->symbols);
-    else list_foreach(objsym,sym,o->symbols) {
-        free(sym->name.str);
-        free(sym);
-    }
-
-    if (o->bloc.records) free(o->records);
-    else list_foreach(objrec,rec,o->records) free(rec);
+    obj_v2_free_helper(objrlc, relocs , free(item->name.str));
+    obj_v2_free_helper(objsym, symbols, free(item->name.str));
+    obj_v2_free_helper(objrec, records, free(item->data    ));
 
     free(o);
 }
