@@ -69,7 +69,6 @@ matrix:
         - PKG_RULE=gzip
         - CXX=clang++
         - SANITIZE=address
-        - ASAN_OPTIONS=detect_leaks=0 # TODO enable leak detection by removing this line
       addons:
         <<: *def_addons
         apt:
