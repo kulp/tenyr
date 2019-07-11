@@ -235,8 +235,11 @@ static int do_link_process(struct link_state *s)
     do_link_build_state(s, &objtree, &defns);
     do_link_relocate(s->objs, &objtree, &defns);
 
-    while (objtree)
-        tdelete(*(void**)objtree, &objtree, ptrcmp);
+    while (objtree) {
+        void *node = *(void**)objtree;
+        tdelete(node, &objtree, ptrcmp);
+        free(node);
+    }
 
     struct delete_list {
         void *todo;
