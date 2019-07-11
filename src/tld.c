@@ -183,7 +183,7 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     if (rlc->name.len) { // TODO use length
         debug(1, "Object %p relocating name `%s` from %#x to %#x", i, rlc->name.str, rlc->addr, reladdr);
         struct defn def;
-        def.name = strdup(rlc->name.str);
+        def.name = rlc->name.str; // safe as long as we use tfind() but not tsearch()
         struct defn **look = tfind(&def, defns, def_str_cmp);
         if (!look)
             fatal(0, "Missing definition for symbol `%s'", rlc->name.str);
