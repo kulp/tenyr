@@ -482,7 +482,8 @@ int main(int argc, char *argv[])
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
-        return EXIT_FAILURE;
+        rc = EXIT_FAILURE;
+        goto cleanup;
     }
 
     // Trailing slash is required, because `build_path` strips off last path
@@ -549,10 +550,11 @@ int main(int argc, char *argv[])
 
     devices_teardown(s);
 
-    param_destroy(s->conf.params);
-
     if (s->conf.debugging > 0)
         fprintf(stderr, "Instructions executed: %llu\n", s->insns_executed);
+
+cleanup:
+    param_destroy(s->conf.params);
 
     while (s->libs) {
         struct library_list *t = s->libs;
