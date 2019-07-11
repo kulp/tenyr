@@ -353,6 +353,9 @@ int main(int argc, char *argv[])
     char * volatile outfname = NULL;
     FILE * volatile out = stdout;
 
+    struct param_state * volatile params = NULL;
+    param_init(&params);
+
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
@@ -361,11 +364,9 @@ int main(int argc, char *argv[])
             // able to remove a file by a stream connected to it, but there is
             // apparently no portable way to do this.
             (void)remove(outfname);
-        return EXIT_FAILURE;
+        rc = EXIT_FAILURE;
+        goto cleanup;
     }
-
-    struct param_state *params = NULL;
-    param_init(&params);
 
     // Explicitly reset optind for cases where main() is called more than once
     // (emscripten)
