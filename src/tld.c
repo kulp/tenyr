@@ -242,8 +242,9 @@ static int do_link_process(struct link_state *s)
     }
 
     while (defns) {
-        void *node = *(void**)defns;
+        struct defn *node = *(void**)defns;
         tdelete(node, &defns, def_str_cmp);
+        free(node->name);
         free(node);
     }
 
