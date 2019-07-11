@@ -75,6 +75,12 @@ int obj_write(struct obj *o, FILE *out);
 int obj_read(struct obj *o, FILE *in);
 void obj_free(struct obj *o);
 
+static inline size_t round_up_to_word(size_t x)
+{
+    // e.g. (x + 3) & ~3
+    return (x + (sizeof(UWord) - 1)) & ~(sizeof(UWord) - 1);
+}
+
 #endif
 
 /* vi: set ts=4 sw=4 et: */

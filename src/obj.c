@@ -19,12 +19,6 @@
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
 
-static inline size_t round_up_to_word(size_t x)
-{
-    // e.g. (x + 3) & ~3
-    return (x + (sizeof(UWord) - 1)) & ~(sizeof(UWord) - 1);
-}
-
 typedef int obj_op(struct obj *o, FILE *out, void *context);
 
 static obj_op

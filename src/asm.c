@@ -1,5 +1,3 @@
-#define _XOPEN_SOURCE (700) /* for strdup */
-
 #include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -14,6 +12,16 @@
 
 // The length (excluding terminating NUL) of an operator length in disassembly
 #define MAX_OP_LEN 3
+
+// Duplicate a string's contents, rounding up the length the a multiple of the
+// length of a UWord, plus a space for the trailing '\0', with the unused bytes
+// set to 0.
+static inline char *strdup_rounded_up(char *in)
+{
+    size_t len = round_up_to_word(strlen(in));
+    char *out = malloc(len + 1);
+    return strncpy(out, in, len + 1);
+}
 
 static const char op_names[][MAX_OP_LEN + 1] = {
     [OP_ADD              ] = "+",
@@ -358,7 +366,7 @@ static int obj_sym(FILE *stream, struct symbol *symbol, int flags, void *ud)
     if (symbol->global) {
         struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
-        sym->name.str = strdup(symbol->name);
+        sym->name.str = strdup_rounded_up(symbol->name);
         sym->name.len = strlen(symbol->name);
         // `symbol->resolved` must be true by this point
         sym->value = symbol->reladdr;
@@ -382,7 +390,7 @@ static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
     rlc->flags = reloc->flags;
-    rlc->name.str  = reloc->name ? strdup(reloc->name) : NULL;
+    rlc->name.str  = reloc->name ? strdup_rounded_up(reloc->name) : NULL;
     rlc->name.len  = reloc->name ? strlen(reloc->name) : 0;
     rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;
