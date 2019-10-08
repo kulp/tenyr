@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
     FILE * volatile out = stdout;
 
     struct param_state * volatile params = NULL;
-    param_init(&params);
+    param_init((struct param_state **)&params);
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
