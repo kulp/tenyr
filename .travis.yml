@@ -127,7 +127,7 @@ matrix:
         - docker exec -it emscripten make V=1 $CHECK_RULE PLATFORM=$PLATFORM JIT=$JIT SDL=$SDL NDEBUG=$NDEBUG
 sudo: false
 install:
-  - if (( GCOV )) ; then gem install coveralls-lcov; fi
+  - if (( GCOV )) ; then sudo gem install coveralls-lcov; fi
 before_script:
   - mkdir -p $DEPSSRC
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx ; fi
