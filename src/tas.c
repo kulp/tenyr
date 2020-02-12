@@ -176,6 +176,18 @@ int main(int argc, char *argv[])
 
     param_set(params, "assembling", &"1\0""0\0"[disassemble], 1, false, false);
 
+    {
+        int setting  = 0;
+        int clearing = 0;
+
+        // Return values from param_get_int are not significant in this case,
+        // since we have correct defaults.
+        param_get_int(params, "tas.flags.set"  , &setting );
+        param_get_int(params, "tas.flags.clear", &clearing);
+
+        flags = (flags | setting) & ~clearing;
+    }
+
     os_preamble();
 
     // TODO don't open output until input has been validated
