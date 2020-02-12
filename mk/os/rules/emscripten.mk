@@ -2,6 +2,8 @@
 $(LIB_TARGETS): CLOSURE_FLAGS =# empty
 $(LIB_TARGETS): LDFLAGS       = -s SIDE_MODULE=1
 preamble.o preamble,dy.o: CFLAGS += -Wno-dollar-in-identifier-extension
+# EM_ASM requires GNU mode
+preamble.o: CFLAGS += -std=gnu99
 # Disable closure compiler for tools using shared libraries
 tsim$(EXE_SUFFIX): CLOSURE_FLAGS :=# empty
 
