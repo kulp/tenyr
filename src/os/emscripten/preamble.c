@@ -10,7 +10,8 @@ int os_preamble()
 
     EM_ASM_(({
         if (ENVIRONMENT_IS_NODE) {
-            var mnt = Pointer_stringify($0);
+            var len = 1024; /* arbitrary */
+            var mnt = UTF8ToString($0, len);
             FS.mkdir(mnt);
             FS.mount(NODEFS, { root: '/' }, mnt);
             FS.chdir(mnt + process.cwd());
