@@ -141,6 +141,7 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     const struct hides hid = hide[g->p][op_types[op]][lzero][mzero][rzero];
 
     const int verbose = !!(flags & ASM_VERBOSE);
+    const int decimal = !!(flags & ASM_FORCE_DECIMAL_CONSTANTS);
 
     const char           c0    = brackets[0][g->dd == 2]; // left side deref ?
     const char           c1    = 'A' + g->z;              // register name for Z
@@ -159,7 +160,7 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     const int flip  = g->p == 0 && i8 < 0 && show2 && !verbose;
 
     char s8[16];
-    const char * const numfmt = (g->p == 3 || verbose) ? "0x%08x" : "%d";
+    const char * const numfmt = (!decimal && (g->p == 3 || verbose)) ? "0x%08x" : "%d";
     snprintf(s8, sizeof s8, numfmt, flip ? -i8 : i8);
 
     const char * const ss[] = { s8, s7, s5 };
