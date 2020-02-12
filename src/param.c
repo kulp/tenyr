@@ -48,6 +48,8 @@ int param_get_int(struct param_state *pstate, const char *key, int *val)
     return good;
 }
 
+// Returns the number of parameters with the given key, filling the first
+// `count` of them into the supplied `val` array
 int param_get(struct param_state *pstate, const char *key, size_t count, const void *val[count])
 {
     if (!pstate) return 0; // permit calling with NULL param set
@@ -60,9 +62,10 @@ int param_get(struct param_state *pstate, const char *key, size_t count, const v
     if (!q)
         return 0;
 
-    size_t i = 0;
-    for (struct string_list *r = q->list; r && i < count; r = r->next)
-        val[i++] = r->value;
+    unsigned int i = 0;
+    for (struct string_list *r = q->list; r; r = r->next, i++)
+        if (i < count)
+            val[i] = r->value;
 
     return i;
 }
