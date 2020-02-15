@@ -1,4 +1,5 @@
-if (ENVIRONMENT_IS_NODE) {
+// --pre-js inserts this code before ENVIRONMENT_IS_NODE is available, so approximate it here
+if (typeof process === 'object' && typeof process.versions === 'object' && typeof process.versions.node === 'string') {
   Module['stdout'] = function(x) { process.stdout.write(String.fromCharCode(x & 255), 'binary'); };
   Module['stdin'] = function stdin_reader () {
     var me = stdin_reader;
