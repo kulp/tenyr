@@ -116,6 +116,7 @@ matrix:
         - PLATFORM=emscripten
         - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
         - PKG_RULE=gzip
+        - NDEBUG=1
       sudo: required
       services:
         - docker
