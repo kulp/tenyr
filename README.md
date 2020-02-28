@@ -34,4 +34,3 @@ Someday it will also include :
 * a novel cooperative real-time operating system
 
 **tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki).
-Feel free to join our [Gitter IM room](https://gitter.im/kulp/tenyr).
