@@ -24,8 +24,6 @@ struct format {
     int (*err  )(        void  *ud);
 };
 
-int find_format_by_name(const void *_a, const void *_b);
-
 #define ASM_AS_INSN                 (1 << 0)
 #define ASM_AS_DATA                 (1 << 1)
 #define ASM_AS_CHAR                 (1 << 2)

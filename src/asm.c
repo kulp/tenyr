@@ -227,7 +227,7 @@ int print_registers(FILE *out, const int32_t regs[16])
     return 0;
 }
 
-int find_format_by_name(const void *_a, const void *_b)
+static int find_format_by_name(const void *_a, const void *_b)
 {
     const struct format *a = _a, *b = _b;
     return strcmp(a->name, b->name);
