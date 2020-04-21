@@ -19,7 +19,7 @@
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
 
-typedef int obj_op(struct obj *o, FILE *out, void *context);
+typedef int obj_op(struct obj *o, STREAM *out, void *context);
 
 static obj_op
     put_recs     , get_recs     ,
@@ -48,13 +48,13 @@ static struct objops {
     },
 };
 
-static inline void get_sized_le(void *what, size_t size, size_t count, FILE *where)
+static inline void get_sized_le(void *what, size_t size, size_t count, STREAM *where)
 {
     if (size * count == 0) {
         return;
     }
-    if (fread(what, size, count, where) != count) {
-        if (feof(where)) {
+    if (where->op.fread(what, size, count, where) != count) {
+        if (where->op.feof(where)) {
             fatal(0, "End of file unexpectedly reached while parsing object");
         } else {
             fatal(0, "Unknown error while parsing object");
@@ -62,13 +62,13 @@ static inline void get_sized_le(void *what, size_t size, size_t count, FILE *whe
     }
 }
 
-static inline void put_sized_le(const void *what, size_t size, size_t count, FILE *where)
+static inline void put_sized_le(const void *what, size_t size, size_t count, STREAM *where)
 {
     if (size * count == 0) {
         return;
     }
-    if (fwrite(what, size, count, where) != count) {
-        if (feof(where)) {
+    if (where->op.fwrite(what, size, count, where) != count) {
+        if (where->op.feof(where)) {
             fatal(0, "End of file unexpectedly reached while emitting object");
         } else {
             fatal(0, "Unknown error while emitting object");
@@ -80,7 +80,7 @@ static inline void put_sized_le(const void *what, size_t size, size_t count, FIL
 #define get_sized get_sized_le
 #define put_sized put_sized_le
 #else
-static inline void get_sized_be(void *what, size_t size, size_t count, FILE *where)
+static inline void get_sized_be(void *what, size_t size, size_t count, STREAM *where)
 {
     get_sized_le(what, size, count, where);
     // get_sized() isn't as general as it looks - it does bytes, UWords, and
@@ -92,7 +92,7 @@ static inline void get_sized_be(void *what, size_t size, size_t count, FILE *whe
     }
 }
 
-static inline void put_sized_be(const void *what, size_t size, size_t count, FILE *where)
+static inline void put_sized_be(const void *what, size_t size, size_t count, STREAM *where)
 {
     // put_sized() has an analagous caveat to get_sized()'s, but we only swap
     // one word at a time so we don't have to allocate arbitrarily-large
@@ -112,7 +112,7 @@ static inline void put_sized_be(const void *what, size_t size, size_t count, FIL
 #define put_sized put_sized_be
 #endif
 
-static int put_recs(struct obj *o, FILE *out, void *context)
+static int put_recs(struct obj *o, STREAM *out, void *context)
 {
     PUT(o->rec_count, out);
     list_foreach(objrec, rec, o->records) {
@@ -124,12 +124,12 @@ static int put_recs(struct obj *o, FILE *out, void *context)
     return 0;
 }
 
-static int put_syms_v0(struct obj *o, FILE *out, void *context)
+static int put_syms_v0(struct obj *o, STREAM *out, void *context)
 {
     return put_syms_v1(o, out, context);
 }
 
-static int put_syms_v1(struct obj *o, FILE *out, void *context)
+static int put_syms_v1(struct obj *o, STREAM *out, void *context)
 {
     PUT(o->sym_count, out);
     list_foreach(objsym, sym, o->symbols) {
@@ -144,7 +144,7 @@ static int put_syms_v1(struct obj *o, FILE *out, void *context)
     return 0;
 }
 
-static int put_syms_v2(struct obj *o, FILE *out, void *context)
+static int put_syms_v2(struct obj *o, STREAM *out, void *context)
 {
     PUT(o->sym_count, out);
     list_foreach(objsym, sym, o->symbols) {
@@ -158,7 +158,7 @@ static int put_syms_v2(struct obj *o, FILE *out, void *context)
     return 0;
 }
 
-static int put_relocs_v0(struct obj *o, FILE *out, void *context)
+static int put_relocs_v0(struct obj *o, STREAM *out, void *context)
 {
     PUT(o->rlc_count, out);
     list_foreach(objrlc, rlc, o->relocs) {
@@ -173,7 +173,7 @@ static int put_relocs_v0(struct obj *o, FILE *out, void *context)
     return 0;
 }
 
-static int put_relocs_v1(struct obj *o, FILE *out, void *context)
+static int put_relocs_v1(struct obj *o, STREAM *out, void *context)
 {
     PUT(o->rlc_count, out);
     list_foreach(objrlc, rlc, o->relocs) {
@@ -189,7 +189,7 @@ static int put_relocs_v1(struct obj *o, FILE *out, void *context)
     return 0;
 }
 
-static int put_relocs_v2(struct obj *o, FILE *out, void *context)
+static int put_relocs_v2(struct obj *o, STREAM *out, void *context)
 {
     PUT(o->rlc_count, out);
     list_foreach(objrlc, rlc, o->relocs) {
@@ -204,7 +204,7 @@ static int put_relocs_v2(struct obj *o, FILE *out, void *context)
     return 0;
 }
 
-static int obj_vx_write(struct obj *o, FILE *out, struct objops *ops)
+static int obj_vx_write(struct obj *o, STREAM *out, struct objops *ops)
 {
     put_sized(MAGIC_BYTES, 3, 1, out);
     PUT(o->magic.parsed.version, out);
@@ -220,7 +220,7 @@ static int obj_vx_write(struct obj *o, FILE *out, struct objops *ops)
     return 0;
 }
 
-int obj_write(struct obj *o, FILE *out)
+int obj_write(struct obj *o, STREAM *out)
 {
     int version = o->magic.parsed.version;
 
@@ -247,7 +247,7 @@ int obj_write(struct obj *o, FILE *out)
     for (UWord i_ = Count; i_ > 0; *Prev_ = Name, Prev_ = &Name++->next, i_--) \
 //
 
-static int get_recs(struct obj *o, FILE *in, void *context)
+static int get_recs(struct obj *o, STREAM *in, void *context)
 {
     int *filesize = context;
 
@@ -264,7 +264,7 @@ static int get_recs(struct obj *o, FILE *in, void *context)
             errno = EFBIG;
             return 1;
         }
-        long here = ftell(in);
+        long here = in->op.ftell(in);
         if (here < 0) {
             // not a seekable stream -- forge ahead recklessly
         } else if (rec->size + here > (unsigned)*filesize) {
@@ -280,12 +280,12 @@ static int get_recs(struct obj *o, FILE *in, void *context)
     return 0;
 }
 
-static int get_syms_v0(struct obj *o, FILE *in, void *context)
+static int get_syms_v0(struct obj *o, STREAM *in, void *context)
 {
     return get_syms_v1(o, in, context);
 }
 
-static int get_syms_v1(struct obj *o, FILE *in, void *context)
+static int get_syms_v1(struct obj *o, STREAM *in, void *context)
 {
     GET(o->sym_count, in);
     if (o->sym_count > OBJ_MAX_SYMBOLS) {
@@ -306,7 +306,7 @@ static int get_syms_v1(struct obj *o, FILE *in, void *context)
     return 0;
 }
 
-static int get_syms_v2(struct obj *o, FILE *in, void *context)
+static int get_syms_v2(struct obj *o, STREAM *in, void *context)
 {
     GET(o->sym_count, in);
     if (o->sym_count > OBJ_MAX_SYMBOLS) {
@@ -332,7 +332,7 @@ static int get_syms_v2(struct obj *o, FILE *in, void *context)
     return 0;
 }
 
-static int get_relocs_v0(struct obj *o, FILE *in, void *context)
+static int get_relocs_v0(struct obj *o, STREAM *in, void *context)
 {
     GET(o->rlc_count, in);
     if (o->rlc_count > OBJ_MAX_RELOCS) {
@@ -354,7 +354,7 @@ static int get_relocs_v0(struct obj *o, FILE *in, void *context)
     return 0;
 }
 
-static int get_relocs_v2(struct obj *o, FILE *in, void *context)
+static int get_relocs_v2(struct obj *o, STREAM *in, void *context)
 {
     GET(o->rlc_count, in);
     if (o->rlc_count > OBJ_MAX_RELOCS) {
@@ -381,7 +381,7 @@ static int get_relocs_v2(struct obj *o, FILE *in, void *context)
     return 0;
 }
 
-static int get_relocs_v1(struct obj *o, FILE *in, void *context)
+static int get_relocs_v1(struct obj *o, STREAM *in, void *context)
 {
     GET(o->rlc_count, in);
     if (o->rlc_count > OBJ_MAX_RELOCS) {
@@ -403,13 +403,13 @@ static int get_relocs_v1(struct obj *o, FILE *in, void *context)
     return 0;
 }
 
-static int obj_vx_read(struct obj *o, FILE *in, struct objops *ops)
+static int obj_vx_read(struct obj *o, STREAM *in, struct objops *ops)
 {
-    long where = ftell(in);
+    long where = in->op.ftell(in);
     long filesize = LONG_MAX;
-    if (where >= 0 && !fseek(in, 0L, SEEK_END)) { // seekable stream
-        filesize = ftell(in);
-        if (fseek(in, where, SEEK_SET))
+    if (where >= 0 && !in->op.fseek(in, 0L, SEEK_END)) { // seekable stream
+        filesize = in->op.ftell(in);
+        if (in->op.fseek(in, where, SEEK_SET))
             fatal(PRINT_ERRNO, "Failed to seek input stream");
     }
 
@@ -425,7 +425,7 @@ static int obj_vx_read(struct obj *o, FILE *in, struct objops *ops)
     return 0;
 }
 
-int obj_read(struct obj *o, FILE *in)
+int obj_read(struct obj *o, STREAM *in)
 {
     GET(o->magic.parsed.TOV, in);
 

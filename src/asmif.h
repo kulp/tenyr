@@ -1,12 +1,14 @@
 #ifndef ASMIF_H_
 #define ASMIF_H_
 
+#include "stream.h"
+
 #include <stdio.h>
 
 struct format;
 
-int do_assembly(FILE *in, FILE *out, const struct format *f, void *ud);
-int do_disassembly(FILE *in, FILE *out, const struct format *f, void *ud, int flags);
+int do_assembly(STREAM *in, STREAM *out, const struct format *f, void *ud);
+int do_disassembly(STREAM *in, STREAM *out, const struct format *f, void *ud, int flags);
 
 #endif
 

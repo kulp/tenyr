@@ -8,6 +8,7 @@
 #include "sim.h"
 // for RAM_BASE
 #include "devices/ram.h"
+#include "stream.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -142,15 +143,20 @@ static int pre_insn(struct sim_state *s, const struct element *i, void *ud)
     if (s->conf.verbose > 0)
         fprintf(stderr, "IP = 0x%08x\t", s->machine.regs[15]);
 
+    struct stream out_ = {
+        .op = stream_get_default_ops(),
+        .ud = stderr,
+    }, *out = &out_;
+
     if (s->conf.verbose > 1) {
-        int len = print_disassembly(stderr, i, ASM_AS_INSN);
+        int len = print_disassembly(out, i, ASM_AS_INSN);
         fprintf(stderr, "%*s# ", 30 - len, "");
-        print_disassembly(stderr, i, ASM_AS_DATA);
+        print_disassembly(out, i, ASM_AS_DATA);
     }
 
     if (s->conf.verbose > 3) {
         fwrite("\n", 1, 1, stderr);
-        print_registers(stderr, s->machine.regs);
+        print_registers(out, s->machine.regs);
     }
 
     if (s->conf.verbose > 0)
@@ -499,19 +505,24 @@ int main(int argc, char *argv[])
         fatal(DISPLAY_USAGE, "More than one input file specified on the command line");
     }
 
-    FILE *in;
+    FILE *infile;
 
     if (!strcmp(argv[optind], "-")) {
-        in = stdin;
+        infile = stdin;
     } else {
-        in = os_fopen(argv[optind], "rb");
-        if (!in)
+        infile = os_fopen(argv[optind], "rb");
+        if (!infile)
             fatal(PRINT_ERRNO, "Failed to open input file `%s'", argv[optind]);
     }
 
     // Explicitly clear errors and EOF in case we run main() twice
     // (emscripten)
-    clearerr(in);
+    clearerr(infile);
+
+    struct stream in_ = {
+        .op = stream_get_default_ops(),
+        .ud = infile,
+    }, *in = &in_;
 
     devices_setup(s);
     run_recipes(s);
@@ -545,7 +556,7 @@ int main(int argc, char *argv[])
     if (rc < 0)
         fprintf(stderr, "Error during simulation, P=0x%08x\n", s->machine.regs[15]);
 
-    fclose(in);
+    fclose(infile);
 
     devices_teardown(s);
 

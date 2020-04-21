@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "param.h"
+#include "stream.h"
 
 struct element;
 struct symbol;
@@ -12,16 +13,16 @@ struct reloc_node;
 
 struct format {
     const char *name;
-    int (*init )(FILE *, struct param_state *, void **ud);
-    int (*in   )(FILE *, struct element *, void *ud);
-    int (*out  )(FILE *, struct element *, void *ud);
+    int (*init )(STREAM *, struct param_state *, void **ud);
+    int (*in   )(STREAM *, struct element *, void *ud);
+    int (*out  )(STREAM *, struct element *, void *ud);
 
-    int (*sym  )(FILE *, struct symbol *, int, void *ud);
-    int (*reloc)(FILE *, struct reloc_node *, void *ud);
+    int (*sym  )(STREAM *, struct symbol *, int, void *ud);
+    int (*reloc)(STREAM *, struct reloc_node *, void *ud);
 
-    int (*emit )(FILE *, void **ud);
-    int (*fini )(FILE *, void **ud);
-    int (*err  )(        void  *ud);
+    int (*emit )(STREAM *, void **ud);
+    int (*fini )(STREAM *, void **ud);
+    int (*err  )(          void  *ud);
 };
 
 #define ASM_AS_INSN                 (1 << 0)
@@ -33,8 +34,8 @@ struct format {
 #define ASM_FORCE_DECIMAL_CONSTANTS (1 << 6)
 
 // returns number of characters printed
-int print_disassembly(FILE *out, const struct element *i, int flags);
-int print_registers(FILE *out, const int32_t regs[16]);
+int print_disassembly(STREAM *out, const struct element *i, int flags);
+int print_registers(STREAM *out, const int32_t regs[16]);
 
 extern const struct format tenyr_asm_formats[];
 extern const size_t tenyr_asm_formats_count;

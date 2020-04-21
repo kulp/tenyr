@@ -77,7 +77,7 @@ struct run_ops {
 
 extern sim_runner interp_run_sim, interp_step_sim;
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
-        void *fud, FILE *in, int load_address);
+        void *fud, STREAM *in, int load_address);
 
 #define breakpoint(...) \
     fatal(0, __VA_ARGS__)

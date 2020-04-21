@@ -2,6 +2,7 @@
 #define OBJ_H_
 
 #include "common.h"
+#include "stream.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -71,8 +72,8 @@ struct obj {
     } *relocs;
 };
 
-int obj_write(struct obj *o, FILE *out);
-int obj_read(struct obj *o, FILE *in);
+int obj_write(struct obj *o, STREAM *out);
+int obj_read(struct obj *o, STREAM *in);
 void obj_free(struct obj *o);
 
 static inline size_t round_up_to_word(size_t x)

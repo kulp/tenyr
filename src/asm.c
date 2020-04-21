@@ -9,6 +9,7 @@
 #include "parser_global.h"
 #include "param.h"
 #include "os_common.h"
+#include "stream.h"
 
 // The length (excluding terminating NUL) of an operator length in disassembly
 #define MAX_OP_LEN 3
@@ -112,17 +113,17 @@ static int is_printable(unsigned int ch, char buf[3])
     }
 }
 
-int print_disassembly(FILE *out, const struct element *i, int flags)
+int print_disassembly(STREAM *out, const struct element *i, int flags)
 {
     if (flags & ASM_AS_DATA)
-        return fprintf(out, ".word 0x%08x", i->insn.u.word);
+        return out->op.fprintf(out, ".word 0x%08x", i->insn.u.word);
 
     if (flags & ASM_AS_CHAR) {
         char buf[3];
         if (is_printable(i->insn.u.word, buf))
-            return fprintf(out, ".word '%s'%*s", buf, buf[1] == '\0', "");
+            return out->op.fprintf(out, ".word '%s'%*s", buf, buf[1] == '\0', "");
         else
-            return fprintf(out, "          ");
+            return out->op.fprintf(out, "          ");
     }
 
     const struct instruction_typeany * const g = &i->insn.u.typeany;
@@ -192,7 +193,7 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     #define C_(C,B,A) (((C) << 2) | ((B) << 1) | (A))
     switch (C_(show1,show2,show3)) {
         #define PUT(...) \
-            fprintf(out,disasm_fmts[show1 + show2 + show3],__VA_ARGS__)
+            out->op.fprintf(out,disasm_fmts[show1 + show2 + show3],__VA_ARGS__)
         // Some combinations are never generated
     //  case C_(0,0,0): return PUT(c0,c1,c2,s3,c4,               c9);
         case C_(0,0,1): return PUT(c0,c1,c2,s3,c4,            sC,c9);
@@ -211,18 +212,18 @@ int print_disassembly(FILE *out, const struct element *i, int flags)
     #undef C_
 }
 
-int print_registers(FILE *out, const int32_t regs[16])
+int print_registers(STREAM *out, const int32_t regs[16])
 {
     for (int i = 0; i < 15; i++) {
-        fprintf(out, "%c %08x ", 'A' + i, regs[i]);
+        out->op.fprintf(out, "%c %08x ", 'A' + i, regs[i]);
         if (i % 6 == 5)
-            fwrite("\n", 1, 1, out);
+            out->op.fwrite("\n", 1, 1, out);
     }
 
     // Treat P specially : a read would return IP + 1
-    fprintf(out, "%c %08x ", 'A' + 15, regs[15] + 1);
+    out->op.fprintf(out, "%c %08x ", 'A' + 15, regs[15] + 1);
 
-    fwrite("\n", 1, 1, out);
+    out->op.fwrite("\n", 1, 1, out);
 
     return 0;
 }
@@ -230,14 +231,14 @@ int print_registers(FILE *out, const int32_t regs[16])
 /*******************************************************************************
  * general hooks
  */
-static int gen_init(FILE *stream, struct param_state *p, void **ud)
+static int gen_init(STREAM *stream, struct param_state *p, void **ud)
 {
     int *offset = *ud = malloc(sizeof *offset);
     *offset = 0;
     return 0;
 }
 
-static int gen_fini(FILE *stream, void **ud)
+static int gen_fini(STREAM *stream, void **ud)
 {
     free(*ud);
     *ud = NULL;
@@ -262,7 +263,7 @@ struct obj_fdata {
     int error;
 };
 
-static int obj_init(FILE *stream, struct param_state *p, void **ud)
+static int obj_init(STREAM *stream, struct param_state *p, void **ud)
 {
     int rc = 0;
 
@@ -291,7 +292,7 @@ static int obj_init(FILE *stream, struct param_state *p, void **ud)
     return rc;
 }
 
-static int obj_in(FILE *stream, struct element *i, void *ud)
+static int obj_in(STREAM *stream, struct element *i, void *ud)
 {
     struct obj_fdata *u = ud;
 
@@ -344,7 +345,7 @@ static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
     u->pos += i->insn.size;
 }
 
-static int obj_out(FILE *stream, struct element *i, void *ud)
+static int obj_out(STREAM *stream, struct element *i, void *ud)
 {
     struct obj_fdata *u = ud;
 
@@ -353,7 +354,7 @@ static int obj_out(FILE *stream, struct element *i, void *ud)
     return 1;
 }
 
-static int obj_sym(FILE *stream, struct symbol *symbol, int flags, void *ud)
+static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
 {
     int rc = 1;
     struct obj_fdata *u = ud;
@@ -374,7 +375,7 @@ static int obj_sym(FILE *stream, struct symbol *symbol, int flags, void *ud)
     return rc;
 }
 
-static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
+static int obj_reloc(STREAM *stream, struct reloc_node *reloc, void *ud)
 {
     struct obj_fdata *u = ud;
     if (!reloc || !reloc->insn) {
@@ -398,7 +399,7 @@ static int obj_reloc(FILE *stream, struct reloc_node *reloc, void *ud)
     return 1;
 }
 
-static int obj_emit(FILE *stream, void **ud)
+static int obj_emit(STREAM *stream, void **ud)
 {
     struct obj_fdata *u = *ud;
     struct obj *o = u->o;
@@ -414,7 +415,7 @@ static int obj_emit(FILE *stream, void **ud)
     return 0;
 }
 
-static int obj_fini(FILE *stream, void **ud)
+static int obj_fini(STREAM *stream, void **ud)
 {
     struct obj_fdata *u = *ud;
 
@@ -435,34 +436,35 @@ static int obj_err(void *ud)
 /*******************************************************************************
  * Text format : hexadecimal numbers
  */
-static int text_in(FILE *stream, struct element *i, void *ud)
+static int text_in(STREAM *stream, struct element *i, void *ud)
 {
     int32_t *offset = ud;
-    int result = fscanf(stream, "  %x", &i->insn.u.word) == 1;
+    int result = stream->op.fscanf(stream, "  %x", &i->insn.u.word) == 1;
     if (!result) {
-        if (feof(stream))
+        if (stream->op.feof(stream))
             return -1;
-        result = fscanf(stream, " 0x%x", &i->insn.u.word) == 1;
-        if (!result && feof(stream))
+        result = stream->op.fscanf(stream, " 0x%x", &i->insn.u.word) == 1;
+        if (!result && stream->op.feof(stream))
             return -1;
     }
     i->insn.reladdr = (*offset)++;
     // Check for whitespace or EOF after the consumed item. This format can
     // read "agda"" as "0xa" and subsequently fail, when the whole string
     // should have been rejected.
-    int next_char = fgetc(stream);
-    if (next_char != EOF && !isspace(next_char))
+    char next_char = 0;
+    int len = stream->op.fread(&next_char, 1, 1, stream);
+    if (len > 0 && !isspace(next_char))
         return -1;
     return result ? 1 : -1;
 }
 
-static int text_out(FILE *stream, struct element *i, void *ud)
+static int text_out(STREAM *stream, struct element *i, void *ud)
 {
     int ok = 1;
     if (i->insn.size > 0)
-        ok &= fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
+        ok &= stream->op.fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
     for (int c = 1; c < i->insn.size && ok; c++)
-        ok &= fprintf(stream, "0x00000000\n") > 0;
+        ok &= stream->op.fprintf(stream, "0x00000000\n") > 0;
     return ok ? 1 : -1;
 }
 
@@ -477,7 +479,7 @@ struct memh_state {
     unsigned error:1;
 };
 
-static int memh_init(FILE *stream, struct param_state *p, void **ud)
+static int memh_init(STREAM *stream, struct param_state *p, void **ud)
 {
     struct memh_state *state = *ud = calloc(1, sizeof *state);
 
@@ -490,7 +492,7 @@ static int memh_init(FILE *stream, struct param_state *p, void **ud)
     return 0;
 }
 
-static int memh_in(FILE *stream, struct element *i, void *ud)
+static int memh_in(STREAM *stream, struct element *i, void *ud)
 {
     struct memh_state *state = ud;
 
@@ -499,10 +501,10 @@ static int memh_in(FILE *stream, struct element *i, void *ud)
         i->insn.reladdr = state->written++;
         return 1;
     } else if (state->marked == state->written) {
-        if (fscanf(stream, " @%x", (uint32_t*)&state->marked) == 1)
+        if (stream->op.fscanf(stream, " @%x", (uint32_t*)&state->marked) == 1)
             return 0; // let next call handle it
 
-        if (fscanf(stream, " %x", &i->insn.u.word) != 1)
+        if (stream->op.fscanf(stream, " %x", &i->insn.u.word) != 1)
             return -1;
 
         i->insn.reladdr = state->written++;
@@ -514,7 +516,7 @@ static int memh_in(FILE *stream, struct element *i, void *ud)
     }
 }
 
-static int memh_out(FILE *stream, struct element *i, void *ud)
+static int memh_out(STREAM *stream, struct element *i, void *ud)
 {
     struct memh_state *state = ud;
     int32_t addr = i->insn.reladdr + state->offset;
@@ -527,11 +529,11 @@ static int memh_out(FILE *stream, struct element *i, void *ud)
     state->written = addr;
     int printed = 0;
     if (diff > 1 || !state->first_done)
-        printed = fprintf(stream, "@%x ", addr) > 2;
+        printed = stream->op.fprintf(stream, "@%x ", addr) > 2;
 
     state->first_done = 1;
 
-    return (printed + fprintf(stream, "%08x\n", word) > 3) ? 1 : -1;
+    return (printed + stream->op.fprintf(stream, "%08x\n", word) > 3) ? 1 : -1;
 }
 
 static int memh_err(void *ud)
