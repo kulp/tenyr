@@ -3,14 +3,26 @@
 
 #include <stddef.h>
 
-typedef int stream_printf(void *userdata, const char *format, ...);
-typedef size_t stream_read(void *ptr, size_t size, size_t nitems, void *userdata);
-typedef size_t stream_write(const void *ptr, size_t size, size_t nitems, void *userdata);
+typedef struct stream STREAM;
+
+typedef int stream_printf(STREAM *s, const char *format, ...);
+typedef int stream_scanf(STREAM *s, const char *format, ...);
+typedef size_t stream_read(void *ptr, size_t size, size_t nitems, STREAM *s);
+typedef size_t stream_write(const void *ptr, size_t size, size_t nitems, STREAM *s);
+typedef int stream_eof(STREAM *s);
+typedef int stream_flush(STREAM *s);
+typedef int stream_seek(STREAM *s, long offset, int whence);
+typedef long stream_tell(STREAM *s);
 
 struct stream_ops {
     stream_printf *fprintf;
+    stream_scanf *fscanf;
     stream_read *fread;
     stream_write *fwrite;
+    stream_eof *feof;
+    stream_flush *fflush;
+    stream_seek *fseek;
+    stream_tell *ftell;
 };
 
 struct stream {
@@ -18,7 +30,7 @@ struct stream {
     const struct stream_ops op;
 };
 
-typedef struct stream STREAM;
+struct stream_ops stream_get_default_ops(void);
 
 #endif
 
