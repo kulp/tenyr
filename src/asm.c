@@ -227,12 +227,6 @@ int print_registers(FILE *out, const int32_t regs[16])
     return 0;
 }
 
-static int find_format_by_name(const void *_a, const void *_b)
-{
-    const struct format *a = _a, *b = _b;
-    return strcmp(a->name, b->name);
-}
-
 /*******************************************************************************
  * general hooks
  */
@@ -639,6 +633,12 @@ int make_format_list(int (*pred)(const struct format *), size_t flen,
             pos += snprintf(&buf[pos], len - pos, "%s%s", pos ? sep : "", f->name);
 
     return pos;
+}
+
+static int find_format_by_name(const void *_a, const void *_b)
+{
+    const struct format *a = _a, *b = _b;
+    return strcmp(a->name, b->name);
 }
 
 int find_format(const char *optarg, const struct format **f)
