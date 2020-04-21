@@ -54,7 +54,7 @@ static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     int rc = -1;
 
     if (op == OP_WRITE) {
-        fputc(*data, s->out);
+        fwrite(data, 1, 1, s->out);
         fflush(s->out);
         rc = ferror(s->out);
     } else if (op == OP_DATA_READ) {

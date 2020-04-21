@@ -216,13 +216,13 @@ int print_registers(FILE *out, const int32_t regs[16])
     for (int i = 0; i < 15; i++) {
         fprintf(out, "%c %08x ", 'A' + i, regs[i]);
         if (i % 6 == 5)
-            fputc('\n', out);
+            fwrite("\n", 1, 1, out);
     }
 
     // Treat P specially : a read would return IP + 1
     fprintf(out, "%c %08x ", 'A' + 15, regs[15] + 1);
 
-    fputc('\n', out);
+    fwrite("\n", 1, 1, out);
 
     return 0;
 }

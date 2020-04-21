@@ -419,7 +419,7 @@ int do_disassembly(FILE *in, FILE *out, const struct format *f, void *ud, int fl
             print_disassembly(out, &i, ASM_AS_CHAR | flags);
             fprintf(out, " ; .addr 0x%08x\n", i.insn.reladdr);
         } else {
-            fputc('\n', out);
+            fwrite("\n", 1, 1, out);
             // This probably means we want line-oriented output
             fflush(out);
         }
