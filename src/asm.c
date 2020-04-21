@@ -462,7 +462,7 @@ static int text_out(FILE *stream, struct element *i, void *ud)
     if (i->insn.size > 0)
         ok &= fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
     for (int c = 1; c < i->insn.size && ok; c++)
-        ok &= fputs("0x00000000\n", stream) > 0;
+        ok &= fprintf(stream, "0x00000000\n") > 0;
     return ok ? 1 : -1;
 }
 

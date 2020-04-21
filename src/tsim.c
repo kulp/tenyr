@@ -149,12 +149,12 @@ static int pre_insn(struct sim_state *s, const struct element *i, void *ud)
     }
 
     if (s->conf.verbose > 3) {
-        fputs("\n", stderr);
+        fwrite("\n", 1, 1, stderr);
         print_registers(stderr, s->machine.regs);
     }
 
     if (s->conf.verbose > 0)
-        fputs("\n", stderr);
+        fwrite("\n", 1, 1, stderr);
 
     return 0;
 }
