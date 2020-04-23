@@ -435,13 +435,6 @@ static int obj_err(void *ud)
 /*******************************************************************************
  * Text format : hexadecimal numbers
  */
-static int text_init(FILE *stream, struct param_state *p, void **ud)
-{
-    // This output might be consumed by a tool that needs a line at a time
-    return gen_init(stream, p, ud)
-        || os_set_buffering(stream, _IOLBF);
-}
-
 static int text_in(FILE *stream, struct element *i, void *ud)
 {
     int32_t *offset = ud;
@@ -559,7 +552,7 @@ const struct format tenyr_asm_formats[] = {
         .reloc = obj_reloc,
         .err   = obj_err },
     { "text",
-        .init  = text_init,
+        .init  = gen_init,
         .in    = text_in,
         .out   = text_out,
         .fini  = gen_fini },
