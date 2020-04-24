@@ -1,3 +1,6 @@
+// Provides a thin abstraction over C streams (FILE*) in order to enable
+// library interactions with software that does not support FILE* (e.g. FFI
+// with non-C languages).
 #ifndef STREAM_H_
 #define STREAM_H_
 
