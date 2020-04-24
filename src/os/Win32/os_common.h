@@ -12,11 +12,6 @@
  */
 typedef unsigned int lfind_size_t;
 
-static inline int os_set_binmode(FILE *stream)
-{
-    return setmode(fileno(stream), O_BINARY) == -1;
-}
-
 // timeradd doesn't exist on MinGW
 #ifndef timeradd
 #define timeradd(a, b, result) \
