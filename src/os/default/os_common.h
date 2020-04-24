@@ -6,13 +6,6 @@
 
 typedef size_t lfind_size_t;
 
-static inline int os_set_binmode(void *stream)
-{
-    /* no-op */
-    (void)stream;
-    return 0;
-}
-
 char *os_find_self(const char *);
 FILE *os_fopen(const char *, const char *);
 int os_get_tsimrc_path(char buf[], size_t sz);

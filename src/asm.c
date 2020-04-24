@@ -436,13 +436,6 @@ static int obj_err(void *ud)
  * Raw format : raw binary data (host endian)
  */
 
-static int raw_init(FILE *stream, struct param_state *p, void **ud)
-{
-    int rc = gen_init(stream, p, ud);
-    os_set_binmode(stream);
-    return rc;
-}
-
 static int raw_in(FILE *stream, struct element *i, void *ud)
 {
     int *offset = ud;
@@ -604,7 +597,7 @@ const struct format tenyr_asm_formats[] = {
         .reloc = obj_reloc,
         .err   = obj_err },
     { "raw",
-        .init  = raw_init ,
+        .init  = gen_init ,
         .in    = raw_in ,
         .out   = raw_out ,
         .fini  = gen_fini },
