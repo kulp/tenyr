@@ -5,6 +5,7 @@
 #define STREAM_H_
 
 #include <stddef.h>
+#include <stdio.h>
 
 typedef struct stream STREAM;
 
@@ -40,6 +41,8 @@ struct stream {
 };
 
 struct stream_ops stream_get_default_ops(void);
+
+struct stream stream_make_from_file(FILE *f);
 
 #endif
 

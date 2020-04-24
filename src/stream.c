@@ -90,3 +90,11 @@ struct stream_ops stream_get_default_ops(void)
     };
 }
 
+struct stream stream_make_from_file(FILE *f)
+{
+	return (struct stream){
+        .ud = f,
+        .op = stream_get_default_ops(),
+    };
+}
+
