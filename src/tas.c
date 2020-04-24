@@ -67,15 +67,8 @@ static int process_stream(struct param_state *params, const struct format *f,
 {
     int rc = 0;
 
-    struct stream in_ = {
-        .op = stream_get_default_ops(),
-        .ud = infile,
-    }, *in = &in_;
-
-    struct stream out_ = {
-        .op = stream_get_default_ops(),
-        .ud = outfile,
-    }, *out = &out_;
+    const struct stream in_ = stream_make_from_file(infile), *in = &in_;
+    const struct stream out_ = stream_make_from_file(outfile), *out = &out_;
 
     int disassemble = flags & ASM_DISASSEMBLE;
     STREAM *stream = disassemble ? in : out;

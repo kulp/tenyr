@@ -143,10 +143,7 @@ static int pre_insn(struct sim_state *s, const struct element *i, void *ud)
     if (s->conf.verbose > 0)
         fprintf(stderr, "IP = 0x%08x\t", s->machine.regs[15]);
 
-    struct stream out_ = {
-        .op = stream_get_default_ops(),
-        .ud = stderr,
-    }, *out = &out_;
+    const struct stream out_ = stream_make_from_file(stderr), *out = &out_;
 
     if (s->conf.verbose > 1) {
         int len = print_disassembly(out, i, ASM_AS_INSN);
@@ -519,10 +516,7 @@ int main(int argc, char *argv[])
     // (emscripten)
     clearerr(infile);
 
-    struct stream in_ = {
-        .op = stream_get_default_ops(),
-        .ud = infile,
-    }, *in = &in_;
+    const struct stream in_ = stream_make_from_file(infile), *in = &in_;
 
     devices_setup(s);
     run_recipes(s);

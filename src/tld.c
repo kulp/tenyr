@@ -328,10 +328,7 @@ int do_load_all(struct link_state *s, int count, char *names[count])
         // (emscripten)
         clearerr(infile);
 
-        struct stream in_ = {
-            .op = stream_get_default_ops(),
-            .ud = infile,
-        }, *in = &in_;
+        const struct stream in_ = stream_make_from_file(infile), *in = &in_;
 
         rc = do_load(s, in);
         int saved = errno;
@@ -408,10 +405,7 @@ int main(int argc, char *argv[])
     if (!outfile)
         fatal(PRINT_ERRNO, "Failed to open output file `%s'", outfname ? outfname : "<stdout>");
 
-    struct stream out_ = {
-        .op = stream_get_default_ops(),
-        .ud = outfile,
-    }, *out = &out_;
+    const struct stream out_ = stream_make_from_file(outfile), *out = &out_;
 
     rc = do_load_all(s, argc - optind, &argv[optind]);
     if (rc)
