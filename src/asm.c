@@ -433,44 +433,6 @@ static int obj_err(void *ud)
 }
 
 /*******************************************************************************
- * Raw format : raw binary data (host endian)
- */
-
-static int raw_in(FILE *stream, struct element *i, void *ud)
-{
-    int *offset = ud;
-    int rc = (fread(&i->insn.u.word, 4, 1, stream) == 1) ? 1 : -1;
-    i->insn.u.word = fixup_endian(i->insn.u.word);
-    i->insn.reladdr = (*offset)++;
-    return rc;
-}
-
-static int raw_out(FILE *stream, struct element *i, void *ud)
-{
-    int *offset = ud;
-    int ok = 1;
-    static const int32_t zero = 0;
-    while (ok && i->insn.reladdr > *offset) {
-        if (fwrite(&zero, sizeof zero, 1, stream) != 1)
-            return -1;
-        ++*offset;
-    }
-
-    if (i->insn.size > 0) {
-        UWord temp = fixup_endian(i->insn.u.word);
-        if (fwrite(&temp, sizeof i->insn.u.word, 1, stream) != 1)
-            return -1;
-        ++*offset;
-    }
-
-    for (int c = 1; c < i->insn.size && ok; c++, ++*offset)
-        if (fwrite(&zero, sizeof zero, 1, stream) != 1)
-            return -1;
-
-    return 1;
-}
-
-/*******************************************************************************
  * Text format : hexadecimal numbers
  */
 static int text_init(FILE *stream, struct param_state *p, void **ud)
@@ -596,11 +558,6 @@ const struct format tenyr_asm_formats[] = {
         .sym   = obj_sym,
         .reloc = obj_reloc,
         .err   = obj_err },
-    { "raw",
-        .init  = gen_init ,
-        .in    = raw_in ,
-        .out   = raw_out ,
-        .fini  = gen_fini },
     { "text",
         .init  = text_init,
         .in    = text_in,
