@@ -1,4 +1,5 @@
 #include "sim.h"
+#include "stream.h"
 
 #include <vpi_user.h>
 
@@ -66,9 +67,11 @@ int tenyr_sim_load(struct tenyr_sim_state *state)
 
     vpi_free_object(args_iter);
 
-    FILE *stream = fopen(filename, "rb");
-    if (!stream)
+    FILE *file = fopen(filename, "rb");
+    if (!file)
         return 1;
+
+    STREAM stream_ = stream_make_from_file(file), *stream = &stream_;
 
     void *ud = NULL;
     const struct format *f = &tenyr_asm_formats[0];
