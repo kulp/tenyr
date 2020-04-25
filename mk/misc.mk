@@ -143,7 +143,6 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	$($*) -ftext -vv      /dev/null 2>&1 | fgrep -q ".word"      && $(MAKESTEP) "    ... -vv ok"
 	$($*) -ftext -vvv     /dev/null 2>&1 | fgrep -q "read  @"    && $(MAKESTEP) "    ... -vvv ok"
 	$($*) -ftext -vvvv    /dev/null 2>&1 | fgrep -q "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
-	$($*) -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(MAKESTEP) "    ... multiple files rejected ok"
 	$($*) -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
 	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> /dev/null )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
 
