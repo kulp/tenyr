@@ -119,7 +119,7 @@ check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	echo 0x3637 | $($*) -ftext -d - | grep -q ".word 0x0*3637"   && $(MAKESTEP) "    ... -d ok"
 	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
-	echo 0x3637 | $($*) -ftext -d -q - | fgrep -qv "word 0x3637" && $(MAKESTEP) "    ... -q ok"
+	echo 0x3637 | $($*) -ftext -d -q - | fgrep -qv "3637"        && $(MAKESTEP) "    ... -q ok"
 	$($*) -d -ftext -v - <<<0xc | fgrep -q "A + 0x0000000c"      && $(MAKESTEP) "    ... -v ok"
 	echo '.zero 2' | $($*) -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
 	                                                             && $(MAKESTEP) "    ... memh explicit ok"
@@ -143,7 +143,6 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	$($*) -ftext -vv      /dev/null 2>&1 | fgrep -q ".word"      && $(MAKESTEP) "    ... -vv ok"
 	$($*) -ftext -vvv     /dev/null 2>&1 | fgrep -q "read  @"    && $(MAKESTEP) "    ... -vvv ok"
 	$($*) -ftext -vvvv    /dev/null 2>&1 | fgrep -q "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
-	$($*) -ftext bad0 bad1 2>&1 | fgrep -qi "more than one"      && $(MAKESTEP) "    ... multiple files rejected ok"
 	$($*) -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
 	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> /dev/null )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
 

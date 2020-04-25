@@ -76,7 +76,7 @@ static int usage(const char *me)
     return 0;
 }
 
-static int do_load(struct link_state *s, FILE *in)
+static int do_load(struct link_state *s, STREAM *in)
 {
     int rc = 0;
     struct obj_list *node = calloc(1, sizeof *node);
@@ -300,7 +300,7 @@ static int do_link(struct link_state *s)
     return rc;
 }
 
-static int do_emit(struct link_state *s, FILE *out)
+static int do_emit(struct link_state *s, STREAM *out)
 {
     int rc = -1;
 
@@ -314,24 +314,26 @@ int do_load_all(struct link_state *s, int count, char *names[count])
     int rc = 0;
 
     for (int i = 0; i < count; i++) {
-        FILE *in = NULL;
+        FILE *infile = NULL;
 
         if (!strcmp(names[i], "-")) {
-            in = stdin;
+            infile = stdin;
         } else {
-            in = os_fopen(names[i], "rb");
-            if (!in)
+            infile = os_fopen(names[i], "rb");
+            if (!infile)
                 fatal(PRINT_ERRNO, "Failed to open input file `%s'", names[i]);
         }
 
         // Explicitly clear errors and EOF in case we run main() twice
         // (emscripten)
-        clearerr(in);
+        clearerr(infile);
+
+        const struct stream in_ = stream_make_from_file(infile), *in = &in_;
 
         rc = do_load(s, in);
         int saved = errno;
 
-        fclose(in);
+        fclose(infile);
 
         errno = saved;
         if (rc)
@@ -351,7 +353,7 @@ int main(int argc, char *argv[])
     }, *s = &_s;
 
     char * volatile outfname = NULL;
-    FILE * volatile out = stdout;
+    FILE * volatile outfile = stdout;
 
     struct param_state * volatile params = NULL;
     param_init((struct param_state **)&params);
@@ -359,7 +361,7 @@ int main(int argc, char *argv[])
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0]);
-        if (out != stdout && outfname != NULL)
+        if (outfile != stdout && outfname != NULL)
             // Technically there is a race condition here ; we would like to be
             // able to remove a file by a stream connected to it, but there is
             // apparently no portable way to do this.
@@ -399,9 +401,11 @@ int main(int argc, char *argv[])
     os_preamble();
 
     if (outfname)
-        out = os_fopen(outfname, "wb");
-    if (!out)
+        outfile = os_fopen(outfname, "wb");
+    if (!outfile)
         fatal(PRINT_ERRNO, "Failed to open output file `%s'", outfname ? outfname : "<stdout>");
+
+    const struct stream out_ = stream_make_from_file(outfile), *out = &out_;
 
     rc = do_load_all(s, argc - optind, &argv[optind]);
     if (rc)
@@ -415,7 +419,7 @@ int main(int argc, char *argv[])
     }
     free(s->relocated);
 
-    fclose(out);
+    fclose(outfile);
     out = NULL;
 
 cleanup:

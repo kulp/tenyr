@@ -25,7 +25,8 @@ clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    random random.*       \
                )#
 
-common_OBJECTS = common.o param.o $(patsubst %.c,%.o,$(notdir $(wildcard $(OS_PATHS:%=%/*.c))))
+common_OBJECTS = common.o param.o $(patsubst %.c,%.o,$(notdir $(wildcard $(OS_PATHS:%=%/*.c)))) \
+                 stream.o
 shared_OBJECTS = common.o
 tas_OBJECTS    = $(common_OBJECTS) asmif.o asm.o obj.o parser.o lexer.o
 tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
@@ -84,7 +85,7 @@ $(TOP)/build/share/tenyr/%:
 
 .PHONY: vpi
 vpi: vpidevices.vpi
-vpidevices.vpi: callbacks,dy.o vpiserial,dy.o load,dy.o sim,dy.o asm,dy.o obj,dy.o common,dy.o param,dy.o
+vpidevices.vpi: callbacks,dy.o vpiserial,dy.o load,dy.o sim,dy.o asm,dy.o obj,dy.o common,dy.o param,dy.o stream,dy.o
 
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)

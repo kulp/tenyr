@@ -410,8 +410,8 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...)
         fprintf(stderr, "%*s", col, "^");
         int len = locp->last_column - locp->first_column;
         while (len-- > 0)
-            fputc('^', stderr);
-        fputc('\n', stderr);
+            fwrite("^", 1, 1, stderr);
+        fwrite("\n", 1, 1, stderr);
     }
 
     va_start(vl, fmt);
@@ -421,7 +421,7 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...)
     fprintf(stderr, " at line %d", locp->first_line);
     if (locp->first_column >= 0)
         fprintf(stderr, " column %d at `%s'", col, tenyr_get_text(pd->scanner));
-    fputc('\n', stderr);
+    fwrite("\n", 1, 1, stderr);
 
     pd->errored++;
     return 0;

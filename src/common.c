@@ -36,7 +36,7 @@ static void NORETURN main_fatal_(int code, const char *file, int line,
     if (code & PRINT_ERRNO)
         fprintf(stderr, ": %s\n", strerror(errno));
     else
-        fputc('\n', stderr);
+        fwrite("\n", 1, 1, stderr);
 
     longjmp(errbuf, code);
 }

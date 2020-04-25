@@ -346,7 +346,7 @@ static int assembly_fixup_insns(struct parse_data *pd)
     return 0;
 }
 
-static int assembly_inner(struct parse_data *pd, FILE *out, const struct format *f, void *ud)
+static int assembly_inner(struct parse_data *pd, STREAM *out, const struct format *f, void *ud)
 {
     assembly_fixup_insns(pd);
 
@@ -380,7 +380,7 @@ static int assembly_inner(struct parse_data *pd, FILE *out, const struct format 
     return 0;
 }
 
-int do_assembly(FILE *in, FILE *out, const struct format *f, void *ud)
+int do_assembly(STREAM *in, STREAM *out, const struct format *f, void *ud)
 {
     struct parse_data _pd = {
         .top = NULL,
@@ -388,7 +388,7 @@ int do_assembly(FILE *in, FILE *out, const struct format *f, void *ud)
 
     tenyr_lex_init(&pd->scanner);
     tenyr_set_extra(pd, pd->scanner);
-    tenyr_set_in(in, pd->scanner);
+    tenyr_set_in(in->ud, pd->scanner);
 
     int result = tenyr_parse(pd);
     if (pd->errored)
@@ -401,27 +401,27 @@ int do_assembly(FILE *in, FILE *out, const struct format *f, void *ud)
     return result || pd->errored;
 }
 
-int do_disassembly(FILE *in, FILE *out, const struct format *f, void *ud, int flags)
+int do_disassembly(STREAM *in, STREAM *out, const struct format *f, void *ud, int flags)
 {
     int rc = 0;
 
     struct element i;
     while ((rc = f->in(in, &i, ud)) >= 0) {
-        if (feof(in))
+        if (in->op.feof(in))
             break;
         if (rc == 0)
             continue; // allow a format to emit no instructions
         int len = print_disassembly(out, &i, ASM_AS_INSN | flags);
         if (!(flags & ASM_QUIET)) {
-            fprintf(out, "%*s# ", 30 - len, "");
+            out->op.fprintf(out, "%*s# ", 30 - len, "");
             print_disassembly(out, &i, ASM_AS_DATA | flags);
-            fprintf(out, " ; ");
+            out->op.fprintf(out, " ; ");
             print_disassembly(out, &i, ASM_AS_CHAR | flags);
-            fprintf(out, " ; .addr 0x%08x\n", i.insn.reladdr);
+            out->op.fprintf(out, " ; .addr 0x%08x\n", i.insn.reladdr);
         } else {
-            fputc('\n', out);
+            out->op.fwrite("\n", 1, 1, out);
             // This probably means we want line-oriented output
-            fflush(out);
+            out->op.fflush(out);
         }
     }
 

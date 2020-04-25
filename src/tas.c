@@ -63,12 +63,15 @@ static int usage(const char *me)
 }
 
 static int process_stream(struct param_state *params, const struct format *f,
-    FILE *in, FILE *out, int flags)
+    FILE *infile, FILE *outfile, int flags)
 {
     int rc = 0;
 
+    const struct stream in_ = stream_make_from_file(infile), *in = &in_;
+    const struct stream out_ = stream_make_from_file(outfile), *out = &out_;
+
     int disassemble = flags & ASM_DISASSEMBLE;
-    FILE *stream = disassemble ? in : out;
+    STREAM *stream = disassemble ? in : out;
     void *ud = NULL;
 
     if (f->init(stream, params, &ud))
@@ -76,7 +79,7 @@ static int process_stream(struct param_state *params, const struct format *f,
 
     if (disassemble) {
         // This output might be consumed by a tool that needs a line at a time
-        os_set_buffering(out, _IOLBF);
+        os_set_buffering(outfile, _IOLBF);
         rc = do_disassembly(in, out, f, ud, flags);
     } else {
         rc = do_assembly(in, out, f, ud);
@@ -87,7 +90,7 @@ static int process_stream(struct param_state *params, const struct format *f,
 
     rc |= f->fini(stream, &ud);
 
-    fflush(out);
+    out->op.fflush(out);
 
     return rc;
 }
