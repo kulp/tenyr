@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-typedef struct stream STREAM;
+typedef const struct stream STREAM;
 
 typedef int    stream_printf (STREAM *s, const char *format, ...);
 typedef int    stream_scanf  (STREAM *s, const char *format, ...);
