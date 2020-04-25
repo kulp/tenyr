@@ -1,3 +1,4 @@
+dist: bionic
 addons: &def_addons
   artifacts:
     paths:
