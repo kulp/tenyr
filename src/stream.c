@@ -25,7 +25,7 @@ static int default_printf(STREAM *s, const char *format, ...)
     return wrote == (size_t)need ? need : -1;
 }
 
-int default_scanf(STREAM *s, const char *format, ...)
+static int default_scanf(STREAM *s, const char *format, ...)
 {
     // It is not feasible to defer to op.fread here. We might try to keep a
     // buffer of our own to read "enough" to satisfy a vsscanf call, but we
@@ -67,12 +67,12 @@ static int default_flush(STREAM *s)
     return fflush(s->ud);
 }
 
-int default_seek(STREAM *s, long offset, int whence)
+static int default_seek(STREAM *s, long offset, int whence)
 {
     return fseek(s->ud, offset, whence);
 }
 
-long default_tell(STREAM *s)
+static long default_tell(STREAM *s)
 {
     return ftell(s->ud);
 }
