@@ -25,7 +25,7 @@ static int default_printf(STREAM *s, const char *format, ...)
     return wrote == (size_t)need ? need : -1;
 }
 
-static int default_scanf(STREAM *s, const char *format, ...)
+static int default_scanf(STREAM *s, const char *format, unsigned int *word)
 {
     // It is not feasible to defer to op.fread here. We might try to keep a
     // buffer of our own to read "enough" to satisfy a vsscanf call, but we
@@ -34,17 +34,13 @@ static int default_scanf(STREAM *s, const char *format, ...)
     // int to the va_list -- and there is no portable way to append to a
     // va_list.
     //
-    // Instead, we simply defer to the system vfscanf. If a library user wants
+    // Instead, we simply defer to the system fscanf. If a library user wants
     // to read the text-based formats (which are the only ones that want
     // fscanf), it could, at worst, convert them to raw format first, perhaps
     // by using `tas -d -ftext - | tas -fraw -`. Since the text formats are
     // meant basically for demonstration and are of increasingly limited use,
     // this is not perceived to be a great limitation.
-    va_list vl;
-    va_start(vl, format);
-    int result = vfscanf(s->ud, format, vl);
-    va_end(vl);
-    return result;
+    return fscanf(s->ud, format, word);
 }
 
 static size_t default_read(void *ptr, size_t size, size_t nitems, STREAM *s)
