@@ -70,13 +70,13 @@ static void build_insn(struct jit_state *s, int32_t insn, int offset)
 {
     int a = -1, b = -1, c = -1;
 
-    union insn u = { .word = insn };
-    struct instruction_type012 t = u.type012;
-    struct instruction_type3   v = u.type3;
+    const union insn u = { .word = insn };
+    const struct instruction_type012 t = u.type012;
+    const struct instruction_type3   v = u.type3;
 
-    int x = JIT_R0;
-    int y = JIT_R1;
-    int i = JIT_R2;
+    const int x = JIT_R0;
+    const int y = JIT_R1;
+    const int i = JIT_R2;
 
     const int ss = JIT_V0;
     const int regs = JIT_V1;
