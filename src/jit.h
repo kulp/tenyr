@@ -9,9 +9,7 @@ typedef void Block(void *cookie, int32_t *registers);
 struct jit_state {
     void *nested_run_data;
     void *sim_state;
-    void *runtime; // actually an asmjit::JitRuntime
     int run_count_threshold;
-    void *cc; // actually an asmjit::X86Compiler
 };
 
 struct ops_state {
@@ -30,18 +28,12 @@ struct basic_block {
     int32_t *cache;
 };
 
-#ifdef __cplusplus
-# define EXTERN_C extern "C"
-#else
-# define EXTERN_C
-#endif
-
-EXTERN_C void jit_init(struct jit_state **state);
-EXTERN_C void jit_fini(struct jit_state *state);
-EXTERN_C Block *jit_gen_block(void *cookie, int len, int32_t *instructions);
+void jit_init(struct jit_state **state);
+void jit_fini(struct jit_state *state);
+Block *jit_gen_block(void *cookie, int len, int32_t *instructions);
 
 // XXX permit fetch to express failure
-EXTERN_C int32_t fetch(void *cookie, int32_t addr);
-EXTERN_C void store(void *cookie, int32_t addr, int32_t value);
+int32_t fetch(void *cookie, int32_t addr);
+void store(void *cookie, int32_t addr, int32_t value);
 
 #endif
