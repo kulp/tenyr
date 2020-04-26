@@ -10,6 +10,7 @@ struct jit_state {
     void *nested_run_data;
     void *sim_state;
     int run_count_threshold;
+    void *jj;
 };
 
 struct ops_state {

@@ -4,19 +4,34 @@
 #include "jit.h"
 #include "lightning.h"
 
-void jit_init(struct jit_state **state)
+// GNU Lightning's macros expect `_jit` to be a jit_state_t pointer
+#define _jit (*(jit_state_t**)(&s->jj))
+
+void jit_init(struct jit_state **pstate)
 {
-    // TODO implement
+    init_jit(NULL);
+    struct jit_state *s = *pstate = calloc(1, sizeof *s);
 }
 
-void jit_fini(struct jit_state *state)
+void jit_fini(struct jit_state *s)
 {
-    // TODO implement
+    jit_destroy_state();
+    finish_jit();
 }
 
 Block *jit_gen_block(void *cookie, int len, int32_t *instructions)
 {
-    // TODO implement
+    struct jit_state *s = cookie;
 
-    return NULL;
+    s->jj = jit_new_state();
+
+    jit_prolog();
+    // TODO
+    jit_ret();
+    jit_epilog();
+
+    Block *result = jit_emit();
+    jit_clear_state();
+
+    return result;
 }
