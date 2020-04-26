@@ -68,8 +68,6 @@ static void build_op(struct jit_state *s, int op, int result, int a, int b)
 
 static void build_insn(struct jit_state *s, int32_t insn, int offset)
 {
-    int a = -1, b = -1, c = -1;
-
     const union insn u = { .word = insn };
     const struct instruction_type012 t = u.type012;
     const struct instruction_type3   v = u.type3;
@@ -102,6 +100,7 @@ static void build_insn(struct jit_state *s, int32_t insn, int offset)
         }
         jit_movi(i, SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,t.imm));
 
+        int a = -1, b = -1, c = -1;
         switch (t.p) {
             case 0: a = x; b = y; c = i; break;
             case 1: a = x; b = i; c = y; break;
@@ -112,7 +111,7 @@ static void build_insn(struct jit_state *s, int32_t insn, int offset)
         jit_addr(result, result, c);
     }
 
-    const int tmp = a; // reuse
+    const int tmp = JIT_R0; // reuse
 
     switch (t.dd) {
         case 0:
