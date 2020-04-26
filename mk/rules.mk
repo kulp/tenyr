@@ -25,24 +25,11 @@ COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 	@$(MAKESTEP) "[ CC ] $(<F)"
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 
-%.o: %.cpp
-	@$(MAKESTEP) "[ CXX ] $(<F)"
-	$(COMPILE.cc) $(OUTPUT_OPTION) $<
-
-%.o: %.cc
-	@$(MAKESTEP) "[ CXX ] $(<F)"
-	$(COMPILE.cc) $(OUTPUT_OPTION) $<
-
 LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
 	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-libtenyr%$(DYLIB_SUFFIX): %.cc
-	@$(MAKESTEP) "[ DYLD-CXX ] $@"
-	$(LINK.cc) -o $@ $^ $(LDLIBS)
-
-%,dy.o: CXXFLAGS += $(CXXFLAGS_PIC)
 %,dy.o: CFLAGS += $(CFLAGS_PIC)
 %,dy.o: %.c
 	@$(MAKESTEP) "[ DYCC ] $(<F)"

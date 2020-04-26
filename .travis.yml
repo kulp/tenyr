@@ -22,7 +22,6 @@ matrix:
       os: linux
       env:
         - PLATFORM=mingw BITS=64 HOST=x86_64
-        - CXX=$HOST-w64-mingw32-g++
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
         - PKG_RULE=zip
       addons:
@@ -30,7 +29,6 @@ matrix:
         apt:
           packages:
             - gcc-mingw-w64-x86-64
-            - g++-mingw-w64-x86-64
             - wine
     - compiler: i686-w64-mingw32-gcc
       language: c
@@ -38,7 +36,6 @@ matrix:
       os: linux
       env:
         - PLATFORM=mingw BITS=32 HOST=i686
-        - CXX=$HOST-w64-mingw32-g++
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
         - PKG_RULE=zip
       addons:
@@ -46,7 +43,6 @@ matrix:
         apt:
           packages:
             - gcc-mingw-w64-i686
-            - g++-mingw-w64-i686
             - wine
     - compiler: "clang"
       language: c
@@ -55,7 +51,6 @@ matrix:
         - PLATFORM=osx   BITS=64 HOST=x86_64
         - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
-        - CXX=clang++
     - compiler: "gcc"
       language: c
       os: osx
@@ -70,7 +65,6 @@ matrix:
         - PLATFORM=linux BITS=64 HOST=x86_64
         - CHECK_RULE=check_sw GCOV=
         - PKG_RULE=gzip
-        - CXX=clang++
         - SANITIZE=address
         - ASAN_OPTIONS=detect_leaks=0 # TODO enable leak detection by removing this line
       addons:
@@ -86,7 +80,6 @@ matrix:
         - PLATFORM=linux BITS=64 HOST=x86_64
         - CHECK_RULE=check GCOV=
         - PKG_RULE=gzip
-        - CXX=clang++
       addons:
         <<: *def_addons
         apt:

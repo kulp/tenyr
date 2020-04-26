@@ -1,4 +1,3 @@
-libtenyrjit$(DYLIB_SUFFIX): LDFLAGS += $(CXXFLAGS_PIC) -shared
 libtenyrjit$(DYLIB_SUFFIX): LDLIBS += -llightning
 libtenyrjit$(DYLIB_SUFFIX): param,dy.o
 libtenyrjit$(DYLIB_SUFFIX): cjit,dy.o
