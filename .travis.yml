@@ -10,6 +10,7 @@ env:
   global:
     - DEPSSRC=$HOME/local
     - SITE_INCLUDES=$DEPSSRC/include
+    - SITE_LIBRARY_PATH=$DEPSSRC/lib
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
     - PATH="$PATH:$DEPSSRC/bin"
 matrix:
