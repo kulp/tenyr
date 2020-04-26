@@ -15,14 +15,12 @@ export MAKESTEP
 
 ifndef NDEBUG
  CFLAGS   += -g
- CXXFLAGS += -g
  LDFLAGS  += -g
 endif
 
 # Set up -fsanitize= options
 SANITIZE_FLAGS += $(SANITIZE:%=-fsanitize=%)
 CFLAGS   += $(SANITIZE_FLAGS)
-CXXFLAGS += $(SANITIZE_FLAGS)
 LDFLAGS  += $(SANITIZE_FLAGS)
 
 ifeq ($(MEMCHECK),1)
@@ -60,17 +58,14 @@ endif
 ifeq ($(DEBUG),)
  CPPFLAGS += -DNDEBUG
  CFLAGS   += -O3
- CXXFLAGS += -O3
 else
  CPPFLAGS += -DDEBUG=$(DEBUG)
  CFLAGS   += -fstack-protector -Wstack-protector
  CFLAGS   += -O0
- CXXFLAGS += -O0
 endif
 
 CFLAGS += -std=c99
 CFLAGS += -Wall -Wextra -Wshadow $(PEDANTIC_FLAGS)
-CXXFLAGS += -Wall -Wshadow
  #-Wextra $(PEDANTIC_FLAGS)
 ifeq ($(PEDANTIC),)
  PEDANTIC_FLAGS ?= -pedantic
@@ -80,7 +75,6 @@ endif
 
 COVERAGE_FLAGS = $(if $(GCOV),--coverage -O0)
 CFLAGS   += $(COVERAGE_FLAGS)
-CXXFLAGS += $(COVERAGE_FLAGS)
 LDFLAGS  += $(COVERAGE_FLAGS)
 
 CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
@@ -124,7 +118,6 @@ include $(TOP)/mk/os/vars/default.mk
 # OS Makefiles might have set CROSS_COMPILE. Since we are using `:=` instead of
 # `=`, order of assignment of variables matters.
 CC  := $(CROSS_COMPILE)$(CC)
-CXX := $(CROSS_COMPILE)$(CXX)
 
 include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/jit.mk

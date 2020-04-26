@@ -5,15 +5,13 @@ PATH_COMPONENT_SEP=\\\\
 PATH_SEP_CHAR = ';'
 EXE_SUFFIX = .exe
 CFLAGS_PIC =
-CXXFLAGS_PIC =
-CXXFLAGS += -fpermissive
 CC := gcc
 ifeq ($(BITS),32)
  CROSS_COMPILE ?= i686-w64-mingw32-
 else
  CROSS_COMPILE ?= x86_64-w64-mingw32-
 endif
-LDFLAGS += -Wl,--kill-at -static-libgcc -static-libstdc++ -static
+LDFLAGS += -Wl,--kill-at -static-libgcc -static
 # JIT on Windows doesn't work yet
 JIT = 0
 
