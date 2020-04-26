@@ -19,6 +19,11 @@ void jit_fini(struct jit_state *s)
     finish_jit();
 }
 
+static void build_op(struct jit_state *s, int op, int result, int a, int b)
+{
+
+}
+
 static void build_insn(struct jit_state *s, int32_t insn, int offset)
 {
     int a = -1, b = -1, c = -1;
@@ -26,8 +31,78 @@ static void build_insn(struct jit_state *s, int32_t insn, int offset)
     union insn u = { .word = insn };
     struct instruction_type012 t = u.type012;
     struct instruction_type3   v = u.type3;
-    int op = t.op;
-    // TODO
+
+    int x = JIT_R0;
+    int y = JIT_R1;
+    int i = JIT_R2;
+
+    const int ss = JIT_V0;
+    const int regs = JIT_V1;
+    const int result = JIT_V2;
+
+    if (t.x) {
+        jit_ldxi_i(x, regs, t.x * 4);
+        if (t.x == 15)
+            jit_addi(x, x, offset + 1);
+    } else {
+        jit_movi(x, 0);
+    }
+
+    if (t.p == 3) {
+        jit_addi(result, x, SEXTEND32(MEDIUM_IMMEDIATE_BITWIDTH,v.imm));
+    } else {
+        if (t.y) {
+            jit_ldxi_i(y, regs, t.y * 4);
+            if (t.y == 15)
+                jit_addi(y, y, offset + 1);
+        } else {
+            jit_movi(y, 0);
+        }
+        jit_movi(i, SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,t.imm));
+
+        switch (t.p) {
+            case 0: a = x; b = y; c = i; break;
+            case 1: a = x; b = i; c = y; break;
+            case 2: a = i; b = x; c = y; break;
+        }
+
+        build_op(s, t.op, result, a, b);
+        jit_addr(result, result, c);
+    }
+
+    const int tmp = a; // reuse
+
+    switch (t.dd) {
+        case 0:
+            if (t.z)
+                jit_stxi_i(t.z * 4, regs, result);
+            break;
+        case 1:
+            jit_ldxi_i(tmp, regs, t.z * 4);
+            jit_prepare();
+            jit_pushargr(ss);
+            jit_pushargr(result);
+            jit_pushargr(tmp);
+            jit_finishi(store);
+            break;
+        case 2:
+            jit_ldxi_i(tmp, regs, t.z * 4);
+            jit_prepare();
+            jit_pushargr(ss);
+            jit_pushargr(tmp);
+            jit_pushargr(result);
+            jit_finishi(store);
+            break;
+        case 3:
+            jit_prepare();
+            jit_pushargr(ss);
+            jit_pushargr(result);
+            jit_finishi(fetch);
+            jit_retval_i(tmp);
+            if (t.z)
+                jit_stxi_i(t.z * 4, regs, tmp);
+            break;
+    }
 }
 
 Block *jit_gen_block(void *cookie, int len, int32_t *instructions)
