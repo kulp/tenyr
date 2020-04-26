@@ -13,7 +13,7 @@ CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 SOURCEFILES = $(wildcard $(TOP)/src/*.c $(TOP)/src/devices/*.c)
 
 VPATH += $(TOP)/src $(TOP)/src/devices $(TOP)/hw/vpi
-INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
+INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR) $(SITE_INCLUDES)
 
 clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    *.o                   \
