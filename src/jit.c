@@ -21,7 +21,49 @@ void jit_fini(struct jit_state *s)
 
 static void build_op(struct jit_state *s, int op, int result, int a, int b)
 {
+    switch (op & 0xf) {
+        case OP_ADD:                jit_addr(result, a, b);     break;
+        case OP_SUBTRACT:           jit_subr(result, a, b);     break;
+        case OP_BITWISE_ANDN:       jit_comr(b, b);             /* FALLTHROUGH */
+        case OP_BITWISE_AND:        jit_andr(result, a, b);     break;
+        case OP_BITWISE_ORN:        jit_comr(b, b);             /* FALLTHROUGH */
+        case OP_BITWISE_OR:         jit_orr(result, a, b);      break;
+        case OP_BITWISE_XOR:        jit_xorr(result, a, b);     break;
+        case OP_MULTIPLY:           jit_mulr(result, a, b);     break;
 
+        // TODO check overshifting behavior
+        case OP_SHIFT_RIGHT_LOGIC:  jit_rshr_u(result, a, b);   break;
+        case OP_SHIFT_RIGHT_ARITH:  jit_rshr(result, a, b);     break;
+        case OP_SHIFT_LEFT:         jit_lshr(result, a, b);     break;
+
+        case OP_PACK:
+            jit_lshi(a, a, 12);
+            jit_andi(b, b, 0xfff);
+            jit_orr(result, a, b);
+            break;
+
+        case OP_TEST_BIT:
+            jit_movi(result, 1);
+            jit_lshi(result, result, b);
+            jit_andr(result, result, a);
+            jit_nei(result, result, 0);
+            break;
+
+        case OP_COMPARE_LT:
+            jit_ltr(result, a, b);
+            jit_negr(result, result);
+            break;
+
+        case OP_COMPARE_EQ:
+            jit_eqr(result, a, b);
+            jit_negr(result, result);
+            break;
+
+        case OP_COMPARE_GE:
+            jit_ger(result, a, b);
+            jit_negr(result, result);
+            break;
+    }
 }
 
 static void build_insn(struct jit_state *s, int32_t insn, int offset)
