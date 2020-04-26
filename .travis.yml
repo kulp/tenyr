@@ -11,6 +11,7 @@ env:
     - DEPSSRC=$HOME/local
     - C_INCLUDE_PATH=$DEPSSRC/include
     - LIBRARY_PATH=$DEPSSRC/lib
+    - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LIBRARY_PATH"
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
     - PATH="$PATH:$DEPSSRC/bin"
 matrix:
