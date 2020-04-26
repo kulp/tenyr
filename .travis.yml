@@ -159,9 +159,3 @@ notifications:
       - "irc.freenode.org#tenyr"
     use_notice: true
     skip_join: true
-  webhooks:
-    urls:
-      - https://webhooks.gitter.im/e/2363bd78181634f85b62
-    on_success: always
-    on_failure: change
-    on_start: never
