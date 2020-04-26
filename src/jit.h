@@ -4,11 +4,11 @@
 #include "sim.h"
 #include <stdint.h>
 
-typedef void Block(void *cookie, int32_t *registers);
+typedef void Block(struct sim_state *sim, int32_t *registers);
 
 struct jit_state {
     void *nested_run_data;
-    void *sim_state;
+    struct sim_state *sim_state;
     int run_count_threshold;
     void *jj;
 };
