@@ -9,6 +9,9 @@ addons: &def_addons
 env:
   global:
     - DEPSSRC=$HOME/local
+    - C_INCLUDE_PATH=$DEPSSRC/include
+    - LIBRARY_PATH=$DEPSSRC/lib
+    - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LIBRARY_PATH"
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
     - PATH="$PATH:$DEPSSRC/bin"
 matrix:
@@ -130,6 +133,7 @@ install:
   - if (( GCOV )) ; then sudo gem install coveralls-lcov; fi
 before_script:
   - mkdir -p $DEPSSRC
+  - if [[ $JIT != 0 ]] ; then ./scripts/build-lightning.sh 2.1.3 $DEPSSRC ; fi
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx ; fi
   - if [[ $PLATFORM = mingw ]] ; then make download-all-sdl2 ; fi
   - if [[ $PLATFORM = mingw ]] ; then sed "s#{{{}}}#z:$(echo $PWD/3rdparty/sdl2/$HOST-w64-mingw32/bin | sed 's#/#\\\\\\\\#g')#" scripts/winepath.reg > scripts/winepath2.reg ; wine regedit scripts/winepath2.reg ; fi

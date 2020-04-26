@@ -82,9 +82,10 @@ COVERAGE_RULE = check
 coverage.info: $(COVERAGE_RULE) | lcov_setup
 	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
-COVERAGE_SKIP = 3rdparty/asmjit/*
+COVERAGE_SKIP =# none right now
 coverage.info.trimmed: coverage.info
-	$(LCOV) --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '$f')
+	cp -p $< $@ # nothing to do yet
+	#$(LCOV) --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '$f')
 
 coverage.info.%: coverage.info.trimmed
 	$(LCOV) --extract $< '*/$*/*' --output-file $@
