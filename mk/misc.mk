@@ -84,7 +84,8 @@ coverage.info: $(COVERAGE_RULE) | lcov_setup
 
 COVERAGE_SKIP =# none right now
 coverage.info.trimmed: coverage.info
-	$(LCOV) --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '$f')
+	cp -p $< $@ # nothing to do yet
+	#$(LCOV) --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '$f')
 
 coverage.info.%: coverage.info.trimmed
 	$(LCOV) --extract $< '*/$*/*' --output-file $@
