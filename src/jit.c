@@ -10,7 +10,7 @@
 void jit_init(struct jit_state **pstate)
 {
     init_jit(NULL);
-    struct jit_state *s = *pstate = calloc(1, sizeof *s);
+    *pstate = calloc(1, sizeof **pstate);
 }
 
 void jit_fini(struct jit_state *s)
