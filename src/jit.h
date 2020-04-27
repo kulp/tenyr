@@ -35,6 +35,6 @@ struct basic_block {
 
 void jit_init(struct jit_state **state);
 void jit_fini(struct jit_state *state);
-Block *jit_gen_block(void *cookie, int len, int32_t *instructions);
+Block *jit_gen_block(struct jit_state *s, int len, int32_t *instructions);
 
 #endif

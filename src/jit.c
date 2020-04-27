@@ -146,10 +146,8 @@ static void build_insn(struct jit_state *s, int32_t insn, int offset)
     }
 }
 
-Block *jit_gen_block(void *cookie, int len, int32_t *instructions)
+Block *jit_gen_block(struct jit_state *s, int len, int32_t *instructions)
 {
-    struct jit_state *s = cookie;
-
     s->jj = jit_new_state();
 
     jit_prolog();
