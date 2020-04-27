@@ -124,7 +124,7 @@ static void build_insn(struct jit_state *s, int32_t insn, int offset)
             jit_pushargr(ss);
             jit_pushargr(result);
             jit_pushargr(tmp);
-            jit_finishi(store);
+            jit_finishi(s->ops.store);
             break;
         case 2:
             jit_ldxi_i(tmp, regs, t.z * 4);
@@ -132,13 +132,13 @@ static void build_insn(struct jit_state *s, int32_t insn, int offset)
             jit_pushargr(ss);
             jit_pushargr(tmp);
             jit_pushargr(result);
-            jit_finishi(store);
+            jit_finishi(s->ops.store);
             break;
         case 3:
             jit_prepare();
             jit_pushargr(ss);
             jit_pushargr(result);
-            jit_finishi(fetch);
+            jit_finishi(s->ops.fetch);
             jit_retval_i(tmp);
             if (t.z)
                 jit_stxi_i(t.z * 4, regs, tmp);

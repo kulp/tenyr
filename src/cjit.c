@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 // XXX permit fetch to express failure
-int32_t fetch(void *cookie, int32_t addr)
+static int32_t fetch(void *cookie, int32_t addr)
 {
     struct sim_state *s = cookie;
     int32_t data;
@@ -12,7 +12,7 @@ int32_t fetch(void *cookie, int32_t addr)
     return data;
 }
 
-void store(void *cookie, int32_t addr, int32_t value)
+static void store(void *cookie, int32_t addr, int32_t value)
 {
     struct sim_state *s = cookie;
     s->dispatch_op(s, OP_WRITE, addr, (uint32_t*)&value);
@@ -79,6 +79,8 @@ int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_data, void 
     jit_init(&js);
     *run_data = js;
     js->sim_state = s;
+    js->ops.fetch = fetch;
+    js->ops.store = store;
 
     param_get_int(s->conf.params, "tsim.jit.run_count_threshold", &js->run_count_threshold);
     if (js->run_count_threshold <= 0)

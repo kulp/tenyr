@@ -10,6 +10,10 @@ struct jit_state {
     void *nested_run_data;
     struct sim_state *sim_state;
     int run_count_threshold;
+    struct {
+        int32_t (*fetch)(void *cookie, int32_t addr);
+        void (*store)(void *cookie, int32_t addr, int32_t value);
+    } ops;
     void *jj;
 };
 
@@ -32,9 +36,5 @@ struct basic_block {
 void jit_init(struct jit_state **state);
 void jit_fini(struct jit_state *state);
 Block *jit_gen_block(void *cookie, int len, int32_t *instructions);
-
-// XXX permit fetch to express failure
-int32_t fetch(void *cookie, int32_t addr);
-void store(void *cookie, int32_t addr, int32_t value);
 
 #endif
