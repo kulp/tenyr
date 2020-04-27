@@ -2,7 +2,6 @@
 #define PARAM_H_
 
 #include <stddef.h>
-#include <stdbool.h>
 
 struct param_state;
 

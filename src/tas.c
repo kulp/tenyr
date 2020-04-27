@@ -14,6 +14,7 @@
 #include <search.h>
 #include <string.h>
 #include <strings.h>
+#include <stdbool.h>
 
 static const char shortopts[] = "df:o:p:qsv" "hV";
 
