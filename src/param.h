@@ -4,10 +4,6 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct param_state;
 
 int param_get_int(struct param_state *pstate, const char *key, int *val);
@@ -17,10 +13,6 @@ int param_set(struct param_state *pstate, char *key, void *val, int replace, int
 int param_add(struct param_state *pstate, const char *optarg);
 void param_init(struct param_state **pstate);
 void param_destroy(struct param_state *pstate);
-
-#ifdef __cplusplus
-};
-#endif
 
 #endif
 
