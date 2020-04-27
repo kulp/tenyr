@@ -22,7 +22,6 @@ static inline int32_t SEXTEND32(unsigned int bits, int32_t val)
     return ext | (val & ((1L << bits) - 1));
 }
 
-#define UNUSED   __attribute__((unused))
 #define NORETURN __attribute__((noreturn))
 
 #define CONCAT_(X,Y) X ## Y
