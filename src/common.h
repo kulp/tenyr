@@ -11,9 +11,16 @@
 #define STR(X) STR_(X)
 #define STR_(X) #X
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
-#define MSB32_(Bits,X) ((1ULL << ((Bits) - 1)) & (uint32_t)(X))
-#define EXTEND32_(Bits,X) ((-!!MSB32_(Bits,X)) << (Bits))
-#define SEXTEND32(Bits,X) ((Bits) >= 32 ? (uint32_t)(X) : (uint32_t)(EXTEND32_(Bits,X) | (((uint32_t)X) & ((1UL << (Bits)) - 1))))
+
+static inline int32_t SEXTEND32(unsigned int bits, int32_t val)
+{
+    if (bits >= 32)
+        return val;
+
+    const int32_t msb = (1L << (bits - 1)) & val;
+    const int32_t ext = (-!!msb) << bits;
+    return ext | (val & ((1L << bits) - 1));
+}
 
 #define UNUSED   __attribute__((unused))
 #define NORETURN __attribute__((noreturn))
