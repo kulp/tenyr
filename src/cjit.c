@@ -4,17 +4,15 @@
 #include <stdlib.h>
 
 // XXX permit fetch to express failure
-static int32_t fetch(void *cookie, int32_t addr)
+static int32_t fetch(struct sim_state *s, int32_t addr)
 {
-    struct sim_state *s = cookie;
     int32_t data;
     s->dispatch_op(s, OP_DATA_READ, addr, (uint32_t*)&data);
     return data;
 }
 
-static void store(void *cookie, int32_t addr, int32_t value)
+static void store(struct sim_state *s, int32_t addr, int32_t value)
 {
-    struct sim_state *s = cookie;
     s->dispatch_op(s, OP_WRITE, addr, (uint32_t*)&value);
 }
 

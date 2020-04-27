@@ -11,8 +11,8 @@ struct jit_state {
     struct sim_state *sim_state;
     int run_count_threshold;
     struct {
-        int32_t (*fetch)(void *cookie, int32_t addr);
-        void (*store)(void *cookie, int32_t addr, int32_t value);
+        int32_t (*fetch)(struct sim_state *s, int32_t addr);
+        void (*store)(struct sim_state *s, int32_t addr, int32_t value);
     } ops;
     void *jj;
 };
