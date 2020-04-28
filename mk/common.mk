@@ -66,12 +66,8 @@ endif
 
 CFLAGS += -std=c99
 CFLAGS += -Wall -Wextra -Wshadow $(PEDANTIC_FLAGS)
- #-Wextra $(PEDANTIC_FLAGS)
-ifeq ($(PEDANTIC),)
- PEDANTIC_FLAGS ?= -pedantic
-else
- PEDANTIC_FLAGS ?= -Werror -pedantic-errors
-endif
+
+include $(TOP)/mk/pedantic.mk
 
 COVERAGE_FLAGS = $(if $(GCOV),--coverage -O0)
 CFLAGS   += $(COVERAGE_FLAGS)
