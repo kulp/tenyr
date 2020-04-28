@@ -14,5 +14,6 @@ PEDANTIC_FLAGS += -Wno-date-time
 PEDANTIC_FLAGS += -Werror=covered-switch-default
 PEDANTIC_FLAGS += -Werror=missing-variable-declarations
 PEDANTIC_FLAGS += -Werror=switch-enum
+PEDANTIC_FLAGS += -Werror=comma
 
 endif
