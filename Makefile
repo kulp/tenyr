@@ -112,6 +112,8 @@ parser.h parser.c: lexer.h
 
 ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include $(patsubst $(TOP)/src/%.c,$(BUILDDIR)/%.d,$(SOURCEFILES))
+-include $(BUILDDIR)/lexer.d
+-include $(BUILDDIR)/parser.d
 endif
 
 # Dispatch all other known targets to auxiliary makefile
