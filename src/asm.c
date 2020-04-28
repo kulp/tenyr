@@ -585,8 +585,7 @@ const struct format tenyr_asm_formats[] = {
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
 
 int make_format_list(int (*pred)(const struct format *), size_t flen,
-        const struct format fmts[flen], size_t len, char buf[len],
-        const char *sep)
+        const struct format *fmts, size_t len, char *buf, const char *sep)
 {
     size_t pos = 0;
     for (const struct format *f = fmts; pos < len && f < fmts + flen; f++)

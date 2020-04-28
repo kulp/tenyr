@@ -50,7 +50,7 @@ int param_get_int(struct param_state *pstate, const char *key, int *val)
 
 // Returns the number of parameters with the given key, filling the first
 // `count` of them into the supplied `val` array
-int param_get(struct param_state *pstate, const char *key, size_t count, const void *val[count])
+int param_get(struct param_state *pstate, const char *key, size_t count, const void **val)
 {
     if (!pstate) return 0; // permit calling with NULL param set
 
