@@ -63,7 +63,7 @@ static const char *version()
 }
 
 
-static int usage(const char *me)
+static int usage(const char *me, int rc)
 {
     printf("Usage: %s [ OPTIONS ] image-file [ image-file ... ] \n"
            "Options:\n"
@@ -73,7 +73,7 @@ static int usage(const char *me)
            "  -V, --version         print the string `%s'\n"
            , me, version());
 
-    return 0;
+    return rc;
 }
 
 static int do_load(struct link_state *s, STREAM *in)
@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
-            usage(argv[0]);
+            usage(argv[0], EXIT_FAILURE);
         if (outfile != stdout && outfname != NULL)
             // Technically there is a race condition here ; we would like to be
             // able to remove a file by a stream connected to it, but there is
@@ -385,11 +385,11 @@ int main(int argc, char *argv[])
                 rc = EXIT_SUCCESS;
                 goto cleanup;
             case 'h':
-                usage(argv[0]);
-                rc = EXIT_FAILURE;
+                usage(argv[0], EXIT_SUCCESS);
+                rc = EXIT_SUCCESS;
                 goto cleanup;
             default:
-                usage(argv[0]);
+                usage(argv[0], EXIT_FAILURE);
                 rc = EXIT_FAILURE;
                 goto cleanup;
         }
