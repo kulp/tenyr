@@ -29,7 +29,8 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     uint32_t pack1 = Pu(1) & 0xfff;
     int32_t  pack0 = Ps(0);
 
-    switch (op) {
+    // This switch is exhaustive for the four bit opcode.
+    switch (op & 0xf) {
         case OP_ADD               : *rhs =  (Ps(2) +  Ps(1)) + Ps(0); break;
         case OP_SUBTRACT          : *rhs =  (Ps(2) -  Ps(1)) + Ps(0); break;
         case OP_MULTIPLY          : *rhs =  (Ps(2) *  Ps(1)) + Ps(0); break;
@@ -51,9 +52,6 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 
         case OP_PACK              : *rhs =  (pack2 |  pack1) + pack0; break;
         case OP_TEST_BIT          : *rhs = -!!(Ps(2) & (1 << Ps(1))) + Ps(0); break;
-
-        default:
-            fatal(0, "Encountered illegal opcode %d", op);
     }
     #undef Ps
     #undef Pu
