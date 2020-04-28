@@ -748,7 +748,8 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
             sym->ce->deferred = context;
             break;
         }
-        default:
+        case D_NULL:
+        case D_ZERO:
             tenyr_error(locp, pd, "Unknown directive type %d in %s",
                         d->type, __func__);
     }

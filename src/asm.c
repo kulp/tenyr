@@ -180,7 +180,23 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
                 sA = " ";
                 show3 |= g->p == 0; // append term to disambiguate type0, type2
                 break;
-            default:
+
+            case OP_BITWISE_OR:
+            case OP_BITWISE_AND:
+            case OP_BITWISE_XOR:
+            case OP_SHIFT_RIGHT_ARITH:
+            case OP_ADD:
+            case OP_MULTIPLY:
+            case OP_COMPARE_EQ:
+            case OP_COMPARE_LT:
+            //case OP_BITWISE_ORN:
+            case OP_BITWISE_ANDN:
+            case OP_PACK:
+            case OP_SHIFT_RIGHT_LOGIC:
+            //case OP_SUBTRACT:
+            case OP_SHIFT_LEFT:
+            case OP_TEST_BIT:
+            case OP_COMPARE_GE:
                 break;
         }
     }
