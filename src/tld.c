@@ -309,7 +309,7 @@ static int do_emit(struct link_state *s, STREAM *out)
     return rc;
 }
 
-int do_load_all(struct link_state *s, int count, char *names[count])
+int do_load_all(struct link_state *s, int count, char **names)
 {
     int rc = 0;
 
