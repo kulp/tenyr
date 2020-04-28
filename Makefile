@@ -34,6 +34,9 @@ tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
 tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ifeq ($(USE_OWN_SEARCH),1)
+# The interface of lsearch and tsearch is not something we can change.
+lsearch.o tsearch.o: CFLAGS += -Wno-error=cast-qual
+
 tas_OBJECTS   += lsearch.o tsearch.o
 tld_OBJECTS   += lsearch.o tsearch.o
 tsim_OBJECTS  += lsearch.o tsearch.o
@@ -101,6 +104,10 @@ obj.o: CFLAGS += -Wno-stringop-truncation
 asm.o asmif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
 $(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o $(shared_OBJECTS:%.o=%,dy.o)
+
+# Some casting away of qualifiers is currently deemed unavoidable, at least
+# without running into different warnings.
+tas.o tld.o param.o param,dy.o: CFLAGS += -Wno-error=cast-qual
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter

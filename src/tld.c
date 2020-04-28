@@ -105,7 +105,7 @@ static int do_unload(struct link_state *s)
 
 static int ptrcmp(const void *a, const void *b)
 {
-    return *(const char**)a - *(const char**)b;
+    return *(const char* const*)a - *(const char* const*)b;
 }
 
 static int def_str_cmp(const void *a, const void *b)
