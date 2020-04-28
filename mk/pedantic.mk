@@ -6,5 +6,6 @@ else
 PEDANTIC_FLAGS ?= -Werror -pedantic-errors -Wno-error=unknown-warning-option
 
 PEDANTIC_FLAGS += -Werror=covered-switch-default
+PEDANTIC_FLAGS += -Werror=missing-variable-declarations
 
 endif
