@@ -108,6 +108,9 @@ $(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o $(shared_OBJECTS:%.o=%,dy
 # Some casting away of qualifiers is currently deemed unavoidable, at least
 # without running into different warnings.
 tas.o tld.o param.o param,dy.o: CFLAGS += -Wno-error=cast-qual
+# Calls to variadic printf functions almost always need non-literal format
+# strings.
+common.o parser.o stream.o: CFLAGS += -Wno-format-nonliteral
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
