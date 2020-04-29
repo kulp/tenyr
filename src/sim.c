@@ -170,7 +170,7 @@ int interp_run_sim(struct sim_state *s, const struct run_ops *ops,
 }
 
 int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
-        void *ud, STREAM *in, int load_address)
+        void *ud, STREAM *in, uint32_t load_address)
 {
     struct element i;
     while (f->in(in, &i, ud) >= 0) {

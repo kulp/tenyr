@@ -382,7 +382,7 @@ static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
         struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
         sym->name.str = strdup_rounded_up(symbol->name);
-        sym->name.len = strlen(symbol->name);
+        sym->name.len = (UWord)strlen(symbol->name);
         // `symbol->resolved` must be true by this point
         sym->value = symbol->reladdr;
         sym->flags = flags;
@@ -404,9 +404,9 @@ static int obj_reloc(STREAM *stream, struct reloc_node *reloc, void *ud)
 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
-    rlc->flags = reloc->flags;
+    rlc->flags = (UWord)reloc->flags;
     rlc->name.str  = reloc->name ? strdup_rounded_up(reloc->name) : NULL;
-    rlc->name.len  = reloc->name ? strlen(reloc->name) : 0;
+    rlc->name.len  = reloc->name ? (UWord)strlen(reloc->name) : 0;
     rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;
     rlc->shift = reloc->shift;
@@ -425,8 +425,8 @@ static int obj_emit(STREAM *stream, void **ud)
 
     if (u->assembling) {
         o->records[0].size = u->pos;
-        o->sym_count = u->syms;
-        o->rlc_count = u->rlcs;
+        o->sym_count = (UWord)u->syms;
+        o->rlc_count = (UWord)u->rlcs;
 
         obj_write(u->o, stream);
     }
@@ -471,7 +471,7 @@ static int text_in(STREAM *stream, struct element *i, void *ud)
     // read "agda"" as "0xa" and subsequently fail, when the whole string
     // should have been rejected.
     char next_char = 0;
-    int len = stream->op.fread(&next_char, 1, 1, stream);
+    size_t len = stream->op.fread(&next_char, 1, 1, stream);
     if (len > 0 && !isspace(next_char))
         return -1;
     return result ? 1 : -1;
@@ -587,7 +587,7 @@ const struct format tenyr_asm_formats[] = {
 
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
 
-int make_format_list(int (*pred)(const struct format *), size_t flen,
+size_t make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format *fmts, size_t len, char *buf, const char *sep)
 {
     size_t pos = 0;

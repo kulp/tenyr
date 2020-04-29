@@ -40,7 +40,7 @@ static int sparseram_init(struct plugin_cookie *pcookie, struct device *device, 
     sparseram->mem = NULL;
     sparseram->pagesize = os_getpagesize();
     // `mask` has only the bits set that address *within* a page
-    sparseram->mask = sparseram->pagesize / sizeof(uint32_t) - 1;
+    sparseram->mask = (unsigned int)(sparseram->pagesize / sizeof(uint32_t) - 1);
 
     return 0;
 }
