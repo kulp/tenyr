@@ -19,6 +19,7 @@
 #include <strings.h>
 #include <search.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
 int recipe_emscript(struct sim_state *s); // linked in externally
 
