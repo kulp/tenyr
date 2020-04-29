@@ -109,7 +109,9 @@ static int is_printable(unsigned int ch, char buf[3])
         case '\r': buf[0] = '\\'; buf[1] = 'r' ; return 1;
         case '\t': buf[0] = '\\'; buf[1] = 't' ; return 1;
         case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
-        default: buf[0] = ch; return ch < UCHAR_MAX && isprint((unsigned char)ch);
+        default:
+            buf[0] = (char)ch;
+            return ch < UCHAR_MAX && isprint((unsigned char)ch);
     }
 }
 
