@@ -23,8 +23,8 @@ struct sparseram_state {
 };
 
 struct ram_element {
-    int32_t base;
     uint32_t *space;
+    int32_t base;
 };
 
 static int tree_compare(const void *_a, const void *_b)

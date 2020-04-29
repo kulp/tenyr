@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <search.h>
 #include <string.h>
+#include <limits.h>
 
 #include "ops.h"
 
@@ -59,22 +60,23 @@ extern void (*debug_)(int level, const char *file, int line, const char *func,
 struct element {
     struct insn_or_data insn;
 
+    struct reloc_node *reloc;
+
     struct symbol {
+        struct const_expr *ce;
+        struct symbol *next;
+
         char *name;
         int column;
         int lineno;
         int32_t reladdr;
         uint32_t size;
 
-        unsigned resolved:1;
-        unsigned global:1;
-        unsigned unique:1;  ///< if this symbol comes from a label
-
-        struct const_expr *ce;
-
-        struct symbol *next;
+        unsigned char resolved:1;
+        unsigned char global:1;
+        unsigned char unique:1;  ///< if this symbol comes from a label
+        unsigned :(CHAR_BIT-3);
     } *symbol;
-    struct reloc_node *reloc;
 };
 
 typedef int cmp(const void *, const void*);

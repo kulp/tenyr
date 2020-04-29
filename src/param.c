@@ -17,8 +17,8 @@ struct param_state {
         unsigned free_key:1;
         struct string_list {
             struct string_list *next;
-            unsigned free_value:1; ///< whether value should be free()d
             void *value;
+            unsigned free_value; ///< whether value should be free()d
         } *list;
     } *params;
 };

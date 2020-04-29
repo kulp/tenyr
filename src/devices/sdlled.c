@@ -35,10 +35,10 @@ struct sdlled_state {
     uint32_t data[2];
     SDL_Window *window;
     SDL_Renderer *renderer;
-    enum { RUNNING, STOPPING, STOPPED } status;
     SDL_Texture *digits[16];
     SDL_Texture *dots[2];
     struct timeval last_update, deadline;
+    enum { RUNNING, STOPPING, STOPPED } status;
     int cycles;
 };
 

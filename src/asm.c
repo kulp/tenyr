@@ -1,6 +1,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include "obj.h"
 #include "ops.h"
@@ -55,7 +56,7 @@ static const int op_types[16] = {
     // all others   = OP0
 };
 // This table defines canonical shorthands for certain encodings
-static const struct hides { unsigned a:1, b:1, c:1; }
+static const struct hides { unsigned char a:1, b:1, c:1, :(CHAR_BIT-3); }
 hide[TYPEx][OPx] [2][2][2] = {
     [TYPE0][OP0] [0][0][1] = { 0,0,1 }, // B <- C * D
     [TYPE0][OP1] [0][0][1] = { 0,0,1 }, // B <- C | D
@@ -267,7 +268,6 @@ static int gen_fini(STREAM *stream, void **ud)
  * Object format : simple section-based objects
  */
 struct obj_fdata {
-    int assembling;
     struct obj *o;
     long syms;
     long rlcs;
@@ -278,6 +278,7 @@ struct obj_fdata {
     struct objrlc **next_rlc;
     uint32_t pos;   ///< position in objrec
 
+    int assembling;
     int error;
 };
 
@@ -492,9 +493,9 @@ static int text_out(STREAM *stream, struct element *i, void *ud)
 
 struct memh_state {
     int32_t written, marked, offset;
-    unsigned first_done:1;
     int emit_zeros;
-    unsigned error:1;
+    bool first_done;
+    bool error;
 };
 
 static int memh_init(STREAM *stream, struct param_state *p, void **ud)

@@ -97,6 +97,9 @@ tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
 # used to apply to .o only but some make versions built directly from .c
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
+# Padding warnings are not really relevant to this project.
+CFLAGS += -Wno-padded
+
 # Exempt ourselves from string-related warnings we have manually vetted
 asm.o: CFLAGS += -Wno-stringop-overflow
 obj.o: CFLAGS += -Wno-stringop-truncation
