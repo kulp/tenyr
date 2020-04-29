@@ -15,6 +15,9 @@ typedef int  cmp(const void *key1, const void *key2);
 typedef void act(const void *node, VISIT order, int level);
 typedef void freer(void *node);
 
+// A prototype for tdestroy may not yet exist.
+void tdestroy(void *root, freer *free_node);
+
 // guaranteed to return a non-NULL pointer (might be a pointer to NULL)
 static struct tree **traverse(const void *key, struct tree **rootp, cmp *compar,
                               int create, struct tree **parent)

@@ -9,6 +9,8 @@
 #include "sim.h"
 #include "ram.h"
 
+device_adder sparseram_add_device;
+
 // Allocate space by roughly a page-size (although since there is overhead the
 // fact that it is nearly a page size is basically useless since it does not
 // fit evenly into pages). Consider allocating header ram_elements separately from

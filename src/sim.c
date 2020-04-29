@@ -85,7 +85,7 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     return 0;
 }
 
-int run_instruction(struct sim_state *s, const struct element *i, void *run_data)
+static int run_instruction(struct sim_state *s, const struct element *i, void *run_data)
 {
     (void)run_data;
     int32_t * const ip = &s->machine.regs[15];

@@ -31,6 +31,8 @@ struct device_list {
     struct device_list *next;
 };
 
+typedef int device_adder(struct device *device);
+
 #endif
 
 /* vi: set ts=4 sw=4 et: */

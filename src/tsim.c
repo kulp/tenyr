@@ -273,7 +273,7 @@ static int recipe_top_page(struct sim_state *s)
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \
     static int recipe_##Name(struct sim_state *s)                              \
     {                                                                          \
-        int Func(struct device *device);                                       \
+        device_adder Func;                                                     \
         return Func(new_device(s));                                            \
     }                                                                          \
     //

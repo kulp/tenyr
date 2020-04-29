@@ -27,6 +27,9 @@
 
 #define PUMP_CYCLES 2048
 
+library_init tenyr_plugin_init;
+device_adder sdlled_add_device;
+
 struct sdlled_state {
     struct plugin_cookie *pcookie;
     uint32_t data[2];
@@ -239,10 +242,12 @@ static int sdlled_pump(void *cookie)
     return 0;
 }
 
-void EXPORT tenyr_plugin_init(struct guest_ops *ops)
+int EXPORT tenyr_plugin_init(struct guest_ops *ops)
 {
     fatal_ = ops->fatal;
     debug_ = ops->debug;
+
+    return 0;
 }
 
 int EXPORT sdlled_add_device(struct device *device)

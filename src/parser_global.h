@@ -53,6 +53,9 @@ struct directive {
 };
 
 int tenyr_parse(struct parse_data *);
+struct symbol *symbol_find(struct symbol_list *list, const char *name);
+void tenyr_push_state(int st, void *yyscanner);
+void tenyr_pop_state(void *yyscanner);
 
 #endif
 

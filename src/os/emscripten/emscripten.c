@@ -1,6 +1,9 @@
 #include "emscripten.h"
 #include "sim.h"
 
+// In lieu of a header, provide a prototype for -Wmissing-prototypes.
+int recipe_emscript(struct sim_state *s);
+
 struct emscripten_wrap {
     struct sim_state *s;
     const struct run_ops *ops;

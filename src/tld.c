@@ -251,7 +251,7 @@ static int do_link_process(struct link_state *s)
     return 0;
 }
 
-int do_link_emit(struct link_state *s, struct obj *o)
+static int do_link_emit(struct link_state *s, struct obj *o)
 {
     long rec_count = 0;
     // copy records
@@ -309,7 +309,7 @@ static int do_emit(struct link_state *s, STREAM *out)
     return rc;
 }
 
-int do_load_all(struct link_state *s, int count, char **names)
+static int do_load_all(struct link_state *s, int count, char **names)
 {
     int rc = 0;
 

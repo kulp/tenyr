@@ -3,6 +3,8 @@
 #include <search.h>
 #include <stdlib.h>
 
+sim_runner jit_run_sim;
+
 // XXX permit fetch to express failure
 static int32_t fetch(struct sim_state *s, int32_t addr)
 {
@@ -71,7 +73,7 @@ static int post_insn_hook(struct sim_state *s, const struct element *i, void *ud
     return o->ops.post_insn(s, i, o->nested_ops_data);
 }
 
-int jit_run_sim(struct sim_state *s, struct run_ops *ops, void **run_data, void *ops_data)
+int jit_run_sim(struct sim_state *s, const struct run_ops *ops, void **run_data, void *ops_data)
 {
     struct jit_state *js;
     jit_init(&js);
