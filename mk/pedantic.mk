@@ -20,5 +20,6 @@ PEDANTIC_FLAGS += -Werror=switch-enum
 PEDANTIC_FLAGS += -Werror=comma
 PEDANTIC_FLAGS += -Werror=cast-qual
 PEDANTIC_FLAGS += -Werror=vla
+PEDANTIC_FLAGS += -Werror=strict-prototypes
 
 endif

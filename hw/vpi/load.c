@@ -1,7 +1,7 @@
 #include "sim.h"
 #include "stream.h"
 
-#include <vpi_user.h>
+#include "tenyr_vpi.h"
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
