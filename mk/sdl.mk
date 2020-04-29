@@ -10,6 +10,10 @@ libtenyrsdl%$(DYLIB_SUFFIX): LDLIBS += $(call sdl2_pkg_config,--libs,sdl2 SDL2_i
 libtenyrsdlvga$(DYLIB_SUFFIX): | $(TOP)rsrc/font10x15/invert.font10x15.png
 $(TOP)rsrc/font10x15/%:
 	$(MAKE) -C $(@D) $(@F)
+
+# Do not halt the build for platforms on which the feature-flag _BSD_SOURCE is
+# unused.
+sdl%.o: CFLAGS += -Wno-error=unused-macros
 endif
 endif
 

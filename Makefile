@@ -112,8 +112,9 @@ tas.o tld.o param.o param,dy.o: CFLAGS += -Wno-error=cast-qual
 # strings.
 common.o parser.o stream.o: CFLAGS += -Wno-format-nonliteral
 
-# We cannot control some aspects of the generated lexer.
+# We cannot control some aspects of the generated lexer or parser.
 lexer.o: CFLAGS += -Wno-missing-prototypes
+parser.o lexer.o: CFLAGS += -Wno-unused-macros
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter

@@ -22,5 +22,6 @@ PEDANTIC_FLAGS += -Werror=cast-qual
 PEDANTIC_FLAGS += -Werror=vla
 PEDANTIC_FLAGS += -Werror=strict-prototypes
 PEDANTIC_FLAGS += -Werror=missing-prototypes
+PEDANTIC_FLAGS += -Werror=unused-macros
 
 endif
