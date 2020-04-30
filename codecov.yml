@@ -1,0 +1,5 @@
+gnore:
+    - "3rdparty/**/*"
+coverage:
+    range: 75..95
+    precision: 1
