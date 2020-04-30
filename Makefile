@@ -93,9 +93,10 @@ $(TOP)/build/share/tenyr/%:
 vpi: vpidevices.vpi
 vpidevices.vpi: callbacks,dy.o vpiserial,dy.o load,dy.o sim,dy.o asm,dy.o obj,dy.o common,dy.o param,dy.o stream,dy.o
 
-tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
-tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
-tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
+%-static$(EXE_SUFFIX): LDFLAGS += -static
+
+$(foreach t,tas tsim tld,$(eval $t$(EXE_SUFFIX): $t.o $($t_OBJECTS)))
+$(foreach t,tas tsim tld,$(eval $t-static$(EXE_SUFFIX): $t.o $($t_OBJECTS); $$(LINK.c) -o $$@ $$^ $$(LDLIBS)))
 
 # used to apply to .o only but some make versions built directly from .c
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
