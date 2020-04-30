@@ -248,7 +248,7 @@ test_op_%: $(TOP)/test/op/%.texe $(build_tas)
 # one run, as they do not have random bits appended (yet).
 .SECONDARY: $(RUNS:%=$(TOP)/test/run/%.texe)
 test_run_%: %.texe $(build_tas) $(build_tld)
-	@$(MAKESTEP) -n "Running test `printf %-15s "'$*'"` ($(context)) ... "
+	@$(MAKESTEP) -n "Running test `printf %-20s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
 check_hw_icarus_pre:
