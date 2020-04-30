@@ -39,6 +39,10 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	@$(MAKESTEP) "[ DYLD ] $@"
 	$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 
+libtenyr%$(STLIB_SUFFIX): %.o
+	@$(MAKESTEP) "[ STLD ] $@"
+	$(AR) r $@ $^
+
 %.vpi: CFLAGS  += $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
 %.vpi: CFLAGS  += -Wno-strict-prototypes
 # it's all right for callbacks not to use all their parameters
