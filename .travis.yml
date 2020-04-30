@@ -105,6 +105,14 @@ matrix:
             - lcov
             - libsdl2-dev
             - libsdl2-image-dev
+    - compiler: "gcc"
+      language: c
+      os: linux
+      arch: ppc64le
+      env:
+        - PLATFORM=linux BITS=64
+        - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
+        - PKG_RULE=gzip
     - language: node_js
       node_js:
         - node
