@@ -130,8 +130,6 @@ matrix:
         - docker exec -it emscripten make V=1 all PLATFORM=$PLATFORM JIT=$JIT SDL=$SDL NDEBUG=$NDEBUG
         - docker exec -it emscripten make V=1 $CHECK_RULE PLATFORM=$PLATFORM JIT=$JIT SDL=$SDL NDEBUG=$NDEBUG
 sudo: false
-install:
-  - if (( GCOV )) ; then sudo gem install coveralls-lcov; fi
 before_script:
   - mkdir -p $DEPSSRC
   - if [[ $JIT != 0 ]] ; then ./scripts/build-lightning.sh 2.1.3 $DEPSSRC ; fi
@@ -150,8 +148,6 @@ script:
 after_success:
   - |
     if [[ -n $GCOV ]] ; then
-        coveralls-lcov $(make showbuilddir)/coverage.info.src
-        coveralls-lcov $(make showbuilddir)/coverage.info.vpi
         bash <(curl -s https://codecov.io/bash) -f $(make showbuilddir)/coverage.info.src -f $(make showbuilddir)/coverage.info.vpi
     fi
 notifications:
