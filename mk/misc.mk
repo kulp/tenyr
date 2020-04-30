@@ -225,7 +225,7 @@ test_demo_trailz:  verify = grep -c good
 test_demo_trailz:  result = 33
 test_demo_%: record = 2> log.$@.err.$$$$ | tee log.$@.out.$$$$
 test_demo_%: $(TOP)/ex/%_demo.texe
-	@$(MAKESTEP) -n "Running $* demo ($(context)) ... "
+	@$(MAKESTEP) -n "Running `printf %-10s "'$*'"` demo ($(context)) ... "
 	[ "$$(($(call run,$*)) $(record) | $(verify))" = "$(result)" ] && (rm -f log.$@.{out,err}.$$$$ ; $(MAKESTEP) ok) || (cat log.$@.{out,err}.$$$$ ; false)
 
 randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase | fold -w8 | head -n$1 | sed 's/^/.word 0x/;s/$$/;/')
@@ -331,10 +331,12 @@ check_hw_icarus_op: PERIODS.mk
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
 check_compile: $(build_tas) $(build_tld)
-	@$(MAKESTEP) -n "Building tests from test/ ... "
-	$(MAKE) $S -C $(TOP)/test && $(MAKESTEP) ok
-	@$(MAKESTEP) -n "Building examples from ex/ ... "
-	$(MAKE) $S -C $(TOP)/ex && $(MAKESTEP) ok
+	@$(MAKESTEP) "Building tests from test/ ..."
+	$(MAKE) $S -C $(TOP)/test
+	@$(MAKESTEP) "Done building in test/."
+	@$(MAKESTEP) "Building examples from ex/ ..."
+	$(MAKE) $S -C $(TOP)/ex
+	@$(MAKESTEP) "Done building in ex/."
 
 dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) $(build_tas)
 	@$(MAKESTEP) -n "Checking reversibility of assembly-disassembly ... "
