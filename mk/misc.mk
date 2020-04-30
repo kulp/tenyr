@@ -82,12 +82,7 @@ COVERAGE_RULE = check
 coverage.info: $(COVERAGE_RULE) | lcov_setup
 	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
-COVERAGE_SKIP =# none right now
-coverage.info.trimmed: coverage.info
-	cp -p $< $@ # nothing to do yet
-	#$(LCOV) --output-file $@ $(foreach f,$(COVERAGE_SKIP),--remove $< '$f')
-
-coverage.info.%: coverage.info.trimmed
+coverage.info.%: coverage.info
 	$(LCOV) --extract $< '*/$*/*' --output-file $@
 
 coverage_html_src:     coverage.info.src
