@@ -45,7 +45,7 @@ static int pre_insn_hook(struct sim_state *s, const struct element *i, void *ud)
     if (bb->run_count == o->js->run_count_threshold) {
         // Cache the instructions we receive so they are ready for compilation
         if (!bb->cache)
-            bb->cache = calloc(bb->len, sizeof *bb->cache);
+            bb->cache = calloc((size_t)bb->len, sizeof *bb->cache);
         bb->cache[i->insn.reladdr - bb->base] = i->insn.u.word;
     } else if (bb->run_count > o->js->run_count_threshold) {
         bb->compiled = jit_gen_block(o->js, bb->len, bb->cache);
@@ -100,7 +100,7 @@ int jit_run_sim(struct sim_state *s, const struct run_ops *ops, void **run_data,
     do {
         if (o->curr_bb && o->curr_bb->compiled) {
             o->curr_bb->compiled(s, s->machine.regs);
-            s->insns_executed += o->curr_bb->len;
+            s->insns_executed += (unsigned long)o->curr_bb->len;
             o->curr_bb->run_count++;
             o->curr_bb = NULL;
         }
