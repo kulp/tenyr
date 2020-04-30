@@ -96,7 +96,7 @@ static const char * const disasm_fmts[] = {
     [3] = "%c%c%c %s %c%s %3s %s%s%s%c", // [Z] <- [X >>> Y + -0]
 };
 
-static int is_printable(unsigned int ch, char buf[3])
+static int is_printable(int ch, char buf[3])
 {
     buf[1] = buf[2] = '\0';
 
@@ -112,7 +112,7 @@ static int is_printable(unsigned int ch, char buf[3])
         case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
         default:
             buf[0] = (char)ch;
-            return ch < UCHAR_MAX && isprint((unsigned char)ch);
+            return ch < UCHAR_MAX && isprint(ch);
     }
 }
 
@@ -132,9 +132,9 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
     const struct instruction_typeany * const g = &i->insn.u.typeany;
     const struct instruction_type012 * const t = &i->insn.u.type012;
 
-    const int32_t imm   = g->p == 3 ? i->insn.u.type3.imm : i->insn.u.type012.imm;
-    const int     width = g->p == 3 ? MEDIUM_IMMEDIATE_BITWIDTH : SMALL_IMMEDIATE_BITWIDTH;
-    const enum op op    = g->p == 3 ? OP_BITWISE_OR : t->op;
+    const int32_t  imm   = g->p == 3 ? i->insn.u.type3.imm : i->insn.u.type012.imm;
+    const unsigned width = g->p == 3 ? MEDIUM_IMMEDIATE_BITWIDTH : SMALL_IMMEDIATE_BITWIDTH;
+    const enum op  op    = g->p == 3 ? OP_BITWISE_OR : t->op;
 
     const int fields[3]   = { imm, t->y, t->x };
     const int * const map = asm_op_loc[g->p];
@@ -295,10 +295,10 @@ static int obj_init(STREAM *stream, struct param_state *p, void **ud)
     if (u->assembling) {
         // TODO proper multiple-records support
         o->rec_count = 1;
-        o->records = calloc(o->rec_count, sizeof *o->records);
+        o->records = calloc((size_t)o->rec_count, sizeof *o->records);
         o->records[0].addr = 0;
         o->records[0].size = 1024; // will be realloc()ed as appropriate
-        o->records[0].data = calloc(o->records->size, sizeof *o->records->data);
+        o->records[0].data = calloc((size_t)o->records->size, sizeof *o->records->data);
         u->curr_rec = o->records;
 
         u->next_sym = &o->symbols;
@@ -355,7 +355,7 @@ static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
         // TODO rewrite this without realloc() (start a new section ?)
         while (rec->size < u->pos + i->insn.size)
             rec->size *= 2;
-        rec->data = realloc(rec->data, rec->size * sizeof *rec->data);
+        rec->data = realloc(rec->data, (size_t)rec->size * sizeof *rec->data);
     }
 
     // We could store .zero data sparsely, but we don't (yet)
@@ -593,7 +593,7 @@ size_t make_format_list(int (*pred)(const struct format *), size_t flen,
     size_t pos = 0;
     for (const struct format *f = fmts; pos < len && f < fmts + flen; f++)
         if (!pred || pred(f))
-            pos += snprintf(&buf[pos], len - pos, "%s%s", pos ? sep : "", f->name);
+            pos += (size_t)snprintf(&buf[pos], len - pos, "%s%s", pos ? sep : "", f->name);
 
     return pos;
 }
