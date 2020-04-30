@@ -100,7 +100,7 @@ CHECK_SW_TASKS ?= check_args check_behaviour check_compile check_sim check_obj c
 check_sw: $(CHECK_SW_TASKS)
 check_forth:
 	@$(MAKESTEP) -n "Compiling forth ... "
-	$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(TOP)/forth && $(MAKESTEP) ok
+	$(MAKE) $S MAKESTEP=true BUILDDIR=$(abspath $(BUILDDIR)) --always-make -C $(TOP)/forth && $(MAKESTEP) ok
 
 check_args: check_args_tas check_args_tld check_args_tsim
 check_args_%: check_args_general_% check_args_specific_% ;
@@ -334,9 +334,8 @@ check_compile: $(build_tas) $(build_tld)
 	@$(MAKESTEP) "Building tests from test/ ..."
 	$(MAKE) $S -C $(TOP)/test
 	@$(MAKESTEP) "Done building in test/."
-	@$(MAKESTEP) "Building examples from ex/ ..."
-	$(MAKE) $S -C $(TOP)/ex
-	@$(MAKESTEP) "Done building in ex/."
+	@$(MAKESTEP) -n "Building examples from ex/ ... "
+	$(MAKE) $S MAKESTEP=true --always-make -C $(TOP)/ex && $(MAKESTEP) ok
 
 dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) $(build_tas)
 	@$(MAKESTEP) -n "Checking reversibility of assembly-disassembly ... "
