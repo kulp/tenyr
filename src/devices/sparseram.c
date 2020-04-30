@@ -40,7 +40,7 @@ static int sparseram_init(struct plugin_cookie *pcookie, struct device *device, 
     sparseram->mem = NULL;
     sparseram->pagesize = os_getpagesize();
     // `mask` has only the bits set that address *within* a page
-    sparseram->mask = (unsigned int)(sparseram->pagesize / sizeof(int32_t) - 1);
+    sparseram->mask = (int32_t)(sparseram->pagesize / (ssize_t)sizeof(int32_t) - 1);
 
     return 0;
 }
@@ -73,7 +73,7 @@ static int sparseram_op(void *cookie, int op, int32_t addr,
         // first write.
         struct ram_element *node = malloc(sizeof *node);
         node->base  = page_base;
-        node->space = malloc(sparseram->pagesize);
+        node->space = malloc((size_t)sparseram->pagesize);
         // set all 32-bit words to 0xffffffff, the trap instruction
         memset(node->space, 0xff, sparseram->pagesize);
 

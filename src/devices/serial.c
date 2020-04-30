@@ -8,7 +8,7 @@
 #include "os_common.h"
 
 #define SERIAL_BASE (1ULL << 5)
-#define SERIAL_NO_CHARACTER 0x80000000ull
+#define SERIAL_NO_CHARACTER 0x80000000ul
 
 device_adder serial_add_device;
 
@@ -59,14 +59,14 @@ static int serial_op(void *cookie, int op, int32_t addr, int32_t *data)
         // Use a temporary variable to get the semantically least significant
         // bits of `data` into a character. Writing out one byte as pointed to
         // by `data` (as was once done here) improperly assumes endianness.
-        const char ch = *data;
+        const char ch = (char)*data;
         fwrite(&ch, 1, 1, s->out);
         fflush(s->out);
         rc = ferror(s->out);
     } else if (op == OP_DATA_READ) {
         int tmp;
         if ((tmp = fgetc(s->in)) && tmp == EOF) {
-            *data = SERIAL_NO_CHARACTER;
+            *data = (int32_t)SERIAL_NO_CHARACTER;
             rc = 0;
         } else {
             *data = tmp;

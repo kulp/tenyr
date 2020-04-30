@@ -44,7 +44,7 @@ struct sdlled_state {
 
 static int handle_update(struct sdlled_state *state);
 
-static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
+static int put_digit(struct sdlled_state *state, int index, int digit)
 {
     SDL_Rect src = { .w = DIGIT_WIDTH, .h = DIGIT_HEIGHT },
              dst = {
@@ -79,7 +79,7 @@ static int put_digit(struct sdlled_state *state, unsigned index, unsigned digit)
     return 0;
 }
 
-static int put_dot(struct sdlled_state *state, unsigned index, unsigned on)
+static int put_dot(struct sdlled_state *state, int index, int on)
 {
     SDL_Rect src = { .w = DOT_WIDTH, .h = DIGIT_HEIGHT },
              dst = {
@@ -184,7 +184,7 @@ static int handle_update(struct sdlled_state *state)
     decode_led(state->data[0], digits);
     decode_dots(state->data[1], dots);
 
-    for (unsigned i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++) {
         put_digit(state, i, digits[3 - i]);
         put_dot(state, i, dots[3 - i]);
     }
