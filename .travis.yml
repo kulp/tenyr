@@ -68,7 +68,7 @@ matrix:
       arch: arm64
       env:
         - PLATFORM=linux BITS=64
-        - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
+        - CHECK_RULE=check_sw GCOV= JIT=1 SDL=0
         - PKG_RULE=gzip
     - compiler: "clang"
       language: c
