@@ -27,4 +27,6 @@ should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
   * random snakes "screensaver" ([tenyr source code](https://github.com/kulp/tenyr/blob/develop/ex/bm_snake.tas.cpp) &ndash; [running in the simulator](https://vimeo.com/98338696), [running on the FPGA](https://vimeo.com/103773300))
   * a [recursive Fibonacci number generator](https://github.com/kulp/tenyr/blob/develop/ex/bm_fib.tas.cpp)
 
+Explore a [simple online demo of the **tenyr** toolset](http://demo.tenyr.info/).
+
 **tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki).
