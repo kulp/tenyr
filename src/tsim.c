@@ -566,7 +566,7 @@ int main(int argc, char *argv[])
     devices_teardown(s);
 
     if (s->conf.debugging > 0)
-        fprintf(stderr, "Instructions executed: %lu\n", (unsigned long)s->insns_executed);
+        fprintf(stderr, "Instructions executed: %lu\n", s->insns_executed);
 
 cleanup:
     param_destroy(s->conf.params);

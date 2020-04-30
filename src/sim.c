@@ -25,11 +25,11 @@ static void do_op(enum op op, int type, int32_t *rhs, int32_t X, int32_t Y,
 
     #define Ps(x) ((( int32_t*)p)[x])
     #define Pu(x) (((uint32_t*)p)[x])
-    #define Sh(Lv,Op,Ri) ((Pu(Ri)) < 32 ? (Lv) Op (Pu(Ri)) : ((Lv) Op 31) Op 1)
-    uint32_t pack2 = Pu(2) << 12;
-    uint32_t pack1 = Pu(1) & 0xfff;
-    int32_t  pack0 = Ps(0);
-    uint32_t mask  = (uint32_t)((Pu(1) < 32) ? (1ull << Pu(1)) : 0);
+    #define Sh(Lv,Op,Ri) (int32_t)((Pu(Ri)) < 32 ? (Lv) Op (Pu(Ri)) : ((Lv) Op 31) Op 1)
+    int32_t pack2 = (int32_t)(Pu(2) << 12);
+    int32_t pack1 = (int32_t)(Pu(1) & 0xfff);
+    int32_t pack0 = (int32_t)(Ps(0));
+    int32_t mask  = (int32_t)((Pu(1) < 32) ? (1ull << Pu(1)) : 0);
 
     // This switch is exhaustive for the four bit opcode.
     switch (op & 0xf) {
@@ -45,11 +45,11 @@ static void do_op(enum op op, int type, int32_t *rhs, int32_t X, int32_t Y,
         case OP_COMPARE_EQ        : *rhs = -(Ps(2) == Ps(1)) + Ps(0); break;
         case OP_COMPARE_GE        : *rhs = -(Ps(2) >= Ps(1)) + Ps(0); break;
 
-        case OP_BITWISE_AND       : *rhs =  (Pu(2) &  Pu(1)) + Ps(0); break;
-        case OP_BITWISE_ANDN      : *rhs =  (Pu(2) &~ Pu(1)) + Ps(0); break;
-        case OP_BITWISE_OR        : *rhs =  (Pu(2) |  Pu(1)) + Ps(0); break;
-        case OP_BITWISE_ORN       : *rhs =  (Pu(2) |~ Pu(1)) + Ps(0); break;
-        case OP_BITWISE_XOR       : *rhs =  (Pu(2) ^  Pu(1)) + Ps(0); break;
+        case OP_BITWISE_AND       : *rhs =  (Ps(2) &  Ps(1)) + Ps(0); break;
+        case OP_BITWISE_ANDN      : *rhs =  (Ps(2) &~ Ps(1)) + Ps(0); break;
+        case OP_BITWISE_OR        : *rhs =  (Ps(2) |  Ps(1)) + Ps(0); break;
+        case OP_BITWISE_ORN       : *rhs =  (Ps(2) |~ Ps(1)) + Ps(0); break;
+        case OP_BITWISE_XOR       : *rhs =  (Ps(2) ^  Ps(1)) + Ps(0); break;
 
         case OP_PACK              : *rhs =  (pack2 |  pack1) + pack0; break;
         case OP_TEST_BIT          : *rhs = -!!(Ps(2) & mask) + Ps(0); break;
@@ -93,7 +93,7 @@ static int run_instruction(struct sim_state *s, const struct element *i, void *r
     int32_t * const ip = &s->machine.regs[15];
     int32_t rhs = 0;
     int32_t Y = 0, imm = 0, value = 0;
-    int op = OP_BITWISE_OR;
+    enum op op = OP_BITWISE_OR;
 
     ++*ip;
 
@@ -106,7 +106,7 @@ static int run_instruction(struct sim_state *s, const struct element *i, void *r
         case 2:
             Y   = s->machine.regs[g->y];
             imm = g->imm;
-            op  = g->op;
+            op  = (enum op)g->op;
             break;
         case 3:
             Y   = 0;

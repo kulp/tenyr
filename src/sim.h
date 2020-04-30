@@ -64,7 +64,7 @@ struct sim_state {
     struct machine_state machine;
     sim_runner *run_sim, *interp;
     dispatch_cycle *pump;
-    unsigned long long insns_executed;
+    unsigned long insns_executed;
 
     struct library_list *libs; // opaque linked list of open libraries to dispose
 };
