@@ -2,8 +2,8 @@
 
 _start:
     prologue
-    c <- rel(dst)
-    d <- rel(src)
+    c <- @+dst + p
+    d <- @+src + p
     e <- 10
     call(memcpy)
     c <- b

@@ -21,15 +21,15 @@ seed: .word @mult
 
 .global srand
 srand:
-    c -> [rel(seed)]
+    c -> [@+seed + p]
     ret
 
 .global rand
 rand:
     push(c)
-    b <- [rel(seed)]
-    c <- [rel(mult)]
+    b <- [@+seed + p]
+    c <- [@+mult + p]
     b <- b * c + INCREMENT
-    b -> [rel(seed)]
+    b -> [@+seed + p]
     popall_ret(c)
 

@@ -2,7 +2,7 @@
 
 _start:
     prologue
-    c <- rel(hi)        // string starts at @hi
+    c <- @+hi + p       // string starts at @hi
     call(puts)
     illegal
 

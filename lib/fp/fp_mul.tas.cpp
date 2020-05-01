@@ -18,7 +18,7 @@ fp_mul:
   e <- e - 0x7f + g
 
   // Extract the mantissas.
-  m <- [rel(mant)]
+  m <- [@+mant + p]
   c <- c & m
   d <- d & m
 
@@ -57,7 +57,7 @@ no_shift:
   // Restore the saved sign and combine the result.
   pop(b)
   b <- e << 23 + b
-  m <- [rel(mant)]
+  m <- [@+mant + p]
   c <- c & m
   b <- b | c
 

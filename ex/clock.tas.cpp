@@ -4,10 +4,10 @@ _start:
     prologue
 
 top:
-    d <- [rel(min0)]
-    e <- [rel(min1)]
-    f <- [rel(sec0)]
-    g <- [rel(sec1)]
+    d <- [@+min0 + p]
+    e <- [@+min1 + p]
+    f <- [@+sec0 + p]
+    g <- [@+sec1 + p]
 
     h <- d << 4 + e
     h <- h << 4 + f
@@ -31,10 +31,10 @@ top:
     h <- d == 6
     d <- d &~ h
 
-    d -> [rel(min0)]
-    e -> [rel(min1)]
-    f -> [rel(sec0)]
-    g -> [rel(sec1)]
+    d -> [@+min0 + p]
+    e -> [@+min1 + p]
+    f -> [@+sec0 + p]
+    g -> [@+sec1 + p]
     goto(top)
 
     illegal

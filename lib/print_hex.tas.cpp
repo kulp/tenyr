@@ -3,7 +3,7 @@
     .global convert_hex
 convert_hex:
     push(d)
-    b <- rel(tmpbuf_end)
+    b <- @+tmpbuf_end + p
 convert_hex_top:
     b <- b - 1
     d <- c & 0xf

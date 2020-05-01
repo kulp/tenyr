@@ -88,13 +88,13 @@ _start:
 
 print_hex:
     push(c)
-    c <- rel(_0x)
+    c <- @+_0x + p
     call(puts)
     pop(c)
     call(convert_hex)
     c <- b
     call(puts)
-    c <- rel(_nl)
+    c <- @+_nl + p
     call(puts)
     ret
 

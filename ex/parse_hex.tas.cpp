@@ -3,48 +3,48 @@
 _start:
     prologue
 
-    c <- rel(string_oct)
+    c <- @+string_oct + p
     d <- 0
     e <- 0
     call(strtol)
 
-    c <- rel(string_dec)
+    c <- @+string_dec + p
     d <- 0
     e <- 0
     call(strtol)
 
-    c <- rel(string_hex)
+    c <- @+string_hex + p
     d <- 0
     e <- 0
     call(strtol)
 
-    c <- rel(string_36)
+    c <- @+string_36 + p
     d <- 0
     e <- 36
     call(strtol)
 
-    c <- rel(string_gbg)
+    c <- @+string_gbg + p
     d <- 0
     e <- 10
     call(strtol)
 
-    c <- rel(string_gbg)
-    d <- rel(next)
+    c <- @+string_gbg + p
+    d <- @+next + p
     e <- 10
     call(strtol)
 
-    c <- [rel(next)]
-    d <- rel(next)
+    c <- [@+next + p]
+    d <- @+next + p
     e <- 16
     call(strtol)
 
-    c <- rel(string_gb2)
-    d <- rel(next)
+    c <- @+string_gb2 + p
+    d <- @+next + p
     e <- 8
     call(strtol)
 
-    c <- [rel(next)]
-    d <- rel(next)
+    c <- [@+next + p]
+    d <- @+next + p
     e <- 36
     call(strtol)
 

@@ -7,7 +7,7 @@
     b <- ARGUMENT       // b = upper limit (N) (31-bit unsigned)
     c <- b >> 1         // c = (N/2)
     i <- 2              // i = outer loop control
-    o <- rel(array)     // base of array
+    o <- @+array + p    // base of array
     j <- 2              // j = inner index, setup index
     d <- -1             // d = truth
 

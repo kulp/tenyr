@@ -14,14 +14,14 @@ start:
   c <- 36
   call(isqrt)
 
-  b <- [rel(arg0)]
-  c <- [rel(arg1)]
-  d <- [rel(arg2)]
-  e <- [rel(arg3)]
+  b <- [@+arg0 + p]
+  c <- [@+arg1 + p]
+  d <- [@+arg2 + p]
+  e <- [@+arg3 + p]
   call(dw_add)
 
-  d <- [rel(arg0)]
-  e <- [rel(arg1)]
+  d <- [@+arg0 + p]
+  e <- [@+arg1 + p]
   call(dw_mul)
 
   illegal

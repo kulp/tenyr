@@ -3,26 +3,26 @@
 _start:
     prologue
 
-    c <- rel(this)
-    d <- rel(that)
-    f <- rel(strcmp)
+    c <- @+this + p
+    d <- @+that + p
+    f <- @+strcmp + p
     call(cmp)
 
-    c <- rel(this)
-    d <- rel(this)
-    f <- rel(strcmp)
+    c <- @+this + p
+    d <- @+this + p
+    f <- @+strcmp + p
     call(cmp)
 
-    c <- rel(this)
-    d <- rel(that)
+    c <- @+this + p
+    d <- @+that + p
     e <- 6
-    f <- rel(strncmp)
+    f <- @+strncmp + p
     call(cmp)
 
-    c <- rel(this)
-    d <- rel(that)
+    c <- @+this + p
+    d <- @+that + p
     e <- 50
-    f <- rel(strncmp)
+    f <- @+strncmp + p
     call(cmp)
 
     illegal
@@ -31,7 +31,7 @@ cmp:
     push(c)
     push(d)
     call(puts)      // output first string
-    c <- rel(nl)    // followed by newline
+    c <- @+nl + p   // followed by newline
     call(puts)
     pop(d)
     pop(c)
@@ -40,16 +40,16 @@ cmp:
     push(d)
     c <- d
     call(puts)      // output second string
-    c <- rel(nl)    // followed by newline
+    c <- @+nl + p   // followed by newline
     call(puts)
     pop(d)
     pop(c)
 
     call(check)     // actually compare them
 
-    c <- rel(nl)    // ... followed by newline
+    c <- @+nl + p   // ... followed by newline
     call(puts)
-    c <- rel(nl)    // and another
+    c <- @+nl + p   // and another
     call(puts)
 
     ret
@@ -57,10 +57,10 @@ cmp:
 check:
     callr(f)
     jnzrel(b,_mismatched)
-    c <- rel(_match_message)
+    c <- @+_match_message + p
     goto(_finished)
 _mismatched:
-    c <- rel(_mismatch_message)
+    c <- @+_mismatch_message + p
 _finished:
     call(puts)
     ret

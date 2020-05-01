@@ -5,7 +5,7 @@
 start:
     prologue
 
-    c <- [rel(large)]
+    c <- [@+large + p]
     call(isprime)
 
     illegal

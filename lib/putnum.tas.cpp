@@ -8,7 +8,7 @@ putnum:
     h <- 0x10000        // h is video base
     k <- d * COLS + e   // k is offset into display
     k <- k + f          // start at right side of field
-    i <- rel(hexes)     // i is base of hex transform
+    i <- @+hexes + p    // i is base of hex transform
 
 putnumloop:
     j <- [c & 0xf + i]  // j is character for bottom 4 bits of c

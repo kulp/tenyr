@@ -7,7 +7,7 @@
 dw_mul:
   push(m)
   // Load mask.
-  m <- [rel(mask)]
+  m <- [@+mask + p]
 
   // Split up factors into 16-bit components.
   b <- d >>> 16

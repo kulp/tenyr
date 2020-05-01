@@ -13,11 +13,11 @@ loop_outer:
     G <- B == E
     E <- E - 1
     jzrel(G,skip)
-    C <- rel(good_msg)
+    C <- @+good_msg + P
     call(puts)
     goto(loop_outer)
 skip:
-    C <- rel(bad_msg)
+    C <- @+bad_msg + P
     call(puts)
     goto(loop_outer)
 

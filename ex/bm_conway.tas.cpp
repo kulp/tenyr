@@ -14,7 +14,7 @@ _start:
     // i is global video base
     i <- @VGA_BASE
     // g is global flip buffer
-    g <- rel(databuf)
+    g <- @+databuf + p
     // h is global flip buffer bit index
     h <- 0
 
@@ -47,7 +47,7 @@ blank_area_loop:
 
 randomise_board:
     pushall(j,k,c,d,l,n)
-    c <- [rel(seed)]
+    c <- [@+seed + p]
     call(srand)
     j <- (ROWS - 1)
 randomise_board_rows:

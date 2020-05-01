@@ -7,10 +7,10 @@ main:
 #define DATA_LEN (.L_data_end - .L_data_start)
 #define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)
 
-    c <- rel(data_start)        // data to sort
+    c <- @+data_start + p       // data to sort
     d <- (DATA_LEN / ELT_LEN)   // number of elements
     e <- ELT_LEN                // size of each element
-    f <- rel(inteq)             // comparator
+    f <- @+inteq + p            // comparator
     call(qsort)
 
 done:
@@ -19,7 +19,7 @@ print_loop:
     c <- [i - (. + 0) + p]      // get second field of struct
     c <-  c - (. + 1) + p       // and relocate it
     call(puts)
-    c <- rel(nl)
+    c <- @+nl + p
     call(puts)
     i <- i + ELT_LEN
     c <- i < .L_data_end

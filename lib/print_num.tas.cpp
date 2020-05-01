@@ -6,7 +6,7 @@ print_num:
 print_num_generic:
     pushall(d,f,g,h)
     g <- c
-    h <- rel(tmpbuf_end)
+    h <- @+tmpbuf_end + p
     d <- c < 0
     jnzrel(d,print_num_generic_negative)
     f <- 0

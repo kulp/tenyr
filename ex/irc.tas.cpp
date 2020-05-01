@@ -4,7 +4,7 @@
 #define CHANNEL "#tenyr"
 #define NICK    "rynet"
 
-#define do(X) c <- rel(X) ; call(puts) ; c <- rel(rn) ; call(puts)
+#define do(X) c <- @+X + p ; call(puts) ; c <- @+rn + p ; call(puts)
 
 _start:
     prologue
@@ -19,7 +19,7 @@ loop_line:
     g <- b
 
     c <- g
-    d <- rel(ping)
+    d <- @+ping + p
     e <- 5
     call(strncmp)
     jzrel(b,do_pong)
@@ -29,7 +29,7 @@ loop_line:
     call(skipwords)
 
     c <- b
-    d <- rel(privmsg)
+    d <- @+privmsg + p
     e <- 7
     call(strncmp)
     jnzrel(b,loop_line)
@@ -44,21 +44,21 @@ loop_line:
 
     illegal
 do_pong:
-    c <- rel(pong)
+    c <- @+pong + p
     call(puts)
     c <- g
     d <- 1
     call(skipwords)
     c <- b
     call(puts) // respond with same identifier
-    c <- rel(rn)
+    c <- @+rn + p
     call(puts)
     goto(loop_line)
 
 check_input:
     pushall(d,e)
     push(c)
-    d <- rel(trigger)
+    d <- @+trigger + p
     e <- 3 // strlen(trigger)
     call(strncmp)
     pop(c)
@@ -100,7 +100,7 @@ say_fahrenheit:
     call(convert_decimal)
     c <- b
     call(puts)
-    c <- rel(degF)
+    c <- @+degF + p
     call(puts)
     call(say_end)
     ret
@@ -111,7 +111,7 @@ degF: .utf32 "°F" ; .word 0
 convert_decimal:
     pushall(d,f,g,h)
     g <- c
-    h <- rel(tmpbuf_end)
+    h <- @+tmpbuf_end + p
     d <- c < 0
     jnzrel(d,convert_decimal_negative)
     f <- 0
@@ -152,14 +152,14 @@ say:
 
 say_start:
     push(c)
-    c <- rel(talk)
+    c <- @+talk + p
     call(puts)
     pop(c)
     ret
 
 say_end:
     push(c)
-    c <- rel(rn)
+    c <- @+rn + p
     call(puts)
     pop(c)
     ret
@@ -187,7 +187,7 @@ skipwords_done:
 
 getline:
     pushall(c,d,f)
-    f <- rel(buffer)
+    f <- @+buffer + p
 
 getline_top:
     getch(b)
@@ -200,7 +200,7 @@ getline_top:
 
 getline_eol:
     a -> [f]
-    b <- rel(buffer)
+    b <- @+buffer + p
     popall(c,d,f)
     ret
 

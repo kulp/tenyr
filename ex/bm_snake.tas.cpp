@@ -11,11 +11,11 @@ _start:
     call(init_display)
 
 #ifdef TEST
-    c <- rel(_start) ; call(srand) # seed based on where we are loaded
+    c <- @+_start + p ; call(srand) # seed based on where we are loaded
 #endif
 
-    n <- rel(snakes)
-    e <- rel(snakes_after)
+    n <- @+snakes + p
+    e <- @+snakes_after + p
 init:
     call(rand)
     j <- b >>> 27 // 5 bits
@@ -29,7 +29,7 @@ init:
 
     g <- -1 // constant
 L_loop:
-    n <- rel(snakes)
+    n <- @+snakes + p
 L_snake:
     // j:k = row:col
     j <- [n + 2]
@@ -82,7 +82,7 @@ L_snake:
     c -> [e + d]        // e is d characters past start of text region
 
     n <- n + SIZEOF_SNAKE
-    e <- rel(snakes_after)
+    e <- @+snakes_after + p
     j <- n < e
     jnzrel(j,L_snake)
 

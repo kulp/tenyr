@@ -8,17 +8,17 @@ main:
 #define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)
 
     c <- 0                      // needle
-    i <- [rel(largest)]
+    i <- [@+largest + p]
 loop_top:
     h <- i < c
     jnzrel(h, loop_exit)
 
-    c -> [rel(key)]             // update key value
-    c <- rel(key)               // pointer to value
-    d <- rel(data_start)        // haystack
+    c -> [@+key + p]            // update key value
+    c <- @+key + p              // pointer to value
+    d <- @+data_start + p       // haystack
     e <- (DATA_LEN / ELT_LEN)   // number of elements
     f <- ELT_LEN                // size of each element
-    g <- rel(inteq)             // comparator
+    g <- @+inteq + p            // comparator
     call(bsearch)
 
     push(c)
@@ -29,14 +29,14 @@ loop_top:
     goto(done)
 
 notfound:
-    c <- rel(error_msg)
+    c <- @+error_msg + p
 
 done:
     call(puts)
-    c <- rel(nl)
+    c <- @+nl + p
     call(puts)
     pop(c)
-    c <- [rel(key)]
+    c <- [@+key + p]
     c <- c + 1                  // increment loop counter
     goto(loop_top)
 loop_exit:
