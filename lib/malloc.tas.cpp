@@ -11,7 +11,7 @@
 #define NPER        (1 << NPERBITS)
 #define BPER        (1 << BPERBITS)
 #define TN          0
-#define POOL        rel(pool)
+#define POOL        @+pool
 
 // DATA ------------------------------------------------------------------------
 counts: .zero (RANKS - 1) ; .word 1
@@ -124,12 +124,12 @@ L_SIZE2RANK_zero:
 
 // GET_COUNT gets SZ rank in C, returns SZ free-count in B
 #define GET_COUNT(B,C)          \
-    B   <- [C + rel(counts)]  ; \
+    B   <- [C + @+counts + P] ; \
     //
 
 // SET_COUNT gets SZ rank in C, SZ free-count in D, returns nothing
 #define SET_COUNT(C,D)          \
-    D   -> [C + rel(counts)]  ; \
+    D   -> [C + @+counts + P] ; \
     //
 
 // GET_NODE gets NP n in C, returns SZ shifted-word in B, T may be C
@@ -137,7 +137,7 @@ L_SIZE2RANK_zero:
     B   <- C >> BPERBITS      ; \
     T   <- C & (BPER - 1)     ; \
     T   <- T << BPERBITS      ; \
-    B   <- [B + rel(nodes)]   ; \
+    B   <- [B + @+counts + P] ; \
     B   <- B >> T             ; \
     //
 
@@ -148,11 +148,11 @@ L_SIZE2RANK_zero:
     U   <- (BPER - 1)           /* U is mask                        */ ; \
     U   <- U << T               /* U is shifted mask                */ ; \
     V   <- C >> BPERBITS        /* V is index into node array       */ ; \
-    C   <- [V + rel(nodes)]     /* C is current word                */ ; \
+    C   <- [V + @+counts + P]   /* C is current word                */ ; \
     C   <- C &~ U               /* C is word with node masked out   */ ; \
     U   <- D << T               /* U is now D shifted over          */ ; \
     C   <- C | U                /* C is word with new node included */ ; \
-    C   -> [V + rel(nodes)]     /* C gets written back to node      */ ; \
+    C   -> [V + @+counts + P]   /* C gets written back to node      */ ; \
     //
 
 // GET_LEAF gets NP n in C, returns SZ leafiness in B, T may be C
@@ -215,7 +215,7 @@ NODE2ADDR_looptop:
     E   <- E + 1            // i++
     goto(NODE2ADDR_looptop) // }
 NODE2ADDR_loopbottom:
-    B   <- B + rel(pool)
+    B   <- B + @+counts + P
     ret
 
 // ADDR2NODE gets SZ addr in C, returns NP node in B

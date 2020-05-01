@@ -56,7 +56,7 @@
 #include "common.th"
 
     prologue
-    c &lt;- rel(hi)        // string starts at @hi
+    c &lt;- @+hi + p       // string starts at @hi
     call(puts)
     illegal
 
