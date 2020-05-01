@@ -6,6 +6,7 @@
 
 char *os_find_self(const char *argv0)
 {
+    (void)argv0;
     size_t size = PATH_MAX;
     char *buf = malloc(size);
     if (GetModuleFileName(NULL, buf, size) > 0) {
