@@ -25,6 +25,8 @@ matrix:
         - PLATFORM=mingw BITS=64 HOST=x86_64
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
         - PKG_RULE=zip
+        # Older compilers do not recognize some of our pedantic flags
+        - PEDANTIC=
       addons:
         <<: *def_addons
         apt:
@@ -39,6 +41,8 @@ matrix:
         - PLATFORM=mingw BITS=32 HOST=i686
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
         - PKG_RULE=zip
+        # Older compilers do not recognize some of our pedantic flags
+        - PEDANTIC=
       addons:
         <<: *def_addons
         apt:
@@ -99,6 +103,8 @@ matrix:
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
         - COVERITY_SCAN_BUILD_COMMAND="make V=1 all vpi"
+        # Older compilers do not recognize some of our pedantic flags
+        - PEDANTIC=
       addons:
         <<: *def_addons
         apt:
@@ -114,6 +120,8 @@ matrix:
         - PLATFORM=linux BITS=64
         - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
         - PKG_RULE=gzip
+        # Older compilers do not recognize some of our pedantic flags
+        - PEDANTIC=
     - language: node_js
       node_js:
         - node
