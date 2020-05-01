@@ -17,7 +17,7 @@ env:
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
     - PATH="$PATH:$DEPSSRC/bin"
 language: c
-matrix:
+jobs:
   include:
     - compiler: x86_64-w64-mingw32-gcc
       os: linux
