@@ -1,6 +1,8 @@
+#include "os_common.h"
+
 #include <stdlib.h>
 
-char *os_find_self(char *argv0)
+char *os_find_self(const char *argv0)
 {
     (void)argv0;
     // This value is not used by its caller as of the time of writing -- this
