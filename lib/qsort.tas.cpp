@@ -69,7 +69,7 @@ L_qsort_partition:
     SI <- SI + 1
 L_qsort_noswap:
     II <- II + 1
-    goto(L_qsort_partition)
+    p <- p + @+L_qsort_partition
 
 L_qsort_partition_done:
     swap(SI,LI)

@@ -17,7 +17,7 @@ top:
     e <- e & 0xff
     e <- e << 16
     c <- e | c + 1
-goto(top)
+p <- p + @+top
 
 illegal
 

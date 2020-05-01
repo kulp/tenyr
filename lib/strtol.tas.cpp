@@ -25,12 +25,12 @@ strtol_no_call:
 strtol_top:
     g <- e < 11
     jnzrel(g,strtol_le10_top)
-    goto(strtol_gt10_top)
+    p <- p + @+strtol_gt10_top
 
 strtol_negative:
     f <- -1
     c <- c + 1
-    goto(strtol_top)
+    p <- p + @+strtol_top
 
 strtol_error:
     h -> errno
@@ -45,14 +45,14 @@ strtol_no_endptr:
 
 strtol_error_ERANGE:
     h <- ERANGE
-    goto(strtol_error)
+    p <- p + @+strtol_error
 
 // TODO produce EINVAL
 // only way I can think to do this so far is to get ilog2(base) and check for
 // that many zero bits at the MSB end before every multiplication
 strtol_error_EINVAL:
     h <- EINVAL
-    goto(strtol_error)
+    p <- p + @+strtol_error
 
 // ----------------------------------------------------------------------------
 strtol_le10_top:
@@ -65,7 +65,7 @@ strtol_le10_top:
     c <- c + 1
     b <- b * e
     b <- b + i
-    goto(strtol_le10_top)
+    p <- p + @+strtol_le10_top
 
 // ----------------------------------------------------------------------------
 strtol_gt10_top:
@@ -78,7 +78,7 @@ strtol_gt10_top:
     c <- c + 1
     b <- b * e
     b <- b + g
-    goto(strtol_gt10_top)
+    p <- p + @+strtol_gt10_top
 
 strtol_gt10_tryhigh:
     i <- i &~ ('a' - 'A')
@@ -91,7 +91,7 @@ strtol_gt10_tryhigh:
     c <- c + 1
     b <- b * e
     b <- b + g
-    goto(strtol_gt10_top)
+    p <- p + @+strtol_gt10_top
 
 // ----------------------------------------------------------------------------
 // modifies C upon return
@@ -111,9 +111,9 @@ detect_base_8or16:
     jnzrel(f,detect_base_16)
     b <- 8
     c <- c + 1
-    goto(detect_base_done)
+    p <- p + @+detect_base_done
 detect_base_16:
     b <- 16
     c <- c + 2
-    goto(detect_base_done)
+    p <- p + @+detect_base_done
 

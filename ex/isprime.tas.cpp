@@ -74,11 +74,11 @@ mod_loop:
     // Increment i and continue.
     jnzrel(k, cleanup0)
     i <- i + 1
-    goto(mod_loop)
+    p <- p + @+mod_loop
 
 prime:
     b <- -1
-    goto(done)
+    p <- p + @+done
 
 cleanup1:
     pop(c)

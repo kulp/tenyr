@@ -23,6 +23,6 @@ top:
     jnzrel(n,top)
 
     b <- -1             // indicate completion to testbench
-    goto(restart)     // restartable, but exits to testbench by default
+    p <- p + @+restart     // restartable, but exits to testbench by default
     illegal
 

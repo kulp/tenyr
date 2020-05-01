@@ -32,7 +32,7 @@ forever:
     call(flip)
 
     m <- m + 1
-    goto(forever)
+    p <- p + @+forever
 
 blank_area:
     pushall(j,n)

@@ -26,7 +26,7 @@ loop_top:
     jnzrel(c,notfound)
     c <- [b + 1]
     c <- c - (. + 1) + p        // relocate string address argument
-    goto(done)
+    p <- p + @+done
 
 notfound:
     c <- @+error_msg + p
@@ -38,7 +38,7 @@ done:
     pop(c)
     c <- [@+key + p]
     c <- c + 1                  // increment loop counter
-    goto(loop_top)
+    p <- p + @+loop_top
 loop_exit:
 
     illegal

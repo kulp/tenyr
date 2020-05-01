@@ -16,7 +16,7 @@ compute_4:
   k <- j | k
   jnzrel(k, do_magic)
   g <- g >> 2
-  goto(compute_4)
+  p <- p + @+compute_4
 
   // :)
 do_magic:
@@ -33,7 +33,7 @@ do_magic:
 shift:
   b <- b >> 1
   g <- g >> 2
-  goto(do_magic)
+  p <- p + @+do_magic
 
 done:
   popall(e,g,j,k)

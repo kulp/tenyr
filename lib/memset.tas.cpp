@@ -12,7 +12,7 @@ L_memset_loop:
     jnzrel(g,L_memset_done)
     d -> [c + f]                // store val into dst word
     f <- f + 1                  // increment offset
-    goto(L_memset_loop)
+    p <- p + @+L_memset_loop
 L_memset_done:
     popall(f,g)
     ret

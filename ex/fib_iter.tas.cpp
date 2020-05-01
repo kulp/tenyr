@@ -25,7 +25,7 @@ loop:
     d <- g
 
     c <- c - 1
-    goto(loop)
+    p <- p + @+loop
 
 done:
     popall(d,g,k)

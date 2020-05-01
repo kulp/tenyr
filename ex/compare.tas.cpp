@@ -58,7 +58,7 @@ check:
     callr(f)
     jnzrel(b,_mismatched)
     c <- @+_match_message + p
-    goto(_finished)
+    p <- p + @+_finished
 _mismatched:
     c <- @+_mismatch_message + p
 _finished:

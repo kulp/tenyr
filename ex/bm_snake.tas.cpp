@@ -93,7 +93,7 @@ slow_down:
 	j <- j - 1
 	jnzrel(e,slow_down)
 
-    goto(L_loop) // infinite loop
+    p <- p + @+L_loop // infinite loop
 
 snakes:
     // base type, shift distance for rand(), row, col

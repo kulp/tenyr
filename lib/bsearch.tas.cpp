@@ -37,15 +37,15 @@ bsearch_loop:
     e <- e >> 1
     j <- e * f
     d <- d + j
-    goto(bsearch_loop)
+    p <- p + @+bsearch_loop
 
 bsearch_less:
     e <- e >> 1
-    goto(bsearch_loop)
+    p <- p + @+bsearch_loop
 
 bsearch_notfound:
     b <- 0
-    goto(bsearch_done)
+    p <- p + @+bsearch_done
 
 bsearch_done:
     popall(h,i,j)

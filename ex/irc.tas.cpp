@@ -40,7 +40,7 @@ loop_line:
     c <- b + 1
     call(check_input)
 
-    goto(loop_line)
+    p <- p + @+loop_line
 
     illegal
 do_pong:
@@ -53,7 +53,7 @@ do_pong:
     call(puts) // respond with same identifier
     c <- @+rn + p
     call(puts)
-    goto(loop_line)
+    p <- p + @+loop_line
 
 check_input:
     pushall(d,e)
@@ -63,7 +63,7 @@ check_input:
     call(strncmp)
     pop(c)
     jzrel(b,check_input_triggered)
-    goto(check_input_done)
+    p <- p + @+check_input_done
 
 check_input_triggered:
     c <- c + 3
@@ -142,7 +142,7 @@ convert_decimal_done:
 convert_decimal_negative:
     g <- - g
     f <- -1
-    goto(convert_decimal_top)
+    p <- p + @+convert_decimal_top
 
 say:
     call(say_start)
@@ -173,7 +173,7 @@ skipwords_top:
     e <- g == ' '
     c <- c + 1
     jnzrel(e,skipwords_foundspace)
-    goto(skipwords_top)
+    p <- p + @+skipwords_top
 
 skipwords_foundspace:
     d <- d - 1
@@ -196,7 +196,7 @@ getline_top:
     jnzrel(c,getline_eol)
     b -> [f]
     f <- f + 1
-    goto(getline_top)
+    p <- p + @+getline_top
 
 getline_eol:
     a -> [f]

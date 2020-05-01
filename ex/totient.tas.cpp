@@ -30,7 +30,7 @@ loop:
   b <- b - k + 2
 
   d <- d - 1
-  goto(loop)
+  p <- p + @+loop
 
 done:
   popall(d,k)

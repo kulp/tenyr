@@ -31,11 +31,11 @@ inner:
     m <- b < j          // compare j to N
     jnzrel(m,bottom)    // branch if j > N
     a -> [o + j]        // mark as composite
-    goto(inner)         // loop
+    p <- p + @+inner    // loop
 
 bottom:
     i <- i + 1          // check next candidate
-    goto(outer)         // loop
+    p <- p + @+outer    // loop
 
 done:
     illegal

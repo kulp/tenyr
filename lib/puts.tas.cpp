@@ -12,7 +12,7 @@ puts_loop:
     jnzrel(d,puts_done)
     c <- c + 1          // increment index for next time
     emit(b)             // output character to serial device
-    goto(puts_loop)
+    p <- p + @+puts_loop
 puts_done:
     pop(d)
     ret

@@ -13,7 +13,7 @@ L_memcpy_loop:
     g <- [d + f]                // copy src word into temp
     g -> [c + f]                // copy temp into dst word
     f <- f + 1                  // increment offset
-    goto(L_memcpy_loop)
+    p <- p + @+L_memcpy_loop
 L_memcpy_done:
     popall(f,g)
     ret

@@ -15,11 +15,11 @@ loop_outer:
     jzrel(G,skip)
     C <- @+good_msg + P
     call(puts)
-    goto(loop_outer)
+    p <- p + @+loop_outer
 skip:
     C <- @+bad_msg + P
     call(puts)
-    goto(loop_outer)
+    p <- p + @+loop_outer
 
 done:
     illegal

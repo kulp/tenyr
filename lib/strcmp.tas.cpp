@@ -18,7 +18,7 @@ strcmp_loop:
     d <- d + 1          // increment index for next time
     e <- j == g         // check for mismatch
     b <- b |~ e         // accumulate mismatches
-    goto(strcmp_loop)
+    p <- p + @+strcmp_loop
 strcmp_done:
     e <- j == g         // check for mismatch
     b <- b |~ e         // accumulate mismatches
@@ -48,7 +48,7 @@ strncmp_loop:
     e <- e - 1          // decrement length to check
     f <- j == g         // check for mismatch
     b <- b |~ f         // accumulate mismatches
-    goto(strncmp_loop)
+    p <- p + @+strncmp_loop
 strncmp_done:
     f <- j == g         // check for mismatch
     b <- b |~ f         // accumulate mismatches

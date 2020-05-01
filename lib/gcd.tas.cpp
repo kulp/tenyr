@@ -22,11 +22,11 @@ loop:
   jnzrel(k, else)
 
   d <- d - b
-  goto(loop)
+  p <- p + @+loop
 
 else:
   b <- b - d
-  goto(loop)
+  p <- p + @+loop
 
 done:
   pop(k)

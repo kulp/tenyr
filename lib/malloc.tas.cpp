@@ -30,7 +30,7 @@ L_ilog2_top:
     D   <- C == 0
     jnzrel(D, L_ilog2_done)
     B   <- B + 1
-    goto(L_ilog2_top)
+    p <- p + @+L_ilog2_top
 L_ilog2_done:
     pop(D)
     ret
@@ -96,7 +96,7 @@ L_NODE2RANK_top:
     jnzrel(B, L_NODE2RANK_done)
     D   <- D + 1
     PARENT(C,C)
-    goto(L_NODE2RANK_top)
+    p <- p + @+L_NODE2RANK_top
 L_NODE2RANK_done:
     B   <- - D + (RANKS - 1)
     pop(D)
@@ -213,7 +213,7 @@ NODE2ADDR_looptop:
     B   <- B | D            // base |= ISRIGHT(n) << i
     PARENT(C,C)             // n = PARENT(n)
     E   <- E + 1            // i++
-    goto(NODE2ADDR_looptop) // }
+    p <- p + @+NODE2ADDR_looptop // }
 NODE2ADDR_loopbottom:
     B   <- B + @+counts + P
     ret
@@ -233,14 +233,14 @@ L_ADDR2NODE_looptop:
     jnzrel(F,L_ADDR2NODE_left)
     RLINK(B,B)          // n = RLINK(n)
     E   <- E + D        // base += RANK2WORDS(rank)
-    goto(L_ADDR2NODE_loopbottom)
+    p <- p + @+L_ADDR2NODE_loopbottom
 L_ADDR2NODE_left:
     LLINK(B,B)          // n = LLINK(n)
     // fallthrough
 
 L_ADDR2NODE_loopbottom:
     D   <- D >> 1       // drop to next smaller rank
-    goto(L_ADDR2NODE_looptop)
+    p <- p + @+L_ADDR2NODE_looptop
 
 L_ADDR2NODE_loopdone:
 #if DEBUG
@@ -256,7 +256,7 @@ L_ADDR2NODE_done:
 .global buddy_malloc
 buddy_malloc:
     SIZE2RANK(C,C)
-    goto(buddy_alloc)
+    p <- p + @+buddy_alloc
 
 .global buddy_calloc
 buddy_calloc:
@@ -342,7 +342,7 @@ L_buddy_nosplit_loop_top:
 
 L_buddy_nosplit_loop_bottom:
     D   <- D + 1    // D is loop index
-    goto(L_buddy_nosplit_loop_top)
+    p <- p + @+L_buddy_nosplit_loop_top
 
     popall(D,E,F,G)
     ret
@@ -359,11 +359,11 @@ L_buddy_alloc_rankplus:
     E   <- E == 0
     jzrel(E,L_buddy_alloc_rankdone)
     F   <- F + 1
-    goto(L_buddy_alloc_rankplus)
+    p <- p + @+L_buddy_alloc_rankplus
 
 L_buddy_alloc_rankdone:
     call(buddy_nosplit)
-    goto(L_buddy_alloc_done)
+    p <- p + @+L_buddy_alloc_done
 
 L_buddy_alloc_do_split:
     D   <- E
@@ -377,5 +377,5 @@ L_buddy_alloc_error:
     D   <- ENOMEM
     D   -> errno
     B   <- 0
-    goto(L_buddy_alloc_done)
+    p <- p + @+L_buddy_alloc_done
 

@@ -35,7 +35,7 @@ top:
     e -> [@+min1 + p]
     f -> [@+sec0 + p]
     g -> [@+sec1 + p]
-    goto(top)
+    p <- p + @+top
 
     illegal
 

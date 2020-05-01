@@ -37,7 +37,7 @@ print_num_generic_done:
 print_num_generic_negative:
     g <- - g
     f <- -1
-    goto(print_num_generic_top)
+    p <- p + @+print_num_generic_top
 
 tmpbuf: .utf32 "0123456789abcdef"
 tmpbuf_end: .word 0

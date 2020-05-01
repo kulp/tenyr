@@ -25,7 +25,7 @@ build_subtrahend:
 
   // Otherwise, multiply by 2.
   g <- g << 1
-  goto(build_subtrahend)
+  p <- p + @+build_subtrahend
 
 compute_quotient:
   // If our subtrahend is equal to our divisor, we're done.
@@ -48,7 +48,7 @@ compute_quotient:
   // Each iteration, shift the quotient left by one.
 shift_quotient:
   b <- b << 1
-  goto(compute_quotient)
+  p <- p + @+compute_quotient
 
   // Return result.
 done:

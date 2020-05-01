@@ -22,13 +22,13 @@ mult_loop:
 odd:
   b <- b * c
   d <- d - 1
-  goto(mult_loop)
+  p <- p + @+mult_loop
 
   // If even, halve the exponent and square the base.
 even:
   c <- c * c
   d <- d >> 1
-  goto(mult_loop)
+  p <- p + @+mult_loop
 
 done:
   pop(k)

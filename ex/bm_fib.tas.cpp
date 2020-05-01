@@ -52,7 +52,7 @@ loop:
     k <- k - m          // if j >= ROWS, k <- k - -1
     j <- j &~ m         // if j >= ROWS, j <- j & 0
 
-    goto(loop)
+    p <- p + @+loop
     illegal
 
 fib:
