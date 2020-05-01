@@ -18,8 +18,8 @@ typedef uint32_t UWord;
 typedef  int32_t SWord;
 
 struct name {
-    UWord len;
     char *str;
+    UWord len;
 };
 
 struct obj {

@@ -10,6 +10,8 @@
 #define SERIAL_BASE (1ULL << 5)
 #define SERIAL_NO_CHARACTER 0x80000000ull
 
+device_adder serial_add_device;
+
 struct serial_state {
     FILE *in;
     FILE *out;

@@ -105,7 +105,7 @@ static int do_unload(struct link_state *s)
 
 static int ptrcmp(const void *a, const void *b)
 {
-    return *(const char**)a - *(const char**)b;
+    return (int)(*(const char* const*)a - *(const char* const*)b);
 }
 
 static int def_str_cmp(const void *a, const void *b)
@@ -251,7 +251,7 @@ static int do_link_process(struct link_state *s)
     return 0;
 }
 
-int do_link_emit(struct link_state *s, struct obj *o)
+static int do_link_emit(struct link_state *s, struct obj *o)
 {
     long rec_count = 0;
     // copy records
@@ -281,9 +281,9 @@ int do_link_emit(struct link_state *s, struct obj *o)
 
     o->records = front;
 
-    o->rec_count = rec_count;
-    o->sym_count = s->syms;
-    o->rlc_count = s->rlcs;
+    o->rec_count = (UWord)rec_count;
+    o->sym_count = (UWord)s->syms;
+    o->rlc_count = (UWord)s->rlcs;
 
     return 0;
 }
@@ -309,7 +309,7 @@ static int do_emit(struct link_state *s, STREAM *out)
     return rc;
 }
 
-int do_load_all(struct link_state *s, int count, char *names[count])
+static int do_load_all(struct link_state *s, int count, char **names)
 {
     int rc = 0;
 

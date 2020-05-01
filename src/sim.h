@@ -41,8 +41,8 @@ struct sim_state {
 
         struct param_state *params;
 
-        int start_addr;
-        int load_addr;
+        uint32_t start_addr;
+        uint32_t load_addr;
         const struct format *fmt;
         char *tsim_path;
     } conf;
@@ -77,7 +77,7 @@ struct run_ops {
 
 extern sim_runner interp_run_sim, interp_step_sim;
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
-        void *fud, STREAM *in, int load_address);
+        void *fud, STREAM *in, uint32_t load_address);
 
 #define breakpoint(...) \
     fatal(0, __VA_ARGS__)

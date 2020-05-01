@@ -44,6 +44,7 @@ struct const_expr_list {
 };
 
 struct expr {
+    struct const_expr *ce;
     int type;   ///< type{0,1,2,3}
     int deref;
     int x;
@@ -51,7 +52,6 @@ struct expr {
     int y;
     int32_t i;
     int mult;   ///< multiplier from addsub
-    struct const_expr *ce;
 };
 
 #endif

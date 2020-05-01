@@ -1,9 +1,12 @@
 #define _XOPEN_SOURCE 500
+#include "os_common.h"
+
 #include <unistd.h>
 #include <stdlib.h>
 
-char *os_find_self(void)
+char *os_find_self(const char *argv0)
 {
+    (void)argv0;
     // PATH_MAX (used by readlink(2)) is not necessarily available
     size_t size = 2048, used = 0;
     char *path = NULL;

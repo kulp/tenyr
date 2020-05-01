@@ -298,7 +298,7 @@ static int get_syms_v1(struct obj *o, STREAM *in, void *context)
         sym->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(sym->name.str, SYMBOL_LEN_V1, 1, in);
         sym->name.str[SYMBOL_LEN_V1] = '\0';
-        sym->name.len = strlen(sym->name.str);
+        sym->name.len = (UWord)strlen(sym->name.str);
         GET(sym->value, in);
         GET(sym->size, in);
     }
@@ -345,7 +345,7 @@ static int get_relocs_v0(struct obj *o, STREAM *in, void *context)
         rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
         rlc->name.str[SYMBOL_LEN_V1] = '\0';
-        rlc->name.len = strlen(rlc->name.str);
+        rlc->name.len = (UWord)strlen(rlc->name.str);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         rlc->shift = 0;
@@ -394,7 +394,7 @@ static int get_relocs_v1(struct obj *o, STREAM *in, void *context)
         rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
         rlc->name.str[SYMBOL_LEN_V1] = '\0';
-        rlc->name.len = strlen(rlc->name.str);
+        rlc->name.len = (UWord)strlen(rlc->name.str);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         GET(rlc->shift, in);

@@ -7,9 +7,9 @@
 #include "ram.h"
 
 struct ram_state {
-    uint32_t base;
     size_t memsize;
     uint32_t *mem;
+    uint32_t base;
 };
 
 static int ram_init(struct plugin_cookie *pcookie, struct device *device, void *cookie)

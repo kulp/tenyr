@@ -29,7 +29,8 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     uint32_t pack1 = Pu(1) & 0xfff;
     int32_t  pack0 = Ps(0);
 
-    switch (op) {
+    // This switch is exhaustive for the four bit opcode.
+    switch (op & 0xf) {
         case OP_ADD               : *rhs =  (Ps(2) +  Ps(1)) + Ps(0); break;
         case OP_SUBTRACT          : *rhs =  (Ps(2) -  Ps(1)) + Ps(0); break;
         case OP_MULTIPLY          : *rhs =  (Ps(2) *  Ps(1)) + Ps(0); break;
@@ -51,9 +52,6 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 
         case OP_PACK              : *rhs =  (pack2 |  pack1) + pack0; break;
         case OP_TEST_BIT          : *rhs = -!!(Ps(2) & (1 << Ps(1))) + Ps(0); break;
-
-        default:
-            fatal(0, "Encountered illegal opcode %d", op);
     }
     #undef Ps
     #undef Pu
@@ -87,7 +85,7 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     return 0;
 }
 
-int run_instruction(struct sim_state *s, const struct element *i, void *run_data)
+static int run_instruction(struct sim_state *s, const struct element *i, void *run_data)
 {
     (void)run_data;
     int32_t * const ip = &s->machine.regs[15];
@@ -172,7 +170,7 @@ int interp_run_sim(struct sim_state *s, const struct run_ops *ops,
 }
 
 int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
-        void *ud, STREAM *in, int load_address)
+        void *ud, STREAM *in, uint32_t load_address)
 {
     struct element i;
     while (f->in(in, &i, ud) >= 0) {

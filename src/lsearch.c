@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+// em.h defines these prototypes, but this file should not need to depend on
+// that header.
+void *lfind(const void *key, const void *base, size_t *nelp, size_t width, int (*compar)(const void *, const void *));
+void *lsearch(const void *key, void *base, size_t *nelp, size_t width, int (*compar)(const void *, const void *));
+
 void *lfind(const void *key, const void *base, size_t *nelp, size_t width, int (*compar)(const void *, const void *))
 {
     char *where = (void*)base;

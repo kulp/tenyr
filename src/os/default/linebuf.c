@@ -1,3 +1,5 @@
+#include "os_common.h"
+
 #include <stdio.h>
 
 int os_set_buffering(FILE *stream, int mode)

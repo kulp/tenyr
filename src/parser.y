@@ -54,9 +54,6 @@ static void do_option(struct parse_data *pd, YYLTYPE *locp,
 
 // XXX decide whether this should be called in functions or in grammar actions
 static void free_cstr(struct cstr *cs, int recurse);
-extern struct symbol *symbol_find(struct symbol_list *list, const char *name);
-extern void tenyr_push_state(int st, void *yyscanner);
-extern void tenyr_pop_state(void *yyscanner);
 %}
 
 %define parse.error verbose
@@ -748,7 +745,8 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
             sym->ce->deferred = context;
             break;
         }
-        default:
+        case D_NULL:
+        case D_ZERO:
             tenyr_error(locp, pd, "Unknown directive type %d in %s",
                         d->type, __func__);
     }

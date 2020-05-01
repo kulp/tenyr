@@ -1,6 +1,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include "obj.h"
 #include "ops.h"
@@ -55,7 +56,7 @@ static const int op_types[16] = {
     // all others   = OP0
 };
 // This table defines canonical shorthands for certain encodings
-static const struct hides { unsigned a:1, b:1, c:1; }
+static const struct hides { unsigned char a:1, b:1, c:1, :(CHAR_BIT-3); }
 hide[TYPEx][OPx] [2][2][2] = {
     [TYPE0][OP0] [0][0][1] = { 0,0,1 }, // B <- C * D
     [TYPE0][OP1] [0][0][1] = { 0,0,1 }, // B <- C | D
@@ -109,7 +110,9 @@ static int is_printable(unsigned int ch, char buf[3])
         case '\r': buf[0] = '\\'; buf[1] = 'r' ; return 1;
         case '\t': buf[0] = '\\'; buf[1] = 't' ; return 1;
         case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
-        default: buf[0] = ch; return ch < UCHAR_MAX && isprint((unsigned char)ch);
+        default:
+            buf[0] = (char)ch;
+            return ch < UCHAR_MAX && isprint((unsigned char)ch);
     }
 }
 
@@ -180,7 +183,23 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
                 sA = " ";
                 show3 |= g->p == 0; // append term to disambiguate type0, type2
                 break;
-            default:
+
+            case OP_BITWISE_OR:
+            case OP_BITWISE_AND:
+            case OP_BITWISE_XOR:
+            case OP_SHIFT_RIGHT_ARITH:
+            case OP_ADD:
+            case OP_MULTIPLY:
+            case OP_COMPARE_EQ:
+            case OP_COMPARE_LT:
+            //case OP_BITWISE_ORN:
+            case OP_BITWISE_ANDN:
+            case OP_PACK:
+            case OP_SHIFT_RIGHT_LOGIC:
+            //case OP_SUBTRACT:
+            case OP_SHIFT_LEFT:
+            case OP_TEST_BIT:
+            case OP_COMPARE_GE:
                 break;
         }
     }
@@ -249,7 +268,6 @@ static int gen_fini(STREAM *stream, void **ud)
  * Object format : simple section-based objects
  */
 struct obj_fdata {
-    int assembling;
     struct obj *o;
     long syms;
     long rlcs;
@@ -260,6 +278,7 @@ struct obj_fdata {
     struct objrlc **next_rlc;
     uint32_t pos;   ///< position in objrec
 
+    int assembling;
     int error;
 };
 
@@ -363,7 +382,7 @@ static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
         struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
         sym->name.str = strdup_rounded_up(symbol->name);
-        sym->name.len = strlen(symbol->name);
+        sym->name.len = (UWord)strlen(symbol->name);
         // `symbol->resolved` must be true by this point
         sym->value = symbol->reladdr;
         sym->flags = flags;
@@ -385,9 +404,9 @@ static int obj_reloc(STREAM *stream, struct reloc_node *reloc, void *ud)
 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
-    rlc->flags = reloc->flags;
+    rlc->flags = (UWord)reloc->flags;
     rlc->name.str  = reloc->name ? strdup_rounded_up(reloc->name) : NULL;
-    rlc->name.len  = reloc->name ? strlen(reloc->name) : 0;
+    rlc->name.len  = reloc->name ? (UWord)strlen(reloc->name) : 0;
     rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;
     rlc->shift = reloc->shift;
@@ -406,8 +425,8 @@ static int obj_emit(STREAM *stream, void **ud)
 
     if (u->assembling) {
         o->records[0].size = u->pos;
-        o->sym_count = u->syms;
-        o->rlc_count = u->rlcs;
+        o->sym_count = (UWord)u->syms;
+        o->rlc_count = (UWord)u->rlcs;
 
         obj_write(u->o, stream);
     }
@@ -452,7 +471,7 @@ static int text_in(STREAM *stream, struct element *i, void *ud)
     // read "agda"" as "0xa" and subsequently fail, when the whole string
     // should have been rejected.
     char next_char = 0;
-    int len = stream->op.fread(&next_char, 1, 1, stream);
+    size_t len = stream->op.fread(&next_char, 1, 1, stream);
     if (len > 0 && !isspace(next_char))
         return -1;
     return result ? 1 : -1;
@@ -474,9 +493,9 @@ static int text_out(STREAM *stream, struct element *i, void *ud)
 
 struct memh_state {
     int32_t written, marked, offset;
-    unsigned first_done:1;
     int emit_zeros;
-    unsigned error:1;
+    bool first_done;
+    bool error;
 };
 
 static int memh_init(STREAM *stream, struct param_state *p, void **ud)
@@ -568,9 +587,8 @@ const struct format tenyr_asm_formats[] = {
 
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
 
-int make_format_list(int (*pred)(const struct format *), size_t flen,
-        const struct format fmts[flen], size_t len, char buf[len],
-        const char *sep)
+size_t make_format_list(int (*pred)(const struct format *), size_t flen,
+        const struct format *fmts, size_t len, char *buf, const char *sep)
 {
     size_t pos = 0;
     for (const struct format *f = fmts; pos < len && f < fmts + flen; f++)

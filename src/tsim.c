@@ -273,7 +273,7 @@ static int recipe_top_page(struct sim_state *s)
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \
     static int recipe_##Name(struct sim_state *s)                              \
     {                                                                          \
-        int Func(struct device *device);                                       \
+        device_adder Func;                                                     \
         return Func(new_device(s));                                            \
     }                                                                          \
     //
@@ -334,7 +334,7 @@ static int add_recipe(struct sim_state *s, const char *name)
     }
 }
 
-static int plugin_param_get(const struct plugin_cookie *cookie, const char *key, size_t count, const void *val[count])
+static int plugin_param_get(const struct plugin_cookie *cookie, const char *key, size_t count, const void **val)
 {
     return param_get(cookie->param, key, count, val);
 }
@@ -365,7 +365,7 @@ static int parse_opts_file(struct sim_state *s, const char *filename)
     char buf[1024], *p;
     while ((p = fgets(buf, sizeof buf, f))) {
         // trim newline
-        int len = strlen(buf);
+        size_t len = strlen(buf);
         if (buf[len - 1] == '\n')
             buf[len - 1] = '\0';
 
@@ -410,13 +410,13 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
-            case 'a': s->conf.load_addr = strtol(optarg, NULL, 0); break;
+            case 'a': s->conf.load_addr = (uint32_t)strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
             case 'f': if (find_format(optarg, &s->conf.fmt)) exit(usage(argv[0], EXIT_FAILURE)); break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(s->conf.params, optarg); break;
             case 'r': if (add_recipe(s, optarg)) exit(usage(argv[0], EXIT_FAILURE)); break;
-            case 's': s->conf.start_addr = strtol(optarg, NULL, 0); break;
+            case 's': s->conf.start_addr = (uint32_t)strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
 
             case 'V': puts(version()); exit(EXIT_SUCCESS);

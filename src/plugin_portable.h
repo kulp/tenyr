@@ -39,6 +39,10 @@ typedef int plugin_success_cb(void *libhandle, int inst, const char *parent,
 int plugin_load(const char *basepath, const char **paths, const char *base,
         const struct plugin_cookie *p, plugin_success_cb *success, void *ud);
 
+// These are the implementations of the `common` functions, plugin version.
+extern void (* NORETURN fatal_)(int code, const char *file, int line, const char *func, const char *fmt, ...);
+extern void (*          debug_)(int level, const char *file, int line, const char *func, const char *fmt, ...);
+
 #endif
 
 /* vi: set ts=4 sw=4 et: */

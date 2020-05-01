@@ -17,8 +17,8 @@ struct param_state {
         unsigned free_key:1;
         struct string_list {
             struct string_list *next;
-            unsigned free_value:1; ///< whether value should be free()d
             void *value;
+            unsigned free_value; ///< whether value should be free()d
         } *list;
     } *params;
 };
@@ -37,20 +37,20 @@ int param_get_int(struct param_state *pstate, const char *key, int *val)
 {
     const char *str = NULL;
     char *next = NULL;
-    int test = 0;
+    long test = 0;
     if (param_get(pstate, key, 1, (const void **)&str) && str != NULL)
         test = strtol(str, &next, 0);
 
     int good = next > str;
     if (good)
-        *val = test;
+        *val = (int)test;
 
     return good;
 }
 
 // Returns the number of parameters with the given key, filling the first
 // `count` of them into the supplied `val` array
-int param_get(struct param_state *pstate, const char *key, size_t count, const void *val[count])
+int param_get(struct param_state *pstate, const char *key, size_t count, const void **val)
 {
     if (!pstate) return 0; // permit calling with NULL param set
 

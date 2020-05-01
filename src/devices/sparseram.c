@@ -9,6 +9,8 @@
 #include "sim.h"
 #include "ram.h"
 
+device_adder sparseram_add_device;
+
 // Allocate space by roughly a page-size (although since there is overhead the
 // fact that it is nearly a page size is basically useless since it does not
 // fit evenly into pages). Consider allocating header ram_elements separately from
@@ -21,8 +23,8 @@ struct sparseram_state {
 };
 
 struct ram_element {
-    int32_t base;
     uint32_t *space;
+    int32_t base;
 };
 
 static int tree_compare(const void *_a, const void *_b)
@@ -38,7 +40,7 @@ static int sparseram_init(struct plugin_cookie *pcookie, struct device *device, 
     sparseram->mem = NULL;
     sparseram->pagesize = os_getpagesize();
     // `mask` has only the bits set that address *within* a page
-    sparseram->mask = sparseram->pagesize / sizeof(uint32_t) - 1;
+    sparseram->mask = (unsigned int)(sparseram->pagesize / sizeof(uint32_t) - 1);
 
     return 0;
 }

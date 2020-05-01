@@ -31,5 +31,13 @@ struct tenyr_sim_state {
     void *extstate; ///< external state possibly used by tenyr_sim_cb's
 };
 
+extern tenyr_sim_cb tenyr_sim_genesis;
+extern tenyr_sim_cb tenyr_sim_apocalypse;
+extern tenyr_sim_cb tenyr_sim_clock;
+
+extern int tenyr_sim_load(struct tenyr_sim_state *state);
+extern int tenyr_sim_putchar(struct tenyr_sim_state *state);
+extern int tenyr_sim_getchar(struct tenyr_sim_state *state);
+
 #endif
 
