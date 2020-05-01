@@ -28,9 +28,6 @@
 // popall_ret() for convenient symmetry with a frame-creating popall()
 #define popall_ret(...)     popall(P,__VA_ARGS__)
 
-#define bare_metal_init() \
-    //
-
 #endif
 
 /* vi:set syntax=c: */
