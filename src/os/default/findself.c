@@ -52,7 +52,7 @@ static int walker(size_t len, const char *name, void *ud)
     return 0;
 }
 
-char *os_find_self(char *argv0)
+char *os_find_self(const char *argv0)
 {
     // Find the first file in PATH, or return argv[0]
     char *paths[] = { argv0, NULL };
