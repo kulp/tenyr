@@ -25,7 +25,7 @@ clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    random random.*       \
                )#
 
-common_OBJECTS = common.o param.o $(patsubst %.c,%.o,$(notdir $(wildcard $(OS_PATHS:%=%/*.c)))) \
+common_OBJECTS = common.o param.o $(foreach p,$(OS_PATHS),$(patsubst %.c,%.o,$(notdir $(wildcard $(p:%=%/*.c))))) \
                  stream.o
 shared_OBJECTS = common.o
 tas_OBJECTS    = $(common_OBJECTS) asmif.o asm.o obj.o parser.o lexer.o
