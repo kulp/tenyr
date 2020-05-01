@@ -8,6 +8,7 @@ addons: &def_addons
       - version/$(git describe --always --tags --match 'v?.?.?*' $TRAVIS_COMMIT)
 env:
   global:
+    - MAKEFLAGS=e
     - DEPSSRC=$HOME/local
     - C_INCLUDE_PATH=$DEPSSRC/include
     - LIBRARY_PATH=$DEPSSRC/lib

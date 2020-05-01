@@ -51,13 +51,13 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 
 %.h %.c: %.l
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
-	$(FLEX) --header-file=$*.h -o $*.c $<
+	$(LEX) --header-file=$*.h -o $*.c $<
 	# Hack around an issue where gcov gets line numbers off by one after the rules section
 	-sed /XXXREMOVE/d < $*.c > $*.c.$$$$ && mv $*.c.$$$$ $*.c
 
 %.h %.c: %.y
 	@$(MAKESTEP) "[ BISON ] $(<F)"
-	$(BISON) --defines=$*.h -o $*.c $<
+	$(YACC.y) --defines=$*.h -o $*.c $<
 
 %.d: %.c
 	@set -e; mkdir -p $(@D); rm -f $@; \
