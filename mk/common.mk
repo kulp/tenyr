@@ -77,8 +77,9 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
 GIT = git --git-dir=$(TOP)/.git
-FLEX  ?= flex
-BISON ?= bison -Werror
+LEX = flex
+YACC = bison
+YFLAGS = -Werror
 
 cc_flag_supp = $(shell $(CC) $1 -c -x c -o /dev/null /dev/null 2>/dev/null >/dev/null && echo $1)
 
