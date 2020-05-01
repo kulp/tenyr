@@ -5,7 +5,7 @@
 #define prologue            o <- ((1 << 13) - 1)
 
 #define rel(Label)          @+Label + p
-#define goto(Label)         p <- rel(Label)
+#define goto(Label)         p <- @+Label + p
 #define call(Label)         push(p + 2); goto(Label)
 #define callr(Reg)          push(p + 2); p <- Reg
 // XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
