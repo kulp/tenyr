@@ -4,7 +4,6 @@
 // The stack-setup prologue sets up a stack at the top of 8K
 #define prologue            o <- ((1 << 13) - 1)
 
-#define goto(Label)         p <- @+Label + p
 #define call(Label)         push(p + 2); p <- @+Label + p
 #define callr(Reg)          push(p + 2); p <- Reg
 // XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
