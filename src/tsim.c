@@ -315,7 +315,7 @@ static int add_recipe(struct sim_state *s, const char *name)
         #define Entry(Name,Desc) { STR(Name), recipe_##Name },
         RECIPES(Entry)
     };
-    lfind_size_t sz = countof(entries);
+    size_t sz = countof(entries);
 
     struct recipe_entry *r = lfind(&(struct recipe_entry){ .name = name },
             entries, &sz, sizeof entries[0],

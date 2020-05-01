@@ -6,12 +6,6 @@
 #include <io.h>
 #include <stdio.h>
 
-/*
- * MinGW lfind() and friends use `unsigned int *` where they should use a
- * `size_t *` according to the man page.
- */
-typedef unsigned int lfind_size_t;
-
 // timeradd doesn't exist on MinGW
 #ifndef timeradd
 #define timeradd(a, b, result) \

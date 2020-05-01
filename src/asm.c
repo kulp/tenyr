@@ -588,7 +588,7 @@ static int find_format_by_name(const void *_a, const void *_b)
 
 int find_format(const char *optarg, const struct format **f)
 {
-    lfind_size_t sz = tenyr_asm_formats_count;
+    size_t sz = tenyr_asm_formats_count;
     *f = lfind(&(struct format){ .name = optarg }, tenyr_asm_formats, &sz,
             sizeof tenyr_asm_formats[0], find_format_by_name);
     return !*f;
