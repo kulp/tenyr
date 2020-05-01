@@ -16,10 +16,10 @@ env:
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LIBRARY_PATH"
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
     - PATH="$PATH:$DEPSSRC/bin"
+language: c
 matrix:
   include:
     - compiler: x86_64-w64-mingw32-gcc
-      language: c
       sudo: required
       os: linux
       env:
@@ -34,7 +34,6 @@ matrix:
             - wine64
             - wine-stable
     - compiler: i686-w64-mingw32-gcc
-      language: c
       sudo: required
       os: linux
       env:
@@ -49,14 +48,12 @@ matrix:
             - wine32
             - wine-stable
     - compiler: "clang"
-      language: c
       os: osx
       env:
         - PLATFORM=osx   BITS=64 HOST=x86_64
         - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
-      language: c
       os: osx
       env:
         - PLATFORM=osx   BITS=64 HOST=x86_64
@@ -71,7 +68,6 @@ matrix:
         - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
     - compiler: "clang"
-      language: c
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
@@ -86,7 +82,6 @@ matrix:
             - libsdl2-dev
             - libsdl2-image-dev
     - compiler: "clang"
-      language: c
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
@@ -100,7 +95,6 @@ matrix:
             - libsdl2-image-dev
             - iverilog
     - compiler: "gcc"
-      language: c
       os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
@@ -120,7 +114,6 @@ matrix:
             - libsdl2-image-dev
             - iverilog
     - compiler: "gcc"
-      language: c
       os: linux
       arch: ppc64le
       env:
