@@ -57,7 +57,7 @@ char *os_find_self(const char *argv0)
     // Find the first file in PATH, or return argv[0]
     char *paths[] = { argv0, NULL };
     if (os_walk_path_search_list(walker, paths) != 0)
-        return paths[1];
+        return strdup(paths[1]);
 
     return strdup(argv0);
 }
