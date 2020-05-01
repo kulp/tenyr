@@ -5,7 +5,6 @@
 #define prologue            o <- ((1 << 13) - 1)
 
 #define rel(Label)          (@Label - (. + 1)) + p
-#define offsetpc(Reg)       Reg + p - (. + 1)
 #define goto(Label)         p <- rel(Label)
 #define call(Label)         push(p + 2); goto(Label)
 #define callr(Reg)          push(p + 2); p <- Reg
