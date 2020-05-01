@@ -42,7 +42,7 @@ before_script:
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx ; fi
   - . scripts/install_sdl.sh
   - . scripts/set_up_mingw.sh
-  - if [[ $TRAVIS_OS_NAME = osx ]] ; then brew install bison ; BISONS=(/usr/local/Cellar/bison/*/bin/bison) ; export BISON="${BISONS[${#BISONS[@]}-1]}" ; fi
+  - . scripts/install_parsers.sh
   # implement Coverity Scan with before_script instead of addons.coverity_scan
   # to work around too-early quota check by the coverity_scan addon
   - if [[ -n $COVERITY_SCAN_PROJECT_NAME ]] ; then curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true ; fi
