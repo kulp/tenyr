@@ -1,4 +1,5 @@
 dist: bionic
+os: linux
 addons: &def_addons
   artifacts:
     paths:
@@ -20,7 +21,6 @@ language: c
 jobs:
   include:
     - compiler: x86_64-w64-mingw32-gcc
-      os: linux
       env:
         - PLATFORM=mingw BITS=64 HOST=x86_64
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
@@ -33,7 +33,6 @@ jobs:
             - wine64
             - wine-stable
     - compiler: i686-w64-mingw32-gcc
-      os: linux
       env:
         - PLATFORM=mingw BITS=32 HOST=i686
         - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
@@ -66,7 +65,6 @@ jobs:
         - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
     - compiler: "clang"
-      os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
         - CHECK_RULE=check_sw GCOV=
@@ -80,7 +78,6 @@ jobs:
             - libsdl2-dev
             - libsdl2-image-dev
     - compiler: "clang"
-      os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
         - CHECK_RULE=check GCOV=
@@ -93,7 +90,6 @@ jobs:
             - libsdl2-image-dev
             - iverilog
     - compiler: "gcc"
-      os: linux
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
         # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
@@ -112,7 +108,6 @@ jobs:
             - libsdl2-image-dev
             - iverilog
     - compiler: "gcc"
-      os: linux
       arch: ppc64le
       env:
         - PLATFORM=linux BITS=64
