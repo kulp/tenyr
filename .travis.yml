@@ -20,7 +20,6 @@ language: c
 matrix:
   include:
     - compiler: x86_64-w64-mingw32-gcc
-      sudo: required
       os: linux
       env:
         - PLATFORM=mingw BITS=64 HOST=x86_64
@@ -34,7 +33,6 @@ matrix:
             - wine64
             - wine-stable
     - compiler: i686-w64-mingw32-gcc
-      sudo: required
       os: linux
       env:
         - PLATFORM=mingw BITS=32 HOST=i686
@@ -135,7 +133,6 @@ matrix:
         - PLATFORM=emscripten
         - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
         - PKG_RULE=gzip
-      sudo: required
       services:
         - docker
       before_install:
@@ -144,7 +141,6 @@ matrix:
         - make PLATFORM=emscripten SDL=0 JIT=0 NODEPS lexer.c parser.c
         - docker exec -it emscripten make V=1 all PLATFORM=$PLATFORM JIT=$JIT SDL=$SDL NDEBUG=$NDEBUG
         - docker exec -it emscripten make V=1 $CHECK_RULE PLATFORM=$PLATFORM JIT=$JIT SDL=$SDL NDEBUG=$NDEBUG
-sudo: false
 before_script:
   - mkdir -p $DEPSSRC
   - if [[ $JIT != 0 ]] ; then ./scripts/build-lightning.sh 2.1.3 $DEPSSRC ; fi
