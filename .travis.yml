@@ -40,7 +40,7 @@ before_script:
   - . scripts/install_msys2.sh
   - if [[ $JIT != 0 ]] ; then ./scripts/build-lightning.sh 2.1.3 $DEPSSRC ; fi
   - if [[ $TRAVIS_OS_NAME = linux ]] ; then curl -s 'http://dl.tenyr.info/deps/iverilog-s20140801-139-gaf85d44-x86_64-linux-binaries-0.10.0.tar.gz' | tar -C $DEPSSRC -zx ; fi
-  - if [[ $PLATFORM = mingw ]] ; then ${MAKE} download-all-sdl2 ; fi
+  - . scripts/install_sdl.sh
   - if [[ $PLATFORM = mingw ]] ; then sed "s#{{{}}}#z:$(echo $PWD/3rdparty/sdl2/$HOST-w64-mingw32/bin | sed 's#/#\\\\\\\\#g')#" scripts/winepath.reg > scripts/winepath2.reg ; wine regedit scripts/winepath2.reg ; fi
   - if [[ $TRAVIS_OS_NAME = osx ]] ; then brew install bison ; BISONS=(/usr/local/Cellar/bison/*/bin/bison) ; export BISON="${BISONS[${#BISONS[@]}-1]}" ; fi
   # implement Coverity Scan with before_script instead of addons.coverity_scan
