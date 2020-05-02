@@ -6,6 +6,7 @@ DYLIB_SUFFIX = .dll
 PATH_COMPONENT_SEP=/
 PATH_SEP_CHAR = ';'
 EXE_SUFFIX = .exe
+DEVNUL = NUL
 CFLAGS_PIC =
 CC := gcc
 ifeq ($(BITS),32)

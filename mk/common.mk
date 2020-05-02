@@ -85,7 +85,7 @@ LEX = flex
 YACC = bison
 YFLAGS = -Werror
 
-cc_flag_supp = $(shell $(CC) $1 -c -x c -o /dev/null /dev/null 2>/dev/null >/dev/null && echo $1)
+cc_flag_supp = $(shell $(CC) $1 -c -x c -o $(DEVNUL) $(DEVNUL) 2>$(DEVNUL) >$(DEVNUL) && echo $1)
 
 # In the presence of a non-null runwrap, $(build_tas) and $(tas) differ, so be
 # careful to use the correct variable
@@ -145,7 +145,7 @@ BUILD_DIR_VERS = $(if $(findstring .,$(BUILD_DIR_NAME)),$(patsubst tenyr-%,v%,$(
 BUILD_DIR_DATE = $(shell date -r "$(CURDIR)" +%Y%M%dT%H%M%S)
 # BUILD_NAME prefers more precise measures, and falls back
 BUILD_NAME := $(firstword \
-        $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>/dev/null) \
+        $(shell $(GIT) describe --always --tags --match 'v?.?.?*' 2>$(DEVNUL)) \
         $(BUILD_DIR_VERS) \
         $(BUILD_DIR_DATE) \
         unknown \

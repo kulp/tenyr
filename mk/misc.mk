@@ -104,17 +104,17 @@ check_args_general_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* general options ... "
 	$($*) -V | grep -q version                                   && $(MAKESTEP) "    ... -V ok"
 	$($*) -h | grep -q Usage                                     && $(MAKESTEP) "    ... -h ok"
-	( ! $($*) ) > /dev/null 2>&1                                 && $(MAKESTEP) "    ... no-args trapped ok"
+	( ! $($*) ) > $(DEVNUL) 2>&1                                 && $(MAKESTEP) "    ... no-args trapped ok"
 	$($*) /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(MAKESTEP) "    ... non-existent file ok"
-	$($*) -QRSTU 2>&1 >/dev/null | egrep -qi "option.*Q"         && $(MAKESTEP) "    ... bad option prints error ok"
-	( ! $($*) -QRSTU &> /dev/null )                              && $(MAKESTEP) "    ... bad option exits non-zero ok"
+	$($*) -QRSTU 2>&1 >$(DEVNUL) | egrep -qi "option.*Q"         && $(MAKESTEP) "    ... bad option prints error ok"
+	( ! $($*) -QRSTU &> $(DEVNUL) )                              && $(MAKESTEP) "    ... bad option exits non-zero ok"
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	echo 0x3637 | $($*) -ftext -d - | grep -q ".word 0x0*3637"   && $(MAKESTEP) "    ... -d ok"
-	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
+	(! $($*) -f does_not_exist $(DEVNUL) &> $(DEVNUL) )          && $(MAKESTEP) "    ... -f ok"
 	echo 0x3637 | $($*) -ftext -d -q - | fgrep -qv "3637"        && $(MAKESTEP) "    ... -q ok"
 	$($*) -d -ftext -v - <<<0xc | fgrep -q "A + 0x0000000c"      && $(MAKESTEP) "    ... -v ok"
 	echo '.zero 2' | $($*) -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
@@ -131,16 +131,16 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	$($*) -@ does_not_exist 2>&1 | fgrep -q "No such"            && $(MAKESTEP) "    ... -@ ok"
 	$($*) -ftext -a 123 - <<<0 2>&1 | fgrep -q "address 0x7b"    && $(MAKESTEP) "    ... -a ok"
-	$($*) -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(MAKESTEP) "    ... -d ok"
-	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
-	(! $($*) -r does_not_exist -ftext /dev/null &> /dev/null )   && $(MAKESTEP) "    ... -r ok"
-	$($*) -ftext -vs $(s) /dev/null 2>&1 | fgrep -q "IP = $(sx)" && $(MAKESTEP) "    ... -s ok"
-	$($*) -ftext -v       /dev/null 2>&1 | fgrep -q "IP ="       && $(MAKESTEP) "    ... -v ok"
-	$($*) -ftext -vv      /dev/null 2>&1 | fgrep -q ".word"      && $(MAKESTEP) "    ... -vv ok"
-	$($*) -ftext -vvv     /dev/null 2>&1 | fgrep -q "read  @"    && $(MAKESTEP) "    ... -vvv ok"
-	$($*) -ftext -vvvv    /dev/null 2>&1 | fgrep -q "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
-	$($*) -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
-	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> /dev/null )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
+	$($*) -d -ftext $(DEVNUL) 2>&1 | fgrep -q "executed: 1"      && $(MAKESTEP) "    ... -d ok"
+	(! $($*) -f does_not_exist $(DEVNUL) &> $(DEVNUL) )          && $(MAKESTEP) "    ... -f ok"
+	(! $($*) -r does_not_exist -ftext $(DEVNUL) &> $(DEVNUL) )   && $(MAKESTEP) "    ... -r ok"
+	$($*) -ftext -vs $(s) $(DEVNUL) 2>&1 | fgrep -q "IP = $(sx)" && $(MAKESTEP) "    ... -s ok"
+	$($*) -ftext -v       $(DEVNUL) 2>&1 | fgrep -q "IP ="       && $(MAKESTEP) "    ... -v ok"
+	$($*) -ftext -vv      $(DEVNUL) 2>&1 | fgrep -q ".word"      && $(MAKESTEP) "    ... -vv ok"
+	$($*) -ftext -vvv     $(DEVNUL) 2>&1 | fgrep -q "read  @"    && $(MAKESTEP) "    ... -vvv ok"
+	$($*) -ftext -vvvv    $(DEVNUL) 2>&1 | fgrep -q "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
+	$($*) -d -ftext - < $(DEVNUL) 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
+	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> $(DEVNUL) )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
 
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
@@ -154,8 +154,8 @@ check_behaviour_tas: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tas: TASD = $(TOP)/test/misc/
 check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
-	$($*) -o . /dev/null 2>&1 | fgrep -qi "failed to open"                     && $(MAKESTEP) "    ... failed to open ok"
-	(! $($*) -d -f memh $(MEMHD)backward.memh &>/dev/null )                    && $(MAKESTEP) "    ... validated memh lack of backward support ok"
+	$($*) -o . $(DEVNUL) 2>&1 | fgrep -qi "failed to open"                     && $(MAKESTEP) "    ... failed to open ok"
+	(! $($*) -d -f memh $(MEMHD)backward.memh &>$(DEVNUL) )                    && $(MAKESTEP) "    ... validated memh lack of backward support ok"
 	$($*) -d $(OBJD)bad_version.to 2>&1 | fgrep -qi "unhandled version"        && $(MAKESTEP) "    ... unhandled version ok"
 	$($*) -d $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                    && $(MAKESTEP) "    ... too-large ok"
 	$($*) -d $(OBJD)toolarge2.to 2>&1 | fgrep -q "too large"                   && $(MAKESTEP) "    ... too-large 2 ok"
@@ -165,24 +165,24 @@ check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
-	$($*) /dev/null 2>&1 | fgrep -qi "end of file"                              && $(MAKESTEP) "    ... too-small ok"
+	$($*) $(DEVNUL) 2>&1 | fgrep -qi "end of file"                              && $(MAKESTEP) "    ... too-small ok"
 	$($*) $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                        && $(MAKESTEP) "    ... too-large ok"
-	$($*) -o $(OBJD) /dev/null 2>&1 | fgrep -qi "failed to open"                && $(MAKESTEP) "    ... failed to open ok"
+	$($*) -o $(OBJD) $(DEVNUL) 2>&1 | fgrep -qi "failed to open"                && $(MAKESTEP) "    ... failed to open ok"
 	$($*) $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | fgrep -qi "duplicate"  && $(MAKESTEP) "    ... duplicate symbols ok"
 	$($*) $(OBJD)zerorecs.to 2>&1 | fgrep -qi "has no records"                  && $(MAKESTEP) "    ... zero records ok"
 	$($*) $(OBJD)tworecs.to 2>&1 | fgrep -qi "more than one record"             && $(MAKESTEP) "    ... multiple records ok"
 	$($*) $(OBJD)unresolved.to 2>&1 | fgrep -qi "missing definition"            && $(MAKESTEP) "    ... unresolved ok"
 
 clean_FILES += check_obj_*.to null.to ff.bin
-null.to: ; $(tas) -o $@ /dev/null
+null.to: ; $(tas) -o $@ $(DEVNUL)
 ff.bin:; echo -ne '\0377\0377\0377\0377' > $@
 check_obj: check_obj_0 check_obj_2 check_obj_4 check_obj_5 check_obj_6
 check_obj_%: check_obj_%.to | $(build_tas)
-	(! $(tas) -d $< 2> /dev/null)
+	(! $(tas) -d $< 2> $(DEVNUL))
 check_obj_%.to: null.to ff.bin
 	cp $< $@
-	dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
-	dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>/dev/null
+	dd bs=4 if=ff.bin of=$@ seek=$* 2>$(DEVNUL)
+	dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>$(DEVNUL)
 
 vpath %_demo.tas.cpp $(TOP)/ex
 DEMOS = qsort bsearch trailz
@@ -314,7 +314,7 @@ PERIODS_%.mk: %.texe $(build_tsim)
 	@$(MAKESTEP) -n "Computing cycle count for '$*' ... "
 	$(ECHO) -n PERIODS_$*= > $@
 	echo $$(($$($(tsim) -d $< 2>&1 | sed -En '/^.*executed: ([0-9]+)/{s//\1/;p;}') * 20)) >> $@
-	cp -f $(TOP)/mk/$(@F) $@ 2>/dev/null || true # override with forced version if existing
+	cp -f $(TOP)/mk/$(@F) $@ 2>$(DEVNUL) || true # override with forced version if existing
 	@$(MAKESTEP) ok
 
 vpath PERIODS_%.mk $(TOP)/mk

@@ -39,12 +39,12 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	@$(MAKESTEP) "[ DYLD ] $@"
 	$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 
-%.vpi: CFLAGS  += $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
+%.vpi: CFLAGS  += $(shell $(IVERILOG)iverilog-vpi --cflags 2> $(DEVNUL) | sed s/-no-cpp-precomp//)
 %.vpi: CFLAGS  += -Wno-strict-prototypes
 # it's all right for callbacks not to use all their parameters
 %.vpi: CFLAGS  += -Wno-unused-parameter
-%.vpi: LDFLAGS += $(shell $(IVERILOG)iverilog-vpi --ldflags 2> /dev/null)
-%.vpi: LDLIBS  += $(shell $(IVERILOG)iverilog-vpi --ldlibs 2> /dev/null)
+%.vpi: LDFLAGS += $(shell $(IVERILOG)iverilog-vpi --ldflags 2> $(DEVNUL))
+%.vpi: LDLIBS  += $(shell $(IVERILOG)iverilog-vpi --ldlibs 2> $(DEVNUL))
 %.vpi: %,dy.o
 	@$(MAKESTEP) "[ VPI ] $@"
 	$(LINK.c) -o $@ $^ $(LDLIBS)
@@ -61,7 +61,7 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 
 %.d: %.c
 	@set -e; mkdir -p $(@D); rm -f $@; \
-	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null && \
+	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> $(DEVNUL) && \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@ && \
 	rm -f $@.$$$$ || rm -f $@.$$$$
 

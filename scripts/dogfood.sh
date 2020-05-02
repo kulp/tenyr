@@ -47,7 +47,7 @@ function check ()
 function cycle ()
 {
     fmt=$1
-    en $fmt 1 | de $fmt 1 | en $fmt 2 | de $fmt 2 | en $fmt 3 | de $fmt 3 > /dev/null
+    en $fmt 1 | de $fmt 1 | en $fmt 2 | de $fmt 2 | en $fmt 3 | de $fmt 3 > ${DEVNUL}
     if [[ $? != 0 ]] ; then return 1 ; fi
 }
 
@@ -73,14 +73,14 @@ for flags in -v "" ; do
             if [[ $? != 0 ]] ; then fail $fmt $file ; fi
             match $fmt en $file
         done & pids+=( $! )
-        trap "kill $! 2>/dev/null" EXIT
+        trap "kill $! 2>${DEVNUL}" EXIT
 
         ( base=random
         file=$base
         $here/random.sh | tee $base | de text 0 | cycle $fmt
         if [[ $? != 0 ]] ; then fail $fmt $file ; fi
         match $fmt en $file ) & pids+=( $! )
-        trap "kill $! 2>/dev/null" EXIT
+        trap "kill $! 2>${DEVNUL}" EXIT
     done
 done
 

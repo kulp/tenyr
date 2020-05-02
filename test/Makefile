@@ -29,7 +29,7 @@ copy.texe: memcpy.to puts.to
 
 $(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
 	@$(MAKESTEP) -n "Assembling `printf %-24s '$@'` (should fail) ... "
-	@(! $(tas) -o$@ $< 2>/dev/null) \
+	@(! $(tas) -o$@ $< 2>$(DEVNUL)) \
 		&& $(MAKESTEP) "failed as expected" \
 		|| ($(MAKESTEP) "succeeded unexpectedly" ; false)
 
