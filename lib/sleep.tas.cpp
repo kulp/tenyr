@@ -6,7 +6,8 @@ sleep:
     c <- c * 1000
     c <- c * 2000
     call(ticks)
-    ret
+    o <- o + 1
+    p <- [o]
 
 ticks:
     pushall(d,e)

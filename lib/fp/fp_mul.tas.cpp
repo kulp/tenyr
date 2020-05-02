@@ -61,6 +61,7 @@ no_shift:
   c <- c & m
   b <- b | c
 
-  ret
+  o <- o + 1
+  p <- [o]
 
 mant: .word 0x7fffff

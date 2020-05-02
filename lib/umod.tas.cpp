@@ -11,5 +11,6 @@ umod:
   b <- b * d
   b <- c - b
 
-  ret
+  o <- o + 1
+  p <- [o]
 

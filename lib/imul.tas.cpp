@@ -36,5 +36,6 @@ L_top:
 
     popall(h,i,j)
 L_done:
-    ret
+    o <- o + 1
+    p <- [o]
 

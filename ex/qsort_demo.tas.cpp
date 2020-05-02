@@ -34,7 +34,8 @@ inteq:
     c <- [c]
     d <- [d]
     b <- c - d
-    ret
+    o <- o + 1
+    p <- [o]
 
 data_start:
 .L_data_start:

@@ -60,7 +60,8 @@ fib:
     d <- d < c          // zero or one ?
     p <- @+_recurse & d + p  // not-zero is true (c >= 2)
     b <- c
-    ret
+    o <- o + 1
+    p <- [o]
 
 _recurse:
     push(c)
@@ -74,5 +75,6 @@ _recurse:
     pop(b)
     b <- d + b
 
-    ret
+    o <- o + 1
+    p <- [o]
 

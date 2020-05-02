@@ -96,7 +96,8 @@ print_hex:
     call(puts)
     c <- @+_nl + p
     call(puts)
-    ret
+    o <- o + 1
+    p <- [o]
 
 _0x: .utf32 "0x" ; .word 0
 _nl: .word '\n' ; .word 0

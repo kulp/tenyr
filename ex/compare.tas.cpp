@@ -52,7 +52,8 @@ cmp:
     c <- @+nl + p   // and another
     call(puts)
 
-    ret
+    o <- o + 1
+    p <- [o]
 
 check:
     callr(f)
@@ -63,7 +64,8 @@ _mismatched:
     c <- @+_mismatch_message + p
 _finished:
     call(puts)
-    ret
+    o <- o + 1
+    p <- [o]
 
 _match_message:
     .utf32 "strings matched"

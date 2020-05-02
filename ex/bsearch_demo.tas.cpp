@@ -50,7 +50,8 @@ inteq:
     c <- [c]
     d <- [d]
     b <- c - d
-    ret
+    o <- o + 1
+    p <- [o]
 
 error_msg:
     .utf32 "error : not found" ; .word 0

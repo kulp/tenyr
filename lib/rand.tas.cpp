@@ -22,7 +22,8 @@ seed: .word @mult
 .global srand
 srand:
     c -> [@+seed + p]
-    ret
+    o <- o + 1
+    p <- [o]
 
 .global rand
 rand:
