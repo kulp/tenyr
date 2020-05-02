@@ -8,7 +8,6 @@
 #define callr(Reg)          push(p + 2); p <- Reg
 #define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
-#define ret                 pop(p)
 
 #include "push.th"
 
