@@ -56,7 +56,7 @@ qsort:
 
 L_qsort_partition:
     k <- II < LI
-    jzrel(k,L_qsort_partition_done)
+    p <- @+L_qsort_partition_done &~ k + p
     pushall(c)
     elem(k, BASE, II)
     elem(d, BASE, LI)
@@ -64,7 +64,7 @@ L_qsort_partition:
     callr(f)                    // call comparator
     popall(c)
     k <- b < 0
-    jzrel(k,L_qsort_noswap)
+    p <- @+L_qsort_noswap &~ k + p
     swap(II,SI)
     SI <- SI + 1
 L_qsort_noswap:

@@ -292,7 +292,7 @@ buddy_splitnode:
     B   <- 1
     GET_FULL(E,C,F)
     E   <- E == 0
-    jzrel(E,L_buddy_splitnode_notempty)
+    p <- @+L_buddy_splitnode_notempty &~ E + p
 
     GET_COUNT(E,D)
     E   <- E - 1
@@ -328,9 +328,9 @@ L_buddy_nosplit_loop_top:
     // rank. B is rank, D is scratch, E is scratch and currently count
     E   <- D
     GET_VALID(C,E,F,G)  // C is validity
-    jzrel(C,L_buddy_nosplit_loop_bottom)
+    p <- @+L_buddy_nosplit_loop_bottom &~ C + p
     GET_LEAF(C,E,G)     // C is leafiness
-    jzrel(C,L_buddy_nosplit_loop_bottom)
+    p <- @+L_buddy_nosplit_loop_bottom &~ C + p
     GET_FULL(C,E,G)     // C is fullness
     jnzrel(C,L_buddy_nosplit_loop_bottom)
     SET_FULL(E,-1,D,G,C,D)
@@ -351,13 +351,13 @@ L_buddy_nosplit_loop_bottom:
 buddy_alloc:
     pushall(D,E,F)                  // D,E are scratch, F is rank
     D   <- C < RANKS
-    jzrel(D,L_buddy_alloc_error)    // bail if need is too large
+    p <- @+L_buddy_alloc_error &~ D + p    // bail if need is too large
 L_buddy_alloc_rankplus:
     D   <- C < RANKS
-    jzrel(D,L_buddy_alloc_rankdone)
+    p <- @+L_buddy_alloc_rankdone &~ D + p
     GET_COUNT(E,C)
     E   <- E == 0
-    jzrel(E,L_buddy_alloc_rankdone)
+    p <- @+L_buddy_alloc_rankdone &~ E + p
     F   <- F + 1
     p <- p + @+L_buddy_alloc_rankplus
 

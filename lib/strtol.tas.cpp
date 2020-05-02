@@ -7,7 +7,7 @@ strtol:
     pushall(f,g,h,i)
 
     h <- e == 0
-    jzrel(h,strtol_no_call)
+    p <- @+strtol_no_call &~ h + p
     call(detect_base)
     e <- b
 
@@ -59,9 +59,9 @@ strtol_le10_top:
     i <- [c]
     i <- i - '0'
     g <- i < e
-    jzrel(g,strtol_done)
+    p <- @+strtol_done &~ g + p
     g <- i >= 0
-    jzrel(g,strtol_done)
+    p <- @+strtol_done &~ g + p
     c <- c + 1
     b <- b * e
     b <- b + i
@@ -72,9 +72,9 @@ strtol_gt10_top:
     i <- [c]
     g <- i - '0'
     h <- g >= 0
-    jzrel(h,strtol_done)
+    p <- @+strtol_done &~ h + p
     h <- g < e
-    jzrel(h,strtol_gt10_tryhigh)
+    p <- @+strtol_gt10_tryhigh &~ h + p
     c <- c + 1
     b <- b * e
     b <- b + g
@@ -84,10 +84,10 @@ strtol_gt10_tryhigh:
     i <- i &~ ('a' - 'A')
     g <- i - 'A'
     h <- g >= 0
-    jzrel(h,strtol_done)
+    p <- @+strtol_done &~ h + p
     g <- g + 10
     h <- g < e
-    jzrel(h,strtol_done)
+    p <- @+strtol_done &~ h + p
     c <- c + 1
     b <- b * e
     b <- b + g

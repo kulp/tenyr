@@ -11,7 +11,7 @@ convert_hex_top:
     d -> [b]
     c <- c >>> 4
     d <- c == 0
-    jzrel(d,convert_hex_top)
+    p <- @+convert_hex_top &~ d + p
 
     pop(d)
     ret

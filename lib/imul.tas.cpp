@@ -29,7 +29,7 @@ L_top:
     c <- c << 1
     d <- d >> 1
     i <- d == 0
-    jzrel(i, L_top)
+    p <- @+L_top &~ i + p
 
     b <- b ^ j      // adjust product for signed math
     b <- b - j

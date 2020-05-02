@@ -4,6 +4,6 @@
 top:
     c <- b == 0
     b <- b - 1
-    jzrel(c,top)
+    p <- @+top &~ c + p
 done:
     illegal

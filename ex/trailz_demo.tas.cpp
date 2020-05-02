@@ -12,7 +12,7 @@ loop_outer:
     call(trailz)
     G <- B == E
     E <- E - 1
-    jzrel(G,skip)
+    p <- @+skip &~ G + p
     C <- @+good_msg + P
     call(puts)
     p <- p + @+loop_outer

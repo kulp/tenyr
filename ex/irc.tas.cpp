@@ -22,7 +22,7 @@ loop_line:
     d <- @+ping + p
     e <- 5
     call(strncmp)
-    jzrel(b,do_pong)
+    p <- @+do_pong &~ b + p
 
     c <- g
     d <- 1
@@ -62,7 +62,7 @@ check_input:
     e <- 3 // strlen(trigger)
     call(strncmp)
     pop(c)
-    jzrel(b,check_input_triggered)
+    p <- @+check_input_triggered &~ b + p
     p <- p + @+check_input_done
 
 check_input_triggered:
@@ -130,8 +130,8 @@ convert_decimal_top:
     g <- b
 
     d <- g == 0
-    jzrel(d,convert_decimal_top)
-    jzrel(f,convert_decimal_done)
+    p <- @+convert_decimal_top &~ d + p
+    p <- @+convert_decimal_done &~ f + p
     h <- h - 1
     [h] <- '-'
 
@@ -178,7 +178,7 @@ skipwords_top:
 skipwords_foundspace:
     d <- d - 1
     e <- d < 1
-    jzrel(e,skipwords_top)
+    p <- @+skipwords_top &~ e + p
 
 skipwords_done:
     b <- c

@@ -17,7 +17,7 @@ init:
     d -> [o + j]        // write truth to table cell
     j <- j + 1          // increment table index
     m <- b < j          // exit loop when i > N
-    jzrel(m,init)
+    p <- @+init &~ m + p
 outer:
     m <- c < i          // exit loop when i > N/2
     jnzrel(m,done)

@@ -16,7 +16,7 @@ putnumloop:
     k <- k - 1          // go to the left one character
     c <- c >>> 4        // shift down for next iteration
     l <- c == 0         // shall we loop ?
-    jzrel(l,putnumloop)
+    p <- @+putnumloop &~ l + p
 
 putnumdone:
     popall_ret(h,i,j,k,l,m)

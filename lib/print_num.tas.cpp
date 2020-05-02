@@ -25,8 +25,8 @@ print_num_generic_top:
     g <- b
 
     d <- g == 0
-    jzrel(d,print_num_generic_top)
-    jzrel(f,print_num_generic_done)
+    p <- @+print_num_generic_top &~ d + p
+    p <- @+print_num_generic_done &~ f + p
     h <- h - 1
     [h] <- '-'
 
