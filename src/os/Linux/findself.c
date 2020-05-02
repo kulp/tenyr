@@ -14,7 +14,7 @@ char *os_find_self(const char *argv0)
         size *= 2;
         path = realloc(path, size);
         used = readlink("/proc/self/exe", path, size);
-        path[used - 1] = '\0';
+        path[used] = '\0';
     } while (used >= size); // path has already been dereferencd - can't be NULL
 
     return path;
