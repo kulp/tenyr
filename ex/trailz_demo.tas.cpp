@@ -6,7 +6,7 @@ _start:
     E <- 32
 loop_outer:
     G <- E < 0
-    jnzrel(G,done)
+    p <- @+done & G + p
     D <- 0xa5 // TODO try other bit patterns
     C <- D << E
     call(trailz)

@@ -10,16 +10,16 @@ gcd:
   // If C == 0, return D.
   b <- d
   k <- c == 0
-  jnzrel(k, done)
+  p <- @+done & k + p
 
   b <- c
 
 loop:
   k <- d == 0
-  jnzrel(k, done)
+  p <- @+done & k + p
 
   k <- d < b
-  jnzrel(k, else)
+  p <- @+else & k + p
 
   d <- d - b
   p <- p + @+loop

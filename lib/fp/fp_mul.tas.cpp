@@ -47,7 +47,7 @@ fp_mul:
   m <- m << 23
   m <- m & c
   m <- 0 < m
-  jnzrel(m, no_shift)
+  p <- @+no_shift & m + p
 
   // Adjust exponent.
   e <- e + 1

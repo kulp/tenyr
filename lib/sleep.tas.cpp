@@ -15,6 +15,6 @@ Lticks_loop:
     e <- d < c
     d <- d + 1
     a <- a // delay to make the loop 4 cycles long
-    jnzrel(e,Lticks_loop)
+    p <- @+Lticks_loop & e + p
     popall_ret(d,e)
 

@@ -11,7 +11,7 @@ trailz:
     // if C was zero, C is still zero, and we exit early
     D   <- C == 0
     B   <- D & 32
-    jnzrel(D,done)
+    p <- @+done & D + p
 
     // D is the building register, moved to B at the end
     E   <- 0xffff       // E,F are mask registers

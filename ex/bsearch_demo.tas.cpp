@@ -11,7 +11,7 @@ main:
     i <- [@+largest + p]
 loop_top:
     h <- i < c
-    jnzrel(h, loop_exit)
+    p <- @+loop_exit & h + p
 
     c -> [@+key + p]            // update key value
     c <- @+key + p              // pointer to value
@@ -23,7 +23,7 @@ loop_top:
 
     push(c)
     c <- b == 0
-    jnzrel(c,notfound)
+    p <- @+notfound & c + p
     c <- [b + 1]
     c <- c - (. + 1) + p        // relocate string address argument
     p <- p + @+done

@@ -23,7 +23,7 @@ print_loop:
     call(puts)
     i <- i + ELT_LEN
     c <- i < .L_data_end
-    jnzrel(c,print_loop)
+    p <- @+print_loop & c + p
 
     illegal
 

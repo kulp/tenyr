@@ -14,7 +14,7 @@ init_display_loop:
     [h] <- ' '          // write space to display
     h <- h + 1          // go to the right one character
     k <- h < n          // shall we loop ?
-    jnzrel(k,init_display_loop)
+    p <- @+init_display_loop & k + p
 
     popall_ret(h,k,n)
 

@@ -46,7 +46,7 @@ do_swap:
 qsort:
     pushall(g,h,i,j,k,l,m)
     h <- d < 2                  // test for base case
-    jnzrel(h,L_qsort_done)
+    p <- @+L_qsort_done & h + p
     PI <- d >> 1                // partition index
     LI <- d - 1                 // last index
     // partitioning

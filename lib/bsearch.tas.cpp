@@ -15,7 +15,7 @@ bsearch_loop:
     // d is the first element to consider
     // e is the number of elements to consider after d (31-bit unsigned)
     i <- e == 0
-    jnzrel(i,bsearch_notfound)
+    p <- @+bsearch_notfound & i + p
 
     pushall(c,d,e,f)
     // consider element halfway between (d) and (d + e)
@@ -29,9 +29,9 @@ bsearch_loop:
     popall(c,d,e,f)
 
     j <- i == 0
-    jnzrel(j,bsearch_done)
+    p <- @+bsearch_done & j + p
     j <- i < 0
-    jnzrel(j,bsearch_less)
+    p <- @+bsearch_less & j + p
 
     e <- e + 1
     e <- e >> 1

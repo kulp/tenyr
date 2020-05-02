@@ -11,12 +11,12 @@ ipow:
   // Multiply the product by C until D == 0.
 mult_loop:
   k <- d == 0
-  jnzrel(k, done)
+  p <- @+done & k + p
 
   // Check to see if the exponent is even or not.
   k <- d & 1
   k <- k - 1
-  jnzrel(k, even)
+  p <- @+even & k + p
 
   // If odd, subtract one from the exponent and multiply by the base.
 odd:

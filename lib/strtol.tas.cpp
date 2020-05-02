@@ -13,18 +13,18 @@ strtol:
 
 strtol_no_call:
     h <- 36 < e
-    jnzrel(h,strtol_error_EINVAL)
+    p <- @+strtol_error_EINVAL & h + p
     h <- e < 2
-    jnzrel(h,strtol_error_EINVAL)
+    p <- @+strtol_error_EINVAL & h + p
 
     b <- 0
     i <- [c]
     g <- i == '-'
-    jnzrel(g,strtol_negative)
+    p <- @+strtol_negative & g + p
     f <- 1
 strtol_top:
     g <- e < 11
-    jnzrel(g,strtol_le10_top)
+    p <- @+strtol_le10_top & g + p
     p <- p + @+strtol_gt10_top
 
 strtol_negative:
@@ -37,7 +37,7 @@ strtol_error:
 strtol_done:
     b <- b * f
     h <- d == 0
-    jnzrel(h,strtol_no_endptr)
+    p <- @+strtol_no_endptr & h + p
     c -> [d]
 strtol_no_endptr:
     popall(f,g,h,i)
@@ -99,7 +99,7 @@ detect_base:
     push(f)
     f <- [c]
     f <- f == '0'
-    jnzrel(f,detect_base_8or16)
+    p <- @+detect_base_8or16 & f + p
     b <- 10
 detect_base_done:
     pop(f)
@@ -108,7 +108,7 @@ detect_base_8or16:
     f <- [c + 1]
     f <- f &~ ('a' - 'A')
     f <- f == 'X'
-    jnzrel(f,detect_base_16)
+    p <- @+detect_base_16 & f + p
     b <- 8
     c <- c + 1
     p <- p + @+detect_base_done

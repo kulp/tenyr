@@ -18,7 +18,7 @@ fib:
 
 loop:
     k <- c == 0
-    jnzrel(k, done)
+    p <- @+done & k + p
 
     g <- b + d
     b <- d

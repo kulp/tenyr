@@ -34,7 +34,7 @@ loop_top:
     k <- k + 1
     g <- g + f - 1
     c <- k <= 16
-    jnzrel(c,loop_top)
+    p <- @+loop_top & c + p
 
     // outer loop is j (multiplier, corresponds to row)
 loop_j:
@@ -61,11 +61,11 @@ loop_k:
     k <- k + 1
     g <- g + f - 1
     c <- k <= 16
-    jnzrel(c,loop_k)
+    p <- @+loop_k & c + p
 
     j <- j + 1          // increment N
     c <- j < ROWS
-    jnzrel(c,loop_j)
+    p <- @+loop_j & c + p
     b <- -1             // indicate completion to testbench
 
     //p <- p + @+restart     // restartable, but exits to testbench by default

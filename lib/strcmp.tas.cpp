@@ -12,8 +12,8 @@ strcmp_loop:
     g <- [d]            // load word from string
     h <- j == a         // if it is zero, we are done
     i <- g == a         // if it is zero, we are done
-    jnzrel(h,strcmp_done)
-    jnzrel(i,strcmp_done)
+    p <- @+strcmp_done & h + p
+    p <- @+strcmp_done & i + p
     c <- c + 1          // increment index for next time
     d <- d + 1          // increment index for next time
     e <- j == g         // check for mismatch
@@ -36,13 +36,13 @@ strncmp:
     b <- 0              // start with matching
 strncmp_loop:
     h <- e < 1          // check length to go
-    jnzrel(h,strncmp_nreached)
+    p <- @+strncmp_nreached & h + p
     j <- [c]            // load word from string
     g <- [d]            // load word from string
     h <- j == a         // if it is zero, we are done
     i <- g == a         // if it is zero, we are done
-    jnzrel(h,strncmp_done)
-    jnzrel(i,strncmp_done)
+    p <- @+strncmp_done & h + p
+    p <- @+strncmp_done & i + p
     c <- c + 1          // increment index for next time
     d <- d + 1          // increment index for next time
     e <- e - 1          // decrement length to check

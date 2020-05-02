@@ -17,7 +17,7 @@ totient:
 
 loop:
   k <- d == a
-  jnzrel(k, done)
+  p <- @+done & k + p
 
   pushall(b,c,d)
 

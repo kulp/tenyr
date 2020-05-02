@@ -9,7 +9,7 @@ memset:
     f <- 0                      // load offset with 0
 L_memset_loop:
     g <- e == f                 // check if count is reached
-    jnzrel(g,L_memset_done)
+    p <- @+L_memset_done & g + p
     d -> [c + f]                // store val into dst word
     f <- f + 1                  // increment offset
     p <- p + @+L_memset_loop

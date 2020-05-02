@@ -20,16 +20,16 @@ init:
     p <- @+init &~ m + p
 outer:
     m <- c < i          // exit loop when i > N/2
-    jnzrel(m,done)
+    p <- @+done & m + p
     g <- [o + i]        // load compositeness
     m <- g == 0         // check recorded compositeness
-    jnzrel(m,bottom)    // branch if composite
+    p <- @+bottom & m + p    // branch if composite
     k <- 2              // set up initial multiplier
 inner:
     j <- i * k          // compute j
     k <- k + 1          // increment multiplier
     m <- b < j          // compare j to N
-    jnzrel(m,bottom)    // branch if j > N
+    p <- @+bottom & m + p    // branch if j > N
     a -> [o + j]        // mark as composite
     p <- p + @+inner    // loop
 

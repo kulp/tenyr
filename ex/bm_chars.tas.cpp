@@ -20,7 +20,7 @@ top:
 
     j <- j + 1
     n <- j < k
-    jnzrel(n,top)
+    p <- @+top & n + p
 
     b <- -1             // indicate completion to testbench
     p <- p + @+restart     // restartable, but exits to testbench by default

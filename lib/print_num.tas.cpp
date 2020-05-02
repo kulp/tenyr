@@ -8,7 +8,7 @@ print_num_generic:
     g <- c
     h <- @+tmpbuf_end + p
     d <- c < 0
-    jnzrel(d,print_num_generic_negative)
+    p <- @+print_num_generic_negative & d + p
     f <- 0
 print_num_generic_top:
     h <- h - 1

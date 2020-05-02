@@ -28,7 +28,7 @@ ilog2:
 L_ilog2_top:
     C   <- C >> 1
     D   <- C == 0
-    jnzrel(D, L_ilog2_done)
+    p <- @+L_ilog2_done & D + p
     B   <- B + 1
     p <- p + @+L_ilog2_top
 L_ilog2_done:
@@ -93,7 +93,7 @@ NODE2RANK_func:
     D   <- 0
 L_NODE2RANK_top:
     B   <- C == 0
-    jnzrel(B, L_NODE2RANK_done)
+    p <- @+L_NODE2RANK_done & B + p
     D   <- D + 1
     PARENT(C,C)
     p <- p + @+L_NODE2RANK_top
@@ -105,7 +105,7 @@ L_NODE2RANK_done:
 #define SIZE2RANK(B,C)  FUNCIFY2(SIZE2RANK,B,C)
 SIZE2RANK_func:
     B   <- C == 0
-    jnzrel(B, L_SIZE2RANK_zero)
+    p <- @+L_SIZE2RANK_zero & B + p
     C   <- C - 1
     C   <- C >> RANK_0_LOG
     call(ilog2)
@@ -206,7 +206,7 @@ NODE2ADDR_func:
     E   <- RANK_0_LOG + E   // i = RANK_0_LOG + NODE2RANK(n)
 NODE2ADDR_looptop:
     D   <- C == TN          // while (n != TN) {
-    jnzrel(D,NODE2ADDR_loopbottom)
+    p <- @+NODE2ADDR_loopbottom & D + p
     ISRIGHT(D,C)            // ISRIGHT(n)
     D   <- - D              // -1 -> 1, 0 -> 0
     D   <- D << E           // ISRIGHT(n) << i
@@ -227,10 +227,10 @@ ADDR2NODE_func:
     B   <- TN           // B is the node being checked
 L_ADDR2NODE_looptop:
     GET_LEAF(G,B,F)
-    jnzrel(G,L_ADDR2NODE_loopdone)
+    p <- @+L_ADDR2NODE_loopdone & G + p
     F   <- C - E        // F is (key - base)
     F   <- F < D        // if true, then left-link
-    jnzrel(F,L_ADDR2NODE_left)
+    p <- @+L_ADDR2NODE_left & F + p
     RLINK(B,B)          // n = RLINK(n)
     E   <- E + D        // base += RANK2WORDS(rank)
     p <- p + @+L_ADDR2NODE_loopbottom
@@ -245,7 +245,7 @@ L_ADDR2NODE_loopbottom:
 L_ADDR2NODE_loopdone:
 #if DEBUG
     D   <- C == E
-    jnzrel(D,L_ADDR2NODE_done)
+    p <- @+L_ADDR2NODE_done & D + p
     call(abort)
 
 L_ADDR2NODE_done:
@@ -288,7 +288,7 @@ buddy_splitnode:
     pushall(E,F)
     B   <- 0
     E   <- D == 0
-    jnzrel(E,L_buddy_splitnode_done)
+    p <- @+L_buddy_splitnode_done & E + p
     B   <- 1
     GET_FULL(E,C,F)
     E   <- E == 0
@@ -332,7 +332,7 @@ L_buddy_nosplit_loop_top:
     GET_LEAF(C,E,G)     // C is leafiness
     p <- @+L_buddy_nosplit_loop_bottom &~ C + p
     GET_FULL(C,E,G)     // C is fullness
-    jnzrel(C,L_buddy_nosplit_loop_bottom)
+    p <- @+L_buddy_nosplit_loop_bottom & C + p
     SET_FULL(E,-1,D,G,C,D)
     GET_COUNT(C,B)
     C   <- C - 1

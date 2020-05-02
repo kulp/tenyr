@@ -19,7 +19,7 @@ _start:
 fib:
     push(d)
     d <- c > 1          // not zero or one ?
-    jnzrel(d,_recurse)  // not-zero is true (c >= 2)
+    p <- @+_recurse & d + p  // not-zero is true (c >= 2)
     b <- c
     pop(d)
     ret

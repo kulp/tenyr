@@ -9,7 +9,7 @@ imul:
     b <- c == 0
     d <- d &~ b     // d = (c == 0) ? 0 : d
     b <- d == 0
-    jnzrel(b, L_done)
+    p <- @+L_done & b + p
 #endif
 
     pushall(h,i,j)

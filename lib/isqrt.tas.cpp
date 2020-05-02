@@ -14,18 +14,18 @@ compute_4:
   j <- g <  c
   k <- g == c
   k <- j | k
-  jnzrel(k, do_magic)
+  p <- @+do_magic & k + p
   g <- g >> 2
   p <- p + @+compute_4
 
   // :)
 do_magic:
   k <- g == 0
-  jnzrel(k, done)
+  p <- @+done & k + p
 
   e <- b + g
   k <- c < e
-  jnzrel(k, shift)
+  p <- @+shift & k + p
 
   c <- c - e
   b <- g * 2 + b

@@ -56,7 +56,7 @@ cmp:
 
 check:
     callr(f)
-    jnzrel(b,_mismatched)
+    p <- @+_mismatched & b + p
     c <- @+_match_message + p
     p <- p + @+_finished
 _mismatched:

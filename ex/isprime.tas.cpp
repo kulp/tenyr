@@ -22,27 +22,27 @@ isprime:
     j <- e == 0
     k <- e == 1
     k <- j | k
-    jnzrel(k, cleanup0)
+    p <- @+cleanup0 & k + p
 
     // 2 and 3 are prime.
     j <- e == 2
     k <- e == 3
     k <- j | k
-    jnzrel(k, prime)
+    p <- @+prime & k + p
 
     // Check for divisibility by 2.
     c <- e
     d <- 2
     call(umod)
     k <- b == 0
-    jnzrel(k, cleanup0)
+    p <- @+cleanup0 & k + p
 
     // Check for divisibility by 3.
     c <- e
     d <- 3
     call(umod)
     k <- b == 0
-    jnzrel(k, cleanup0)
+    p <- @+cleanup0 & k + p
 
     // Compute upper bound and store it in M.
     c <- e
@@ -55,14 +55,14 @@ mod_loop:
     g <- i * 6
     g <- g - 1
     k <- m < g
-    jnzrel(k, prime)
+    p <- @+prime & k + p
 
     // Check for divisibility by 6*i - 1.
     c <- e
     g <- d
     call(umod)
     k <- b == 0
-    jnzrel(k, cleanup1)
+    p <- @+cleanup1 & k + p
 
     // Check for divisibility by 6*i + 1.
     c <- e
@@ -72,7 +72,7 @@ mod_loop:
     k <- b == 0
 
     // Increment i and continue.
-    jnzrel(k, cleanup0)
+    p <- @+cleanup0 & k + p
     i <- i + 1
     p <- p + @+mod_loop
 

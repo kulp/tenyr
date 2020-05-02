@@ -32,7 +32,7 @@ loop_line:
     d <- @+privmsg + p
     e <- 7
     call(strncmp)
-    jnzrel(b,loop_line)
+    p <- @+loop_line & b + p
     c <- g
     d <- 3
     call(skipwords)
@@ -113,7 +113,7 @@ convert_decimal:
     g <- c
     h <- @+tmpbuf_end + p
     d <- c < 0
-    jnzrel(d,convert_decimal_negative)
+    p <- @+convert_decimal_negative & d + p
     f <- 0
 convert_decimal_top:
     h <- h - 1
@@ -169,10 +169,10 @@ skipwords:
 skipwords_top:
     g <- [c]
     e <- g == 0
-    jnzrel(e,skipwords_done)
+    p <- @+skipwords_done & e + p
     e <- g == ' '
     c <- c + 1
-    jnzrel(e,skipwords_foundspace)
+    p <- @+skipwords_foundspace & e + p
     p <- p + @+skipwords_top
 
 skipwords_foundspace:
@@ -193,7 +193,7 @@ getline_top:
     getch(b)
     c <- b == '\r'
     c <- b == '\n' + c
-    jnzrel(c,getline_eol)
+    p <- @+getline_eol & c + p
     b -> [f]
     f <- f + 1
     p <- p + @+getline_top

@@ -58,7 +58,7 @@ loop:
 fib:
     d <- 1
     d <- d < c          // zero or one ?
-    jnzrel(d,_recurse)  // not-zero is true (c >= 2)
+    p <- @+_recurse & d + p  // not-zero is true (c >= 2)
     b <- c
     ret
 

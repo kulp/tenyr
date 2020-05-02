@@ -25,7 +25,7 @@ init:
 
     n <- n + SIZEOF_SNAKE
     j <- n < e
-    jnzrel(j,init)
+    p <- @+init & j + p
 
     g <- -1 // constant
 L_loop:
@@ -84,14 +84,14 @@ L_snake:
     n <- n + SIZEOF_SNAKE
     e <- @+snakes_after + p
     j <- n < e
-    jnzrel(j,L_snake)
+    p <- @+L_snake & j + p
 
 	j <- 250
 	j <- j * 75
 slow_down:
 	e <- j > 0
 	j <- j - 1
-	jnzrel(e,slow_down)
+	p <- @+slow_down & e + p
 
     p <- p + @+L_loop // infinite loop
 

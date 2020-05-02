@@ -42,7 +42,7 @@ blank_area_loop:
     j <- j - 1
     d -> [c + j]
     n <- j > 0
-    jnzrel(n,blank_area_loop)
+    p <- @+blank_area_loop & n + p
     popall_ret(j,n)
 
 randomise_board:
@@ -63,10 +63,10 @@ randomise_board_cols:
 
     k <- k - 1
     n <- k >= 0
-    jnzrel(n,randomise_board_cols)
+    p <- @+randomise_board_cols & n + p
     j <- j - 1
     n <- j >= 0
-    jnzrel(n,randomise_board_rows)
+    p <- @+randomise_board_rows & n + p
     popall_ret(j,k,c,d,l,n)
 
 flip:
@@ -90,10 +90,10 @@ flip_cols:
 
     k <- k - 1
     n <- k >= 0
-    jnzrel(n,flip_cols)
+    p <- @+flip_cols & n + p
     j <- j - 1
     n <- j >= 0
-    jnzrel(n,flip_rows)
+    p <- @+flip_rows & n + p
 
     h <- h ^ 1
     popall_ret(j,k,n)
@@ -127,10 +127,10 @@ compute_cols:
 
     k <- k - 1
     n <- k >= 0
-    jnzrel(n,compute_cols)
+    p <- @+compute_cols & n + p
     j <- j - 1
     n <- j >= 0
-    jnzrel(n,compute_rows)
+    p <- @+compute_rows & n + p
     popall_ret(c,d,e,f,j,k,l)
 
 get_neighbour_count:
@@ -160,10 +160,10 @@ neighbour_loop_cols:
 
     f <- f + 1
     n <- f <= 1
-    jnzrel(n,neighbour_loop_cols)
+    p <- @+neighbour_loop_cols & n + p
     e <- e + 1
     n <- e <= 1
-    jnzrel(n,neighbour_loop_rows)
+    p <- @+neighbour_loop_rows & n + p
 
     b <- m
     popall_ret(e,f,j,k,l,m,n)

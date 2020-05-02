@@ -10,18 +10,18 @@ udiv:
 
   // Check for division by zero.
   k <- d == 0
-  jnzrel(k, done)
+  p <- @+done & k + p
 
   // Check for divisor > dividend.
   k <- c < d
-  jnzrel(k, done)
+  p <- @+done & k + p
 
   // Prepare the value to subtract from the dividend.
   g <- d
 build_subtrahend:
   // If the value is greater than the dividend, we're done.
   k <- c < g
-  jnzrel(k, compute_quotient)
+  p <- @+compute_quotient & k + p
 
   // Otherwise, multiply by 2.
   g <- g << 1
@@ -32,14 +32,14 @@ compute_quotient:
   j <- g <  d
   k <- g == d
   k <- j | k
-  jnzrel(k, done)
+  p <- @+done & k + p
 
   // Divide the subtrahend by 2.
   g <- g >> 1
 
   // Check to see if we can subtract the subtrahend.
   k <- c < g
-  jnzrel(k, shift_quotient)
+  p <- @+shift_quotient & k + p
 
   // Perform a subtraction and set this output bit to 1.
   c <- c - g
