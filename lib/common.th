@@ -6,8 +6,6 @@
 
 #define call(Label)         push(p + 2); p <- @+Label + p
 #define callr(Reg)          push(p + 2); p <- Reg
-// XXX jnzrel requires Cond to be either 0 or -1, so it's not properly "nz"
-#define jnzrel(Cond,Label)  p <- @+Label &  Cond + p
 #define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 #define ret                 pop(p)
