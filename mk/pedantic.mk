@@ -1,7 +1,5 @@
 PEDANTIC = 1
 
-PEDANTRY_EXCEPTION = no-error=
-
 ifeq ($(PEDANTIC),)
 PEDANTIC_FLAGS ?= -pedantic
 else
