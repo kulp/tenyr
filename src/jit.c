@@ -44,7 +44,7 @@ static void build_op(struct jit_state *s, int op, int result, int a, int b)
 
         case OP_TEST_BIT:
             jit_movi(result, 1);
-            jit_lshi(result, result, b);
+            jit_lshr(result, result, b);
             jit_andr(result, result, a);
             jit_nei(result, result, 0);
             jit_negr(result, result);

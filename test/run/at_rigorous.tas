@@ -1,0 +1,21 @@
+# does a rigorous test of the `@` (bit test) operation
+B <- 0
+C <- 1
+D <- [(@data - . - 1) + P]
+G <- 0
+
+top:
+E <- D @ B
+F <- E & C
+G <- G + F
+
+N <- B >= 31
+B <- B + 1
+C <- C << 1
+P <- @+top &~ N + P
+
+B <- G == D
+illegal
+
+data: .word 0xfadebabe
+
