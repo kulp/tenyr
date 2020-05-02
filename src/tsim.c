@@ -225,14 +225,16 @@ static int recipe_runner(struct sim_state *s, const char *prefix)
     char name[128];
     if (snprintf(name, sizeof name, "%s_run_sim", prefix) >= (long)sizeof name) {
         debug(0, "Library name prefix too long");
-        dlclose(libhandle);
+        if (libhandle != NULL)
+            dlclose(libhandle);
         return 1;
     }
 
     void *ptr = dlsym(libhandle, name);
     if (!ptr) {
         debug(0, "Failed to find symbol `%s` - %s", name, dlerror());
-        dlclose(libhandle);
+        if (libhandle != NULL)
+            dlclose(libhandle);
         return 1;
     }
 
@@ -571,7 +573,8 @@ cleanup:
 
     while (s->libs) {
         struct library_list *t = s->libs;
-        dlclose(t->handle);
+        if (t->handle != NULL)
+            dlclose(t->handle);
         s->libs = s->libs->next;
         free(t);
     }
