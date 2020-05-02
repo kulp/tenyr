@@ -21,7 +21,7 @@ static int default_printf(STREAM *s, const char *format, ...)
     if (need > 0 && (size_t)need >= sizeof buf)
         return -1; // we ran out of space
 
-    size_t wrote = s->op.fwrite(buf, (size_t)need, 1, s);
+    size_t wrote = s->op.fwrite(buf, 1, (size_t)need, s);
     return wrote == (size_t)need ? need : -1;
 }
 
