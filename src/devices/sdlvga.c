@@ -122,9 +122,7 @@ static int sdlvga_fini(void *cookie)
 {
     struct sdlvga_state *state = cookie;
 
-    SDL_DestroyRenderer(state->renderer);
-    SDL_DestroyTexture(state->sprite);
-    SDL_DestroyTexture(state->display);
+    SDL_DestroyRenderer(state->renderer); // also frees textures
     SDL_DestroyWindow(state->window);
 
     free(state);
