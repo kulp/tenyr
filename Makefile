@@ -35,7 +35,7 @@ tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ifeq ($(USE_OWN_SEARCH),1)
 # The interface of lsearch and tsearch is not something we can change.
-lsearch.o tsearch.o: CFLAGS += -Wno-error=cast-qual
+lsearch.o tsearch.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
 
 tas_OBJECTS   += lsearch.o tsearch.o
 tld_OBJECTS   += lsearch.o tsearch.o
@@ -100,9 +100,6 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BU
 # Padding warnings are not really relevant to this project.
 CFLAGS += -Wno-padded
 
-# Exempt ourselves from string-related warnings we have manually vetted
-asm.o: CFLAGS += -Wno-stringop-overflow
-obj.o: CFLAGS += -Wno-stringop-truncation
 # don't complain about unused state
 asm.o asmif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
@@ -110,7 +107,7 @@ $(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o $(shared_OBJECTS:%.o=%,dy
 
 # Some casting away of qualifiers is currently deemed unavoidable, at least
 # without running into different warnings.
-tas.o tld.o param.o param,dy.o: CFLAGS += -Wno-error=cast-qual
+tas.o tld.o param.o param,dy.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
 # Calls to variadic printf functions almost always need non-literal format
 # strings.
 common.o parser.o stream.o: CFLAGS += -Wno-format-nonliteral

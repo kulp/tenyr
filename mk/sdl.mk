@@ -13,7 +13,7 @@ $(TOP)rsrc/font10x15/%:
 
 # Do not halt the build for platforms on which the feature-flag _BSD_SOURCE is
 # unused.
-sdl%.o: CFLAGS += -Wno-error=unused-macros
+sdl%.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)unused-macros
 endif
 endif
 

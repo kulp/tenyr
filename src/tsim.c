@@ -88,7 +88,7 @@ static const char *library_search_paths[] = {
     NULL
 };
 
-static const char *version()
+static const char *version(void)
 {
     return "tsim version " STR(BUILD_NAME) " built " __DATE__;
 }
@@ -566,7 +566,7 @@ int main(int argc, char *argv[])
     devices_teardown(s);
 
     if (s->conf.debugging > 0)
-        fprintf(stderr, "Instructions executed: %llu\n", s->insns_executed);
+        fprintf(stderr, "Instructions executed: %lu\n", (unsigned long)s->insns_executed);
 
 cleanup:
     param_destroy(s->conf.params);

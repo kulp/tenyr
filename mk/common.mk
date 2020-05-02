@@ -115,6 +115,12 @@ include $(TOP)/mk/os/vars/default.mk
 # `=`, order of assignment of variables matters.
 CC  := $(CROSS_COMPILE)$(CC)
 
+# Provide a short identifier (e.g. "clang" or "gcc") to switch some build-time
+# behaviors (e.g. diagnostic fatalization).
+COMPILER = $(shell echo __clang_version__ | cc -E -P - | grep -qL __clang_version__ && echo gcc || echo clang)
+include $(TOP)/mk/compiler/default.mk
+-include $(TOP)/mk/compiler/$(COMPILER).mk
+
 include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/jit.mk
 

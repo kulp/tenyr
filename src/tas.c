@@ -32,7 +32,7 @@ static const struct option longopts[] = {
     { NULL, 0, NULL, 0 },
 };
 
-static const char *version()
+static const char *version(void)
 {
     return "tas version " STR(BUILD_NAME) " built " __DATE__;
 }
