@@ -15,6 +15,8 @@ PEDANTIC_FLAGS += -Wno-date-time
 PEDANTIC_FLAGS += -Wno-reserved-id-macro
 PEDANTIC_FLAGS += -Wno-error=cpp
 
+# The following errors are meant to be absent, and therefore their presence is
+# fatal except where elsewhere overridden on a per-object basis.
 PEDANTIC_FLAGS += -Werror=covered-switch-default
 PEDANTIC_FLAGS += -Werror=missing-variable-declarations
 PEDANTIC_FLAGS += -Werror=switch-enum
