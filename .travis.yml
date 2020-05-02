@@ -31,6 +31,7 @@ matrix:
         apt:
           packages:
             - gcc-mingw-w64-x86-64
+            - wine32
             - wine-stable
     - compiler: i686-w64-mingw32-gcc
       language: c
