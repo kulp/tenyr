@@ -17,15 +17,11 @@ PEDANTIC_FLAGS += -W$(PEDANTRY_EXCEPTION)cpp
 
 # The following errors are meant to be absent, and therefore their presence is
 # fatal except where elsewhere overridden on a per-object basis.
-PEDANTIC_FLAGS += -Werror=covered-switch-default
-PEDANTIC_FLAGS += -Werror=missing-variable-declarations
 PEDANTIC_FLAGS += -Werror=switch-enum
-PEDANTIC_FLAGS += -Werror=comma
 PEDANTIC_FLAGS += -Werror=cast-qual
 PEDANTIC_FLAGS += -Werror=vla
 PEDANTIC_FLAGS += -Werror=strict-prototypes
 PEDANTIC_FLAGS += -Werror=missing-prototypes
 PEDANTIC_FLAGS += -Werror=unused-macros
-PEDANTIC_FLAGS += -Werror=shorten-64-to-32
 
 endif
