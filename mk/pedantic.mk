@@ -1,9 +1,11 @@
 PEDANTIC = 1
 
+PEDANTRY_EXCEPTION = no-error=
+
 ifeq ($(PEDANTIC),)
 PEDANTIC_FLAGS ?= -pedantic
 else
-PEDANTIC_FLAGS ?= -Werror -pedantic-errors -Wno-error=unknown-warning-option
+PEDANTIC_FLAGS ?= -Werror -pedantic-errors -W$(PEDANTRY_EXCEPTION)unknown-warning-option
 
 # Unreachable `return` statements after `fatal` are not an error for us.
 PEDANTIC_FLAGS += -Wno-unreachable-code-return
@@ -13,7 +15,7 @@ PEDANTIC_FLAGS += -Wno-date-time
 
 # Required feature-macros trip these warnings spuriously.
 PEDANTIC_FLAGS += -Wno-reserved-id-macro
-PEDANTIC_FLAGS += -Wno-error=cpp
+PEDANTIC_FLAGS += -W$(PEDANTRY_EXCEPTION)cpp
 
 # The following errors are meant to be absent, and therefore their presence is
 # fatal except where elsewhere overridden on a per-object basis.
