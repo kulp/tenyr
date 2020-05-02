@@ -1,12 +1,6 @@
 # delete all build products built by a rule that exits nonzero
 .DELETE_ON_ERROR:
 
-# Provide a short identifier (e.g. "clang" or "gcc") to switch some build-time
-# behaviors (e.g. diagnostic fatalization).
-COMPILER = $(if $(TRAVIS_COMPILER),$(TRAVIS_COMPILER),default)
-include $(TOP)/mk/compiler/default.mk
--include $(TOP)/mk/compiler/$(COMPILER).mk
-
 ECHO := $(shell which echo)
 EMPTY :=#
 
@@ -120,6 +114,12 @@ include $(TOP)/mk/os/vars/default.mk
 # OS Makefiles might have set CROSS_COMPILE. Since we are using `:=` instead of
 # `=`, order of assignment of variables matters.
 CC  := $(CROSS_COMPILE)$(CC)
+
+# Provide a short identifier (e.g. "clang" or "gcc") to switch some build-time
+# behaviors (e.g. diagnostic fatalization).
+COMPILER = $(shell echo __clang_version__ | cc -E -P - | grep -qL __clang_version__ && echo gcc || echo clang)
+include $(TOP)/mk/compiler/default.mk
+-include $(TOP)/mk/compiler/$(COMPILER).mk
 
 include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/jit.mk
