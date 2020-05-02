@@ -1,0 +1,43 @@
+# performs a sanity test of basic ops, especially in the JIT
+B <- 1
+C <- 1
+
+top:
+D <- 0x7f0
+D <- D + C
+L <- 14
+L <- C ^^ L
+E <- D - L
+
+D <- C & 31
+N <- E @ D
+N <- N << 16
+
+F <- E + N
+G <- F & D
+
+N <- G <= D
+
+H <- G |~ E
+I <- H | F
+J <- I ^ 0x5a5
+K <- J * (3 * 256)
+
+M <- K >> 8
+N <- M >>> 4
+O <- N & 0xf
+O <- O == 0xa
+
+C <- C - O + 3
+
+N <- 0x400
+#N <- 1
+N <- B > N
+B <- B + 1
+P <- @+top &~ N + P
+
+B <- [(@data - . - 1) + p]
+B <- J == B
+illegal
+data: .word 0xffbffa5a
+

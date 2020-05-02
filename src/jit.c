@@ -47,6 +47,7 @@ static void build_op(struct jit_state *s, int op, int result, int a, int b)
             jit_lshi(result, result, b);
             jit_andr(result, result, a);
             jit_nei(result, result, 0);
+            jit_negr(result, result);
             break;
 
         case OP_COMPARE_LT:
