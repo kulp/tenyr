@@ -206,12 +206,20 @@ static int recipe_runner(struct sim_state *s, const char *prefix)
 {
     const char **path = library_search_paths;
     void *libhandle = NULL;
+    char *error = "(no error)";
     while ((libhandle == NULL) && *path != NULL) {
         char *buf = build_path(s->conf.tsim_path, "%slibtenyr%s"DYLIB_SUFFIX, *path++, prefix);
         void *handle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
+        error = dlerror();
         if (handle)
             libhandle = handle;
+        else
+            debug(1, "Did not load library `%s`: %s", buf, error);
         free(buf);
+    }
+    if (libhandle == NULL) {
+        debug(0, "Failed to load `%s` library: %s", prefix, error);
+        return 1;
     }
 
     char name[128];
