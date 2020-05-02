@@ -110,6 +110,7 @@ matrix:
             - lcov
             - libsdl2-dev
             - libsdl2-image-dev
+            - iverilog
     - compiler: "gcc"
       language: c
       os: linux
