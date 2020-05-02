@@ -4,6 +4,7 @@
 # Provide a short identifier (e.g. "clang" or "gcc") to switch some build-time
 # behaviors (e.g. diagnostic fatalization).
 COMPILER = $(if $(TRAVIS_COMPILER),$(TRAVIS_COMPILER),default)
+include $(TOP)/mk/compiler/default.mk
 -include $(TOP)/mk/compiler/$(COMPILER).mk
 
 ECHO := $(shell which echo)
