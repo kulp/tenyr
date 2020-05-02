@@ -100,9 +100,6 @@ tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BU
 # Padding warnings are not really relevant to this project.
 CFLAGS += -Wno-padded
 
-# Exempt ourselves from string-related warnings we have manually vetted
-asm.o: CFLAGS += -Wno-stringop-overflow
-obj.o: CFLAGS += -Wno-stringop-truncation
 # don't complain about unused state
 asm.o asmif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
