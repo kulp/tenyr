@@ -92,7 +92,8 @@ say_decimal:
     c <- b
     call(puts)
     call(say_end)
-    ret
+    o <- o + 1
+    p <- [o]
 
 say_fahrenheit:
     call(say_start)
@@ -102,7 +103,8 @@ say_fahrenheit:
     c <- @+degF + p
     call(puts)
     call(say_end)
-    ret
+    o <- o + 1
+    p <- [o]
 
 // TODO this is actually being encoded as UTF-8
 degF: .utf32 "°F" ; .word 0
@@ -146,7 +148,8 @@ say:
     call(say_start)
     call(puts)
     call(say_end)
-    ret
+    o <- o + 1
+    p <- [o]
 
 say_start:
     push(c)

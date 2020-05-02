@@ -109,7 +109,8 @@ SIZE2RANK_func:
     call(ilog2)
     B   <- B + 1
 L_SIZE2RANK_zero:
-    ret
+    o <- o + 1
+    p <- [o]
 
 // RANK2WORDS gets SZ rank in C, returns SZ word-count in B, T may be C
 // TODO update grammar to permit expressions without parens to save insns
@@ -214,7 +215,8 @@ NODE2ADDR_looptop:
     p <- p + @+NODE2ADDR_looptop // }
 NODE2ADDR_loopbottom:
     B   <- B + @+counts + P
-    ret
+    o <- o + 1
+    p <- [o]
 
 // ADDR2NODE gets SZ addr in C, returns NP node in B
 #define ADDR2NODE(B,C)  FUNCIFY2(ADDR2NODE,B,C)
@@ -270,12 +272,14 @@ buddy_calloc:
 .global buddy_free
 buddy_free:
     // TODO
-    ret
+    o <- o + 1
+    p <- [o]
 
 .global buddy_realloc
 buddy_realloc:
     // TODO
-    ret
+    o <- o + 1
+    p <- [o]
 
 // -----------------------------------------------------------------------------
 

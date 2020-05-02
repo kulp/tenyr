@@ -1,7 +1,8 @@
 #include "common.th"
 
 print_num:
-    ret
+    o <- o + 1
+    p <- [o]
 
 print_num_generic:
     pushall(d,f,g,h)

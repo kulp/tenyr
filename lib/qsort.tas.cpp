@@ -30,7 +30,8 @@ do_swap:
     e <- k
     call(memcpy)
     o <- o + k
-    ret
+    o <- o + 1
+    p <- [o]
 
 // c <- base
 // d <- number of elements
