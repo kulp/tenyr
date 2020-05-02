@@ -88,7 +88,7 @@ static const char *library_search_paths[] = {
     NULL
 };
 
-static const char *version()
+static const char *version(void)
 {
     return "tsim version " STR(BUILD_NAME) " built " __DATE__;
 }
