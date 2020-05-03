@@ -15,7 +15,8 @@ void jit_init(struct jit_state **pstate)
 
 void jit_fini(struct jit_state *s)
 {
-    jit_destroy_state();
+    if (s->jj != NULL)
+        jit_destroy_state();
     finish_jit();
 }
 
