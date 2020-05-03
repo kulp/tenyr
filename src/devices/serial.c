@@ -56,7 +56,11 @@ static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     int rc = -1;
 
     if (op == OP_WRITE) {
-        fwrite(data, 1, 1, s->out);
+        // Use a temporary variable to get the semantically least significant
+        // bits of `data` into a character. Writing out one byte as pointed to
+        // by `data` (as was once done here) improperly assumes endianness.
+        const char ch = *data;
+        fwrite(&ch, 1, 1, s->out);
         fflush(s->out);
         rc = ferror(s->out);
     } else if (op == OP_DATA_READ) {
