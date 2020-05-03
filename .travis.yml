@@ -44,19 +44,19 @@ jobs:
             - gcc-mingw-w64-i686
             - wine32
             - wine-stable
-    - compiler: "clang"
+    - compiler: clang
       os: osx
       env:
         - PLATFORM=osx
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
-    - compiler: "gcc"
+    - compiler: gcc
       os: osx
       env:
         - PLATFORM=osx
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
-    - compiler: "gcc"
+    - compiler: gcc
       language: c
       os: linux
       arch: arm64
@@ -64,7 +64,7 @@ jobs:
         - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
-    - compiler: "clang"
+    - compiler: clang
       env:
         - PLATFORM=linux
         - CHECK_RULE=check_sw
@@ -77,7 +77,7 @@ jobs:
           packages:
             - libsdl2-dev
             - libsdl2-image-dev
-    - compiler: "clang"
+    - compiler: clang
       env:
         - PLATFORM=linux
         - CHECK_RULE=check
@@ -89,7 +89,7 @@ jobs:
             - libsdl2-dev
             - libsdl2-image-dev
             - iverilog
-    - compiler: "gcc"
+    - compiler: gcc
       env:
         - PLATFORM=linux
         # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
@@ -107,13 +107,13 @@ jobs:
             - libsdl2-dev
             - libsdl2-image-dev
             - iverilog
-    - compiler: "gcc"
+    - compiler: gcc
       arch: ppc64le
       env:
         - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
-    - compiler: "gcc"
+    - compiler: gcc
       language: c
       os: linux
       arch: s390x
