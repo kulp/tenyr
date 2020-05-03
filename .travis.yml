@@ -17,6 +17,7 @@ env:
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LIBRARY_PATH"
     - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
     - PATH="$PATH:$DEPSSRC/bin"
+    - PKG_RULE=gzip
 language: c
 jobs:
   include:
@@ -49,13 +50,11 @@ jobs:
       env:
         - PLATFORM=osx
         - CHECK_RULE=check_sw             SDL=0
-        - PKG_RULE=gzip
     - compiler: gcc
       os: osx
       env:
         - PLATFORM=osx
         - CHECK_RULE=check_sw             SDL=0
-        - PKG_RULE=gzip
     - compiler: gcc
       language: c
       os: linux
@@ -63,12 +62,10 @@ jobs:
       env:
         - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
-        - PKG_RULE=gzip
     - compiler: clang
       env:
         - PLATFORM=linux
         - CHECK_RULE=check_sw
-        - PKG_RULE=gzip
         - SANITIZE=address
         - ASAN_OPTIONS=detect_leaks=0 # TODO enable leak detection by removing this line
       addons:
@@ -81,7 +78,6 @@ jobs:
       env:
         - PLATFORM=linux
         - CHECK_RULE=check
-        - PKG_RULE=gzip
       addons:
         <<: *def_addons
         apt:
@@ -94,7 +90,6 @@ jobs:
         - PLATFORM=linux
         # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
         - CHECK_RULE=coverage GCOV=1
-        - PKG_RULE=gzip
         - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
@@ -112,7 +107,6 @@ jobs:
       env:
         - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
-        - PKG_RULE=gzip
     - compiler: gcc
       language: c
       os: linux
@@ -120,14 +114,12 @@ jobs:
       env:
         - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
-        - PKG_RULE=gzip
     - language: node_js
       node_js:
         - node
       env:
         - PLATFORM=emscripten
         - CHECK_RULE=check_sw       JIT=0 SDL=0
-        - PKG_RULE=gzip
       services:
         - docker
       before_install:
