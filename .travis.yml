@@ -22,7 +22,7 @@ jobs:
   include:
     - compiler: x86_64-w64-mingw32-gcc
       env:
-        - PLATFORM=mingw BITS=64 HOST=x86_64
+        - PLATFORM=mingw         HOST=x86_64
         - CHECK_RULE=check_sw        JIT=0 SDL=0
         - PKG_RULE=zip
       addons:
@@ -47,13 +47,13 @@ jobs:
     - compiler: "clang"
       os: osx
       env:
-        - PLATFORM=osx   BITS=64 HOST=x86_64
+        - PLATFORM=osx           HOST=x86_64
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
       os: osx
       env:
-        - PLATFORM=osx   BITS=64 HOST=x86_64
+        - PLATFORM=osx           HOST=x86_64
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
@@ -61,12 +61,12 @@ jobs:
       os: linux
       arch: arm64
       env:
-        - PLATFORM=linux BITS=64
+        - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - compiler: "clang"
       env:
-        - PLATFORM=linux BITS=64 HOST=x86_64
+        - PLATFORM=linux         HOST=x86_64
         - CHECK_RULE=check_sw
         - PKG_RULE=gzip
         - SANITIZE=address
@@ -79,7 +79,7 @@ jobs:
             - libsdl2-image-dev
     - compiler: "clang"
       env:
-        - PLATFORM=linux BITS=64 HOST=x86_64
+        - PLATFORM=linux         HOST=x86_64
         - CHECK_RULE=check
         - PKG_RULE=gzip
       addons:
@@ -91,7 +91,7 @@ jobs:
             - iverilog
     - compiler: "gcc"
       env:
-        - PLATFORM=linux BITS=64 HOST=x86_64
+        - PLATFORM=linux         HOST=x86_64
         # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
         - CHECK_RULE=coverage GCOV=1
         - PKG_RULE=gzip
@@ -110,7 +110,7 @@ jobs:
     - compiler: "gcc"
       arch: ppc64le
       env:
-        - PLATFORM=linux BITS=64
+        - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
@@ -118,7 +118,7 @@ jobs:
       os: linux
       arch: s390x
       env:
-        - PLATFORM=linux BITS=64
+        - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - language: node_js
