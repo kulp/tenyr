@@ -60,7 +60,7 @@ matrix:
       os: osx
       env:
         - PLATFORM=osx   BITS=64 HOST=x86_64
-        - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
+        - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
       language: c
@@ -68,7 +68,7 @@ matrix:
       arch: arm64
       env:
         - PLATFORM=linux BITS=64
-        - CHECK_RULE=check_sw GCOV= JIT=1 SDL=0
+        - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
     - compiler: "clang"
       language: c
@@ -125,7 +125,7 @@ matrix:
       arch: ppc64le
       env:
         - PLATFORM=linux BITS=64
-        - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
+        - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
       language: c
@@ -133,7 +133,7 @@ matrix:
       arch: s390x
       env:
         - PLATFORM=linux BITS=64
-        - CHECK_RULE=check_sw GCOV= JIT=1 SDL=0
+        - CHECK_RULE=check_sw GCOV=       SDL=0
         - PKG_RULE=gzip
     - language: node_js
       node_js:
