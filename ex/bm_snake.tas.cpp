@@ -3,7 +3,7 @@
 #include "common.th"
 #include "vga.th"
 
-#define SIZEOF_SNAKE 4
+.set SIZEOF_SNAKE, 4
 
 _start:
     prologue
@@ -23,7 +23,7 @@ init:
     j -> [n + 2]
     k -> [n + 3]
 
-    n <- n + SIZEOF_SNAKE
+    n <- n + $SIZEOF_SNAKE
     j <- n < e
     jnzrel(j,init)
 
@@ -81,7 +81,7 @@ L_snake:
     e <- e << 8         // e is video base
     c -> [e + d]        // e is d characters past start of text region
 
-    n <- n + SIZEOF_SNAKE
+    n <- n + $SIZEOF_SNAKE
     e <- rel(snakes_after)
     j <- n < e
     jnzrel(j,L_snake)

@@ -4,15 +4,13 @@
 //  C is the (so far only) argument register
 //  N is the relative-jump temp register
 
-#ifndef ARGUMENT
-#define ARGUMENT 10
-#endif
+.set ARGUMENT, 10
 
 #include "common.th"
 
 _start:
     prologue            // sets up base/stack pointer
-    c <- ARGUMENT       // argument
+    c <- $ARGUMENT      // argument
     call(fib)
     illegal
 

@@ -4,8 +4,8 @@
 main:
     prologue
 
-#define DATA_LEN (.L_data_end - .L_data_start)
-#define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)
+.set DATA_LEN, (.L_data_end - .L_data_start)
+.set ELT_LEN,  (.L_data_elt_end - .L_data_elt_start)
 
     c <- 0                      // needle
     i <- [rel(largest)]
@@ -16,8 +16,8 @@ loop_top:
     c -> [rel(key)]             // update key value
     c <- rel(key)               // pointer to value
     d <- rel(data_start)        // haystack
-    e <- (DATA_LEN / ELT_LEN)   // number of elements
-    f <- ELT_LEN                // size of each element
+    e <- ($DATA_LEN / $ELT_LEN) // number of elements
+    f <- $ELT_LEN               // size of each element
     g <- rel(inteq)             // comparator
     call(bsearch)
 

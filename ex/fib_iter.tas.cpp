@@ -1,12 +1,10 @@
 #include "common.th"
 
-#ifndef ARGUMENT
-#define ARGUMENT 10
-#endif
+.set ARGUMENT, 10
 
 _start:
     prologue
-    c <- ARGUMENT       // argument
+    c <- $ARGUMENT      // argument
     call(fib)
     illegal
 

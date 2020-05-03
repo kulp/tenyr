@@ -4,12 +4,12 @@
 main:
     prologue
 
-#define DATA_LEN (.L_data_end - .L_data_start)
-#define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)
+.set DATA_LEN, (.L_data_end - .L_data_start)
+.set ELT_LEN,  (.L_data_elt_end - .L_data_elt_start)
 
     c <- rel(data_start)        // data to sort
-    d <- (DATA_LEN / ELT_LEN)   // number of elements
-    e <- ELT_LEN                // size of each element
+    d <- ($DATA_LEN / $ELT_LEN) // number of elements
+    e <- $ELT_LEN               // size of each element
     f <- rel(inteq)             // comparator
     call(qsort)
 
@@ -21,7 +21,7 @@ print_loop:
     call(puts)
     c <- rel(nl)
     call(puts)
-    i <- i + ELT_LEN
+    i <- i + $ELT_LEN
     c <- i < .L_data_end
     jnzrel(c,print_loop)
 

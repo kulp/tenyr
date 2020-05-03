@@ -1,7 +1,7 @@
 #include "common.th"
 #include "vga.th"
 
-#define THRESHOLD 64
+.set THRESHOLD, 64
 
 _start:
     prologue
@@ -56,7 +56,7 @@ randomise_board_cols:
     call(rand)
     b <- b >> 23
 
-    l <- b >= THRESHOLD
+    l <- b >= $THRESHOLD
 
     b <- j * COLS + k
     l -> [b + g] // write to buf0
