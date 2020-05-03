@@ -23,7 +23,7 @@ jobs:
     - compiler: x86_64-w64-mingw32-gcc
       env:
         - PLATFORM=mingw BITS=64 HOST=x86_64
-        - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+        - CHECK_RULE=check_sw        JIT=0 SDL=0
         - PKG_RULE=zip
       addons:
         <<: *def_addons
@@ -35,7 +35,7 @@ jobs:
     - compiler: i686-w64-mingw32-gcc
       env:
         - PLATFORM=mingw BITS=32 HOST=i686
-        - CHECK_RULE=check_sw GCOV=  JIT=0 SDL=0
+        - CHECK_RULE=check_sw        JIT=0 SDL=0
         - PKG_RULE=zip
       addons:
         <<: *def_addons
@@ -48,13 +48,13 @@ jobs:
       os: osx
       env:
         - PLATFORM=osx   BITS=64 HOST=x86_64
-        - CHECK_RULE=check_sw GCOV=       SDL=0
+        - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
       os: osx
       env:
         - PLATFORM=osx   BITS=64 HOST=x86_64
-        - CHECK_RULE=check_sw GCOV=       SDL=0
+        - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
       language: c
@@ -62,12 +62,12 @@ jobs:
       arch: arm64
       env:
         - PLATFORM=linux BITS=64
-        - CHECK_RULE=check_sw GCOV=       SDL=0
+        - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - compiler: "clang"
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
-        - CHECK_RULE=check_sw GCOV=
+        - CHECK_RULE=check_sw
         - PKG_RULE=gzip
         - SANITIZE=address
         - ASAN_OPTIONS=detect_leaks=0 # TODO enable leak detection by removing this line
@@ -80,7 +80,7 @@ jobs:
     - compiler: "clang"
       env:
         - PLATFORM=linux BITS=64 HOST=x86_64
-        - CHECK_RULE=check GCOV=
+        - CHECK_RULE=check
         - PKG_RULE=gzip
       addons:
         <<: *def_addons
@@ -111,7 +111,7 @@ jobs:
       arch: ppc64le
       env:
         - PLATFORM=linux BITS=64
-        - CHECK_RULE=check_sw GCOV=       SDL=0
+        - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - compiler: "gcc"
       language: c
@@ -119,14 +119,14 @@ jobs:
       arch: s390x
       env:
         - PLATFORM=linux BITS=64
-        - CHECK_RULE=check_sw GCOV=       SDL=0
+        - CHECK_RULE=check_sw             SDL=0
         - PKG_RULE=gzip
     - language: node_js
       node_js:
         - node
       env:
         - PLATFORM=emscripten
-        - CHECK_RULE=check_sw GCOV= JIT=0 SDL=0
+        - CHECK_RULE=check_sw       JIT=0 SDL=0
         - PKG_RULE=gzip
       services:
         - docker
