@@ -249,7 +249,7 @@ int obj_write(struct obj *o, STREAM *out)
 
 static int get_recs(struct obj *o, STREAM *in, void *context)
 {
-    int *filesize = context;
+    long *filesize = context;
 
     GET(o->rec_count, in);
     if (o->rec_count > OBJ_MAX_REC_CNT) {
@@ -267,7 +267,7 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
         long here = in->op.ftell(in);
         if (here < 0) {
             // not a seekable stream -- forge ahead recklessly
-        } else if (rec->size + here > (unsigned)*filesize) {
+        } else if (rec->size + here > *filesize) {
             errno = EFBIG;
             return 1;
         }
