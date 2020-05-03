@@ -267,7 +267,7 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
         long here = in->op.ftell(in);
         if (here < 0) {
             // not a seekable stream -- forge ahead recklessly
-        } else if (rec->size + here > *filesize) {
+        } else if ((long)rec->size > *filesize - here) {
             errno = EFBIG;
             return 1;
         }
