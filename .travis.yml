@@ -1,5 +1,7 @@
 dist: bionic
-os: linux
+os:
+- linux
+- osx
 osx_image: xcode11.3
 addons:
   apt:
@@ -41,6 +43,9 @@ env:
   - CHECK_RULE=check
   - PKG_RULE=gzip
 language: c
+compiler:
+- gcc
+- clang
 jobs:
   include:
   - compiler: x86_64-w64-mingw32-gcc
@@ -57,10 +62,6 @@ jobs:
     - PLATFORM=mingw BITS=32
     - CHECK_RULE=check_sw        JIT=0 SDL=0
     - PKG_RULE=zip
-  - compiler: clang
-    os: osx
-  - compiler: gcc
-    os: osx
   - compiler: gcc
     arch: arm64
   - compiler: clang
@@ -68,7 +69,6 @@ jobs:
     - CHECK_RULE=check_sw # cannot check_hw until ASAN can be built into the VPI
     - SANITIZE=address
     - ASAN_OPTIONS=detect_leaks=0 # TODO enable leak detection by removing this line
-  - compiler: clang
   - compiler: gcc
     env:
     # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
@@ -77,10 +77,8 @@ jobs:
     - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
     - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
     - COVERITY_SCAN_BUILD_COMMAND="make V=1 all vpi"
-  - compiler: gcc
-    arch: ppc64le
-  - compiler: gcc
-    arch: s390x
+  - arch: ppc64le
+  - arch: s390x
   - language: node_js
     env:
     - PLATFORM=emscripten
