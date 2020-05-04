@@ -38,6 +38,7 @@ env:
   - LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$DEPSSRC/lib/x86_64-linux-gnu"
   - PATH="$PATH:$DEPSSRC/bin"
   - PATH="/usr/local/opt/bison/bin:$PATH"
+  - CHECK_RULE=check
   - PKG_RULE=gzip
 language: c
 jobs:
@@ -58,34 +59,22 @@ jobs:
     - PKG_RULE=zip
   - compiler: clang
     os: osx
-    env:
-    - PLATFORM=osx
-    - CHECK_RULE=check
   - compiler: gcc
     os: osx
-    env:
-    - PLATFORM=osx
-    - CHECK_RULE=check
   - compiler: gcc
     language: c
     os: linux
     arch: arm64
     env:
-    - PLATFORM=linux
-    - CHECK_RULE=check                SDL=0
+    - SDL=0
   - compiler: clang
     env:
-    - PLATFORM=linux
     - CHECK_RULE=check_sw # cannot check_hw until ASAN can be built into the VPI
     - SANITIZE=address
     - ASAN_OPTIONS=detect_leaks=0 # TODO enable leak detection by removing this line
   - compiler: clang
-    env:
-    - PLATFORM=linux
-    - CHECK_RULE=check
   - compiler: gcc
     env:
-    - PLATFORM=linux
     # TODO do `check` or `check_hw` here too, not just `check_sw` (as part of `coverage`)
     - CHECK_RULE=coverage GCOV=1
     - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
@@ -95,15 +84,13 @@ jobs:
   - compiler: gcc
     arch: ppc64le
     env:
-    - PLATFORM=linux
-    - CHECK_RULE=check                SDL=0
+    - SDL=0
   - compiler: gcc
     language: c
     os: linux
     arch: s390x
     env:
-    - PLATFORM=linux
-    - CHECK_RULE=check                SDL=0
+    - SDL=0
   - language: node_js
     env:
     - PLATFORM=emscripten
