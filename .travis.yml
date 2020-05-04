@@ -1,7 +1,19 @@
 dist: bionic
 os: linux
 osx_image: xcode11.3
-addons: &def_addons
+addons:
+  apt:
+    packages:
+      - iverilog
+      - lcov
+      - libsdl2-dev
+      - libsdl2-image-dev
+    _win_packages: &win_packages
+      - gcc-mingw-w64-i686
+      - gcc-mingw-w64-x86-64
+      - wine-stable
+      - wine32
+      - wine64
   artifacts:
     paths:
       - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)
@@ -28,29 +40,17 @@ language: c
 jobs:
   include:
     - compiler: x86_64-w64-mingw32-gcc
+      addons: { apt: *win_packages }
       env:
         - PLATFORM=mingw
         - CHECK_RULE=check_sw        JIT=0 SDL=0
         - PKG_RULE=zip
-      addons:
-        <<: *def_addons
-        apt:
-          packages:
-            - gcc-mingw-w64-x86-64
-            - wine64
-            - wine-stable
     - compiler: i686-w64-mingw32-gcc
+      addons: { apt: *win_packages }
       env:
         - PLATFORM=mingw BITS=32
         - CHECK_RULE=check_sw        JIT=0 SDL=0
         - PKG_RULE=zip
-      addons:
-        <<: *def_addons
-        apt:
-          packages:
-            - gcc-mingw-w64-i686
-            - wine32
-            - wine-stable
     - compiler: clang
       os: osx
       env:
@@ -74,23 +74,10 @@ jobs:
         - CHECK_RULE=check_sw
         - SANITIZE=address
         - ASAN_OPTIONS=detect_leaks=0 # TODO enable leak detection by removing this line
-      addons:
-        <<: *def_addons
-        apt:
-          packages:
-            - libsdl2-dev
-            - libsdl2-image-dev
     - compiler: clang
       env:
         - PLATFORM=linux
         - CHECK_RULE=check
-      addons:
-        <<: *def_addons
-        apt:
-          packages:
-            - libsdl2-dev
-            - libsdl2-image-dev
-            - iverilog
     - compiler: gcc
       env:
         - PLATFORM=linux
@@ -100,14 +87,6 @@ jobs:
         - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
         - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
         - COVERITY_SCAN_BUILD_COMMAND="make V=1 all vpi"
-      addons:
-        <<: *def_addons
-        apt:
-          packages:
-            - lcov
-            - libsdl2-dev
-            - libsdl2-image-dev
-            - iverilog
     - compiler: gcc
       arch: ppc64le
       env:
