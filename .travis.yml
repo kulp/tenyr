@@ -115,8 +115,6 @@ jobs:
         - PLATFORM=linux
         - CHECK_RULE=check_sw             SDL=0
     - language: node_js
-      node_js:
-        - node
       env:
         - PLATFORM=emscripten
         - CHECK_RULE=check_sw       JIT=0 SDL=0
