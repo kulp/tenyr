@@ -28,6 +28,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     uint32_t pack2 = Pu(2) << 12;
     uint32_t pack1 = Pu(1) & 0xfff;
     int32_t  pack0 = Ps(0);
+    uint32_t mask  = (uint32_t)((Pu(1) < 32) ? (1ull << Pu(1)) : 0);
 
     // This switch is exhaustive for the four bit opcode.
     switch (op & 0xf) {
@@ -51,7 +52,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_BITWISE_XOR       : *rhs =  (Pu(2) ^  Pu(1)) + Ps(0); break;
 
         case OP_PACK              : *rhs =  (pack2 |  pack1) + pack0; break;
-        case OP_TEST_BIT          : *rhs = -!!(Ps(2) & (1 << Ps(1))) + Ps(0); break;
+        case OP_TEST_BIT          : *rhs = -!!(Ps(2) & mask) + Ps(0); break;
     }
     #undef Ps
     #undef Pu
