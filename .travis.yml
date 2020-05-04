@@ -25,6 +25,7 @@ addons:
     update: true # work around lack of bundle: https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/21
     packages:
       - bison
+      - icarus-verilog
 env:
   global:
     - MAKEFLAGS=e
