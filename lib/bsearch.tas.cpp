@@ -23,7 +23,8 @@ bsearch_loop:
     i <- i * f
     d <- d + i
     push(d)     // save testpointer
-    callr(g)
+    push(p + 2)
+    p <- g          // call indirect
     i <- b      // copy result to temp
     pop(b)      // restore testpointer to b in case of match
     popall(c,d,e,f)

@@ -56,7 +56,8 @@ cmp:
     p <- [o]
 
 check:
-    callr(f)
+    push(p + 2)
+    p <- f          // call indirect
     p <- @+_mismatched & b + p
     c <- @+_match_message + p
     p <- p + @+_finished

@@ -62,7 +62,8 @@ L_qsort_partition:
     elem(k, BASE, II)
     elem(d, BASE, LI)
     c <- k
-    callr(f)                    // call comparator
+    push(p + 2)
+    p <- f                      // call comparator
     popall(c)
     k <- b < 0
     p <- @+L_qsort_noswap &~ k + p
