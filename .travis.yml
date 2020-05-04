@@ -76,7 +76,7 @@ jobs:
     - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
     - COVERITY_SCAN_BRANCH_PATTERN="coverity_scan"
     - COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@tenyr.info"
-    - COVERITY_SCAN_BUILD_COMMAND="make V=1 all vpi"
+    - COVERITY_SCAN_BUILD_COMMAND="make all vpi"
   - arch: ppc64le
   - arch: s390x
   - language: node_js
@@ -90,9 +90,9 @@ jobs:
       bash
     script:
     - make PLATFORM=emscripten SDL=0 JIT=0 NODEPS lexer.c parser.c
-    - docker exec -it emscripten make V=1 all PLATFORM=$PLATFORM JIT=$JIT SDL=$SDL
+    - docker exec -it emscripten make all PLATFORM=$PLATFORM JIT=$JIT SDL=$SDL
       NDEBUG=$NDEBUG
-    - docker exec -it emscripten make V=1 $CHECK_RULE PLATFORM=$PLATFORM JIT=$JIT
+    - docker exec -it emscripten make $CHECK_RULE PLATFORM=$PLATFORM JIT=$JIT
       SDL=$SDL NDEBUG=$NDEBUG
 before_script:
 - mkdir -p $DEPSSRC
@@ -104,7 +104,7 @@ before_script:
 - if [[ -n $COVERITY_SCAN_PROJECT_NAME ]] ; then curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh'
   | bash || true ; fi
 script:
-- make V=1 all
+- make all
 - make $CHECK_RULE
 - make local-install
 - make $PKG_RULE
