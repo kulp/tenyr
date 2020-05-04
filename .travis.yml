@@ -26,6 +26,8 @@ addons:
     packages:
       - bison
       - icarus-verilog
+      - sdl2
+      - sdl2_image
 env:
   global:
     - MAKEFLAGS=e
@@ -56,12 +58,12 @@ jobs:
       os: osx
       env:
         - PLATFORM=osx
-        - CHECK_RULE=check                SDL=0
+        - CHECK_RULE=check
     - compiler: gcc
       os: osx
       env:
         - PLATFORM=osx
-        - CHECK_RULE=check                SDL=0
+        - CHECK_RULE=check
     - compiler: gcc
       language: c
       os: linux
