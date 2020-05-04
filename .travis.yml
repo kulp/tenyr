@@ -1,5 +1,6 @@
 dist: bionic
 os: linux
+osx_image: xcode11.3
 addons: &def_addons
   artifacts:
     paths:
