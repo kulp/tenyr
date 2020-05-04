@@ -98,15 +98,6 @@ static inline uint32_t swapword(const uint32_t in)
            (((in >>  0) & 0xff) << 24);
 }
 
-static inline uint32_t fixup_endian(const uint32_t in)
-{
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    return in;
-#else
-    return swapword(in);
-#endif
-}
-
 long long numberise(char *str, int base);
 
 char *build_path(const char *base, const char *fmt, ...);
