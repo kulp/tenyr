@@ -62,7 +62,6 @@ jobs:
   - compiler: gcc
     os: osx
   - compiler: gcc
-    language: c
     arch: arm64
   - compiler: clang
     env:
@@ -81,7 +80,6 @@ jobs:
   - compiler: gcc
     arch: ppc64le
   - compiler: gcc
-    language: c
     arch: s390x
   - language: node_js
     env:
