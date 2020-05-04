@@ -65,8 +65,6 @@ jobs:
     language: c
     os: linux
     arch: arm64
-    env:
-    - SDL=0
   - compiler: clang
     env:
     - CHECK_RULE=check_sw # cannot check_hw until ASAN can be built into the VPI
@@ -83,14 +81,10 @@ jobs:
     - COVERITY_SCAN_BUILD_COMMAND="make V=1 all vpi"
   - compiler: gcc
     arch: ppc64le
-    env:
-    - SDL=0
   - compiler: gcc
     language: c
     os: linux
     arch: s390x
-    env:
-    - SDL=0
   - language: node_js
     env:
     - PLATFORM=emscripten
