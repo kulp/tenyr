@@ -5,7 +5,6 @@
 #define prologue            o <- ((1 << 13) - 1)
 
 #define call(Label)         push(p + 2); p <- @+Label + p
-#define callr(Reg)          push(p + 2); p <- Reg
 #define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 
