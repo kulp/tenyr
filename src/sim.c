@@ -25,6 +25,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 
     #define Ps(x) ((( int32_t*)p)[x])
     #define Pu(x) (((uint32_t*)p)[x])
+    #define Sh(Lv,Op,Ri) ((Pu(Ri)) < 32 ? (Lv) Op (Pu(Ri)) : ((Lv) Op 31) Op 1)
     uint32_t pack2 = Pu(2) << 12;
     uint32_t pack1 = Pu(1) & 0xfff;
     int32_t  pack0 = Ps(0);
@@ -36,10 +37,9 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
         case OP_SUBTRACT          : *rhs =  (Ps(2) -  Ps(1)) + Ps(0); break;
         case OP_MULTIPLY          : *rhs =  (Ps(2) *  Ps(1)) + Ps(0); break;
 
-        case OP_SHIFT_RIGHT_LOGIC : *rhs =  (Pu(2) >> Pu(1)) + Ps(0); break;
-        case OP_SHIFT_RIGHT_ARITH : *rhs =  (Ps(2) >> Pu(1)) + Ps(0); break;
-        case OP_SHIFT_LEFT        : *rhs =  (Pu(2) << Pu(1)) + Ps(0);
-                                    if (Pu(1) >= 32) { *rhs = Ps(0); } break;
+        case OP_SHIFT_RIGHT_LOGIC : *rhs =  Sh(Pu(2), >>, 1) + Ps(0); break;
+        case OP_SHIFT_RIGHT_ARITH : *rhs =  Sh(Ps(2), >>, 1) + Ps(0); break;
+        case OP_SHIFT_LEFT        : *rhs =  Sh(Pu(2), <<, 1) + Ps(0); break;
 
         case OP_COMPARE_LT        : *rhs = -(Ps(2) <  Ps(1)) + Ps(0); break;
         case OP_COMPARE_EQ        : *rhs = -(Ps(2) == Ps(1)) + Ps(0); break;
@@ -56,6 +56,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
     }
     #undef Ps
     #undef Pu
+    #undef Sh
 }
 
 static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
