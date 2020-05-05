@@ -1,6 +1,6 @@
 C <- [P + (@+args + 0)]
 D <- [P + (@+args + 1)]
-D <- D & 31	// doesn't support overshifting yet
+D <- D & 31 // overshifting is tested separately
 
 // passing until proven broken
 B <- -1
