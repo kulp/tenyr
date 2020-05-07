@@ -3,10 +3,10 @@
 
 #include <stdlib.h>
 
-static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
-        uint32_t I)
+static void do_op(enum op op, int type, int32_t *rhs, int32_t X, int32_t Y,
+        int32_t I)
 {
-    uint32_t p[3] = { 0 };
+    int32_t p[3] = { 0 };
     // The `type` determines which position the immediate has
     switch (type) {
         case 0:
@@ -60,7 +60,7 @@ static void do_op(enum op op, int type, int32_t *rhs, uint32_t X, uint32_t Y,
 }
 
 static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
-        uint32_t *value, int loading, int storing, int arrow_right)
+        int32_t *value, int loading, int storing, int arrow_right)
 {
     int32_t * const r = arrow_right ? Z   : rhs;
     int32_t * const w = arrow_right ? rhs : Z  ;
@@ -92,7 +92,7 @@ static int run_instruction(struct sim_state *s, const struct element *i, void *r
     (void)run_data;
     int32_t * const ip = &s->machine.regs[15];
     int32_t rhs = 0;
-    uint32_t Y = 0, imm = 0, value = 0;
+    int32_t Y = 0, imm = 0, value = 0;
     int op = OP_BITWISE_OR;
 
     ++*ip;
@@ -172,7 +172,7 @@ int interp_run_sim(struct sim_state *s, const struct run_ops *ops,
 }
 
 int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
-        void *ud, STREAM *in, uint32_t load_address)
+        void *ud, STREAM *in, int32_t load_address)
 {
     struct element i;
     while (f->in(in, &i, ud) >= 0) {

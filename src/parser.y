@@ -16,7 +16,7 @@
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *fmt, ...);
 static struct const_expr *add_deferred_expr(struct parse_data *pd,
-        struct const_expr *ce, int mult, uint32_t *dest, int width, int flags);
+        struct const_expr *ce, int mult, int32_t *dest, int width, int flags);
 static struct const_expr *make_expr(struct parse_data *pd, YYLTYPE *locp,
         enum const_expr_type type, int op, struct const_expr *left,
         struct const_expr *right, int flags);
@@ -466,7 +466,7 @@ static struct element *make_insn_general(struct parse_data *pd,
 }
 
 static struct const_expr *add_deferred_expr(struct parse_data *pd,
-        struct const_expr *ce, int mult, uint32_t *dest, int width, int flags)
+        struct const_expr *ce, int mult, int32_t *dest, int width, int flags)
 {
     struct deferred_expr *n = calloc(1, sizeof *n);
 

@@ -50,7 +50,7 @@ static int serial_fini(void *cookie)
     return 0;
 }
 
-static int serial_op(void *cookie, int op, uint32_t addr, uint32_t *data)
+static int serial_op(void *cookie, int op, int32_t addr, int32_t *data)
 {
     struct serial_state *s = cookie;
     int rc = -1;

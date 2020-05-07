@@ -520,7 +520,7 @@ static int memh_in(STREAM *stream, struct element *i, void *ud)
         i->insn.reladdr = state->written++;
         return 1;
     } else if (state->marked == state->written) {
-        if (stream->op.fscanf(stream, " @%x", (uint32_t*)&state->marked) == 1)
+        if (stream->op.fscanf(stream, " @%x", &state->marked) == 1)
             return 0; // let next call handle it
 
         if (stream->op.fscanf(stream, " %x", &i->insn.u.word) != 1)

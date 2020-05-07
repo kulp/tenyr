@@ -13,7 +13,7 @@ struct parse_data {
     struct element_list *top;
     struct deferred_expr {
         struct const_expr *ce;
-        uint32_t *dest;     ///< destination word to be updated
+        int32_t *dest;      ///< destination word to be updated
         struct deferred_expr *next;
         int width;          ///< width in bits of the right-justified immediate
         int mult;           ///< multiplier (1 or -1, according to sign)

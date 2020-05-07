@@ -8,8 +8,8 @@
 
 struct ram_state {
     size_t memsize;
-    uint32_t *mem;
-    uint32_t base;
+    int32_t *mem;
+    int32_t base;
 };
 
 static int ram_init(struct plugin_cookie *pcookie, struct device *device, void *cookie)
@@ -17,8 +17,8 @@ static int ram_init(struct plugin_cookie *pcookie, struct device *device, void *
     struct ram_state *ram = *(void**)cookie;
 
     if (!ram) {
-        uint32_t base = device->bounds[0];
-        uint32_t end  = device->bounds[1];
+        int32_t base = device->bounds[0];
+        int32_t end  = device->bounds[1];
         ram = *(void**)cookie = malloc(sizeof *ram);
         ram->memsize = end - base + 1;
         ram->mem = malloc(ram->memsize * sizeof *ram->mem);
@@ -40,7 +40,7 @@ static int ram_fini(void *cookie)
     return 0;
 }
 
-static int ram_op(void *cookie, int op, uint32_t addr, uint32_t *data)
+static int ram_op(void *cookie, int op, int32_t addr, int32_t *data)
 {
     struct ram_state *ram = cookie;
 
@@ -54,7 +54,7 @@ static int ram_op(void *cookie, int op, uint32_t addr, uint32_t *data)
     return 0;
 }
 
-int ram_add_device_sized(struct device *device, uint32_t base, uint32_t len)
+int ram_add_device_sized(struct device *device, int32_t base, int32_t len)
 {
     *device = (struct device){
         .bounds = { base, base + len - 1 },

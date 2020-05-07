@@ -12,7 +12,7 @@ struct device * new_device(struct sim_state *s)
     return &d->device;
 }
 
-static int devices_does_match(const uint32_t *addr, const struct device *device)
+static int devices_does_match(const int32_t *addr, const struct device *device)
 {
     if (*addr <= device->bounds[1]) {
         if (*addr >= device->bounds[0]) {
@@ -25,7 +25,7 @@ static int devices_does_match(const uint32_t *addr, const struct device *device)
     }
 }
 
-int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data)
+int dispatch_op(void *ud, int op, int32_t addr, int32_t *data)
 {
     struct sim_state *s = ud;
     struct device *device = NULL;

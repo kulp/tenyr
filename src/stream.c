@@ -25,7 +25,7 @@ static int default_printf(STREAM *s, const char *format, ...)
     return wrote == (size_t)need ? need : -1;
 }
 
-static int default_scanf(STREAM *s, const char *format, unsigned int *word)
+static int default_scanf(STREAM *s, const char *format, int *word)
 {
     // It is not feasible to defer to op.fread here. We might try to keep a
     // buffer of our own to read "enough" to satisfy a vsscanf call, but we

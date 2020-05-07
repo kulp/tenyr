@@ -33,7 +33,7 @@ library_init tenyr_plugin_init;
 device_adder sdlvga_add_device;
 
 struct sdlvga_state {
-    uint32_t data[ROWS][COLS];
+    int32_t data[ROWS][COLS];
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *display;
@@ -154,7 +154,7 @@ static int handle_update(struct sdlvga_state *state)
     return 0;
 }
 
-static int sdlvga_op(void *cookie, int op, uint32_t addr, uint32_t *data)
+static int sdlvga_op(void *cookie, int op, int32_t addr, int32_t *data)
 {
     struct sdlvga_state *state = cookie;
 

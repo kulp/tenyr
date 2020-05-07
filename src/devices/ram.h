@@ -9,7 +9,7 @@
 struct device;
 
 int ram_add_device(struct device *device);
-int ram_add_device_sized(struct device *device, uint32_t base, uint32_t len);
+int ram_add_device_sized(struct device *device, int32_t base, int32_t len);
 
 #endif
 

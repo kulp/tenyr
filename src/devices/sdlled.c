@@ -32,7 +32,7 @@ device_adder sdlled_add_device;
 
 struct sdlled_state {
     struct plugin_cookie *pcookie;
-    uint32_t data[2];
+    int32_t data[2];
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *digits[16];
@@ -111,13 +111,13 @@ static int put_dot(struct sdlled_state *state, unsigned index, unsigned on)
     return 0;
 }
 
-static void decode_led(uint32_t data, int digits[4])
+static void decode_led(int32_t data, int digits[4])
 {
     for (unsigned i = 0; i < 4; i++)
         digits[i] = (data >> (i * 4)) & 0xf;
 }
 
-static void decode_dots(uint32_t data, int dots[4])
+static void decode_dots(int32_t data, int dots[4])
 {
     for (unsigned i = 0; i < 4; i++)
         dots[i] = (data >> i) & 1;
@@ -203,7 +203,7 @@ static int handle_update(struct sdlled_state *state)
     return 0;
 }
 
-static int sdlled_op(void *cookie, int op, uint32_t addr, uint32_t *data)
+static int sdlled_op(void *cookie, int op, int32_t addr, int32_t *data)
 {
     struct sdlled_state *state = cookie;
 

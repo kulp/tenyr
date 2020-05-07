@@ -277,7 +277,7 @@ static int recipe_tsimrc(struct sim_state *s)
 
 static int recipe_top_page(struct sim_state *s)
 {
-    return ram_add_device_sized(new_device(s), (uint32_t)-4096, 4096);
+    return ram_add_device_sized(new_device(s), -4096, 4096);
 }
 
 #define DEVICE_RECIPE_TMPL(Name,Func)                                          \
@@ -420,13 +420,13 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
-            case 'a': s->conf.load_addr = (uint32_t)strtol(optarg, NULL, 0); break;
+            case 'a': s->conf.load_addr = (int32_t)strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
             case 'f': if (find_format(optarg, &s->conf.fmt)) exit(usage(argv[0], EXIT_FAILURE)); break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(s->conf.params, optarg); break;
             case 'r': if (add_recipe(s, optarg)) exit(usage(argv[0], EXIT_FAILURE)); break;
-            case 's': s->conf.start_addr = (uint32_t)strtol(optarg, NULL, 0); break;
+            case 's': s->conf.start_addr = (int32_t)strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
 
             case 'V': puts(version()); exit(EXIT_SUCCESS);

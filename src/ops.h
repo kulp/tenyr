@@ -78,7 +78,7 @@
 
 struct insn_or_data {
     union insn {
-        uint32_t word;
+        int32_t word;
         struct instruction_typeany { BITFIELDS(INSN_any)     } typeany;
         struct instruction_type012 { BITFIELDS(INSN_type012) } type012;
         struct instruction_type3   { BITFIELDS(INSN_type3)   } type3;

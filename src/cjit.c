@@ -9,13 +9,13 @@ sim_runner jit_run_sim;
 static int32_t fetch(struct sim_state *s, int32_t addr)
 {
     int32_t data;
-    s->dispatch_op(s, OP_DATA_READ, addr, (uint32_t*)&data);
+    s->dispatch_op(s, OP_DATA_READ, addr, &data);
     return data;
 }
 
 static void store(struct sim_state *s, int32_t addr, int32_t value)
 {
-    s->dispatch_op(s, OP_WRITE, addr, (uint32_t*)&value);
+    s->dispatch_op(s, OP_WRITE, addr, &value);
 }
 
 static int bb_by_base(const void *a_, const void *b_)
@@ -46,7 +46,7 @@ static int pre_insn_hook(struct sim_state *s, const struct element *i, void *ud)
         // Cache the instructions we receive so they are ready for compilation
         if (!bb->cache)
             bb->cache = calloc(bb->len, sizeof *bb->cache);
-        bb->cache[(uint32_t)i->insn.reladdr - (uint32_t)bb->base] = i->insn.u.word;
+        bb->cache[i->insn.reladdr - bb->base] = i->insn.u.word;
     } else if (bb->run_count > o->js->run_count_threshold) {
         bb->compiled = jit_gen_block(o->js, bb->len, bb->cache);
         free(bb->cache);
@@ -63,7 +63,7 @@ static int post_insn_hook(struct sim_state *s, const struct element *i, void *ud
     int dd = i->insn.u.typeany.dd;
     if ((dd == 0 || dd == 3) && i->insn.u.typeany.z == 0xf) { // P is being updated
         struct basic_block *bb = o->curr_bb;
-        bb->len = (uint32_t)i->insn.reladdr - (uint32_t)bb->base + 1;
+        bb->len = i->insn.reladdr - bb->base + 1;
         bb->run_count++;
         o->curr_bb = NULL;
         o->ops.post_insn(s, i, o->nested_ops_data); // allow hook to run one last time
