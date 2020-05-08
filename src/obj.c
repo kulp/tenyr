@@ -119,7 +119,7 @@ static int put_recs(struct obj *o, STREAM *out, void *context)
     list_foreach(objrec, rec, o->records) {
         PUT(rec->addr, out);
         PUT(rec->size, out);
-        put_sized(rec->data, sizeof *rec->data, rec->size, out);
+        put_sized(rec->data, sizeof *rec->data, (size_t)rec->size, out);
     }
 
     return 0;
@@ -151,7 +151,7 @@ static int put_syms_v2(struct obj *o, STREAM *out, void *context)
     list_foreach(objsym, sym, o->symbols) {
         PUT(sym->flags, out);
         PUT(sym->name.len, out);
-        put_sized(sym->name.str, round_up_to_word(sym->name.len), 1, out);
+        put_sized(sym->name.str, round_up_to_word((size_t)sym->name.len), 1, out);
         PUT(sym->value, out);
         PUT(sym->size, out);
     }
@@ -196,7 +196,7 @@ static int put_relocs_v2(struct obj *o, STREAM *out, void *context)
     list_foreach(objrlc, rlc, o->relocs) {
         PUT(rlc->flags, out);
         PUT(rlc->name.len, out);
-        put_sized(rlc->name.str, round_up_to_word(rlc->name.len), 1, out);
+        put_sized(rlc->name.str, round_up_to_word((size_t)rlc->name.len), 1, out);
         PUT(rlc->addr, out);
         PUT(rlc->width, out);
         PUT(rlc->shift, out);
@@ -244,7 +244,7 @@ int obj_write(struct obj *o, STREAM *out)
 
 #define for_counted_get(Tag,Name,List,Count) \
     if (!(Count)) { /* avoid calloc when Count is zero */ } else \
-    CREATE_SCOPE(struct Tag*,Name,=calloc(Count,sizeof *Name),**Prev_ = &List) \
+    CREATE_SCOPE(struct Tag*,Name,=calloc((size_t)Count,sizeof *Name),**Prev_ = &List) \
     for (SWord i_ = Count; i_ > 0; *Prev_ = Name, Prev_ = &Name++->next, i_--) \
 //
 
@@ -272,10 +272,10 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
             errno = EFBIG;
             return 1;
         }
-        rec->data = calloc(rec->size, sizeof *rec->data);
+        rec->data = calloc((size_t)rec->size, sizeof *rec->data);
         if (!rec->data)
             fatal(PRINT_ERRNO, "Failed to allocate record data field");
-        get_sized(rec->data, sizeof *rec->data, rec->size, in);
+        get_sized(rec->data, sizeof *rec->data, (size_t)rec->size, in);
     }
 
     return 0;
@@ -322,7 +322,7 @@ static int get_syms_v2(struct obj *o, STREAM *in, void *context)
             errno = EFBIG;
             return 1;
         }
-        size_t rounded_len = round_up_to_word(sym->name.len);
+        size_t rounded_len = round_up_to_word((size_t)sym->name.len);
         sym->name.str = malloc(rounded_len + sizeof '\0');
         get_sized(sym->name.str, rounded_len, 1, in);
         sym->name.str[sym->name.len] = '\0';
@@ -370,7 +370,7 @@ static int get_relocs_v2(struct obj *o, STREAM *in, void *context)
             errno = EFBIG;
             return 1;
         }
-        size_t rounded_len = round_up_to_word(rlc->name.len);
+        size_t rounded_len = round_up_to_word((size_t)rlc->name.len);
         rlc->name.str = malloc(rounded_len + sizeof '\0');
         get_sized(rlc->name.str, rounded_len, 1, in);
         rlc->name.str[rlc->name.len] = '\0';
