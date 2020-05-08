@@ -16,7 +16,7 @@
 #include <errno.h>
 
 struct link_state {
-    UWord addr;     ///< current address
+    SWord addr;     ///< current address
     int obj_count;
     struct obj_list {
         struct obj *obj;
@@ -31,8 +31,8 @@ struct link_state {
 struct defn {
     char *name;
     struct obj *obj;
-    UWord reladdr;
-    UWord flags;
+    SWord reladdr;
+    SWord flags;
 
     struct link_state *state;   ///< state reference used for twalk() support
 };
@@ -117,7 +117,7 @@ static int def_str_cmp(const void *a, const void *b)
 static int do_link_build_state(struct link_state *s, void **objtree, void **defns)
 {
     // running offset, tracking where to pack objects tightly one after another
-    UWord running = 0;
+    SWord running = 0;
 
     // read in all symbols
     list_foreach(obj_list, Node, s->objs) {
@@ -162,7 +162,7 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
 static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
                                        void **objtree, void **defns)
 {
-    UWord reladdr = 0;
+    SWord reladdr = 0;
 
     // TODO support more than one record per object
     if (i->rec_count > 1)
@@ -281,9 +281,9 @@ static int do_link_emit(struct link_state *s, struct obj *o)
 
     o->records = front;
 
-    o->rec_count = (UWord)rec_count;
-    o->sym_count = (UWord)s->syms;
-    o->rlc_count = (UWord)s->rlcs;
+    o->rec_count = (SWord)rec_count;
+    o->sym_count = (SWord)s->syms;
+    o->rlc_count = (SWord)s->rlcs;
 
     return 0;
 }

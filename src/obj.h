@@ -14,8 +14,7 @@
 // RLC_ABSOLUTE marks a symbol as not being relative to the start of its record
 #define RLC_ABSOLUTE    4
 
-typedef uint32_t UWord;
-typedef  int32_t SWord;
+typedef int32_t SWord;
 
 struct name {
     char *str;

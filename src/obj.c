@@ -86,8 +86,8 @@ static inline void get_sized_be(void *what, size_t size, size_t count, STREAM *w
     get_sized_le(what, size, count, where);
     // get_sized() isn't as general as it looks - it does bytes, UWords, and
     // strings.
-    if (size == sizeof(UWord)) {
-        UWord *dest = what;
+    if (size == sizeof(SWord)) {
+        SWord *dest = what;
         for (size_t i = 0; i < count; i++)
             dest[i] = swapword(dest[i]);
     }
@@ -98,11 +98,11 @@ static inline void put_sized_be(const void *what, size_t size, size_t count, STR
     // put_sized() has an analagous caveat to get_sized()'s, but we only swap
     // one word at a time so we don't have to allocate arbitrarily-large
     // buffers.
-    if (size == sizeof(UWord)) {
-        const UWord *src = what;
+    if (size == sizeof(SWord)) {
+        const SWord *src = what;
         for (size_t i = 0; i < count; i++) {
-            const UWord temp = swapword(src[i]);
-            put_sized_le(&temp, sizeof(UWord), 1, where);
+            const SWord temp = swapword(src[i]);
+            put_sized_le(&temp, sizeof(SWord), 1, where);
         }
     } else {
         put_sized_le(what, size, count, where);
@@ -245,7 +245,7 @@ int obj_write(struct obj *o, STREAM *out)
 #define for_counted_get(Tag,Name,List,Count) \
     if (!(Count)) { /* avoid calloc when Count is zero */ } else \
     CREATE_SCOPE(struct Tag*,Name,=calloc(Count,sizeof *Name),**Prev_ = &List) \
-    for (UWord i_ = Count; i_ > 0; *Prev_ = Name, Prev_ = &Name++->next, i_--) \
+    for (SWord i_ = Count; i_ > 0; *Prev_ = Name, Prev_ = &Name++->next, i_--) \
 //
 
 static int get_recs(struct obj *o, STREAM *in, void *context)
@@ -299,7 +299,7 @@ static int get_syms_v1(struct obj *o, STREAM *in, void *context)
         sym->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(sym->name.str, SYMBOL_LEN_V1, 1, in);
         sym->name.str[SYMBOL_LEN_V1] = '\0';
-        sym->name.len = (UWord)strlen(sym->name.str);
+        sym->name.len = (SWord)strlen(sym->name.str);
         GET(sym->value, in);
         GET(sym->size, in);
     }
@@ -346,7 +346,7 @@ static int get_relocs_v0(struct obj *o, STREAM *in, void *context)
         rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
         rlc->name.str[SYMBOL_LEN_V1] = '\0';
-        rlc->name.len = (UWord)strlen(rlc->name.str);
+        rlc->name.len = (SWord)strlen(rlc->name.str);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         rlc->shift = 0;
@@ -395,7 +395,7 @@ static int get_relocs_v1(struct obj *o, STREAM *in, void *context)
         rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
         rlc->name.str[SYMBOL_LEN_V1] = '\0';
-        rlc->name.len = (UWord)strlen(rlc->name.str);
+        rlc->name.len = (SWord)strlen(rlc->name.str);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         GET(rlc->shift, in);
@@ -446,7 +446,7 @@ int obj_read(struct obj *o, STREAM *in)
 
 static void obj_v0_free(struct obj *o)
 {
-    UWord remaining = o->rec_count;
+    SWord remaining = o->rec_count;
     list_foreach(objrec, rec, o->records) {
         if (remaining-- <= 0) break;
         free(rec->data);

@@ -16,8 +16,8 @@
 #define MAX_OP_LEN 3
 
 // Duplicate a string's contents, rounding up the length the a multiple of the
-// length of a UWord, plus a space for the trailing '\0', with the unused bytes
-// set to 0.
+// length of an SWord, plus a space for the trailing '\0', with the unused
+// bytes set to 0.
 static inline char *strdup_rounded_up(char *in)
 {
     size_t len = round_up_to_word(strlen(in));
@@ -382,7 +382,7 @@ static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
         struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
         sym->name.str = strdup_rounded_up(symbol->name);
-        sym->name.len = (UWord)strlen(symbol->name);
+        sym->name.len = (SWord)strlen(symbol->name);
         // `symbol->resolved` must be true by this point
         sym->value = symbol->reladdr;
         sym->flags = flags;
@@ -404,9 +404,9 @@ static int obj_reloc(STREAM *stream, struct reloc_node *reloc, void *ud)
 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
-    rlc->flags = (UWord)reloc->flags;
+    rlc->flags = (SWord)reloc->flags;
     rlc->name.str  = reloc->name ? strdup_rounded_up(reloc->name) : NULL;
-    rlc->name.len  = reloc->name ? (UWord)strlen(reloc->name) : 0;
+    rlc->name.len  = reloc->name ? (SWord)strlen(reloc->name) : 0;
     rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;
     rlc->shift = reloc->shift;
@@ -425,8 +425,8 @@ static int obj_emit(STREAM *stream, void **ud)
 
     if (u->assembling) {
         o->records[0].size = u->pos;
-        o->sym_count = (UWord)u->syms;
-        o->rlc_count = (UWord)u->rlcs;
+        o->sym_count = (SWord)u->syms;
+        o->rlc_count = (SWord)u->rlcs;
 
         obj_write(u->o, stream);
     }
