@@ -90,14 +90,6 @@ static inline char *strcopy(char *dest, const char *src, size_t sz)
     return result;
 }
 
-static inline int32_t swapword(const int32_t in)
-{
-    return (((in >> 24) & 0xff) <<  0) |
-           (((in >> 16) & 0xff) <<  8) |
-           (((in >>  8) & 0xff) << 16) |
-           (((in >>  0) & 0xff) << 24);
-}
-
 long long numberise(char *str, int base);
 
 char *build_path(const char *base, const char *fmt, ...);
