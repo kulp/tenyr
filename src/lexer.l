@@ -20,12 +20,12 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 
 #define YY_USER_ACTION \
     do { \
-        size_t len = (size_t)MIN(yyleng, LINE_LEN - savecol); \
+        size_t len = MIN((size_t)yyleng, (size_t)(LINE_LEN - savecol)); \
         strcopy(&saveline[savecol], yytext, len + 1); \
         saveline[savecol += len] = 0; \
         yylloc->first_line = yylloc->last_line = yylineno; \
         yylloc->first_column = yycolumn; \
-        yylloc->last_column = (size_t)yycolumn + yyleng - 1; \
+        yylloc->last_column = (size_t)(yycolumn + yyleng - 1); \
         yycolumn += yyleng; \
     } while (0);
 
@@ -33,9 +33,9 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 #define PUSH(State) yy_push_state(State, yyscanner)
 #define DUP         yy_push_state(yy_top_state(yyscanner), yyscanner)
 #define POP         yy_pop_state(yyscanner)
-#define NEWSTR      YSTR = resizestr(NULL, yyleng)
+#define NEWSTR      YSTR = resizestr(NULL, (size_t)yyleng)
 #define CHKSTR      do { if (!YSTR || YSTR->size < 0) { NEWSTR; } } while (0)
-#define SAVESTR     savestr(yytext, yyleng, yyscanner)
+#define SAVESTR     savestr(yytext, (size_t)yyleng, yyscanner)
 
 %}
 
@@ -158,7 +158,7 @@ static struct cstr *resizestr(struct cstr *s, size_t len)
 
         s = malloc(sizeof *s);
         s->size = len;
-        s->head = s->tail = calloc(s->size, 1);
+        s->head = s->tail = calloc((size_t)s->size, 1);
         s->last = s;
         s->right = NULL;
         return s;
