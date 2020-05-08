@@ -90,7 +90,7 @@ static inline char *strcopy(char *dest, const char *src, size_t sz)
     return result;
 }
 
-static inline uint32_t swapword(const uint32_t in)
+static inline int32_t swapword(const int32_t in)
 {
     return (((in >> 24) & 0xff) <<  0) |
            (((in >> 16) & 0xff) <<  8) |
