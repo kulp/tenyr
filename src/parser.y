@@ -633,7 +633,7 @@ static char *coalesce_string(const struct cstr *s)
             free(ret);
             return NULL;
         }
-        memcpy(&ret[len], p->head, size);
+        memcpy(&ret[len], p->head, (size_t)size);
         len += (size_t)size;
         p = p->right;
     }

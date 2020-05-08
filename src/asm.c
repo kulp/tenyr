@@ -359,7 +359,7 @@ static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
     }
 
     // We could store .zero data sparsely, but we don't (yet)
-    memset(&rec->data[u->pos], 0x00, i->insn.size);
+    memset(&rec->data[u->pos], 0x00, (size_t)i->insn.size);
     rec->data[u->pos] = i->insn.u.word;
     u->pos += i->insn.size;
 }
