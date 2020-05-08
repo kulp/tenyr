@@ -116,6 +116,7 @@ common.o parser.o stream.o: CFLAGS += -Wno-format-nonliteral
 lexer.o: CFLAGS += -Wno-missing-prototypes
 parser.o lexer.o: CFLAGS += -Wno-unused-macros
 lexer.o: CFLAGS += -Wno-shorten-64-to-32
+lexer.o: CPPFLAGS += -Wno-disabled-macro-expansion
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
