@@ -20,12 +20,12 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 
 #define YY_USER_ACTION \
     do { \
-        int len = MIN(yyleng, LINE_LEN - savecol); \
+        size_t len = (size_t)MIN(yyleng, LINE_LEN - savecol); \
         strcopy(&saveline[savecol], yytext, len + 1); \
         saveline[savecol += len] = 0; \
         yylloc->first_line = yylloc->last_line = yylineno; \
         yylloc->first_column = yycolumn; \
-        yylloc->last_column = yycolumn + yyleng - 1; \
+        yylloc->last_column = (size_t)yycolumn + yyleng - 1; \
         yycolumn += yyleng; \
     } while (0);
 
@@ -162,14 +162,18 @@ static struct cstr *resizestr(struct cstr *s, size_t len)
         s->last = s;
         s->right = NULL;
         return s;
-    } else if (s->tail - s->head + len > s->size) {
-        s->size = s->tail - s->head;        // shorten this string segment
-        s->right = resizestr(NULL, len);    // allocate a new segment
-        s->last = s->right;
-        return s->right;                    // caller keeps original s
-    }
+    } else {
+        size_t have = (size_t)(s->tail - s->head);
 
-    return s;
+        if (s->size < have + len) {
+            s->size = have;                     // shorten this string segment
+            s->right = resizestr(NULL, len);    // allocate a new segment
+            s->last = s->right;
+            return s->right;                    // caller keeps original s
+        }
+
+        return s;
+    }
 }
 
 static int savestr(const char *text, size_t len, yyscan_t yyscanner)

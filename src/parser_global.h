@@ -3,6 +3,8 @@
 
 #include "ops.h"
 
+#include <stddef.h>
+
 struct parse_data {
     void *scanner;
     int errored;
@@ -42,7 +44,7 @@ struct parse_data {
 struct cstr {
     char *head, *tail;
     struct cstr *last, *right;
-    int size;
+    int size; // TODO make unsigned
 };
 
 struct directive {
