@@ -10,7 +10,7 @@ struct dispatch_userdata {
     vpiHandle array;
 };
 
-static int vpi_dispatch(void *ud, int op, uint32_t addr, uint32_t *data)
+static int vpi_dispatch(void *ud, int op, int32_t addr, int32_t *data)
 {
     int rc = -1;
     struct dispatch_userdata *d = ud;

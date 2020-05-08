@@ -63,7 +63,7 @@ long long numberise(char *str, int base)
     // there are more efficient ways to strip '_' but this one is pretty clear
     size_t len = strlen(p);
     while ((p = strchr(p, '_')))
-        memmove(p, p + 1, len - (p - str));
+        memmove(p, p + 1, len - (size_t)(p - str));
 
     return strtoll(str, NULL, base);
 }
@@ -83,7 +83,7 @@ char *build_path(const char *base, const char *fmt, ...)
     size_t flen = strlen(fmt) + strlen(dir) + 1;
     char *ff = malloc(flen);
     snprintf(ff, flen, "%s%s", solidus ? dir : "", fmt);
-    size_t len = vsnprintf(NULL, 0, ff, vl);
+    size_t len = (size_t)vsnprintf(NULL, 0, ff, vl);
     va_start(vl, fmt); // restart
     char *buf = malloc(len + 1);
     vsnprintf(buf, len + 1, ff, vl);

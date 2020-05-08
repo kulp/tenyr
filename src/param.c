@@ -14,7 +14,7 @@ struct param_state {
     size_t params_size;
     struct param_entry {
         char *key;
-        unsigned free_key:1;
+        unsigned free_key; ///< whether key should be free()d
         struct string_list {
             struct string_list *next;
             void *value;
@@ -62,9 +62,9 @@ int param_get(struct param_state *pstate, const char *key, size_t count, const v
     if (!q)
         return 0;
 
-    unsigned int i = 0;
+    int i = 0;
     for (struct string_list *r = q->list; r; r = r->next, i++)
-        if (i < count)
+        if (i < (ssize_t)count)
             val[i] = r->value;
 
     return i;
@@ -81,7 +81,7 @@ int param_set(struct param_state *pstate, char *key, void *val, int replace, int
         pstate->params = realloc(pstate->params, pstate->params_size * sizeof *pstate->params);
     }
 
-    struct param_entry p = { .key  = key, .free_key = free_key }; // doesn't have a list yet
+    struct param_entry p = { .key  = key, .free_key = !!free_key }; // doesn't have a list yet
     struct param_entry *q = lsearch(&p, pstate->params, &pstate->params_count,
                                         sizeof *pstate->params, params_cmp);
 
@@ -91,7 +91,7 @@ int param_set(struct param_state *pstate, char *key, void *val, int replace, int
     struct string_list *list = calloc(1, sizeof *list);
     list->next = NULL;
     list->value = val;
-    list->free_value = free_value;
+    list->free_value = !!free_value;
 
     if (replace) {
         if (q->key != p.key) {

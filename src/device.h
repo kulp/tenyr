@@ -9,7 +9,7 @@
 struct device;
 
 typedef int map_init(struct plugin_cookie *pcookie, struct device *device, void *ud);
-typedef int map_op(void *cookie, int op, uint32_t addr, uint32_t *data);
+typedef int map_op(void *cookie, int op, int32_t addr, int32_t *data);
 typedef int map_cycle(void *cookie);
 typedef int map_fini(void *cookie);
 
@@ -21,7 +21,7 @@ struct device_ops {
 };
 
 struct device {
-    uint32_t bounds[2]; // lower and upper memory bounds, inclusive
+    int32_t bounds[2]; // lower and upper memory bounds, inclusive
     struct device_ops ops;
     void *cookie;
 };

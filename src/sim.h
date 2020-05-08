@@ -18,7 +18,7 @@ enum memory_op { OP_INSN_READ=0, OP_DATA_READ=1, OP_WRITE=2 };
 #define SIM_CONTINUE_ON_INVALID_DEVICE  (1 << 0)
 #define SIM_CONTINUE_ON_FAILED_MEM_OP   (1 << 1)
 
-typedef int op_dispatcher(void *ud, int op, uint32_t addr, uint32_t *data);
+typedef int op_dispatcher(void *ud, int op, int32_t addr, int32_t *data);
 
 struct run_ops;
 
@@ -41,8 +41,8 @@ struct sim_state {
 
         struct param_state *params;
 
-        uint32_t start_addr;
-        uint32_t load_addr;
+        int32_t start_addr;
+        int32_t load_addr;
         const struct format *fmt;
         char *tsim_path;
     } conf;
@@ -64,7 +64,7 @@ struct sim_state {
     struct machine_state machine;
     sim_runner *run_sim, *interp;
     dispatch_cycle *pump;
-    unsigned long long insns_executed;
+    unsigned long insns_executed;
 
     struct library_list *libs; // opaque linked list of open libraries to dispose
 };
@@ -77,13 +77,13 @@ struct run_ops {
 
 extern sim_runner interp_run_sim, interp_step_sim;
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
-        void *fud, STREAM *in, uint32_t load_address);
+        void *fud, STREAM *in, int32_t load_address);
 
 #define breakpoint(...) \
     fatal(0, __VA_ARGS__)
 
 struct device * new_device(struct sim_state *s);
-int dispatch_op(void *ud, int op, uint32_t addr, uint32_t *data);
+int dispatch_op(void *ud, int op, int32_t addr, int32_t *data);
 int devices_setup(struct sim_state *s);
 int devices_finalise(struct sim_state *s);
 int devices_teardown(struct sim_state *s);

@@ -5,6 +5,7 @@
 
 #include "obj.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -13,11 +14,19 @@
 #define MAGIC_BYTES "TOV"
 #define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
-#define OBJ_MAX_REC_SIZE ((1ULL << 31) - 1) /* maximum meaningful size */
+#define OBJ_MAX_REC_SIZE INT32_MAX          /* maximum meaningful size */
 #define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
+
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define get_sized get_sized_le
+#define put_sized put_sized_le
+#else
+#define get_sized get_sized_be
+#define put_sized put_sized_be
+#endif
 
 typedef int obj_op(struct obj *o, STREAM *out, void *context);
 
@@ -76,17 +85,21 @@ static inline void put_sized_le(const void *what, size_t size, size_t count, STR
     }
 }
 
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define get_sized get_sized_le
-#define put_sized put_sized_le
-#else
+static inline int32_t swapword(const int32_t in)
+{
+    return (((in >> 24) & 0xff) <<  0) |
+           (((in >> 16) & 0xff) <<  8) |
+           (((in >>  8) & 0xff) << 16) |
+           (((in >>  0) & 0xff) << 24);
+}
+
 static inline void get_sized_be(void *what, size_t size, size_t count, STREAM *where)
 {
     get_sized_le(what, size, count, where);
     // get_sized() isn't as general as it looks - it does bytes, UWords, and
     // strings.
-    if (size == sizeof(UWord)) {
-        UWord *dest = what;
+    if (size == sizeof(SWord)) {
+        SWord *dest = what;
         for (size_t i = 0; i < count; i++)
             dest[i] = swapword(dest[i]);
     }
@@ -97,20 +110,16 @@ static inline void put_sized_be(const void *what, size_t size, size_t count, STR
     // put_sized() has an analagous caveat to get_sized()'s, but we only swap
     // one word at a time so we don't have to allocate arbitrarily-large
     // buffers.
-    if (size == sizeof(UWord)) {
-        const UWord *src = what;
+    if (size == sizeof(SWord)) {
+        const SWord *src = what;
         for (size_t i = 0; i < count; i++) {
-            const UWord temp = swapword(src[i]);
-            put_sized_le(&temp, sizeof(UWord), 1, where);
+            const SWord temp = swapword(src[i]);
+            put_sized_le(&temp, sizeof(SWord), 1, where);
         }
     } else {
         put_sized_le(what, size, count, where);
     }
 }
-
-#define get_sized get_sized_be
-#define put_sized put_sized_be
-#endif
 
 static int put_recs(struct obj *o, STREAM *out, void *context)
 {
@@ -118,7 +127,7 @@ static int put_recs(struct obj *o, STREAM *out, void *context)
     list_foreach(objrec, rec, o->records) {
         PUT(rec->addr, out);
         PUT(rec->size, out);
-        put_sized(rec->data, sizeof *rec->data, rec->size, out);
+        put_sized(rec->data, sizeof *rec->data, (size_t)rec->size, out);
     }
 
     return 0;
@@ -150,7 +159,7 @@ static int put_syms_v2(struct obj *o, STREAM *out, void *context)
     list_foreach(objsym, sym, o->symbols) {
         PUT(sym->flags, out);
         PUT(sym->name.len, out);
-        put_sized(sym->name.str, round_up_to_word(sym->name.len), 1, out);
+        put_sized(sym->name.str, round_up_to_word((size_t)sym->name.len), 1, out);
         PUT(sym->value, out);
         PUT(sym->size, out);
     }
@@ -195,7 +204,7 @@ static int put_relocs_v2(struct obj *o, STREAM *out, void *context)
     list_foreach(objrlc, rlc, o->relocs) {
         PUT(rlc->flags, out);
         PUT(rlc->name.len, out);
-        put_sized(rlc->name.str, round_up_to_word(rlc->name.len), 1, out);
+        put_sized(rlc->name.str, round_up_to_word((size_t)rlc->name.len), 1, out);
         PUT(rlc->addr, out);
         PUT(rlc->width, out);
         PUT(rlc->shift, out);
@@ -243,8 +252,8 @@ int obj_write(struct obj *o, STREAM *out)
 
 #define for_counted_get(Tag,Name,List,Count) \
     if (!(Count)) { /* avoid calloc when Count is zero */ } else \
-    CREATE_SCOPE(struct Tag*,Name,=calloc(Count,sizeof *Name),**Prev_ = &List) \
-    for (UWord i_ = Count; i_ > 0; *Prev_ = Name, Prev_ = &Name++->next, i_--) \
+    CREATE_SCOPE(struct Tag*,Name,=calloc((size_t)Count,sizeof *Name),**Prev_ = &List) \
+    for (SWord i_ = Count; i_ > 0; *Prev_ = Name, Prev_ = &Name++->next, i_--) \
 //
 
 static int get_recs(struct obj *o, STREAM *in, void *context)
@@ -271,10 +280,10 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
             errno = EFBIG;
             return 1;
         }
-        rec->data = calloc(rec->size, sizeof *rec->data);
+        rec->data = calloc((size_t)rec->size, sizeof *rec->data);
         if (!rec->data)
             fatal(PRINT_ERRNO, "Failed to allocate record data field");
-        get_sized(rec->data, sizeof *rec->data, rec->size, in);
+        get_sized(rec->data, sizeof *rec->data, (size_t)rec->size, in);
     }
 
     return 0;
@@ -298,7 +307,7 @@ static int get_syms_v1(struct obj *o, STREAM *in, void *context)
         sym->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(sym->name.str, SYMBOL_LEN_V1, 1, in);
         sym->name.str[SYMBOL_LEN_V1] = '\0';
-        sym->name.len = (UWord)strlen(sym->name.str);
+        sym->name.len = (SWord)strlen(sym->name.str);
         GET(sym->value, in);
         GET(sym->size, in);
     }
@@ -321,7 +330,7 @@ static int get_syms_v2(struct obj *o, STREAM *in, void *context)
             errno = EFBIG;
             return 1;
         }
-        size_t rounded_len = round_up_to_word(sym->name.len);
+        size_t rounded_len = round_up_to_word((size_t)sym->name.len);
         sym->name.str = malloc(rounded_len + sizeof '\0');
         get_sized(sym->name.str, rounded_len, 1, in);
         sym->name.str[sym->name.len] = '\0';
@@ -345,7 +354,7 @@ static int get_relocs_v0(struct obj *o, STREAM *in, void *context)
         rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
         rlc->name.str[SYMBOL_LEN_V1] = '\0';
-        rlc->name.len = (UWord)strlen(rlc->name.str);
+        rlc->name.len = (SWord)strlen(rlc->name.str);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         rlc->shift = 0;
@@ -369,7 +378,7 @@ static int get_relocs_v2(struct obj *o, STREAM *in, void *context)
             errno = EFBIG;
             return 1;
         }
-        size_t rounded_len = round_up_to_word(rlc->name.len);
+        size_t rounded_len = round_up_to_word((size_t)rlc->name.len);
         rlc->name.str = malloc(rounded_len + sizeof '\0');
         get_sized(rlc->name.str, rounded_len, 1, in);
         rlc->name.str[rlc->name.len] = '\0';
@@ -394,7 +403,7 @@ static int get_relocs_v1(struct obj *o, STREAM *in, void *context)
         rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
         get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
         rlc->name.str[SYMBOL_LEN_V1] = '\0';
-        rlc->name.len = (UWord)strlen(rlc->name.str);
+        rlc->name.len = (SWord)strlen(rlc->name.str);
         GET(rlc->addr, in);
         GET(rlc->width, in);
         GET(rlc->shift, in);
@@ -445,7 +454,7 @@ int obj_read(struct obj *o, STREAM *in)
 
 static void obj_v0_free(struct obj *o)
 {
-    UWord remaining = o->rec_count;
+    SWord remaining = o->rec_count;
     list_foreach(objrec, rec, o->records) {
         if (remaining-- <= 0) break;
         free(rec->data);

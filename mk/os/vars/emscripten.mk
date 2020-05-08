@@ -23,6 +23,9 @@ SDL_OPTS = \
 	-s 'SDL2_IMAGE_FORMATS=["png"]' \
 	#
 
+# Avoid choking on stdin / stdout macros.
+CFLAGS += -Wno-disabled-macro-expansion
+
 ifeq ($(DEBUG),)
 CC_OPT = -O2
 CC_DEBUG =

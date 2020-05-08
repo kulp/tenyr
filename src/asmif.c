@@ -52,22 +52,22 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 
 // add_relocation returns 1 on success
 static int add_relocation(struct reloc_list **relocs, const char *name,
-        struct element *insn, int width, int shift, int flags)
+        struct element *in, int width, int shift, int flags)
 {
-    if (!insn)
+    if (!in)
         return 0;
 
     struct reloc_list *node = calloc(1, sizeof *node);
 
     node->reloc.name  = name ? strdup(name) : NULL;
-    node->reloc.insn  = insn;
+    node->reloc.insn  = in;
     node->reloc.width = width;
     node->reloc.shift = shift;
     node->reloc.flags = flags;
 
     node->next = *relocs;
     *relocs = node;
-    insn->reloc = &node->reloc;
+    in->reloc = &node->reloc;
 
     return 1;
 }
@@ -130,7 +130,7 @@ static int ce_eval_op2(struct parse_data *pd, struct element *context,
             case '|' : *result = left |  right; return 1;
             case LSH : *result = left << right; return 1;
             case RSHA: *result = left >> right; return 1;
-            case RSH : *result = ((uint32_t)left) >> right; return 1;
+            case RSH : *result = (int32_t)(((uint32_t)left) >> right); return 1;
             case '/' :
                 if (right == 0)
                     fatal(0, "Constant expression attempted %d/%d", left, right);
@@ -234,7 +234,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
             // XXX handle too-large values in a 32-bit field
             // .word 0x123456123456 # this fails to provoke an error
             const char *sstr = (r->width < 32) ? "signed " : "";
-            if (!(ce->flags & IGNORE_WIDTH) && result != (int32_t)SEXTEND32(r->width, result)) {
+            if (!(ce->flags & IGNORE_WIDTH) && result != SEXTEND32((unsigned)r->width, result)) {
                 debug(0, "Expression resulting in value %#x is too large for "
                         "%d-bit %simmediate field", result, r->width, sstr);
                 rc |= 1;
@@ -242,7 +242,7 @@ static int fixup_deferred_exprs(struct parse_data *pd)
 
             // The mask may need to be all ones, so we need to compute the mask
             // in a space larger than 32 bits, before truncating it.
-            uint32_t mask = (uint32_t)~((1ULL << r->width) - 1);
+            int32_t mask = (int32_t)~((1LL << r->width) - 1);
             *r->dest &= mask;
             *r->dest |= result & ~mask;
             ce_free(ce);

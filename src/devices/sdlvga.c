@@ -18,7 +18,7 @@
 #include "sim.h"
 
 #define SDLVGA_UPDATE_HZ 60
-#define SDLVGA_BASE (1ULL << 16)
+#define SDLVGA_BASE (1L << 16)
 
 #define RESOURCE_DIR    "rsrc"
 
@@ -33,7 +33,7 @@ library_init tenyr_plugin_init;
 device_adder sdlvga_add_device;
 
 struct sdlvga_state {
-    uint32_t data[ROWS][COLS];
+    int32_t data[ROWS][COLS];
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *display;
@@ -43,8 +43,8 @@ struct sdlvga_state {
     int cycles;
 };
 
-static int put_character(struct sdlvga_state *state, unsigned row,
-        unsigned col, unsigned char ch)
+static int put_character(struct sdlvga_state *state, int row,
+        int col, unsigned char ch)
 {
     SDL_Rect src = {
                 .x = ch * FONT_WIDTH,
@@ -154,15 +154,15 @@ static int handle_update(struct sdlvga_state *state)
     return 0;
 }
 
-static int sdlvga_op(void *cookie, int op, uint32_t addr, uint32_t *data)
+static int sdlvga_op(void *cookie, int op, int32_t addr, int32_t *data)
 {
     struct sdlvga_state *state = cookie;
 
     // TODO handle control settings
-    int offset = addr - SDLVGA_BASE;
+    int32_t offset = addr - SDLVGA_BASE;
     if (offset >= 0 && offset < ROWS * COLS) {
-        unsigned row = offset / COLS;
-        unsigned col = offset % COLS;
+        int row = offset / COLS;
+        int col = offset % COLS;
 
         if (op == OP_WRITE) {
             state->data[row][col] = *data;

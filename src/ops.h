@@ -76,13 +76,16 @@
 #define FIELDS_4321(Op,...) _paste(_ops_,_narg(__VA_ARGS__))(Op,IGNORE_,__VA_ARGS__)
 #define BITFIELDS(...)      _paste(FIELDS_,__BYTE_ORDER__)(BITFIELD,__VA_ARGS__)
 
+union insn {
+    int32_t word;
+    struct instruction_typeany { BITFIELDS(INSN_any)     } typeany;
+    struct instruction_type012 { BITFIELDS(INSN_type012) } type012;
+    struct instruction_type3   { BITFIELDS(INSN_type3)   } type3;
+};
+typedef union insn insn;
+
 struct insn_or_data {
-    union insn {
-        uint32_t word;
-        struct instruction_typeany { BITFIELDS(INSN_any)     } typeany;
-        struct instruction_type012 { BITFIELDS(INSN_type012) } type012;
-        struct instruction_type3   { BITFIELDS(INSN_type3)   } type3;
-    } u;
+    insn u;
     int32_t reladdr;    ///< used for CE_ICI resolving
     int32_t size;       ///< used for data (e.g., .zero 5 -> size == 5)
 };

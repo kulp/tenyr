@@ -31,7 +31,7 @@ struct basic_block {
     int32_t *cache;
     int run_count;
     int32_t base;
-    uint32_t len;
+    int len;
 };
 
 void jit_init(struct jit_state **state);

@@ -15,7 +15,7 @@ typedef int    stream_printf (STREAM *s, const char *format, ...);
 // Wine. Since we currently only ever need to scan one item of a fixed type,
 // after some other characters, we constrain the interface to avoid using
 // stdarg.
-typedef int    stream_scanf  (STREAM *s, const char *format, unsigned int *out);
+typedef int    stream_scanf  (STREAM *s, const char *format, int *out);
 
 typedef size_t stream_read   (      void *ptr, size_t size, size_t nitems, STREAM *s);
 typedef size_t stream_write  (const void *ptr, size_t size, size_t nitems, STREAM *s);

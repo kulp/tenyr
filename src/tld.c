@@ -16,7 +16,7 @@
 #include <errno.h>
 
 struct link_state {
-    UWord addr;     ///< current address
+    SWord addr;     ///< current address
     int obj_count;
     struct obj_list {
         struct obj *obj;
@@ -31,8 +31,8 @@ struct link_state {
 struct defn {
     char *name;
     struct obj *obj;
-    UWord reladdr;
-    UWord flags;
+    SWord reladdr;
+    SWord flags;
 
     struct link_state *state;   ///< state reference used for twalk() support
 };
@@ -117,7 +117,7 @@ static int def_str_cmp(const void *a, const void *b)
 static int do_link_build_state(struct link_state *s, void **objtree, void **defns)
 {
     // running offset, tracking where to pack objects tightly one after another
-    UWord running = 0;
+    SWord running = 0;
 
     // read in all symbols
     list_foreach(obj_list, Node, s->objs) {
@@ -162,7 +162,7 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
 static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
                                        void **objtree, void **defns)
 {
-    UWord reladdr = 0;
+    SWord reladdr = 0;
 
     // TODO support more than one record per object
     if (i->rec_count > 1)
@@ -201,9 +201,9 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     // here we actually add the found-symbol's value to the relocation slot,
     // being careful to trim to the right width
     SWord mult = (rlc->flags & RLC_NEGATE) ? -1 : +1;
-    UWord *dest = &r->data[rlc->addr - r->addr];
-    UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
-    UWord updated = (*dest + mult * (reladdr >> rlc->shift)) & mask;
+    SWord *dest = &r->data[rlc->addr - r->addr];
+    SWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
+    SWord updated = (*dest + mult * (reladdr >> rlc->shift)) & mask;
     *dest = (*dest & ~mask) | updated;
 
     return 0;
@@ -265,9 +265,9 @@ static int do_link_emit(struct link_state *s, struct obj *o)
 
             n->addr = addr;
             n->size = rec->size;
-            n->data = malloc(rec->size * sizeof *n->data);
+            n->data = malloc((size_t)rec->size * sizeof *n->data);
             n->next = NULL;
-            memcpy(n->data, rec->data, rec->size * sizeof *n->data);
+            memcpy(n->data, rec->data, (size_t)rec->size * sizeof *n->data);
 
             if (*ptr_objrec) (*ptr_objrec)->next = n;
             if (!front) front = n;
@@ -281,9 +281,9 @@ static int do_link_emit(struct link_state *s, struct obj *o)
 
     o->records = front;
 
-    o->rec_count = (UWord)rec_count;
-    o->sym_count = (UWord)s->syms;
-    o->rlc_count = (UWord)s->rlcs;
+    o->rec_count = (SWord)rec_count;
+    o->sym_count = (SWord)s->syms;
+    o->rlc_count = (SWord)s->rlcs;
 
     return 0;
 }

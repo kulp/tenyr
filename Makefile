@@ -116,11 +116,19 @@ common.o parser.o stream.o: CFLAGS += -Wno-format-nonliteral
 lexer.o: CFLAGS += -Wno-missing-prototypes
 parser.o lexer.o: CFLAGS += -Wno-unused-macros
 lexer.o: CFLAGS += -Wno-shorten-64-to-32
+lexer.o: CFLAGS += -Wno-conversion
+lexer.o: CPPFLAGS += -Wno-disabled-macro-expansion
+lexer.o: CPPFLAGS += -Wno-documentation
+lexer.o: CFLAGS += -Wno-missing-noreturn
+lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)sign-conversion
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 # flex-generated code needs POSIX source for fileno()
 lexer.o: CPPFLAGS += -D_POSIX_SOURCE
+
+# Do not warn about the unused version for endian reading.
+obj.o obj,dy.o: CFLAGS += -Wno-unused-function
 
 lexer.o asmif.o tas.o: parser.h
 parser.h parser.c: lexer.h

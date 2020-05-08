@@ -16,8 +16,8 @@
 #define MAX_OP_LEN 3
 
 // Duplicate a string's contents, rounding up the length the a multiple of the
-// length of a UWord, plus a space for the trailing '\0', with the unused bytes
-// set to 0.
+// length of an SWord, plus a space for the trailing '\0', with the unused
+// bytes set to 0.
 static inline char *strdup_rounded_up(char *in)
 {
     size_t len = round_up_to_word(strlen(in));
@@ -123,7 +123,7 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
 
     if (flags & ASM_AS_CHAR) {
         char buf[3];
-        if (is_printable(i->insn.u.word, buf))
+        if (is_printable((unsigned)i->insn.u.word, buf))
             return out->op.fprintf(out, ".word '%s'%*s", buf, buf[1] == '\0', "");
         else
             return out->op.fprintf(out, "          ");
@@ -132,9 +132,9 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
     const struct instruction_typeany * const g = &i->insn.u.typeany;
     const struct instruction_type012 * const t = &i->insn.u.type012;
 
-    const int32_t imm   = g->p == 3 ? i->insn.u.type3.imm : i->insn.u.type012.imm;
-    const int     width = g->p == 3 ? MEDIUM_IMMEDIATE_BITWIDTH : SMALL_IMMEDIATE_BITWIDTH;
-    const enum op op    = g->p == 3 ? OP_BITWISE_OR : t->op;
+    const int32_t  imm   = g->p == 3 ? i->insn.u.type3.imm : i->insn.u.type012.imm;
+    const unsigned width = g->p == 3 ? MEDIUM_IMMEDIATE_BITWIDTH : SMALL_IMMEDIATE_BITWIDTH;
+    const enum op  op    = g->p == 3 ? OP_BITWISE_OR : t->op;
 
     const int fields[3]   = { imm, t->y, t->x };
     const int * const map = asm_op_loc[g->p];
@@ -276,7 +276,7 @@ struct obj_fdata {
 
     struct objsym **next_sym;
     struct objrlc **next_rlc;
-    uint32_t pos;   ///< position in objrec
+    SWord pos;   ///< position in objrec
 
     int assembling;
     int error;
@@ -295,10 +295,10 @@ static int obj_init(STREAM *stream, struct param_state *p, void **ud)
     if (u->assembling) {
         // TODO proper multiple-records support
         o->rec_count = 1;
-        o->records = calloc(o->rec_count, sizeof *o->records);
+        o->records = calloc((size_t)o->rec_count, sizeof *o->records);
         o->records[0].addr = 0;
         o->records[0].size = 1024; // will be realloc()ed as appropriate
-        o->records[0].data = calloc(o->records->size, sizeof *o->records->data);
+        o->records[0].data = calloc((size_t)o->records->size, sizeof *o->records->data);
         u->curr_rec = o->records;
 
         u->next_sym = &o->symbols;
@@ -355,11 +355,11 @@ static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
         // TODO rewrite this without realloc() (start a new section ?)
         while (rec->size < u->pos + i->insn.size)
             rec->size *= 2;
-        rec->data = realloc(rec->data, rec->size * sizeof *rec->data);
+        rec->data = realloc(rec->data, (size_t)rec->size * sizeof *rec->data);
     }
 
     // We could store .zero data sparsely, but we don't (yet)
-    memset(&rec->data[u->pos], 0x00, i->insn.size);
+    memset(&rec->data[u->pos], 0x00, (size_t)i->insn.size);
     rec->data[u->pos] = i->insn.u.word;
     u->pos += i->insn.size;
 }
@@ -382,7 +382,7 @@ static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
         struct objsym *sym = *u->next_sym = calloc(1, sizeof *sym);
 
         sym->name.str = strdup_rounded_up(symbol->name);
-        sym->name.len = (UWord)strlen(symbol->name);
+        sym->name.len = (SWord)strlen(symbol->name);
         // `symbol->resolved` must be true by this point
         sym->value = symbol->reladdr;
         sym->flags = flags;
@@ -404,9 +404,9 @@ static int obj_reloc(STREAM *stream, struct reloc_node *reloc, void *ud)
 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
-    rlc->flags = (UWord)reloc->flags;
+    rlc->flags = (SWord)reloc->flags;
     rlc->name.str  = reloc->name ? strdup_rounded_up(reloc->name) : NULL;
-    rlc->name.len  = reloc->name ? (UWord)strlen(reloc->name) : 0;
+    rlc->name.len  = reloc->name ? (SWord)strlen(reloc->name) : 0;
     rlc->addr = reloc->insn->insn.reladdr;
     rlc->width = reloc->width;
     rlc->shift = reloc->shift;
@@ -425,8 +425,8 @@ static int obj_emit(STREAM *stream, void **ud)
 
     if (u->assembling) {
         o->records[0].size = u->pos;
-        o->sym_count = (UWord)u->syms;
-        o->rlc_count = (UWord)u->rlcs;
+        o->sym_count = (SWord)u->syms;
+        o->rlc_count = (SWord)u->rlcs;
 
         obj_write(u->o, stream);
     }
@@ -520,7 +520,7 @@ static int memh_in(STREAM *stream, struct element *i, void *ud)
         i->insn.reladdr = state->written++;
         return 1;
     } else if (state->marked == state->written) {
-        if (stream->op.fscanf(stream, " @%x", (uint32_t*)&state->marked) == 1)
+        if (stream->op.fscanf(stream, " @%x", &state->marked) == 1)
             return 0; // let next call handle it
 
         if (stream->op.fscanf(stream, " %x", &i->insn.u.word) != 1)
@@ -593,7 +593,7 @@ size_t make_format_list(int (*pred)(const struct format *), size_t flen,
     size_t pos = 0;
     for (const struct format *f = fmts; pos < len && f < fmts + flen; f++)
         if (!pred || pred(f))
-            pos += snprintf(&buf[pos], len - pos, "%s%s", pos ? sep : "", f->name);
+            pos += (size_t)snprintf(&buf[pos], len - pos, "%s%s", pos ? sep : "", f->name);
 
     return pos;
 }

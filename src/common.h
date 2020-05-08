@@ -18,7 +18,7 @@ static inline int32_t SEXTEND32(unsigned int bits, int32_t val)
     if (bits >= 32)
         return val;
 
-    const int32_t msb = (1L << (bits - 1)) & val;
+    const int32_t msb = (int32_t)(1L << (bits - 1)) & val;
     const int32_t ext = (-!!msb) << bits;
     return ext | (val & ((1L << bits) - 1));
 }
@@ -88,14 +88,6 @@ static inline char *strcopy(char *dest, const char *src, size_t sz)
     char *result = (char*)memcpy(dest, src, sz);
     dest[sz - 1] = '\0';
     return result;
-}
-
-static inline uint32_t swapword(const uint32_t in)
-{
-    return (((in >> 24) & 0xff) <<  0) |
-           (((in >> 16) & 0xff) <<  8) |
-           (((in >>  8) & 0xff) << 16) |
-           (((in >>  0) & 0xff) << 24);
 }
 
 long long numberise(char *str, int base);

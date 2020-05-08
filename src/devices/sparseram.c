@@ -18,12 +18,12 @@ device_adder sparseram_add_device;
 
 struct sparseram_state {
     void *mem;
-    long pagesize;
-    uint32_t mask;
+    size_t pagesize;
+    int32_t mask;
 };
 
 struct ram_element {
-    uint32_t *space;
+    int32_t *space;
     int32_t base;
 };
 
@@ -38,9 +38,9 @@ static int sparseram_init(struct plugin_cookie *pcookie, struct device *device, 
 {
     struct sparseram_state *sparseram = *(void**)cookie = malloc(sizeof *sparseram);
     sparseram->mem = NULL;
-    sparseram->pagesize = os_getpagesize();
+    sparseram->pagesize = (size_t)os_getpagesize();
     // `mask` has only the bits set that address *within* a page
-    sparseram->mask = (unsigned int)(sparseram->pagesize / sizeof(uint32_t) - 1);
+    sparseram->mask = (int32_t)(sparseram->pagesize / sizeof(int32_t) - 1);
 
     return 0;
 }
@@ -59,12 +59,12 @@ static int sparseram_fini(void *cookie)
     return 0;
 }
 
-static int sparseram_op(void *cookie, int op, uint32_t addr,
-        uint32_t *data)
+static int sparseram_op(void *cookie, int op, int32_t addr,
+        int32_t *data)
 {
     struct sparseram_state *sparseram = cookie;
 
-    uint32_t page_base = addr & ~sparseram->mask;
+    int32_t page_base = addr & ~sparseram->mask;
     struct ram_element key = (struct ram_element){ .base = page_base };
     struct ram_element **p = tsearch(&key, &sparseram->mem, tree_compare);
     if (*p == &key) {
@@ -73,14 +73,14 @@ static int sparseram_op(void *cookie, int op, uint32_t addr,
         // first write.
         struct ram_element *node = malloc(sizeof *node);
         node->base  = page_base;
-        node->space = malloc(sparseram->pagesize);
+        node->space = malloc((size_t)sparseram->pagesize);
         // set all 32-bit words to 0xffffffff, the trap instruction
         memset(node->space, 0xff, sparseram->pagesize);
 
         *p = node;
     }
 
-    uint32_t *where = &(*p)->space[addr & sparseram->mask];
+    int32_t *where = &(*p)->space[addr & sparseram->mask];
 
     if (op == OP_WRITE)
         *where = *data;
