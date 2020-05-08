@@ -265,9 +265,9 @@ static int do_link_emit(struct link_state *s, struct obj *o)
 
             n->addr = addr;
             n->size = rec->size;
-            n->data = malloc(rec->size * sizeof *n->data);
+            n->data = malloc((size_t)rec->size * sizeof *n->data);
             n->next = NULL;
-            memcpy(n->data, rec->data, rec->size * sizeof *n->data);
+            memcpy(n->data, rec->data, (size_t)rec->size * sizeof *n->data);
 
             if (*ptr_objrec) (*ptr_objrec)->next = n;
             if (!front) front = n;
