@@ -10,8 +10,8 @@
 
 int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s, ...);
 
-static struct cstr *resizestr(struct cstr *s, size_t len);
-static int savestr(const char *text, size_t len, yyscan_t yyscanner);
+static struct cstr *resizestr(struct cstr *s, int len);
+static int savestr(const char *text, int len, yyscan_t yyscanner);
 #define savechr(ch,sc) savestr((const char[]){ (char)(ch) },1,sc)
 static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 
@@ -35,7 +35,7 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 #define POP         yy_pop_state(yyscanner)
 #define NEWSTR      YSTR = resizestr(NULL, (size_t)yyleng)
 #define CHKSTR      do { if (!YSTR || YSTR->size < 0) { NEWSTR; } } while (0)
-#define SAVESTR     savestr(yytext, (size_t)yyleng, yyscanner)
+#define SAVESTR     savestr(yytext, yyleng, yyscanner)
 
 %}
 
@@ -149,7 +149,7 @@ illegal             { return ILLEGAL; }
  * XXXREMOVEXXX
  * a line above this one removed to work around a gcov off-by-one-line bug
  */
-static struct cstr *resizestr(struct cstr *s, size_t len)
+static struct cstr *resizestr(struct cstr *s, int len)
 {
     if (!s) {
         // allocate at least a minimum segment size
@@ -163,7 +163,7 @@ static struct cstr *resizestr(struct cstr *s, size_t len)
         s->right = NULL;
         return s;
     } else {
-        size_t have = (size_t)(s->tail - s->head);
+        int have = (int)(s->tail - s->head);
 
         if (s->size < have + len) {
             s->size = have;                     // shorten this string segment
@@ -176,7 +176,7 @@ static struct cstr *resizestr(struct cstr *s, size_t len)
     }
 }
 
-static int savestr(const char *text, size_t len, yyscan_t yyscanner)
+static int savestr(const char *text, int len, yyscan_t yyscanner)
 {
     // savestr() appends a string piece into a buffer
     YYSTYPE *lval  = yyget_lval(yyscanner);
