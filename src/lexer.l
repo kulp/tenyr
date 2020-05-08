@@ -25,7 +25,7 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
         saveline[savecol += len] = 0; \
         yylloc->first_line = yylloc->last_line = yylineno; \
         yylloc->first_column = yycolumn; \
-        yylloc->last_column = (size_t)(yycolumn + yyleng - 1); \
+        yylloc->last_column = (int)(yycolumn + yyleng - 1); \
         yycolumn += yyleng; \
     } while (0);
 
