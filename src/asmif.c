@@ -52,22 +52,22 @@ static int symbol_lookup(struct parse_data *pd, struct symbol_list *list, const
 
 // add_relocation returns 1 on success
 static int add_relocation(struct reloc_list **relocs, const char *name,
-        struct element *insn, int width, int shift, int flags)
+        struct element *in, int width, int shift, int flags)
 {
-    if (!insn)
+    if (!in)
         return 0;
 
     struct reloc_list *node = calloc(1, sizeof *node);
 
     node->reloc.name  = name ? strdup(name) : NULL;
-    node->reloc.insn  = insn;
+    node->reloc.insn  = in;
     node->reloc.width = width;
     node->reloc.shift = shift;
     node->reloc.flags = flags;
 
     node->next = *relocs;
     *relocs = node;
-    insn->reloc = &node->reloc;
+    in->reloc = &node->reloc;
 
     return 1;
 }

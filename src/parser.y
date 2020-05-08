@@ -644,16 +644,16 @@ static char *coalesce_string(const struct cstr *s)
 }
 
 static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
-        struct element *insn, struct cstr *symbol)
+        struct element *in, struct cstr *symbol)
 {
     struct symbol *n = calloc(1, sizeof *n);
     n->column   = locp->first_column;
     n->lineno   = locp->first_line;
     n->resolved = 0;
-    n->next     = insn->symbol;
+    n->next     = in->symbol;
     n->unique   = 1;
     n->name     = coalesce_string(symbol);
-    insn->symbol = n;
+    in->symbol = n;
 
     return add_symbol(locp, pd, n);
 }
