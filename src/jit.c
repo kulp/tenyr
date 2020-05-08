@@ -68,10 +68,10 @@ static void build_op(struct jit_state *s, int op, int result, int a, int b)
     }
 }
 
-static void build_insn(struct jit_state *s, union insn insn, int offset)
+static void build_insn(struct jit_state *s, insn in, int offset)
 {
-    const struct instruction_type012 t = insn.type012;
-    const struct instruction_type3   v = insn.type3;
+    const struct instruction_type012 t = in.type012;
+    const struct instruction_type3   v = in.type3;
 
     const int x = JIT_R0;
     const int y = JIT_R1;
@@ -159,7 +159,7 @@ Block *jit_gen_block(struct jit_state *s, int len, int32_t *instructions)
     jit_getarg(JIT_V1, rr);
 
     for (int i = 0; i < len; i++)
-        build_insn(s, (union insn){ .word = instructions[i] }, i);
+        build_insn(s, (insn){ .word = instructions[i] }, i);
 
     jit_ret();
     jit_epilog();
