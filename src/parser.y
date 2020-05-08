@@ -43,7 +43,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
         struct directive *d, struct element_list **context);
 static int is_type3(struct const_expr *ce);
 static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
-        int type, const struct cstr *symbol);
+        enum const_expr_type type, const struct cstr *symbol);
 static struct const_expr *make_eref(struct parse_data *pd, YYLTYPE *locp,
         const struct cstr *symbol, int offset);
 static struct const_expr_list *make_expr_list(struct const_expr *expr,
@@ -188,7 +188,7 @@ insn
         {   $$ = calloc(1, sizeof *$$);
             $$->elem = calloc(1, sizeof *$$->elem);
             $$->elem->insn.size = 1;
-            $$->elem->insn.u.word = 0xffffffff; /* P <- [P + -1] */
+            $$->elem->insn.u.word = (int32_t)0xffffffff; /* P <- [P + -1] */
             $$->tail = $$; }
     | lhs { PUSH(needarrow); } arrow { POP; } rhs
         {   if ($lhs->deref && $rhs->deref)
@@ -430,10 +430,10 @@ static struct element *make_insn_general(struct parse_data *pd,
     struct element *elem = calloc(1, sizeof *elem);
     int dd = ((lhs->deref | (!arrow && expr->deref)) << 1) | expr->deref;
 
-    elem->insn.u.typeany.p  = expr->type;
-    elem->insn.u.typeany.dd = dd;
-    elem->insn.u.typeany.z  = lhs->x;
-    elem->insn.u.typeany.x  = expr->x;
+    elem->insn.u.typeany.p  = (unsigned)expr->type;
+    elem->insn.u.typeany.dd = (unsigned)dd;
+    elem->insn.u.typeany.z  = (unsigned)lhs->x;
+    elem->insn.u.typeany.x  = (unsigned)expr->x;
 
     free(lhs);
 
@@ -441,12 +441,12 @@ static struct element *make_insn_general(struct parse_data *pd,
         case 0:
         case 1:
         case 2:
-            elem->insn.u.type012.op  = expr->op;
-            elem->insn.u.type012.y   = expr->y;
-            elem->insn.u.type012.imm = expr->i;
+            elem->insn.u.type012.op  = (unsigned)expr->op;
+            elem->insn.u.type012.y   = (unsigned)expr->y;
+            elem->insn.u.type012.imm = (unsigned)expr->i;
             break;
         case 3:
-            elem->insn.u.type3.imm = expr->i;
+            elem->insn.u.type3.imm = (unsigned)expr->i;
     }
 
     elem->insn.size = 1;
@@ -540,7 +540,7 @@ static struct expr *make_rhs(int type, int x, int op, int y, int mult,
     if (defexpr) {
         if (op == OP_PACK)
             e->ce->flags |= IGNORE_WIDTH;
-        e->i = 0xfffffbad; // put in a placeholder that must be overwritten
+        e->i = (int32_t)0xfffffbad; // put in a placeholder that must be overwritten
     } else
         e->i = 0; // there was no expr ; zero defined by language
 
@@ -617,7 +617,10 @@ static char *coalesce_string(const struct cstr *s)
     const struct cstr *p = s;
     size_t len = 0;
     while (p) {
-        len += p->tail - p->head;
+        ptrdiff_t size = p->tail - p->head;
+        if (size < 0)
+            return NULL;
+        len += (size_t)size;
         p = p->right;
     }
 
@@ -626,8 +629,12 @@ static char *coalesce_string(const struct cstr *s)
     len = 0;
     while (p) {
         ptrdiff_t size = p->tail - p->head;
+        if (size < 0) {
+            free(ret);
+            return NULL;
+        }
         memcpy(&ret[len], p->head, size);
-        len += size;
+        len += (size_t)size;
         p = p->right;
     }
 
@@ -701,8 +708,11 @@ static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
     result->type = D_GLOBAL;
     // TODO try to eliminate string copy
     struct global_list *g = result->data = malloc(sizeof *g);
-    g->name = malloc(symbol->tail - symbol->head + 1);
-    strcopy(g->name, symbol->head, symbol->tail - symbol->head + 1);
+    ptrdiff_t size = symbol->tail - symbol->head;
+    if (size < 0)
+        return NULL;
+    g->name = malloc((size_t)size + 1);
+    strcopy(g->name, symbol->head, (size_t)size + 1);
     return result;
 }
 
@@ -791,7 +801,7 @@ static int is_type3(struct const_expr *ce)
 }
 
 static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
-        int type, const struct cstr *symbol)
+        enum const_expr_type type, const struct cstr *symbol)
 {
     int flags = IMM_IS_BITS | IS_DEFERRED;
     if (type == CE_EXT)
