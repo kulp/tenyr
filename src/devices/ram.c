@@ -20,7 +20,7 @@ static int ram_init(struct plugin_cookie *pcookie, struct device *device, void *
         uint32_t base = device->bounds[0];
         uint32_t end  = device->bounds[1];
         ram = *(void**)cookie = malloc(sizeof *ram);
-        ram->memsize = end + 1;
+        ram->memsize = end - base + 1;
         ram->mem = malloc(ram->memsize * sizeof *ram->mem);
         ram->base = base;
     }
