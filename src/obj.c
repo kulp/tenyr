@@ -5,6 +5,7 @@
 
 #include "obj.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -13,7 +14,7 @@
 #define MAGIC_BYTES "TOV"
 #define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
-#define OBJ_MAX_REC_SIZE ((1ULL << 31) - 1) /* maximum meaningful size */
+#define OBJ_MAX_REC_SIZE INT32_MAX          /* maximum meaningful size */
 #define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)

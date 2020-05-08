@@ -276,7 +276,7 @@ struct obj_fdata {
 
     struct objsym **next_sym;
     struct objrlc **next_rlc;
-    uint32_t pos;   ///< position in objrec
+    SWord pos;   ///< position in objrec
 
     int assembling;
     int error;

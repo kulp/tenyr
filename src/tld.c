@@ -201,9 +201,9 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     // here we actually add the found-symbol's value to the relocation slot,
     // being careful to trim to the right width
     SWord mult = (rlc->flags & RLC_NEGATE) ? -1 : +1;
-    UWord *dest = &r->data[rlc->addr - r->addr];
-    UWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
-    UWord updated = (*dest + mult * (reladdr >> rlc->shift)) & mask;
+    SWord *dest = &r->data[rlc->addr - r->addr];
+    SWord mask = (((1 << (rlc->width - 1)) << 1) - 1);
+    SWord updated = (*dest + mult * (reladdr >> rlc->shift)) & mask;
     *dest = (*dest & ~mask) | updated;
 
     return 0;
