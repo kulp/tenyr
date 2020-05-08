@@ -20,6 +20,14 @@
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
 
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define get_sized get_sized_le
+#define put_sized put_sized_le
+#else
+#define get_sized get_sized_be
+#define put_sized put_sized_be
+#endif
+
 typedef int obj_op(struct obj *o, STREAM *out, void *context);
 
 static obj_op
@@ -77,10 +85,6 @@ static inline void put_sized_le(const void *what, size_t size, size_t count, STR
     }
 }
 
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define get_sized get_sized_le
-#define put_sized put_sized_le
-#else
 static inline int32_t swapword(const int32_t in)
 {
     return (((in >> 24) & 0xff) <<  0) |
@@ -116,10 +120,6 @@ static inline void put_sized_be(const void *what, size_t size, size_t count, STR
         put_sized_le(what, size, count, where);
     }
 }
-
-#define get_sized get_sized_be
-#define put_sized put_sized_be
-#endif
 
 static int put_recs(struct obj *o, STREAM *out, void *context)
 {
