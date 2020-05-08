@@ -18,7 +18,7 @@ device_adder sparseram_add_device;
 
 struct sparseram_state {
     void *mem;
-    long pagesize;
+    size_t pagesize;
     int32_t mask;
 };
 
@@ -38,9 +38,9 @@ static int sparseram_init(struct plugin_cookie *pcookie, struct device *device, 
 {
     struct sparseram_state *sparseram = *(void**)cookie = malloc(sizeof *sparseram);
     sparseram->mem = NULL;
-    sparseram->pagesize = os_getpagesize();
+    sparseram->pagesize = (size_t)os_getpagesize();
     // `mask` has only the bits set that address *within* a page
-    sparseram->mask = (int32_t)(sparseram->pagesize / (ssize_t)sizeof(int32_t) - 1);
+    sparseram->mask = (int32_t)(sparseram->pagesize / sizeof(int32_t) - 1);
 
     return 0;
 }
