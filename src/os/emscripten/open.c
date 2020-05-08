@@ -10,9 +10,9 @@ FILE *os_fopen(const char *path, const char *mode)
 
     if (path[0] == '/' && strncmp(path, "/dev", 4)) {
         // absolute path, needs to be construed relative to mountpoint
-        size_t need = 1 + snprintf(NULL, 0, MOUNT_POINT "%s", path);
-        char *buf = malloc(need);
-        snprintf(buf, need, MOUNT_POINT "%s", path);
+        int need = 1 + snprintf(NULL, 0, MOUNT_POINT "%s", path);
+        char *buf = malloc((size_t)need);
+        snprintf(buf, (size_t)need, MOUNT_POINT "%s", path);
         f = fopen(buf, mode);
         free(buf);
     } else {
