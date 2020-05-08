@@ -24,5 +24,6 @@ PEDANTIC_FLAGS += -Werror=strict-prototypes
 PEDANTIC_FLAGS += -Werror=missing-prototypes
 PEDANTIC_FLAGS += -Werror=unused-macros
 PEDANTIC_FLAGS += -Werror=disabled-macro-expansion
+PEDANTIC_FLAGS += -Werror=sign-conversion
 
 endif
