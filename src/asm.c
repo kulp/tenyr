@@ -96,7 +96,7 @@ static const char * const disasm_fmts[] = {
     [3] = "%c%c%c %s %c%s %3s %s%s%s%c", // [Z] <- [X >>> Y + -0]
 };
 
-static int is_printable(int ch, char buf[3])
+static int is_printable(unsigned int ch, char buf[3])
 {
     buf[1] = buf[2] = '\0';
 
@@ -112,7 +112,7 @@ static int is_printable(int ch, char buf[3])
         case '\v': buf[0] = '\\'; buf[1] = 'v' ; return 1;
         default:
             buf[0] = (char)ch;
-            return ch < UCHAR_MAX && isprint(ch);
+            return ch < UCHAR_MAX && isprint((unsigned char)ch);
     }
 }
 
@@ -123,7 +123,7 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
 
     if (flags & ASM_AS_CHAR) {
         char buf[3];
-        if (is_printable(i->insn.u.word, buf))
+        if (is_printable((unsigned)i->insn.u.word, buf))
             return out->op.fprintf(out, ".word '%s'%*s", buf, buf[1] == '\0', "");
         else
             return out->op.fprintf(out, "          ");
