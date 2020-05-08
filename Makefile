@@ -128,7 +128,7 @@ parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 lexer.o: CPPFLAGS += -D_POSIX_SOURCE
 
 # Do not warn about the unused version for endian reading.
-obj.o: CFLAGS += -Wno-unused-function
+obj.o obj,dy.o: CFLAGS += -Wno-unused-function
 
 lexer.o asmif.o tas.o: parser.h
 parser.h parser.c: lexer.h
