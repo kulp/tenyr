@@ -268,6 +268,10 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
     for_counted_get(objrec, rec, o->records, o->rec_count) {
         GET(rec->addr, in);
         GET(rec->size, in);
+        if (rec->size < 0) {
+            errno = EINVAL;
+            return 1;
+        }
         long here = in->op.ftell(in);
         if (here < 0) {
             // not a seekable stream -- forge ahead recklessly
