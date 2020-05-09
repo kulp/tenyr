@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #include "common.h"
 #include "parser_global.h"
@@ -618,8 +619,7 @@ static char *coalesce_string(const struct cstr *s)
     size_t len = 0;
     while (p) {
         ptrdiff_t size = p->tail - p->head;
-        if (size < 0)
-            return NULL;
+        assert(size >= 0);
         len += (size_t)size;
         p = p->right;
     }
@@ -629,10 +629,7 @@ static char *coalesce_string(const struct cstr *s)
     len = 0;
     while (p) {
         ptrdiff_t size = p->tail - p->head;
-        if (size < 0) {
-            free(ret);
-            return NULL;
-        }
+        assert(size >= 0);
         memcpy(&ret[len], p->head, (size_t)size);
         len += (size_t)size;
         p = p->right;
@@ -709,8 +706,7 @@ static struct directive *make_global(struct parse_data *pd, YYLTYPE *locp,
     // TODO try to eliminate string copy
     struct global_list *g = result->data = malloc(sizeof *g);
     ptrdiff_t size = symbol->tail - symbol->head;
-    if (size < 0)
-        return NULL;
+    assert(size >= 0);
     g->name = malloc((size_t)size + 1);
     strcopy(g->name, symbol->head, (size_t)size + 1);
     return result;
