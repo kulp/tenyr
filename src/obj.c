@@ -14,7 +14,6 @@
 #define MAGIC_BYTES "TOV"
 #define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
-#define OBJ_MAX_REC_SIZE INT32_MAX          /* maximum meaningful size */
 #define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
@@ -269,10 +268,6 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
     for_counted_get(objrec, rec, o->records, o->rec_count) {
         GET(rec->addr, in);
         GET(rec->size, in);
-        if (rec->size > OBJ_MAX_REC_SIZE) {
-            errno = EFBIG;
-            return 1;
-        }
         long here = in->op.ftell(in);
         if (here < 0) {
             // not a seekable stream -- forge ahead recklessly
