@@ -34,12 +34,11 @@ static int default_scanf(STREAM *s, const char *format, int *word)
     // int to the va_list -- and there is no portable way to append to a
     // va_list.
     //
-    // Instead, we simply defer to the system fscanf. If a library user wants
-    // to read the text-based formats (which are the only ones that want
-    // fscanf), it could, at worst, convert them to raw format first, perhaps
-    // by using `tas -d -ftext - | tas -fraw -`. Since the text formats are
-    // meant basically for demonstration and are of increasingly limited use,
-    // this is not perceived to be a great limitation.
+    // Instead, we simply defer to the system fscanf. This probably prevents a
+    // library user from reading the text-based formats (which are the only
+    // ones that want fscanf). Since the text formats are meant basically for
+    // demonstration and are of increasingly limited use, this is not perceived
+    // to be a great limitation.
     return fscanf(s->ud, format, word);
 }
 
