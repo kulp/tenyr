@@ -1,4 +1,4 @@
-gnore:
+ignore:
     - "3rdparty/**/*"
 coverage:
     range: 75..95
