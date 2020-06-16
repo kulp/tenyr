@@ -32,7 +32,6 @@ static void build_op(struct jit_state *s, int op, int result, int a, int b)
         case OP_BITWISE_XOR:        jit_xorr(result, a, b);     break;
         case OP_MULTIPLY:           jit_mulr(result, a, b);     break;
 
-        // TODO check overshifting behavior
         case OP_SHIFT_RIGHT_LOGIC:  jit_rshr_u(result, a, b);   break;
         case OP_SHIFT_RIGHT_ARITH:  jit_rshr(result, a, b);     break;
         case OP_SHIFT_LEFT:         jit_lshr(result, a, b);     break;
