@@ -6,11 +6,19 @@
     //
 
 #define swap(i0, i1)         \
-    pushall(c,d,e,f)       ; \
+    o <- o - 4             ; \
+    c -> [o + (4 - 0)]     ; \
+    d -> [o + (4 - 1)]     ; \
+    e -> [o + (4 - 2)]     ; \
+    f -> [o + (4 - 3)]     ; \
     f <- i0                ; \
     g <- i1                ; \
     call(do_swap)          ; \
-    popall(c,d,e,f)          \
+    o <- o + 4             ; \
+    f <- [o - 3]           ; \
+    e <- [o - 2]           ; \
+    d <- [o - 1]           ; \
+    c <- [o - 0]             \
     //
 
 do_swap:
