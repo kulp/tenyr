@@ -29,4 +29,6 @@ else:
   p <- p + @+loop
 
 done:
-  popall_ret(k)
+  o <- o + 2
+  k <- [o - (1 + 0)]
+  p <- [o]

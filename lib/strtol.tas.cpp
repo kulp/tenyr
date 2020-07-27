@@ -4,7 +4,11 @@
     .global strtol
 // c,d,e <- str, endptr, base
 strtol:
-    pushall(f,g,h,i)
+    o <- o - 4
+    f -> [o + (4 - 0)]
+    g -> [o + (4 - 1)]
+    h -> [o + (4 - 2)]
+    i -> [o + (4 - 3)]
 
     h <- e == 0
     p <- @+strtol_no_call &~ h + p
@@ -40,7 +44,12 @@ strtol_done:
     p <- @+strtol_no_endptr & h + p
     c -> [d]
 strtol_no_endptr:
-    popall_ret(f,g,h,i)
+    o <- o + 5
+    i <- [o - (1 + 3)]
+    h <- [o - (1 + 2)]
+    g <- [o - (1 + 1)]
+    f <- [o - (1 + 0)]
+    p <- [o]
 
 strtol_error_ERANGE:
     h <- ERANGE
@@ -101,7 +110,9 @@ detect_base:
     p <- @+detect_base_8or16 & f + p
     b <- 10
 detect_base_done:
-    popall_ret(f)
+    o <- o + 2
+    f <- [o - (1 + 0)]
+    p <- [o]
 detect_base_8or16:
     f <- [c + 1]
     f <- f &~ ('a' - 'A')

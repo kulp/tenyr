@@ -5,7 +5,11 @@ print_num:
     p <- [o]
 
 print_num_generic:
-    pushall(d,f,g,h)
+    o <- o - 4
+    d -> [o + (4 - 0)]
+    f -> [o + (4 - 1)]
+    g -> [o + (4 - 2)]
+    h -> [o + (4 - 3)]
     g <- c
     h <- @+tmpbuf_end + p
     d <- c < 0
@@ -33,7 +37,12 @@ print_num_generic_top:
 
 print_num_generic_done:
     b <- h
-    popall_ret(d,f,g,h)
+    o <- o + 5
+    h <- [o - (1 + 3)]
+    g <- [o - (1 + 2)]
+    f <- [o - (1 + 1)]
+    d <- [o - (1 + 0)]
+    p <- [o]
 print_num_generic_negative:
     g <- - g
     f <- -1

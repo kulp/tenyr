@@ -53,7 +53,14 @@ do_swap:
 
     .global qsort
 qsort:
-    pushall(g,h,i,j,k,l,m)
+    o <- o - 7
+    g -> [o + (7 - 0)]
+    h -> [o + (7 - 1)]
+    i -> [o + (7 - 2)]
+    j -> [o + (7 - 3)]
+    k -> [o + (7 - 4)]
+    l -> [o + (7 - 5)]
+    m -> [o + (7 - 6)]
     h <- d < 2                  // test for base case
     p <- @+L_qsort_done & h + p
     PI <- d >> 1                // partition index
@@ -66,13 +73,15 @@ qsort:
 L_qsort_partition:
     k <- II < LI
     p <- @+L_qsort_partition_done &~ k + p
-    pushall(c)
+    o <- o - 1
+    c -> [o + (1 - 0)]
     elem(k, BASE, II)
     elem(d, BASE, LI)
     c <- k
     push(p + 2)
     p <- f                      // call comparator
-    popall(c)
+    o <- o + 1
+    c <- [o - 0]
     k <- b < 0
     p <- @+L_qsort_noswap &~ k + p
     swap(II,SI)
@@ -107,5 +116,13 @@ L_qsort_partition_done:
     call(qsort)
 
 L_qsort_done:
-    popall_ret(g,h,i,j,k,l,m)
+    o <- o + 8
+    m <- [o - (1 + 6)]
+    l <- [o - (1 + 5)]
+    k <- [o - (1 + 4)]
+    j <- [o - (1 + 3)]
+    i <- [o - (1 + 2)]
+    h <- [o - (1 + 1)]
+    g <- [o - (1 + 0)]
+    p <- [o]
 

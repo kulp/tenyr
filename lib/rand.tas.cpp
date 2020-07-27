@@ -32,5 +32,7 @@ rand:
     c <- [@+mult + p]
     b <- b * c + INCREMENT
     b -> [@+seed + p]
-    popall_ret(c)
+    o <- o + 2
+    c <- [o - (1 + 0)]
+    p <- [o]
 

@@ -2,7 +2,10 @@
 
 .global trailz
 trailz:
-    pushall(D,E,F)
+    O <- O - 3
+    D -> [O + (3 - 0)]
+    E -> [O + (3 - 1)]
+    F -> [O + (3 - 2)]
     // get lowest set bit in C
     B   <- C - 1
     B   <- C ^ B
@@ -45,5 +48,9 @@ trailz:
     B   <- D << 1 + B
 
 done:
-    popall_ret(D,E,F)
+    O <- O + 4
+    F <- [O - (1 + 2)]
+    E <- [O - (1 + 1)]
+    D <- [O - (1 + 0)]
+    P <- [O]
 

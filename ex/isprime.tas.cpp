@@ -14,7 +14,14 @@ large: .word 8675309
 
 // Checks whether C is prime or not. Returns a truth value in B.
 isprime:
-    pushall(d,e,g,i,j,k,m)
+    o <- o - 7
+    d -> [o + (7 - 0)]
+    e -> [o + (7 - 1)]
+    g -> [o + (7 - 2)]
+    i -> [o + (7 - 3)]
+    j -> [o + (7 - 4)]
+    k -> [o + (7 - 5)]
+    m -> [o + (7 - 6)]
     // use e as local copy of c so we don't have to constantly save and restore
     // it when calling other functions
     e <- c
@@ -86,4 +93,12 @@ cleanup0:
 composite:
     b <- 0
 done:
-    popall_ret(d,e,g,i,j,k,m)
+    o <- o + 8
+    m <- [o - (1 + 6)]
+    k <- [o - (1 + 5)]
+    j <- [o - (1 + 4)]
+    i <- [o - (1 + 3)]
+    g <- [o - (1 + 2)]
+    e <- [o - (1 + 1)]
+    d <- [o - (1 + 0)]
+    p <- [o]

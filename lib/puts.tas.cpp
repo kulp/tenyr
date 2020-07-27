@@ -14,5 +14,7 @@ puts_loop:
     emit(b)             // output character to serial device
     p <- p + @+puts_loop
 puts_done:
-    popall_ret(d)
+    o <- o + 2
+    d <- [o - (1 + 0)]
+    p <- [o]
 

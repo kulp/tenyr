@@ -12,7 +12,10 @@ _start:
 
 // Computes fib(C) and stores the result in B.
 fib:
-    pushall(d,g,k)
+    o <- o - 3
+    d -> [o + (3 - 0)]
+    g -> [o + (3 - 1)]
+    k -> [o + (3 - 2)]
     b <- 0
     d <- 1
 
@@ -28,4 +31,8 @@ loop:
     p <- p + @+loop
 
 done:
-    popall_ret(d,g,k)
+    o <- o + 4
+    k <- [o - (1 + 2)]
+    g <- [o - (1 + 1)]
+    d <- [o - (1 + 0)]
+    p <- [o]

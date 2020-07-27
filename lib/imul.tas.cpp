@@ -12,7 +12,10 @@ imul:
     p <- @+L_done & b + p
 #endif
 
-    pushall(h,i,j)
+    o <- o - 3
+    h -> [o + (3 - 0)]
+    i -> [o + (3 - 1)]
+    j -> [o + (3 - 2)]
 
     b <- 0
     h <- 1
@@ -34,7 +37,10 @@ L_top:
     b <- b ^ j      // adjust product for signed math
     b <- b - j
 
-    popall(h,i,j)
+    o <- o + 3
+    j <- [o - 2]
+    i <- [o - 1]
+    h <- [o - 0]
 L_done:
     o <- o + 1
     p <- [o]

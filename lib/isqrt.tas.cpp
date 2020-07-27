@@ -4,7 +4,11 @@
 
 // Performs sqrt(C) and stores the result in B.
 isqrt:
-  pushall(e,g,j,k)
+  o <- o - 4
+  e -> [o + (4 - 0)]
+  g -> [o + (4 - 1)]
+  j -> [o + (4 - 2)]
+  k -> [o + (4 - 3)]
   b <- 0
 
   // Compute the highest power of four greater than or equal to n.
@@ -36,5 +40,10 @@ shift:
   p <- p + @+do_magic
 
 done:
-  popall_ret(e,g,j,k)
+  o <- o + 5
+  k <- [o - (1 + 3)]
+  j <- [o - (1 + 2)]
+  g <- [o - (1 + 1)]
+  e <- [o - (1 + 0)]
+  p <- [o]
 

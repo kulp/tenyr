@@ -5,7 +5,11 @@
 // Performs C / D and stores the result in B.
 // Assumes C and D are 31-bit unsigned
 udiv:
-  pushall(d,g,j,k)
+  o <- o - 4
+  d -> [o + (4 - 0)]
+  g -> [o + (4 - 1)]
+  j -> [o + (4 - 2)]
+  k -> [o + (4 - 3)]
   b <- 0
 
   // Check for division by zero.
@@ -53,5 +57,10 @@ shift_quotient:
   // Return result.
 done:
   b <- b >> 1
-  popall_ret(d,g,j,k)
+  o <- o + 5
+  k <- [o - (1 + 3)]
+  j <- [o - (1 + 2)]
+  g <- [o - (1 + 1)]
+  d <- [o - (1 + 0)]
+  p <- [o]
 

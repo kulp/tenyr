@@ -5,7 +5,12 @@
 
     .global strcmp
 strcmp:
-    pushall(e,g,h,i,j)
+    o <- o - 5
+    e -> [o + (5 - 0)]
+    g -> [o + (5 - 1)]
+    h -> [o + (5 - 2)]
+    i -> [o + (5 - 3)]
+    j -> [o + (5 - 4)]
     b <- 0              // start with matching
 strcmp_loop:
     j <- [c]            // load word from string
@@ -24,14 +29,25 @@ strcmp_done:
     b <- b |~ e         // accumulate mismatches
     e <- h == i         // check for length mismatch
     b <- b |~ e         // accumulate mismatches
-    popall_ret(e,g,h,i,j)
+    o <- o + 6
+    j <- [o - (1 + 4)]
+    i <- [o - (1 + 3)]
+    h <- [o - (1 + 2)]
+    g <- [o - (1 + 1)]
+    e <- [o - (1 + 0)]
+    p <- [o]
 
 // arguments in C, D, and E
 // result in B ; 0 for match, -1 for mismatch
 
     .global strncmp
 strncmp:
-    pushall(f,g,h,i,j)
+    o <- o - 5
+    f -> [o + (5 - 0)]
+    g -> [o + (5 - 1)]
+    h -> [o + (5 - 2)]
+    i -> [o + (5 - 3)]
+    j -> [o + (5 - 4)]
     b <- 0              // start with matching
 strncmp_loop:
     h <- e < 1          // check length to go
@@ -54,5 +70,11 @@ strncmp_done:
     f <- h == i         // check for length mismatch
     b <- b |~ f         // accumulate mismatches
 strncmp_nreached:
-    popall_ret(f,g,h,i,j)
+    o <- o + 6
+    j <- [o - (1 + 4)]
+    i <- [o - (1 + 3)]
+    h <- [o - (1 + 2)]
+    g <- [o - (1 + 1)]
+    f <- [o - (1 + 0)]
+    p <- [o]
 

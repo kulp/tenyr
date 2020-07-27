@@ -32,7 +32,9 @@ L_ilog2_top:
     B   <- B + 1
     p <- p + @+L_ilog2_top
 L_ilog2_done:
-    popall_ret(D)
+    O <- O + 2
+    D <- [O - (1 + 0)]
+    P <- [O]
 
 // IRANK gets SZ rank in C, returns SZ inverted-rank in B
 #define IRANK(B,C)              \
@@ -98,7 +100,9 @@ L_NODE2RANK_top:
     p <- p + @+L_NODE2RANK_top
 L_NODE2RANK_done:
     B   <- - D + (RANKS - 1)
-    popall_ret(D)
+    O <- O + 2
+    D <- [O - (1 + 0)]
+    P <- [O]
 
 #define SIZE2RANK(B,C)  FUNCIFY2(SIZE2RANK,B,C)
 SIZE2RANK_func:
@@ -199,7 +203,9 @@ L_SIZE2RANK_zero:
 // NODE2ADDR gets NP n in C, returns address in B
 #define NODE2ADDR(B,C)  FUNCIFY2(NODE2ADDR,B,C)
 NODE2ADDR_func:
-    pushall(D,E)
+    O <- O - 2
+    D -> [O + (2 - 0)]
+    E -> [O + (2 - 1)]
     B   <- 0
     NODE2RANK(E,C)
     E   <- RANK_0_LOG + E   // i = RANK_0_LOG + NODE2RANK(n)
@@ -221,7 +227,11 @@ NODE2ADDR_loopbottom:
 // ADDR2NODE gets SZ addr in C, returns NP node in B
 #define ADDR2NODE(B,C)  FUNCIFY2(ADDR2NODE,B,C)
 ADDR2NODE_func:
-    pushall(D,E,F,G)    // F, G are scratch
+    O <- O - 4
+    D -> [O + (4 - 0)]
+    E -> [O + (4 - 1)]
+    F -> [O + (4 - 2)]
+    G -> [O + (4 - 3)]    // F, G are scratch
     RANK2WORDS(D,(RANKS - 2),F)
     E   <- POOL         // E is base being built
     B   <- TN           // B is the node being checked
@@ -250,7 +260,12 @@ L_ADDR2NODE_loopdone:
 
 L_ADDR2NODE_done:
 #endif
-    popall_ret(D,E,F,G)
+    O <- O + 5
+    G <- [O - (1 + 3)]
+    F <- [O - (1 + 2)]
+    E <- [O - (1 + 1)]
+    D <- [O - (1 + 0)]
+    P <- [O]
 
 .global buddy_malloc
 buddy_malloc:
@@ -267,7 +282,9 @@ buddy_calloc:
     D   <- 0
     pop(E)              // pop size from C into third memset param slot
     call(memset)
-    popall_ret(E)
+    O <- O + 2
+    E <- [O - (1 + 0)]
+    P <- [O]
 
 .global buddy_free
 buddy_free:
@@ -285,7 +302,9 @@ buddy_realloc:
 
 // buddy_splitnode gets NP n in C, SZ rank in D, returns SZ success in B
 buddy_splitnode:
-    pushall(E,F)
+    O <- O - 2
+    E -> [O + (2 - 0)]
+    F -> [O + (2 - 1)]
     B   <- 0
     E   <- D == 0
     p <- @+L_buddy_splitnode_done & E + p
@@ -308,14 +327,21 @@ L_buddy_splitnode_notempty:
     SET_LEAF(C,D,D,E,F,D)
 
 L_buddy_splitnode_done:
-    popall_ret(E,F)
+    O <- O + 3
+    F <- [O - (1 + 1)]
+    E <- [O - (1 + 0)]
+    P <- [O]
 
 // XXX buddy_nosplit has been modified without sufficient care and appears to
 // be internally inconsistent
 // TODO move buddy_nosplit into buddy_alloc as in the C version
 // buddy_nosplit gets SZ rank in C, returns address or 0 in B
 buddy_nosplit:
-    pushall(D,E,F,G)
+    O <- O - 4
+    D -> [O + (4 - 0)]
+    E -> [O + (4 - 1)]
+    F -> [O + (4 - 2)]
+    G -> [O + (4 - 3)]
     B   <- C
     IRANK(E,C)
     F   <- 1
@@ -343,11 +369,19 @@ L_buddy_nosplit_loop_bottom:
     D   <- D + 1    // D is loop index
     p <- p + @+L_buddy_nosplit_loop_top
 
-    popall_ret(D,E,F,G)
+    O <- O + 5
+    G <- [O - (1 + 3)]
+    F <- [O - (1 + 2)]
+    E <- [O - (1 + 1)]
+    D <- [O - (1 + 0)]
+    P <- [O]
 
 // buddy_alloc gets SZ rank in C, returns address or 0 in B
 buddy_alloc:
-    pushall(D,E,F)                  // D,E are scratch, F is rank
+    O <- O - 3
+    D -> [O + (3 - 0)]
+    E -> [O + (3 - 1)]
+    F -> [O + (3 - 2)]                  // D,E are scratch, F is rank
     D   <- C < RANKS
     p <- @+L_buddy_alloc_error &~ D + p    // bail if need is too large
 L_buddy_alloc_rankplus:
@@ -368,7 +402,11 @@ L_buddy_alloc_do_split:
     call(buddy_autosplit)
 
 L_buddy_alloc_done:
-    popall_ret(D,E,F)
+    O <- O + 4
+    F <- [O - (1 + 2)]
+    E <- [O - (1 + 1)]
+    D <- [O - (1 + 0)]
+    P <- [O]
 
 L_buddy_alloc_error:
     D   <- ENOMEM

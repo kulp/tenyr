@@ -56,7 +56,9 @@ do_pong:
     p <- p + @+loop_line
 
 check_input:
-    pushall(d,e)
+    o <- o - 2
+    d -> [o + (2 - 0)]
+    e -> [o + (2 - 1)]
     push(c)
     d <- @+trigger + p
     e <- 3 // strlen(trigger)
@@ -78,7 +80,10 @@ check_input_triggered:
     call(say_fahrenheit)
 
 check_input_done:
-    popall_ret(d,e)
+    o <- o + 3
+    e <- [o - (1 + 1)]
+    d <- [o - (1 + 0)]
+    p <- [o]
 
 ping: .utf32 "PING " ; .word 0
 pong: .utf32 "PONG " ; .word 0
@@ -110,7 +115,11 @@ say_fahrenheit:
 degF: .utf32 "°F" ; .word 0
 
 convert_decimal:
-    pushall(d,f,g,h)
+    o <- o - 4
+    d -> [o + (4 - 0)]
+    f -> [o + (4 - 1)]
+    g -> [o + (4 - 2)]
+    h -> [o + (4 - 3)]
     g <- c
     h <- @+tmpbuf_end + p
     d <- c < 0
@@ -138,7 +147,12 @@ convert_decimal_top:
 
 convert_decimal_done:
     b <- h
-    popall_ret(d,f,g,h)
+    o <- o + 5
+    h <- [o - (1 + 3)]
+    g <- [o - (1 + 2)]
+    f <- [o - (1 + 1)]
+    d <- [o - (1 + 0)]
+    p <- [o]
 convert_decimal_negative:
     g <- - g
     f <- -1
@@ -155,16 +169,22 @@ say_start:
     push(c)
     c <- @+talk + p
     call(puts)
-    popall_ret(c)
+    o <- o + 2
+    c <- [o - (1 + 0)]
+    p <- [o]
 
 say_end:
     push(c)
     c <- @+rn + p
     call(puts)
-    popall_ret(c)
+    o <- o + 2
+    c <- [o - (1 + 0)]
+    p <- [o]
 
 skipwords:
-    pushall(e,g)
+    o <- o - 2
+    e -> [o + (2 - 0)]
+    g -> [o + (2 - 1)]
 skipwords_top:
     g <- [c]
     e <- g == 0
@@ -181,10 +201,16 @@ skipwords_foundspace:
 
 skipwords_done:
     b <- c
-    popall_ret(e,g)
+    o <- o + 3
+    g <- [o - (1 + 1)]
+    e <- [o - (1 + 0)]
+    p <- [o]
 
 getline:
-    pushall(c,d,f)
+    o <- o - 3
+    c -> [o + (3 - 0)]
+    d -> [o + (3 - 1)]
+    f -> [o + (3 - 2)]
     f <- @+buffer + p
 
 getline_top:
@@ -199,7 +225,11 @@ getline_top:
 getline_eol:
     a -> [f]
     b <- @+buffer + p
-    popall_ret(c,d,f)
+    o <- o + 4
+    f <- [o - (1 + 2)]
+    d <- [o - (1 + 1)]
+    c <- [o - (1 + 0)]
+    p <- [o]
 
 // ----------------------------------------------------------------------------
 

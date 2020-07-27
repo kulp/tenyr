@@ -4,7 +4,13 @@
 .global putnum
     // putnum takes number in C, (row,col) in D,E, and field width in F
 putnum:
-    pushall(h,i,j,k,l,m)
+    o <- o - 6
+    h -> [o + (6 - 0)]
+    i -> [o + (6 - 1)]
+    j -> [o + (6 - 2)]
+    k -> [o + (6 - 3)]
+    l -> [o + (6 - 4)]
+    m -> [o + (6 - 5)]
     h <- 0x10000        // h is video base
     k <- d * COLS + e   // k is offset into display
     k <- k + f          // start at right side of field
@@ -19,7 +25,14 @@ putnumloop:
     p <- @+putnumloop &~ l + p
 
 putnumdone:
-    popall_ret(h,i,j,k,l,m)
+    o <- o + 7
+    m <- [o - (1 + 5)]
+    l <- [o - (1 + 4)]
+    k <- [o - (1 + 3)]
+    j <- [o - (1 + 2)]
+    i <- [o - (1 + 1)]
+    h <- [o - (1 + 0)]
+    p <- [o]
 
 hexes:
     .word '0', '1', '2', '3', '4', '5', '6', '7'

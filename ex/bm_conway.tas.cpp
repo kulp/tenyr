@@ -35,7 +35,9 @@ forever:
     p <- p + @+forever
 
 blank_area:
-    pushall(j,n)
+    o <- o - 2
+    j -> [o + (2 - 0)]
+    n -> [o + (2 - 1)]
     j <- COLS
     j <- j * ROWS
 blank_area_loop:
@@ -43,10 +45,19 @@ blank_area_loop:
     d -> [c + j]
     n <- j > 0
     p <- @+blank_area_loop & n + p
-    popall_ret(j,n)
+    o <- o + 3
+    n <- [o - (1 + 1)]
+    j <- [o - (1 + 0)]
+    p <- [o]
 
 randomise_board:
-    pushall(j,k,c,d,l,n)
+    o <- o - 6
+    j -> [o + (6 - 0)]
+    k -> [o + (6 - 1)]
+    c -> [o + (6 - 2)]
+    d -> [o + (6 - 3)]
+    l -> [o + (6 - 4)]
+    n -> [o + (6 - 5)]
     c <- [@+seed + p]
     call(srand)
     j <- (ROWS - 1)
@@ -67,10 +78,20 @@ randomise_board_cols:
     j <- j - 1
     n <- j >= 0
     p <- @+randomise_board_rows & n + p
-    popall_ret(j,k,c,d,l,n)
+    o <- o + 7
+    n <- [o - (1 + 5)]
+    l <- [o - (1 + 4)]
+    d <- [o - (1 + 3)]
+    c <- [o - (1 + 2)]
+    k <- [o - (1 + 1)]
+    j <- [o - (1 + 0)]
+    p <- [o]
 
 flip:
-    pushall(j,k,n)
+    o <- o - 3
+    j -> [o + (3 - 0)]
+    k -> [o + (3 - 1)]
+    n -> [o + (3 - 2)]
     j <- (ROWS - 1)
 flip_rows:
     k <- (COLS - 1)
@@ -96,10 +117,21 @@ flip_cols:
     p <- @+flip_rows & n + p
 
     h <- h ^ 1
-    popall_ret(j,k,n)
+    o <- o + 4
+    n <- [o - (1 + 2)]
+    k <- [o - (1 + 1)]
+    j <- [o - (1 + 0)]
+    p <- [o]
 
 compute:
-    pushall(c,d,e,f,j,k,l)
+    o <- o - 7
+    c -> [o + (7 - 0)]
+    d -> [o + (7 - 1)]
+    e -> [o + (7 - 2)]
+    f -> [o + (7 - 3)]
+    j -> [o + (7 - 4)]
+    k -> [o + (7 - 5)]
+    l -> [o + (7 - 6)]
     j <- (ROWS - 1)
 compute_rows:
     k <- (COLS - 1)
@@ -131,10 +163,25 @@ compute_cols:
     j <- j - 1
     n <- j >= 0
     p <- @+compute_rows & n + p
-    popall_ret(c,d,e,f,j,k,l)
+    o <- o + 8
+    l <- [o - (1 + 6)]
+    k <- [o - (1 + 5)]
+    j <- [o - (1 + 4)]
+    f <- [o - (1 + 3)]
+    e <- [o - (1 + 2)]
+    d <- [o - (1 + 1)]
+    c <- [o - (1 + 0)]
+    p <- [o]
 
 get_neighbour_count:
-    pushall(e,f,j,k,l,m,n)
+    o <- o - 7
+    e -> [o + (7 - 0)]
+    f -> [o + (7 - 1)]
+    j -> [o + (7 - 2)]
+    k -> [o + (7 - 3)]
+    l -> [o + (7 - 4)]
+    m -> [o + (7 - 5)]
+    n -> [o + (7 - 6)]
     m <- 0
     j <- c
     k <- d
@@ -166,7 +213,15 @@ neighbour_loop_cols:
     p <- @+neighbour_loop_rows & n + p
 
     b <- m
-    popall_ret(e,f,j,k,l,m,n)
+    o <- o + 8
+    n <- [o - (1 + 6)]
+    m <- [o - (1 + 5)]
+    l <- [o - (1 + 4)]
+    k <- [o - (1 + 3)]
+    j <- [o - (1 + 2)]
+    f <- [o - (1 + 1)]
+    e <- [o - (1 + 0)]
+    p <- [o]
 
 seed: .word 0x99999999
 

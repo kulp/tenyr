@@ -28,6 +28,8 @@ dw_mul:
   // Adjust upper sum.
   b <- m >>> 16 + b
 
-  popall_ret(m)
+  o <- o + 2
+  m <- [o - (1 + 0)]
+  p <- [o]
 
 mask: .word 0xffff

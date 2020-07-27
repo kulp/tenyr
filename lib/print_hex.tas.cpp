@@ -13,7 +13,9 @@ convert_hex_top:
     d <- c == 0
     p <- @+convert_hex_top &~ d + p
 
-    popall_ret(d)
+    o <- o + 2
+    d <- [o - (1 + 0)]
+    p <- [o]
 
 hexes:
     .word '0', '1', '2', '3', '4', '5', '6', '7',

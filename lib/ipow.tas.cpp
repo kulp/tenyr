@@ -31,5 +31,7 @@ even:
   p <- p + @+mult_loop
 
 done:
-  popall_ret(k)
+  o <- o + 2
+  k <- [o - (1 + 0)]
+  p <- [o]
 

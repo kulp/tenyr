@@ -4,7 +4,9 @@
     .global memset
 // c,d,e <- dst, val, len
 memset:
-    pushall(f,g)
+    o <- o - 2
+    f -> [o + (2 - 0)]
+    g -> [o + (2 - 1)]
     b <- c                      // return original value of dst
     f <- 0                      // load offset with 0
 L_memset_loop:
@@ -14,5 +16,8 @@ L_memset_loop:
     f <- f + 1                  // increment offset
     p <- p + @+L_memset_loop
 L_memset_done:
-    popall_ret(f,g)
+    o <- o + 3
+    g <- [o - (1 + 1)]
+    f <- [o - (1 + 0)]
+    p <- [o]
 

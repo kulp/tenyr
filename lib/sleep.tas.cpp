@@ -10,12 +10,17 @@ sleep:
     p <- [o]
 
 ticks:
-    pushall(d,e)
+    o <- o - 2
+    d -> [o + (2 - 0)]
+    e -> [o + (2 - 1)]
     d <- 0
 Lticks_loop:
     e <- d < c
     d <- d + 1
     a <- a // delay to make the loop 4 cycles long
     p <- @+Lticks_loop & e + p
-    popall_ret(d,e)
+    o <- o + 3
+    e <- [o - (1 + 1)]
+    d <- [o - (1 + 0)]
+    p <- [o]
 
