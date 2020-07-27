@@ -17,7 +17,6 @@
 #define pushall(...)        pushall_(o,__VA_ARGS__)
 #define popall(...)         popall_(o,__VA_ARGS__)
 #define loadall(...)        loadall_(o,__VA_ARGS__)
-#define dropall(...)        dropall_(o,__VA_ARGS__)
 // popall_ret() for convenient symmetry with a frame-creating popall()
 #define popall_ret(...)     popall(P,__VA_ARGS__)
 

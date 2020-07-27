@@ -33,7 +33,6 @@
 #define pushall_(Sp,...)    Sp <- Sp - (_narg(__VA_ARGS__)) ; writeall_(Sp,__VA_ARGS__)
 #define popall_(Sp,...)     Sp <- Sp + (_narg(__VA_ARGS__)) ; loadall_(Sp,__VA_ARGS__)
 #define loadall_(Sp,...)    _paste(_post_,_narg(__VA_ARGS__))(_pop_op,+ 1,Sp,0,__VA_ARGS__)
-#define dropall_(Sp,...)    Sp <- Sp + (_narg(__VA_ARGS__))
 
 #endif
 
