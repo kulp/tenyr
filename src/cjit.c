@@ -111,9 +111,9 @@ int jit_run_sim(struct sim_state *s, const struct run_ops *ops, void **run_data,
         // interpreted even at the end of time.
         //
         // For now, add an explicit check for the normal "end simulation"
-        // condition (P == 0xffffffff) and if we hit it, break out without
+        // condition (P == halt_addr) and if we hit it, break out without
         // trying to run the interpreter again.
-        if (s->machine.regs[15] != (int32_t)0xffffffff) {
+        if (s->machine.regs[15] != s->conf.halt_addr) {
             rc = s->interp(s, &wrappers, &js->nested_run_data, o);
             s->pump(s); // no longer a "cycle" but periodic
         } else {

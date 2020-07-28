@@ -131,8 +131,7 @@ static int usage(const char *me, int rc)
 static int pre_fetch(struct sim_state *s, void *ud)
 {
     (void)ud;
-    // Exit simulation when P is the highest address in memory
-    if (s->machine.regs[15] == (signed)0xffffffff)
+    if (s->machine.regs[15] == s->conf.halt_addr)
         return 1;
 
     return 0;
@@ -468,6 +467,7 @@ int main(int argc, char *argv[])
             .debugging    = 0,
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
+            .halt_addr    = (signed)0xffffffff, // default to legacy halt behavior
             .fmt          = &tenyr_asm_formats[0],
             .tsim_path    = os_find_self(argv[0]),
         },
@@ -512,6 +512,8 @@ int main(int argc, char *argv[])
     } else if (argc - optind > 1) {
         fatal(DISPLAY_USAGE, "More than one input file specified on the command line");
     }
+
+    param_get_int(s->conf.params, "addrs.halt", &s->conf.halt_addr);
 
     FILE *infile;
 
