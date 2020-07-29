@@ -29,5 +29,4 @@ else:
   p <- p + @+loop
 
 done:
-  pop(k)
-  ret
+  popall_ret(k)

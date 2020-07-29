@@ -32,8 +32,7 @@ L_ilog2_top:
     B   <- B + 1
     p <- p + @+L_ilog2_top
 L_ilog2_done:
-    pop(D)
-    ret
+    popall_ret(D)
 
 // IRANK gets SZ rank in C, returns SZ inverted-rank in B
 #define IRANK(B,C)              \
@@ -99,8 +98,7 @@ L_NODE2RANK_top:
     p <- p + @+L_NODE2RANK_top
 L_NODE2RANK_done:
     B   <- - D + (RANKS - 1)
-    pop(D)
-    ret
+    popall_ret(D)
 
 #define SIZE2RANK(B,C)  FUNCIFY2(SIZE2RANK,B,C)
 SIZE2RANK_func:
@@ -268,8 +266,7 @@ buddy_calloc:
     D   <- 0
     pop(E)              // pop size from C into third memset param slot
     call(memset)
-    pop(E)
-    ret
+    popall_ret(E)
 
 .global buddy_free
 buddy_free:

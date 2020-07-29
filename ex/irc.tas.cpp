@@ -154,15 +154,13 @@ say_start:
     push(c)
     c <- @+talk + p
     call(puts)
-    pop(c)
-    ret
+    popall_ret(c)
 
 say_end:
     push(c)
     c <- @+rn + p
     call(puts)
-    pop(c)
-    ret
+    popall_ret(c)
 
 skipwords:
     pushall(e,g)

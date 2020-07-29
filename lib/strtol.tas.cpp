@@ -102,8 +102,7 @@ detect_base:
     p <- @+detect_base_8or16 & f + p
     b <- 10
 detect_base_done:
-    pop(f)
-    ret
+    popall_ret(f)
 detect_base_8or16:
     f <- [c + 1]
     f <- f &~ ('a' - 'A')

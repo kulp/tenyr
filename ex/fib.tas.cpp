@@ -21,8 +21,7 @@ fib:
     d <- c > 1          // not zero or one ?
     p <- @+_recurse & d + p  // not-zero is true (c >= 2)
     b <- c
-    pop(d)
-    ret
+    popall_ret(d)
 
 _recurse:
     push(c)
@@ -36,6 +35,5 @@ _recurse:
     pop(b)
     b <- d + b
 
-    pop(d)
-    ret
+    popall_ret(d)
 

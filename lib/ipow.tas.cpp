@@ -31,6 +31,5 @@ even:
   p <- p + @+mult_loop
 
 done:
-  pop(k)
-  ret
+  popall_ret(k)
 
