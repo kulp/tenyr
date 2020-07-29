@@ -41,7 +41,7 @@ static int walker(size_t len, const char *name, void *ud)
     size_t alen = strlen(argv0);
     char *buf = calloc(1,len + alen + 1 + 1);
     strncpy(buf, name, len);
-    buf[len] = PATH_COMPONENT_SEPARATOR_CHAR;
+    buf[len] = '/';
     strncpy(&buf[len + 1], argv0, alen);
     if (access(buf, F_OK) == 0) {
         paths[1] = buf;

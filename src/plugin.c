@@ -44,7 +44,7 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
             const void *implstem = NULL;
             snprintf(buf, sizeof buf, "%s[%d].stem", base, inst);
             p->gops.param_get(p, buf, 1, &implstem); // may not be set ; that's OK
-            if (strchr(implname, PATH_COMPONENT_SEPARATOR_CHAR)) {
+            if (strchr(implname, '/')) {
                 implpath = implname;
             } else {
                 snprintf(buf, sizeof buf, "libtenyr%s"DYLIB_SUFFIX, implname);

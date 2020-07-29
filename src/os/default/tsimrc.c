@@ -6,7 +6,7 @@
 int os_get_tsimrc_path(char buf[], size_t sz)
 {
     char *home = getenv("HOME");
-    int need = snprintf(buf, sz, "%s"PATH_COMPONENT_SEPARATOR_STR".tsimrc", home);
+    int need = snprintf(buf, sz, "%s/.tsimrc", home);
     if ((size_t)need >= sz) {
         errno = ENOSPC;
         return 1;
