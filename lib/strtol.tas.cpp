@@ -40,8 +40,7 @@ strtol_done:
     p <- @+strtol_no_endptr & h + p
     c -> [d]
 strtol_no_endptr:
-    popall(f,g,h,i)
-    ret
+    popall_ret(f,g,h,i)
 
 strtol_error_ERANGE:
     h <- ERANGE

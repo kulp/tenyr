@@ -24,8 +24,7 @@ strcmp_done:
     b <- b |~ e         // accumulate mismatches
     e <- h == i         // check for length mismatch
     b <- b |~ e         // accumulate mismatches
-    popall(e,g,h,i,j)
-    ret
+    popall_ret(e,g,h,i,j)
 
 // arguments in C, D, and E
 // result in B ; 0 for match, -1 for mismatch
@@ -55,6 +54,5 @@ strncmp_done:
     f <- h == i         // check for length mismatch
     b <- b |~ f         // accumulate mismatches
 strncmp_nreached:
-    popall(f,g,h,i,j)
-    ret
+    popall_ret(f,g,h,i,j)
 

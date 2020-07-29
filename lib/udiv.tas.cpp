@@ -53,6 +53,5 @@ shift_quotient:
   // Return result.
 done:
   b <- b >> 1
-  popall(d,g,j,k)
-  ret
+  popall_ret(d,g,j,k)
 

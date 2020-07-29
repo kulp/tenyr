@@ -14,6 +14,5 @@ L_memset_loop:
     f <- f + 1                  // increment offset
     p <- p + @+L_memset_loop
 L_memset_done:
-    popall(f,g)
-    ret
+    popall_ret(f,g)
 

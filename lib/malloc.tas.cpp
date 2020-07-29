@@ -248,8 +248,7 @@ L_ADDR2NODE_loopdone:
 
 L_ADDR2NODE_done:
 #endif
-    popall(D,E,F,G)
-    ret
+    popall_ret(D,E,F,G)
 
 .global buddy_malloc
 buddy_malloc:
@@ -305,8 +304,7 @@ L_buddy_splitnode_notempty:
     SET_LEAF(C,D,D,E,F,D)
 
 L_buddy_splitnode_done:
-    popall(E,F)
-    ret
+    popall_ret(E,F)
 
 // XXX buddy_nosplit has been modified without sufficient care and appears to
 // be internally inconsistent
@@ -341,8 +339,7 @@ L_buddy_nosplit_loop_bottom:
     D   <- D + 1    // D is loop index
     p <- p + @+L_buddy_nosplit_loop_top
 
-    popall(D,E,F,G)
-    ret
+    popall_ret(D,E,F,G)
 
 // buddy_alloc gets SZ rank in C, returns address or 0 in B
 buddy_alloc:
@@ -367,8 +364,7 @@ L_buddy_alloc_do_split:
     call(buddy_autosplit)
 
 L_buddy_alloc_done:
-    popall(D,E,F)
-    ret
+    popall_ret(D,E,F)
 
 L_buddy_alloc_error:
     D   <- ENOMEM

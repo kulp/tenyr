@@ -86,5 +86,4 @@ cleanup0:
 composite:
     b <- 0
 done:
-    popall(d,e,g,i,j,k,m)
-    ret
+    popall_ret(d,e,g,i,j,k,m)

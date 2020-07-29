@@ -48,6 +48,5 @@ bsearch_notfound:
     p <- p + @+bsearch_done
 
 bsearch_done:
-    popall(h,i,j)
-    ret
+    popall_ret(h,i,j)
 

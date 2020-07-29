@@ -18,6 +18,5 @@ dw_add:
   b <- b + d
   c <- h
 
-  popall(h,j,k)
-  ret
+  popall_ret(h,j,k)
 

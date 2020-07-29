@@ -32,8 +32,7 @@ print_num_generic_top:
 
 print_num_generic_done:
     b <- h
-    popall(d,f,g,h)
-    ret
+    popall_ret(d,f,g,h)
 print_num_generic_negative:
     g <- - g
     f <- -1

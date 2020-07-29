@@ -78,8 +78,7 @@ check_input_triggered:
     call(say_fahrenheit)
 
 check_input_done:
-    popall(d,e)
-    ret
+    popall_ret(d,e)
 
 ping: .utf32 "PING " ; .word 0
 pong: .utf32 "PONG " ; .word 0
@@ -137,8 +136,7 @@ convert_decimal_top:
 
 convert_decimal_done:
     b <- h
-    popall(d,f,g,h)
-    ret
+    popall_ret(d,f,g,h)
 convert_decimal_negative:
     g <- - g
     f <- -1
@@ -180,8 +178,7 @@ skipwords_foundspace:
 
 skipwords_done:
     b <- c
-    popall(e,g)
-    ret
+    popall_ret(e,g)
 
 getline:
     pushall(c,d,f)
@@ -199,8 +196,7 @@ getline_top:
 getline_eol:
     a -> [f]
     b <- @+buffer + p
-    popall(c,d,f)
-    ret
+    popall_ret(c,d,f)
 
 // ----------------------------------------------------------------------------
 

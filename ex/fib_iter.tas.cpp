@@ -28,5 +28,4 @@ loop:
     p <- p + @+loop
 
 done:
-    popall(d,g,k)
-    ret
+    popall_ret(d,g,k)

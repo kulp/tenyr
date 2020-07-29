@@ -15,6 +15,5 @@ L_memcpy_loop:
     f <- f + 1                  // increment offset
     p <- p + @+L_memcpy_loop
 L_memcpy_done:
-    popall(f,g)
-    ret
+    popall_ret(f,g)
 

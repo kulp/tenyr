@@ -97,6 +97,5 @@ L_qsort_partition_done:
     call(qsort)
 
 L_qsort_done:
-    popall(g,h,i,j,k,l,m)
-    ret
+    popall_ret(g,h,i,j,k,l,m)
 

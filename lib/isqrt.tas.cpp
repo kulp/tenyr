@@ -36,6 +36,5 @@ shift:
   p <- p + @+do_magic
 
 done:
-  popall(e,g,j,k)
-  ret
+  popall_ret(e,g,j,k)
 
