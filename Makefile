@@ -82,6 +82,7 @@ all: $(TARGETS) | $(TOP)/build/share/tenyr/rsrc
 $(TOP)/build/share/tenyr/%:
 	@$(MAKESTEP) [ LN ] $*
 	mkdir -p $(@D)
+	$(RM) $@
 	ln -sf ../../../$* $@
 
 -include $(TOP)/mk/os/rules/$(OS).mk
