@@ -19,6 +19,9 @@
 	@$(MAKESTEP) "[ MEMH ] $(<F)"
 	$(tas) -vd $< | $(tas) -fmemh -o $@ -
 
+# Set up dependency generation flags.
+%.o: CPPFLAGS += -MMD -MT '$*.o $*,dy.o $*.d' -MF $*.d
+
 %.o: %.c
 	@$(MAKESTEP) "[ CC ] $(<F)"
 	$(COMPILE.c) -o $@ $<
@@ -55,10 +58,6 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 %.h %.c: %.y
 	@$(MAKESTEP) "[ BISON ] $(<F)"
 	$(BISON) --defines=$*.h -o $*.c $<
-
-%.d: %.c
-	@mkdir -p $(@D)
-	$(CC) -MM -MT '$*.o $*,dy.o $*.d' -MF $@ $(CPPFLAGS) $< > /dev/null
 
 clean clobber::
 	$(RM) -rf $($@_FILES)
