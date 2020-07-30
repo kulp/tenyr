@@ -27,7 +27,7 @@ COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
-	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(LINK.c) -o $@ $^ $(LDLIBS)
 
 %,dy.o: CFLAGS += $(CFLAGS_PIC)
 %,dy.o: %.c
