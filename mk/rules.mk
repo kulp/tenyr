@@ -19,12 +19,10 @@
 	@$(MAKESTEP) "[ MEMH ] $(<F)"
 	$(tas) -vd $< | $(tas) -fmemh -o $@ -
 
-COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 %.o: %.c
 	@$(MAKESTEP) "[ CC ] $(<F)"
 	$(COMPILE.c) -o $@ $<
 
-LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
 	$(LINK.c) -o $@ $^ $(LDLIBS)
