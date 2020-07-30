@@ -57,10 +57,8 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	$(BISON) --defines=$*.h -o $*.c $<
 
 %.d: %.c
-	@set -e; mkdir -p $(@D); rm -f $@; \
-	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null && \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@ && \
-	rm -f $@.$$$$ || rm -f $@.$$$$
+	@mkdir -p $(@D)
+	$(CC) -MM -MT '$*.o $*,dy.o $*.d' -MF $@ $(CPPFLAGS) $< > /dev/null
 
 clean clobber::
 	$(RM) -rf $($@_FILES)
