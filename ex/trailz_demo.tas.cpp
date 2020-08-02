@@ -6,20 +6,20 @@ _start:
     E <- 32
 loop_outer:
     G <- E < 0
-    p <- @+done & G + p
+    P <- @+done & G + P
     D <- 0xa5 // TODO try other bit patterns
     C <- D << E
     call(trailz)
     G <- B == E
     E <- E - 1
-    p <- @+skip &~ G + p
+    P <- @+skip &~ G + P
     C <- @+good_msg + P
     call(puts)
-    p <- p + @+loop_outer
+    P <- P + @+loop_outer
 skip:
     C <- @+bad_msg + P
     call(puts)
-    p <- p + @+loop_outer
+    P <- P + @+loop_outer
 
 done:
     illegal

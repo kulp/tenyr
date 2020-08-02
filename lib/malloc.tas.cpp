@@ -28,9 +28,9 @@ ilog2:
 L_ilog2_top:
     C   <- C >> 1
     D   <- C == 0
-    p <- @+L_ilog2_done & D + p
+    P <- @+L_ilog2_done & D + P
     B   <- B + 1
-    p <- p + @+L_ilog2_top
+    P <- P + @+L_ilog2_top
 L_ilog2_done:
     O <- O + 2
     D <- [O - (1 + 0)]
@@ -94,10 +94,10 @@ NODE2RANK_func:
     D   <- 0
 L_NODE2RANK_top:
     B   <- C == 0
-    p <- @+L_NODE2RANK_done & B + p
+    P <- @+L_NODE2RANK_done & B + P
     D   <- D + 1
     PARENT(C,C)
-    p <- p + @+L_NODE2RANK_top
+    P <- P + @+L_NODE2RANK_top
 L_NODE2RANK_done:
     B   <- - D + (RANKS - 1)
     O <- O + 2
@@ -107,14 +107,14 @@ L_NODE2RANK_done:
 #define SIZE2RANK(B,C)  FUNCIFY2(SIZE2RANK,B,C)
 SIZE2RANK_func:
     B   <- C == 0
-    p <- @+L_SIZE2RANK_zero & B + p
+    P <- @+L_SIZE2RANK_zero & B + P
     C   <- C - 1
     C   <- C >> RANK_0_LOG
     call(ilog2)
     B   <- B + 1
 L_SIZE2RANK_zero:
-    o <- o + 1
-    p <- [o]
+    O <- O + 1
+    P <- [O]
 
 // RANK2WORDS gets SZ rank in C, returns SZ word-count in B, T may be C
 // TODO update grammar to permit expressions without parens to save insns
@@ -211,18 +211,18 @@ NODE2ADDR_func:
     E   <- RANK_0_LOG + E   // i = RANK_0_LOG + NODE2RANK(n)
 NODE2ADDR_looptop:
     D   <- C == TN          // while (n != TN) {
-    p <- @+NODE2ADDR_loopbottom & D + p
+    P <- @+NODE2ADDR_loopbottom & D + P
     ISRIGHT(D,C)            // ISRIGHT(n)
     D   <- - D              // -1 -> 1, 0 -> 0
     D   <- D << E           // ISRIGHT(n) << i
     B   <- B | D            // base |= ISRIGHT(n) << i
     PARENT(C,C)             // n = PARENT(n)
     E   <- E + 1            // i++
-    p <- p + @+NODE2ADDR_looptop // }
+    P <- P + @+NODE2ADDR_looptop // }
 NODE2ADDR_loopbottom:
     B   <- B + @+counts + P
-    o <- o + 1
-    p <- [o]
+    O <- O + 1
+    P <- [O]
 
 // ADDR2NODE gets SZ addr in C, returns NP node in B
 #define ADDR2NODE(B,C)  FUNCIFY2(ADDR2NODE,B,C)
@@ -237,25 +237,25 @@ ADDR2NODE_func:
     B   <- TN           // B is the node being checked
 L_ADDR2NODE_looptop:
     GET_LEAF(G,B,F)
-    p <- @+L_ADDR2NODE_loopdone & G + p
+    P <- @+L_ADDR2NODE_loopdone & G + P
     F   <- C - E        // F is (key - base)
     F   <- F < D        // if true, then left-link
-    p <- @+L_ADDR2NODE_left & F + p
+    P <- @+L_ADDR2NODE_left & F + P
     RLINK(B,B)          // n = RLINK(n)
     E   <- E + D        // base += RANK2WORDS(rank)
-    p <- p + @+L_ADDR2NODE_loopbottom
+    P <- P + @+L_ADDR2NODE_loopbottom
 L_ADDR2NODE_left:
     LLINK(B,B)          // n = LLINK(n)
     // fallthrough
 
 L_ADDR2NODE_loopbottom:
     D   <- D >> 1       // drop to next smaller rank
-    p <- p + @+L_ADDR2NODE_looptop
+    P <- P + @+L_ADDR2NODE_looptop
 
 L_ADDR2NODE_loopdone:
 #if DEBUG
     D   <- C == E
-    p <- @+L_ADDR2NODE_done & D + p
+    P <- @+L_ADDR2NODE_done & D + P
     call(abort)
 
 L_ADDR2NODE_done:
@@ -270,7 +270,7 @@ L_ADDR2NODE_done:
 .global buddy_malloc
 buddy_malloc:
     SIZE2RANK(C,C)
-    p <- p + @+buddy_alloc
+    P <- P + @+buddy_alloc
 
 .global buddy_calloc
 buddy_calloc:
@@ -289,14 +289,14 @@ buddy_calloc:
 .global buddy_free
 buddy_free:
     // TODO
-    o <- o + 1
-    p <- [o]
+    O <- O + 1
+    P <- [O]
 
 .global buddy_realloc
 buddy_realloc:
     // TODO
-    o <- o + 1
-    p <- [o]
+    O <- O + 1
+    P <- [O]
 
 // -----------------------------------------------------------------------------
 
@@ -307,11 +307,11 @@ buddy_splitnode:
     F -> [O + (2 - 1)]
     B   <- 0
     E   <- D == 0
-    p <- @+L_buddy_splitnode_done & E + p
+    P <- @+L_buddy_splitnode_done & E + P
     B   <- 1
     GET_FULL(E,C,F)
     E   <- E == 0
-    p <- @+L_buddy_splitnode_notempty &~ E + p
+    P <- @+L_buddy_splitnode_notempty &~ E + P
 
     GET_COUNT(E,D)
     E   <- E - 1
@@ -353,11 +353,11 @@ L_buddy_nosplit_loop_top:
     // rank. B is rank, D is scratch, E is scratch and currently count
     E   <- D
     GET_VALID(C,E,F,G)  // C is validity
-    p <- @+L_buddy_nosplit_loop_bottom &~ C + p
+    P <- @+L_buddy_nosplit_loop_bottom &~ C + P
     GET_LEAF(C,E,G)     // C is leafiness
-    p <- @+L_buddy_nosplit_loop_bottom &~ C + p
+    P <- @+L_buddy_nosplit_loop_bottom &~ C + P
     GET_FULL(C,E,G)     // C is fullness
-    p <- @+L_buddy_nosplit_loop_bottom & C + p
+    P <- @+L_buddy_nosplit_loop_bottom & C + P
     SET_FULL(E,-1,D,G,C,D)
     GET_COUNT(C,B)
     C   <- C - 1
@@ -367,7 +367,7 @@ L_buddy_nosplit_loop_top:
 
 L_buddy_nosplit_loop_bottom:
     D   <- D + 1    // D is loop index
-    p <- p + @+L_buddy_nosplit_loop_top
+    P <- P + @+L_buddy_nosplit_loop_top
 
     O <- O + 5
     G <- [O - (1 + 3)]
@@ -383,19 +383,19 @@ buddy_alloc:
     E -> [O + (3 - 1)]
     F -> [O + (3 - 2)]                  // D,E are scratch, F is rank
     D   <- C < RANKS
-    p <- @+L_buddy_alloc_error &~ D + p    // bail if need is too large
+    P <- @+L_buddy_alloc_error &~ D + P    // bail if need is too large
 L_buddy_alloc_rankplus:
     D   <- C < RANKS
-    p <- @+L_buddy_alloc_rankdone &~ D + p
+    P <- @+L_buddy_alloc_rankdone &~ D + P
     GET_COUNT(E,C)
     E   <- E == 0
-    p <- @+L_buddy_alloc_rankdone &~ E + p
+    P <- @+L_buddy_alloc_rankdone &~ E + P
     F   <- F + 1
-    p <- p + @+L_buddy_alloc_rankplus
+    P <- P + @+L_buddy_alloc_rankplus
 
 L_buddy_alloc_rankdone:
     call(buddy_nosplit)
-    p <- p + @+L_buddy_alloc_done
+    P <- P + @+L_buddy_alloc_done
 
 L_buddy_alloc_do_split:
     D   <- E
@@ -412,5 +412,5 @@ L_buddy_alloc_error:
     D   <- ENOMEM
     D   -> errno
     B   <- 0
-    p <- p + @+L_buddy_alloc_done
+    P <- P + @+L_buddy_alloc_done
 
