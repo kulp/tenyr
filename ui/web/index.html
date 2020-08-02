@@ -79,8 +79,8 @@ puts_loop:
     emit(b)                // output character to serial device
     p &lt;- p + @+puts_loop
 puts_done:
-    pop(d)
-    o &lt;- o + 1
+    o &lt;- o + 2
+    d &lt;- [o - 1]
     p &lt;- [o]
 </textarea>
             <button class="right" onclick="tenyr_state.tcc.go()">Preprocess &rarr;</button>
