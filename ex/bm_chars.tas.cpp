@@ -23,6 +23,6 @@ top:
     p <- @+top & n + p
 
     b <- -1             // indicate completion to testbench
-    p <- p + @+restart     // restartable, but exits to testbench by default
+    //p <- p + @+restart  // restartable, but exits to testbench by default
     illegal
 
