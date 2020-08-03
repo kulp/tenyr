@@ -113,7 +113,7 @@ $(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o $(shared_OBJECTS:%.o=%,dy
 tas.o tld.o param.o param,dy.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
 # Calls to variadic printf functions almost always need non-literal format
 # strings.
-common.o parser.o stream.o: CFLAGS += -Wno-format-nonliteral
+common.o common,dy.o parser.o stream.o stream,dy.o: CFLAGS += -Wno-format-nonliteral
 
 # We cannot control some aspects of the generated lexer or parser.
 lexer.o: CFLAGS += -Wno-missing-prototypes
