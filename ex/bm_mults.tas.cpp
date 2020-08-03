@@ -68,6 +68,6 @@ loop_k:
     p <- @+loop_j & c + p
     b <- -1             // indicate completion to testbench
 
-    //p <- p + @+restart     // restartable, but exits to testbench by default
+    //p <- p + @+restart  // restartable, but exits to testbench by default
     illegal
 

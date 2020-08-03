@@ -11,15 +11,15 @@
 #include "common.th"
 
 _start:
-    prologue            // sets up base/stack pointer
-    c <- ARGUMENT       // argument
+    prologue                // sets up base/stack pointer
+    c <- ARGUMENT           // argument
     call(fib)
     illegal
 
 fib:
     push(d)
-    d <- c > 1          // not zero or one ?
-    p <- @+_recurse & d + p  // not-zero is true (c >= 2)
+    d <- c > 1              // not zero or one ?
+    p <- @+_recurse & d + p // not-zero is true (c >= 2)
     b <- c
     o <- o + 2
     d <- [o - (1 + 0)]
