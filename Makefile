@@ -11,6 +11,7 @@ GNUMAKEFLAGS += --no-print-directory
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 
 SOURCEFILES = $(wildcard $(TOP)/src/*.c $(TOP)/src/devices/*.c)
+VPIFILES = $(wildcard $(TOP)/hw/vpi/*.c)
 
 VPATH += $(TOP)/src $(TOP)/src/devices $(TOP)/hw/vpi
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
@@ -22,6 +23,7 @@ clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    lexer.[ch]            \
                    $(TARGETS)            \
                    $(SOURCEFILES:$(TOP)/src/%.c=%.d) \
+                   $(VPIFILES:$(TOP)/hw/vpi/%.c=%.d) \
                    random random.*       \
                )#
 
@@ -136,6 +138,7 @@ parser.h parser.c: lexer.h
 
 ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include $(patsubst $(TOP)/src/%.c,$(BUILDDIR)/%.d,$(SOURCEFILES))
+-include $(patsubst $(TOP)/hw/vpi/%.c,$(BUILDDIR)/%.d,$(VPIFILES))
 -include $(BUILDDIR)/lexer.d
 -include $(BUILDDIR)/parser.d
 endif
