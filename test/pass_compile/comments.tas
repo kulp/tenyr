@@ -1,4 +1,2 @@
 # this is a one-line shell comment on its own line
-# this is a one-line shell comment on its own line \
-    and continuing on the next line
 a <- b # this is a one-line shell comment sharing a line

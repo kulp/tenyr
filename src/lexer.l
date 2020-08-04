@@ -114,7 +114,6 @@ illegal             { return ILLEGAL; }
 
 "#"                 PUSH(linecomment);
 <linecomment>{
-    \\\r?\n         ; /* escaped newline */
     \r?\n           { POP; return '\n'; }
     .               ; /* ignored content */
 }
