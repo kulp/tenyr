@@ -2,7 +2,7 @@
 .word (. + (2 + 3))
 bar: .word (@foo - .)
 .word 1,2,3,4,5
-//.word . - . // should not work
+#.word . - . // should not work
 foo: b <- c + d
 .set baz, (@bar + 2)
 c <- d - e

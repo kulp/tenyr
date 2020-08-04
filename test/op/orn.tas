@@ -1,11 +1,11 @@
 C <- [(@args + (0 + 0x1000))]
 D <- [(@args + (1 + 0x1000))]
 
-// passing until proven broken
+# passing until proven broken
 B <- -1
 
 I <- C |~ D
-// test type 0
+# test type 0
 D <- -1 &~ D
 E <- C ^ D
 F <- C & D
@@ -14,7 +14,7 @@ I <- I == E
 B <- B & I
 
 I <- C |~ -123
-// test type 1
+# test type 1
 E <- C ^ (-1 & ~-123)
 F <- C & (-1 & ~-123)
 E <- E + F
@@ -22,7 +22,7 @@ I <- I == E
 B <- B & I
 
 I <- 234 |~ D
-// test type 2
+# test type 2
 D <- -1 &~ D
 E <- 234 ^ D
 F <- 234 & D
