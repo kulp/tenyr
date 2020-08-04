@@ -21,7 +21,7 @@ module Gpio(clk, strobe, rw, reset, addr, data_i, data_o, gpio);
     reg [COUNT-1:0] state[SIZE-1:0];
 
     integer k;
-    initial for (k = 0; k < SIZE; k = k + 1) state[k] <= 0;
+    initial for (k = 0; k < SIZE; k = k + 1) state[k] = 0;
 
     genvar i;
     generate for (i = 0; i < COUNT; i = i + 1)

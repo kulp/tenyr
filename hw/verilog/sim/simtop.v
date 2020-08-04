@@ -9,7 +9,7 @@ module Top();
     reg rhalt = 1;
     reg reset = 1;
 
-    always #(`CLOCKPERIOD / 2) clk <= ~clk;
+    always #(`CLOCKPERIOD / 2) clk = ~clk;
 
     wire halt = 0;
 

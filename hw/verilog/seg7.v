@@ -42,8 +42,8 @@ module Seg7(clk, strobe, rw, reset, addr, d_in, d_out, seg, an);
 
     always @* begin
         case (addr[0])
-            1'b0: d_out <= store;
-            1'b1: d_out <= dots;
+            1'b0: d_out = store;
+            1'b1: d_out = dots;
         endcase
     end
 
