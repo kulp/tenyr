@@ -9,5 +9,4 @@
 	url = https://github.com/kulp/tenyr.wiki.git
 [submodule "3rdparty/wb_intercon"]
 	path = 3rdparty/wb_intercon
-	url = https://github.com/kulp/wb_intercon.git
-	branch = tenyr
+	url = https://github.com/olofk/wb_intercon.git

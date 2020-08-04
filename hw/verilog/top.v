@@ -120,7 +120,7 @@ module Tenyr(
     assign x_dup = 32'hffffffff;
 
     wb_mux #(
-        .NUM_SLAVES(6),
+        .num_slaves(6),
         .MATCH_ADDR({
     //  GPIO    7-seg   VGA display  serial port  memory       default
         32'h200,32'h100,`VIDEO_ADDR ,32'h00000020,`RESETVECTOR,-32'sd1 }),
