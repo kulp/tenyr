@@ -54,7 +54,6 @@ distclean:: clobber
 clean clobber::
 	-rmdir $(BUILDDIR)/devices $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
-	-$(MAKE) -C $(TOP)/forth $@
 	-$(MAKE) -C $(TOP)/hw/icarus $@
 	-$(MAKE) -C $(TOP)/hw/xilinx $@
 
