@@ -18,7 +18,7 @@ module Tenyr(
     wire[31:0] d_adr, d_to_slav, i_to_slav;
     wire[31:0] d_to_mast, i_to_mast;
 
-    assign Led[7:0] = halt;
+    assign Led[7:0] = {8{halt}};
     assign i_ack = i_stb;
 
     tenyr_mainclock clocks(
