@@ -5,7 +5,6 @@ export CC := $(EMCC)
 JIT = 0
 USE_OWN_SEARCH = 1
 LDFLAGS += -s MODULARIZE=1
-LDFLAGS += -s NODERAWFS=1
 DYLIB_SUFFIX = .js
 tpp = cpp
 CHECK_SW_TASKS = check_args check_behaviour check_compile check_sim check_obj check_forth # skip dogfood as it is quite expensive with emscripten
@@ -23,6 +22,10 @@ SDL_OPTS = \
 	-s USE_SDL_IMAGE=2 \
 	-s 'SDL2_IMAGE_FORMATS=["png"]' \
 	#
+
+ifeq ($(BUILD_FOR_NODE),1)
+LDFLAGS += -s NODERAWFS=1
+endif
 
 # Avoid choking on stdin / stdout macros.
 CFLAGS += -Wno-disabled-macro-expansion
