@@ -8,6 +8,8 @@ preamble.o: CFLAGS += -std=gnu11
 tsim$(EXE_SUFFIX): CLOSURE_FLAGS :=# empty
 
 CPPFLAGS += -Wno-error=fastcomp
+vpath %.c $(TOP)/3rdparty/naive-tsearch
+tsearch.o: CFLAGS += -Wno-error=unused-macros
 
 # For now, avoid failing on emscripten warnings (which can be as innocuous as
 # "disabling closure because debug info was requested"
