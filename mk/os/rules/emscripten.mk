@@ -7,6 +7,16 @@ preamble.o: CFLAGS += -std=gnu11
 # Disable closure compiler for tools using shared libraries
 tsim$(EXE_SUFFIX): CLOSURE_FLAGS :=# empty
 
+CPPFLAGS += -Wno-error=fastcomp
+
+# For now, avoid failing on emscripten warnings (which can be as innocuous as
+# "disabling closure because debug info was requested"
+CFLAGS += -Wno-error=emcc
+
+# Avoid erroring on tricks used by EM_ASM
+CFLAGS += -Wno-gnu-zero-variadic-macro-arguments
+CFLAGS += -Wno-c11-extensions
+
 tcc.js: LDFLAGS += $(TH_FLAGS)
 
 tsim.js: $(RSRC_FILES)
