@@ -36,8 +36,11 @@ tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
 tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ifeq ($(USE_OWN_SEARCH),1)
+vpath %.c $(TOP)/3rdparty/naive-tsearch
 # The interface of lsearch and tsearch is not something we can change.
 lsearch.o tsearch.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
+# tsearch.o from naive-tsearch has feature flags
+tsearch.o: CFLAGS += -Wno-unused-macros
 
 tas_OBJECTS   += lsearch.o tsearch.o
 tld_OBJECTS   += lsearch.o tsearch.o
