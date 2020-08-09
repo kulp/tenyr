@@ -25,6 +25,14 @@ SDL_OPTS = \
 
 ifeq ($(BUILD_FOR_NODE),1)
 LDFLAGS += -s NODERAWFS=1
+else
+# --embed-file is incompatible with NODERAWFS
+TENYR_LIB_DIR ?= $(TOP)/lib
+TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
+TH_FLAGS = $(addprefix --embed-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
+
+RSRC_FILES = $(wildcard $(TOP)/rsrc/*.png)
+RSRC_FLAGS = $(addprefix --embed-file ,$(foreach m,$(RSRC_FILES),$m@rsrc/$(notdir $m)))
 endif
 
 # Avoid choking on stdin / stdout macros.
@@ -60,13 +68,6 @@ LDFLAGS += $(CC_OPT) $(CC_DEBUG)
 LDFLAGS += $(CLOSURE_FLAGS)
 
 PP_BUILD = $(TOP)/3rdparty/tinypp
-
-TENYR_LIB_DIR ?= $(TOP)/lib
-TH_FILES = $(wildcard $(TENYR_LIB_DIR)/*.th)
-TH_FLAGS = $(addprefix --embed-file ,$(foreach m,$(TH_FILES),$m@$(notdir $m)))
-
-RSRC_FILES = $(wildcard $(TOP)/rsrc/*.png)
-RSRC_FLAGS = $(addprefix --embed-file ,$(foreach m,$(RSRC_FILES),$m@rsrc/$(notdir $m)))
 
 clean_FILES += $(BUILDDIR)/*.js.mem $(BUILDDIR)/*.js $(BUILDDIR)/*.data
 
