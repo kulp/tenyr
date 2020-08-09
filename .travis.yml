@@ -47,7 +47,7 @@ jobs:
   include:
   - language: node_js
     env:
-    - PLATFORM=emscripten
+    - PLATFORM=emscripten BUILD_FOR_NODE=1
     - CHECK_RULE=check_sw       JIT=0 SDL=0
     services:
     - docker
