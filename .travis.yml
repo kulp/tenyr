@@ -86,7 +86,7 @@ jobs:
     services:
     - docker
     before_install:
-    - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-tag-1.38.46-64bit
+    - docker run -dit --name emscripten -v $(pwd):/src emscripten/emsdk:1.40.1
       bash
     script:
     - make PLATFORM=emscripten SDL=0 JIT=0 NODEPS lexer.c parser.c
