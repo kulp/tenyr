@@ -17,6 +17,10 @@ CFLAGS += -Wno-error=emcc
 CFLAGS += -Wno-gnu-zero-variadic-macro-arguments
 CFLAGS += -Wno-c11-extensions
 
+# Wasm compilation needs PIC
+CFLAGS += -fPIC
+LDFLAGS += -fPIC
+
 tcc.js: LDFLAGS += $(TH_FLAGS)
 
 tsim.js: $(RSRC_FILES)
