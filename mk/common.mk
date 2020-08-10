@@ -113,7 +113,8 @@ include $(TOP)/mk/os/vars/default.mk
 
 # OS Makefiles might have set CROSS_COMPILE. Since we are using `:=` instead of
 # `=`, order of assignment of variables matters.
-CC  := $(CROSS_COMPILE)$(CC)
+export CC_FOR_BUILD := $(CC)
+export CC := $(CROSS_COMPILE)$(CC)
 
 # Provide a short identifier (e.g. "clang" or "gcc") to switch some build-time
 # behaviors (e.g. diagnostic fatalization).
@@ -125,7 +126,7 @@ include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/jit.mk
 
 # These definitions must come after OS includes
-MACHINE := $(shell $(CC) -dumpmachine)
+MACHINE ?= $(shell $(CC) -dumpmachine)
 BUILDDIR ?= $(TOP)/build/$(MACHINE)
 TOOLDIR := $(BUILDDIR)
 ifeq ($(findstring command,$(origin $(BUILDDIR))),)

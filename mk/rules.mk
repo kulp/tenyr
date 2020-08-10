@@ -3,7 +3,7 @@
 %.tas: %.tas.cpp
 	@$(MAKESTEP) "[ TPP ] $(<F)"
 	mkdir -p $(*D)
-	$(tpp) $(CPPFLAGS) - < $< -o $@
+	$(tpp) $(CPPFLAGS) $< -o $@
 
 %.to: %.tas
 	@$(MAKESTEP) "[ TAS ] $(<F)"
