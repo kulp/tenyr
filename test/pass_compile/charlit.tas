@@ -15,4 +15,3 @@ A <- ('a' - 0x20)
 a'
 .word '\
 \\'
-#.word 'ab' // this should fail
