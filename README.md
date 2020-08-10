@@ -29,4 +29,4 @@ should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
 
 Explore a [simple online demo of the **tenyr** toolset](http://demo.tenyr.info/).
 
-**tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki).
+**tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki), and it keeps a [changelog](Changelog.md) from v0.9.4 onward.
