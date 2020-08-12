@@ -2,10 +2,10 @@ TOP := $(abspath ..)
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
-vpath %.tas $(TOP)/lib $(TOP)/lib/dword
-vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
+vpath %.tas $(TOP)/lib
+vpath %.tas.cpp $(TOP)/lib
 
-%.tas: INCLUDES += $(TOP)/lib $(TOP)/lib/dword
+%.tas: INCLUDES += $(TOP)/lib
 
 TARGETS = \
     bsearch_demo.texe   \
@@ -27,7 +27,7 @@ TARGETS = \
 
 CPP_FILES := $(wildcard *.tas.cpp)
 
-clean_FILES += $(TARGETS) *.to dword/*.to *.texe
+clean_FILES += $(TARGETS) *.to *.texe
 clean_FILES += $(CPP_FILES:%.tas.cpp=%.tas)
 
 all: $(TARGETS)
@@ -38,7 +38,7 @@ $(patsubst %.tas,%.texe,$(patsubst %.tas.cpp,%.tas,$(wildcard bm_*.tas*))): \
 hello.texe: puts.to
 compare.texe: strcmp.to puts.to
 dynamic.texe: memset.to malloc.to abort.to
-maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/dword_mul.to
+maths.texe: isqrt.to umod.to udiv.to dword_add.to dword_mul.to
 totient.texe: gcd.to
 isprime.texe: umod.to isqrt.to udiv.to
 bsearch_demo.texe: bsearch.to puts.to
