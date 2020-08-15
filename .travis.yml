@@ -16,7 +16,7 @@ addons:
     - wine-stable
     - wine32
     - wine64
-  artifacts:
+  artifacts: &2
     paths:
     - $(ls -1 $(make showbuilddir)/*.{gz,zip} | tr "\n" :)
     - $(find . -name 'core.*' -o -name 'core' | tr "\n" :)
@@ -51,6 +51,7 @@ jobs:
   - compiler: x86_64-w64-mingw32-gcc
     addons:
       apt: *1
+      artifacts: *2
     env:
     - PLATFORM=mingw
     - CHECK_RULE=check_sw        JIT=0 SDL=0
@@ -58,6 +59,7 @@ jobs:
   - compiler: i686-w64-mingw32-gcc
     addons:
       apt: *1
+      artifacts: *2
     env:
     - PLATFORM=mingw BITS=32
     - CHECK_RULE=check_sw        JIT=0 SDL=0
