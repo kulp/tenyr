@@ -15,6 +15,7 @@ endif
 LDFLAGS += -Wl,--kill-at -static-libgcc -static
 # JIT on Windows doesn't work yet
 JIT = 0
+BIN_TARGETS += $(BIN_TARGETS_STATIC)
 
 sim.o tsim.o common.o: CPPFLAGS += -Wno-misleading-indentation
 

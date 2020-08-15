@@ -87,6 +87,8 @@ $(TOP)/build/share/tenyr/%:
 	$(RM) $@
 	ln -sf ../../../$* $@
 
+BIN_TARGETS_STATIC += $(foreach f,tas tsim tld,$f-static$(EXE_SUFFIX))
+
 -include $(TOP)/mk/os/rules/$(OS).mk
 
 .PHONY: vpi
