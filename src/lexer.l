@@ -60,7 +60,7 @@ string  ([^"]|\\\")+
 hexnum  "0x"[0-9a-f_]+
 octnum  "0"[0-7_]+
 binnum  "0b"[01_]+
-decnum  [0-9_]+
+decnum  0|[1-9][0-9_]*
 bitstr  {hexnum}|{octnum}|{binnum}
 self    [][|&+*^><.,:@()~;=/-]
 strcon  ([^"]|\\\")
