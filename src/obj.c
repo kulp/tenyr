@@ -12,6 +12,7 @@
 #include <limits.h>
 
 #define MAGIC_BYTES "TOV"
+#define OBJ_DEFAULT_VERSION 2
 #define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
@@ -230,7 +231,7 @@ static int obj_vx_write(struct obj *o, STREAM *out, struct objops *ops)
 
 int obj_write(struct obj *o, STREAM *out)
 {
-    int version = o->magic.parsed.version;
+    int version = o->magic.parsed.version = OBJ_DEFAULT_VERSION;
 
     switch (version) {
         case 0: case 1: case 2:
