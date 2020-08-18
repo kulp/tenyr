@@ -1,2 +1,2 @@
 .word '\B', '\F', '\N', '\R', '\T', '\V'
-.utf32 "\B\F\N\R\T\V"
+.chars "\B\F\N\R\T\V"

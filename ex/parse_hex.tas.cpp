@@ -52,9 +52,9 @@ _start:
 
 next: .word 0
 
-string_dec: .utf32 "123"   ; .word 0
-string_oct: .utf32 "0123"  ; .word 0
-string_hex: .utf32 "0x123" ; .word 0
-string_36:  .utf32 "1Za"   ; .word 0
-string_gbg: .utf32 "123CS" ; .word 0
-string_gb2: .utf32 "679Z0" ; .word 0
+string_dec: .chars "123"   ; .word 0
+string_oct: .chars "0123"  ; .word 0
+string_hex: .chars "0x123" ; .word 0
+string_36:  .chars "1Za"   ; .word 0
+string_gbg: .chars "123CS" ; .word 0
+string_gb2: .chars "679Z0" ; .word 0

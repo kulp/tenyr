@@ -17,7 +17,7 @@ syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|<<<\|>>\|>>>\|<>\
 syn match tenyrArrow '<-\|->'
 
 syn match tenyrDirective '\.\(global\|word\|set\|zero\)\>'
-syn match tenyrStrDir '\.utf32'
+syn match tenyrStrDir '\.chars'
 
 syn keyword tenyrTodo illegal
 syn keyword tenyrTodo contained TODO FIXME XXX NOTE
@@ -37,7 +37,7 @@ syn region  cDefine     start="^\s*\(%:\|#\)\s*\(define\|undef\)\>" skip="\\$" e
 syn region tenyrChar start="'" end="'" contains=tenyrEscape
 syn match tenyrEscape contained '\\[\\'0bfnrtv]'
 syn region tenyrString start='"' end='"' contained contains=tenyrEscape
-syn region tenyrStrRegion start="\.utf32\>" end="$" keepend contains=tenyrString,tenyrStrDir
+syn region tenyrStrRegion start="\.chars\>" end="$" keepend contains=tenyrString,tenyrStrDir
 
 syn match tenyrNumber '-\?\<\d\+\>'
 syn match tenyrNumber '0x[0-9a-fA-F]{1,8}'

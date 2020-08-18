@@ -1,5 +1,5 @@
-.utf32 "this is a test"
-.utf32
+.chars "this is a test"
+.chars
 "test 3"
-#.utf32"this is a test" // this should not work
+#.chars"this is a test" // this should not work
 

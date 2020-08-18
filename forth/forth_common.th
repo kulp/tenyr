@@ -62,7 +62,7 @@
     .set    L##Label##_compile, 0             ; /* offset  1 */ \
     .word  @L##Label##_compile                ;                 \
     .set    L##Label##_compile, 0             ;                 \
-    .utf32 Name                               ; /* offset  2 */ \
+    .chars Name                               ; /* offset  2 */ \
 .L##Label##_end: Label
 
 #define compile(Label)                          \

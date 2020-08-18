@@ -54,17 +54,17 @@ data_start:
 .L_data_end:
     .word 0
 
-L_1  : .utf32 "one"                    ; .word 0
-L_2  : .utf32 "two"                    ; .word 0
-L_3  : .utf32 "three"                  ; .word 0
-L_5  : .utf32 "five"                   ; .word 0
-L_8  : .utf32 "eight"                  ; .word 0
-L_13 : .utf32 "thirteen"               ; .word 0
-L_21 : .utf32 "twenty-one"             ; .word 0
-L_34 : .utf32 "thirty-four"            ; .word 0
-L_55 : .utf32 "fifty-five"             ; .word 0
-L_89 : .utf32 "eighty-nine"            ; .word 0
-L_144: .utf32 "one hundred forty-four" ; .word 0
+L_1  : .chars "one"                    ; .word 0
+L_2  : .chars "two"                    ; .word 0
+L_3  : .chars "three"                  ; .word 0
+L_5  : .chars "five"                   ; .word 0
+L_8  : .chars "eight"                  ; .word 0
+L_13 : .chars "thirteen"               ; .word 0
+L_21 : .chars "twenty-one"             ; .word 0
+L_34 : .chars "thirty-four"            ; .word 0
+L_55 : .chars "fifty-five"             ; .word 0
+L_89 : .chars "eighty-nine"            ; .word 0
+L_144: .chars "one hundred forty-four" ; .word 0
 
 nl: .word '\n', 0
 

@@ -363,7 +363,7 @@ L_WORD_zero_len: .word
     @EXIT
 L_WORD_tmp:
 .L_WORD_tmp:
-    .utf32 "          ""          ""          ""  "
+    .chars "          ""          ""          ""  "
 .L_WORD_tmp_end: .word 0
 
 head(CLEAR_WORD_TMP,CLEAR-WORD-TMP): .word

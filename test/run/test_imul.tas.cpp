@@ -98,6 +98,6 @@ print_hex:
     call(puts)
     ret
 
-_0x: .utf32 "0x" ; .word 0
+_0x: .chars "0x" ; .word 0
 _nl: .word '\n' ; .word 0
 

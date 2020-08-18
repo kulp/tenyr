@@ -11,5 +11,5 @@
 
 # This would be nice but is not available yet ; need to review the ambiguity of
 # the grammar
-#.utf32 "hi"
+#.chars "hi"
 #       "there"
