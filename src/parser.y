@@ -29,7 +29,7 @@ static struct expr *make_unary(int op, int x, int y, int mult,
         struct const_expr *defexpr);
 static struct element *make_insn_general(struct parse_data *pd,
         struct expr *lhs, int arrow, struct expr *expr);
-static struct element_list *make_utf32(struct cstr *cs);
+static struct element_list *make_chars(struct cstr *cs);
 static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
         struct element *insn, struct cstr *symbol);
 static struct element_list *make_data(struct parse_data *pd,
@@ -108,7 +108,7 @@ static void free_cstr(struct cstr *cs, int recurse);
 %token <i> TOR  "->"
 
 %token WORD     ".word"
-%token UTF32    ".utf32"
+%token CHARS    ".chars"
 %token GLOBAL   ".global"
 %token SET      ".set"
 %token ZERO     ".zero"
@@ -224,7 +224,7 @@ strspan
 data
     : ".word"  opt_nl expr_list {  POP; $$ = make_data(pd, $expr_list); }
     | ".zero"  opt_nl expr      {  POP; $$ = make_zeros(pd, &yylloc, $expr); ce_free($expr); }
-    | ".utf32" opt_nl string    {  POP; $$ = make_utf32($string); free_cstr($string, 1); }
+    | ".chars" opt_nl string    {  POP; $$ = make_chars($string); free_cstr($string, 1); }
 
 directive
     : ".global" opt_nl SYMBOL
@@ -572,7 +572,7 @@ static void free_cstr(struct cstr *cs, int recurse)
     free(cs);
 }
 
-static struct element_list *make_utf32(struct cstr *cs)
+static struct element_list *make_chars(struct cstr *cs)
 {
     struct element_list *result = NULL, **rp = &result;
 

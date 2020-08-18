@@ -66,17 +66,17 @@ _finished:
     ret
 
 _match_message:
-    .utf32 "strings matched"
+    .chars "strings matched"
     .word 0
 _mismatch_message:
-    .utf32 "strings did not match"
+    .chars "strings did not match"
     .word 0
 
 this:
-    .utf32 "this is a longish string"
+    .chars "this is a longish string"
     .word 0
 that:
-    .utf32 "this is a longish string2"
+    .chars "this is a longish string2"
     .word 0
 nl:
     .word '\n'

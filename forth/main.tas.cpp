@@ -5,8 +5,8 @@
 .global INBUF ; .global INPOS ; .global INLEN
 .L_INBUF_before:
 INBUF:
-    .utf32 "                                               "
-    .utf32 "                                               "
+    .chars "                                               "
+    .chars "                                               "
 .L_INBUF_after:
 INPOS: .word 0
 INLEN: .word (.L_INBUF_after - .L_INBUF_before)
@@ -83,7 +83,7 @@ head(HEXTABLE,HEXTABLE): .word
     @EXIT
 
 hexchars:
-    .utf32 "0123456789ABCDEF"
+    .chars "0123456789ABCDEF"
 
 head(TOHEXCHAR,>HEXCHAR): .word
     @ENTER,

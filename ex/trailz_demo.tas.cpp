@@ -24,6 +24,6 @@ skip:
 done:
     illegal
 
-good_msg: .utf32 "good\n" ; .word 0
-bad_msg:  .utf32 "bad\n"  ; .word 0
+good_msg: .chars "good\n" ; .word 0
+bad_msg:  .chars "bad\n"  ; .word 0
 
