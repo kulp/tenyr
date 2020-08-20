@@ -5,6 +5,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Enabled many compiler warnings under Clang and GCC
+- Introduced a stream-based abstraction layer for filesystem operations
+- Enabled CI jobs for additional architectures (arm64, ppc64le, s390x)
+- Defined the overshifting behavior for the `@` operator
+
+### Changed
+- Updated supported emscripten version to 1.38.46
+- Reimplemented JIT using GNU lightning
+- Stopped relying on customizations to `wb_intercon` for tenyr's Verilog implementation
+- Addressed various lint warnings found in tenyr's Verilog
+
+### Fixed
+- Corrected a long-standing tsim bug when right-shifting by more than 31 bits
+- Corrected tsim bugs manifesting on big-endian host machines
+- Corrected silent sign conversions, adhering to `-Werror=sign-conversion`
+
+### Removed
+- Stopped suggesting Gitter as a chat option
+- Stopped using coveralls.io for code coverage reporting
+- Dropped `raw` output format
 
 ## [0.9.7] - 2019-07-25
 ### Added
