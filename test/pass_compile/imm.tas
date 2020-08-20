@@ -5,6 +5,36 @@ foo:
     e <- @foo
     [e] <- @bar
     e <- [e]
+
+    f <- a - 0x7ff
+    f <- a + 0x7ff
+    f <- a - 0x800
+    f <- a + 0xfffff800
+
+    f <- a - 0x7ff + a
+    f <- a + 0x7ff + a
+    f <- a - 0xfffff800 + a
+    f <- a + 0xfffff800 + a
+
+    g <- a - 2047
+    g <- a + 2047
+    g <- a - -2048
+    g <- a + -2048
+
+    g <- a - 2047 + a
+    g <- a + 2047 + a
+    g <- a - -2048 + a
+    g <- a + -2048 + a
+
+    h <- a - 0x7ffff
+    h <- a + 0x7ffff
+    #h <- a - 0xfff80000 # too big (cannot be negated)
+    h <- a + 0xfff80000
+    h <- a - 524287
+    h <- a + 524287
+    #h <- a - -524288 # too big (cannot be negated)
+    h <- a + -524288
+
     illegal
 bar:
     .word 0x123
