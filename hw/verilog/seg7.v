@@ -20,7 +20,7 @@ module Seg7(clk, strobe, rw, reset, addr, d_in, d_out, seg, an);
     wire[1:0] dig = counter[CNT_BITS - 2 +: 2];
     assign seg[7] = (dots[0 +: 4] & ~an) == 0;
     assign an = ~(1 << dig);
-    Hex2Segments lookup(clk, store[dig * 4 +: 4], seg[6:0]);
+    Hex2Segments lookup(store[dig * 4 +: 4], seg[6:0]);
 
     always @(posedge clk) begin
         if (reset) begin
