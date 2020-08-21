@@ -93,7 +93,7 @@ module Core(
     inout halt
 );
 
-    localparam[3:0] s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6;
+    localparam[3:0] s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6, s7=7;
 
     wire deref_rhs, branching, storing, loading, edone;
     wire[3:0] idxX, idxY, idxZ, op;
@@ -101,7 +101,7 @@ module Core(
     wire[1:0] kind;
     reg[31:0] insn, _data;
     reg signed[31:0] _irhs, nextP;
-    reg[3:0] state = s5;
+    reg[3:0] state;
 
     wire signed[31:0] nextI = branching ? nextZ : nextP;
     wire signed[31:0] nextZ = deref_rhs ? _data : _irhs;
@@ -130,6 +130,7 @@ module Core(
             s4: begin state <=          s5     ; adr_o <= nextI;        end
             s5: begin state <= ack_i  ? s6 : s5; nextP <= adr_o + 1;    end
             s6: begin state <=          s0     ; insn  <= dat_i;        end
+            s7: begin state <= s5;                                      end
         endcase
 
     Decode decode(.insn, .op, .idxZ, .idxX, .idxY, .valI, .deref_rhs,
