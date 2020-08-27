@@ -260,6 +260,10 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
     long *filesize = context;
 
     GET(o->rec_count, in);
+    if (o->rec_count < 0) {
+        errno = EINVAL;
+        return 1;
+    }
     if (o->rec_count > OBJ_MAX_REC_CNT) {
         errno = EFBIG;
         return 1;
@@ -317,6 +321,10 @@ static int get_syms_v1(struct obj *o, STREAM *in, void *context)
 static int get_syms_v2(struct obj *o, STREAM *in, void *context)
 {
     GET(o->sym_count, in);
+    if (o->sym_count < 0) {
+        errno = EINVAL;
+        return 1;
+    }
     if (o->sym_count > OBJ_MAX_SYMBOLS) {
         errno = EFBIG;
         return 1;
@@ -365,6 +373,10 @@ static int get_relocs_v0(struct obj *o, STREAM *in, void *context)
 static int get_relocs_v2(struct obj *o, STREAM *in, void *context)
 {
     GET(o->rlc_count, in);
+    if (o->rlc_count < 0) {
+        errno = EINVAL;
+        return 1;
+    }
     if (o->rlc_count > OBJ_MAX_RELOCS) {
         errno = EFBIG;
         return 1;
