@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stopped suggesting Gitter as a chat option
 - Stopped using coveralls.io for code coverage reporting
 - Dropped `raw` output format
+- Dropped explicit support for backslashes as path component separators (#43)
 
 ## [0.9.7] - 2019-07-25
 ### Added
