@@ -316,7 +316,8 @@ static int obj_in(STREAM *stream, struct element *i, void *ud)
     int done = 0;
     while (!done) {
         if (!rec) {
-            u->error = 1;
+            // We have reached the end of the list. This is not an error
+            // condition, but we need to signal it specially.
             return -1;
         }
 
