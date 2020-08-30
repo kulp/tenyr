@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stopped suggesting Gitter as a chat option
 - Stopped using coveralls.io for code coverage reporting
 - Dropped `raw` output format
+- Removed support for various deprecated and obsolete functionalities (#47)
+    - Dropped support for C-style and C++-style comments in .tas files
+    - Removed broken Forth implementation
+    - Dropped support for deprecated v0 and v1 object formats
+    - Remove unused `@=` syntax sugar
+    - Removed web demo
+    - Removed bitrotten support for Quartus and Lattice builds
+    - Dropped unused submodule for broken lcc port
 
 ## [0.9.7] - 2019-07-25
 ### Added
