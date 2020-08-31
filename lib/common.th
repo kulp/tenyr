@@ -4,7 +4,6 @@
 // The stack-setup prologue sets up a stack at the top of 8K
 #define prologue            o <- ((1 << 13) - 1)
 
-#define call(Label)         push(p + 2); p <- @+Label + p
 #define push(Expr)          [o] <- Expr ; o <- o - 1
 #define pop(Reg)            o <- o + 1 ; Reg <- [o]
 
