@@ -58,9 +58,9 @@ symbol  [A-Z_][A-Z0-9_]+|[Q-Z_][A-Z0-9_]*
 local   \.L[A-Z0-9_]+
 string  ([^"]|\\\")+
 hexnum  "0x"[0-9a-f_]+
-octnum  "0"[0-7_]+
-binnum  "0b"[01_]+
-decnum  [0-9_]+
+octnum  "0"[0-7_]*[0-7]
+binnum  "0b"[01_]*[01]
+decnum  0|[1-9]([0-9_]*[0-9])?
 bitstr  {hexnum}|{octnum}|{binnum}
 self    [][|&+*^><.,:@()~;=/-]
 strcon  ([^"]|\\\")

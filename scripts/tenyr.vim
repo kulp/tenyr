@@ -39,8 +39,10 @@ syn match tenyrEscape contained '\\[\\'0bfnrtv]'
 syn region tenyrString start='"' end='"' contained contains=tenyrEscape
 syn region tenyrStrRegion start="\.chars\>" end="$" keepend contains=tenyrString,tenyrStrDir
 
-syn match tenyrNumber '-\?\<\d\+\>'
-syn match tenyrNumber '0x[0-9a-fA-F]{1,8}'
+syn match tenyrNumber '-\?\(0\|[1-9]\([0-9_]*[0-9]\)\?\)\>' " decimal
+syn match tenyrNumber '-\?0[0-7_]*[0-7]' " octal
+syn match tenyrNumber '-\?0x[[:xdigit:]_]*[[:xdigit:]]' " hexadecimal
+syn match tenyrNumber '-\?0b[01_]*[01]' " binary
 
 let b:current_syntax = "tenyr"
 

@@ -16,16 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reimplemented JIT using GNU lightning
 - Stopped relying on customizations to `wb_intercon` for tenyr's Verilog implementation
 - Addressed various lint warnings found in tenyr's Verilog
+- Tightened lexer rules for numeric constans (#56)
 
 ### Fixed
 - Corrected a long-standing tsim bug when right-shifting by more than 31 bits
 - Corrected tsim bugs manifesting on big-endian host machines
 - Corrected silent sign conversions, adhering to `-Werror=sign-conversion`
+- Prevented disassembly from `obj` from always exiting non-zero (#59)
 
 ### Removed
 - Stopped suggesting Gitter as a chat option
 - Stopped using coveralls.io for code coverage reporting
 - Dropped `raw` output format
+- Dropped explicit support for backslashes as path component separators (#43)
 - Removed support for various deprecated and obsolete functionalities (#47)
     - Dropped support for C-style and C++-style comments in .tas files
     - Removed broken Forth implementation
