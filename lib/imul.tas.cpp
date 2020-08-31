@@ -5,13 +5,6 @@
 // b -> product
 .global imul
 imul:
-#if IMUL_EARLY_EXITS
-    b <- c == 0
-    d <- d &~ b     // d = (c == 0) ? 0 : d
-    b <- d == 0
-    p <- @+L_done & b + p
-#endif
-
     o <- o - 3
     h -> [o + (3 - 0)]
     i -> [o + (3 - 1)]
