@@ -1,5 +1,4 @@
 #include "common.th"
-#include "errno.th"
 
     c   <- 10
     push(p + 2); p <- @+buddy_malloc + p

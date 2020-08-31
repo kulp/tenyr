@@ -1,5 +1,4 @@
 #include "common.th"
-#include "errno.th"
 
     .global memcpy
 // c,d,e <- dst, src, len

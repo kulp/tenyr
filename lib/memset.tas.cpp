@@ -1,5 +1,4 @@
 #include "common.th"
-#include "errno.th"
 
     .global memset
 // c,d,e <- dst, val, len
