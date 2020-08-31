@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language: tenyr asm
 " Maintainer: Darren Kulp <darren@kulp.ch>
-" Latest Revision: 12 Feb 2012
+" Latest Revision: 10 Aug 2020
 
-    "if exists("b:current_syntax")
+"if exists("b:current_syntax")
 "  finish
 "endif
 
@@ -13,7 +13,7 @@ syn keyword tenyrRegister a b c d e f g h i j k l m n o p
 syn match tenyrDelim '[][]'
 
 "syn keyword tenyrArrow <- ->
-syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|<<<\|>>\|>>>\|<>\|!=\|==\|>=\|<=\||\~\|&\~\|\^\^\)\([[:space:]]\|$\)\@='
+syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|<<<\|>>\|>>>\|!=\|==\|>=\|<=\||\~\|&\~\|\^\^\)\([[:space:]]\|$\)\@='
 syn match tenyrArrow '<-\|->'
 
 syn match tenyrDirective '\.\(global\|word\|set\|zero\)\>'

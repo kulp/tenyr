@@ -1,5 +1,3 @@
 .chars "this is a test"
 .chars
 "test 3"
-#.chars"this is a test" // this should not work
-

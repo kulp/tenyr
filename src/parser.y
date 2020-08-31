@@ -355,7 +355,6 @@ expr
 eref
     : '@'     SYMBOL    { $$ = make_ref (pd, &yylloc, CE_EXT, $SYMBOL);    free_cstr($SYMBOL, 1); }
     /* syntax sugars */
-    | '@' '=' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 0); free_cstr($SYMBOL, 1); }
     | '@' '+' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 1); free_cstr($SYMBOL, 1); }
 
 binop_expr
@@ -800,7 +799,6 @@ static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
 }
 
 // make_eref implements syntax sugar :
-//  `@=var` expands to `@var - (. + 0)`
 //  `@+var` expands to `@var - (. + 1)`
 static struct const_expr *make_eref(struct parse_data *pd, YYLTYPE *locp,
         const struct cstr *symbol, int offset)

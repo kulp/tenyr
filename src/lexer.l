@@ -48,7 +48,7 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 %s ignore_nl
 %s needarrow
 %x charlit charend charesc
-%x comment linecomment
+%x linecomment
 %x string
 
 regname [A-P]
@@ -112,18 +112,9 @@ illegal             { return ILLEGAL; }
 
 {white}+            ; /* ignored whitespace */
 
-"//"|"#"            PUSH(linecomment);
+"#"                 PUSH(linecomment);
 <linecomment>{
-    \\\r?\n         ; /* escaped newline */
     \r?\n           { POP; return '\n'; }
-    .               ; /* ignored content */
-}
-
-"/*"                PUSH(comment);
-<comment>{
-    "*/"            POP; /* pop comment, reveal INITIAL */
-    <<EOF>>         { tenyr_error(yylloc, yyextra, "End of file reached while inside comment. "
-                        "Did you forget `*/' ?"); POP; }
     .               ; /* ignored content */
 }
 

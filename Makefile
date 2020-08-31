@@ -36,8 +36,11 @@ tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
 tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ifeq ($(USE_OWN_SEARCH),1)
+vpath %.c $(TOP)/3rdparty/naive-tsearch
 # The interface of lsearch and tsearch is not something we can change.
 lsearch.o tsearch.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
+# tsearch.o from naive-tsearch has feature flags
+tsearch.o: CFLAGS += -Wno-unused-macros
 
 tas_OBJECTS   += lsearch.o tsearch.o
 tld_OBJECTS   += lsearch.o tsearch.o
@@ -54,7 +57,6 @@ distclean:: clobber
 clean clobber::
 	-rmdir $(BUILDDIR)/devices $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
-	-$(MAKE) -C $(TOP)/forth $@
 	-$(MAKE) -C $(TOP)/hw/icarus $@
 	-$(MAKE) -C $(TOP)/hw/xilinx $@
 
