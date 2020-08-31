@@ -11,7 +11,7 @@ _start:
     c <- 1              // argument
     prologue
 
-    call(init_display)
+    push(p + 2); p <- @+init_display + p
 
     j <- 0              // row (0 - 31)
     k <- 0              // column (0 - 3)
@@ -21,7 +21,7 @@ loop:
 
     // compute fib(N)
     push(c)
-    call(fib)
+    push(p + 2); p <- @+fib + p
     pop(c)
 
     c -> [0x100]        // write N to LED
@@ -32,7 +32,7 @@ loop:
     d <- j
     e <- l
     f <- 2
-    call(putnum)
+    push(p + 2); p <- @+putnum + p
     pop(c)
 
     // write fib(N) to VGA
@@ -41,7 +41,7 @@ loop:
     d <- j
     e <- l + 4
     f <- 12
-    call(putnum)
+    push(p + 2); p <- @+putnum + p
     pop(c)
 
     c <- c + 1          // increment N
@@ -66,11 +66,11 @@ fib:
 _recurse:
     push(c)
     c <- c - 1
-    call(fib)
+    push(p + 2); p <- @+fib + p
     pop(c)
     push(b)
     c <- c - 2
-    call(fib)
+    push(p + 2); p <- @+fib + p
     d <- b
     pop(b)
     b <- d + b

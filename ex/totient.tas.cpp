@@ -4,7 +4,7 @@ _start:
   prologue
 
   c <- 67
-  call(totient)
+  push(p + 2); p <- @+totient + p
 
   illegal
 
@@ -26,7 +26,7 @@ loop:
   c -> [o + (3 - 1)]
   d -> [o + (3 - 2)]
 
-  call(gcd)
+  push(p + 2); p <- @+gcd + p
 
   k <- b == 1
 

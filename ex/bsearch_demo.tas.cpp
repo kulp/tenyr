@@ -19,7 +19,7 @@ loop_top:
     e <- (DATA_LEN / ELT_LEN)   // number of elements
     f <- ELT_LEN                // size of each element
     g <- @+inteq + p            // comparator
-    call(bsearch)
+    push(p + 2); p <- @+bsearch + p
 
     push(c)
     c <- b == 0
@@ -32,9 +32,9 @@ notfound:
     c <- @+error_msg + p
 
 done:
-    call(puts)
+    push(p + 2); p <- @+puts + p
     c <- @+nl + p
-    call(puts)
+    push(p + 2); p <- @+puts + p
     pop(c)
     c <- [@+key + p]
     c <- c + 1                  // increment loop counter

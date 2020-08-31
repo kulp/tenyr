@@ -16,7 +16,7 @@ top:
     h -> [0x101]
 
     c <- 1
-    call(sleep)
+    push(p + 2); p <- @+sleep + p
 
     g <- g + 1
     h <- g == 10

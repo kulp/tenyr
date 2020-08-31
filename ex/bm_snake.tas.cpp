@@ -8,7 +8,7 @@
 _start:
     prologue
 
-    call(init_display)
+    push(p + 2); p <- @+init_display + p
 
 #ifdef TEST
     c <- @+_start + p ; call(srand) # seed based on where we are loaded
@@ -17,7 +17,7 @@ _start:
     n <- @+snakes + p
     e <- @+snakes_after + p
 init:
-    call(rand)
+    push(p + 2); p <- @+rand + p
     j <- b >>> 27 // 5 bits
     k <- b >>> 21 ; k <- k & 0x3f // 6 bits
     j -> [n + 2]
@@ -36,7 +36,7 @@ L_snake:
     k <- [n + 3]
 
     // direction and character choice are not independent variables
-    call(rand)
+    push(p + 2); p <- @+rand + p
     f <- b // save away random value for later
     d <- f >>> 30 // a direction 0 - 3 ; clockwise, 0 = up
 

@@ -13,7 +13,7 @@
 _start:
     prologue                // sets up base/stack pointer
     c <- ARGUMENT           // argument
-    call(fib)
+    push(p + 2); p <- @+fib + p
     illegal
 
 fib:
@@ -28,11 +28,11 @@ fib:
 _recurse:
     push(c)
     c <- c - 1
-    call(fib)
+    push(p + 2); p <- @+fib + p
     pop(c)
     push(b)
     c <- c - 2
-    call(fib)
+    push(p + 2); p <- @+fib + p
     d <- b
     pop(b)
     b <- d + b

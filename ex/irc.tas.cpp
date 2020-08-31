@@ -14,45 +14,45 @@ _start:
     do(join)
 
 loop_line:
-    call(getline)
+    push(p + 2); p <- @+getline + p
     // use g as backing store for line ; c is stompable as arg
     g <- b
 
     c <- g
     d <- @+ping + p
     e <- 5
-    call(strncmp)
+    push(p + 2); p <- @+strncmp + p
     p <- @+do_pong &~ b + p
 
     c <- g
     d <- 1
-    call(skipwords)
+    push(p + 2); p <- @+skipwords + p
 
     c <- b
     d <- @+privmsg + p
     e <- 7
-    call(strncmp)
+    push(p + 2); p <- @+strncmp + p
     p <- @+loop_line & b + p
     c <- g
     d <- 3
-    call(skipwords)
+    push(p + 2); p <- @+skipwords + p
 
     c <- b + 1
-    call(check_input)
+    push(p + 2); p <- @+check_input + p
 
     p <- p + @+loop_line
 
     illegal
 do_pong:
     c <- @+pong + p
-    call(puts)
+    push(p + 2); p <- @+puts + p
     c <- g
     d <- 1
-    call(skipwords)
+    push(p + 2); p <- @+skipwords + p
     c <- b
-    call(puts) // respond with same identifier
+    push(p + 2); p <- @+puts + p // respond with same identifier
     c <- @+rn + p
-    call(puts)
+    push(p + 2); p <- @+puts + p
     p <- p + @+loop_line
 
 check_input:
@@ -62,7 +62,7 @@ check_input:
     push(c)
     d <- @+trigger + p
     e <- 3 // strlen(trigger)
-    call(strncmp)
+    push(p + 2); p <- @+strncmp + p
     pop(c)
     p <- @+check_input_triggered &~ b + p
     p <- p + @+check_input_done
@@ -71,13 +71,13 @@ check_input_triggered:
     c <- c + 3
     d <- 0
     e <- 10
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
     c <- b + 40
     c <- c * 9
     d <- 5
-    call(udiv)
+    push(p + 2); p <- @+udiv + p
     c <- b - 40
-    call(say_fahrenheit)
+    push(p + 2); p <- @+say_fahrenheit + p
 
 check_input_done:
     o <- o + 3
@@ -92,22 +92,22 @@ tmpbuf: .chars "0123456789abcdef"
 tmpbuf_end: .word 0
 
 say_decimal:
-    call(say_start)
-    call(convert_decimal)
+    push(p + 2); p <- @+say_start + p
+    push(p + 2); p <- @+convert_decimal + p
     c <- b
-    call(puts)
-    call(say_end)
+    push(p + 2); p <- @+puts + p
+    push(p + 2); p <- @+say_end + p
     o <- o + 1
     p <- [o]
 
 say_fahrenheit:
-    call(say_start)
-    call(convert_decimal)
+    push(p + 2); p <- @+say_start + p
+    push(p + 2); p <- @+convert_decimal + p
     c <- b
-    call(puts)
+    push(p + 2); p <- @+puts + p
     c <- @+degF + p
-    call(puts)
-    call(say_end)
+    push(p + 2); p <- @+puts + p
+    push(p + 2); p <- @+say_end + p
     o <- o + 1
     p <- [o]
 
@@ -130,13 +130,13 @@ convert_decimal_top:
 
     c <- g
     d <- 10
-    call(umod)
+    push(p + 2); p <- @+umod + p
 
     [h] <- b + '0'
 
     c <- g
     d <- 10
-    call(udiv)
+    push(p + 2); p <- @+udiv + p
     g <- b
 
     d <- g == 0
@@ -159,16 +159,16 @@ convert_decimal_negative:
     p <- p + @+convert_decimal_top
 
 say:
-    call(say_start)
-    call(puts)
-    call(say_end)
+    push(p + 2); p <- @+say_start + p
+    push(p + 2); p <- @+puts + p
+    push(p + 2); p <- @+say_end + p
     o <- o + 1
     p <- [o]
 
 say_start:
     push(c)
     c <- @+talk + p
-    call(puts)
+    push(p + 2); p <- @+puts + p
     o <- o + 2
     c <- [o - (1 + 0)]
     p <- [o]
@@ -176,7 +176,7 @@ say_start:
 say_end:
     push(c)
     c <- @+rn + p
-    call(puts)
+    push(p + 2); p <- @+puts + p
     o <- o + 2
     c <- [o - (1 + 0)]
     p <- [o]

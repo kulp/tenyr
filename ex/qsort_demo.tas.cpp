@@ -11,16 +11,16 @@ main:
     d <- (DATA_LEN / ELT_LEN)   // number of elements
     e <- ELT_LEN                // size of each element
     f <- @+inteq + p            // comparator
-    call(qsort)
+    push(p + 2); p <- @+qsort + p
 
 done:
     i <- .L_data_start
 print_loop:
     c <- [i - (. + 0) + p]      // get second field of struct
     c <-  c - (. + 1) + p       // and relocate it
-    call(puts)
+    push(p + 2); p <- @+puts + p
     c <- @+nl + p
-    call(puts)
+    push(p + 2); p <- @+puts + p
     i <- i + ELT_LEN
     c <- i < .L_data_end
     p <- @+print_loop & c + p

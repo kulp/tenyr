@@ -6,7 +6,7 @@
 _start:
     prologue
 
-    call(init_display)
+    push(p + 2); p <- @+init_display + p
 
     // m is generation
     m <- 0
@@ -20,16 +20,16 @@ _start:
 
     c <- i
     d <- 0xa // in our font, a 50% greyscale
-    call(blank_area)
+    push(p + 2); p <- @+blank_area + p
 
-    call(randomise_board)
-    call(flip)
+    push(p + 2); p <- @+randomise_board + p
+    push(p + 2); p <- @+flip + p
 
 forever:
     m -> [0x100]
 
-    call(compute)
-    call(flip)
+    push(p + 2); p <- @+compute + p
+    push(p + 2); p <- @+flip + p
 
     m <- m + 1
     p <- p + @+forever
@@ -59,12 +59,12 @@ randomise_board:
     l -> [o + (6 - 4)]
     n -> [o + (6 - 5)]
     c <- [@+seed + p]
-    call(srand)
+    push(p + 2); p <- @+srand + p
     j <- (ROWS - 1)
 randomise_board_rows:
     k <- (COLS - 1)
 randomise_board_cols:
-    call(rand)
+    push(p + 2); p <- @+rand + p
     b <- b >> 23
 
     l <- b >= THRESHOLD
@@ -139,7 +139,7 @@ compute_cols:
 
     c <- j
     d <- k
-    call(get_neighbour_count)
+    push(p + 2); p <- @+get_neighbour_count + p
     e <- b
 
     b <- j * COLS + k

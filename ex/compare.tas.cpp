@@ -6,51 +6,51 @@ _start:
     c <- @+this + p
     d <- @+that + p
     f <- @+strcmp + p
-    call(cmp)
+    push(p + 2); p <- @+cmp + p
 
     c <- @+this + p
     d <- @+this + p
     f <- @+strcmp + p
-    call(cmp)
+    push(p + 2); p <- @+cmp + p
 
     c <- @+this + p
     d <- @+that + p
     e <- 6
     f <- @+strncmp + p
-    call(cmp)
+    push(p + 2); p <- @+cmp + p
 
     c <- @+this + p
     d <- @+that + p
     e <- 50
     f <- @+strncmp + p
-    call(cmp)
+    push(p + 2); p <- @+cmp + p
 
     illegal
 
 cmp:
     push(c)
     push(d)
-    call(puts)      // output first string
+    push(p + 2); p <- @+puts + p // output first string
     c <- @+nl + p   // followed by newline
-    call(puts)
+    push(p + 2); p <- @+puts + p
     pop(d)
     pop(c)
 
     push(c)
     push(d)
     c <- d
-    call(puts)      // output second string
+    push(p + 2); p <- @+puts + p // output second string
     c <- @+nl + p   // followed by newline
-    call(puts)
+    push(p + 2); p <- @+puts + p
     pop(d)
     pop(c)
 
-    call(check)     // actually compare them
+    push(p + 2); p <- @+check + p // actually compare them
 
     c <- @+nl + p   // ... followed by newline
-    call(puts)
+    push(p + 2); p <- @+puts + p
     c <- @+nl + p   // and another
-    call(puts)
+    push(p + 2); p <- @+puts + p
 
     o <- o + 1
     p <- [o]
@@ -64,7 +64,7 @@ check:
 _mismatched:
     c <- @+_mismatch_message + p
 _finished:
-    call(puts)
+    push(p + 2); p <- @+puts + p
     o <- o + 1
     p <- [o]
 

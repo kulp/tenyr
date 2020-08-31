@@ -35,7 +35,7 @@ fp_mul:
   e <- c
 
   // Multiply the two mantissas together.
-  call(dw_mul)
+  push(p + 2); p <- @+dw_mul + p
 
   // B:C contains a 48-bit product, take the upper 23 bits.
   b <- b << 9

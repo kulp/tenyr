@@ -13,7 +13,7 @@
     f -> [o + (4 - 3)]     ; \
     f <- i0                ; \
     g <- i1                ; \
-    call(do_swap)          ; \
+    push(p + 2); p <- @+do_swap + p ; \
     o <- o + 4             ; \
     f <- [o - 3]           ; \
     e <- [o - 2]           ; \
@@ -28,15 +28,15 @@ do_swap:
     c <- o + 1
     elem(d,l,f)
     /* E is already width */
-    call(memcpy)
+    push(p + 2); p <- @+memcpy + p
     elem(c,l,f)
     elem(d,l,g)
     e <- k
-    call(memcpy)
+    push(p + 2); p <- @+memcpy + p
     elem(c,l,g)
     d <- o + 1
     e <- k
-    call(memcpy)
+    push(p + 2); p <- @+memcpy + p
     o <- o + k
     o <- o + 1
     p <- [o]
@@ -103,7 +103,7 @@ L_qsort_partition_done:
     d <- PI
     // E is already width
     // F is already callback
-    call(qsort)
+    push(p + 2); p <- @+qsort + p
     // restore argument registers
     c <- m
     d <- LI - PI
@@ -113,7 +113,7 @@ L_qsort_partition_done:
     elem(k,BASE,PI)
     c <- k
     // TODO tail call
-    call(qsort)
+    push(p + 2); p <- @+qsort + p
 
 L_qsort_done:
     o <- o + 8

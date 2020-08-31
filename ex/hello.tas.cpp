@@ -3,7 +3,7 @@
 _start:
     prologue
     c <- @+hi + p       // string starts at @hi
-    call(puts)
+    push(p + 2); p <- @+puts + p
     illegal
 
 hi:

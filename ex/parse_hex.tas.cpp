@@ -6,47 +6,47 @@ _start:
     c <- @+string_oct + p
     d <- 0
     e <- 0
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     c <- @+string_dec + p
     d <- 0
     e <- 0
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     c <- @+string_hex + p
     d <- 0
     e <- 0
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     c <- @+string_36 + p
     d <- 0
     e <- 36
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     c <- @+string_gbg + p
     d <- 0
     e <- 10
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     c <- @+string_gbg + p
     d <- @+next + p
     e <- 10
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     c <- [@+next + p]
     d <- @+next + p
     e <- 16
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     c <- @+string_gb2 + p
     d <- @+next + p
     e <- 8
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     c <- [@+next + p]
     d <- @+next + p
     e <- 36
-    call(strtol)
+    push(p + 2); p <- @+strtol + p
 
     illegal
 

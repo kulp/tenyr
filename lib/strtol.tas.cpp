@@ -12,7 +12,7 @@ strtol:
 
     h <- e == 0
     p <- @+strtol_no_call &~ h + p
-    call(detect_base)
+    push(p + 2); p <- @+detect_base + p
     e <- b
 
 strtol_no_call:

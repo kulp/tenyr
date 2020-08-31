@@ -20,13 +20,13 @@ print_num_generic_top:
 
     c <- g
     d <- 10
-    call(umod)
+    push(p + 2); p <- @+umod + p
 
     [h] <- b + '0'
 
     c <- g
     d <- 10
-    call(udiv)
+    push(p + 2); p <- @+udiv + p
     g <- b
 
     d <- g == 0

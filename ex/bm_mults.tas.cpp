@@ -12,7 +12,7 @@ _start:
     b <- 0              // indicate non-completion to testbench
     c <- 1              // argument
 
-    call(init_display)
+    push(p + 2); p <- @+init_display + p
 
 restart:
     j <- 0              // multiplier
@@ -30,7 +30,7 @@ loop_top:
     e <- k + g          // column is multiplicand + filled width
     d <- 0              // row is 0
     c <- k              // number to print is multiplicand
-    call(putnum)
+    push(p + 2); p <- @+putnum + p
     k <- k + 1
     g <- g + f - 1
     c <- k <= 16
@@ -45,7 +45,7 @@ loop_j:
     e <- 0              // column is 0
     d <- j + 1          // row (J + 1)
     c <- j
-    call(putnum)
+    push(p + 2); p <- @+putnum + p
     g <- g + f
 
 loop_k:
@@ -55,7 +55,7 @@ loop_k:
     e <- k + g          // column is multiplicand + filled width
     d <- j + 1
     c <- j * k
-    call(putnum)
+    push(p + 2); p <- @+putnum + p
     c <- 0x100          // write {J,K} to LEDs
     [c] <- j << 8 + k
     k <- k + 1

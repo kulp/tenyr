@@ -2,8 +2,8 @@
 #include "errno.th"
 
     c   <- 10
-    call(buddy_malloc)
+    push(p + 2); p <- @+buddy_malloc + p
     c   <- b
-    call(buddy_free)
+    push(p + 2); p <- @+buddy_free + p
     illegal
 

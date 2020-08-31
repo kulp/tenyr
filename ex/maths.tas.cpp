@@ -5,24 +5,24 @@ start:
 
   c <- 11
   d <- 5
-  call(umod)
+  push(p + 2); p <- @+umod + p
 
   c <- 50
   d <- 10
-  call(udiv)
+  push(p + 2); p <- @+udiv + p
 
   c <- 36
-  call(isqrt)
+  push(p + 2); p <- @+isqrt + p
 
   b <- [@+arg0 + p]
   c <- [@+arg1 + p]
   d <- [@+arg2 + p]
   e <- [@+arg3 + p]
-  call(dw_add)
+  push(p + 2); p <- @+dw_add + p
 
   d <- [@+arg0 + p]
   e <- [@+arg1 + p]
-  call(dw_mul)
+  push(p + 2); p <- @+dw_mul + p
 
   illegal
 
