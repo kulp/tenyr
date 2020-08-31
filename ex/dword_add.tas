@@ -1,22 +1,20 @@
-#include "common.th"
-
 .global dw_add
 
-// Performs B:C = B:C + D:E
+# Performs B:C = B:C + D:E
 dw_add:
   o <- o - 3
   h -> [o + (3 - 0)]
   j -> [o + (3 - 1)]
   k -> [o + (3 - 2)]
-  // Computes lower sum.
+  # Computes lower sum.
   h <- c + e
 
-  // Compute carry and store it in K
+  # Compute carry and store it in K
   j <- c < h
   k <- e < h
   k <- j & k + 1
 
-  // Finish computing sum.
+  # Finish computing sum.
   b <- b + k
   b <- b + d
   c <- h

@@ -1,8 +1,6 @@
-#include "common.th"
-
-// c <- multiplicand
-// d <- multiplier
-// b -> product
+# c <- multiplicand
+# d <- multiplier
+# b -> product
 .global imul
 imul:
     o <- o - 3
@@ -13,12 +11,12 @@ imul:
     b <- 0
     h <- 1
 
-    j <- d >> 31    // save sign bit in j
-    d <- d ^ j      // adjust multiplier
+    j <- d >> 31    # save sign bit in j
+    d <- d ^ j      # adjust multiplier
     d <- d - j
 
 L_top:
-    // use constant 1 in h to combine instructions
+    # use constant 1 in h to combine instructions
     i <- d & h - 1
     i <- c &~ i
     b <- b + i
@@ -27,7 +25,7 @@ L_top:
     i <- d == 0
     p <- @+L_top &~ i + p
 
-    b <- b ^ j      // adjust product for signed math
+    b <- b ^ j      # adjust product for signed math
     b <- b - j
 
     o <- o + 3

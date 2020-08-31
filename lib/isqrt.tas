@@ -1,8 +1,6 @@
-#include "common.th"
-
 .global isqrt
 
-// Performs sqrt(C) and stores the result in B.
+# Performs sqrt(C) and stores the result in B.
 isqrt:
   o <- o - 4
   e -> [o + (4 - 0)]
@@ -11,7 +9,7 @@ isqrt:
   k -> [o + (4 - 3)]
   b <- 0
 
-  // Compute the highest power of four greater than or equal to n.
+  # Compute the highest power of four greater than or equal to n.
   g <- 1
   g <- g << 30
 compute_4:
@@ -22,7 +20,7 @@ compute_4:
   g <- g >> 2
   p <- p + @+compute_4
 
-  // :)
+  # :)
 do_magic:
   k <- g == 0
   p <- @+done & k + p

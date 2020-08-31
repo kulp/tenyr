@@ -1,9 +1,7 @@
-#include "common.th"
-
 .global udiv
 
-// Performs C / D and stores the result in B.
-// Assumes C and D are 31-bit unsigned
+# Performs C / D and stores the result in B.
+# Assumes C and D are 31-bit unsigned
 udiv:
   o <- o - 4
   d -> [o + (4 - 0)]
@@ -12,49 +10,49 @@ udiv:
   k -> [o + (4 - 3)]
   b <- 0
 
-  // Check for division by zero.
+  # Check for division by zero.
   k <- d == 0
   p <- @+done & k + p
 
-  // Check for divisor > dividend.
+  # Check for divisor > dividend.
   k <- c < d
   p <- @+done & k + p
 
-  // Prepare the value to subtract from the dividend.
+  # Prepare the value to subtract from the dividend.
   g <- d
 build_subtrahend:
-  // If the value is greater than the dividend, we're done.
+  # If the value is greater than the dividend, we're done.
   k <- c < g
   p <- @+compute_quotient & k + p
 
-  // Otherwise, multiply by 2.
+  # Otherwise, multiply by 2.
   g <- g << 1
   p <- p + @+build_subtrahend
 
 compute_quotient:
-  // If our subtrahend is equal to our divisor, we're done.
+  # If our subtrahend is equal to our divisor, we're done.
   j <- g <  d
   k <- g == d
   k <- j | k
   p <- @+done & k + p
 
-  // Divide the subtrahend by 2.
+  # Divide the subtrahend by 2.
   g <- g >> 1
 
-  // Check to see if we can subtract the subtrahend.
+  # Check to see if we can subtract the subtrahend.
   k <- c < g
   p <- @+shift_quotient & k + p
 
-  // Perform a subtraction and set this output bit to 1.
+  # Perform a subtraction and set this output bit to 1.
   c <- c - g
   b <- b | 1
 
-  // Each iteration, shift the quotient left by one.
+  # Each iteration, shift the quotient left by one.
 shift_quotient:
   b <- b << 1
   p <- p + @+compute_quotient
 
-  // Return result.
+  # Return result.
 done:
   b <- b >> 1
   o <- o + 5
