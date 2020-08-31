@@ -10,6 +10,6 @@ _start:
     call(puts)
     illegal
 
-dst: .utf32 "                " ; .word 0
-src: .utf32 "0123456789ABCDEF" ; .word 0
+dst: .chars "                " ; .word 0
+src: .chars "0123456789ABCDEF" ; .word 0
 

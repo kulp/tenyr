@@ -48,6 +48,6 @@ print_num_generic_negative:
     f <- -1
     p <- p + @+print_num_generic_top
 
-tmpbuf: .utf32 "0123456789abcdef"
+tmpbuf: .chars "0123456789abcdef"
 tmpbuf_end: .word 0
 

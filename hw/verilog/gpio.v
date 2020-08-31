@@ -21,7 +21,7 @@ module Gpio(clk, strobe, rw, reset, addr, data_i, data_o, gpio);
     reg [COUNT-1:0] state[SIZE-1:0];
 
     integer k;
-    initial for (k = 0; k < SIZE; k = k + 1) state[k] <= 0;
+    initial for (k = 0; k < SIZE; k = k + 1) state[k] = 0;
 
     genvar i;
     generate for (i = 0; i < COUNT; i = i + 1)
@@ -35,9 +35,9 @@ module Gpio(clk, strobe, rw, reset, addr, data_i, data_o, gpio);
                 state[k] <= 0;
         end else if (strobe) begin
             if (rw)
-                state[addr] <= data_i;
+                state[addr] <= data_i[COUNT-1:0];
             else
-                data_o <= state[addr];
+                data_o <= {{32-COUNT{1'b0}},state[addr]};
         end
     end
 

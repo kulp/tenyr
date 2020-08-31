@@ -43,6 +43,7 @@ struct sim_state {
 
         int32_t start_addr;
         int32_t load_addr;
+        int32_t halt_addr;
         const struct format *fmt;
         char *tsim_path;
     } conf;

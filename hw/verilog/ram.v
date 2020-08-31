@@ -35,17 +35,17 @@ module BlockRAM(
     end
 
     always @(posedge clka) begin
+        douta = store[addra - OFFSET];
         if (wea && ena)
-            store[addra - OFFSET] <= dina;
-        douta <= store[addra - OFFSET];
-        acka <= ena;
+            store[addra - OFFSET] = dina;
+        acka = ena;
     end
 
     always @(posedge clkb) begin
+        doutb = store[addrb - OFFSET];
         if (web && enb)
-            store[addrb - OFFSET] <= dinb;
-        doutb <= store[addrb - OFFSET];
-        ackb <= enb;
+            store[addrb - OFFSET] = dinb;
+        ackb = enb;
     end
 
 endmodule

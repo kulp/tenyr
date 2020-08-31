@@ -17,6 +17,9 @@
 #include <string.h>
 #include <strings.h>
 
+static int ce_eval(struct parse_data *pd, struct element *context,
+        struct const_expr *ce, int flags, int width, int shift, int32_t *result);
+
 struct symbol *symbol_find(struct symbol_list *list, const char *name)
 {
     list_foreach(symbol_list, elt, list)
@@ -193,7 +196,7 @@ static ce_evaluator * const ce_eval_dispatch[CE_max] = {
 };
 
 // ce_eval should be idempotent. returns 1 on fully-successful evaluation, 0 on incomplete evaluation
-int ce_eval(struct parse_data *pd, struct element *context,
+static int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
     if (ce->type >= CE_max)

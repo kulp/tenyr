@@ -6,10 +6,10 @@
 
 **tenyr** is a 32-bit computer architecture and computing environment that
 focuses on simplicity of design and implementation. **tenyr**'s tools run on
-Mac, \*nix, Windows, node.js (via [emscripten](https://github.com/kripken/emscripten)),
-and [in a web browser](http://demo.tenyr.info/). **tenyr**'s highly portable
-Verilog hardware definition has been demonstrated on Xilinx Spartan6 FPGAs and
-should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
+macOS, \*nix, Windows, and node.js (via [emscripten](https://github.com/emscripten-core/emscripten)).
+**tenyr**'s highly portable Verilog hardware definition has been demonstrated
+on Xilinx Spartan6 FPGAs and should run fine on many FPGAs while using less
+than 1200 LUT6-equivalents.
 
 **tenyr** comprises :
 
@@ -27,6 +27,4 @@ should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
   * random snakes "screensaver" ([tenyr source code](https://github.com/kulp/tenyr/blob/develop/ex/bm_snake.tas.cpp) &ndash; [running in the simulator](https://vimeo.com/98338696), [running on the FPGA](https://vimeo.com/103773300))
   * a [recursive Fibonacci number generator](https://github.com/kulp/tenyr/blob/develop/ex/bm_fib.tas.cpp)
 
-Explore a [simple online demo of the **tenyr** toolset](http://demo.tenyr.info/).
-
-**tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki).
+**tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki), and it keeps a [changelog](Changelog.md) from v0.9.4 onward.

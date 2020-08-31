@@ -26,8 +26,8 @@ module Decode(input[31:0] insn, output[3:0] idxZ, idxX, output reg[3:0] idxY,
     assign {kind, dd, idxZ, idxX, tI} = insn;
 
     always @* case (kind)
-        default: {idxY,op,valI[11:0],valI[31:12]} = {      tI,{20{tI[11]}}};
-        2'b11:   {idxY,op,valI[19:0],valI[31:20]} = {24'h0,tI,{12{tI[19]}}};
+        default: {idxY,op,valI[11:0],valI[31:12]} = {     tI,{20{tI[11]}}};
+        2'b11:   {idxY,op,valI[19:0],valI[31:20]} = {8'h0,tI,{12{tI[19]}}};
     endcase
 
     assign storing   = ^dd;
@@ -66,7 +66,7 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
         if (staged) case (rop)
             4'h0: rY <=    (rA  |  rB) ; 4'h8: rY <=    (rA  |~ rB  );
             4'h1: rY <=    (rA  &  rB) ; 4'h9: rY <=    (rA  &~ rB  );
-            4'h2: rY <=    (rA  ^  rB) ; 4'ha: rY <=    {rA,rB[11:0]};
+            4'h2: rY <=    (rA  ^  rB) ; 4'ha: rY <=  {rA[19:0],rB[11:0]};
             4'h3: rY <=    (rA >>> rB) ; 4'hb: rY <=    (rA  >> rB  );
             4'h4: rY <=    (rA  +  rB) ; 4'hc: rY <=    (rA  -  rB  );
             4'h5: rY <=    (rA  *  rB) ; 4'hd: rY <=    (rA  << rB  );
@@ -90,7 +90,7 @@ module Core(
     input            err_i, // error
     input            rty_i, // retry
     output           cyc_o, // cycle
-    inout wor halt
+    inout halt
 );
 
     localparam[3:0] s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6;

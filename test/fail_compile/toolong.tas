@@ -1,34 +1,34 @@
-b <- a + a + -1     // ok
-c <- a + a + 0x7ff  // ok
-c <- a + a + 0xfff  // bad
-d <- a + a + 0xffff // bad
-e <- a + a + 12345  // bad
-e <- a + a + -0x7ff // ok
-e <- a + a + -0x800 // ok
-e <- a + a + -0xfff // bad
-f <- a + a + -555   // ok
-g <- a + a + 03777  // ok
-g <- a + a + 07777  // bad
-h <- a + a + 017777 // bad
-i <- a + a + (1 << 11) // bad
-j <- a + a + (1 << 12) // bad
-k <- a + a + (1 << 13) // bad
-l <- a + a + ((1 << 12) - 1) // bad
-m <- a + a + ((1 << 11) - 1) // ok
-b <- -1       // ok
-c <- 0x7fffff  // ok
-c <- 0xffffff  // bad
-d <- 0xfffffff // bad
-e <- 12345678  // bad
-e <- -0x7fffff // ok
-e <- -0x800000 // ok
-e <- -0xffffff // bad
-f <- -555555   // ok
-g <- 037777777  // ok
-g <- 077777777  // bad
-h <- 0177777777 // bad
-i <- (1 << 23) // bad
-j <- (1 << 24) // bad
-k <- (1 << 25) // bad
-l <- ((1 << 24) - 1) // bad
-m <- ((1 << 23) - 1) // ok
+b <- a + a + -1     # ok
+c <- a + a + 0x7ff  # ok
+c <- a + a + 0xfff  # bad
+d <- a + a + 0xffff # bad
+e <- a + a + 12345  # bad
+e <- a + a + -0x7ff # ok
+e <- a + a + -0x800 # ok
+e <- a + a + -0xfff # bad
+f <- a + a + -555   # ok
+g <- a + a + 03777  # ok
+g <- a + a + 07777  # bad
+h <- a + a + 017777 # bad
+i <- a + a + (1 << 11) # bad
+j <- a + a + (1 << 12) # bad
+k <- a + a + (1 << 13) # bad
+l <- a + a + ((1 << 12) - 1) # bad
+m <- a + a + ((1 << 11) - 1) # ok
+b <- -1       # ok
+c <- 0x7fffff  # ok
+c <- 0xffffff  # bad
+d <- 0xfffffff # bad
+e <- 12345678  # bad
+e <- -0x7fffff # ok
+e <- -0x800000 # ok
+e <- -0xffffff # bad
+f <- -555555   # ok
+g <- 037777777  # ok
+g <- 077777777  # bad
+h <- 0177777777 # bad
+i <- (1 << 23) # bad
+j <- (1 << 24) # bad
+k <- (1 << 25) # bad
+l <- ((1 << 24) - 1) # bad
+m <- ((1 << 23) - 1) # ok

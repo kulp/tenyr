@@ -11,6 +11,7 @@ GNUMAKEFLAGS += --no-print-directory
 CPPFLAGS += -'DDYLIB_SUFFIX="$(DYLIB_SUFFIX)"'
 
 SOURCEFILES = $(wildcard $(TOP)/src/*.c $(TOP)/src/devices/*.c)
+VPIFILES = $(wildcard $(TOP)/hw/vpi/*.c)
 
 VPATH += $(TOP)/src $(TOP)/src/devices $(TOP)/hw/vpi
 INCLUDES += $(TOP)/src $(INCLUDE_OS) $(BUILDDIR)
@@ -22,6 +23,7 @@ clean_FILES = $(addprefix $(BUILDDIR)/,  \
                    lexer.[ch]            \
                    $(TARGETS)            \
                    $(SOURCEFILES:$(TOP)/src/%.c=%.d) \
+                   $(VPIFILES:$(TOP)/hw/vpi/%.c=%.d) \
                    random random.*       \
                )#
 
@@ -34,8 +36,11 @@ tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
 tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ifeq ($(USE_OWN_SEARCH),1)
+vpath %.c $(TOP)/3rdparty/naive-tsearch
 # The interface of lsearch and tsearch is not something we can change.
 lsearch.o tsearch.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
+# tsearch.o from naive-tsearch has feature flags
+tsearch.o: CFLAGS += -Wno-unused-macros
 
 tas_OBJECTS   += lsearch.o tsearch.o
 tld_OBJECTS   += lsearch.o tsearch.o
@@ -52,7 +57,6 @@ distclean:: clobber
 clean clobber::
 	-rmdir $(BUILDDIR)/devices $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
-	-$(MAKE) -C $(TOP)/forth $@
 	-$(MAKE) -C $(TOP)/hw/icarus $@
 	-$(MAKE) -C $(TOP)/hw/xilinx $@
 
@@ -82,6 +86,7 @@ all: $(TARGETS) | $(TOP)/build/share/tenyr/rsrc
 $(TOP)/build/share/tenyr/%:
 	@$(MAKESTEP) [ LN ] $*
 	mkdir -p $(@D)
+	$(RM) $@
 	ln -sf ../../../$* $@
 
 -include $(TOP)/mk/os/rules/$(OS).mk
@@ -110,7 +115,7 @@ $(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o $(shared_OBJECTS:%.o=%,dy
 tas.o tld.o param.o param,dy.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
 # Calls to variadic printf functions almost always need non-literal format
 # strings.
-common.o parser.o stream.o: CFLAGS += -Wno-format-nonliteral
+common.o common,dy.o parser.o stream.o stream,dy.o: CFLAGS += -Wno-format-nonliteral
 
 # We cannot control some aspects of the generated lexer or parser.
 lexer.o: CFLAGS += -Wno-missing-prototypes
@@ -135,6 +140,7 @@ parser.h parser.c: lexer.h
 
 ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include $(patsubst $(TOP)/src/%.c,$(BUILDDIR)/%.d,$(SOURCEFILES))
+-include $(patsubst $(TOP)/hw/vpi/%.c,$(BUILDDIR)/%.d,$(VPIFILES))
 -include $(BUILDDIR)/lexer.d
 -include $(BUILDDIR)/parser.d
 endif

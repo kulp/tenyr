@@ -29,7 +29,7 @@ static struct expr *make_unary(int op, int x, int y, int mult,
         struct const_expr *defexpr);
 static struct element *make_insn_general(struct parse_data *pd,
         struct expr *lhs, int arrow, struct expr *expr);
-static struct element_list *make_utf32(struct cstr *cs);
+static struct element_list *make_chars(struct cstr *cs);
 static int add_symbol_to_insn(struct parse_data *pd, YYLTYPE *locp,
         struct element *insn, struct cstr *symbol);
 static struct element_list *make_data(struct parse_data *pd,
@@ -42,7 +42,6 @@ static struct directive *make_set(struct parse_data *pd, YYLTYPE *locp,
         const struct cstr *sym, struct const_expr *expr);
 static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
         struct directive *d, struct element_list **context);
-static int is_type3(struct const_expr *ce);
 static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
         enum const_expr_type type, const struct cstr *symbol);
 static struct const_expr *make_eref(struct parse_data *pd, YYLTYPE *locp,
@@ -109,7 +108,7 @@ static void free_cstr(struct cstr *cs, int recurse);
 %token <i> TOR  "->"
 
 %token WORD     ".word"
-%token UTF32    ".utf32"
+%token CHARS    ".chars"
 %token GLOBAL   ".global"
 %token SET      ".set"
 %token ZERO     ".zero"
@@ -225,7 +224,7 @@ strspan
 data
     : ".word"  opt_nl expr_list {  POP; $$ = make_data(pd, $expr_list); }
     | ".zero"  opt_nl expr      {  POP; $$ = make_zeros(pd, &yylloc, $expr); ce_free($expr); }
-    | ".utf32" opt_nl string    {  POP; $$ = make_utf32($string); free_cstr($string, 1); }
+    | ".chars" opt_nl string    {  POP; $$ = make_chars($string); free_cstr($string, 1); }
 
 directive
     : ".global" opt_nl SYMBOL
@@ -275,13 +274,9 @@ rhs_plain
     | regname[x] binop vatom
         {   int adding = $binop == OP_ADD || $binop == OP_SUBTRACT;
             int mult   = $binop == OP_SUBTRACT ? -1 : 1;
-            int type   = adding ? is_type3($vatom) ? 3 : 0 : 1;
-            int x      = type == 0 ?  0 : $x;
-            int y      = type == 0 ? $x :  0;
-            int op     = type == 0 ? OP_BITWISE_OR :
-                         mult <  0 ? OP_ADD        :
-                                     $binop;
-            $$ = make_rhs(type, x, op, y, mult, $vatom); }
+            int type   = adding ? 3 : 1;
+            int op     = mult < 0 ? OP_ADD : $binop;
+            $$ = make_rhs(type, $x, op, 0, mult, $vatom); }
     | vatom binop regname[x] '+' regname[y]
         { $$ = make_rhs(2, $x, $binop, $y, 1, $vatom); }
     | vatom binop regname[x]
@@ -292,7 +287,7 @@ rhs_plain
             // `B <- 0 + C` is type2, `B <- 2 + C` is type1
             $$ = make_rhs(adding ? 1 : 2, x, op, y, 1, $vatom); }
     | vatom
-        { $$ = make_rhs(is_type3($vatom) ? 3 : 0, 0, 0, 0, 1, $vatom); }
+        { $$ = make_rhs(3, 0, 0, 0, 1, $vatom); }
     /* syntax sugars */
     | unary_op regname[x] reloc_op vatom
         { $$ = make_unary($unary_op, $x,  0, $reloc_op, $vatom); }
@@ -360,7 +355,6 @@ expr
 eref
     : '@'     SYMBOL    { $$ = make_ref (pd, &yylloc, CE_EXT, $SYMBOL);    free_cstr($SYMBOL, 1); }
     /* syntax sugars */
-    | '@' '=' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 0); free_cstr($SYMBOL, 1); }
     | '@' '+' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 1); free_cstr($SYMBOL, 1); }
 
 binop_expr
@@ -577,7 +571,7 @@ static void free_cstr(struct cstr *cs, int recurse)
     free(cs);
 }
 
-static struct element_list *make_utf32(struct cstr *cs)
+static struct element_list *make_chars(struct cstr *cs)
 {
     struct element_list *result = NULL, **rp = &result;
 
@@ -783,19 +777,6 @@ bad:
     goto done;
 }
 
-static int is_type3(struct const_expr *ce)
-{
-    int is_bits  = ce->flags & IMM_IS_BITS;
-    int deferred = ce->flags & IS_DEFERRED;
-    int32_t extended = SEXTEND32(SMALL_IMMEDIATE_BITWIDTH,ce->i);
-    /* Large immediates and ones that should be expressed in
-     * hexadecimal use type3. */
-    if (is_bits || deferred || ce->i != extended)
-        return 1;
-
-    return 0;
-}
-
 static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
         enum const_expr_type type, const struct cstr *symbol)
 {
@@ -818,7 +799,6 @@ static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,
 }
 
 // make_eref implements syntax sugar :
-//  `@=var` expands to `@var - (. + 0)`
 //  `@+var` expands to `@var - (. + 1)`
 static struct const_expr *make_eref(struct parse_data *pd, YYLTYPE *locp,
         const struct cstr *symbol, int offset)

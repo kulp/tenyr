@@ -3,7 +3,7 @@
 %.tas: %.tas.cpp
 	@$(MAKESTEP) "[ TPP ] $(<F)"
 	mkdir -p $(*D)
-	$(tpp) $(CPPFLAGS) - < $< -o $@
+	$(tpp) $(CPPFLAGS) $< -o $@
 
 %.to: %.tas
 	@$(MAKESTEP) "[ TAS ] $(<F)"
@@ -19,16 +19,16 @@
 	@$(MAKESTEP) "[ MEMH ] $(<F)"
 	$(tas) -vd $< | $(tas) -fmemh -o $@ -
 
-OUTPUT_OPTION ?= -o $@
-COMPILE.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+# Set up dependency generation flags.
+%.o: CPPFLAGS += -MMD -MT '$*.o $*,dy.o $*.d' -MF $*.d
+
 %.o: %.c
 	@$(MAKESTEP) "[ CC ] $(<F)"
-	$(COMPILE.c) $(OUTPUT_OPTION) $<
+	$(COMPILE.c) -o $@ $<
 
-LINK.c ?= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
 %$(EXE_SUFFIX): %.o
 	@$(MAKESTEP) "[ LD ] $@"
-	$(LINK.c) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(LINK.c) -o $@ $^ $(LDLIBS)
 
 %,dy.o: CFLAGS += $(CFLAGS_PIC)
 %,dy.o: %.c
@@ -51,19 +51,13 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 
 %.h %.c: %.l
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
-	$(FLEX) --header-file=$*.h -o $*.c $<
-	# Hack around an issue where gcov gets line numbers off by one after the rules section
-	-sed /XXXREMOVE/d < $*.c > $*.c.$$$$ && mv $*.c.$$$$ $*.c
+	# `sed` here hacks around an issue where gcov gets line numbers off by one
+	# after the rules section
+	$(FLEX) --header-file=$*.h --stdout $< | sed /XXXREMOVE/d > $*.c
 
 %.h %.c: %.y
 	@$(MAKESTEP) "[ BISON ] $(<F)"
 	$(BISON) --defines=$*.h -o $*.c $<
-
-%.d: %.c
-	@set -e; mkdir -p $(@D); rm -f $@; \
-	$(CC) -M $(CPPFLAGS) $< > $@.$$$$ 2> /dev/null && \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@ && \
-	rm -f $@.$$$$ || rm -f $@.$$$$
 
 clean clobber::
 	$(RM) -rf $($@_FILES)

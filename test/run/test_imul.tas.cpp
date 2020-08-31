@@ -99,6 +99,6 @@ print_hex:
     o <- o + 1
     p <- [o]
 
-_0x: .utf32 "0x" ; .word 0
+_0x: .chars "0x" ; .word 0
 _nl: .word '\n' ; .word 0
 
