@@ -4,7 +4,8 @@
 #define CHANNEL "#tenyr"
 #define NICK    "rynet"
 
-#define do(X) c <- @+X + p ; call(puts) ; c <- @+rn + p ; call(puts)
+#define do(X) c <- @+X + p  ; push(p + 2) ; p <- @+puts + p ; \
+              c <- @+rn + p ; push(p + 2) ; p <- @+puts + p
 
 _start:
     prologue
