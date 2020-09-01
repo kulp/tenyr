@@ -11,8 +11,6 @@ _start:
     c <- 1              // argument
     prologue
 
-    push(p + 2); p <- @+init_display + p
-
     j <- 0              // row (0 - 31)
     k <- 0              // column (0 - 3)
 

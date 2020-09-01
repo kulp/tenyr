@@ -8,8 +8,6 @@
 _start:
     prologue
 
-    push(p + 2); p <- @+init_display + p
-
 #ifdef TEST
     c <- @+_start + p ; push(p + 2) ; p <- @+Label + p # seed based on where we are loaded
 #endif

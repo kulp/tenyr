@@ -12,8 +12,6 @@ _start:
     b <- 0              // indicate non-completion to testbench
     c <- 1              // argument
 
-    push(p + 2); p <- @+init_display + p
-
 restart:
     j <- 0              // multiplier
     k <- 0              // multiplicand

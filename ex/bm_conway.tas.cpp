@@ -6,8 +6,6 @@
 _start:
     prologue
 
-    push(p + 2); p <- @+init_display + p
-
     // m is generation
     m <- 0
 
