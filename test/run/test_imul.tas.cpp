@@ -3,7 +3,7 @@
 #define PRINT 1
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
 
 #if 1
     c <- 0

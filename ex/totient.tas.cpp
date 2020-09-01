@@ -1,7 +1,7 @@
 #include "common.th"
 
 _start:
-  prologue
+  o <- ((1 << 13) - 1)
 
   c <- 67
   [o] <- p + 2 ; o <- o - 1 ; p <- @+totient + p

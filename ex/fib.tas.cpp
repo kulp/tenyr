@@ -11,7 +11,7 @@
 #include "common.th"
 
 _start:
-    prologue                // sets up base/stack pointer
+    o <- ((1 << 13) - 1)                // sets up base/stack pointer
     c <- ARGUMENT           // argument
     [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     illegal

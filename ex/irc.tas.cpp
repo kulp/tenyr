@@ -8,7 +8,7 @@
               c <- @+rn + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
 
     do(nick)
     do(user)

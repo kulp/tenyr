@@ -2,7 +2,7 @@
 
     .global main
 main:
-    prologue
+    o <- ((1 << 13) - 1)
 
 #define DATA_LEN (.L_data_end - .L_data_start)
 #define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)

@@ -4,7 +4,7 @@
 #define THRESHOLD 64
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
 
     // m is generation
     m <- 0

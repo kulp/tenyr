@@ -3,7 +3,7 @@
 .global isprime
 
 start:
-    prologue
+    o <- ((1 << 13) - 1)
 
     c <- [@+large + p]
     [o] <- p + 2 ; o <- o - 1 ; p <- @+isprime + p

@@ -5,7 +5,7 @@
 #endif
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
     c <- ARGUMENT       // argument
     [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     illegal

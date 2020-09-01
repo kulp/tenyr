@@ -1,7 +1,7 @@
 #include "common.th"
 
 start:
-  prologue
+  o <- ((1 << 13) - 1)
 
   c <- 11
   d <- 5

@@ -6,7 +6,7 @@
 #define SIZEOF_SNAKE 4
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
 
 #ifdef TEST
     c <- @+_start + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+Label + p # seed based on where we are loaded

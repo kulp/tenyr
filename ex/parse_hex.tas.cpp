@@ -1,7 +1,7 @@
 #include "common.th"
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
 
     c <- @+string_oct + p
     d <- 0

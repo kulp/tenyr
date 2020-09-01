@@ -1,7 +1,7 @@
 #include "common.th"
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
 
     c <- @+this + p
     d <- @+that + p

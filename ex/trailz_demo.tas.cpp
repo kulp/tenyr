@@ -1,7 +1,7 @@
 #include <common.th>
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
 
     E <- 32
 loop_outer:

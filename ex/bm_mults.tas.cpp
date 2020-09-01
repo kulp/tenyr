@@ -8,7 +8,7 @@
 #include "vga.th"
 
 _start:
-    prologue
+    o <- ((1 << 13) - 1)
     b <- 0              // indicate non-completion to testbench
     c <- 1              // argument
 
