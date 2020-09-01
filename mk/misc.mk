@@ -189,7 +189,7 @@ OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/op/*.tas)))
 OPS += $(subst .tas.cpp,,$(notdir $(wildcard $(TOP)/test/op/*.tas.cpp)))
 RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
 #TESTS = $(patsubst $(TOP)/test/%.tas,%,$(wildcard $(TOP)/test/*/*.tas))
-$(DEMOFILES): %_demo.texe: %_demo.tas.cpp
+$(DEMOFILES): %_demo.texe: %_demo.tas
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
 	$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(@D) $(@F) && $(MAKESTEP) ok
 

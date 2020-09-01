@@ -28,8 +28,8 @@ _start:
 cmp:
     [o] <- c ; o <- o - 1
     [o] <- d ; o <- o - 1
-    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p // output first string
-    c <- @+nl + p   // followed by newline
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p # output first string
+    c <- @+nl + p   # followed by newline
     [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     o <- o + 1 ; d <- [o]
     o <- o + 1 ; c <- [o]
@@ -37,17 +37,17 @@ cmp:
     [o] <- c ; o <- o - 1
     [o] <- d ; o <- o - 1
     c <- d
-    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p // output second string
-    c <- @+nl + p   // followed by newline
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p # output second string
+    c <- @+nl + p   # followed by newline
     [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     o <- o + 1 ; d <- [o]
     o <- o + 1 ; c <- [o]
 
-    [o] <- p + 2 ; o <- o - 1 ; p <- @+check + p // actually compare them
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+check + p # actually compare them
 
-    c <- @+nl + p   // ... followed by newline
+    c <- @+nl + p   # ... followed by newline
     [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
-    c <- @+nl + p   // and another
+    c <- @+nl + p   # and another
     [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
 
     o <- o + 1
@@ -55,7 +55,7 @@ cmp:
 
 check:
     [o] <- p + 2 ; o <- o - 1
-    p <- f          // call indirect
+    p <- f          # call indirect
     p <- @+_mismatched & b + p
     c <- @+_match_message + p
     p <- p + @+_finished

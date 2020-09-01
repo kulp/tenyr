@@ -5,7 +5,7 @@ _start:
 loop_outer:
     G <- E < 0
     P <- @+done & G + P
-    D <- 0xa5 // TODO try other bit patterns
+    D <- 0xa5 # TODO try other bit patterns
     C <- D << E
     [o] <- p + 2 ; o <- o - 1 ; p <- @+trailz + p
     G <- B == E

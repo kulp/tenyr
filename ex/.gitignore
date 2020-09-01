@@ -6,16 +6,9 @@ bm_gpio.tas
 bm_mults.tas
 bm_snake.tas
 bsearch_demo.tas
-clock.tas
-compare.tas
-copy.tas
 fib.tas
 fib_iter.tas
-hello.tas
 irc.tas
-isprime.tas
-maths.tas
-parse_hex.tas
 qsort_demo.tas
 test_imul.tas
 totient.tas

@@ -6,8 +6,8 @@ _start:
 
   illegal
 
-// Computes the number of values less than C that are relatively prime to C.
-// Stores the result in B.
+# Computes the number of values less than C that are relatively prime to C.
+# Stores the result in B.
 totient:
   o <- o - 2
   d -> [o + (2 - 0)]
