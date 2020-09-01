@@ -82,7 +82,7 @@ L_ilog2_done:
 #define FUNCIFY2(Stem,B,C)      \
     push(c)                   ; \
     c   <- C                  ; \
-    push(p + 2); p <- @+Stem##_func + p ; \
+    push(P + 2); P <- @+Stem##_func + P ; \
     pop(c)                    ; \
     B   <- b                  ; \
     //
@@ -110,7 +110,7 @@ SIZE2RANK_func:
     P <- @+L_SIZE2RANK_zero & B + P
     C   <- C - 1
     C   <- C >> RANK_0_LOG
-    push(p + 2); p <- @+ilog2 + p
+    push(P + 2); P <- @+ilog2 + P
     B   <- B + 1
 L_SIZE2RANK_zero:
     O <- O + 1
@@ -256,7 +256,7 @@ L_ADDR2NODE_loopdone:
 #if DEBUG
     D   <- C == E
     P <- @+L_ADDR2NODE_done & D + P
-    push(p + 2); p <- @+abort + p
+    push(P + 2); P <- @+abort + P
 
 L_ADDR2NODE_done:
 #endif
@@ -277,11 +277,11 @@ buddy_calloc:
     push(E)             // save E which we will use below
     C   <- C * D
     push(C)
-    push(p + 2); p <- @+buddy_alloc + p
+    push(P + 2); P <- @+buddy_alloc + P
     C   <- B
     D   <- 0
     pop(E)              // pop size from C into third memset param slot
-    push(p + 2); p <- @+memset + p
+    push(P + 2); P <- @+memset + P
     O <- O + 2
     E <- [O - (1 + 0)]
     P <- [O]
@@ -394,12 +394,12 @@ L_buddy_alloc_rankplus:
     P <- P + @+L_buddy_alloc_rankplus
 
 L_buddy_alloc_rankdone:
-    push(p + 2); p <- @+buddy_nosplit + p
+    push(P + 2); P <- @+buddy_nosplit + P
     P <- P + @+L_buddy_alloc_done
 
 L_buddy_alloc_do_split:
     D   <- E
-    push(p + 2); p <- @+buddy_autosplit + p
+    push(P + 2); P <- @+buddy_autosplit + P
 
 L_buddy_alloc_done:
     O <- O + 4
