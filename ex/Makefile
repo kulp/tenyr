@@ -34,9 +34,6 @@ clean_FILES += $(CPP_FILES:%.tas.cpp=%.tas)
 
 all: $(TARGETS)
 
-$(patsubst %.tas,%.texe,$(patsubst %.tas.cpp,%.tas,$(wildcard bm_*.tas*))): \
-		bm_%.texe: baremetal_common.to
-
 hello.texe: puts.to
 compare.texe: strcmp.to puts.to
 dynamic.texe: memset.to malloc.to abort.to

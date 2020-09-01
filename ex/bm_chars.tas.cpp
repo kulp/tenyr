@@ -5,8 +5,6 @@ _start:
     prologue
     b <- 0              // indicate non-completion to testbench
 
-    call(init_display)
-
 restart:
     c <- 0
     j <- @VGA_BASE

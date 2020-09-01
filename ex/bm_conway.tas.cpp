@@ -6,8 +6,6 @@
 _start:
     prologue
 
-    call(init_display)
-
     // m is generation
     m <- 0
 
