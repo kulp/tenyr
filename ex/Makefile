@@ -14,6 +14,7 @@ TARGETS = \
     bm_snake.texe       \
     bm_mults.texe       \
     compare.texe        \
+    copy.texe           \
     fib.texe            \
     fib_iter.texe       \
     hello.texe          \
@@ -23,6 +24,7 @@ TARGETS = \
     parse_hex.texe      \
     qsort_demo.texe     \
     sieve.texe          \
+    test_imul.texe      \
     #
 
 CPP_FILES := $(wildcard *.tas.cpp)
@@ -50,6 +52,8 @@ bm_fib.texe bm_mults.texe: putnum.to
 clock.texe: sleep.to
 trailz_demo.texe: puts.to trailz.to
 bm_conway.texe: bm_conway_buffer.to
+test_imul.texe: imul.to puts.to print_hex.to
+copy.texe: memcpy.to puts.to
 
 $(patsubst %.tas.cpp,%.tas,$(CPP_FILES)): %.tas: $(TOP)/lib/common.th
 
