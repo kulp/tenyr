@@ -1,5 +1,3 @@
-#include "common.th"
-
 .global isprime
 
 start:

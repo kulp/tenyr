@@ -1,5 +1,3 @@
-#include "common.th"
-
 #define PRINT 1
 
 _start:

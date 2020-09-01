@@ -1,5 +1,3 @@
-#include "common.th"
-
 #define elem(Dest, Base, Index) \
     Dest <- E * Index         ; \
     Dest <- Dest + Base       ; \

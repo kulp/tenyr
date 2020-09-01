@@ -1,5 +1,3 @@
-#include "common.th"
-
     .global main
 main:
     o <- ((1 << 13) - 1)

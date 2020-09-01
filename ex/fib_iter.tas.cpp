@@ -1,5 +1,3 @@
-#include "common.th"
-
 #ifndef ARGUMENT
 #define ARGUMENT 10
 #endif

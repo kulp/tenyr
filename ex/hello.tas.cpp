@@ -1,5 +1,3 @@
-#include "common.th"
-
 _start:
     o <- ((1 << 13) - 1)
     c <- @+hi + p       // string starts at @hi

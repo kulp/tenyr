@@ -1,8 +1,6 @@
 // Remember not to use the bottom bits of the result for randomness : the
 // period is much shorter than the overall PRNG period !
 
-#include "common.th"
-
 // From MTH$RANDOM
 // http://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use
 // Use this one because it saves instructions and a memory load for the

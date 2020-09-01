@@ -8,8 +8,6 @@
 #define ARGUMENT 10
 #endif
 
-#include "common.th"
-
 _start:
     o <- ((1 << 13) - 1)                // sets up base/stack pointer
     c <- ARGUMENT           // argument
