@@ -6,57 +6,57 @@ _start:
     c <- @+this + p
     d <- @+that + p
     f <- @+strcmp + p
-    push(p + 2); p <- @+cmp + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+cmp + p
 
     c <- @+this + p
     d <- @+this + p
     f <- @+strcmp + p
-    push(p + 2); p <- @+cmp + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+cmp + p
 
     c <- @+this + p
     d <- @+that + p
     e <- 6
     f <- @+strncmp + p
-    push(p + 2); p <- @+cmp + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+cmp + p
 
     c <- @+this + p
     d <- @+that + p
     e <- 50
     f <- @+strncmp + p
-    push(p + 2); p <- @+cmp + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+cmp + p
 
     illegal
 
 cmp:
-    push(c)
-    push(d)
-    push(p + 2); p <- @+puts + p // output first string
+    [o] <- c ; o <- o - 1
+    [o] <- d ; o <- o - 1
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p // output first string
     c <- @+nl + p   // followed by newline
-    push(p + 2); p <- @+puts + p
-    pop(d)
-    pop(c)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    o <- o + 1 ; d <- [o]
+    o <- o + 1 ; c <- [o]
 
-    push(c)
-    push(d)
+    [o] <- c ; o <- o - 1
+    [o] <- d ; o <- o - 1
     c <- d
-    push(p + 2); p <- @+puts + p // output second string
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p // output second string
     c <- @+nl + p   // followed by newline
-    push(p + 2); p <- @+puts + p
-    pop(d)
-    pop(c)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    o <- o + 1 ; d <- [o]
+    o <- o + 1 ; c <- [o]
 
-    push(p + 2); p <- @+check + p // actually compare them
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+check + p // actually compare them
 
     c <- @+nl + p   // ... followed by newline
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     c <- @+nl + p   // and another
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
 
     o <- o + 1
     p <- [o]
 
 check:
-    push(p + 2)
+    [o] <- p + 2 ; o <- o - 1
     p <- f          // call indirect
     p <- @+_mismatched & b + p
     c <- @+_match_message + p
@@ -64,7 +64,7 @@ check:
 _mismatched:
     c <- @+_mismatch_message + p
 _finished:
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     o <- o + 1
     p <- [o]
 

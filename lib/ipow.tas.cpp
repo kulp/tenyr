@@ -4,7 +4,7 @@
 
 // Performs C^D and stores the result in B.
 ipow:
-  push(k)
+  [o] <- k ; o <- o - 1
   // Initialize the return value to 1.
   b <- 1
 

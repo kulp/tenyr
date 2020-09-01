@@ -5,24 +5,24 @@ start:
 
   c <- 11
   d <- 5
-  push(p + 2); p <- @+umod + p
+  [o] <- p + 2 ; o <- o - 1 ; p <- @+umod + p
 
   c <- 50
   d <- 10
-  push(p + 2); p <- @+udiv + p
+  [o] <- p + 2 ; o <- o - 1 ; p <- @+udiv + p
 
   c <- 36
-  push(p + 2); p <- @+isqrt + p
+  [o] <- p + 2 ; o <- o - 1 ; p <- @+isqrt + p
 
   b <- [@+arg0 + p]
   c <- [@+arg1 + p]
   d <- [@+arg2 + p]
   e <- [@+arg3 + p]
-  push(p + 2); p <- @+dw_add + p
+  [o] <- p + 2 ; o <- o - 1 ; p <- @+dw_add + p
 
   d <- [@+arg0 + p]
   e <- [@+arg1 + p]
-  push(p + 2); p <- @+dw_mul + p
+  [o] <- p + 2 ; o <- o - 1 ; p <- @+dw_mul + p
 
   illegal
 

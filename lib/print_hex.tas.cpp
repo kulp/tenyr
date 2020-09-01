@@ -2,7 +2,7 @@
 
     .global convert_hex
 convert_hex:
-    push(d)
+    [o] <- d ; o <- o - 1
     b <- @+tmpbuf_end + p
 convert_hex_top:
     b <- b - 1

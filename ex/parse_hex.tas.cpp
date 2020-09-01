@@ -6,47 +6,47 @@ _start:
     c <- @+string_oct + p
     d <- 0
     e <- 0
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     c <- @+string_dec + p
     d <- 0
     e <- 0
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     c <- @+string_hex + p
     d <- 0
     e <- 0
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     c <- @+string_36 + p
     d <- 0
     e <- 36
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     c <- @+string_gbg + p
     d <- 0
     e <- 10
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     c <- @+string_gbg + p
     d <- @+next + p
     e <- 10
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     c <- [@+next + p]
     d <- @+next + p
     e <- 16
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     c <- @+string_gb2 + p
     d <- @+next + p
     e <- 8
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     c <- [@+next + p]
     d <- @+next + p
     e <- 36
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
 
     illegal
 

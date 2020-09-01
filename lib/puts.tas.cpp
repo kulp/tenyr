@@ -5,7 +5,7 @@
 
     .global puts
 puts:
-    push(d)
+    [o] <- d ; o <- o - 1
 puts_loop:
     b <- [c]            // load word from string
     d <- b == 0         // if it is zero, we are done

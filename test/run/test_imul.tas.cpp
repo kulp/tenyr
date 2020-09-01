@@ -87,10 +87,10 @@ _start:
     illegal
 
 print_hex:
-    push(c)
+    [o] <- c ; o <- o - 1
     c <- @+_0x + p
     call(puts)
-    pop(c)
+    o <- o + 1 ; c <- [o]
     call(convert_hex)
     c <- b
     call(puts)

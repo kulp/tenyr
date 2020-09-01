@@ -13,7 +13,7 @@
     f -> [o + (4 - 3)]     ; \
     f <- i0                ; \
     g <- i1                ; \
-    push(p + 2); p <- @+do_swap + p ; \
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+do_swap + p ; \
     o <- o + 4             ; \
     f <- [o - 3]           ; \
     e <- [o - 2]           ; \
@@ -28,15 +28,15 @@ do_swap:
     c <- o + 1
     elem(d,l,f)
     /* E is already width */
-    push(p + 2); p <- @+memcpy + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+memcpy + p
     elem(c,l,f)
     elem(d,l,g)
     e <- k
-    push(p + 2); p <- @+memcpy + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+memcpy + p
     elem(c,l,g)
     d <- o + 1
     e <- k
-    push(p + 2); p <- @+memcpy + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+memcpy + p
     o <- o + k
     o <- o + 1
     p <- [o]
@@ -78,7 +78,7 @@ L_qsort_partition:
     elem(k, BASE, II)
     elem(d, BASE, LI)
     c <- k
-    push(p + 2)
+    [o] <- p + 2 ; o <- o - 1
     p <- f                      // call comparator
     o <- o + 1
     c <- [o - 0]
@@ -103,7 +103,7 @@ L_qsort_partition_done:
     d <- PI
     // E is already width
     // F is already callback
-    push(p + 2); p <- @+qsort + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+qsort + p
     // restore argument registers
     c <- m
     d <- LI - PI
@@ -113,7 +113,7 @@ L_qsort_partition_done:
     elem(k,BASE,PI)
     c <- k
     // TODO tail call
-    push(p + 2); p <- @+qsort + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+qsort + p
 
 L_qsort_done:
     o <- o + 8

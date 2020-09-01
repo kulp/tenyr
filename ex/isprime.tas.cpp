@@ -6,7 +6,7 @@ start:
     prologue
 
     c <- [@+large + p]
-    push(p + 2); p <- @+isprime + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+isprime + p
 
     illegal
 
@@ -40,20 +40,20 @@ isprime:
     // Check for divisibility by 2.
     c <- e
     d <- 2
-    push(p + 2); p <- @+umod + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+umod + p
     k <- b == 0
     p <- @+cleanup0 & k + p
 
     // Check for divisibility by 3.
     c <- e
     d <- 3
-    push(p + 2); p <- @+umod + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+umod + p
     k <- b == 0
     p <- @+cleanup0 & k + p
 
     // Compute upper bound and store it in M.
     c <- e
-    push(p + 2); p <- @+isqrt + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+isqrt + p
     m <- b
 
     i <- 1
@@ -67,7 +67,7 @@ mod_loop:
     // Check for divisibility by 6*i - 1.
     c <- e
     g <- d
-    push(p + 2); p <- @+umod + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+umod + p
     k <- b == 0
     p <- @+cleanup1 & k + p
 
@@ -75,7 +75,7 @@ mod_loop:
     c <- e
     d <- i * 6
     d <- d + 1
-    push(p + 2); p <- @+umod + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+umod + p
     k <- b == 0
 
     // Increment i and continue.
@@ -88,7 +88,7 @@ prime:
     p <- p + @+done
 
 cleanup1:
-    pop(c)
+    o <- o + 1 ; c <- [o]
 cleanup0:
 composite:
     b <- 0

@@ -9,16 +9,16 @@ loop_outer:
     P <- @+done & G + P
     D <- 0xa5 // TODO try other bit patterns
     C <- D << E
-    push(p + 2); p <- @+trailz + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+trailz + p
     G <- B == E
     E <- E - 1
     P <- @+skip &~ G + P
     C <- @+good_msg + P
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     P <- P + @+loop_outer
 skip:
     C <- @+bad_msg + P
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     P <- P + @+loop_outer
 
 done:

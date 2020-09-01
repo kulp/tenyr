@@ -5,7 +5,7 @@ sleep:
     // 80MHz clock, 4-cycle ticks() loop, 10cpi
     c <- c * 1000
     c <- c * 2000
-    push(p + 2); p <- @+ticks + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+ticks + p
     o <- o + 1
     p <- [o]
 

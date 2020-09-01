@@ -7,7 +7,7 @@
 _start:
     prologue
     c <- ARGUMENT       // argument
-    push(p + 2); p <- @+fib + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     illegal
 
 // Computes fib(C) and stores the result in B.

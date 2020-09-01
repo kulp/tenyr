@@ -29,20 +29,20 @@ fp_mul:
   d <- d | m
 
   // Save what we have so far.
-  push(b)
-  push(e)
+  [o] <- b ; o <- o - 1
+  [o] <- e ; o <- o - 1
 
   e <- c
 
   // Multiply the two mantissas together.
-  push(p + 2); p <- @+dw_mul + p
+  [o] <- p + 2 ; o <- o - 1 ; p <- @+dw_mul + p
 
   // B:C contains a 48-bit product, take the upper 23 bits.
   b <- b << 9
   c <- c >>> 23 + b
 
   // Check to see if the exponent needs adjustment.
-  pop(e)
+  o <- o + 1 ; e <- [o]
   m <- 1
   m <- m << 23
   m <- m & c
@@ -55,7 +55,7 @@ fp_mul:
 
 no_shift:
   // Restore the saved sign and combine the result.
-  pop(b)
+  o <- o + 1 ; b <- [o]
   b <- e << 23 + b
   m <- [@+mant + p]
   c <- c & m

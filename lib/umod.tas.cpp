@@ -7,7 +7,7 @@ umod:
   o <- o - 2
   c -> [o + (2 - 0)]
   d -> [o + (2 - 1)]
-  push(p + 2); p <- @+udiv + p
+  [o] <- p + 2 ; o <- o - 1 ; p <- @+udiv + p
   o <- o + 2
   d <- [o - 1]
   c <- [o - 0]

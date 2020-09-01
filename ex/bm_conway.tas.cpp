@@ -18,16 +18,16 @@ _start:
 
     c <- i
     d <- 0xa // in our font, a 50% greyscale
-    push(p + 2); p <- @+blank_area + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+blank_area + p
 
-    push(p + 2); p <- @+randomise_board + p
-    push(p + 2); p <- @+flip + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+randomise_board + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+flip + p
 
 forever:
     m -> [0x100]
 
-    push(p + 2); p <- @+compute + p
-    push(p + 2); p <- @+flip + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+compute + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+flip + p
 
     m <- m + 1
     p <- p + @+forever
@@ -57,12 +57,12 @@ randomise_board:
     l -> [o + (6 - 4)]
     n -> [o + (6 - 5)]
     c <- [@+seed + p]
-    push(p + 2); p <- @+srand + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+srand + p
     j <- (ROWS - 1)
 randomise_board_rows:
     k <- (COLS - 1)
 randomise_board_cols:
-    push(p + 2); p <- @+rand + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+rand + p
     b <- b >> 23
 
     l <- b >= THRESHOLD
@@ -137,7 +137,7 @@ compute_cols:
 
     c <- j
     d <- k
-    push(p + 2); p <- @+get_neighbour_count + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+get_neighbour_count + p
     e <- b
 
     b <- j * COLS + k

@@ -27,7 +27,7 @@ srand:
 
 .global rand
 rand:
-    push(c)
+    [o] <- c ; o <- o - 1
     b <- [@+seed + p]
     c <- [@+mult + p]
     b <- b * c + INCREMENT

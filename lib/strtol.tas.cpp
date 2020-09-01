@@ -12,7 +12,7 @@ strtol:
 
     h <- e == 0
     p <- @+strtol_no_call &~ h + p
-    push(p + 2); p <- @+detect_base + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+detect_base + p
     e <- b
 
 strtol_no_call:
@@ -104,7 +104,7 @@ strtol_gt10_tryhigh:
 // ----------------------------------------------------------------------------
 // modifies C upon return
 detect_base:
-    push(f)
+    [o] <- f ; o <- o - 1
     f <- [c]
     f <- f == '0'
     p <- @+detect_base_8or16 & f + p

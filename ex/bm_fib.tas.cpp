@@ -18,29 +18,29 @@ loop:
     l <- k * 16         // column (0 - 63)
 
     // compute fib(N)
-    push(c)
-    push(p + 2); p <- @+fib + p
-    pop(c)
+    [o] <- c ; o <- o - 1
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
+    o <- o + 1 ; c <- [o]
 
     c -> [0x100]        // write N to LED
     //c -> [0x101]
 
     // write N to VGA
-    push(c)
+    [o] <- c ; o <- o - 1
     d <- j
     e <- l
     f <- 2
-    push(p + 2); p <- @+putnum + p
-    pop(c)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+putnum + p
+    o <- o + 1 ; c <- [o]
 
     // write fib(N) to VGA
-    push(c)
+    [o] <- c ; o <- o - 1
     c <- b
     d <- j
     e <- l + 4
     f <- 12
-    push(p + 2); p <- @+putnum + p
-    pop(c)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+putnum + p
+    o <- o + 1 ; c <- [o]
 
     c <- c + 1          // increment N
 
@@ -62,15 +62,15 @@ fib:
     p <- [o]
 
 _recurse:
-    push(c)
+    [o] <- c ; o <- o - 1
     c <- c - 1
-    push(p + 2); p <- @+fib + p
-    pop(c)
-    push(b)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
+    o <- o + 1 ; c <- [o]
+    [o] <- b ; o <- o - 1
     c <- c - 2
-    push(p + 2); p <- @+fib + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     d <- b
-    pop(b)
+    o <- o + 1 ; b <- [o]
     b <- d + b
 
     o <- o + 1

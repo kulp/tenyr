@@ -29,11 +29,11 @@ bsearch_loop:
     i <- e >> 1
     i <- i * f
     d <- d + i
-    push(d)     // save testpointer
-    push(p + 2)
+    [o] <- d ; o <- o - 1 // save testpointer
+    [o] <- p + 2 ; o <- o - 1
     p <- g      // call indirect
     i <- b      // copy result to temp
-    pop(b)      // restore testpointer to b in case of match
+    o <- o + 1 ; b <- [o] // restore testpointer to b in case of match
     o <- o + 4
     f <- [o - 3]
     e <- [o - 2]

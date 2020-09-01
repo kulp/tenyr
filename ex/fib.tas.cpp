@@ -13,11 +13,11 @@
 _start:
     prologue                // sets up base/stack pointer
     c <- ARGUMENT           // argument
-    push(p + 2); p <- @+fib + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     illegal
 
 fib:
-    push(d)
+    [o] <- d ; o <- o - 1
     d <- c > 1              // not zero or one ?
     p <- @+_recurse & d + p // not-zero is true (c >= 2)
     b <- c
@@ -26,15 +26,15 @@ fib:
     p <- [o]
 
 _recurse:
-    push(c)
+    [o] <- c ; o <- o - 1
     c <- c - 1
-    push(p + 2); p <- @+fib + p
-    pop(c)
-    push(b)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
+    o <- o + 1 ; c <- [o]
+    [o] <- b ; o <- o - 1
     c <- c - 2
-    push(p + 2); p <- @+fib + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     d <- b
-    pop(b)
+    o <- o + 1 ; b <- [o]
     b <- d + b
 
     o <- o + 2

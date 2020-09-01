@@ -5,7 +5,7 @@
 // Performs B:C <- D * E
 // Assumes D and E are 31-bit unsigned
 dw_mul:
-  push(m)
+  [o] <- m ; o <- o - 1
   // Load mask.
   m <- [@+mask + p]
 

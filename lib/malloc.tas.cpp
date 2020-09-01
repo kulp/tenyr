@@ -24,7 +24,7 @@ pool:   .zero (RANK_0_SIZE * (1 << (RANKS - 1)))
 
 ilog2:
     B   <- 0
-    push(D)
+    [O] <- D ; O <- O - 1
 L_ilog2_top:
     C   <- C >> 1
     D   <- C == 0
@@ -80,17 +80,17 @@ L_ilog2_done:
     //
 
 #define FUNCIFY2(Stem,B,C)      \
-    push(c)                   ; \
+    [o] <- c ; o <- o - 1 ; \
     c   <- C                  ; \
-    push(P + 2); P <- @+Stem##_func + P ; \
-    pop(c)                    ; \
+    [O] <- P + 2 ; O <- O - 1 ; P <- @+Stem##_func + P ; \
+    o <- o + 1 ; c <- [o] ; \
     B   <- b                  ; \
     //
 
 // NODE2RANK gets NP n in C, returns SZ rank in B
 #define NODE2RANK(B,C)  FUNCIFY2(NODE2RANK,B,C)
 NODE2RANK_func:
-    push(D)
+    [O] <- D ; O <- O - 1
     D   <- 0
 L_NODE2RANK_top:
     B   <- C == 0
@@ -110,7 +110,7 @@ SIZE2RANK_func:
     P <- @+L_SIZE2RANK_zero & B + P
     C   <- C - 1
     C   <- C >> RANK_0_LOG
-    push(P + 2); P <- @+ilog2 + P
+    [O] <- P + 2 ; O <- O - 1 ; P <- @+ilog2 + P
     B   <- B + 1
 L_SIZE2RANK_zero:
     O <- O + 1
@@ -256,7 +256,7 @@ L_ADDR2NODE_loopdone:
 #if DEBUG
     D   <- C == E
     P <- @+L_ADDR2NODE_done & D + P
-    push(P + 2); P <- @+abort + P
+    [O] <- P + 2 ; O <- O - 1 ; P <- @+abort + P
 
 L_ADDR2NODE_done:
 #endif
@@ -274,14 +274,14 @@ buddy_malloc:
 
 .global buddy_calloc
 buddy_calloc:
-    push(E)             // save E which we will use below
+    [O] <- E ; O <- O - 1 // save E which we will use below
     C   <- C * D
-    push(C)
-    push(P + 2); P <- @+buddy_alloc + P
+    [O] <- C ; O <- O - 1
+    [O] <- P + 2 ; O <- O - 1 ; P <- @+buddy_alloc + P
     C   <- B
     D   <- 0
-    pop(E)              // pop size from C into third memset param slot
-    push(P + 2); P <- @+memset + P
+    O <- O + 1 ; E <- [O] // pop size from C into third memset param slot
+    [O] <- P + 2 ; O <- O - 1 ; P <- @+memset + P
     O <- O + 2
     E <- [O - (1 + 0)]
     P <- [O]
@@ -394,12 +394,12 @@ L_buddy_alloc_rankplus:
     P <- P + @+L_buddy_alloc_rankplus
 
 L_buddy_alloc_rankdone:
-    push(P + 2); P <- @+buddy_nosplit + P
+    [O] <- P + 2 ; O <- O - 1 ; P <- @+buddy_nosplit + P
     P <- P + @+L_buddy_alloc_done
 
 L_buddy_alloc_do_split:
     D   <- E
-    push(P + 2); P <- @+buddy_autosplit + P
+    [O] <- P + 2 ; O <- O - 1 ; P <- @+buddy_autosplit + P
 
 L_buddy_alloc_done:
     O <- O + 4

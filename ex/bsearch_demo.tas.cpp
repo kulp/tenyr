@@ -19,9 +19,9 @@ loop_top:
     e <- (DATA_LEN / ELT_LEN)   // number of elements
     f <- ELT_LEN                // size of each element
     g <- @+inteq + p            // comparator
-    push(p + 2); p <- @+bsearch + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+bsearch + p
 
-    push(c)
+    [o] <- c ; o <- o - 1
     c <- b == 0
     p <- @+notfound & c + p
     c <- [b + 1]
@@ -32,10 +32,10 @@ notfound:
     c <- @+error_msg + p
 
 done:
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     c <- @+nl + p
-    push(p + 2); p <- @+puts + p
-    pop(c)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    o <- o + 1 ; c <- [o]
     c <- [@+key + p]
     c <- c + 1                  // increment loop counter
     p <- p + @+loop_top

@@ -4,8 +4,8 @@
 #define CHANNEL "#tenyr"
 #define NICK    "rynet"
 
-#define do(X) c <- @+X + p  ; push(p + 2) ; p <- @+puts + p ; \
-              c <- @+rn + p ; push(p + 2) ; p <- @+puts + p
+#define do(X) c <- @+X + p  ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p ; \
+              c <- @+rn + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
 
 _start:
     prologue
@@ -15,56 +15,56 @@ _start:
     do(join)
 
 loop_line:
-    push(p + 2); p <- @+getline + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+getline + p
     // use g as backing store for line ; c is stompable as arg
     g <- b
 
     c <- g
     d <- @+ping + p
     e <- 5
-    push(p + 2); p <- @+strncmp + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strncmp + p
     p <- @+do_pong &~ b + p
 
     c <- g
     d <- 1
-    push(p + 2); p <- @+skipwords + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+skipwords + p
 
     c <- b
     d <- @+privmsg + p
     e <- 7
-    push(p + 2); p <- @+strncmp + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strncmp + p
     p <- @+loop_line & b + p
     c <- g
     d <- 3
-    push(p + 2); p <- @+skipwords + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+skipwords + p
 
     c <- b + 1
-    push(p + 2); p <- @+check_input + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+check_input + p
 
     p <- p + @+loop_line
 
     illegal
 do_pong:
     c <- @+pong + p
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     c <- g
     d <- 1
-    push(p + 2); p <- @+skipwords + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+skipwords + p
     c <- b
-    push(p + 2); p <- @+puts + p // respond with same identifier
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p // respond with same identifier
     c <- @+rn + p
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     p <- p + @+loop_line
 
 check_input:
     o <- o - 2
     d -> [o + (2 - 0)]
     e -> [o + (2 - 1)]
-    push(c)
+    [o] <- c ; o <- o - 1
     d <- @+trigger + p
     e <- 3 // strlen(trigger)
-    push(p + 2); p <- @+strncmp + p
-    pop(c)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strncmp + p
+    o <- o + 1 ; c <- [o]
     p <- @+check_input_triggered &~ b + p
     p <- p + @+check_input_done
 
@@ -72,13 +72,13 @@ check_input_triggered:
     c <- c + 3
     d <- 0
     e <- 10
-    push(p + 2); p <- @+strtol + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+strtol + p
     c <- b + 40
     c <- c * 9
     d <- 5
-    push(p + 2); p <- @+udiv + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+udiv + p
     c <- b - 40
-    push(p + 2); p <- @+say_fahrenheit + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+say_fahrenheit + p
 
 check_input_done:
     o <- o + 3
@@ -93,22 +93,22 @@ tmpbuf: .chars "0123456789abcdef"
 tmpbuf_end: .word 0
 
 say_decimal:
-    push(p + 2); p <- @+say_start + p
-    push(p + 2); p <- @+convert_decimal + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+say_start + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+convert_decimal + p
     c <- b
-    push(p + 2); p <- @+puts + p
-    push(p + 2); p <- @+say_end + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+say_end + p
     o <- o + 1
     p <- [o]
 
 say_fahrenheit:
-    push(p + 2); p <- @+say_start + p
-    push(p + 2); p <- @+convert_decimal + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+say_start + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+convert_decimal + p
     c <- b
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     c <- @+degF + p
-    push(p + 2); p <- @+puts + p
-    push(p + 2); p <- @+say_end + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+say_end + p
     o <- o + 1
     p <- [o]
 
@@ -131,13 +131,13 @@ convert_decimal_top:
 
     c <- g
     d <- 10
-    push(p + 2); p <- @+umod + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+umod + p
 
     [h] <- b + '0'
 
     c <- g
     d <- 10
-    push(p + 2); p <- @+udiv + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+udiv + p
     g <- b
 
     d <- g == 0
@@ -160,24 +160,24 @@ convert_decimal_negative:
     p <- p + @+convert_decimal_top
 
 say:
-    push(p + 2); p <- @+say_start + p
-    push(p + 2); p <- @+puts + p
-    push(p + 2); p <- @+say_end + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+say_start + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+say_end + p
     o <- o + 1
     p <- [o]
 
 say_start:
-    push(c)
+    [o] <- c ; o <- o - 1
     c <- @+talk + p
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     o <- o + 2
     c <- [o - (1 + 0)]
     p <- [o]
 
 say_end:
-    push(c)
+    [o] <- c ; o <- o - 1
     c <- @+rn + p
-    push(p + 2); p <- @+puts + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     o <- o + 2
     c <- [o - (1 + 0)]
     p <- [o]
