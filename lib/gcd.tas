@@ -2,12 +2,12 @@
 
 .global gcd
 
-// Computes GCD(C, D) and stores it in B.
-// The variant which uses subtraction will ultimately be a lot cheaper than
-// the traditional approach involving mod.
+# Computes GCD(C, D) and stores it in B.
+# The variant which uses subtraction will ultimately be a lot cheaper than
+# the traditional approach involving mod.
 gcd:
   [o] <- k ; o <- o - 1
-  // If C == 0, return D.
+  # If C == 0, return D.
   b <- d
   k <- c == 0
   p <- @+done & k + p

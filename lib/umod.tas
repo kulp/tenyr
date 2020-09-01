@@ -2,7 +2,7 @@
 
 .global umod
 
-// Performs C % D and stores the result in B.
+# Performs C % D and stores the result in B.
 umod:
   o <- o - 2
   c -> [o + (2 - 0)]

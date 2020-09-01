@@ -2,29 +2,29 @@
 
 .global ipow
 
-// Performs C^D and stores the result in B.
+# Performs C^D and stores the result in B.
 ipow:
   [o] <- k ; o <- o - 1
-  // Initialize the return value to 1.
+  # Initialize the return value to 1.
   b <- 1
 
-  // Multiply the product by C until D == 0.
+  # Multiply the product by C until D == 0.
 mult_loop:
   k <- d == 0
   p <- @+done & k + p
 
-  // Check to see if the exponent is even or not.
+  # Check to see if the exponent is even or not.
   k <- d & 1
   k <- k - 1
   p <- @+even & k + p
 
-  // If odd, subtract one from the exponent and multiply by the base.
+  # If odd, subtract one from the exponent and multiply by the base.
 odd:
   b <- b * c
   d <- d - 1
   p <- p + @+mult_loop
 
-  // If even, halve the exponent and square the base.
+  # If even, halve the exponent and square the base.
 even:
   c <- c * c
   d <- d >> 1
