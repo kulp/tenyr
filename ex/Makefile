@@ -8,18 +8,18 @@ vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
 %.tas: INCLUDES += $(TOP)/lib $(TOP)/lib/dword
 
 TARGETS = \
-    bsearch_demo.texe   \
     bm_chars.texe       \
     bm_conway.texe      \
-    bm_snake.texe       \
     bm_mults.texe       \
+    bm_snake.texe       \
+    bsearch_demo.texe   \
     compare.texe        \
     copy.texe           \
     fib.texe            \
     fib_iter.texe       \
     hello.texe          \
-    isprime.texe        \
     irc.texe            \
+    isprime.texe        \
     maths.texe          \
     parse_hex.texe      \
     qsort_demo.texe     \
