@@ -12,8 +12,6 @@ _start:
     b <- 0              // indicate non-completion to testbench
     c <- 1              // argument
 
-    call(init_display)
-
 restart:
     j <- 0              // multiplier
     k <- 0              // multiplicand

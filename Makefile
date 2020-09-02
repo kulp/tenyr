@@ -126,6 +126,9 @@ lexer.o: CPPFLAGS += -Wno-disabled-macro-expansion
 lexer.o: CPPFLAGS += -Wno-documentation
 lexer.o: CFLAGS += -Wno-missing-noreturn
 lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)sign-conversion
+lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)conversion
+lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)disabled-macro-expansion
+lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)unreachable-code
 
 # flex-generated code we can't control warnings of as easily
 parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter

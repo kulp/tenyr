@@ -24,9 +24,6 @@ all: positive negative
 positive: $(PASS_ASSEMBLE)
 negative: $(FAIL_ASSEMBLE)
 
-test_imul.texe: imul.to puts.to print_hex.to
-copy.texe: memcpy.to puts.to
-
 $(filter %.to,$(FAIL_ASSEMBLE)): %.to: %.tas
 	@$(MAKESTEP) -n "Assembling `printf %-24s '$@'` (should fail) ... "
 	@(! $(tas) -o$@ $< 2>/dev/null) \
