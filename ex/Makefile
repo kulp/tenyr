@@ -23,6 +23,7 @@ TARGETS = \
     parse_hex.texe      \
     qsort_demo.texe     \
     sieve.texe          \
+    trailz_demo.texe    \
     #
 
 CPP_FILES := $(wildcard *.tas.cpp)
