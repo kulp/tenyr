@@ -17,7 +17,7 @@ jmp_buf errbuf;
 // Strip directory components from filename
 static const char *notdir(const char *file)
 {
-    const char *slash = strrchr(file, PATH_COMPONENT_SEPARATOR_CHAR);
+    const char *slash = strrchr(file, '/');
     if (slash)
         file = slash + 1; // if we found a slash, start after it
 
@@ -71,7 +71,7 @@ long long numberise(char *str, int base)
 char *build_path(const char *base, const char *fmt, ...)
 {
     char *dir = strdup(base);
-    char *solidus = strrchr(dir, PATH_COMPONENT_SEPARATOR_CHAR);
+    char *solidus = strrchr(dir, '/');
     if (solidus)
         solidus[1] = '\0';
     if (!fmt)

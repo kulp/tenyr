@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language: tenyr asm
 " Maintainer: Darren Kulp <darren@kulp.ch>
-" Latest Revision: 12 Feb 2012
+" Latest Revision: 10 Aug 2020
 
-    "if exists("b:current_syntax")
+"if exists("b:current_syntax")
 "  finish
 "endif
 
@@ -13,7 +13,7 @@ syn keyword tenyrRegister a b c d e f g h i j k l m n o p
 syn match tenyrDelim '[][]'
 
 "syn keyword tenyrArrow <- ->
-syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|<<<\|>>\|>>>\|<>\|!=\|==\|>=\|<=\||\~\|&\~\|\^\^\)\([[:space:]]\|$\)\@='
+syn match tenyrOp '\(^\|[[:space:]]\)\@<=\([-<>^.+\&|*\~]\|<<\|<<<\|>>\|>>>\|!=\|==\|>=\|<=\||\~\|&\~\|\^\^\)\([[:space:]]\|$\)\@='
 syn match tenyrArrow '<-\|->'
 
 syn match tenyrDirective '\.\(global\|word\|set\|zero\)\>'
@@ -39,8 +39,10 @@ syn match tenyrEscape contained '\\[\\'0bfnrtv]'
 syn region tenyrString start='"' end='"' contained contains=tenyrEscape
 syn region tenyrStrRegion start="\.chars\>" end="$" keepend contains=tenyrString,tenyrStrDir
 
-syn match tenyrNumber '-\?\<\d\+\>'
-syn match tenyrNumber '0x[0-9a-fA-F]{1,8}'
+syn match tenyrNumber '-\?\(0\|[1-9]\([0-9_]*[0-9]\)\?\)\>' " decimal
+syn match tenyrNumber '-\?0[0-7_]*[0-7]' " octal
+syn match tenyrNumber '-\?0x[[:xdigit:]_]*[[:xdigit:]]' " hexadecimal
+syn match tenyrNumber '-\?0b[01_]*[01]' " binary
 
 let b:current_syntax = "tenyr"
 

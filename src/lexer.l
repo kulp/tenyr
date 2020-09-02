@@ -48,7 +48,7 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 %s ignore_nl
 %s needarrow
 %x charlit charend charesc
-%x comment linecomment
+%x linecomment
 %x string
 
 regname [A-P]
@@ -58,9 +58,9 @@ symbol  [A-Z_][A-Z0-9_]+|[Q-Z_][A-Z0-9_]*
 local   \.L[A-Z0-9_]+
 string  ([^"]|\\\")+
 hexnum  "0x"[0-9a-f_]+
-octnum  "0"[0-7_]+
-binnum  "0b"[01_]+
-decnum  [0-9_]+
+octnum  "0"[0-7_]*[0-7]
+binnum  "0b"[01_]*[01]
+decnum  0|[1-9]([0-9_]*[0-9])?
 bitstr  {hexnum}|{octnum}|{binnum}
 self    [][|&+*^><.,:@()~;=/-]
 strcon  ([^"]|\\\")
@@ -112,18 +112,9 @@ illegal             { return ILLEGAL; }
 
 {white}+            ; /* ignored whitespace */
 
-"//"|"#"            PUSH(linecomment);
+"#"                 PUSH(linecomment);
 <linecomment>{
-    \\\r?\n         ; /* escaped newline */
     \r?\n           { POP; return '\n'; }
-    .               ; /* ignored content */
-}
-
-"/*"                PUSH(comment);
-<comment>{
-    "*/"            POP; /* pop comment, reveal INITIAL */
-    <<EOF>>         { tenyr_error(yylloc, yyextra, "End of file reached while inside comment. "
-                        "Did you forget `*/' ?"); POP; }
     .               ; /* ignored content */
 }
 

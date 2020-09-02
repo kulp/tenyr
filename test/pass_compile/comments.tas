@@ -1,20 +1,2 @@
-// this is a one-line C99 comment on its own line
-a <- b // this is a one-line C99 comment sharing a line
-a <- b // this is a one-line C99 comment sharing a line \
-    and continuing on the next line
 # this is a one-line shell comment on its own line
-# this is a one-line shell comment on its own line \
-    and continuing on the next line
 a <- b # this is a one-line shell comment sharing a line
-/* this is a C89 comment on its own line */
-a <- b /* this is a C89 comment sharing a line */
-/* this is a multiline C89 comment
-   on its own lines and containing ignored code
-   c <- c
-   */
-
-a <- b /* this is a multiline C89 comment
-   sharing lines and containing ignored code
-   c <- c
-   */ ;	b <- a
-
