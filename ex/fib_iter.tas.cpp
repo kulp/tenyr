@@ -1,10 +1,8 @@
-#ifndef ARGUMENT
-#define ARGUMENT 10
-#endif
+.set ARGUMENT, 10
 
 _start:
     o <- ((1 << 13) - 1)
-    c <- ARGUMENT       // argument
+    c <- @ARGUMENT      // argument
     [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     illegal
 
