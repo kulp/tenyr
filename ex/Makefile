@@ -10,9 +10,12 @@ vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
 TARGETS = \
     bm_chars.texe       \
     bm_conway.texe      \
+    bm_fib.texe         \
+    bm_gpio.texe        \
     bm_mults.texe       \
     bm_snake.texe       \
     bsearch_demo.texe   \
+    clock.texe          \
     compare.texe        \
     copy.texe           \
     fib.texe            \
@@ -23,8 +26,11 @@ TARGETS = \
     maths.texe          \
     parse_hex.texe      \
     qsort_demo.texe     \
+    set.texe            \
     sieve.texe          \
     test_imul.texe      \
+    totient.texe        \
+    trailz_demo.texe    \
     #
 
 CPP_FILES := $(wildcard *.tas.cpp)
