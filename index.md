@@ -6,8 +6,7 @@
 
 **tenyr** is a 32-bit computer architecture and computing environment that
 focuses on simplicity of design and implementation. **tenyr**'s tools run on
-Mac, \*nix, Windows, node.js (via [emscripten](https://github.com/kripken/emscripten)),
-and [in a web browser](http://demo.tenyr.info/). **tenyr**'s highly portable
+Mac, \*nix, Windows, and node.js via [emscripten]. **tenyr**'s highly portable
 Verilog hardware definition has been demonstrated on Xilinx Spartan6 FPGAs and
 should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
 
@@ -28,3 +27,5 @@ should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
   * a [recursive Fibonacci number generator](https://github.com/kulp/tenyr/blob/develop/ex/bm_fib.tas.cpp)
 
 **tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki).
+
+[emscripten]: https://github.com/emscripten-core/emscripten
