@@ -3,9 +3,9 @@ _start:
     c <- @+dst + p
     d <- @+src + p
     e <- 10
-    call(memcpy)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+memcpy + p
     c <- b
-    call(puts)
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     illegal
 
 dst: .chars "                " ; .word 0
