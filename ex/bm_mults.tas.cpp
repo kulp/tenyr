@@ -4,7 +4,6 @@
 //  C is the (so far only) argument register
 //  N is the condition register
 
-#include "common.th"
 #include "vga.th"
 
 _start:

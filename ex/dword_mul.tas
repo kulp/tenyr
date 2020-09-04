@@ -1,5 +1,3 @@
-#include "common.th"
-
 .global dw_mul
 
 # Performs B:C <- D * E

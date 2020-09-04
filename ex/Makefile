@@ -57,5 +57,3 @@ bm_conway.texe: bm_conway_buffer.to
 test_imul.texe: imul.to puts.to print_hex.to
 copy.texe: memcpy.to puts.to
 
-$(patsubst %.tas.cpp,%.tas,$(CPP_FILES)): %.tas: $(TOP)/lib/common.th
-

@@ -1,4 +1,3 @@
-#include "common.th"
 #include "vga.th"
 
 #define THRESHOLD 64

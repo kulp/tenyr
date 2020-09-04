@@ -1,4 +1,3 @@
-#include "common.th"
 #include "serial.th"
 
 #define CHANNEL "#tenyr"

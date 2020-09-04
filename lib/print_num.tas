@@ -1,4 +1,3 @@
-#include "common.th"
 
 print_num:
     o <- o + 1

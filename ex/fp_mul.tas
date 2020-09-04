@@ -1,5 +1,3 @@
-#include "common.th"
-
 .global fp_mul
 
 # Performs B <- C * D, where B, C, & D are binary32 floating-point values.

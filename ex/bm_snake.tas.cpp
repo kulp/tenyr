@@ -1,6 +1,5 @@
 // This file doesn't adhere to the standard EABI !
 
-#include "common.th"
 #include "vga.th"
 
 #define SIZEOF_SNAKE 4
