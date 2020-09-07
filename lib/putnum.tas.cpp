@@ -1,4 +1,5 @@
-#include "vga.th"
+.set VGA_ROWS, 32
+.set VGA_COLS, 64
 
 .global putnum
     // putnum takes number in C, (row,col) in D,E, and field width in F
@@ -11,7 +12,7 @@ putnum:
     l -> [o + (6 - 4)]
     m -> [o + (6 - 5)]
     h <- 0x10000        // h is video base
-    k <- d * COLS + e   // k is offset into display
+    k <- d * @VGA_COLS + e  // k is offset into display
     k <- k + f          // start at right side of field
     i <- @+hexes + p    // i is base of hex transform
 

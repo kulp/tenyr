@@ -1,4 +1,6 @@
-#include "vga.th"
+.set VGA_ROWS, 32
+.set VGA_COLS, 64
+.set VGA_BASE, 0x10000
 
 #define THRESHOLD 64
 
@@ -35,8 +37,8 @@ blank_area:
     o <- o - 2
     j -> [o + (2 - 0)]
     n -> [o + (2 - 1)]
-    j <- COLS
-    j <- j * ROWS
+    j <- @VGA_COLS
+    j <- j * @VGA_ROWS
 blank_area_loop:
     j <- j - 1
     d -> [c + j]
@@ -57,16 +59,16 @@ randomise_board:
     n -> [o + (6 - 5)]
     c <- [@+seed + p]
     [o] <- p + 2 ; o <- o - 1 ; p <- @+srand + p
-    j <- (ROWS - 1)
+    j <- (@VGA_ROWS - 1)
 randomise_board_rows:
-    k <- (COLS - 1)
+    k <- (@VGA_COLS - 1)
 randomise_board_cols:
     [o] <- p + 2 ; o <- o - 1 ; p <- @+rand + p
     b <- b >> 23
 
     l <- b >= THRESHOLD
 
-    b <- j * COLS + k
+    b <- j * @VGA_COLS + k
     l -> [b + g] // write to buf0
 
     k <- k - 1
@@ -89,11 +91,11 @@ flip:
     j -> [o + (3 - 0)]
     k -> [o + (3 - 1)]
     n -> [o + (3 - 2)]
-    j <- (ROWS - 1)
+    j <- (@VGA_ROWS - 1)
 flip_rows:
-    k <- (COLS - 1)
+    k <- (@VGA_COLS - 1)
 flip_cols:
-    b <- j * COLS + k
+    b <- j * @VGA_COLS + k
     b <- [b + g] // read from buf0
 
     b <- b @ h
@@ -103,7 +105,7 @@ flip_cols:
     n <- b | n
 
     // convert from inset coordinates to full coordinates
-    b <- j * COLS + k
+    b <- j * @VGA_COLS + k
     n -> [b + i] // write to display
 
     k <- k - 1
@@ -129,9 +131,9 @@ compute:
     j -> [o + (7 - 4)]
     k -> [o + (7 - 5)]
     l -> [o + (7 - 6)]
-    j <- (ROWS - 1)
+    j <- (@VGA_ROWS - 1)
 compute_rows:
-    k <- (COLS - 1)
+    k <- (@VGA_COLS - 1)
 compute_cols:
 
     c <- j
@@ -139,7 +141,7 @@ compute_cols:
     [o] <- p + 2 ; o <- o - 1 ; p <- @+get_neighbour_count + p
     e <- b
 
-    b <- j * COLS + k
+    b <- j * @VGA_COLS + k
     f <- [b + g] // read from buf1
     // E is neighbour count, F is current state
     c <- h ^ 1
@@ -188,10 +190,10 @@ neighbour_loop_rows:
     f <- -1
 neighbour_loop_cols:
     // essentially doing `(a + 31) % 32` to get `a - 1` safely
-    c <- j + e + ROWS ; c <- c & (ROWS - 1)
-    d <- k + f + COLS ; d <- d & (COLS - 1)
+    c <- j + e + @VGA_ROWS ; c <- c & (@VGA_ROWS - 1)
+    d <- k + f + @VGA_COLS ; d <- d & (@VGA_COLS - 1)
 
-    b <- c * COLS + d
+    b <- c * @VGA_COLS + d
     l <- [b + g]
     n <- e | f
     n <- n == 0

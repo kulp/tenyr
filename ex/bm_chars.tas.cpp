@@ -1,4 +1,6 @@
-#include "vga.th"
+.set VGA_ROWS, 32
+.set VGA_COLS, 64
+.set VGA_BASE, 0x10000
 
 _start:
     o <- ((1 << 13) - 1)
@@ -7,7 +9,7 @@ _start:
 restart:
     c <- 0
     j <- @VGA_BASE
-    k <- (ROWS * COLS)
+    k <- @VGA_ROWS; k <- k * @VGA_COLS
     k <- k + j
 
 top:

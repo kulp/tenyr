@@ -4,7 +4,8 @@
 //  C is the (so far only) argument register
 //  N is the relative-jump temp register
 
-#include "vga.th"
+.set VGA_ROWS, 32
+.set VGA_COLS, 64
 
 _start:
     c <- 1              // argument
@@ -44,10 +45,10 @@ loop:
     c <- c + 1          // increment N
 
     j <- j + 1          // increment row
-    m <- j >= ROWS      // check for column full
+    m <- j >= @VGA_ROWS // check for column full
     // TODO try `l <- m * -20 + l`
-    k <- k - m          // if j >= ROWS, k <- k - -1
-    j <- j &~ m         // if j >= ROWS, j <- j & 0
+    k <- k - m          // if j >= @VGA_ROWS, k <- k - -1
+    j <- j &~ m         // if j >= @VGA_ROWS, j <- j & 0
 
     p <- p + @+loop
     illegal

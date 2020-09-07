@@ -4,7 +4,8 @@
 //  C is the (so far only) argument register
 //  N is the condition register
 
-#include "vga.th"
+.set VGA_ROWS, 32
+.set VGA_COLS, 64
 
 _start:
     o <- ((1 << 13) - 1)
@@ -22,7 +23,7 @@ restart:
     // write the top row first
 loop_top:
     f <- 4              // field width
-    n <- k <= (0x100 / (ROWS - 2))
+    n <- k <= (0x100 / (@VGA_ROWS - 2))
     f <- f + n          // conditionally shrink field width
     e <- k + g          // column is multiplicand + filled width
     d <- 0              // row is 0
@@ -47,7 +48,7 @@ loop_j:
 
 loop_k:
     f <- 4              // field width
-    n <- k <= (0x100 / (ROWS - 2))
+    n <- k <= (0x100 / (@VGA_ROWS - 2))
     f <- f + n          // conditionally shrink field width
     e <- k + g          // column is multiplicand + filled width
     d <- j + 1
@@ -61,7 +62,7 @@ loop_k:
     p <- @+loop_k & c + p
 
     j <- j + 1          // increment N
-    c <- j < ROWS
+    c <- j < @VGA_ROWS
     p <- @+loop_j & c + p
     b <- -1             // indicate completion to testbench
 

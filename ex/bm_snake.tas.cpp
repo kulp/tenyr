@@ -1,6 +1,7 @@
 // This file doesn't adhere to the standard EABI !
 
-#include "vga.th"
+.set VGA_ROWS, 32
+.set VGA_COLS, 64
 
 #define SIZEOF_SNAKE 4
 
@@ -58,10 +59,10 @@ L_snake:
 
     // start clamp
     // Check for out-of-bounds and bounce off the wall
-    b <- j >= ROWS  ; j <- b << 1 + j
-    b <- j >= a + 1 ; j <- b << 1 + j
-    c <- k >= COLS  ; k <- c << 1 + k
-    c <- k >= a + 1 ; k <- c << 1 + k
+    b <- j >= @VGA_ROWS ; j <- b << 1 + j
+    b <- j >= a + 1     ; j <- b << 1 + j
+    c <- k >= @VGA_COLS ; k <- c << 1 + k
+    c <- k >= a + 1     ; k <- c << 1 + k
     // end clamp
 
     j -> [n + 2] // store new row, col
@@ -73,7 +74,7 @@ L_snake:
     c <- c &~ h
     h <- [n + 0]
     c <- c + h
-    d <- j * COLS + k   // d is offset into display
+    d <- j * @VGA_COLS + k // d is offset into display
     e <- 0x100
     e <- e << 8         // e is video base
     c -> [e + d]        // e is d characters past start of text region
