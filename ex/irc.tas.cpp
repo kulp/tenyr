@@ -1,4 +1,4 @@
-#include "serial.th"
+.set SERIAL, 1 << 5
 
 #define CHANNEL "#tenyr"
 #define NICK    "rynet"
@@ -214,7 +214,7 @@ getline:
     f <- @+buffer + p
 
 getline_top:
-    getch(b)
+    b <- [@SERIAL]
     c <- b == '\r'
     c <- b == '\n' + c
     p <- @+getline_eol & c + p

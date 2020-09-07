@@ -1,5 +1,0 @@
-#define SERIAL [(1 << 5)]
-#define emit(Var) Var -> SERIAL
-#define getch(Var) Var <- SERIAL
-
-/* vi:set syntax=c: */

@@ -1,4 +1,4 @@
-#include "serial.th"
+.set SERIAL, 1 << 5
 
 // argument in C
 
@@ -10,7 +10,7 @@ puts_loop:
     d <- b == 0         // if it is zero, we are done
     p <- @+puts_done & d + p
     c <- c + 1          // increment index for next time
-    emit(b)             // output character to serial device
+    b -> [@SERIAL]      // output character to serial device
     p <- p + @+puts_loop
 puts_done:
     o <- o + 2
