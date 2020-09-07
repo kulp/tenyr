@@ -3,85 +3,53 @@
 _start:
     o <- ((1 << 13) - 1)
 
-#if 1
     c <- 0
     d <- 0x234
     [o] <- p + 2 ; o <- o - 1 ; p <- @+imul + p
     // 0x0 * 0x234 = 0x0
-#if PRINT
     c <- b ; [o] <- p + 2 ; o <- o - 1 ; p <- @+print_hex + p
-#endif
-#endif
 
-#if 1
     c <- 0x7ed
     d <- 0
     [o] <- p + 2 ; o <- o - 1 ; p <- @+imul + p
     // 0x7ed * 0x0 = 0x0
-#if PRINT
     c <- b ; [o] <- p + 2 ; o <- o - 1 ; p <- @+print_hex + p
-#endif
-#endif
 
-#if 1
     c <- 0x7ed
     d <- 0x234
     [o] <- p + 2 ; o <- o - 1 ; p <- @+imul + p
     // 0x7ed * 0x234 = 0x117624
-#if PRINT
     c <- b ; [o] <- p + 2 ; o <- o - 1 ; p <- @+print_hex + p
-#endif
-#endif
 
-#if 1
     c <- -1024
     d <- 1023
     [o] <- p + 2 ; o <- o - 1 ; p <- @+imul + p
     // -1024 * 1023 = -1047552 = 0xfff00400
-#if PRINT
     c <- b ; [o] <- p + 2 ; o <- o - 1 ; p <- @+print_hex + p
-#endif
-#endif
 
-#if 1
     c <- -2048
     d <- 2047
     [o] <- p + 2 ; o <- o - 1 ; p <- @+imul + p
     // -2048 * 2047 = -4192256 = 0xffc00800
-#if PRINT
     c <- b ; [o] <- p + 2 ; o <- o - 1 ; p <- @+print_hex + p
-#endif
-#endif
 
-#if 1
     c <- 3
     d <- -2
     [o] <- p + 2 ; o <- o - 1 ; p <- @+imul + p
     // 3 * -2 = 0xfffffffa
-#if PRINT
     c <- b ; [o] <- p + 2 ; o <- o - 1 ; p <- @+print_hex + p
-#endif
-#endif
 
-#if 1
     c <- -3
     d <- -2
     [o] <- p + 2 ; o <- o - 1 ; p <- @+imul + p
     // -3 * -2 = 0x6
-#if PRINT
     c <- b ; [o] <- p + 2 ; o <- o - 1 ; p <- @+print_hex + p
-#endif
-#endif
 
-#if 1
     c <- -3
     d <- 2
     [o] <- p + 2 ; o <- o - 1 ; p <- @+imul + p
     // -3 * 2 = 0xfffffffa
-#if PRINT
     c <- b ; [o] <- p + 2 ; o <- o - 1 ; p <- @+print_hex + p
-#endif
-#endif
     illegal
 
 print_hex:
