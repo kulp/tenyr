@@ -1,7 +1,9 @@
-#include "errno.th"
+errno: .zero 1 # TODO hoist this
+.set EINVAL, 22
+.set ERANGE, 34
 
     .global strtol
-// c,d,e <- str, endptr, base
+# c,d,e <- str, endptr, base
 strtol:
     o <- o - 4
     f -> [o + (4 - 0)]
@@ -36,7 +38,7 @@ strtol_negative:
     p <- p + @+strtol_top
 
 strtol_error:
-    h -> errno
+    h -> [p + @+errno]
 strtol_done:
     b <- b * f
     h <- d == 0
@@ -51,17 +53,17 @@ strtol_no_endptr:
     p <- [o]
 
 strtol_error_ERANGE:
-    h <- ERANGE
+    h <- @ERANGE
     p <- p + @+strtol_error
 
-// TODO produce EINVAL
-// only way I can think to do this so far is to get ilog2(base) and check for
-// that many zero bits at the MSB end before every multiplication
+# TODO produce EINVAL
+# only way I can think to do this so far is to get ilog2(base) and check for
+# that many zero bits at the MSB end before every multiplication
 strtol_error_EINVAL:
-    h <- EINVAL
+    h <- @EINVAL
     p <- p + @+strtol_error
 
-// ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 strtol_le10_top:
     i <- [c]
     i <- i - '0'
@@ -74,7 +76,7 @@ strtol_le10_top:
     b <- b + i
     p <- p + @+strtol_le10_top
 
-// ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 strtol_gt10_top:
     i <- [c]
     g <- i - '0'
@@ -100,8 +102,8 @@ strtol_gt10_tryhigh:
     b <- b + g
     p <- p + @+strtol_gt10_top
 
-// ----------------------------------------------------------------------------
-// modifies C upon return
+# ----------------------------------------------------------------------------
+# modifies C upon return
 detect_base:
     [o] <- f ; o <- o - 1
     f <- [c]
