@@ -2,23 +2,23 @@
 .set VGA_COLS, 64
 .set VGA_BASE, 0x10000
 
-#define THRESHOLD 64
+.set THRESHOLD, 64
 
 _start:
     o <- ((1 << 13) - 1)
 
-    // m is generation
+    # m is generation
     m <- 0
 
-    // i is global video base
+    # i is global video base
     i <- @VGA_BASE
-    // g is global flip buffer
+    # g is global flip buffer
     g <- @+databuf + p
-    // h is global flip buffer bit index
+    # h is global flip buffer bit index
     h <- 0
 
     c <- i
-    d <- 0xa // in our font, a 50% greyscale
+    d <- 0xa # in our font, a 50% greyscale
     [o] <- p + 2 ; o <- o - 1 ; p <- @+blank_area + p
 
     [o] <- p + 2 ; o <- o - 1 ; p <- @+randomise_board + p
@@ -66,10 +66,10 @@ randomise_board_cols:
     [o] <- p + 2 ; o <- o - 1 ; p <- @+rand + p
     b <- b >> 23
 
-    l <- b >= THRESHOLD
+    l <- b >= @THRESHOLD
 
     b <- j * @VGA_COLS + k
-    l -> [b + g] // write to buf0
+    l -> [b + g] # write to buf0
 
     k <- k - 1
     n <- k >= 0
@@ -96,7 +96,7 @@ flip_rows:
     k <- (@VGA_COLS - 1)
 flip_cols:
     b <- j * @VGA_COLS + k
-    b <- [b + g] // read from buf0
+    b <- [b + g] # read from buf0
 
     b <- b @ h
 
@@ -104,9 +104,9 @@ flip_cols:
     b <- ' ' &~ b
     n <- b | n
 
-    // convert from inset coordinates to full coordinates
+    # convert from inset coordinates to full coordinates
     b <- j * @VGA_COLS + k
-    n -> [b + i] // write to display
+    n -> [b + i] # write to display
 
     k <- k - 1
     n <- k >= 0
@@ -142,19 +142,19 @@ compute_cols:
     e <- b
 
     b <- j * @VGA_COLS + k
-    f <- [b + g] // read from buf1
-    // E is neighbour count, F is current state
+    f <- [b + g] # read from buf1
+    # E is neighbour count, F is current state
     c <- h ^ 1
     n <- f @ c
     n <- - n
-    // N is 1 if alive
-    e <- e | n // tricky
+    # N is 1 if alive
+    e <- e | n # tricky
     e <- e == 3
     n <- 1 << h
     e <- e & n
     f <- f &~ n
     f <- f |  e
-    f -> [b + g] // write to buf0
+    f -> [b + g] # write to buf0
 
     k <- k - 1
     n <- k >= 0
@@ -189,7 +189,7 @@ get_neighbour_count:
 neighbour_loop_rows:
     f <- -1
 neighbour_loop_cols:
-    // essentially doing `(a + 31) % 32` to get `a - 1` safely
+    # essentially doing `(a + 31) % 32` to get `a - 1` safely
     c <- j + e + @VGA_ROWS ; c <- c & (@VGA_ROWS - 1)
     d <- k + f + @VGA_COLS ; d <- d & (@VGA_COLS - 1)
 
@@ -197,7 +197,7 @@ neighbour_loop_cols:
     l <- [b + g]
     n <- e | f
     n <- n == 0
-    // skip case where e == f == 0 (self)
+    # skip case where e == f == 0 (self)
 
     c <- h ^ 1
     l <- l @ c ; l <- l &~ n

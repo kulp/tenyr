@@ -1,21 +1,18 @@
 .set SERIAL, 1 << 5
 
-#define CHANNEL "#tenyr"
-#define NICK    "rynet"
-
-#define do(X) c <- @+X + p  ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p ; \
-              c <- @+rn + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
-
 _start:
     o <- ((1 << 13) - 1)
 
-    do(nick)
-    do(user)
-    do(join)
+    c <- @+nick + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    c <- @+rn   + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    c <- @+user + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    c <- @+rn   + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    c <- @+join + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
+    c <- @+rn   + p ; [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
 
 loop_line:
     [o] <- p + 2 ; o <- o - 1 ; p <- @+getline + p
-    // use g as backing store for line ; c is stompable as arg
+    # use g as backing store for line ; c is stompable as arg
     g <- b
 
     c <- g
@@ -50,7 +47,7 @@ do_pong:
     d <- 1
     [o] <- p + 2 ; o <- o - 1 ; p <- @+skipwords + p
     c <- b
-    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p // respond with same identifier
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p # respond with same identifier
     c <- @+rn + p
     [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     p <- p + @+loop_line
@@ -61,7 +58,7 @@ check_input:
     e -> [o + (2 - 1)]
     [o] <- c ; o <- o - 1
     d <- @+trigger + p
-    e <- 3 // strlen(trigger)
+    e <- 3 # strlen(trigger)
     [o] <- p + 2 ; o <- o - 1 ; p <- @+strncmp + p
     o <- o + 1 ; c <- [o]
     p <- @+check_input_triggered &~ b + p
@@ -111,7 +108,7 @@ say_fahrenheit:
     o <- o + 1
     p <- [o]
 
-// TODO this is actually being encoded as UTF-8
+# TODO this is actually being encoded as UTF-8
 degF: .chars "°F" ; .word 0
 
 convert_decimal:
@@ -231,9 +228,9 @@ getline_eol:
     c <- [o - (1 + 0)]
     p <- [o]
 
-// ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
-buffer: // 512 chars
+buffer: # 512 chars
     .chars "----------------------------------------------------------------"
     .chars "----------------------------------------------------------------"
     .chars "----------------------------------------------------------------"
@@ -243,10 +240,10 @@ buffer: // 512 chars
     .chars "----------------------------------------------------------------"
     .chars "----------------------------------------------------------------"
 
-nick: .chars "NICK " NICK ; .word 0
-user: .chars "USER " NICK " 0 * :get your own bot" ; .word 0
-join: .chars "JOIN " CHANNEL ; .word 0
-talk: .chars "PRIVMSG " CHANNEL " :" ; .word 0
+nick: .chars "NICK " "rynet" ; .word 0
+user: .chars "USER " "rynet" " 0 * :get your own bot" ; .word 0
+join: .chars "JOIN " "#tenyr" ; .word 0
+talk: .chars "PRIVMSG " "#tenyr" " :" ; .word 0
 
 privmsg: .chars "PRIVMSG" ; .word 0
 trigger: .chars "!f " ; .word 0

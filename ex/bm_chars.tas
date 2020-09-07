@@ -4,7 +4,7 @@
 
 _start:
     o <- ((1 << 13) - 1)
-    b <- 0              // indicate non-completion to testbench
+    b <- 0              # indicate non-completion to testbench
 
 restart:
     c <- 0
@@ -21,7 +21,7 @@ top:
     n <- j < k
     p <- @+top & n + p
 
-    b <- -1             // indicate completion to testbench
-    //p <- p + @+restart  // restartable, but exits to testbench by default
+    b <- -1             # indicate completion to testbench
+    #p <- p + @+restart  # restartable, but exits to testbench by default
     illegal
 

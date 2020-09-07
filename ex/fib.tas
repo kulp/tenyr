@@ -1,23 +1,21 @@
-// Conventions:
-//  O is the stack pointer (post-decrement)
-//  B is the (so far only) return register
-//  C is the (so far only) argument register
-//  N is the relative-jump temp register
+# Conventions:
+#  O is the stack pointer (post-decrement)
+#  B is the (so far only) return register
+#  C is the (so far only) argument register
+#  N is the relative-jump temp register
 
-#ifndef ARGUMENT
-#define ARGUMENT 10
-#endif
+.set ARGUMENT, 10
 
 _start:
-    o <- ((1 << 13) - 1)                // sets up base/stack pointer
-    c <- ARGUMENT           // argument
+    o <- ((1 << 13) - 1)    # sets up base/stack pointer
+    c <- @ARGUMENT          # argument
     [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     illegal
 
 fib:
     [o] <- d ; o <- o - 1
-    d <- c > 1              // not zero or one ?
-    p <- @+_recurse & d + p // not-zero is true (c >= 2)
+    d <- c > 1              # not zero or one ?
+    p <- @+_recurse & d + p # not-zero is true (c >= 2)
     b <- c
     o <- o + 2
     d <- [o - (1 + 0)]

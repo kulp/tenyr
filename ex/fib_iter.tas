@@ -2,11 +2,11 @@
 
 _start:
     o <- ((1 << 13) - 1)
-    c <- @ARGUMENT      // argument
+    c <- @ARGUMENT      # argument
     [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
     illegal
 
-// Computes fib(C) and stores the result in B.
+# Computes fib(C) and stores the result in B.
 fib:
     o <- o - 3
     d -> [o + (3 - 0)]

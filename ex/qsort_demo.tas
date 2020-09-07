@@ -2,32 +2,32 @@
 main:
     o <- ((1 << 13) - 1)
 
-#define DATA_LEN (.L_data_end - .L_data_start)
-#define ELT_LEN  (.L_data_elt_end - .L_data_elt_start)
+.set ELT_LEN, (.L_data_elt_end - .L_data_elt_start)
+.set ELT_CNT, (.L_data_end - .L_data_start) / (.L_data_elt_end - .L_data_elt_start)
 
-    c <- @+data_start + p       // data to sort
-    d <- (DATA_LEN / ELT_LEN)   // number of elements
-    e <- ELT_LEN                // size of each element
-    f <- @+inteq + p            // comparator
+    c <- @+data_start + p       # data to sort
+    d <- @ELT_CNT               # number of elements
+    e <- @ELT_LEN               # size of each element
+    f <- @+inteq + p            # comparator
     [o] <- p + 2 ; o <- o - 1 ; p <- @+qsort + p
 
 done:
     i <- .L_data_start
 print_loop:
-    c <- [i - (. + 0) + p]      // get second field of struct
-    c <-  c - (. + 1) + p       // and relocate it
+    c <- [i - (. + 0) + p]      # get second field of struct
+    c <-  c - (. + 1) + p       # and relocate it
     [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
     c <- @+nl + p
     [o] <- p + 2 ; o <- o - 1 ; p <- @+puts + p
-    i <- i + ELT_LEN
+    i <- i + @ELT_LEN
     c <- i < .L_data_end
     p <- @+print_loop & c + p
 
     illegal
 
-// c <- pointer to key
-// d <- pointer to element
-// b -> < 0, 0, > 0
+# c <- pointer to key
+# d <- pointer to element
+# b -> < 0, 0, > 0
 inteq:
     c <- [c]
     d <- [d]
