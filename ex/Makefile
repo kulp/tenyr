@@ -3,7 +3,6 @@ include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
 vpath %.tas $(TOP)/lib
-vpath %.tas.cpp $(TOP)/lib
 
 %.tas: INCLUDES += $(TOP)/lib
 

@@ -6,7 +6,7 @@ INCLUDES += -I$(TOP)/lib
 CPPFLAGS += $(INCLUDES)
 
 vpath %.texe $(TOP)/ex
-vpath %.tas.cpp $(TOP)/lib
+vpath %.tas $(TOP)/lib
 
 # Specific rules
 

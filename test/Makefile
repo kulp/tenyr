@@ -6,11 +6,10 @@ include $(TOP)/mk/rules.mk
 CPPFLAGS += -I$(TOP)/lib
 
 vpath %.tas $(TOP)/lib
-vpath %.tas.cpp $(TOP)/lib
 
 vpath %.tas pass_compile/ fail_compile/
 
-get_obj_name = $(notdir $(patsubst %.tas,%.to,$(patsubst %.tas.cpp,%.tas,$1)))
+get_obj_name = $(notdir $(patsubst %.tas,%.to,$1))
 
 PASS_ASSEMBLE := $(call get_obj_name,$(wildcard pass_compile/*))
 FAIL_ASSEMBLE := $(call get_obj_name,$(wildcard fail_compile/*))
