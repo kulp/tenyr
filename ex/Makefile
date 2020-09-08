@@ -33,10 +33,7 @@ TARGETS = \
     trailz_demo.texe    \
     #
 
-CPP_FILES := $(wildcard *.tas.cpp)
-
 clean_FILES += $(TARGETS) *.to *.texe
-clean_FILES += $(CPP_FILES:%.tas.cpp=%.tas)
 
 all: $(TARGETS)
 
