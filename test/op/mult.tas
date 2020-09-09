@@ -1,0 +1,76 @@
+ C <- [P + (@+args + 0)]
+ D <- [P + (@+args + 1)]
+# in:   F (C), G (D)
+# out:  H
+# temp: E, I
+
+# passing until proven broken
+ B  <-  -1
+
+# test type 0
+ H  <-  0
+ F  <-  C
+ G  <-  D
+
+ I  <- 32
+type0_loop:
+ E  <-  G  &  1
+ E  <-  E  == 1
+ E  <-  E  &  F
+ H  <-  H  +  E
+ G  <-  G  >> 1
+ F  <-  F  << 1
+
+ E  <-  I  >  0
+ I  <-  I  -  1
+ P  <-  @+type0_loop & E + P
+
+ I  <-  C  *  D
+ I  <-  I  == H
+ B  <-  B  &  I
+
+# test type 1
+ H  <-  0
+ F  <-  C
+ G  <-  -123
+
+ I  <- 32
+type1_loop:
+ E  <-  G  &  1
+ E  <-  E  == 1
+ E  <-  E  &  F
+ H  <-  H  +  E
+ G  <-  G  >> 1
+ F  <-  F  << 1
+
+ E  <-  I  >  0
+ I  <-  I  -  1
+ P  <-  @+type1_loop & E + P
+
+ I  <-  C  *  -123
+ I  <-  I  == H
+ B  <-  B  &  I
+
+# test type 2
+ H  <-  0
+ F  <-  234
+ G  <-  D
+
+ I  <- 32
+type2_loop:
+ E  <-  G  &  1
+ E  <-  E  == 1
+ E  <-  E  &  F
+ H  <-  H  +  E
+ G  <-  G  >> 1
+ F  <-  F  << 1
+
+ E  <-  I  >  0
+ I  <-  I  -  1
+ P  <-  @+type2_loop & E + P
+
+ I  <-  234  *  D
+ I  <-  I  == H
+ B  <-  B  &  I
+
+illegal

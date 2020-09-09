@@ -22,9 +22,9 @@ should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
   * [simulator (tsim)](https://github.com/kulp/tenyr/wiki/Simulator)
 * a [standard library](https://github.com/kulp/tenyr/tree/develop/lib) of tenyr code
 * some [example software](https://github.com/kulp/tenyr/tree/develop/ex), including :
-  * [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) ([tenyr source code](https://github.com/kulp/tenyr/blob/develop/ex/bm_conway.tas.cpp))
-  * random snakes "screensaver" ([tenyr source code](https://github.com/kulp/tenyr/blob/develop/ex/bm_snake.tas.cpp) &ndash; [running in the simulator](https://vimeo.com/98338696), [running on the FPGA](https://vimeo.com/103773300))
-  * a [recursive Fibonacci number generator](https://github.com/kulp/tenyr/blob/develop/ex/bm_fib.tas.cpp)
+  * [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) ([tenyr source code](https://github.com/kulp/tenyr/blob/develop/ex/bm_conway.tas))
+  * random snakes "screensaver" ([tenyr source code](https://github.com/kulp/tenyr/blob/develop/ex/bm_snake.tas) &ndash; [running in the simulator](https://vimeo.com/98338696), [running on the FPGA](https://vimeo.com/103773300))
+  * a [recursive Fibonacci number generator](https://github.com/kulp/tenyr/blob/develop/ex/bm_fib.tas)
 
 **tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki), and it keeps a [changelog](Changelog.md) from v0.9.4 onward.
 

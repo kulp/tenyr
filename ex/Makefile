@@ -3,7 +3,6 @@ include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
 vpath %.tas $(TOP)/lib
-vpath %.tas.cpp $(TOP)/lib
 
 %.tas: INCLUDES += $(TOP)/lib
 
@@ -33,10 +32,7 @@ TARGETS = \
     trailz_demo.texe    \
     #
 
-CPP_FILES := $(wildcard *.tas.cpp)
-
 clean_FILES += $(TARGETS) *.to *.texe
-clean_FILES += $(CPP_FILES:%.tas.cpp=%.tas)
 
 all: $(TARGETS)
 
@@ -56,6 +52,4 @@ trailz_demo.texe: puts.to trailz.to
 bm_conway.texe: bm_conway_buffer.to
 test_imul.texe: imul.to puts.to print_hex.to
 copy.texe: memcpy.to puts.to
-
-$(patsubst %.tas.cpp,%.tas,$(CPP_FILES)): %.tas: $(TOP)/lib/common.th
 

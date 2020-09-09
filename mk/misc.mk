@@ -182,14 +182,13 @@ check_obj_%.to: null.to ff.bin
 	dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
 	dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>/dev/null
 
-vpath %_demo.tas.cpp $(TOP)/ex
+vpath %_demo.tas $(TOP)/ex
 DEMOS = qsort bsearch trailz
 DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
 OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/op/*.tas)))
-OPS += $(subst .tas.cpp,,$(notdir $(wildcard $(TOP)/test/op/*.tas.cpp)))
 RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
 #TESTS = $(patsubst $(TOP)/test/%.tas,%,$(wildcard $(TOP)/test/*/*.tas))
-$(DEMOFILES): %_demo.texe: %_demo.tas.cpp
+$(DEMOFILES): %_demo.texe: %_demo.tas
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
 	$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(@D) $(@F) && $(MAKESTEP) ok
 

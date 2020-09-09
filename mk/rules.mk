@@ -1,10 +1,5 @@
 .DEFAULT_GOAL = all
 
-%.tas: %.tas.cpp
-	@$(MAKESTEP) "[ TPP ] $(<F)"
-	mkdir -p $(*D)
-	$(tpp) $(CPPFLAGS) $< -o $@
-
 %.to: %.tas
 	@$(MAKESTEP) "[ TAS ] $(<F)"
 	mkdir -p $(*D)

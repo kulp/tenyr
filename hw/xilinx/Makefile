@@ -65,7 +65,6 @@ Tenyr.ngc: ../verilog/common.vh
 ################################################################################
 # General rules
 vpath %.tas     ../verilog $(TOP)/ex
-vpath %.tas.cpp ../verilog $(TOP)/ex
 vpath %.texe    ../verilog $(TOP)/ex
 vpath %.memh    gen
 
@@ -107,12 +106,6 @@ include $(DESIGN).md
 
 # force remaking %.texe because we don't have actual dependency information here
 FORCE:
-%.texe: %.tas.cpp FORCE | $(tas) $(tld)
-	@@$(MAKESTEP) -n "Recursively building $@ from $< ... "
-	$(MAKE) -s -C $(<D) $@ tas=$(tas) tld=$(tld)
-	cp -p $(<D)/$(@F) $@
-	@@$(MAKESTEP) done
-
 %.texe: %.tas FORCE | $(tas) $(tld)
 	@@$(MAKESTEP) -n "Recursively building $@ from $< ... "
 	$(MAKE) -s -C $(<D) $@ tas=$(tas) tld=$(tld)

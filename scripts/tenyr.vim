@@ -22,17 +22,9 @@ syn match tenyrStrDir '\.chars'
 syn keyword tenyrTodo illegal
 syn keyword tenyrTodo contained TODO FIXME XXX NOTE
 syn region tenyrComment start='#' end='$' contains=tenyrTodo
-syn region tenyrComment start='//' end='$' contains=tenyrTodo
-syn region tenyrComment start="/\*" end="\*/" contains=tenyrTodo extend
 
 syn match tenyrLabel '\w\+:'
 syn match tenyrLocal '\.L\w\+:'
-
-" stolen from c.vim
-syn region  cIncluded   display contained start=+"+ skip=+\\\\\|\\"+ end=+"+
-syn match   cIncluded   display contained "<[^>]*>"
-syn match   cInclude    display "^\s*\(%:\|#\)\s*include\>\s*["<]" contains=cIncluded
-syn region  cDefine     start="^\s*\(%:\|#\)\s*\(define\|undef\)\>" skip="\\$" end="$" keepend contains=tenyrTodo
 
 syn region tenyrChar start="'" end="'" contains=tenyrEscape
 syn match tenyrEscape contained '\\[\\'0bfnrtv]'

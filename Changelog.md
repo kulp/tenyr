@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Removed web demo
     - Removed bitrotten support for Quartus and Lattice builds
     - Dropped unused submodule for broken lcc port
+- Stopped using C preprocessor on `.tas.cpp` files (#45)
 
 ## [0.9.7] - 2019-07-25
 ### Added
