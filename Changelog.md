@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reimplemented JIT using GNU lightning
 - Stopped relying on customizations to `wb_intercon` for tenyr's Verilog implementation
 - Addressed various lint warnings found in tenyr's Verilog
-- Tightened lexer rules for numeric constans (#56)
+- Tightened lexer rules for numeric constants (#56)
 - Cleaned up OS overrides (#61)
 
 ### Fixed
