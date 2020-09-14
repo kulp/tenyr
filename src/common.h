@@ -92,6 +92,9 @@ static inline char *strcopy(char *dest, const char *src, size_t sz)
 
 long long numberise(char *str, int base);
 
+// build_path expects a path to a file, or else a path to a directory including
+// a trailing slash.  It returns a string whose ownership passes to the caller
+// and which must be deallocated with free().
 char *build_path(const char *base, const char *fmt, ...);
 
 #define ALIASING_CAST(Type,Expr) \
