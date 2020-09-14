@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stopped relying on customizations to `wb_intercon` for tenyr's Verilog implementation
 - Addressed various lint warnings found in tenyr's Verilog
 - Tightened lexer rules for numeric constans (#56)
+- Cleaned up OS overrides (#61)
 
 ### Fixed
 - Corrected a long-standing tsim bug when right-shifting by more than 31 bits
