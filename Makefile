@@ -118,8 +118,9 @@ tas.o tld.o param.o param,dy.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
 common.o common,dy.o parser.o stream.o stream,dy.o: CFLAGS += -Wno-format-nonliteral
 
 # We cannot control some aspects of the generated lexer or parser.
+lexer.o parser.o: CFLAGS += -Wno-error
 lexer.o: CFLAGS += -Wno-missing-prototypes
-parser.o lexer.o: CFLAGS += -Wno-unused-macros
+lexer.o parser.o: CFLAGS += -Wno-unused-macros
 lexer.o: CFLAGS += -Wno-shorten-64-to-32
 lexer.o: CFLAGS += -Wno-conversion
 lexer.o: CPPFLAGS += -Wno-disabled-macro-expansion
@@ -129,9 +130,7 @@ lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)sign-conversion
 lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)conversion
 lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)disabled-macro-expansion
 lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)unreachable-code
-
-# flex-generated code we can't control warnings of as easily
-parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
+lexer.o parser.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 # flex-generated code needs POSIX source for fileno()
 lexer.o: CPPFLAGS += -D_POSIX_SOURCE
 
