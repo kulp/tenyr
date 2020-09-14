@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced a stream-based abstraction layer for filesystem operations
 - Enabled CI jobs for additional architectures (arm64, ppc64le, s390x)
 - Defined the overshifting behavior for the `@` operator
+- Defined the tenyr assembly grammar in ABNF (#60)
 
 ### Changed
 - Updated supported emscripten version to 1.38.46
