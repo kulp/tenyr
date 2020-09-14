@@ -1,5 +1,4 @@
-makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
-TOP := $(dir $(makefile_path))
+TOP := .
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
@@ -75,9 +74,10 @@ clobber::
 DROP_TARGETS = showbuilddir clean clobber distclean NODEPS
 NODEPS:; # phony target just to prevent dependency generation
 ifneq ($(BUILDDIR),.)
+makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
 all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	mkdir -p $(BUILDDIR)
-	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
+	$(MAKE) TOOLDIR=$(abspath $(BUILDDIR)) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(CURDIR) $@
 else
 
 all: $(TARGETS) | $(TOP)/build/share/tenyr/rsrc
