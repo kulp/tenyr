@@ -201,13 +201,13 @@ static int recipe_plugin(struct sim_state *s)
     return !result;
 }
 
-static int recipe_runner(struct sim_state *s, const char *prefix)
+static int recipe_jit(struct sim_state *s)
 {
     const char **path = library_search_paths;
     void *libhandle = NULL;
     char *error = "(no error)";
     while ((libhandle == NULL) && *path != NULL) {
-        char *buf = build_path(s->conf.tsim_path, "%slibtenyr%s"DYLIB_SUFFIX, *path++, prefix);
+        char *buf = build_path(s->conf.tsim_path, "%slibtenyrjit"DYLIB_SUFFIX, *path++);
         void *handle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
         error = dlerror();
         if (handle)
@@ -216,19 +216,9 @@ static int recipe_runner(struct sim_state *s, const char *prefix)
             debug(1, "Did not load library `%s`: %s", buf, error);
         free(buf);
     }
-    if (libhandle == NULL) {
-        debug(0, "Failed to load `%s` library: %s", prefix, error);
-        return 1;
-    }
+    // We can still try dlsym even if libhandle is NULL
 
-    char name[128];
-    if (snprintf(name, sizeof name, "%s_run_sim", prefix) >= (long)sizeof name) {
-        debug(0, "Library name prefix too long");
-        if (libhandle != NULL)
-            dlclose(libhandle);
-        return 1;
-    }
-
+    const char name[] = "jit_run_sim";
     void *ptr = dlsym(libhandle, name);
     if (!ptr) {
         debug(0, "Failed to find symbol `%s` - %s", name, dlerror());
@@ -245,11 +235,6 @@ static int recipe_runner(struct sim_state *s, const char *prefix)
     s->run_sim = ALIASING_CAST(sim_runner, ptr);
 
     return 0;
-}
-
-static int recipe_jit(struct sim_state *s)
-{
-    return recipe_runner(s, "jit");
 }
 
 static int parse_opts_file(struct sim_state *s, const char *filename);
