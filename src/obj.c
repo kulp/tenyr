@@ -30,15 +30,6 @@
 
 typedef int obj_op(struct obj *o, STREAM *out, void *context);
 
-static int unsupported_version(struct obj *o, STREAM *out, void *context)
-{
-    (void)o;
-    (void)out;
-    (void)context;
-    fatal(0, "Unsupported object version");
-    return -1;
-}
-
 static obj_op
     put_recs     , get_recs     ,
     put_syms_v2  , get_syms_v2  ,
@@ -47,19 +38,9 @@ static obj_op
 static struct objops {
     obj_op *put_recs, *put_syms, *put_relocs,
            *get_recs, *get_syms, *get_relocs;
-} objops[] = {
-    [0] = {
-        .put_recs = unsupported_version, .put_syms = unsupported_version, .put_relocs = unsupported_version,
-        .get_recs = unsupported_version, .get_syms = unsupported_version, .get_relocs = unsupported_version,
-    },
-    [1] = {
-        .put_recs = unsupported_version, .put_syms = unsupported_version, .put_relocs = unsupported_version,
-        .get_recs = unsupported_version, .get_syms = unsupported_version, .get_relocs = unsupported_version,
-    },
-    [2] = {
-        .put_recs = put_recs, .put_syms = put_syms_v2, .put_relocs = put_relocs_v2,
-        .get_recs = get_recs, .get_syms = get_syms_v2, .get_relocs = get_relocs_v2,
-    },
+} objops = {
+    .put_recs = put_recs, .put_syms = put_syms_v2, .put_relocs = put_relocs_v2,
+    .get_recs = get_recs, .get_syms = get_syms_v2, .get_relocs = get_relocs_v2,
 };
 
 static inline void get_sized_le(void *what, size_t size, size_t count, STREAM *where)
@@ -189,7 +170,7 @@ int obj_write(struct obj *o, STREAM *out)
 
     switch (version) {
         case 2:
-            return obj_v2_write(o, out, &objops[version]);
+            return obj_v2_write(o, out, &objops);
         default:
             fatal(0, "Unhandled version %d while emitting object", version);
     }
@@ -342,7 +323,7 @@ int obj_read(struct obj *o, STREAM *in)
     int version = o->magic.parsed.version;
     switch (version) {
         case 2:
-            return obj_v2_read(o, in, &objops[version]);
+            return obj_v2_read(o, in, &objops);
         default:
             fatal(0, "Unhandled version number when loading object");
     }
