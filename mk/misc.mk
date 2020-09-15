@@ -1,5 +1,5 @@
 makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
-TOP := $(dir $(makefile_path))/..
+TOP := ..
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
