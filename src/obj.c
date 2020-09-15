@@ -35,7 +35,7 @@ static obj_op
     put_syms_v2  , get_syms_v2  ,
     put_relocs_v2, get_relocs_v2;
 
-static struct objops {
+static const struct objops {
     obj_op *put_recs, *put_syms, *put_relocs,
            *get_recs, *get_syms, *get_relocs;
 } objops = {
@@ -148,7 +148,7 @@ static int put_relocs_v2(struct obj *o, STREAM *out, void *context)
     return 0;
 }
 
-static int obj_v2_write(struct obj *o, STREAM *out, struct objops *ops)
+static int obj_v2_write(struct obj *o, STREAM *out, const struct objops *ops)
 {
     put_sized(MAGIC_BYTES, 3, 1, out);
     PUT(o->magic.parsed.version, out);
@@ -289,7 +289,7 @@ static int get_relocs_v2(struct obj *o, STREAM *in, void *context)
     return 0;
 }
 
-static int obj_v2_read(struct obj *o, STREAM *in, struct objops *ops)
+static int obj_v2_read(struct obj *o, STREAM *in, const struct objops *ops)
 {
     long where = in->op.ftell(in);
     long filesize = LONG_MAX;
