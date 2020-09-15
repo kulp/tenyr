@@ -136,6 +136,7 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	$($*) -ftext -vv      /dev/null 2>&1 | fgrep -q ".word"      && $(MAKESTEP) "    ... -vv ok"
 	$($*) -ftext -vvv     /dev/null 2>&1 | fgrep -q "read  @"    && $(MAKESTEP) "    ... -vvv ok"
 	$($*) -ftext -vvvv    /dev/null 2>&1 | fgrep -q "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
+	$($*) -ftext x y      /dev/null 2>&1 | fgrep -q "More than"  && $(MAKESTEP) "    ... multiple files rejected ok"
 	$($*) -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
 	[[ "`$($*) -ftext -vv - <<<-1 2>&1 | wc -c`" < 67 ]]         && $(MAKESTEP) "    ... debug output is 66 columns or shorter"
 	$($*) -@ $(TOP)/test/misc/long.rcp $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "handling"    && $(MAKESTEP) "    ... plugins cap ok"
