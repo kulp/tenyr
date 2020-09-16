@@ -101,7 +101,7 @@ PDEVLIBS = $(PDEVICES:%=libtenyr%$(DYLIB_SUFFIX))
 BIN_TARGETS += tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS += $(PDEVLIBS)
 
-TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
+TARGETS      = $(BIN_TARGETS) $(LIB_TARGETS) $(TEST_TARGETS)
 RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
                $(TOP)/rsrc/font10x15/invert.font10x15.png \
                $(wildcard $(TOP)/plugins/*.rcp) \
