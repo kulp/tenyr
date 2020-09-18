@@ -1,4 +1,4 @@
-TOP := $(abspath ../..)
+TOP := ../..
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 

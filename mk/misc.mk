@@ -1,5 +1,5 @@
 makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
-TOP := $(dir $(makefile_path))/..
+TOP := ..
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
@@ -291,7 +291,7 @@ check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
 
 ifneq ($(SDL),0)
 RUNS += $(SDL_RUNS)
-tsim_FLAGS += -p paths.share=$(call os_path,$(TOP))
+tsim_FLAGS += -p paths.share=$(call os_path,$(TOP)/)
 tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
 endif
 

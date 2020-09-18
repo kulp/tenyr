@@ -11,8 +11,8 @@ libtenyrsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): \
 libtenyrsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): \
     CPPFLAGS += $(call sdl2_pkg_config,--cflags-only-other,sdl2 SDL2_image)
 libtenyrsdl%$(DYLIB_SUFFIX): LDLIBS += $(call sdl2_pkg_config,--libs,sdl2 SDL2_image)
-libtenyrsdlvga$(DYLIB_SUFFIX): | $(TOP)rsrc/font10x15/invert.font10x15.png
-$(TOP)rsrc/font10x15/%:
+libtenyrsdlvga$(DYLIB_SUFFIX): | $(TOP)/rsrc/font10x15/invert.font10x15.png
+$(TOP)/rsrc/font10x15/%:
 	$(MAKE) -C $(@D) $(@F)
 
 # Do not halt the build for platforms on which the feature-flag _BSD_SOURCE is
