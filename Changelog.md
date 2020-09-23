@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected tsim bugs manifesting on big-endian host machines
 - Corrected silent sign conversions, adhering to `-Werror=sign-conversion`
 - Prevented disassembly from `obj` from always exiting non-zero (#59)
+- Prevented a buffer overrun when too many plugins are specified (#64)
 
 ### Removed
 - Stopped suggesting Gitter as a chat option
