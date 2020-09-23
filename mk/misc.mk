@@ -124,7 +124,7 @@ check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 
 check_args_specific_tsim: s = 4105
 check_args_specific_tsim: sx = $(shell printf 0x%08x $(s))
-check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
+check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_specific_tsim_plugins
 	@$(MAKESTEP) "Checking $* specific options ... "
 	$($*) -@ does_not_exist 2>&1 | fgrep -q "No such"            && $(MAKESTEP) "    ... -@ ok"
 	$($*) -ftext -a 123 - <<<0 2>&1 | fgrep -q "address 0x7b"    && $(MAKESTEP) "    ... -a ok"
@@ -141,6 +141,10 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	[[ "`$($*) -ftext -vv - <<<-1 2>&1 | wc -c`" < 67 ]]         && $(MAKESTEP) "    ... debug output is 66 columns or shorter"
 	$($*) -@ $(TOP)/test/misc/long.rcp $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "handling"    && $(MAKESTEP) "    ... plugins cap ok"
 	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> /dev/null )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
+
+check_args_specific_tsim_plugins: tsim$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* specific options (plugins) ... "
+	$(tsim) -p plugin[0]+=failure_INIT $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "Error while finalising" && $(MAKESTEP) "    ... plugin failure detected ok"
 
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
