@@ -34,7 +34,7 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
         int count = p->gops.param_get(p, parent, countof(impls), impls);
         const int max_impls = (signed)countof(impls);
         if (count > max_impls)
-            debug(1, "Got %d impl names, only have room for %d", count, max_impls);
+            debug(0, "Saw %d plugins names, handling only the first %d", count, max_impls);
         else if (count <= 0)
             break;
 
