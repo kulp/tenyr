@@ -1,0 +1,47 @@
+program = 1*(insn (";" / %x0a))
+
+insn = register "<-" rhs
+insn =/ register "<-" "[" rhs "]"
+insn =/ register "->" "[" rhs "]"
+insn =/ "[" register "]" "<-" rhs
+insn =/ ".word 0x" 1*8(hexdigit)
+insn =/ ".zero " 1*2(decdigit-nonzero)
+insn =/ ".chars " %x22 1*(%d32 / %d33 / %d35-91 / escape / %d93-126) %x22
+
+escape = "\" ('0' / '\' / 'b' / 'n' / 'n' / 'r' / 't' / 'v')
+
+rhs = register [op register ["+" imm12]]
+rhs =/ register [op imm12 ["+" register]]
+rhs =/ imm12 [op register ["+" register]]
+rhs =/ [register "+"] imm20
+register = %d65-80
+op = "|" / "|~" / "&" / "&~" / "^" / "^^" / ">>" / ">>>" / "+" / "-" / "*" / "<<" / "==" / "@" / "<" / ">=" / "<=" / ">"
+decdigit = %d48-57
+decdigit-nonzero = %d49-57
+hexdigit = decdigit / %d65-70
+
+nyb-lo = "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7"
+nyb-hi = "8" / "9" / "a" / "b" / "c" / "d" / "e" / "f"
+
+imm12 = ["-"]decdigit-nonzero 0*2(decdigit)
+imm12 =/ ["-"]"1" 3(decdigit)
+imm12 =/ ["-"]"20" %d48-51 decdigit
+imm12 =/ ["-"]"204" nyb-lo
+imm12 =/ "-2048"
+
+imm12 =/ ["-"]"0x" 1*2(hexdigit)
+imm12 =/ "0x" nyb-lo 2(hexdigit)
+imm12 =/ "0xfffff" nyb-hi 2(hexdigit)
+
+imm20 = ["-"]decdigit-nonzero 0*4(decdigit)
+imm20 =/ ["-"]"4" 1*5(decdigit)
+imm20 =/ ["-"]"5" ("0" / "1") 4(decdigit)
+imm20 =/ ["-"]"52" ("0" / "1" / "2" / "3") 3(decdigit)
+imm20 =/ ["-"]"524" ("0" / "1") 2(decdigit)
+imm20 =/ ["-"]"5242" ("0" / "1" / "2" / "3" / "4" / "5" / "6" / "7") decdigit
+imm20 =/ ["-"]"52428" ("0" / "1" / "2" / "3" / "4" / "5" / "6" / "7")
+imm20 =/ "-524288"
+
+imm20 =/ ["-"]"0x" 1*4(hexdigit)
+imm20 =/ "0x" nyb-lo 4(hexdigit)
+imm20 =/ "0xfff" nyb-hi 4(hexdigit)

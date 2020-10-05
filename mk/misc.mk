@@ -1,5 +1,5 @@
 makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
-TOP := $(dir $(makefile_path))/..
+TOP := ..
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
@@ -91,11 +91,8 @@ coverage_html_%:
 	genhtml --output-directory $@ $^
 
 check: check_sw check_hw
-CHECK_SW_TASKS ?= check_args check_behaviour check_compile check_forth check_sim check_obj dogfood
+CHECK_SW_TASKS ?= check_args check_behaviour check_compile check_sim check_obj dogfood
 check_sw: $(CHECK_SW_TASKS)
-check_forth:
-	@$(MAKESTEP) -n "Compiling forth ... "
-	$(MAKE) $S MAKESTEP=true BUILDDIR=$(abspath $(BUILDDIR)) --always-make -C $(TOP)/forth && $(MAKESTEP) ok
 
 check_args: check_args_tas check_args_tld check_args_tsim
 check_args_%: check_args_general_% check_args_specific_% ;
@@ -141,6 +138,7 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
 	$($*) -ftext -vvvv    /dev/null 2>&1 | fgrep -q "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
 	$($*) -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
 	[[ "`$($*) -ftext -vv - <<<-1 2>&1 | wc -c`" < 67 ]]         && $(MAKESTEP) "    ... debug output is 66 columns or shorter"
+	$($*) -@ $(TOP)/test/misc/long.rcp $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "handling"    && $(MAKESTEP) "    ... plugins cap ok"
 	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> /dev/null )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
 
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
@@ -185,14 +183,13 @@ check_obj_%.to: null.to ff.bin
 	dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
 	dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>/dev/null
 
-vpath %_demo.tas.cpp $(TOP)/ex
+vpath %_demo.tas $(TOP)/ex
 DEMOS = qsort bsearch trailz
 DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
 OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/op/*.tas)))
-OPS += $(subst .tas.cpp,,$(notdir $(wildcard $(TOP)/test/op/*.tas.cpp)))
 RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
 #TESTS = $(patsubst $(TOP)/test/%.tas,%,$(wildcard $(TOP)/test/*/*.tas))
-$(DEMOFILES): %_demo.texe: %_demo.tas.cpp
+$(DEMOFILES): %_demo.texe: %_demo.tas
 	@$(MAKESTEP) -n "Building $(*F) demo ... "
 	$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(@D) $(@F) && $(MAKESTEP) ok
 
@@ -295,7 +292,7 @@ check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
 
 ifneq ($(SDL),0)
 RUNS += $(SDL_RUNS)
-tsim_FLAGS += -p paths.share=$(call os_path,$(TOP))
+tsim_FLAGS += -p paths.share=$(call os_path,$(TOP)/)
 tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
 endif
 

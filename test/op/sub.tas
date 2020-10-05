@@ -1,0 +1,368 @@
+ C  <- [P + (@+args + 0)]
+ D  <- [P + (@+args + 1)]
+ D  <-  ~ D + 1
+
+# passing until proven broken
+ B  <-  -1 
+
+# test type 0
+ F  <-  C 
+ G  <-  D 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ I  <-  C  +  D 
+ I  <-  I  == F 
+ B  <-  B  &  I 
+
+# test type 1
+ F  <-  C 
+ G  <-  -123 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ I  <-  C  -  123 
+ I  <-  I  == F 
+ B  <-  B  &  I 
+
+# test type 2
+ F  <-  234 
+ G  <-  D 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ E  <-  F  ^  G 
+ G  <-  F  &  G 
+ G  <-  G  << 1 
+ F  <-  E  ^  G 
+ G  <-  E  &  G 
+ G  <-  G  << 1 
+
+ I  <-  234  +  D 
+ I  <-  I  == F 
+ B  <-  B  &  I 
+
+ illegal

@@ -12,6 +12,7 @@
 #include <limits.h>
 
 #define MAGIC_BYTES "TOV"
+#define OBJ_DEFAULT_VERSION 2
 #define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
 #define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
@@ -29,13 +30,18 @@
 
 typedef int obj_op(struct obj *o, STREAM *out, void *context);
 
+static int unsupported_version(struct obj *o, STREAM *out, void *context)
+{
+    (void)o;
+    (void)out;
+    (void)context;
+    fatal(0, "Unsupported object version");
+    return -1;
+}
+
 static obj_op
     put_recs     , get_recs     ,
-    put_syms_v0  , get_syms_v0  ,
-    put_syms_v1  , get_syms_v1  ,
     put_syms_v2  , get_syms_v2  ,
-    put_relocs_v0, get_relocs_v0,
-    put_relocs_v1, get_relocs_v1,
     put_relocs_v2, get_relocs_v2;
 
 static struct objops {
@@ -43,12 +49,12 @@ static struct objops {
            *get_recs, *get_syms, *get_relocs;
 } objops[] = {
     [0] = {
-        .put_recs = put_recs, .put_syms = put_syms_v0, .put_relocs = put_relocs_v0,
-        .get_recs = get_recs, .get_syms = get_syms_v0, .get_relocs = get_relocs_v0,
+        .put_recs = unsupported_version, .put_syms = unsupported_version, .put_relocs = unsupported_version,
+        .get_recs = unsupported_version, .get_syms = unsupported_version, .get_relocs = unsupported_version,
     },
     [1] = {
-        .put_recs = put_recs, .put_syms = put_syms_v1, .put_relocs = put_relocs_v1,
-        .get_recs = get_recs, .get_syms = get_syms_v1, .get_relocs = get_relocs_v1,
+        .put_recs = unsupported_version, .put_syms = unsupported_version, .put_relocs = unsupported_version,
+        .get_recs = unsupported_version, .get_syms = unsupported_version, .get_relocs = unsupported_version,
     },
     [2] = {
         .put_recs = put_recs, .put_syms = put_syms_v2, .put_relocs = put_relocs_v2,
@@ -132,26 +138,6 @@ static int put_recs(struct obj *o, STREAM *out, void *context)
     return 0;
 }
 
-static int put_syms_v0(struct obj *o, STREAM *out, void *context)
-{
-    return put_syms_v1(o, out, context);
-}
-
-static int put_syms_v1(struct obj *o, STREAM *out, void *context)
-{
-    PUT(o->sym_count, out);
-    list_foreach(objsym, sym, o->symbols) {
-        PUT(sym->flags, out);
-        char buf[SYMBOL_LEN_V1] = { 0 };
-        if (sym->name.str) strncpy(buf, sym->name.str, sizeof buf);
-        PUT(buf, out);
-        PUT(sym->value, out);
-        PUT(sym->size, out);
-    }
-
-    return 0;
-}
-
 static int put_syms_v2(struct obj *o, STREAM *out, void *context)
 {
     PUT(o->sym_count, out);
@@ -161,37 +147,6 @@ static int put_syms_v2(struct obj *o, STREAM *out, void *context)
         put_sized(sym->name.str, round_up_to_word((size_t)sym->name.len), 1, out);
         PUT(sym->value, out);
         PUT(sym->size, out);
-    }
-
-    return 0;
-}
-
-static int put_relocs_v0(struct obj *o, STREAM *out, void *context)
-{
-    PUT(o->rlc_count, out);
-    list_foreach(objrlc, rlc, o->relocs) {
-        PUT(rlc->flags, out);
-        char buf[SYMBOL_LEN_V1] = { 0 };
-        if (rlc->name.str) strncpy(buf, rlc->name.str, sizeof buf);
-        PUT(buf, out);
-        PUT(rlc->addr, out);
-        PUT(rlc->width, out);
-    }
-
-    return 0;
-}
-
-static int put_relocs_v1(struct obj *o, STREAM *out, void *context)
-{
-    PUT(o->rlc_count, out);
-    list_foreach(objrlc, rlc, o->relocs) {
-        PUT(rlc->flags, out);
-        char buf[SYMBOL_LEN_V1] = { 0 };
-        if (rlc->name.str) strncpy(buf, rlc->name.str, sizeof buf);
-        PUT(buf, out);
-        PUT(rlc->addr, out);
-        PUT(rlc->width, out);
-        PUT(rlc->shift, out);
     }
 
     return 0;
@@ -212,7 +167,7 @@ static int put_relocs_v2(struct obj *o, STREAM *out, void *context)
     return 0;
 }
 
-static int obj_vx_write(struct obj *o, STREAM *out, struct objops *ops)
+static int obj_v2_write(struct obj *o, STREAM *out, struct objops *ops)
 {
     put_sized(MAGIC_BYTES, 3, 1, out);
     PUT(o->magic.parsed.version, out);
@@ -230,11 +185,11 @@ static int obj_vx_write(struct obj *o, STREAM *out, struct objops *ops)
 
 int obj_write(struct obj *o, STREAM *out)
 {
-    int version = o->magic.parsed.version;
+    int version = o->magic.parsed.version = OBJ_DEFAULT_VERSION;
 
     switch (version) {
-        case 0: case 1: case 2:
-            return obj_vx_write(o, out, &objops[version]);
+        case 2:
+            return obj_v2_write(o, out, &objops[version]);
         default:
             fatal(0, "Unhandled version %d while emitting object", version);
     }
@@ -260,6 +215,10 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
     long *filesize = context;
 
     GET(o->rec_count, in);
+    if (o->rec_count < 0) {
+        errno = EINVAL;
+        return 1;
+    }
     if (o->rec_count > OBJ_MAX_REC_CNT) {
         errno = EFBIG;
         return 1;
@@ -288,35 +247,13 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
     return 0;
 }
 
-static int get_syms_v0(struct obj *o, STREAM *in, void *context)
-{
-    return get_syms_v1(o, in, context);
-}
-
-static int get_syms_v1(struct obj *o, STREAM *in, void *context)
-{
-    GET(o->sym_count, in);
-    if (o->sym_count > OBJ_MAX_SYMBOLS) {
-        errno = EFBIG;
-        return 1;
-    }
-    o->bloc.symbols = 1;
-    for_counted_get(objsym, sym, o->symbols, o->sym_count) {
-        GET(sym->flags, in);
-        sym->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
-        get_sized(sym->name.str, SYMBOL_LEN_V1, 1, in);
-        sym->name.str[SYMBOL_LEN_V1] = '\0';
-        sym->name.len = (SWord)strlen(sym->name.str);
-        GET(sym->value, in);
-        GET(sym->size, in);
-    }
-
-    return 0;
-}
-
 static int get_syms_v2(struct obj *o, STREAM *in, void *context)
 {
     GET(o->sym_count, in);
+    if (o->sym_count < 0) {
+        errno = EINVAL;
+        return 1;
+    }
     if (o->sym_count > OBJ_MAX_SYMBOLS) {
         errno = EFBIG;
         return 1;
@@ -340,31 +277,13 @@ static int get_syms_v2(struct obj *o, STREAM *in, void *context)
     return 0;
 }
 
-static int get_relocs_v0(struct obj *o, STREAM *in, void *context)
-{
-    GET(o->rlc_count, in);
-    if (o->rlc_count > OBJ_MAX_RELOCS) {
-        errno = EFBIG;
-        return 1;
-    }
-    o->bloc.relocs = 1;
-    for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
-        GET(rlc->flags, in);
-        rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
-        get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
-        rlc->name.str[SYMBOL_LEN_V1] = '\0';
-        rlc->name.len = (SWord)strlen(rlc->name.str);
-        GET(rlc->addr, in);
-        GET(rlc->width, in);
-        rlc->shift = 0;
-    }
-
-    return 0;
-}
-
 static int get_relocs_v2(struct obj *o, STREAM *in, void *context)
 {
     GET(o->rlc_count, in);
+    if (o->rlc_count < 0) {
+        errno = EINVAL;
+        return 1;
+    }
     if (o->rlc_count > OBJ_MAX_RELOCS) {
         errno = EFBIG;
         return 1;
@@ -389,29 +308,7 @@ static int get_relocs_v2(struct obj *o, STREAM *in, void *context)
     return 0;
 }
 
-static int get_relocs_v1(struct obj *o, STREAM *in, void *context)
-{
-    GET(o->rlc_count, in);
-    if (o->rlc_count > OBJ_MAX_RELOCS) {
-        errno = EFBIG;
-        return 1;
-    }
-    o->bloc.relocs = 1;
-    for_counted_get(objrlc, rlc, o->relocs, o->rlc_count) {
-        GET(rlc->flags, in);
-        rlc->name.str = malloc(SYMBOL_LEN_V1 + sizeof '\0');
-        get_sized(rlc->name.str, SYMBOL_LEN_V1, 1, in);
-        rlc->name.str[SYMBOL_LEN_V1] = '\0';
-        rlc->name.len = (SWord)strlen(rlc->name.str);
-        GET(rlc->addr, in);
-        GET(rlc->width, in);
-        GET(rlc->shift, in);
-    }
-
-    return 0;
-}
-
-static int obj_vx_read(struct obj *o, STREAM *in, struct objops *ops)
+static int obj_v2_read(struct obj *o, STREAM *in, struct objops *ops)
 {
     long where = in->op.ftell(in);
     long filesize = LONG_MAX;
@@ -444,31 +341,11 @@ int obj_read(struct obj *o, STREAM *in)
 
     int version = o->magic.parsed.version;
     switch (version) {
-        case 0: case 1: case 2:
-            return obj_vx_read(o, in, &objops[version]);
+        case 2:
+            return obj_v2_read(o, in, &objops[version]);
         default:
             fatal(0, "Unhandled version number when loading object");
     }
-}
-
-static void obj_v0_free(struct obj *o)
-{
-    SWord remaining = o->rec_count;
-    list_foreach(objrec, rec, o->records) {
-        if (remaining-- <= 0) break;
-        free(rec->data);
-    }
-
-    if (o->bloc.relocs) free(o->relocs);
-    else list_foreach(objrlc,rlc,o->relocs) free(rlc);
-
-    if (o->bloc.symbols) free(o->symbols);
-    else list_foreach(objsym,sym,o->symbols) free(sym);
-
-    if (o->bloc.records) free(o->records);
-    else list_foreach(objrec,rec,o->records) free(rec);
-
-    free(o);
 }
 
 static void obj_v2_free(struct obj *o)
@@ -495,8 +372,6 @@ static void obj_v2_free(struct obj *o)
 void obj_free(struct obj *o)
 {
     switch (o->magic.parsed.version) {
-        case 0: case 1:
-            obj_v0_free(o); break;
         case 2:
             obj_v2_free(o); break;
         default:

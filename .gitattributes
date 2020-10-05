@@ -1,2 +1,1 @@
-*.tas.cpp linguist-language=tenyr
-hw/lattice/*.sty linguist-language=XML
+*.tas linguist-language=tenyr

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: dogfood.sh tempfile-stem path-to-tas file.tas[.cpp] [ files... ]
+# Usage: dogfood.sh tempfile-stem path-to-tas file.tas [ files... ]
 set -o pipefail
 if (( V > 1 )) ; then ECHO=echo ; else ECHO=true ; fi
 here=`dirname $BASH_SOURCE`
@@ -64,12 +64,7 @@ for flags in -v "" ; do
     for fmt in memh text ; do
         for file in $* ; do
             trap "rm $base.$fmt.{en,de}.[0123]" EXIT
-            if [[ $file = *.cpp ]] ; then
-                pp="${CC:-cc} -E -I$here/../lib"
-            else
-                pp=cat
-            fi
-            $pp $file | cycle $fmt
+            cat $file | cycle $fmt
             if [[ $? != 0 ]] ; then fail $fmt $file ; fi
             match $fmt en $file
         done & pids+=( $! )

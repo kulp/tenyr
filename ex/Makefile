@@ -1,44 +1,44 @@
-TOP := $(abspath ..)
+TOP := ..
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
-vpath %.tas $(TOP)/lib $(TOP)/lib/dword
-vpath %.tas.cpp $(TOP)/lib $(TOP)/lib/dword
+vpath %.tas $(TOP)/lib
 
-%.tas: INCLUDES += $(TOP)/lib $(TOP)/lib/dword
+%.tas: INCLUDES += $(TOP)/lib
 
 TARGETS = \
-    bsearch_demo.texe   \
     bm_chars.texe       \
     bm_conway.texe      \
-    bm_snake.texe       \
+    bm_fib.texe         \
+    bm_gpio.texe        \
     bm_mults.texe       \
+    bm_snake.texe       \
+    bsearch_demo.texe   \
+    clock.texe          \
     compare.texe        \
+    copy.texe           \
     fib.texe            \
     fib_iter.texe       \
     hello.texe          \
-    isprime.texe        \
     irc.texe            \
+    isprime.texe        \
     maths.texe          \
     parse_hex.texe      \
     qsort_demo.texe     \
+    set.texe            \
     sieve.texe          \
+    test_imul.texe      \
+    totient.texe        \
+    trailz_demo.texe    \
     #
 
-CPP_FILES := $(wildcard *.tas.cpp)
-
-clean_FILES += $(TARGETS) *.to dword/*.to *.texe
-clean_FILES += $(CPP_FILES:%.tas.cpp=%.tas)
+clean_FILES += $(TARGETS) *.to *.texe
 
 all: $(TARGETS)
 
-$(patsubst %.tas,%.texe,$(patsubst %.tas.cpp,%.tas,$(wildcard bm_*.tas*))): \
-		bm_%.texe: baremetal_common.to
-
 hello.texe: puts.to
 compare.texe: strcmp.to puts.to
-dynamic.texe: memset.to malloc.to abort.to
-maths.texe: isqrt.to umod.to udiv.to dword/add.to dword/dword_mul.to
+maths.texe: isqrt.to umod.to udiv.to dword_add.to dword_mul.to
 totient.texe: gcd.to
 isprime.texe: umod.to isqrt.to udiv.to
 bsearch_demo.texe: bsearch.to puts.to
@@ -50,6 +50,6 @@ bm_fib.texe bm_mults.texe: putnum.to
 clock.texe: sleep.to
 trailz_demo.texe: puts.to trailz.to
 bm_conway.texe: bm_conway_buffer.to
-
-$(patsubst %.tas.cpp,%.tas,$(CPP_FILES)): %.tas: $(TOP)/lib/common.th
+test_imul.texe: imul.to puts.to print_hex.to
+copy.texe: memcpy.to puts.to
 

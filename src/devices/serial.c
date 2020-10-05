@@ -36,9 +36,6 @@ static int serial_init(struct plugin_cookie *pcookie, struct device *device, voi
     // correct cross-platform non-blocking behaviour. User (i.e. tenyr
     // assembly) code should always be written to check for
     // SERIAL_NO_CHARACTER.
-    int nb;
-    if (pcookie->gops.param_get_int(pcookie, "tsim.serial.set_non_blocking", &nb) && nb)
-        rc = os_set_non_blocking(s->in);
 
     return rc;
 }

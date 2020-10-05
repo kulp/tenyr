@@ -1,4 +1,4 @@
-TOP := $(abspath ../..)
+TOP := ../..
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
@@ -12,7 +12,6 @@ INCLUDES += $(INCLUDE_OS)
 clean_FILES = tenyr *.o
 clobber_FILES  = *.vcd
 clobber_FILES += *.texe
-clobber_FILES += $(GEN_V)
 
 all: tenyr
 
@@ -22,10 +21,6 @@ vpath %.memh ../verilog
 
 VFLAGS += -I../verilog -g2005-sv
 VFLAGS += -DSIM
-
-GEN_V += simserial.v
-SIM_GET_simserial = tenyr_getchar
-SIM_PUT_simserial = tenyr_putchar
 
 tenyr: VFLAGS += -m vpidevices
 tenyr: VFLAGS += -DSIMMEM=GenedBlockMem -DSIMCLK=tenyr_mainclock
@@ -60,17 +55,6 @@ run_%: %.texe tenyr
 ##############################################################################
 
 OUTPUT_OPTION ?= -o $@
-
-$(GEN_V): VFLAGS += -DPUT='$$$(SIM_PUT_$*)' -DGET='$$$(SIM_GET_$*)' -DSTEM='$*'
-$(GEN_V): VFLAGS += -E
-$(GEN_V): %.v: ../verilog/sim/simwrap.v
-	@$(MAKESTEP) "[ IVERILOG -E ] $@"
-	$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
-
-%.vhdl: VFLAGS += -t vhdl
-%.vhdl: %.v
-	@$(MAKESTEP) "[ VHDL ] $@"
-	$(IVERILOG)iverilog $(VFLAGS) -Wall $(OUTPUT_OPTION) $^
 
 %: %.v
 	@$(MAKESTEP) "[ IVERILOG ] $@"

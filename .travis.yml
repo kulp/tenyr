@@ -99,7 +99,9 @@ jobs:
 before_script:
 - mkdir -p $DEPSSRC
 - if [[ $JIT != 0 ]] ; then ./scripts/build-lightning.sh 2.1.3 $DEPSSRC ; fi
-- ". scripts/install_sdl.sh"
+- . scripts/install_sdl.sh
+- . scripts/set_up_mingw.sh
+- . scripts/install_parsers.sh
 - if [[ $PLATFORM = mingw ]] ; then sed "s#{{{}}}#z:$(echo $PWD/3rdparty/sdl2/${TRAVIS_COMPILER%%-*}-w64-mingw32/bin
   | sed 's#/#\\\\\\\\#g')#" scripts/winepath.reg > scripts/winepath2.reg ; wine regedit
   scripts/winepath2.reg ; fi

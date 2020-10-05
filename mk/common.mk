@@ -45,8 +45,6 @@ vpath %.c $(OS_PATHS)
 LDFLAGS += $(LDFLAGS_$(OS))
 LDLIBS  += $(LDLIBS_$(OS))
 
-CPPFLAGS += -D"PATH_COMPONENT_SEPARATOR_CHAR='$(PATH_COMPONENT_SEP)'"
-CPPFLAGS += -D'PATH_COMPONENT_SEPARATOR_STR="'$(PATH_COMPONENT_SEP)'"'
 CPPFLAGS += -D"PATH_SEPARATOR_CHAR=$(PATH_SEP_CHAR)"
 
 ifeq ($(BITS),32)
@@ -77,8 +75,9 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINES)) \
             $(patsubst %,-I%,$(INCLUDES))
 
 GIT = git --git-dir=$(TOP)/.git
-FLEX  ?= flex
-BISON ?= bison -Werror
+LEX = flex
+YACC = bison
+YFLAGS = -Werror
 
 cc_flag_supp = $(shell $(CC) $1 -c -x c -o /dev/null /dev/null 2>/dev/null >/dev/null && echo $1)
 
@@ -113,11 +112,12 @@ include $(TOP)/mk/os/vars/default.mk
 
 # OS Makefiles might have set CROSS_COMPILE. Since we are using `:=` instead of
 # `=`, order of assignment of variables matters.
-CC  := $(CROSS_COMPILE)$(CC)
+export CC_FOR_BUILD := $(CC)
+export CC := $(CROSS_COMPILE)$(CC)
 
 # Provide a short identifier (e.g. "clang" or "gcc") to switch some build-time
 # behaviors (e.g. diagnostic fatalization).
-COMPILER = $(shell echo __clang_version__ | cc -E -P - | grep -qL __clang_version__ && echo gcc || echo clang)
+COMPILER = $(shell echo __clang_version__ | $(CC) -E -P - | grep -qL __clang_version__ && echo gcc || echo clang)
 include $(TOP)/mk/compiler/default.mk
 -include $(TOP)/mk/compiler/$(COMPILER).mk
 
@@ -125,7 +125,7 @@ include $(TOP)/mk/sdl.mk
 include $(TOP)/mk/jit.mk
 
 # These definitions must come after OS includes
-MACHINE := $(shell $(CC) -dumpmachine)
+MACHINE ?= $(shell $(CC) -dumpmachine)
 BUILDDIR ?= $(TOP)/build/$(MACHINE)
 TOOLDIR := $(BUILDDIR)
 ifeq ($(findstring command,$(origin $(BUILDDIR))),)

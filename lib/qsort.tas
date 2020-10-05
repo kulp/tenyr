@@ -1,0 +1,149 @@
+# TODO clean up this implementation. It previously used c preprocessor macros
+# to hide some of its ugliness.
+do_swap:
+    l <- c
+    k <- e
+    o <- o - e
+    c <- o + 1
+    d <- e * f ; d <- d + l ;
+    
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+memcpy + p
+    c <- e * f ; c <- c + l ;
+    d <- e * g ; d <- d + l ;
+    e <- k
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+memcpy + p
+    c <- e * g ; c <- c + l ;
+    d <- o + 1
+    e <- k
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+memcpy + p
+    o <- o + k
+    o <- o + 1
+    p <- [o]
+
+# c is base
+# d is number of elements
+# e is size of element
+# f is comparator
+# m is SI
+# j is II
+# h is PI
+# i is LI
+
+    .global qsort
+qsort:
+    o <- o - 7
+    g -> [o + (7 - 0)]
+    h -> [o + (7 - 1)]
+    i -> [o + (7 - 2)]
+    j -> [o + (7 - 3)]
+    k -> [o + (7 - 4)]
+    l -> [o + (7 - 5)]
+    m -> [o + (7 - 6)]
+    h <- d < 2                  # test for base case
+    p <- @+L_qsort_done & h + p
+    h <- d >> 1                 # partition index
+    i <- d - 1                  # last index
+    # partitioning
+        o <- o - 4
+        c -> [o + (4 - 0)]
+        d -> [o + (4 - 1)]
+        e -> [o + (4 - 2)]
+        f -> [o + (4 - 3)]
+        f <- h
+        g <- i
+        [o] <- p + 2
+        o <- o - 1
+        p <- @+do_swap + p
+        o <- o + 4
+        f <- [o - 3]
+        e <- [o - 2]
+        d <- [o - 1]
+        c <- [o - 0]
+    m <- 0                     # store index
+    j <- 0                     # i index
+
+L_qsort_partition:
+    k <- j < i
+    p <- @+L_qsort_partition_done &~ k + p
+    o <- o - 1
+    c -> [o + (1 - 0)]
+    k <- e *  j ; k <- k +  c ;
+    d <- e *  i ; d <- d +  c ;
+    c <- k
+    [o] <- p + 2 ; o <- o - 1
+    p <- f                      # call comparator
+    o <- o + 1
+    c <- [o - 0]
+    k <- b < 0
+    p <- @+L_qsort_noswap &~ k + p
+        o <- o - 4
+        c -> [o + (4 - 0)]
+        d -> [o + (4 - 1)]
+        e -> [o + (4 - 2)]
+        f -> [o + (4 - 3)]
+        f <- j
+        g <- m
+        [o] <- p + 2
+        o <- o - 1
+        p <- @+do_swap + p
+        o <- o + 4
+        f <- [o - 3]
+        e <- [o - 2]
+        d <- [o - 1]
+        c <- [o - 0]
+    m <- m + 1
+L_qsort_noswap:
+    j <- j + 1
+    p <- p + @+L_qsort_partition
+
+L_qsort_partition_done:
+        o <- o - 4
+        c -> [o + (4 - 0)]
+        d -> [o + (4 - 1)]
+        e -> [o + (4 - 2)]
+        f -> [o + (4 - 3)]
+        f <- m
+        g <- i
+        [o] <- p + 2
+        o <- o - 1
+        p <- @+do_swap + p
+        o <- o + 4
+        f <- [o - 3]
+        e <- [o - 2]
+        d <- [o - 1]
+        c <- [o - 0]
+    h <- m
+
+    # recursive cases --------------------
+    # save argument registers
+    m <- c
+    j <- e
+    k <- f
+    # c is already the zeroth element
+    d <- h
+    # e is already width
+    # f is already callback
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+qsort + p
+    # restore argument registers
+    c <- m
+    d <- i - h
+    e <- j
+    f <- k
+    h <- h + 1
+    k <- e * h ; k <- k + c ;
+    c <- k
+    # TODO tail call
+    [o] <- p + 2 ; o <- o - 1 ; p <- @+qsort + p
+
+L_qsort_done:
+    o <- o + 8
+    m <- [o - (1 + 6)]
+    l <- [o - (1 + 5)]
+    k <- [o - (1 + 4)]
+    j <- [o - (1 + 3)]
+    i <- [o - (1 + 2)]
+    h <- [o - (1 + 1)]
+    g <- [o - (1 + 0)]
+    p <- [o]
+
+

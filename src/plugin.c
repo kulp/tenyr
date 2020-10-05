@@ -32,19 +32,20 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
         char buf[256], parent[256];
         snprintf(parent, sizeof parent, "%s[%d]", base, inst);
         int count = p->gops.param_get(p, parent, countof(impls), impls);
-        if (count > (signed)countof(impls))
-            debug(1, "Got %d impl names, only have room for %zd", count, countof(impls));
+        const int max_impls = (signed)countof(impls);
+        if (count > max_impls)
+            debug(0, "Saw %d plugins names, handling only the first %d", count, max_impls);
         else if (count <= 0)
             break;
 
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count && i < max_impls; i++) {
             const char *implname = impls[i];
             // If implname contains a slash, treat it as a path ; otherwise, stem
             const char *implpath = NULL;
             const void *implstem = NULL;
             snprintf(buf, sizeof buf, "%s[%d].stem", base, inst);
             p->gops.param_get(p, buf, 1, &implstem); // may not be set ; that's OK
-            if (strchr(implname, PATH_COMPONENT_SEPARATOR_CHAR)) {
+            if (strchr(implname, '/')) {
                 implpath = implname;
             } else {
                 snprintf(buf, sizeof buf, "libtenyr%s"DYLIB_SUFFIX, implname);

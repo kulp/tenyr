@@ -5,6 +5,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Enabled many compiler warnings under Clang and GCC
+- Introduced a stream-based abstraction layer for filesystem operations
+- Enabled CI jobs for additional architectures (arm64, ppc64le, s390x)
+- Defined the overshifting behavior for the `@` operator
+- Defined the tenyr assembly grammar in ABNF (#60)
+
+### Changed
+- Updated supported emscripten version to 1.38.46
+- Reimplemented JIT using GNU lightning
+- Stopped relying on customizations to `wb_intercon` for tenyr's Verilog implementation
+- Addressed various lint warnings found in tenyr's Verilog
+- Tightened lexer rules for numeric constants (#56)
+- Cleaned up OS overrides (#61)
+
+### Fixed
+- Corrected a long-standing tsim bug when right-shifting by more than 31 bits
+- Corrected tsim bugs manifesting on big-endian host machines
+- Corrected silent sign conversions, adhering to `-Werror=sign-conversion`
+- Prevented disassembly from `obj` from always exiting non-zero (#59)
+- Prevented a buffer overrun when too many plugins are specified (#64)
+
+### Removed
+- Stopped suggesting Gitter as a chat option
+- Stopped using coveralls.io for code coverage reporting
+- Dropped `raw` output format
+- Dropped explicit support for backslashes as path component separators (#43)
+- Removed support for various deprecated and obsolete functionalities (#47)
+    - Dropped support for C-style and C++-style comments in .tas files
+    - Removed broken Forth implementation
+    - Dropped support for deprecated v0 and v1 object formats
+    - Remove unused `@=` syntax sugar
+    - Removed web demo
+    - Removed bitrotten support for Quartus and Lattice builds
+    - Dropped unused submodule for broken lcc port
+- Stopped using C preprocessor on `.tas.cpp` files (#45)
 
 ## [0.9.7] - 2019-07-25
 ### Added

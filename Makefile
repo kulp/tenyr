@@ -1,5 +1,4 @@
-makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
-TOP := $(dir $(makefile_path))
+TOP := .
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
@@ -36,8 +35,11 @@ tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
 tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ifeq ($(USE_OWN_SEARCH),1)
+vpath %.c $(TOP)/3rdparty/naive-tsearch
 # The interface of lsearch and tsearch is not something we can change.
 lsearch.o tsearch.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
+# tsearch.o from naive-tsearch has feature flags
+tsearch.o: CFLAGS += -Wno-unused-macros
 
 tas_OBJECTS   += lsearch.o tsearch.o
 tld_OBJECTS   += lsearch.o tsearch.o
@@ -54,7 +56,6 @@ distclean:: clobber
 clean clobber::
 	-rmdir $(BUILDDIR)/devices $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
-	-$(MAKE) -C $(TOP)/forth $@
 	-$(MAKE) -C $(TOP)/hw/icarus $@
 	-$(MAKE) -C $(TOP)/hw/xilinx $@
 
@@ -73,9 +74,10 @@ clobber::
 DROP_TARGETS = showbuilddir clean clobber distclean NODEPS
 NODEPS:; # phony target just to prevent dependency generation
 ifneq ($(BUILDDIR),.)
+makefile_path := $(abspath $(firstword $(MAKEFILE_LIST)))
 all $(filter-out $(DROP_TARGETS),$(MAKECMDGOALS))::
 	mkdir -p $(BUILDDIR)
-	$(MAKE) TOOLDIR=$(BUILDDIR) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(TOP) $@
+	$(MAKE) TOOLDIR=$(abspath $(BUILDDIR)) BUILDDIR=. -C $(BUILDDIR) -f $(makefile_path) TOP=$(CURDIR) $@
 else
 
 all: $(TARGETS) | $(TOP)/build/share/tenyr/rsrc
@@ -119,17 +121,19 @@ tas.o tld.o param.o param,dy.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
 common.o common,dy.o parser.o stream.o stream,dy.o: CFLAGS += -Wno-format-nonliteral
 
 # We cannot control some aspects of the generated lexer or parser.
+lexer.o parser.o: CFLAGS += -Wno-error
 lexer.o: CFLAGS += -Wno-missing-prototypes
-parser.o lexer.o: CFLAGS += -Wno-unused-macros
+lexer.o parser.o: CFLAGS += -Wno-unused-macros
 lexer.o: CFLAGS += -Wno-shorten-64-to-32
 lexer.o: CFLAGS += -Wno-conversion
 lexer.o: CPPFLAGS += -Wno-disabled-macro-expansion
 lexer.o: CPPFLAGS += -Wno-documentation
 lexer.o: CFLAGS += -Wno-missing-noreturn
 lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)sign-conversion
-
-# flex-generated code we can't control warnings of as easily
-parser.o lexer.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
+lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)conversion
+lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)disabled-macro-expansion
+lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)unreachable-code
+lexer.o parser.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 # flex-generated code needs POSIX source for fileno()
 lexer.o: CPPFLAGS += -D_POSIX_SOURCE
 

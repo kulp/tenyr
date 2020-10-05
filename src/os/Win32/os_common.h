@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <io.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 /*
  * MinGW lfind() and friends use `unsigned int *` where they should use a
@@ -14,14 +15,17 @@ typedef unsigned int lfind_size_t;
 
 // timeradd doesn't exist on MinGW
 #ifndef timeradd
-#define timeradd(a, b, result) \
-    do { \
-        (result)->tv_sec  = (a)->tv_sec  + (b)->tv_sec; \
-        (result)->tv_usec = (a)->tv_usec + (b)->tv_usec; \
-        (result)->tv_sec += (result)->tv_usec / 1000000; \
-        (result)->tv_usec %= 1000000; \
-    } while (0) \
-    //
+#define timeradd timeradd
+
+static inline void timeradd(struct timeval *a, struct timeval *b,
+                            struct timeval *result)
+{
+    result->tv_sec  = a->tv_sec  + b->tv_sec;
+    result->tv_usec = a->tv_usec + b->tv_usec;
+    result->tv_sec += result->tv_usec / 1000000;
+    result->tv_usec %= 1000000;
+}
+
 #endif
 
 struct param_state;
@@ -32,7 +36,6 @@ int os_get_tsimrc_path(char buf[], size_t sz);
 long os_getpagesize(void);
 int os_preamble(void);
 int os_set_buffering(FILE *stream, int mode);
-int os_set_non_blocking(FILE *stream);
 
 #endif
 

@@ -1,10 +1,5 @@
 .DEFAULT_GOAL = all
 
-%.tas: %.tas.cpp
-	@$(MAKESTEP) "[ TPP ] $(<F)"
-	mkdir -p $(*D)
-	$(tpp) $(CPPFLAGS) - < $< -o $@
-
 %.to: %.tas
 	@$(MAKESTEP) "[ TAS ] $(<F)"
 	mkdir -p $(*D)
@@ -57,11 +52,11 @@ libtenyr%$(STLIB_SUFFIX): %.o
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
 	# `sed` here hacks around an issue where gcov gets line numbers off by one
 	# after the rules section
-	$(FLEX) --header-file=$*.h --stdout $< | sed /XXXREMOVE/d > $*.c
+	$(LEX) --header-file=$*.h --stdout $< | sed /XXXREMOVE/d > $*.c
 
 %.h %.c: %.y
 	@$(MAKESTEP) "[ BISON ] $(<F)"
-	$(BISON) --defines=$*.h -o $*.c $<
+	$(YACC.y) --defines=$*.h -o $*.c $<
 
 clean clobber::
 	$(RM) -rf $($@_FILES)

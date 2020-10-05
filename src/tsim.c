@@ -82,8 +82,8 @@ static const struct option longopts[] = {
 };
 
 static const char *library_search_paths[] = {
-    ".." PATH_COMPONENT_SEPARATOR_STR "lib" PATH_COMPONENT_SEPARATOR_STR,
-    "." PATH_COMPONENT_SEPARATOR_STR,
+    "../lib/",
+    "./",
     "",
     NULL
 };

@@ -60,10 +60,6 @@ static const struct hides { unsigned char a:1, b:1, c:1, :(CHAR_BIT-3); }
 hide[TYPEx][OPx] [2][2][2] = {
     [TYPE0][OP0] [0][0][1] = { 0,0,1 }, // B <- C * D
     [TYPE0][OP1] [0][0][1] = { 0,0,1 }, // B <- C | D
-    [TYPE0][OP1] [1][0][0] = { 1,0,0 }, // B <-     D + 2
-    [TYPE0][OP1] [1][0][1] = { 1,0,0 }, // B <-     D + 0
-    [TYPE0][OP1] [1][1][0] = { 1,1,0 }, // B <-         2
-    [TYPE0][OP1] [1][1][1] = { 1,1,0 }, // B <-         0
     [TYPE0][OP2] [0][0][1] = { 0,0,1 }, // B <- C - D
     [TYPE1][OP0] [0][0][1] = { 0,0,1 }, // B <- C * 2
     [TYPE1][OP0] [0][1][1] = { 0,0,1 }, // B <- C * 0
@@ -78,6 +74,7 @@ hide[TYPEx][OPx] [2][2][2] = {
     [TYPE2][OP2] [0][0][1] = { 0,0,1 }, // B <- 2 - C
     [TYPE2][OP2] [1][0][1] = { 0,0,1 }, // B <- 0 - C
     [TYPE2][OP3] [1][0][1] = { 0,0,1 }, // B <- 0 + C
+    [TYPE3][OP1] [1][1][1] = { 1,1,0 }, // B <-         0
     [TYPE3][OP1] [1][1][0] = { 1,1,0 }, // B <-         2
 };
 
@@ -161,10 +158,10 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
     const int show1 = (!hid.a || verbose) && g->p != 3;
     const int show2 = (!hid.b || verbose);
           int show3 = (!hid.c || verbose);
-    const int flip  = g->p == 0 && i8 < 0 && show2 && !verbose;
+    const int flip  = g->p == 3 && i8 < 0 && show2 && !verbose;
 
     char s8[16];
-    const char * const numfmt = (!decimal && (g->p == 3 || verbose)) ? "0x%08x" : "%d";
+    const char * const numfmt = (!decimal && verbose) ? "0x%08x" : "%d";
     snprintf(s8, sizeof s8, numfmt, flip ? -i8 : i8);
 
     const char * const ss[] = { s8, s7, s5 };
@@ -319,7 +316,8 @@ static int obj_in(STREAM *stream, struct element *i, void *ud)
     int done = 0;
     while (!done) {
         if (!rec) {
-            u->error = 1;
+            // We have reached the end of the list. This is not an error
+            // condition, but we need to signal it specially.
             return -1;
         }
 

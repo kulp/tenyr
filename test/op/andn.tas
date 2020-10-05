@@ -1,14 +1,14 @@
 C <- [P + (@+args + 0)]
 D <- [P + (@+args + 1)]
 
-// TODO rewrite without reference to ~, as this may be implemented in hardware
-// common between |~ and &~
+# TODO rewrite without reference to ~, as this may be implemented in hardware
+# common between |~ and &~
 G <- ~ D
 
-// passing until proven broken
+# passing until proven broken
 B <- -1
 
-// test type 0
+# test type 0
 E <- C ^ G
 F <- ~ E
 E <- F ^ C
@@ -20,7 +20,7 @@ I <- C &~ D
 I <- I == H
 B <- B & I
 
-// test type 1
+# test type 1
 E <- C ^ ~-123
 F <- ~ E
 E <- F ^ C
@@ -32,7 +32,7 @@ I <- C &~ -123
 I <- I == H
 B <- B & I
 
-// test type 2
+# test type 2
 E <- 234 ^ G
 F <- ~ E
 E <- F ^ 234

@@ -4,11 +4,15 @@ SDL_VERSION := $(call sdl2_pkg_config,--modversion,sdl2)
 ifneq ($(SDL_VERSION),)
 PDEVICES_SDL += sdlled sdlvga
 PDEVICES += $(PDEVICES_SDL)
+# Mark SDL header includes as system includes to avoid subjecting them to full
+# pedantry
 libtenyrsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): \
-    CPPFLAGS += $(call sdl2_pkg_config,--cflags,sdl2 SDL2_image)
+    CPPFLAGS += $(patsubst -I%,-isystem %,$(call sdl2_pkg_config,--cflags-only-I,sdl2 SDL2_image))
+libtenyrsdl%$(DYLIB_SUFFIX) $(PDEVICES_SDL:%=devices/%.d): \
+    CPPFLAGS += $(call sdl2_pkg_config,--cflags-only-other,sdl2 SDL2_image)
 libtenyrsdl%$(DYLIB_SUFFIX): LDLIBS += $(call sdl2_pkg_config,--libs,sdl2 SDL2_image)
-libtenyrsdlvga$(DYLIB_SUFFIX): | $(TOP)rsrc/font10x15/invert.font10x15.png
-$(TOP)rsrc/font10x15/%:
+libtenyrsdlvga$(DYLIB_SUFFIX): | $(TOP)/rsrc/font10x15/invert.font10x15.png
+$(TOP)/rsrc/font10x15/%:
 	$(MAKE) -C $(@D) $(@F)
 
 # Do not halt the build for platforms on which the feature-flag _BSD_SOURCE is
