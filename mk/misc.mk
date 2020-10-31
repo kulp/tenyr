@@ -244,9 +244,9 @@ test_run_%: %.texe $(build_tas) $(build_tld)
 	@$(MAKESTEP) -n "Running test `printf %-20s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
-check_hw_icarus_pre:
+check_hw_icarus_pre: vpidevices.vpi
 	@$(MAKESTEP) -n "Building hardware simulator ... "
-	$(MAKE) $S -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
+	$(MAKE) $S -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) tenyr && $(MAKESTEP) ok
 
 tsim_FLAVOURS := interp interp_prealloc
 tsim_FLAGS_interp =
