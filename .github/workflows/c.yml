@@ -1,0 +1,24 @@
+name: C-language CI
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+env:
+  SDL: 0
+  JIT: 0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: make
+      run: make -j
+      timeout-minutes: 1
+    - name: make check_sw
+      run: make check_sw
+      timeout-minutes: 5
+
