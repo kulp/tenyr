@@ -9,11 +9,21 @@ on:
 env:
   SDL: 0
   JIT: 0
+  PEDANTIC: 0
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
+    - if: runner.os == 'Linux'
+      run: sudo apt-get install expect # for unbuffer
+    - if: runner.os == 'macOS'
+      run: |
+        brew install bison expect
+        echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
     - uses: actions/checkout@v2
     - name: make
       run: make -j
@@ -23,6 +33,6 @@ jobs:
         path: build/
         name: builddir-${{ matrix.os }}
     - name: make check_sw
-      run: make check_sw
+      run: unbuffer make check_sw
       timeout-minutes: 5
 
