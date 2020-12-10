@@ -1,6 +1,6 @@
-PEDANTIC = 1
+PEDANTIC ?= 1
 
-ifeq ($(PEDANTIC),)
+ifneq ($(PEDANTIC),1)
 PEDANTIC_FLAGS ?= -pedantic
 else
 PEDANTIC_FLAGS ?= -Werror -pedantic-errors -W$(PEDANTRY_EXCEPTION)unknown-warning-option
