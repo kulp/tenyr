@@ -202,7 +202,7 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     // being careful to trim to the right width
     SWord mult = (rlc->flags & RLC_NEGATE) ? -1 : +1;
     SWord *dest = &r->data[rlc->addr - r->addr];
-    SWord mask = (SWord)(((1u << (rlc->width - 1)) << 1) - 1);
+    SWord mask = ((SWord)((1u << (rlc->width - 1)) << 1) - 1);
     SWord updated = (*dest + mult * (reladdr >> rlc->shift)) & mask;
     *dest = (*dest & ~mask) | updated;
 
