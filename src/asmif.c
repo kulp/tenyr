@@ -131,7 +131,7 @@ static int ce_eval_op2(struct parse_data *pd, struct element *context,
             case '^' : *result = left ^  right; return 1;
             case '&' : *result = left &  right; return 1;
             case '|' : *result = left |  right; return 1;
-            case LSH : *result = left << right; return 1;
+            case LSH : *result = (int32_t)(((uint32_t)left) << right); return 1;
             case RSHA: *result = left >> right; return 1;
             case RSH : *result = (int32_t)(((uint32_t)left) >> right); return 1;
             case '/' :
