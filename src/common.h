@@ -19,7 +19,8 @@ static inline int32_t SEXTEND32(unsigned int bits, int32_t val)
         return val;
 
     const int32_t msb = (int32_t)(1L << (bits - 1)) & val;
-    const int32_t ext = (-!!msb) << bits;
+    const uint32_t mask = msb ? 0xffffffff : 0;
+    const int32_t ext = (int32_t)(mask << bits);
     return ext | (val & ((1L << bits) - 1));
 }
 
