@@ -18,6 +18,10 @@ jobs:
     - name: make
       run: make -j
       timeout-minutes: 1
+    - uses: actions/upload-artifact@v2
+      with:
+        path: build/
+        name: builddir-${{ matrix.os }}
     - name: make check_sw
       run: make check_sw
       timeout-minutes: 5
