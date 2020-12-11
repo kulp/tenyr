@@ -1,0 +1,38 @@
+name: C-language CI
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+env:
+  SDL: 0
+  JIT: 0
+  PEDANTIC: 0
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - if: runner.os == 'Linux'
+      run: sudo apt-get install expect # for unbuffer
+    - if: runner.os == 'macOS'
+      run: |
+        brew install bison expect
+        echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
+    - uses: actions/checkout@v2
+    - name: make
+      run: make -j
+      timeout-minutes: 1
+    - uses: actions/upload-artifact@v2
+      with:
+        path: build/
+        name: builddir-${{ matrix.os }}
+    - name: make check_sw
+      run: unbuffer make check_sw
+      timeout-minutes: 5
+
