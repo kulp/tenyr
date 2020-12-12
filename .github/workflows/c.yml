@@ -7,7 +7,7 @@ on:
     branches: [ develop ]
 
 env:
-  SDL: 0
+  SDL: 1
   JIT: 1
   PEDANTIC: 0
 
