@@ -19,12 +19,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - if: runner.os == 'Linux'
-      run: sudo apt-get install expect # for unbuffer
+      run: sudo apt-get install expect iverilog
     - if: runner.os == 'Linux' && env.SDL != 0
       run: sudo apt-get install libsdl2-dev libsdl2-image-dev
     - if: runner.os == 'macOS'
       run: |
-        brew install bison expect
+        brew install bison expect icarus-verilog
         echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
     - if: runner.os == 'macOS' && env.SDL != 0
       run: brew install sdl2 sdl2_image
