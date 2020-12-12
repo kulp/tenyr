@@ -29,6 +29,8 @@ jobs:
     - if: runner.os == 'macOS' && env.SDL != 0
       run: brew install sdl2 sdl2_image
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - if: env.JIT != 0
       run: |
           ./scripts/build-lightning.sh 2.1.3 $HOME/local
