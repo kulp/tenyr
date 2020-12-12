@@ -31,7 +31,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         path: build/
-        name: builddir-${{ matrix.os }}
+        name: builddir-mingw64
     - name: make check_sw
       run: unbuffer make check_sw
       timeout-minutes: 5
