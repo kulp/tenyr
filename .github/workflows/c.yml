@@ -25,6 +25,12 @@ jobs:
         brew install bison expect
         echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
     - uses: actions/checkout@v2
+    - if: env.JIT != 0
+      run: |
+          ./scripts/build-lightning.sh 2.1.3 $HOME/local
+          echo "C_INCLUDE_PATH=$HOME/local/include" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$HOME/local/lib" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/local/lib" >> $GITHUB_ENV
     - name: make
       run: make -j
       timeout-minutes: 1
