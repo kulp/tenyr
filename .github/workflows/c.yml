@@ -56,10 +56,6 @@ jobs:
     - name: make
       run: make -j
       timeout-minutes: 1
-    - uses: actions/upload-artifact@v2
-      with:
-        path: build/
-        name: builddir-${{ matrix.os }}
     - name: make coverage
       run: unbuffer make coverage
       timeout-minutes: 10
