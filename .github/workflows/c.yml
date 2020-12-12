@@ -47,4 +47,7 @@ jobs:
     - name: make check_sw
       run: unbuffer make check_sw
       timeout-minutes: 5
+    - name: make check_hw
+      run: unbuffer make check_hw
+      timeout-minutes: 10
 
