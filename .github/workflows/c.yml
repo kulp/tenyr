@@ -8,7 +8,7 @@ on:
 
 env:
   SDL: 0
-  JIT: 0
+  JIT: 1
   PEDANTIC: 0
 
 jobs:
