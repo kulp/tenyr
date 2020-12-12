@@ -12,6 +12,32 @@ env:
   PEDANTIC: 0
 
 jobs:
+  wine:
+    env:
+      SDL: 0
+      JIT: 0
+    runs-on: ubuntu-20.04
+    steps:
+    - name: install expect
+      run: sudo apt-get install expect # for unbuffer
+    - name: install wine
+      run: sudo apt-get install gcc-mingw-w64-x86-64 wine-stable wine64
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: make
+      run: make -j
+      timeout-minutes: 1
+    - uses: actions/upload-artifact@v2
+      with:
+        path: build/
+        name: builddir-${{ matrix.os }}
+    - name: make check_sw
+      run: unbuffer make check_sw
+      timeout-minutes: 5
+      env:
+        PLATFORM: mingw
+
   build:
     strategy:
       matrix:
