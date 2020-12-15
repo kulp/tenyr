@@ -1,5 +1,5 @@
 # tenyr
-[![Build Status](https://travis-ci.org/kulp/tenyr.svg?branch=develop)](https://travis-ci.org/kulp/tenyr)
+[![C-language CI](https://github.com/kulp/tenyr/workflows/C-language%20CI/badge.svg)](https://github.com/kulp/tenyr/actions?query=workflow%3A%22C-language+CI%22)
 [![Coverage Status](https://img.shields.io/codecov/c/github/kulp/tenyr.svg)](https://codecov.io/github/kulp/tenyr)
 
 ## Overview
