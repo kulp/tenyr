@@ -75,9 +75,6 @@ extern sim_runner interp_run_sim, interp_step_sim;
 int load_sim(op_dispatcher *dispatch_op, void *sud, const struct format *f,
         void *fud, STREAM *in, int32_t load_address);
 
-#define breakpoint(...) \
-    fatal(0, __VA_ARGS__)
-
 struct device * new_device(struct sim_state *s);
 int dispatch_op(void *ud, int op, int32_t addr, int32_t *data);
 int devices_setup(struct sim_state *s);
