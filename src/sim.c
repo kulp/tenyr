@@ -65,26 +65,24 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     int32_t * const r = arrow_right ? Z   : rhs;
     int32_t * const w = arrow_right ? rhs : Z  ;
 
+    int rc = 0;
     if (loading) {
-        int rc = s->dispatch_op(s, OP_DATA_READ, *r, value);
-        if (rc) {
-            if (s->conf.flags & SIM_CONTINUE_ON_FAILED_MEM_OP) {
-                // silently swallow error for now
-                // this is in the critical path, so don't add a verbose message
-            } else {
-                return -1;
-            }
-        }
+        rc = s->dispatch_op(s, OP_DATA_READ, *r, value);
     } else
         *value = *r;
 
     if (storing) {
-        if (s->dispatch_op(s, OP_WRITE, *w, value))
-            return -1;
+        rc = s->dispatch_op(s, OP_WRITE, *w, value);
     } else if (w != &s->machine.regs[0])  // throw away write to reg 0
         *w = *value;
 
-    return 0;
+    if (s->conf.flags & SIM_CONTINUE_ON_FAILED_MEM_OP) {
+        // silently swallow error for now
+        // this is in the critical path, so don't add a verbose message
+        rc = 0;
+    }
+
+    return rc;
 }
 
 static int run_instruction(struct sim_state *s, const struct element *i, void *run_data)
