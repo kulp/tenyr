@@ -221,9 +221,11 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
         case C_(1,1,1): return PUT(c0,c1,c2,s3,c4,sA,s6,sB,sF,sC,c9);
         #undef PUT
 
+// LCOV_EXCL_START
         default:
             fatal(0, "Unsupported show1,show2,show3 %d,%d,%d",
                     show1,show2,show3);
+// LCOV_EXCL_STOP
     }
     #undef C_
 }

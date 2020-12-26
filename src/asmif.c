@@ -139,8 +139,10 @@ static int ce_eval_op2(struct parse_data *pd, struct element *context,
                     fatal(0, "Constant expression attempted %d/%d", left, right);
                 *result = left / right;
                 return 1;
+// LCOV_EXCL_START
             default:
                 fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
+// LCOV_EXCL_STOP
         }
     }
     return 0;
@@ -154,7 +156,9 @@ static int ce_eval_op1(struct parse_data *pd, struct element *context,
     switch (ce->op) {
         case '-': *result = -*result; return 1;
         case '~': *result = ~*result; return 1;
+// LCOV_EXCL_START
         default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
+// LCOV_EXCL_STOP
     }
 }
 
@@ -175,12 +179,14 @@ static int ce_eval_imm(struct parse_data *pd, struct element *context,
     return 1;
 }
 
+// LCOV_EXCL_START
 static int ce_eval_bad(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
     fatal(0, "Bad const_expr type %d", ce->type);
     return -1; // never reached
 }
+// LCOV_EXCL_STOP
 
 typedef int ce_evaluator(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result);
@@ -200,7 +206,7 @@ static int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
     if (ce->type >= CE_max)
-        return ce_eval_bad(pd, context, ce, flags, width, shift, result);
+        return ce_eval_bad(pd, context, ce, flags, width, shift, result); // LCOV_EXCL_LINE
 
     return ce_eval_dispatch[ce->type](pd, context, ce, flags, width, shift, result);
 }
