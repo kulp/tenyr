@@ -1,5 +1,9 @@
 ignore:
     - "3rdparty/**/*"
+    # failure.c generates libtenyrfailure, which is meant for *stimulating*
+    # coverage, but should not itself contribute to the number of
+    # lines/branches/functions covered.
+    - src/devices/failure.c
 coverage:
     range: 75..95
     precision: 1
