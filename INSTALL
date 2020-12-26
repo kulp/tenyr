@@ -1,14 +1,14 @@
 By default, tenyr installs into /usr/local/{bin,lib,share/tenyr}. To install,
 run
 
-	make install
+    make install
 
 and to uninstall, type
 
-	make uninstall
+    make uninstall
 
 To change the installation directory, supply INSTALL_DIR to the make command
 line :
 
-	make install INSTALL_DIR=/tmp/tenyr
+    make install INSTALL_DIR=/tmp/tenyr
 

@@ -18,5 +18,5 @@ if [[ -x $icarus ]] ; then
     fi
 else
     $MAKESTEP "icarus path '$icarus' not found"
-	exit 1
+    exit 1
 fi

@@ -1,9 +1,9 @@
 [submodule "wiki"]
-	path = wiki
-	url = https://github.com/kulp/tenyr.wiki.git
+    path = wiki
+    url = https://github.com/kulp/tenyr.wiki.git
 [submodule "3rdparty/wb_intercon"]
-	path = 3rdparty/wb_intercon
-	url = https://github.com/olofk/wb_intercon.git
+    path = 3rdparty/wb_intercon
+    url = https://github.com/olofk/wb_intercon.git
 [submodule "3rdparty/naive-tsearch"]
-	path = 3rdparty/naive-tsearch
-	url = https://github.com/kulp/naive-tsearch.git
+    path = 3rdparty/naive-tsearch
+    url = https://github.com/kulp/naive-tsearch.git

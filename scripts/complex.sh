@@ -6,4 +6,4 @@ pmccabe ${1:-src/*.c} |
         fi
     done |
     sort -gr |
-	column -t
+    column -t
