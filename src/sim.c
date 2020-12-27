@@ -76,12 +76,6 @@ static int do_common(struct sim_state *s, int32_t *Z, int32_t *rhs,
     } else if (w != &s->machine.regs[0])  // throw away write to reg 0
         *w = *value;
 
-    if (s->conf.flags & SIM_CONTINUE_ON_FAILED_MEM_OP) {
-        // silently swallow error for now
-        // this is in the critical path, so don't add a verbose message
-        rc = 0;
-    }
-
     return rc;
 }
 

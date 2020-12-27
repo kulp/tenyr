@@ -424,19 +424,10 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
 
 static int read_sim_params(struct sim_state *s)
 {
-    {
-        int truth = 0;
-        param_get_int(s->conf.params, "tsim.continue_on_invalid_device", &truth);
-        if (truth)
-            s->conf.flags |= SIM_CONTINUE_ON_INVALID_DEVICE;
-    }
-
-    {
-        int truth = 0;
-        param_get_int(s->conf.params, "tsim.continue_on_failed_mem_op", &truth);
-        if (truth)
-            s->conf.flags |= SIM_CONTINUE_ON_FAILED_MEM_OP;
-    }
+    int truth = 0;
+    param_get_int(s->conf.params, "tsim.continue_on_invalid_device", &truth);
+    if (truth)
+        s->conf.flags |= SIM_CONTINUE_ON_INVALID_DEVICE;
 
     return 0;
 }
