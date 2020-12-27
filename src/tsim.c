@@ -422,16 +422,6 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
     return 0;
 }
 
-static int read_sim_params(struct sim_state *s)
-{
-    int truth = 0;
-    param_get_int(s->conf.params, "tsim.continue_on_invalid_device", &truth);
-    if (truth)
-        s->conf.flags |= SIM_CONTINUE_ON_INVALID_DEVICE;
-
-    return 0;
-}
-
 int main(int argc, char *argv[])
 {
     int rc = EXIT_SUCCESS;
@@ -531,8 +521,6 @@ int main(int argc, char *argv[])
         .pre_insn = pre_insn,
         .post_insn = post_insn,
     };
-
-    read_sim_params(s);
 
     void *run_ud = NULL;
     rc = s->run_sim(s, &ops, &run_ud, NULL);
