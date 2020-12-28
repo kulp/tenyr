@@ -1,0 +1,38 @@
+.set SERIAL, 1 << 5
+
+    b <- -1             # assume success
+    e <- @+string_start + p
+    f <- @+check_start + p
+    n <- (.Lstring_end - .Lstring_start)
+compare_loop:
+    d <- i >= n
+    p <- @+compare_done & d + p
+    c <- [e + i]        # load word from string
+    d <- [f + i]        # load word from string
+    i <- i + 1          # increment index for next time
+    o <- c == d         # compare words
+    b <- b & o          # accumulate failures
+    p <- p + @+compare_loop
+compare_done:
+    illegal
+
+string_start:
+.Lstring_start:
+    .chars "foo" " " "concatenated " "with " "bar"
+    .chars "foo" "AAAAA" "bar" "AAAAA"
+    .word 0
+    .chars "hi"
+    .chars "hello, world!"
+    .chars "hello, world!plus all this stuff"
+    .chars "this is a longish string, which is definitely longer than 32 characters"
+    .chars "this is a string with embedded \"quotes\""
+    .chars ""
+    .chars "this is a string with embedded \b\v\r\n control \t characters\0other things"
+.Lstring_end:
+    .zero 0
+
+check_start:
+.Lcheck_start:
+    .chars "foo concatenated with barfooAAAAAbarAAAAA\0hihello, world!hello, world!plus all this stuffthis is a longish string, which is definitely longer than 32 charactersthis is a string with embedded \"quotes\"this is a string with embedded \b\v\r\n control \t characters\0other things"
+.Lcheck_end:
+    .zero 0
