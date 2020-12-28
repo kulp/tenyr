@@ -137,40 +137,18 @@ illegal             { return ILLEGAL; }
  * XXXREMOVEXXX
  * a line above this one removed to work around a gcov off-by-one-line bug
  */
-static struct cstr *resizestr(struct cstr *s, int len)
-{
-    if (!s) {
-        // allocate at least a minimum segment size
-        if (len < 128)
-            len = 128;
-
-        s = malloc(sizeof *s);
-        s->size = len;
-        s->head = s->tail = calloc((size_t)s->size, 1);
-        s->last = s;
-        s->right = NULL;
-        return s;
-    } else {
-        int have = (int)(s->tail - s->head);
-
-        if (s->size < have + len) {
-            s->size = have;                     // shorten this string segment
-            s->right = resizestr(NULL, len);    // allocate a new segment
-            s->last = s->right;
-            return s->right;                    // caller keeps original s
-        }
-
-        return s;
-    }
-}
-
 static int savestr(const char *text, int len, yyscan_t yyscanner)
 {
     // savestr() appends a string piece into a buffer
     YYSTYPE *lval  = yyget_lval(yyscanner);
     struct cstr *s = lval->cstr;
 
-    s = resizestr(s, len);
+    s = malloc(sizeof *s);
+    s->size = len;
+    s->head = s->tail = calloc((size_t)s->size, 1);
+    s->last = s;
+    s->right = NULL;
+
     memcpy(s->tail, text, len);
     s->tail += len;
 
