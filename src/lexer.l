@@ -29,11 +29,10 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
         yycolumn += yyleng; \
     } while (0);
 
-#define YSTR        yylval->cstr
 #define PUSH(State) yy_push_state(State, yyscanner)
 #define DUP         yy_push_state(yy_top_state(yyscanner), yyscanner)
 #define POP         yy_pop_state(yyscanner)
-#define CHKSTR      do { if (YSTR && YSTR->size < 0) { YSTR = NULL; } } while (0)
+#define CHKSTR      do { if (yylval->cstr && yylval->cstr->size < 0) { yylval->cstr = NULL; } } while (0)
 #define SAVESTR     savestr(yytext, yyleng, yyscanner)
 
 %}
@@ -73,14 +72,14 @@ edge    {white}|\n
 illegal             { return ILLEGAL; }
 
 {regname}           { yylval->i = yytext[0]; return REGISTER; }
-{symbol}            { YSTR = NULL; SAVESTR; return SYMBOL; }
-{local}             { YSTR = NULL; SAVESTR; return LOCAL; }
+{symbol}            { yylval->cstr = NULL; SAVESTR; return SYMBOL; }
+{local}             { yylval->cstr = NULL; SAVESTR; return LOCAL; }
 
-\"                  { YSTR = NULL; PUSH(string); return OPNQUOTE; }
+\"                  { yylval->cstr = NULL; PUSH(string); return OPNQUOTE; }
 <string>{
     \"              { POP; return CLSQUOTE; }
-    \\{escchar}     { CHKSTR; savechr(translate_escape(yylloc, yyextra, yytext[1]), yyscanner); YSTR->size = -1; return STRSPAN; }
-    [^\\"]+         { CHKSTR; SAVESTR; YSTR->size = -1; return STRSPAN; }
+    \\{escchar}     { CHKSTR; savechr(translate_escape(yylloc, yyextra, yytext[1]), yyscanner); yylval->cstr->size = -1; return STRSPAN; }
+    [^\\"]+         { CHKSTR; SAVESTR; yylval->cstr->size = -1; return STRSPAN; }
 }
 
 ".word"{edge}       { PUSH(ignore_nl); return WORD; }
@@ -116,7 +115,7 @@ illegal             { return ILLEGAL; }
     .               ; /* ignored content */
 }
 
-"'"                 { PUSH(charend); PUSH(charlit); YSTR = NULL; }
+"'"                 { PUSH(charend); PUSH(charlit); yylval->cstr = NULL; }
 <charlit>{
     \\              PUSH(charesc);
     .               { savechr(yytext[0], yyscanner); POP; }
