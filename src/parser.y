@@ -89,7 +89,7 @@ static void free_cstr(struct cstr *cs, int recurse);
 %token <i>      INTEGER BITSTRING REGISTER
 %token <cstr>   SYMBOL LOCAL STRSPAN CHARACTER
 %token          ILLEGAL
-%token          OPNQUOTE CLSQUOTE
+%token          DBLQUOTE
 
 /* synonyms for literal string tokens */
 %token LSH      "<<"
@@ -208,8 +208,8 @@ string
             if ($stringelt) $$->last = $stringelt; }
 
 stringelt
-    : OPNQUOTE strspan CLSQUOTE {   $$ = $strspan; }
-    | OPNQUOTE CLSQUOTE         {   $$ = NULL; }
+    : DBLQUOTE strspan DBLQUOTE {   $$ = $strspan; }
+    | DBLQUOTE DBLQUOTE         {   $$ = NULL; }
 
 strspan
     : STRSPAN

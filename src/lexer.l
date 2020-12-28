@@ -75,9 +75,9 @@ illegal             { return ILLEGAL; }
 {symbol}            { yylval->cstr = NULL; SAVESTR; return SYMBOL; }
 {local}             { yylval->cstr = NULL; SAVESTR; return LOCAL; }
 
-\"                  { yylval->cstr = NULL; PUSH(string); return OPNQUOTE; }
+\"                  { yylval->cstr = NULL; PUSH(string); return DBLQUOTE; }
 <string>{
-    \"              { POP; return CLSQUOTE; }
+    \"              { POP; return DBLQUOTE; }
     \\{escchar}     { CHKSTR; savechr(translate_escape(yylloc, yyextra, yytext[1]), yyscanner); yylval->cstr->size = -1; return STRSPAN; }
     [^\\"]+         { CHKSTR; SAVESTR; yylval->cstr->size = -1; return STRSPAN; }
 }
