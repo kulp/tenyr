@@ -49,8 +49,6 @@ static struct const_expr *make_eref(struct parse_data *pd, YYLTYPE *locp,
 static struct const_expr_list *make_expr_list(struct const_expr *expr,
         struct const_expr_list *right);
 static int validate_expr(struct parse_data *pd, struct const_expr *e, int level);
-static void do_option(struct parse_data *pd, YYLTYPE *locp,
-        struct cstr *key, struct cstr *value);
 
 // XXX decide whether this should be called in functions or in grammar actions
 static void free_cstr(struct cstr *cs, int recurse);
@@ -112,7 +110,6 @@ static void free_cstr(struct cstr *cs, int recurse);
 %token GLOBAL   ".global"
 %token SET      ".set"
 %token ZERO     ".zero"
-%token OPTION   ".option"
 
 %type <ce>      binop_expr expr vexpr atom vatom eref
 %type <cl>      expr_list
@@ -231,10 +228,6 @@ directive
         {   POP; $directive = make_global(pd, &yylloc, $SYMBOL); free_cstr($SYMBOL, 1); }
     | ".set" opt_nl SYMBOL ',' vexpr
         {   POP; $directive = make_set(pd, &yylloc, $SYMBOL, $vexpr); free_cstr($SYMBOL, 1); }
-    | ".option" opt_nl string[key]
-        {   tenyr_pop_state(pd->scanner); $directive = NULL; do_option(pd, &yylloc, $key, NULL); }
-    | ".option" opt_nl string[key] ',' string[value]
-        {   tenyr_pop_state(pd->scanner); $directive = NULL; do_option(pd, &yylloc, $key, $value); }
 
 expr_list
     : vexpr
@@ -731,7 +724,7 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
         struct directive *d, struct element_list **context)
 {
     if (!d)
-        return; // permit NULL directives as no-ops (see do_option)
+        return; // permit NULL directives as no-ops
 
     switch (d->type) {
         case D_GLOBAL: {
@@ -752,29 +745,6 @@ static void handle_directive(struct parse_data *pd, YYLTYPE *locp,
     }
 
     free(d);
-}
-
-static void do_option(struct parse_data *pd, YYLTYPE *locp,
-        struct cstr *key, struct cstr *value)
-{
-    char *k = coalesce_string(key);
-    char *v = coalesce_string(value);
-
-    if (k == NULL)
-        goto bad;
-
-    /* TODO implement some .options */
-
-done:
-    free_cstr(key, 1);
-    free_cstr(value, 1);
-
-    free(k);
-    free(v);
-    return;
-bad:
-    tenyr_error(locp, pd, "bad .option directive");
-    goto done;
 }
 
 static struct const_expr *make_ref(struct parse_data *pd, YYLTYPE *locp,

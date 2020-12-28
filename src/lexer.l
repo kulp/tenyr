@@ -89,7 +89,6 @@ illegal             { return ILLEGAL; }
 ".global"{edge}     { PUSH(ignore_nl); return GLOBAL; }
 ".set"{edge}        { PUSH(ignore_nl); return SET; }
 ".zero"{edge}       { PUSH(ignore_nl); return ZERO; }
-".option"{edge}     { PUSH(ignore_nl); return OPTION; }
 
 {self}              { return yytext[0]; }
 
