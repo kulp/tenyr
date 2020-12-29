@@ -185,6 +185,13 @@ check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	$($*) $(OBJD)tworecs.to 2>&1 | $(GREP) -i "more than one record"            && $(MAKESTEP) "    ... multiple records ok"
 	$($*) $(OBJD)unresolved.to 2>&1 | $(GREP) -i "missing definition"           && $(MAKESTEP) "    ... unresolved ok"
 
+check_sim_run: check_sim_deref
+check_sim_deref: texe = $(TOP)/test/misc/deref.texe
+# XXX we should be able to use $(tsim_FLAGS) here rather than appending to tsim
+check_sim_deref: tsim += -rzero_word
+check_sim_deref: $(TOP)/test/misc/deref.texe
+	$(run)
+
 clean_FILES += check_obj_*.to null.to ff.bin
 null.to: ; $(tas) -o $@ /dev/null
 ff.bin:; echo -ne '\0377\0377\0377\0377' > $@
