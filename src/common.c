@@ -74,8 +74,6 @@ char *build_path(const char *base, const char *fmt, ...)
     char *solidus = strrchr(dir, '/');
     if (solidus)
         solidus[1] = '\0';
-    if (!fmt)
-        return dir;
 
     va_list vl;
     va_start(vl, fmt);
