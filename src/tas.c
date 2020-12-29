@@ -135,11 +135,12 @@ int main(int argc, char *argv[])
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
             usage(argv[0], EXIT_FAILURE);
-        if (out != stdout && outfname != NULL)
-            // Technically there is a race condition here ; we would like to be
-            // able to remove a file by a stream connected to it, but there is
-            // apparently no portable way to do this.
-            (void)remove(outfname);
+        // We may have created an output file already, but we do not try to
+        // remove it, because doing so by filename would be a race condition.
+        // The most important reason to remove the output file is to avoid
+        // tricking a build system into thinking that a failed build created a
+        // good output file; with GNU Make this can be avoided by using
+        // .DELETE_ON_ERROR, and other build systems have similar features.
         rc = EXIT_FAILURE;
         goto cleanup;
     }
@@ -205,8 +206,12 @@ int main(int argc, char *argv[])
 
     for (int i = optind; i < argc; i++) {
         rc = process_file(params, flags, fmt, argv[i], out);
-        if (rc && outfname != NULL)
-            (void)remove(outfname); // race condition ?
+        // We may have created an output file already, but we do not try to
+        // remove it, because doing so by filename would be a race condition.
+        // The most important reason to remove the output file is to avoid
+        // tricking a build system into thinking that a failed build created a
+        // good output file; with GNU Make this can be avoided by using
+        // .DELETE_ON_ERROR, and other build systems have similar features.
     }
 
     fclose(out);
