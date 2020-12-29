@@ -119,7 +119,7 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
         return out->op.fprintf(out, ".word 0x%08x", i->insn.u.word);
 
     if (flags & ASM_AS_CHAR) {
-        char buf[3];
+        char buf[3] = { 0 };
         if (is_printable((unsigned)i->insn.u.word, buf))
             return out->op.fprintf(out, ".word '%s'%*s", buf, buf[1] == '\0', "");
         else
@@ -160,7 +160,7 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
           int show3 = (!hid.c || verbose);
     const int flip  = g->p == 3 && i8 < 0 && show2 && !verbose;
 
-    char s8[16];
+    char s8[16] = { 0 };
     const char * const numfmt = (!decimal && verbose) ? "0x%08x" : "%d";
     snprintf(s8, sizeof s8, numfmt, flip ? -i8 : i8);
 
@@ -202,7 +202,7 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
     }
 
     // Centre a 1-to-3-character op
-    char opstr[MAX_OP_LEN + 1];
+    char opstr[MAX_OP_LEN + 1] = { 0 };
     snprintf(opstr, sizeof opstr, "%-2s", s6);
     s6 = opstr;
 

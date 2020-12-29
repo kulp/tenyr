@@ -178,8 +178,8 @@ static int sdlled_fini(void *cookie)
 
 static int handle_update(struct sdlled_state *state)
 {
-    int digits[4];
-    int dots[4];
+    int digits[4] = { 0 };
+    int dots[4] = { 0 };
 
     decode_led(state->data[0], digits);
     decode_dots(state->data[1], dots);

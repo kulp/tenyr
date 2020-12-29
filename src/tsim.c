@@ -100,7 +100,7 @@ static int format_has_input(const struct format *f)
 
 static int usage(const char *me, int rc)
 {
-    char format_list[256];
+    char format_list[256] = { 0 };
     make_format_list(format_has_input, tenyr_asm_formats_count,
             tenyr_asm_formats, sizeof format_list, format_list, ", ");
 
@@ -179,7 +179,7 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
 
     struct sim_state *s = ud;
 
-    char buf[128];
+    char buf[128] = { 0 };
     snprintf(buf, sizeof buf, "%s_add_device", implstem);
     void *ptr = dlsym(libhandle, buf);
     if (!ptr) {

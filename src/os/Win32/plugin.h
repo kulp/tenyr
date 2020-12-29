@@ -29,7 +29,7 @@ static inline void *dlsym(void *handle, const char *name)
 
 static inline char *dlerror(void)
 {
-    static __thread char buf[1024];
+    static __thread char buf[1024] = { 0 };
 
     FormatMessage(
         FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,

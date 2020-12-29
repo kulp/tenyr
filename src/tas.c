@@ -44,7 +44,7 @@ static int format_has_output(const struct format *f)
 
 static int usage(const char *me, int rc)
 {
-    char format_list[256];
+    char format_list[256] = { 0 };
     make_format_list(format_has_output, tenyr_asm_formats_count, tenyr_asm_formats,
             sizeof format_list, format_list, ", ");
 
