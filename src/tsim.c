@@ -24,14 +24,15 @@
 int recipe_emscript(struct sim_state *s); // linked in externally
 
 #define RECIPES(_) \
-    _(emscript, "change behaviour to use an event loop for emscripten") \
-    _(jit     , "use a JIT compiler (usually faster, but no -v supported)") \
-    _(plugin  , "load plugins specified through param mechanism") \
-    _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
-    _(serial  , "enable simple serial device and connect to stdio") \
-    _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
-    _(top_page, "map a page at the highest addresses in memory") \
-    _(tsimrc  , "parse tsimrc, after command-line args") \
+    _(emscript  , "change behaviour to use an event loop for emscripten") \
+    _(jit       , "use a JIT compiler (usually faster, but no -v supported)") \
+    _(plugin    , "load plugins specified through param mechanism") \
+    _(prealloc  , "preallocate memory (higher memory footprint, maybe faster)") \
+    _(serial    , "enable simple serial device and connect to stdio") \
+    _(sparse    , "use sparse memory (lower memory footprint, maybe slower)") \
+    _(top_page  , "map a page at the highest addresses in memory") \
+    _(tsimrc    , "parse tsimrc, after command-line args") \
+    _(zero_word , "make address zero readable and writable") \
     //
 
 #define DEFAULT_RECIPES(_) \
@@ -272,9 +273,10 @@ static int recipe_top_page(struct sim_state *s)
     }                                                                          \
     //
 
-DEVICE_RECIPE_TMPL(prealloc,      ram_add_device)
-DEVICE_RECIPE_TMPL(sparse  ,sparseram_add_device)
-DEVICE_RECIPE_TMPL(serial  ,   serial_add_device)
+DEVICE_RECIPE_TMPL(prealloc     ,      ram_add_device)
+DEVICE_RECIPE_TMPL(sparse       ,sparseram_add_device)
+DEVICE_RECIPE_TMPL(serial       ,   serial_add_device)
+DEVICE_RECIPE_TMPL(zero_word    ,zero_word_add_device)
 
 static int run_recipes(struct sim_state *s)
 {
