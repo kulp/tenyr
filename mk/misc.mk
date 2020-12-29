@@ -171,6 +171,8 @@ check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	$($*) -d $(OBJD)bad_version.to 2>&1 | $(GREP) -i "unhandled version"    && $(MAKESTEP) "    ... unhandled version ok"
 	$($*) -d $(OBJD)toolarge.to 2>&1 | $(GREP) "too large"                  && $(MAKESTEP) "    ... too-large ok"
 	$($*) -d $(OBJD)toolarge2.to 2>&1 | $(GREP) "too large"                 && $(MAKESTEP) "    ... too-large 2 ok"
+	$($*) -d $(OBJD)too-many-symbols.to 2>&1 | $(GREP) "too large"          && $(MAKESTEP) "    ... too many symbols ok"
+	$($*) -d $(OBJD)too-many-relocs.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... too many relocs ok"
 	$($*) $(TASD)missing_global.tas 2>&1 | $(GREP) "not defined"            && $(MAKESTEP) "    ... undefined global ok"
 	$($*) $(TOP)/test/fail_compile/error_capture.tas 2>&1 | $(GREP) "@q"    && $(MAKESTEP) "    ... error message ok"
 
