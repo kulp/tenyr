@@ -6,7 +6,7 @@
 
 struct const_expr {
     enum const_expr_type {
-        CE_BAD,
+        CE_INVALID,
 
         CE_OP1,
         CE_OP2,

@@ -16,6 +16,7 @@
 #include <search.h>
 #include <string.h>
 #include <strings.h>
+#include <assert.h>
 
 static int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result);
@@ -179,20 +180,9 @@ static int ce_eval_imm(struct parse_data *pd, struct element *context,
     return 1;
 }
 
-// LCOV_EXCL_START
-static int ce_eval_bad(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
-{
-    fatal(0, "Bad const_expr type %d", ce->type);
-    return -1; // never reached
-}
-// LCOV_EXCL_STOP
-
 typedef int ce_evaluator(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result);
 static ce_evaluator * const ce_eval_dispatch[CE_max] = {
-    [CE_BAD] = ce_eval_bad,
-
     [CE_OP1] = ce_eval_op1,
     [CE_OP2] = ce_eval_op2,
     [CE_SYM] = ce_eval_sym,
@@ -205,9 +195,8 @@ static ce_evaluator * const ce_eval_dispatch[CE_max] = {
 static int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
-    if (ce->type >= CE_max)
-        return ce_eval_bad(pd, context, ce, flags, width, shift, result); // LCOV_EXCL_LINE
-
+    assert(ce->type > CE_INVALID);
+    assert(ce->type < CE_max);
     return ce_eval_dispatch[ce->type](pd, context, ce, flags, width, shift, result);
 }
 
