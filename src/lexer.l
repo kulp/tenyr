@@ -12,7 +12,7 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s, ...);
 
 static struct cstr *resizestr(struct cstr *s, int len);
 static int savestr(const char *text, int len, yyscan_t yyscanner);
-#define savechr(ch,sc) savestr((const char[]){ (char)(ch) },1,sc)
+static int savechr(char ch, yyscan_t yyscanner) { return savestr(&ch, 1, yyscanner); }
 static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 
 #define savecol  (yyextra->lexstate.savecol)
