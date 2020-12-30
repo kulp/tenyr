@@ -401,6 +401,7 @@ int do_assembly(STREAM *in, STREAM *out, const struct format *f, void *ud)
     return result || pd->errored;
 }
 
+// Currently always returns success (zero). Should consider propagating errors.
 int do_disassembly(STREAM *in, STREAM *out, const struct format *f, void *ud, int flags)
 {
     int rc = 0;
@@ -423,7 +424,7 @@ int do_disassembly(STREAM *in, STREAM *out, const struct format *f, void *ud, in
         }
     }
 
-    return f->err ? f->err(ud) : 0;
+    return 0;
 }
 
 /* vi:set ts=4 sw=4 et: */
