@@ -395,10 +395,8 @@ static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
 static int obj_reloc(STREAM *stream, struct reloc_node *reloc, void *ud)
 {
     struct obj_fdata *u = ud;
-    if (!reloc || !reloc->insn) {
-        u->error = 1;
-        return 0;
-    }
+    assert(reloc != NULL);
+    assert(reloc->insn != NULL);
 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
