@@ -279,7 +279,6 @@ struct obj_fdata {
     SWord pos;   ///< position in objrec
 
     int assembling;
-    int error;
 };
 
 static int obj_init(STREAM *stream, struct param_state *p, void **ud)
@@ -442,12 +441,6 @@ static int obj_fini(STREAM *stream, void **ud)
     return 0;
 }
 
-static int obj_err(void *ud)
-{
-    struct obj_fdata *u = ud;
-    return !!u->error;
-}
-
 /*******************************************************************************
  * Text format : hexadecimal numbers
  */
@@ -566,8 +559,7 @@ const struct format tenyr_asm_formats[] = {
         .emit  = obj_emit,
         .fini  = obj_fini,
         .sym   = obj_sym,
-        .reloc = obj_reloc,
-        .err   = obj_err },
+        .reloc = obj_reloc },
     { "text",
         .init  = gen_init,
         .in    = text_in,
