@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "obj.h"
 #include "ops.h"
@@ -345,10 +346,7 @@ static int obj_in(STREAM *stream, struct element *i, void *ud)
 
 static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
 {
-    if (i->insn.size <= 0) {
-        u->error = 1;
-        return;
-    }
+    assert(i->insn.size >= 0); // Zero is a valid size for `.zero 0`.
 
     struct objrec *rec = &o->records[0];
     if (rec->size < u->pos + i->insn.size) {
