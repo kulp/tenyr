@@ -33,6 +33,14 @@ J <- E == 0xa8
 A <- [C]
 K <- A == 0
 
+# Demonstrate that [A] *does* retain its value after being written into.
+[A] <- 1
+M <- [A]
+[A] <- 2
+N <- [A]
+L <- M + 1
+L <- L == N
+
 # Loop multiple times in order to trigger JIT
 O <- I < 100
 I <- I + 1
@@ -42,6 +50,7 @@ B <- F & G
 B <- B & H
 B <- B & J
 B <- B & K
+B <- B & L
 
 illegal
 
