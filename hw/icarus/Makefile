@@ -55,6 +55,11 @@ run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAU
 run_%: %.texe tenyr
 	$(IVERILOG)vvp -N -M$(BUILDDIR) tenyr +LOAD=$< $(PLUSARGS)
 
+# Test for nonexistent file.
+.PHONY: nonexistent.texe
+run_nonexistent: tenyr
+	(! $(IVERILOG)vvp -N tenyr +LOAD=nonexistent.texe)
+
 ##############################################################################
 
 OUTPUT_OPTION ?= -o $@

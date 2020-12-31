@@ -326,6 +326,11 @@ export SDL_VIDEODRIVER=dummy
 PERIODS.mk: $(SDL_RUNS:%=PERIODS_%.mk)
 check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
 
+# Allow testing for a nonexistent file.
+.PHONY: nonexistent.texe
+check_hw_icarus_run: test_run_nonexistent
+test_run_nonexistent: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus run_$*
+
 ifneq ($(SDL),0)
 RUNS += $(SDL_RUNS)
 tsim_FLAGS += -p paths.share=$(call os_path,$(TOP)/)
