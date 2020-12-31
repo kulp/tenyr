@@ -91,7 +91,7 @@ int devices_dispatch_cycle(struct sim_state *s)
     int rc = 0;
     for (struct device_list *d = s->machine.devices; d; d = d->next)
         if (d->device.ops.cycle)
-            rc = d->device.ops.cycle(d->device.cookie);
+            rc |= !!d->device.ops.cycle(d->device.cookie);
 
     return rc;
 }
