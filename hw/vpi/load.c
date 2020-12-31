@@ -43,8 +43,9 @@ static int get_range(vpiHandle from, int which)
     return argval.value.integer;
 }
 
-int tenyr_sim_load(struct tenyr_sim_state *state)
+PLI_INT32 tenyr_sim_load(PLI_BYTE8 *userdata)
 {
+    struct tenyr_sim_state *state = (void*)userdata;
     int rc = 0;
     vpiHandle array = vpi_handle_by_name("Top.tenyr.ram.store", NULL);
 

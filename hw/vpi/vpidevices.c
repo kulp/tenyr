@@ -18,7 +18,7 @@ static void register_genesis(void)
 
 static void register_general(void)
 {
-    s_vpi_systf_data load = { vpiSysTask, 0, "$tenyr_load", (int(*)())tenyr_sim_load, NULL, NULL, pud };
+    s_vpi_systf_data load = { vpiSysTask, 0, "$tenyr_load", tenyr_sim_load, NULL, NULL, pud };
     pstate->handle.tf.tenyr_load = vpi_register_systf(&load);
 
     pstate->cb.genesis = tenyr_sim_dummy;
@@ -35,11 +35,11 @@ static void register_apocalypse(void)
 
 static void register_serial(void)
 {
-    s_vpi_systf_data put = { vpiSysTask, 0, "$tenyr_putchar", (int(*)())tenyr_sim_putchar, NULL, NULL, pud };
+    s_vpi_systf_data put = { vpiSysTask, 0, "$tenyr_putchar", tenyr_sim_putchar, NULL, NULL, pud };
     pstate->handle.tf.tenyr_putchar = vpi_register_systf(&put);
 #if 0
     // XXX this code is not tenyr-correct -- it can block
-    s_vpi_systf_data get = { vpiSysTask, 0, "$tenyr_getchar", (int(*)())tenyr_sim_getchar, NULL, NULL, pud };
+    s_vpi_systf_data get = { vpiSysTask, 0, "$tenyr_getchar", tenyr_sim_getchar, NULL, NULL, pud };
     pstate->handle.tf.tenyr_getchar = vpi_register_systf(&get);
 #endif
 }

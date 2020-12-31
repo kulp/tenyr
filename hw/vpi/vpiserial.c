@@ -1,7 +1,8 @@
 #include "tenyr_vpi.h"
 
-int tenyr_sim_putchar(struct tenyr_sim_state *state)
+PLI_INT32 tenyr_sim_putchar(PLI_BYTE8 *userdata)
 {
+    struct tenyr_sim_state *state = (void*)userdata;
     (void)state;
 
     vpiHandle systfref  = vpi_handle(vpiSysTfCall, NULL),
@@ -18,8 +19,9 @@ int tenyr_sim_putchar(struct tenyr_sim_state *state)
 
 #if 0
 // XXX this code is not tenyr-correct -- it can block
-int tenyr_sim_getchar(struct tenyr_sim_state *state)
+PLI_INT32 tenyr_sim_getchar(PLI_BYTE8 *userdata)
 {
+    struct tenyr_sim_state *state = (void*)userdata;
     (void)state;
 
     vpiHandle systfref  = vpi_handle(vpiSysTfCall, NULL),
