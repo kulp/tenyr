@@ -335,16 +335,6 @@ static int plugin_param_get(const struct plugin_cookie *cookie, const char *key,
     return param_get(cookie->param, key, count, val);
 }
 
-static int plugin_param_get_int(const struct plugin_cookie *cookie, const char *key, int *val)
-{
-    return param_get_int(cookie->param, key, val);
-}
-
-static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_key, int free_value)
-{
-    return param_set(cookie->param, key, val, replace, free_key, free_value);
-}
-
 static int parse_args(struct sim_state *s, int argc, char *argv[]);
 
 static int parse_opts_file(struct sim_state *s, const char *filename)
@@ -445,8 +435,6 @@ int main(int argc, char *argv[])
                 .fatal = fatal_,
                 .debug = debug_,
                 .param_get = plugin_param_get,
-                .param_get_int = plugin_param_get_int,
-                .param_set = plugin_param_set,
             },
         },
         .run_sim      = interp_run_sim,
