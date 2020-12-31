@@ -193,7 +193,8 @@ check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	$($*) $(OBJD)tworecs.to 2>&1 | $(GREP) -i "more than one record"            && $(MAKESTEP) "    ... multiple records ok"
 	(! $($*) $(OBJD)too-many-records.to &>/dev/null )                           && $(MAKESTEP) "    ... too many records ok"
 	$($*) $(OBJD)unresolved.to 2>&1 | $(GREP) -i "missing definition"           && $(MAKESTEP) "    ... unresolved ok"
-	(! $($*) $(OBJD)invalid-reloc.to &>/dev/null )                              && $(MAKESTEP) "    ... invalid relocation ok"
+	(! $($*) $(OBJD)invalid-reloc.to &>/dev/null )                              && $(MAKESTEP) "    ... negative relocation ok"
+	(! $($*) $(OBJD)invalid-reloc2.to &>/dev/null )                             && $(MAKESTEP) "    ... too-large relocation ok"
 
 check_behaviour_tsim: $(TOP)/ex/irc.texe
 check_behaviour_tsim: check_behaviour_%: %$(EXE_SUFFIX)
