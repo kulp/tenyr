@@ -123,12 +123,13 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
     list_foreach(obj_list, Node, s->objs) {
         struct obj *i = Node->obj;
 
-        if (!i->rec_count) {
+        if (i->rec_count == 0) {
             debug(0, "Object has no records, skipping");
             continue;
         }
 
-        if (i->rec_count != 1)
+        // TODO support more than one record per object
+        if (i->rec_count > 1)
             debug(0, "Object has more than one record, only using first");
 
         struct objmeta *meta = calloc(1, sizeof *meta);
