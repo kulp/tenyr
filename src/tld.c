@@ -14,6 +14,7 @@
 #include <string.h>
 #include <strings.h>
 #include <errno.h>
+#include <assert.h>
 
 struct link_state {
     SWord addr;     ///< current address
@@ -169,11 +170,10 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
 {
     SWord reladdr = 0;
 
+    // Objects with record counts other than 1 have already been pruned in
+    // do_link_build_state.
     // TODO support more than one record per object
-    if (i->rec_count > 1)
-        fatal(0, "Object has more than one record, unsupported");
-    else if (i->rec_count < 1)
-        fatal(0, "Object has invalid record count, aborting");
+    assert(i->rec_count == 1);
 
     struct objrec *r = &i->records[0];
     if (rlc->addr < r->addr ||
