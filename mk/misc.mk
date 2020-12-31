@@ -150,8 +150,10 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_speci
 	$($*) -@ $(TOP)/test/misc/long.rcp $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "handling"    && $(MAKESTEP) "    ... plugins cap ok"
 	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> /dev/null )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
 
+check_args_specific_tsim_plugins: $(TOP)/test/misc/deref.texe
 check_args_specific_tsim_plugins: tsim$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options (plugins) ... "
+	$(tsim) -p plugin[0]+=failure_NONE $(TOP)/test/misc/deref.texe && $(MAKESTEP) "    .... plugin no-error case ok"
 	$(tsim) -p plugin[0]+=failure_INIT $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error while finalising" && $(MAKESTEP) "    ... plugin initialisation failure detected ok"
 	$(tsim) -p plugin[0]+=failure_FINI $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error during device teardown" && $(MAKESTEP) "    ... plugin finalisation failure detected ok"
 
