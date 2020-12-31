@@ -519,7 +519,9 @@ int main(int argc, char *argv[])
 
     fclose(infile);
 
-    devices_teardown(s);
+    rc = devices_teardown(s);
+    if (rc != 0)
+        fprintf(stderr, "Error during device teardown\n");
 
     if (s->conf.debugging > 0)
         fprintf(stderr, "Instructions executed: %lu\n", s->insns_executed);

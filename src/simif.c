@@ -71,13 +71,19 @@ int devices_finalise(struct sim_state *s)
 
 int devices_teardown(struct sim_state *s)
 {
+    int rc = 0;
+
     for (struct device_list *d = s->machine.devices, *e; d; d = e) {
         e = d->next;
-        d->device.ops.fini(d->device.cookie);
+        int result = d->device.ops.fini(d->device.cookie);
+        if (result)
+            debug(1, "Finalising device %p (cookie %p) returned %d",
+                     d, d->device.cookie, result);
+        rc |= !!result;
         free(d);
     }
 
-    return 0;
+    return rc;
 }
 
 int devices_dispatch_cycle(struct sim_state *s)
