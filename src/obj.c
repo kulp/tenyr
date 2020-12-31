@@ -14,9 +14,6 @@
 
 #define MAGIC_BYTES "TOV"
 #define OBJ_DEFAULT_VERSION 2
-#define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
-#define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
-#define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
