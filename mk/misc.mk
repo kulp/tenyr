@@ -191,6 +191,7 @@ check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	$($*) $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | $(GREP) -i "duplicate" && $(MAKESTEP) "    ... duplicate symbols ok"
 	$($*) $(OBJD)zerorecs.to 2>&1 | $(GREP) -i "has no records"                 && $(MAKESTEP) "    ... zero records ok"
 	$($*) $(OBJD)tworecs.to 2>&1 | $(GREP) -i "more than one record"            && $(MAKESTEP) "    ... multiple records ok"
+	(! $($*) $(OBJD)too-many-records.to &>/dev/null )                           && $(MAKESTEP) "    ... too many records ok"
 	$($*) $(OBJD)unresolved.to 2>&1 | $(GREP) -i "missing definition"           && $(MAKESTEP) "    ... unresolved ok"
 
 check_behaviour_tsim: $(TOP)/ex/irc.texe
