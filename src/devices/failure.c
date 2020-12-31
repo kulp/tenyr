@@ -1,6 +1,8 @@
 #include "device.h"
 #include "plugin.h"
 
+#include <stdint.h>
+
 library_init tenyr_plugin_init;
 device_adder failure_add_device;
 
@@ -75,7 +77,7 @@ int EXPORT FAILURE_ADD_DEVICE_FUNC(struct device *device);
 int EXPORT FAILURE_ADD_DEVICE_FUNC(struct device *device)
 {
     *device = (struct device){
-        .bounds = { 0, -1 },
+        .bounds = { INT32_MIN, INT32_MAX },
         .ops = {
             .op = failure_op,
             .init = failure_init,
