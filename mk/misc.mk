@@ -152,7 +152,8 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_speci
 
 check_args_specific_tsim_plugins: tsim$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options (plugins) ... "
-	$(tsim) -p plugin[0]+=failure_INIT $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error while finalising" && $(MAKESTEP) "    ... plugin failure detected ok"
+	$(tsim) -p plugin[0]+=failure_INIT $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error while finalising" && $(MAKESTEP) "    ... plugin initialisation failure detected ok"
+	$(tsim) -p plugin[0]+=failure_FINI $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error during device teardown" && $(MAKESTEP) "    ... plugin finalisation failure detected ok"
 
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
