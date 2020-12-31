@@ -99,7 +99,7 @@ static int format_has_input(const struct format *f)
     return !!f->in;
 }
 
-static int usage(const char *me, int rc)
+static void usage(const char *me)
 {
     char format_list[256] = { 0 };
     make_format_list(format_has_input, tenyr_asm_formats_count,
@@ -125,8 +125,6 @@ static int usage(const char *me, int rc)
            "  " DEFAULT_RECIPES(Space)
            "\n"
            , me, format_list, version());
-
-    return rc;
 }
 
 static int pre_fetch(struct sim_state *s, void *ud)
@@ -398,16 +396,16 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
             case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
             case 'a': s->conf.load_addr = (int32_t)strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
-            case 'f': if (find_format(optarg, &s->conf.fmt)) exit(usage(argv[0], EXIT_FAILURE)); break;
+            case 'f': if (find_format(optarg, &s->conf.fmt)) { usage(argv[0]); exit(EXIT_FAILURE); } break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(s->conf.params, optarg); break;
-            case 'r': if (add_recipe(s, optarg)) exit(usage(argv[0], EXIT_FAILURE)); break;
+            case 'r': if (add_recipe(s, optarg)) { usage(argv[0]); exit(EXIT_FAILURE); } break;
             case 's': s->conf.start_addr = (int32_t)strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
 
             case 'V': puts(version()); exit(EXIT_SUCCESS);
-            case 'h': exit(usage(argv[0], EXIT_SUCCESS));
-            default : exit(usage(argv[0], EXIT_FAILURE));
+            case 'h': usage(argv[0]); exit(EXIT_SUCCESS);
+            default : usage(argv[0]); exit(EXIT_FAILURE);
         }
     }
 
@@ -450,7 +448,7 @@ int main(int argc, char *argv[])
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
-            usage(argv[0], EXIT_FAILURE);
+            usage(argv[0]);
         rc = EXIT_FAILURE;
         goto cleanup;
     }

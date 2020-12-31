@@ -64,7 +64,7 @@ static const char *version(void)
 }
 
 
-static int usage(const char *me, int rc)
+static void usage(const char *me)
 {
     printf("Usage: %s [ OPTIONS ] image-file [ image-file ... ] \n"
            "Options:\n"
@@ -73,8 +73,6 @@ static int usage(const char *me, int rc)
            "  -h, --help            display this message\n"
            "  -V, --version         print the string `%s'\n"
            , me, version());
-
-    return rc;
 }
 
 static int do_load(struct link_state *s, STREAM *in)
@@ -347,7 +345,7 @@ int main(int argc, char *argv[])
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
-            usage(argv[0], EXIT_FAILURE);
+            usage(argv[0]);
         // We may have created an output file already, but we do not try to
         // remove it, because doing so by filename would be a race condition.
         // The most important reason to remove the output file is to avoid
@@ -373,11 +371,11 @@ int main(int argc, char *argv[])
                 rc = EXIT_SUCCESS;
                 goto cleanup;
             case 'h':
-                usage(argv[0], EXIT_SUCCESS);
+                usage(argv[0]);
                 rc = EXIT_SUCCESS;
                 goto cleanup;
             default:
-                usage(argv[0], EXIT_FAILURE);
+                usage(argv[0]);
                 rc = EXIT_FAILURE;
                 goto cleanup;
         }

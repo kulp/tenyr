@@ -42,7 +42,7 @@ static int format_has_output(const struct format *f)
     return !!f->out;
 }
 
-static int usage(const char *me, int rc)
+static void usage(const char *me)
 {
     char format_list[256] = { 0 };
     make_format_list(format_has_output, tenyr_asm_formats_count, tenyr_asm_formats,
@@ -59,8 +59,6 @@ static int usage(const char *me, int rc)
            "  -h, --help            display this message\n"
            "  -V, --version         print the string `%s'\n"
            , me, format_list, version());
-
-    return rc;
 }
 
 static int process_stream(struct param_state *params, const struct format *f,
@@ -134,7 +132,7 @@ int main(int argc, char *argv[])
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
-            usage(argv[0], EXIT_FAILURE);
+            usage(argv[0]);
         // We may have created an output file already, but we do not try to
         // remove it, because doing so by filename would be a race condition.
         // The most important reason to remove the output file is to avoid
@@ -155,7 +153,7 @@ int main(int argc, char *argv[])
     while ((ch = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (ch) {
             case 'd': disassemble = 1; break;
-            case 'f': if (find_format(optarg, &fmt)) exit(usage(argv[0], EXIT_FAILURE)); break;
+            case 'f': if (find_format(optarg, &fmt)) { usage(argv[0]); exit(EXIT_FAILURE); } break;
             case 'o': outfname = optarg; break;
             case 'p': param_add(params, optarg); break;
             case 'q': flags |= ASM_QUIET; break;
@@ -166,11 +164,11 @@ int main(int argc, char *argv[])
                 rc = EXIT_SUCCESS;
                 goto cleanup;
             case 'h':
-                usage(argv[0], EXIT_SUCCESS);
+                usage(argv[0]);
                 rc = EXIT_SUCCESS;
                 goto cleanup;
             default:
-                usage(argv[0], EXIT_FAILURE);
+                usage(argv[0]);
                 rc = EXIT_FAILURE;
                 goto cleanup;
         }
