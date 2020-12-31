@@ -10,6 +10,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <assert.h>
 
 #define MAGIC_BYTES "TOV"
 #define OBJ_DEFAULT_VERSION 2
@@ -220,8 +221,7 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
             return 1;
         }
         rec->data = calloc((size_t)rec->size, sizeof *rec->data);
-        if (!rec->data)
-            fatal(PRINT_ERRNO, "Failed to allocate record data field");
+        assert(rec->data != NULL);
         get_sized(rec->data, sizeof *rec->data, (size_t)rec->size, in);
     }
 
