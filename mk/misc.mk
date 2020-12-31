@@ -177,6 +177,8 @@ check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	$($*) -d $(OBJD)toolarge2.to 2>&1 | $(GREP) "too large"                 && $(MAKESTEP) "    ... too-large 2 ok"
 	$($*) -d $(OBJD)too-many-symbols.to 2>&1 | $(GREP) "too large"          && $(MAKESTEP) "    ... too many symbols ok"
 	$($*) -d $(OBJD)too-many-relocs.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... too many relocs ok"
+	$($*) -d $(OBJD)overlong-symbol.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... overlong symbol ok"
+	$($*) -d $(OBJD)overlong-reloc.to 2>&1 | $(GREP) "too large"            && $(MAKESTEP) "    ... overlong reloc ok"
 	$($*) $(TASD)missing_global.tas 2>&1 | $(GREP) "not defined"            && $(MAKESTEP) "    ... undefined global ok"
 	$($*) $(TOP)/test/fail_compile/error_capture.tas 2>&1 | $(GREP) "@q"    && $(MAKESTEP) "    ... error message ok"
 
