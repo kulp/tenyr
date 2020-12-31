@@ -328,8 +328,9 @@ check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
 
 # Allow testing for a nonexistent file.
 .PHONY: nonexistent.texe
-check_hw_icarus_run: test_run_nonexistent
-test_run_nonexistent: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus run_$*
+vpath %.texe $(TOP)/test/misc/obj/
+check_hw_icarus_run: test_run_nonexistent test_run_bad_magic test_run_toolarge
+test_run_nonexistent test_run_bad_magic test_run_toolarge: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus run_$*
 
 ifneq ($(SDL),0)
 RUNS += $(SDL_RUNS)
