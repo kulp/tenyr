@@ -165,7 +165,7 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
     return 0;
 }
 
-static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
+static void do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
                                        void **objtree, void **defns)
 {
     SWord reladdr = 0;
@@ -179,9 +179,9 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     if (rlc->addr < r->addr ||
         rlc->addr - r->addr > r->size)
     {
-        debug(0, "Invalid relocation @ 0x%08x outside record @ 0x%08x size %d",
+        fatal(0, "Invalid relocation @ 0x%08x outside record @ 0x%08x size %d",
               rlc->addr, r->addr, r->size);
-        return 1;
+        return;
     }
 
     struct objmeta **me = tfind(&i, objtree, ptrcmp);
@@ -210,8 +210,6 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     SWord mask = ((SWord)((1u << (rlc->width - 1)) << 1) - 1);
     SWord updated = (*dest + mult * (reladdr >> rlc->shift)) & mask;
     *dest = (*dest & ~mask) | updated;
-
-    return 0;
 }
 
 static void do_link_relocate_obj(struct obj *i, void **objtree, void **defns)
