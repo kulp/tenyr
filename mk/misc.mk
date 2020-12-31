@@ -187,6 +187,11 @@ check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	$($*) $(OBJD)tworecs.to 2>&1 | $(GREP) -i "more than one record"            && $(MAKESTEP) "    ... multiple records ok"
 	$($*) $(OBJD)unresolved.to 2>&1 | $(GREP) -i "missing definition"           && $(MAKESTEP) "    ... unresolved ok"
 
+check_behaviour_tsim: $(TOP)/ex/irc.texe
+check_behaviour_tsim: check_behaviour_%: %$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* behaviour ... "
+	$($*) $(TOP)/ex/irc.texe <<<'PING 123' 2>/dev/null | $(GREP) 'PONG 123'     && $(MAKESTEP) "    ... ping-pong ok"
+
 check_sim_run: check_sim_deref
 check_sim_deref: texe = $(TOP)/test/misc/deref.texe
 # XXX we should be able to use $(tsim_FLAGS) here rather than appending to tsim
