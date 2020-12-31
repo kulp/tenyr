@@ -53,7 +53,7 @@ run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAU
                    #
 
 run_%: %.texe tenyr
-	$(IVERILOG)vvp -n -M$(BUILDDIR) tenyr +LOAD=$< $(PLUSARGS)
+	$(IVERILOG)vvp -N -M$(BUILDDIR) tenyr +LOAD=$< $(PLUSARGS)
 
 ##############################################################################
 
