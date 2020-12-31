@@ -3,6 +3,13 @@
 static struct tenyr_sim_state tstate = { .cb.posedge = 0 }, *const pstate = &tstate;
 static void *const pud = (void*)&tstate;
 
+static int tenyr_sim_dummy(struct tenyr_sim_state *state, void *userdata)
+{
+    (void)state;
+    (void)userdata;
+    return 0;
+}
+
 static void register_genesis(void)
 {
     s_cb_data data = { cbStartOfSimulation, tenyr_sim_genesis, NULL, 0, 0, 0, pud };
@@ -13,6 +20,11 @@ static void register_general(void)
 {
     s_vpi_systf_data load = { vpiSysTask, 0, "$tenyr_load", (int(*)())tenyr_sim_load, NULL, NULL, pud };
     pstate->handle.tf.tenyr_load = vpi_register_systf(&load);
+
+    pstate->cb.genesis = tenyr_sim_dummy;
+    pstate->cb.posedge = tenyr_sim_dummy;
+    pstate->cb.negedge = tenyr_sim_dummy;
+    pstate->cb.apocalypse = tenyr_sim_dummy;
 }
 
 static void register_apocalypse(void)
