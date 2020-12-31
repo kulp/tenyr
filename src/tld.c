@@ -94,14 +94,12 @@ static int do_load(struct link_state *s, STREAM *in)
     return rc;
 }
 
-static int do_unload(struct link_state *s)
+static void do_unload(struct link_state *s)
 {
     list_foreach(obj_list,ol,s->objs) {
         obj_free(ol->obj);
         free(ol);
     }
-
-    return 0;
 }
 
 static int ptrcmp(const void *a, const void *b)
@@ -115,7 +113,7 @@ static int def_str_cmp(const void *a, const void *b)
     return strcmp(aa->name, bb->name);
 }
 
-static int do_link_build_state(struct link_state *s, void **objtree, void **defns)
+static void do_link_build_state(struct link_state *s, void **objtree, void **defns)
 {
     // running offset, tracking where to pack objects tightly one after another
     SWord running = 0;
@@ -161,8 +159,6 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
                 fatal(0, "Duplicate definition for symbol `%s'", def->name);
         }
     }
-
-    return 0;
 }
 
 static void do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
@@ -230,7 +226,7 @@ static void do_link_relocate(struct obj_list *ol, void **objtree, void **defns)
     }
 }
 
-static int do_link_process(struct link_state *s)
+static void do_link_process(struct link_state *s)
 {
     void *objtree = NULL;   ///< tsearch-tree of `struct objmeta'
     void *defns   = NULL;   ///< tsearch tree of `struct defns'
@@ -250,11 +246,9 @@ static int do_link_process(struct link_state *s)
         free(node->name);
         free(node);
     }
-
-    return 0;
 }
 
-static int do_link_emit(struct link_state *s, struct obj *o)
+static void do_link_emit(struct link_state *s, struct obj *o)
 {
     long rec_count = 0;
     // copy records
@@ -287,29 +281,19 @@ static int do_link_emit(struct link_state *s, struct obj *o)
     o->rec_count = (SWord)rec_count;
     o->sym_count = (SWord)s->syms;
     o->rlc_count = (SWord)s->rlcs;
-
-    return 0;
 }
 
-static int do_link(struct link_state *s)
+static void do_link(struct link_state *s)
 {
-    int rc = -1;
-
     struct obj *o = s->relocated = calloc(1, sizeof *o);
 
     do_link_process(s);
     do_link_emit(s, o);
-
-    return rc;
 }
 
-static int do_emit(struct link_state *s, STREAM *out)
+static void do_emit(struct link_state *s, STREAM *out)
 {
-    int rc = -1;
-
-    rc = obj_write(s->relocated, out);
-
-    return rc;
+    obj_write(s->relocated, out);
 }
 
 static int do_load_all(struct link_state *s, int count, char **names)
