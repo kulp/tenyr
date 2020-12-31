@@ -170,6 +170,14 @@ int load_sim(op_dispatcher *dispatch, void *sud, const struct format *f,
     while (f->in(in, &i, ud) >= 0) {
         if (dispatch(sud, OP_WRITE, load_address + i.insn.reladdr, &i.insn.u.word))
             return -1;
+
+        // Do a minimal word-at-a-time verification as we go.
+        int32_t word = 0;
+        if (dispatch(sud, OP_INSN_READ, load_address + i.insn.reladdr, &word))
+            return -1;
+
+        if (word != i.insn.u.word)
+            return -1;
     }
 
     return 0;
