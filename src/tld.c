@@ -123,6 +123,10 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
     list_foreach(obj_list, Node, s->objs) {
         struct obj *i = Node->obj;
 
+        // Loading an object has already validated the object count.
+        assert(i->rec_count >= 0);
+        assert(i->rec_count < OBJ_MAX_REC_CNT);
+
         if (i->rec_count == 0) {
             debug(0, "Object has no records, skipping");
             continue;
