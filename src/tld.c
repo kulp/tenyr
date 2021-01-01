@@ -125,7 +125,7 @@ static void do_link_build_state(struct link_state *s, void **objtree, void **def
         assert(i->rec_count < OBJ_MAX_REC_CNT);
 
         if (i->rec_count == 0) {
-            debug(0, "Object has no records, skipping");
+            debug(1, "Object has no records, skipping");
             continue;
         }
 
@@ -216,7 +216,7 @@ static void do_link_relocate(struct obj_list *ol, void **objtree, void **defns)
 {
     list_foreach(obj_list, Node, ol) {
         if (!Node->obj->rec_count) {
-            debug(0, "Object has no records, skipping");
+            debug(1, "Object has no records, skipping");
             continue;
         }
 
