@@ -131,7 +131,7 @@ static void do_link_build_state(struct link_state *s, void **objtree, void **def
 
         // TODO support more than one record per object
         if (i->rec_count > 1)
-            debug(0, "Object has more than one record, only using first");
+            fatal(0, "Object has more than one record (unsupported)");
 
         struct objmeta *meta = calloc(1, sizeof *meta);
         meta->state = s;
