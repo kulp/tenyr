@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Addressed various lint warnings found in tenyr's Verilog
 - Tightened lexer rules for numeric constants (#56)
 - Cleaned up OS overrides (#61)
+- Stopped removing output files (in a racy way) when failure occurs (#63)
 
 ### Fixed
 - Corrected a long-standing tsim bug when right-shifting by more than 31 bits
@@ -27,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected silent sign conversions, adhering to `-Werror=sign-conversion`
 - Prevented disassembly from `obj` from always exiting non-zero (#59)
 - Prevented a buffer overrun when too many plugins are specified (#64)
+- Fixed some miscellaneous bugs while improving test coverage (#63)
+    - Corrected incorrect pointer cast in VPI
+    - Propagate errors better instead of swallowing them inadvertently
 
 ### Removed
 - Stopped suggesting Gitter as a chat option
@@ -43,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Dropped unused submodule for broken lcc port
 - Stopped using C preprocessor on `.tas.cpp` files (#45)
 - Removed Travis-CI support (#72)
+- Removed undocumented settings that allowed continuing after memory errors (#63)
+- Removed unused `.option` support
 
 ## [0.9.7] - 2019-07-25
 ### Added
