@@ -62,10 +62,7 @@ run_nonexistent: tenyr
 
 # Test invalid files.
 vpath %.texe $(TOP)/test/misc/obj/
-run_bad_magic: bad_magic.texe tenyr
-	(! $(IVERILOG)vvp -N tenyr +LOAD=$<)
-
-run_toolarge: toolarge.texe tenyr
+run_bad_magic run_toolarge: run_%: %.texe tenyr
 	(! $(IVERILOG)vvp -N tenyr +LOAD=$<)
 
 ##############################################################################
