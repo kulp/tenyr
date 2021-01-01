@@ -174,7 +174,6 @@ check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	(! $($*) -d -f memh $(MEMHD)backward.memh &>/dev/null )                 && $(MAKESTEP) "    ... validated memh lack of backward support ok"
 	$($*) -d $(OBJD)bad_version.to 2>&1 | $(GREP) -i "unhandled version"    && $(MAKESTEP) "    ... unhandled version ok"
 	$($*) -d $(OBJD)toolarge.to 2>&1 | $(GREP) "too large"                  && $(MAKESTEP) "    ... too-large ok"
-	$($*) -d $(OBJD)toolarge2.to 2>&1 | $(GREP) "too large"                 && $(MAKESTEP) "    ... too-large 2 ok"
 	$($*) -d $(OBJD)too-many-symbols.to 2>&1 | $(GREP) "too large"          && $(MAKESTEP) "    ... too many symbols ok"
 	$($*) -d $(OBJD)too-many-relocs.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... too many relocs ok"
 	$($*) -d $(OBJD)overlong-symbol.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... overlong symbol ok"
@@ -186,7 +185,6 @@ check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
 	$($*) /dev/null 2>&1 | $(GREP) -i "end of file"                             && $(MAKESTEP) "    ... too-small ok"
-	$($*) $(OBJD)toolarge.to 2>&1 | $(GREP) "too large"                         && $(MAKESTEP) "    ... too-large ok"
 	$($*) -o $(OBJD) /dev/null 2>&1 | $(GREP) -i "failed to open"               && $(MAKESTEP) "    ... failed to open ok"
 	$($*) $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | $(GREP) -i "duplicate" && $(MAKESTEP) "    ... duplicate symbols ok"
 	$($*) $(OBJD)zerorecs.to 2>&1 | $(GREP) -i "has no records"                 && $(MAKESTEP) "    ... zero records ok"
