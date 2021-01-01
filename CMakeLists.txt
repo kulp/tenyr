@@ -25,6 +25,7 @@ function(check_failure)
     set_tests_properties(
         "${CO_NAME}_output"
         PROPERTIES
+        LABELS "tool=${CO_COMMAND}"
         PASS_REGULAR_EXPRESSION "${CO_EXPECT}"
         ${CO_PROPERTIES}
     )
@@ -36,6 +37,7 @@ function(check_failure)
     set_tests_properties(
         "${CO_NAME}_exitcode"
         PROPERTIES
+        LABELS "tool=${CO_COMMAND}"
         WILL_FAIL TRUE
         ${CO_PROPERTIES}
     )
