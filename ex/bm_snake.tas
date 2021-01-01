@@ -22,7 +22,10 @@ init:
     p <- @+init & j + p
 
     g <- -1 # constant
+    l <- 0 # loop counter (generation number)
 L_loop:
+    l -> [0x100] # show generation number on LED output
+    l <- l + 1
     n <- @+snakes + p
 L_snake:
     # j:k = row:col
