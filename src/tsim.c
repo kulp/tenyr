@@ -24,14 +24,15 @@
 int recipe_emscript(struct sim_state *s); // linked in externally
 
 #define RECIPES(_) \
-    _(emscript, "change behaviour to use an event loop for emscripten") \
-    _(jit     , "use a JIT compiler (usually faster, but no -v supported)") \
-    _(plugin  , "load plugins specified through param mechanism") \
-    _(prealloc, "preallocate memory (higher memory footprint, maybe faster)") \
-    _(serial  , "enable simple serial device and connect to stdio") \
-    _(sparse  , "use sparse memory (lower memory footprint, maybe slower)") \
-    _(top_page, "map a page at the highest addresses in memory") \
-    _(tsimrc  , "parse tsimrc, after command-line args") \
+    _(emscript  , "change behaviour to use an event loop for emscripten") \
+    _(jit       , "use a JIT compiler (usually faster, but no -v supported)") \
+    _(plugin    , "load plugins specified through param mechanism") \
+    _(prealloc  , "preallocate memory (higher memory footprint, maybe faster)") \
+    _(serial    , "enable simple serial device and connect to stdio") \
+    _(sparse    , "use sparse memory (lower memory footprint, maybe slower)") \
+    _(top_page  , "map a page at the highest addresses in memory") \
+    _(tsimrc    , "parse tsimrc, after command-line args") \
+    _(zero_word , "make address zero readable and writable") \
     //
 
 #define DEFAULT_RECIPES(_) \
@@ -98,9 +99,9 @@ static int format_has_input(const struct format *f)
     return !!f->in;
 }
 
-static int usage(const char *me, int rc)
+static void usage(const char *me)
 {
-    char format_list[256];
+    char format_list[256] = { 0 };
     make_format_list(format_has_input, tenyr_asm_formats_count,
             tenyr_asm_formats, sizeof format_list, format_list, ", ");
 
@@ -124,8 +125,6 @@ static int usage(const char *me, int rc)
            "  " DEFAULT_RECIPES(Space)
            "\n"
            , me, format_list, version());
-
-    return rc;
 }
 
 static int pre_fetch(struct sim_state *s, void *ud)
@@ -179,7 +178,7 @@ static int plugin_success(void *libhandle, int inst, const char *parent, const
 
     struct sim_state *s = ud;
 
-    char buf[128];
+    char buf[128] = { 0 };
     snprintf(buf, sizeof buf, "%s_add_device", implstem);
     void *ptr = dlsym(libhandle, buf);
     if (!ptr) {
@@ -201,13 +200,13 @@ static int recipe_plugin(struct sim_state *s)
     return !result;
 }
 
-static int recipe_runner(struct sim_state *s, const char *prefix)
+static int recipe_jit(struct sim_state *s)
 {
     const char **path = library_search_paths;
     void *libhandle = NULL;
     char *error = "(no error)";
     while ((libhandle == NULL) && *path != NULL) {
-        char *buf = build_path(s->conf.tsim_path, "%slibtenyr%s"DYLIB_SUFFIX, *path++, prefix);
+        char *buf = build_path(s->conf.tsim_path, "%slibtenyrjit"DYLIB_SUFFIX, *path++);
         void *handle = dlopen(buf, RTLD_NOW | RTLD_LOCAL);
         error = dlerror();
         if (handle)
@@ -216,19 +215,9 @@ static int recipe_runner(struct sim_state *s, const char *prefix)
             debug(1, "Did not load library `%s`: %s", buf, error);
         free(buf);
     }
-    if (libhandle == NULL) {
-        debug(0, "Failed to load `%s` library: %s", prefix, error);
-        return 1;
-    }
+    // We can still try dlsym even if libhandle is NULL
 
-    char name[128];
-    if (snprintf(name, sizeof name, "%s_run_sim", prefix) >= (long)sizeof name) {
-        debug(0, "Library name prefix too long");
-        if (libhandle != NULL)
-            dlclose(libhandle);
-        return 1;
-    }
-
+    const char name[] = "jit_run_sim";
     void *ptr = dlsym(libhandle, name);
     if (!ptr) {
         debug(0, "Failed to find symbol `%s` - %s", name, dlerror());
@@ -245,11 +234,6 @@ static int recipe_runner(struct sim_state *s, const char *prefix)
     s->run_sim = ALIASING_CAST(sim_runner, ptr);
 
     return 0;
-}
-
-static int recipe_jit(struct sim_state *s)
-{
-    return recipe_runner(s, "jit");
 }
 
 static int parse_opts_file(struct sim_state *s, const char *filename);
@@ -287,9 +271,10 @@ static int recipe_top_page(struct sim_state *s)
     }                                                                          \
     //
 
-DEVICE_RECIPE_TMPL(prealloc,      ram_add_device)
-DEVICE_RECIPE_TMPL(sparse  ,sparseram_add_device)
-DEVICE_RECIPE_TMPL(serial  ,   serial_add_device)
+DEVICE_RECIPE_TMPL(prealloc     ,      ram_add_device)
+DEVICE_RECIPE_TMPL(sparse       ,sparseram_add_device)
+DEVICE_RECIPE_TMPL(serial       ,   serial_add_device)
+DEVICE_RECIPE_TMPL(zero_word    ,zero_word_add_device)
 
 static int run_recipes(struct sim_state *s)
 {
@@ -346,16 +331,6 @@ static int add_recipe(struct sim_state *s, const char *name)
 static int plugin_param_get(const struct plugin_cookie *cookie, const char *key, size_t count, const void **val)
 {
     return param_get(cookie->param, key, count, val);
-}
-
-static int plugin_param_get_int(const struct plugin_cookie *cookie, const char *key, int *val)
-{
-    return param_get_int(cookie->param, key, val);
-}
-
-static int plugin_param_set(struct plugin_cookie *cookie, char *key, char *val, int replace, int free_key, int free_value)
-{
-    return param_set(cookie->param, key, val, replace, free_key, free_value);
 }
 
 static int parse_args(struct sim_state *s, int argc, char *argv[]);
@@ -421,36 +396,17 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
             case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
             case 'a': s->conf.load_addr = (int32_t)strtol(optarg, NULL, 0); break;
             case 'd': s->conf.debugging = 1; break;
-            case 'f': if (find_format(optarg, &s->conf.fmt)) exit(usage(argv[0], EXIT_FAILURE)); break;
+            case 'f': if (find_format(optarg, &s->conf.fmt)) { usage(argv[0]); exit(EXIT_FAILURE); } break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(s->conf.params, optarg); break;
-            case 'r': if (add_recipe(s, optarg)) exit(usage(argv[0], EXIT_FAILURE)); break;
+            case 'r': if (add_recipe(s, optarg)) { usage(argv[0]); exit(EXIT_FAILURE); } break;
             case 's': s->conf.start_addr = (int32_t)strtol(optarg, NULL, 0); break;
             case 'v': s->conf.verbose++; break;
 
             case 'V': puts(version()); exit(EXIT_SUCCESS);
-            case 'h': exit(usage(argv[0], EXIT_SUCCESS));
-            default : exit(usage(argv[0], EXIT_FAILURE));
+            case 'h': usage(argv[0]); exit(EXIT_SUCCESS);
+            default : usage(argv[0]); exit(EXIT_FAILURE);
         }
-    }
-
-    return 0;
-}
-
-static int read_sim_params(struct sim_state *s)
-{
-    {
-        int truth = 0;
-        param_get_int(s->conf.params, "tsim.continue_on_invalid_device", &truth);
-        if (truth)
-            s->conf.flags |= SIM_CONTINUE_ON_INVALID_DEVICE;
-    }
-
-    {
-        int truth = 0;
-        param_get_int(s->conf.params, "tsim.continue_on_failed_mem_op", &truth);
-        if (truth)
-            s->conf.flags |= SIM_CONTINUE_ON_FAILED_MEM_OP;
     }
 
     return 0;
@@ -477,8 +433,6 @@ int main(int argc, char *argv[])
                 .fatal = fatal_,
                 .debug = debug_,
                 .param_get = plugin_param_get,
-                .param_get_int = plugin_param_get_int,
-                .param_set = plugin_param_set,
             },
         },
         .run_sim      = interp_run_sim,
@@ -494,7 +448,7 @@ int main(int argc, char *argv[])
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
-            usage(argv[0], EXIT_FAILURE);
+            usage(argv[0]);
         rc = EXIT_FAILURE;
         goto cleanup;
     }
@@ -556,8 +510,6 @@ int main(int argc, char *argv[])
         .post_insn = post_insn,
     };
 
-    read_sim_params(s);
-
     void *run_ud = NULL;
     rc = s->run_sim(s, &ops, &run_ud, NULL);
     if (rc < 0)
@@ -565,7 +517,9 @@ int main(int argc, char *argv[])
 
     fclose(infile);
 
-    devices_teardown(s);
+    rc = devices_teardown(s);
+    if (rc != 0)
+        fprintf(stderr, "Error during device teardown\n");
 
     if (s->conf.debugging > 0)
         fprintf(stderr, "Instructions executed: %lu\n", s->insns_executed);

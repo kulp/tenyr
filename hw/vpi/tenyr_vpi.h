@@ -35,9 +35,9 @@ extern tenyr_sim_cb tenyr_sim_genesis;
 extern tenyr_sim_cb tenyr_sim_apocalypse;
 extern tenyr_sim_cb tenyr_sim_clock;
 
-extern int tenyr_sim_load(struct tenyr_sim_state *state);
-extern int tenyr_sim_putchar(struct tenyr_sim_state *state);
-extern int tenyr_sim_getchar(struct tenyr_sim_state *state);
+extern PLI_INT32 tenyr_sim_load(PLI_BYTE8 *userdata);
+extern PLI_INT32 tenyr_sim_putchar(PLI_BYTE8 *userdata);
+extern PLI_INT32 tenyr_sim_getchar(PLI_BYTE8 *userdata);
 
 #endif
 

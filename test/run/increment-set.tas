@@ -1,0 +1,19 @@
+# var has an initial value of zero. However, because it is a *symbol*, it can
+# take only one final value per file. This is not documented elsewhere, and is
+# somewhat confusing behavior. It would be nice to have some kind of "local
+# variable" that could take on different values throughout a file.
+.set var, 0
+
+# Here @var will have whatever final value it acquires at the end of compilation.
+b <- b + @var
+
+# Incrementing the value in @var does have an effect, but not a
+# *temporally-observable* one. Only the final state of @var is observable.
+.set var, (@var + 1)
+b <- b + @var
+
+.set var, (@var + 1)
+b <- b + @var
+
+b <- b == 6
+illegal

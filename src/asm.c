@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "obj.h"
 #include "ops.h"
@@ -119,7 +120,7 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
         return out->op.fprintf(out, ".word 0x%08x", i->insn.u.word);
 
     if (flags & ASM_AS_CHAR) {
-        char buf[3];
+        char buf[3] = { 0 };
         if (is_printable((unsigned)i->insn.u.word, buf))
             return out->op.fprintf(out, ".word '%s'%*s", buf, buf[1] == '\0', "");
         else
@@ -160,7 +161,7 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
           int show3 = (!hid.c || verbose);
     const int flip  = g->p == 3 && i8 < 0 && show2 && !verbose;
 
-    char s8[16];
+    char s8[16] = { 0 };
     const char * const numfmt = (!decimal && verbose) ? "0x%08x" : "%d";
     snprintf(s8, sizeof s8, numfmt, flip ? -i8 : i8);
 
@@ -202,7 +203,7 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
     }
 
     // Centre a 1-to-3-character op
-    char opstr[MAX_OP_LEN + 1];
+    char opstr[MAX_OP_LEN + 1] = { 0 };
     snprintf(opstr, sizeof opstr, "%-2s", s6);
     s6 = opstr;
 
@@ -221,9 +222,11 @@ int print_disassembly(STREAM *out, const struct element *i, int flags)
         case C_(1,1,1): return PUT(c0,c1,c2,s3,c4,sA,s6,sB,sF,sC,c9);
         #undef PUT
 
+// LCOV_EXCL_START
         default:
             fatal(0, "Unsupported show1,show2,show3 %d,%d,%d",
                     show1,show2,show3);
+// LCOV_EXCL_STOP
     }
     #undef C_
 }
@@ -276,7 +279,6 @@ struct obj_fdata {
     SWord pos;   ///< position in objrec
 
     int assembling;
-    int error;
 };
 
 static int obj_init(STREAM *stream, struct param_state *p, void **ud)
@@ -343,10 +345,7 @@ static int obj_in(STREAM *stream, struct element *i, void *ud)
 
 static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
 {
-    if (i->insn.size <= 0) {
-        u->error = 1;
-        return;
-    }
+    assert(i->insn.size >= 0); // Zero is a valid size for `.zero 0`.
 
     struct objrec *rec = &o->records[0];
     if (rec->size < u->pos + i->insn.size) {
@@ -395,10 +394,8 @@ static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
 static int obj_reloc(STREAM *stream, struct reloc_node *reloc, void *ud)
 {
     struct obj_fdata *u = ud;
-    if (!reloc || !reloc->insn) {
-        u->error = 1;
-        return 0;
-    }
+    assert(reloc != NULL);
+    assert(reloc->insn != NULL);
 
     struct objrlc *rlc = *u->next_rlc = calloc(1, sizeof *rlc);
 
@@ -444,12 +441,6 @@ static int obj_fini(STREAM *stream, void **ud)
     return 0;
 }
 
-static int obj_err(void *ud)
-{
-    struct obj_fdata *u = ud;
-    return !!u->error;
-}
-
 /*******************************************************************************
  * Text format : hexadecimal numbers
  */
@@ -493,7 +484,6 @@ struct memh_state {
     int32_t written, marked, offset;
     int emit_zeros;
     bool first_done;
-    bool error;
 };
 
 static int memh_init(STREAM *stream, struct param_state *p, void **ud)
@@ -528,8 +518,9 @@ static int memh_in(STREAM *stream, struct element *i, void *ud)
         state->marked = state->written;
         return 1;
     } else {
-        state->error = 1;
-        return -1; // @address moved backward (unsupported)
+        fatal(0, "Address marker in memh format moved backward from %#x to %#x"
+                 " (unsupported)", state->written, state->marked);
+        return -1;
     }
 }
 
@@ -553,12 +544,6 @@ static int memh_out(STREAM *stream, struct element *i, void *ud)
     return (printed + stream->op.fprintf(stream, "%08x\n", word) > 3) ? 1 : -1;
 }
 
-static int memh_err(void *ud)
-{
-    struct memh_state *state = ud;
-    return !!state->error;
-}
-
 const struct format tenyr_asm_formats[] = {
     // first format is default
     { "obj",
@@ -568,8 +553,7 @@ const struct format tenyr_asm_formats[] = {
         .emit  = obj_emit,
         .fini  = obj_fini,
         .sym   = obj_sym,
-        .reloc = obj_reloc,
-        .err   = obj_err },
+        .reloc = obj_reloc },
     { "text",
         .init  = gen_init,
         .in    = text_in,
@@ -579,8 +563,7 @@ const struct format tenyr_asm_formats[] = {
         .init  = memh_init,
         .in    = memh_in,
         .out   = memh_out,
-        .fini  = gen_fini,
-        .err   = memh_err },
+        .fini  = gen_fini },
 };
 
 const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);

@@ -26,10 +26,10 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
 {
     int rc = 0;
 
-    const void *impls[16];
+    const void *impls[16] = { 0 };
     int inst = 0;
     do {
-        char buf[256], parent[256];
+        char buf[256] = { 0 }, parent[256] = { 0 };
         snprintf(parent, sizeof parent, "%s[%d]", base, inst);
         int count = p->gops.param_get(p, parent, countof(impls), impls);
         const int max_impls = (signed)countof(impls);

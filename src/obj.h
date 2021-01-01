@@ -14,6 +14,10 @@
 // RLC_ABSOLUTE marks a symbol as not being relative to the start of its record
 #define RLC_ABSOLUTE    4
 
+#define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
+#define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
+#define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
+
 typedef int32_t SWord;
 
 struct name {

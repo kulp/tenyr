@@ -10,7 +10,7 @@ static int default_printf(STREAM *s, const char *format, ...)
     // Failing this way is safer than using a variable-length-array and faster
     // than allocating from the free store, which means it is better for our
     // purposes.
-    char buf[BUFSIZ];
+    char buf[BUFSIZ] = { 0 };
 
     va_list vl;
     va_start(vl, format);

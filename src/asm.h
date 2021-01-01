@@ -22,7 +22,6 @@ struct format {
 
     int (*emit )(STREAM *, void **ud);
     int (*fini )(STREAM *, void **ud);
-    int (*err  )(          void  *ud);
 };
 
 #define ASM_AS_INSN                 (1 << 0)

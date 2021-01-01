@@ -14,6 +14,7 @@
 #include <string.h>
 #include <strings.h>
 #include <errno.h>
+#include <assert.h>
 
 struct link_state {
     SWord addr;     ///< current address
@@ -63,7 +64,7 @@ static const char *version(void)
 }
 
 
-static int usage(const char *me, int rc)
+static void usage(const char *me)
 {
     printf("Usage: %s [ OPTIONS ] image-file [ image-file ... ] \n"
            "Options:\n"
@@ -72,8 +73,6 @@ static int usage(const char *me, int rc)
            "  -h, --help            display this message\n"
            "  -V, --version         print the string `%s'\n"
            , me, version());
-
-    return rc;
 }
 
 static int do_load(struct link_state *s, STREAM *in)
@@ -93,14 +92,12 @@ static int do_load(struct link_state *s, STREAM *in)
     return rc;
 }
 
-static int do_unload(struct link_state *s)
+static void do_unload(struct link_state *s)
 {
     list_foreach(obj_list,ol,s->objs) {
         obj_free(ol->obj);
         free(ol);
     }
-
-    return 0;
 }
 
 static int ptrcmp(const void *a, const void *b)
@@ -114,7 +111,7 @@ static int def_str_cmp(const void *a, const void *b)
     return strcmp(aa->name, bb->name);
 }
 
-static int do_link_build_state(struct link_state *s, void **objtree, void **defns)
+static void do_link_build_state(struct link_state *s, void **objtree, void **defns)
 {
     // running offset, tracking where to pack objects tightly one after another
     SWord running = 0;
@@ -123,12 +120,17 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
     list_foreach(obj_list, Node, s->objs) {
         struct obj *i = Node->obj;
 
-        if (!i->rec_count) {
+        // Loading an object has already validated the object count.
+        assert(i->rec_count >= 0);
+        assert(i->rec_count < OBJ_MAX_REC_CNT);
+
+        if (i->rec_count == 0) {
             debug(0, "Object has no records, skipping");
             continue;
         }
 
-        if (i->rec_count != 1)
+        // TODO support more than one record per object
+        if (i->rec_count > 1)
             debug(0, "Object has more than one record, only using first");
 
         struct objmeta *meta = calloc(1, sizeof *meta);
@@ -155,28 +157,25 @@ static int do_link_build_state(struct link_state *s, void **objtree, void **defn
                 fatal(0, "Duplicate definition for symbol `%s'", def->name);
         }
     }
-
-    return 0;
 }
 
-static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
+static void do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
                                        void **objtree, void **defns)
 {
     SWord reladdr = 0;
 
+    // Objects with record counts other than 1 have already been pruned in
+    // do_link_build_state.
     // TODO support more than one record per object
-    if (i->rec_count > 1)
-        fatal(0, "Object has more than one record, unsupported");
-    else if (i->rec_count < 1)
-        fatal(0, "Object has invalid record count, aborting");
+    assert(i->rec_count == 1);
 
     struct objrec *r = &i->records[0];
     if (rlc->addr < r->addr ||
         rlc->addr - r->addr > r->size)
     {
-        debug(0, "Invalid relocation @ 0x%08x outside record @ 0x%08x size %d",
+        fatal(0, "Invalid relocation @ 0x%08x outside record @ 0x%08x size %d",
               rlc->addr, r->addr, r->size);
-        return 1;
+        return;
     }
 
     struct objmeta **me = tfind(&i, objtree, ptrcmp);
@@ -205,8 +204,6 @@ static int do_link_relocate_obj_reloc(struct obj *i, struct objrlc *rlc,
     SWord mask = ((SWord)((1u << (rlc->width - 1)) << 1) - 1);
     SWord updated = (*dest + mult * (reladdr >> rlc->shift)) & mask;
     *dest = (*dest & ~mask) | updated;
-
-    return 0;
 }
 
 static void do_link_relocate_obj(struct obj *i, void **objtree, void **defns)
@@ -227,7 +224,7 @@ static void do_link_relocate(struct obj_list *ol, void **objtree, void **defns)
     }
 }
 
-static int do_link_process(struct link_state *s)
+static void do_link_process(struct link_state *s)
 {
     void *objtree = NULL;   ///< tsearch-tree of `struct objmeta'
     void *defns   = NULL;   ///< tsearch tree of `struct defns'
@@ -247,11 +244,9 @@ static int do_link_process(struct link_state *s)
         free(node->name);
         free(node);
     }
-
-    return 0;
 }
 
-static int do_link_emit(struct link_state *s, struct obj *o)
+static void do_link_emit(struct link_state *s, struct obj *o)
 {
     long rec_count = 0;
     // copy records
@@ -284,29 +279,19 @@ static int do_link_emit(struct link_state *s, struct obj *o)
     o->rec_count = (SWord)rec_count;
     o->sym_count = (SWord)s->syms;
     o->rlc_count = (SWord)s->rlcs;
-
-    return 0;
 }
 
-static int do_link(struct link_state *s)
+static void do_link(struct link_state *s)
 {
-    int rc = -1;
-
     struct obj *o = s->relocated = calloc(1, sizeof *o);
 
     do_link_process(s);
     do_link_emit(s, o);
-
-    return rc;
 }
 
-static int do_emit(struct link_state *s, STREAM *out)
+static void do_emit(struct link_state *s, STREAM *out)
 {
-    int rc = -1;
-
-    rc = obj_write(s->relocated, out);
-
-    return rc;
+    obj_write(s->relocated, out);
 }
 
 static int do_load_all(struct link_state *s, int count, char **names)
@@ -360,12 +345,13 @@ int main(int argc, char *argv[])
 
     if ((rc = setjmp(errbuf))) {
         if (rc == DISPLAY_USAGE)
-            usage(argv[0], EXIT_FAILURE);
-        if (outfile != stdout && outfname != NULL)
-            // Technically there is a race condition here ; we would like to be
-            // able to remove a file by a stream connected to it, but there is
-            // apparently no portable way to do this.
-            (void)remove(outfname);
+            usage(argv[0]);
+        // We may have created an output file already, but we do not try to
+        // remove it, because doing so by filename would be a race condition.
+        // The most important reason to remove the output file is to avoid
+        // tricking a build system into thinking that a failed build created a
+        // good output file; with GNU Make this can be avoided by using
+        // .DELETE_ON_ERROR, and other build systems have similar features.
         rc = EXIT_FAILURE;
         goto cleanup;
     }
@@ -385,11 +371,11 @@ int main(int argc, char *argv[])
                 rc = EXIT_SUCCESS;
                 goto cleanup;
             case 'h':
-                usage(argv[0], EXIT_SUCCESS);
+                usage(argv[0]);
                 rc = EXIT_SUCCESS;
                 goto cleanup;
             default:
-                usage(argv[0], EXIT_FAILURE);
+                usage(argv[0]);
                 rc = EXIT_FAILURE;
                 goto cleanup;
         }

@@ -10,12 +10,10 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <assert.h>
 
 #define MAGIC_BYTES "TOV"
 #define OBJ_DEFAULT_VERSION 2
-#define OBJ_MAX_SYMBOLS  ((1 << 16) - 1)    /* arbitrary safety limit */
-#define OBJ_MAX_RELOCS   ((1 << 16) - 1)    /* arbitrary safety limit */
-#define OBJ_MAX_REC_CNT  ((1 << 16) - 1)    /* arbitrary safety limit */
 
 #define PUT(What,Where) put_sized(&(What), sizeof (What), 1, Where)
 #define GET(What,Where) get_sized(&(What), sizeof (What), 1, Where)
@@ -30,36 +28,17 @@
 
 typedef int obj_op(struct obj *o, STREAM *out, void *context);
 
-static int unsupported_version(struct obj *o, STREAM *out, void *context)
-{
-    (void)o;
-    (void)out;
-    (void)context;
-    fatal(0, "Unsupported object version");
-    return -1;
-}
-
 static obj_op
     put_recs     , get_recs     ,
     put_syms_v2  , get_syms_v2  ,
     put_relocs_v2, get_relocs_v2;
 
-static struct objops {
+static const struct objops {
     obj_op *put_recs, *put_syms, *put_relocs,
            *get_recs, *get_syms, *get_relocs;
-} objops[] = {
-    [0] = {
-        .put_recs = unsupported_version, .put_syms = unsupported_version, .put_relocs = unsupported_version,
-        .get_recs = unsupported_version, .get_syms = unsupported_version, .get_relocs = unsupported_version,
-    },
-    [1] = {
-        .put_recs = unsupported_version, .put_syms = unsupported_version, .put_relocs = unsupported_version,
-        .get_recs = unsupported_version, .get_syms = unsupported_version, .get_relocs = unsupported_version,
-    },
-    [2] = {
-        .put_recs = put_recs, .put_syms = put_syms_v2, .put_relocs = put_relocs_v2,
-        .get_recs = get_recs, .get_syms = get_syms_v2, .get_relocs = get_relocs_v2,
-    },
+} objops = {
+    .put_recs = put_recs, .put_syms = put_syms_v2, .put_relocs = put_relocs_v2,
+    .get_recs = get_recs, .get_syms = get_syms_v2, .get_relocs = get_relocs_v2,
 };
 
 static inline void get_sized_le(void *what, size_t size, size_t count, STREAM *where)
@@ -167,7 +146,7 @@ static int put_relocs_v2(struct obj *o, STREAM *out, void *context)
     return 0;
 }
 
-static int obj_v2_write(struct obj *o, STREAM *out, struct objops *ops)
+static int obj_v2_write(struct obj *o, STREAM *out, const struct objops *ops)
 {
     put_sized(MAGIC_BYTES, 3, 1, out);
     PUT(o->magic.parsed.version, out);
@@ -189,7 +168,7 @@ int obj_write(struct obj *o, STREAM *out)
 
     switch (version) {
         case 2:
-            return obj_v2_write(o, out, &objops[version]);
+            return obj_v2_write(o, out, &objops);
         default:
             fatal(0, "Unhandled version %d while emitting object", version);
     }
@@ -239,8 +218,7 @@ static int get_recs(struct obj *o, STREAM *in, void *context)
             return 1;
         }
         rec->data = calloc((size_t)rec->size, sizeof *rec->data);
-        if (!rec->data)
-            fatal(PRINT_ERRNO, "Failed to allocate record data field");
+        assert(rec->data != NULL);
         get_sized(rec->data, sizeof *rec->data, (size_t)rec->size, in);
     }
 
@@ -308,7 +286,7 @@ static int get_relocs_v2(struct obj *o, STREAM *in, void *context)
     return 0;
 }
 
-static int obj_v2_read(struct obj *o, STREAM *in, struct objops *ops)
+static int obj_v2_read(struct obj *o, STREAM *in, const struct objops *ops)
 {
     long where = in->op.ftell(in);
     long filesize = LONG_MAX;
@@ -342,7 +320,7 @@ int obj_read(struct obj *o, STREAM *in)
     int version = o->magic.parsed.version;
     switch (version) {
         case 2:
-            return obj_v2_read(o, in, &objops[version]);
+            return obj_v2_read(o, in, &objops);
         default:
             fatal(0, "Unhandled version number when loading object");
     }

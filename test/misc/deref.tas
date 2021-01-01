@@ -1,0 +1,58 @@
+B <- 0 # assume failure
+C <- @+data + P
+D <- 0xa5
+I <- 0
+
+loop:
+# Demonstrate that A does not retain its value after being written to.
+[C] <- 0
+A <- C
+D -> [A]
+E <- [C]
+F <- E == 0
+
+# Demonstrate right-side dereferencing and memory persistence.
+D -> [C]
+E <- [C]
+G <- E == 0xa5
+
+# Demonstrate memory non-interference.
+[C] <- D + 2
+[A] <- D
+E <- [C]
+H <- E == 0xa7
+
+# Demonstrate left-side dereferencing and memory persistence.
+[C] <- 0
+[C] <- D + 3
+E <- [C]
+J <- E == 0xa8
+
+# Demonstrate that A does not retain its value after being loaded into.
+[C] <- 1
+A <- [C]
+K <- A == 0
+
+# Demonstrate that [A] *does* retain its value after being written into.
+[A] <- 1
+M <- [A]
+[A] <- 2
+N <- [A]
+L <- M + 1
+L <- L == N
+
+# Loop multiple times in order to trigger JIT
+O <- I < 100
+I <- I + 1
+P <- @+loop & O + P
+
+B <- F & G
+B <- B & H
+B <- B & J
+B <- B & K
+B <- B & L
+
+illegal
+
+data: .word 0
+
