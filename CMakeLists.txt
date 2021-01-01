@@ -41,3 +41,77 @@ function(check_failure)
     )
 endfunction()
 
+set(TASDIR ${CMAKE_SOURCE_DIR}/test/misc)
+set(OBJDIR ${TASDIR}/obj)
+set(MEMHDIR ${TASDIR}/memh)
+
+check_failure(
+    NAME    "invalid output file"
+    EXPECT  "Failed to open"
+    COMMAND tas
+    ARGS    -o . /dev/null
+)
+
+check_failure(
+    NAME    "unhandled version"
+    EXPECT  "Unhandled version"
+    COMMAND tas
+    ARGS    -d ${OBJDIR}/bad_version.to
+)
+
+check_failure(
+    NAME    "file size too large"
+    EXPECT  "too large"
+    COMMAND tas
+    ARGS    -d ${OBJDIR}/toolarge.to
+)
+
+check_failure(
+    NAME    "too many symbols"
+    EXPECT  "too large"
+    COMMAND tas
+    ARGS    -d ${OBJDIR}/too-many-symbols.to
+)
+
+check_failure(
+    NAME    "too many relocs"
+    EXPECT  "too large"
+    COMMAND tas
+    ARGS    -d ${OBJDIR}/too-many-relocs.to
+)
+
+check_failure(
+    NAME    "overlong symbol"
+    EXPECT  "too large"
+    COMMAND tas
+    ARGS    -d ${OBJDIR}/overlong-symbol.to
+)
+
+check_failure(
+    NAME    "overlong reloc"
+    EXPECT  "too large"
+    COMMAND tas
+    ARGS    -d ${OBJDIR}/overlong-reloc.to
+)
+
+check_failure(
+    NAME    "missing global"
+    EXPECT  "not defined"
+    COMMAND tas
+    ARGS    ${TASDIR}/missing_global.tas
+)
+
+check_failure(
+    NAME    "capture error message"
+    EXPECT  "@q - @r"
+    COMMAND tas
+    ARGS    ${CMAKE_SOURCE_DIR}/test/fail_compile/error_capture.tas
+)
+
+check_failure(
+    NAME    "no backward memh support"
+    EXPECT  "backward.*unsupported"
+    COMMAND tas
+    ARGS    -d -f memh ${MEMHDIR}/backward.memh
+)
+
