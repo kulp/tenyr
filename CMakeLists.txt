@@ -19,11 +19,11 @@ function(check_failure)
     string(MAKE_C_IDENTIFIER "${CO_NAME}" CO_NAME)
 
     add_test(
-        NAME "${CO_NAME}_output"
+        NAME "${CO_COMMAND}_${CO_NAME}_output"
         COMMAND ${CO_COMMAND} ${CO_ARGS}
     )
     set_tests_properties(
-        "${CO_NAME}_output"
+        "${CO_COMMAND}_${CO_NAME}_output"
         PROPERTIES
         LABELS "tool=${CO_COMMAND}"
         PASS_REGULAR_EXPRESSION "${CO_EXPECT}"
@@ -31,11 +31,11 @@ function(check_failure)
     )
 
     add_test(
-        NAME "${CO_NAME}_exitcode"
+        NAME "${CO_COMMAND}_${CO_NAME}_exitcode"
         COMMAND ${CO_COMMAND} ${CO_ARGS}
     )
     set_tests_properties(
-        "${CO_NAME}_exitcode"
+        "${CO_COMMAND}_${CO_NAME}_exitcode"
         PROPERTIES
         LABELS "tool=${CO_COMMAND}"
         WILL_FAIL TRUE
