@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.9.8] - 2021-01-01
 ### Added
 - Enabled many compiler warnings under Clang and GCC
 - Introduced a stream-based abstraction layer for filesystem operations
@@ -103,7 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - uses of little-used assert()
 - obsolescent SPI simulated device
 
-[Unreleased]: https://github.com/kulp/tenyr/compare/v0.9.7...HEAD
+[Unreleased]: https://github.com/kulp/tenyr/compare/v0.9.8...HEAD
+[0.9.8]: https://github.com/kulp/tenyr/compare/v0.9.7...v0.9.8
 [0.9.7]: https://github.com/kulp/tenyr/compare/v0.9.6...v0.9.7
 [0.9.6]: https://github.com/kulp/tenyr/compare/v0.9.5...v0.9.6
 [0.9.5]: https://github.com/kulp/tenyr/compare/v0.9.4...v0.9.5
