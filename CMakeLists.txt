@@ -113,3 +113,59 @@ check_failure(
     ARGUMENTS   -d -f memh ${MEMHDIR}/backward.memh
 )
 
+check_failure(
+    NAME        "early end of file"
+    EXPECT      "End of file unexpectedly reached"
+    COMMAND     tld
+    ARGUMENTS   /dev/null
+)
+
+check_failure(
+    NAME        "invalid output file"
+    EXPECT      "Failed to open"
+    COMMAND     tld
+    ARGUMENTS   -o . /dev/null
+)
+
+check_failure(
+    NAME        "duplicate symbols"
+    EXPECT      "Duplicate definition"
+    COMMAND     tld
+    ARGUMENTS   ${OBJDIR}/duplicate.to ${OBJDIR}/duplicate.to
+)
+
+check_failure(
+    NAME        "multiple records"
+    EXPECT      "more than one record"
+    COMMAND     tld
+    ARGUMENTS   ${OBJDIR}/tworecs.to
+)
+
+check_failure(
+    NAME        "too many records"
+    EXPECT      "too large"
+    COMMAND     tld
+    ARGUMENTS   ${OBJDIR}/too-many-records.to
+)
+
+check_failure(
+    NAME        "unresolved"
+    EXPECT      "Missing definition"
+    COMMAND     tld
+    ARGUMENTS   ${OBJDIR}/unresolved.to
+)
+
+check_failure(
+    NAME        "negative relocation"
+    EXPECT      "Invalid relocation"
+    COMMAND     tld
+    ARGUMENTS   ${OBJDIR}/invalid-reloc.to
+)
+
+check_failure(
+    NAME        "too-large relocation"
+    EXPECT      "Invalid relocation"
+    COMMAND     tld
+    ARGUMENTS   ${OBJDIR}/invalid-reloc2.to
+)
+
