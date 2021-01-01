@@ -13,14 +13,26 @@ function(check_failure)
     set(oneValueArgs NAME COMMAND EXPECT)
     set(multiValueArgs ARGUMENTS PROPERTIES)
     cmake_parse_arguments(CO "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
     add_test(
-        NAME ${CO_NAME}
+        NAME "${CO_NAME}_output"
         COMMAND ${CO_COMMAND} ${CO_ARGUMENTS}
     )
     set_tests_properties(
-        ${CO_NAME}
+        "${CO_NAME}_output"
         PROPERTIES
         PASS_REGULAR_EXPRESSION "${CO_EXPECT}"
+        ${CO_PROPERTIES}
+    )
+
+    add_test(
+        NAME "${CO_NAME}_exitcode"
+        COMMAND ${CO_COMMAND} ${CO_ARGUMENTS}
+    )
+    set_tests_properties(
+        "${CO_NAME}_exitcode"
+        PROPERTIES
+        WILL_FAIL TRUE
         ${CO_PROPERTIES}
     )
 endfunction()
