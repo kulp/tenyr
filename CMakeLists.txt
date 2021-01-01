@@ -9,5 +9,19 @@ cmake_policy(VERSION 3.12...3.19)
 
 enable_testing()
 
-# TODO add_test()
+function(check_failure)
+    set(oneValueArgs NAME COMMAND EXPECT)
+    set(multiValueArgs ARGUMENTS PROPERTIES)
+    cmake_parse_arguments(CO "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+    add_test(
+        NAME ${CO_NAME}
+        COMMAND ${CO_COMMAND} ${CO_ARGUMENTS}
+    )
+    set_tests_properties(
+        ${CO_NAME}
+        PROPERTIES
+        PASS_REGULAR_EXPRESSION "${CO_EXPECT}"
+        ${CO_PROPERTIES}
+    )
+endfunction()
 
