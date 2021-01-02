@@ -9,6 +9,23 @@ cmake_policy(VERSION 3.12...3.19)
 
 enable_testing()
 
+function(check_success)
+    set(oneValueArgs NAME COMMAND)
+    set(multiValueArgs ARGUMENTS PROPERTIES)
+    cmake_parse_arguments(CO "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    add_test(
+        NAME "${CO_COMMAND}_${CO_NAME}_success"
+        COMMAND ${CO_COMMAND} ${CO_ARGUMENTS}
+    )
+    set_tests_properties(
+        "${CO_COMMAND}_${CO_NAME}_success"
+        PROPERTIES
+        LABELS "tool=${CO_COMMAND}"
+        ${CO_PROPERTIES}
+    )
+endfunction()
+
 function(check_output)
     set(oneValueArgs NAME COMMAND EXPECT)
     set(multiValueArgs ARGUMENTS PROPERTIES)
