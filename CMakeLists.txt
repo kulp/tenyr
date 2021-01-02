@@ -39,6 +39,8 @@ function(check_failure)
     )
 endfunction()
 
+set(TOOL_LIST tas tld tsim)
+
 set(TASDIR ${CMAKE_SOURCE_DIR}/test/misc)
 set(OBJDIR ${TASDIR}/obj)
 set(MEMHDIR ${TASDIR}/memh)
@@ -169,3 +171,26 @@ check_failure(
     ARGUMENTS   ${OBJDIR}/invalid-reloc2.to
 )
 
+foreach(tool ${TOOL_LIST})
+
+    check_failure(
+        NAME        "no args"
+        EXPECT      "No input files specified"
+        COMMAND     ${tool}
+    )
+
+    check_failure(
+        NAME        "non-existent file"
+        EXPECT      "Failed to open"
+        COMMAND     ${tool}
+        ARGUMENTS   does_not_exit
+    )
+
+    check_failure(
+        NAME        "bad option"
+        EXPECT      "invalid option.*Q"
+        COMMAND     ${tool}
+        ARGUMENTS   -QRSTU
+    )
+
+endforeach()
