@@ -231,6 +231,17 @@ check_failure(
     ARGS    -r does_not_exist /dev/null
 )
 
+# CMake's regex syntax does not support {M,N} matching, so we have to expand it
+# ourselves. This is a string of 67 dots; the longest acceptable line is 66
+# characters.
+set(TSIM_TOO_LONG "^...................................................................+$")
+check_success(
+    NAME    "narrow verbose output"
+    COMMAND tsim
+    ARGS    -vv ${OBJDIR}/empty.to
+    PROPERTIES  FAIL_REGULAR_EXPRESSION ${TSIM_TOO_LONG}
+)
+
 foreach(tool ${TOOL_LIST})
 
     check_failure(

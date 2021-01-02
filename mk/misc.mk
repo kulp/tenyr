@@ -127,7 +127,6 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_speci
 	$($*) -ftext -vvvv    /dev/null 2>&1 | $(GREP) "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
 	$($*) -ftext x y      /dev/null 2>&1 | $(GREP) "More than"  && $(MAKESTEP) "    ... multiple files rejected ok"
 	$($*) -v -ftext - < /dev/null 2>&1 | $(GREP) "0x00001000"   && $(MAKESTEP) "    ... stdin accepted for input ok"
-	[[ "`$($*) -ftext -vv - <<<-1 2>&1 | wc -c`" < 67 ]]        && $(MAKESTEP) "    ... debug output is 66 columns or shorter"
 	$($*) -@ $(TOP)/test/misc/long.rcp $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "handling"    && $(MAKESTEP) "    ... plugins cap ok"
 
 check_args_specific_tsim_plugins: $(TOP)/test/misc/deref.texe
