@@ -234,6 +234,13 @@ check_success(
     PROPERTIES  FAIL_REGULAR_EXPRESSION ${TSIM_TOO_LONG}
 )
 
+check_failure(
+    NAME        "missing @-file"
+    EXPECT      "Error in opts file"
+    COMMAND     tsim
+    ARGUMENTS   -@ does_not_exist -h
+)
+
 foreach(tool ${TOOL_LIST})
 
     check_failure(
