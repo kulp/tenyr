@@ -160,18 +160,6 @@ check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
 
-check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
-check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
-	@$(MAKESTEP) "Checking $* behaviour ... "
-	$($*) /dev/null 2>&1 | $(GREP) -i "end of file"                             && $(MAKESTEP) "    ... too-small ok"
-	$($*) -o $(OBJD) /dev/null 2>&1 | $(GREP) -i "failed to open"               && $(MAKESTEP) "    ... failed to open ok"
-	$($*) $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | $(GREP) -i "duplicate" && $(MAKESTEP) "    ... duplicate symbols ok"
-	$($*) $(OBJD)tworecs.to 2>&1 | $(GREP) -i "more than one record"            && $(MAKESTEP) "    ... multiple records ok"
-	(! $($*) $(OBJD)too-many-records.to &>/dev/null )                           && $(MAKESTEP) "    ... too many records ok"
-	$($*) $(OBJD)unresolved.to 2>&1 | $(GREP) -i "missing definition"           && $(MAKESTEP) "    ... unresolved ok"
-	(! $($*) $(OBJD)invalid-reloc.to &>/dev/null )                              && $(MAKESTEP) "    ... negative relocation ok"
-	(! $($*) $(OBJD)invalid-reloc2.to &>/dev/null )                             && $(MAKESTEP) "    ... too-large relocation ok"
-
 check_behaviour_tsim: $(TOP)/ex/irc.texe
 check_behaviour_tsim: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
