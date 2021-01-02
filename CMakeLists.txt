@@ -11,7 +11,7 @@ cmake_policy(VERSION 3.12...3.19)
 
 enable_testing()
 
-function(check_failure)
+function(check_output)
     set(oneValueArgs NAME COMMAND EXPECT)
     set(multiValueArgs ARGS PROPERTIES)
     cmake_parse_arguments(CO "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
@@ -28,6 +28,22 @@ function(check_failure)
         LABELS "tool=${CO_COMMAND}"
         PASS_REGULAR_EXPRESSION "${CO_EXPECT}"
         ${CO_PROPERTIES}
+    )
+endfunction()
+
+function(check_failure)
+    set(oneValueArgs NAME COMMAND EXPECT)
+    set(multiValueArgs ARGS PROPERTIES)
+    cmake_parse_arguments(CO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    string(MAKE_C_IDENTIFIER "${CO_NAME}" CO_NAME)
+
+    check_output(
+        NAME    "${CO_NAME}"
+        EXPECT  "${CO_EXPECT}"
+        COMMAND "${CO_COMMAND}"
+        ARGS    "${CO_ARGS}"
+        PROPERTIES  "${CO_PROPERTIES}"
     )
 
     add_test(
