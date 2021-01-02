@@ -89,7 +89,12 @@ coverage_html: coverage.info
 
 check: check_sw check_hw
 CHECK_SW_TASKS ?= check_args check_behaviour check_compile check_sim check_obj dogfood
+check_sw: check_ctest
 check_sw: $(CHECK_SW_TASKS)
+
+check_ctest:
+	cmake -S $(TOP) -B $(BUILDDIR)/ctest
+	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 
 check_args: check_args_tas check_args_tld check_args_tsim
 check_args_%: check_args_general_% check_args_specific_% ;
