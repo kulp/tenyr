@@ -353,7 +353,7 @@ clean_FILES += $(BUILDDIR)/PERIODS_*.mk
 PERIODS_%.mk: %.texe $(build_tsim)
 	@$(MAKESTEP) -n "Computing cycle count for '$*' ... "
 	$(ECHO) -n PERIODS_$*= > $@
-	echo $$(($$($(tsim) -d $< 2>&1 | sed -En '/^.*executed: ([0-9]+)/{s//\1/;p;}') * 20)) >> $@
+	echo $$(($$($(tsim) $(tsim_FLAGS) -d $< 2>&1 | sed -En '/^.*executed: ([0-9]+)/{s//\1/;p;}') * 20)) >> $@
 	cp -f $(TOP)/mk/$(@F) $@ 2>/dev/null || true # override with forced version if existing
 	@$(MAKESTEP) ok
 
