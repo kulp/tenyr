@@ -98,7 +98,7 @@ coverage_html_%:
 	genhtml --output-directory $@ $^
 
 check: check_sw check_hw
-CHECK_SW_TASKS ?= check_args check_behaviour check_compile check_sim check_obj dogfood
+CHECK_SW_TASKS ?= check_args check_behaviour check_compile check_sim check_obj
 check_sw: check_ctest
 check_sw: $(CHECK_SW_TASKS)
 
@@ -319,8 +319,4 @@ check_compile: $(build_tas) $(build_tld)
 	@$(MAKESTEP) "Done building in test/."
 	@$(MAKESTEP) -n "Building examples from ex/ ... "
 	$(MAKE) $S MAKESTEP=true --always-make -C $(TOP)/ex && $(MAKESTEP) ok
-
-dogfood: $(wildcard $(TOP)/test/pass_compile/*.tas $(TOP)/ex/*.tas*) $(build_tas)
-	@$(MAKESTEP) -n "Checking reversibility of assembly-disassembly ... "
-	$(TOP)/scripts/dogfood.sh dogfood.$$$$.XXXXXX "$(tas)" $(filter-out $(build_tas),$^) && $(MAKESTEP) ok || ($(MAKESTEP) FAILED ; false)
 
