@@ -219,3 +219,22 @@ foreach(tool ${TOOL_LIST})
     )
 
 endforeach()
+
+file(
+    GLOB dogfood_INPUTS
+    ${CMAKE_SOURCE_DIR}/test/pass_compile/*.tas
+    ${CMAKE_SOURCE_DIR}/ex/*.tas
+)
+
+add_test(
+    NAME dogfood
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/dogfood.sh dogfood.XXXXXX tas ${dogfood_INPUTS}
+)
+set_tests_properties(
+    dogfood
+    PROPERTIES
+    LABELS "tool=tas;expensive"
+    COST 0.5
+    TIMEOUT 60
+)
+
