@@ -118,7 +118,6 @@ check_args_specific_tsim: s = 4105
 check_args_specific_tsim: sx = $(shell printf 0x%08x $(s))
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_specific_tsim_plugins
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$($*) -@ does_not_exist 2>&1 | $(GREP) "No such"            && $(MAKESTEP) "    ... -@ ok"
 	$($*) -ftext -a 123 - <<<0 2>&1 | $(GREP) "address 0x7b"    && $(MAKESTEP) "    ... -a ok"
 	$($*) -ftext -vs $(s) /dev/null 2>&1 | $(GREP) "IP = $(sx)" && $(MAKESTEP) "    ... -s ok"
 	$($*) -ftext -v       /dev/null 2>&1 | $(GREP) "IP ="       && $(MAKESTEP) "    ... -v ok"
