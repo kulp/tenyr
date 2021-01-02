@@ -104,10 +104,6 @@ check_args_general_%: %$(EXE_SUFFIX)
 	$($*) -V | grep -q version                                   && $(MAKESTEP) "    ... -V ok"
 	$($*) -h | grep -q Usage                                     && $(MAKESTEP) "    ... -h ok"
 	$($*) -p dummy=1 -h &>/dev/null                              && $(MAKESTEP) "    ... -p ok"
-	( ! $($*) ) > /dev/null 2>&1                                 && $(MAKESTEP) "    ... no-args trapped ok"
-	$($*) /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(MAKESTEP) "    ... non-existent file ok"
-	$($*) -QRSTU 2>&1 >/dev/null | egrep -qi "option.*Q"         && $(MAKESTEP) "    ... bad option prints error ok"
-	( ! $($*) -QRSTU &> /dev/null )                              && $(MAKESTEP) "    ... bad option exits non-zero ok"
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
 
