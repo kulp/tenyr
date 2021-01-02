@@ -110,7 +110,6 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	echo 0x3637 | $($*) -ftext -d - | grep -q ".word 0x0*3637"  && $(MAKESTEP) "    ... -d ok"
-	(! $($*) -f does_not_exist /dev/null &> /dev/null )         && $(MAKESTEP) "    ... -f ok"
 	echo 0x3637 | $($*) -ftext -d -q - | $(GREP) -v "3637"      && $(MAKESTEP) "    ... -q ok"
 	$($*) -d -ftext -v - <<<0xc | $(GREP) "A + 0x0000000c"      && $(MAKESTEP) "    ... -v ok"
 	echo '.zero 2' | $($*) -fmemh -pformat.memh.explicit=1 - | $(GREP) "@0 00000000" \
@@ -127,8 +126,6 @@ check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_speci
 	@$(MAKESTEP) "Checking $* specific options ... "
 	$($*) -@ does_not_exist 2>&1 | $(GREP) "No such"            && $(MAKESTEP) "    ... -@ ok"
 	$($*) -ftext -a 123 - <<<0 2>&1 | $(GREP) "address 0x7b"    && $(MAKESTEP) "    ... -a ok"
-	(! $($*) -f does_not_exist /dev/null &> /dev/null )         && $(MAKESTEP) "    ... -f ok"
-	(! $($*) -r does_not_exist -ftext /dev/null &> /dev/null )  && $(MAKESTEP) "    ... -r ok"
 	$($*) -ftext -vs $(s) /dev/null 2>&1 | $(GREP) "IP = $(sx)" && $(MAKESTEP) "    ... -s ok"
 	$($*) -ftext -v       /dev/null 2>&1 | $(GREP) "IP ="       && $(MAKESTEP) "    ... -v ok"
 	$($*) -ftext -vv      /dev/null 2>&1 | $(GREP) ".word"      && $(MAKESTEP) "    ... -vv ok"
