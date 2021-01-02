@@ -160,22 +160,6 @@ check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
 
-check_behaviour_tas: MEMHD = $(TOP)/test/misc/memh/
-check_behaviour_tas: OBJD = $(TOP)/test/misc/obj/
-check_behaviour_tas: TASD = $(TOP)/test/misc/
-check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
-	@$(MAKESTEP) "Checking $* behaviour ... "
-	$($*) -o . /dev/null 2>&1 | $(GREP) -i "failed to open"                 && $(MAKESTEP) "    ... failed to open ok"
-	(! $($*) -d -f memh $(MEMHD)backward.memh &>/dev/null )                 && $(MAKESTEP) "    ... validated memh lack of backward support ok"
-	$($*) -d $(OBJD)bad_version.to 2>&1 | $(GREP) -i "unhandled version"    && $(MAKESTEP) "    ... unhandled version ok"
-	$($*) -d $(OBJD)toolarge.to 2>&1 | $(GREP) "too large"                  && $(MAKESTEP) "    ... too-large ok"
-	$($*) -d $(OBJD)too-many-symbols.to 2>&1 | $(GREP) "too large"          && $(MAKESTEP) "    ... too many symbols ok"
-	$($*) -d $(OBJD)too-many-relocs.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... too many relocs ok"
-	$($*) -d $(OBJD)overlong-symbol.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... overlong symbol ok"
-	$($*) -d $(OBJD)overlong-reloc.to 2>&1 | $(GREP) "too large"            && $(MAKESTEP) "    ... overlong reloc ok"
-	$($*) $(TASD)missing_global.tas 2>&1 | $(GREP) "not defined"            && $(MAKESTEP) "    ... undefined global ok"
-	$($*) $(TOP)/test/fail_compile/error_capture.tas 2>&1 | $(GREP) "@q"    && $(MAKESTEP) "    ... error message ok"
-
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
