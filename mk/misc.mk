@@ -97,13 +97,7 @@ check_ctest:
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 
 check_args: check_args_tas check_args_tld check_args_tsim
-check_args_%: check_args_general_% check_args_specific_% ;
-
-check_args_general_%: %$(EXE_SUFFIX)
-	@$(MAKESTEP) "Checking $* general options ... "
-	$($*) -V | grep -q version                                   && $(MAKESTEP) "    ... -V ok"
-	$($*) -h | grep -q Usage                                     && $(MAKESTEP) "    ... -h ok"
-	$($*) -p dummy=1 -h &>/dev/null                              && $(MAKESTEP) "    ... -p ok"
+check_args_%: check_args_specific_% ;
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
 

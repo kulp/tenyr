@@ -234,6 +234,27 @@ foreach(tool ${TOOL_LIST})
         ARGS    -QRSTU
     )
 
+    check_output(
+        NAME    "version option"
+        EXPECT  "${tool} version.*built"
+        COMMAND ${tool}
+        ARGS    -V
+    )
+
+    check_output(
+        NAME    "help option"
+        EXPECT  "Usage: .*${tool}"
+        COMMAND ${tool}
+        ARGS    -h
+    )
+
+    check_output(
+        NAME    "params option"
+        EXPECT  "Usage: .*${tool}"
+        COMMAND ${tool}
+        ARGS    -p dummy=1 -h
+    )
+
 endforeach()
 
 file(
