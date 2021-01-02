@@ -116,6 +116,13 @@ check_failure(
 )
 
 check_failure(
+    NAME        "bad format"
+    EXPECT      "Usage:"
+    COMMAND     tas
+    ARGUMENTS   -f does_not_exist /dev/null
+)
+
+check_failure(
     NAME        "early end of file"
     EXPECT      "End of file unexpectedly reached"
     COMMAND     tld
@@ -169,6 +176,20 @@ check_failure(
     EXPECT      "Invalid relocation"
     COMMAND     tld
     ARGUMENTS   ${OBJDIR}/invalid-reloc2.to
+)
+
+check_failure(
+    NAME        "bad format"
+    EXPECT      "Usage:"
+    COMMAND     tsim
+    ARGUMENTS   -f does_not_exist /dev/null
+)
+
+check_failure(
+    NAME        "bad recipe"
+    EXPECT      "Usage:"
+    COMMAND     tsim
+    ARGUMENTS   -r does_not_exist /dev/null
 )
 
 foreach(tool ${TOOL_LIST})
