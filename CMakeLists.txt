@@ -161,6 +161,19 @@ check_failure(
     ARGS    -f does_not_exist /dev/null
 )
 
+file(GLOB fail_compile_INPUTS test/fail_compile/*.tas)
+foreach(case ${fail_compile_INPUTS})
+
+    get_filename_component(basename ${case} NAME_WE)
+    check_failure(
+        NAME    "fail_compile_${basename}"
+        EXPECT  "syntax error|bailing|use before definition|Error|attempted"
+        COMMAND tas
+        ARGS    ${case}
+    )
+
+endforeach()
+
 check_failure(
     NAME    "early end of file"
     EXPECT  "End of file unexpectedly reached"
