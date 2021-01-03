@@ -166,6 +166,18 @@ foreach(case ${fail_compile_INPUTS})
 
 endforeach()
 
+file(GLOB pass_compile_INPUTS test/pass_compile/*.tas)
+foreach(case ${pass_compile_INPUTS})
+
+    get_filename_component(basename ${case} NAME_WE)
+    check_success(
+        NAME        "pass_compile_${basename}"
+        COMMAND     tas
+        ARGUMENTS   ${case}
+    )
+
+endforeach()
+
 check_failure(
     NAME        "early end of file"
     EXPECT      "End of file unexpectedly reached"
