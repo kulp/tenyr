@@ -20,6 +20,23 @@ module Top();
 
     Tenyr #(.LOADFILE(LOADFILE)) tenyr(.clk, .reset, .halt);
 
+    task end_simulation;
+    begin
+        integer row, col, i;
+        if ($test$plusargs("DUMPENDSTATE")) begin
+            for (row = 0; row < 3; row = row + 1) begin
+                $write("state: ");
+                for (col = 0; col < 6 && row * 6 + col < 16; col = col + 1) begin
+                    i = row * 6 + col;
+                    $write("%c %08x ", 65 + i, tenyr.core.regs.store[i]);
+                end
+                $write("\n");
+            end
+        end
+        $finish;
+    end
+    endtask
+
 `ifdef __ICARUS__
     // TODO The `ifdef guard should really be controlling for VPI availability
     reg [800:0] filename;
@@ -43,20 +60,7 @@ module Top();
             logfile = filename;
         $dumpfile(logfile);
         $dumpvars;
-        #(periods * `CLOCKPERIOD) begin:ending
-            integer row, col, i;
-            if ($test$plusargs("DUMPENDSTATE")) begin
-                for (row = 0; row < 3; row = row + 1) begin
-                    $write("state: ");
-                    for (col = 0; col < 6 && row * 6 + col < 16; col = col + 1) begin
-                        i = row * 6 + col;
-                        $write("%c %08x ", 65 + i, tenyr.core.regs.store[i]);
-                    end
-                    $write("\n");
-                end
-            end
-            $finish;
-        end
+        #(periods * `CLOCKPERIOD) end_simulation();
     end
 
     always #`CLOCKPERIOD begin
