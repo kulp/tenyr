@@ -11,6 +11,8 @@ cmake_policy(VERSION 3.12...3.19)
 
 enable_testing()
 
+add_subdirectory(lib)
+
 function(check_success)
     set(oneValueArgs NAME COMMAND)
     set(multiValueArgs ARGS PROPERTIES)
