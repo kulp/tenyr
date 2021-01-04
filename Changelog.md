@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - improved emscripten support
 
-## [0.9.5] - 2016-11-16
+## [0.9.5] - 2017-11-16
 ### Added
 - a ~/.tsimrc file (à la `--options=file`) that is loaded by a new default recipe
 - a new BRAM-optimized 10x15 font and associated build tools
