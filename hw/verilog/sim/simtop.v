@@ -62,6 +62,7 @@ module Top();
         $dumpvars;
         #(periods * `CLOCKPERIOD) end_simulation();
     end
+`endif
 
     always #`CLOCKPERIOD begin
         clk_count = clk_count + 1;
@@ -69,8 +70,6 @@ module Top();
             insn_count = insn_count + 1;
         end
     end
-
-`endif
 
 endmodule
 
