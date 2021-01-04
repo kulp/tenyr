@@ -88,7 +88,7 @@ coverage_html: coverage.info
 	genhtml --output-directory $@ $^
 
 check: check_sw check_hw
-CHECK_SW_TASKS ?= check_args check_behaviour check_compile check_sim check_obj
+CHECK_SW_TASKS ?= check_args check_behaviour check_sim check_obj
 check_sw: check_ctest
 check_sw: $(CHECK_SW_TASKS)
 
@@ -278,8 +278,4 @@ vpath %.texe $(TOP)/test/op $(TOP)/ex $(TOP)/test/run
 
 check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -p tsim.dump_end_state=1 $(texe) 2>&1 | grep -o 'B.[[:xdigit:]]\{8\}' | grep -q 'f\{8\}'
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
-
-check_compile: $(build_tas) $(build_tld)
-	@$(MAKESTEP) -n "Building examples from ex/ ... "
-	$(MAKE) $S MAKESTEP=true --always-make -C $(TOP)/ex && $(MAKESTEP) ok
 
