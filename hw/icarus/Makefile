@@ -2,7 +2,7 @@ TOP := ../..
 include $(TOP)/mk/common.mk
 include $(TOP)/mk/rules.mk
 
-PERIODS_DEFAULT ?= 32
+PERIODS_DEFAULT ?= 1000000 # One million cycles should be enough for anybody.
 
 CFLAGS += -Wall -Wextra -Wshadow -pedantic-errors -std=c99 $(VPI_CFLAGS)
 CFLAGS += -I$(TOP)/src
@@ -47,7 +47,7 @@ vpath %.texe $(TOP)/ex $(TOP)/test/run/sdl
 vpath %.tas $(TOP)/ex $(TOP)/test/run/sdl
 
 LOGFILE = Top.vcd
-run_%: PLUSARGS += +PERIODS=$(firstword $(PERIODS) $(PERIODS_$*) $(PERIODS_DEFAULT)) \
+run_%: PLUSARGS += +PERIODS=$(PERIODS_DEFAULT) \
                    +LOGFILE=$(LOGFILE) \
                    $(PLUSARGS_EXTRA) \
                    #
