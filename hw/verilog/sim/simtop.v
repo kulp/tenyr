@@ -41,7 +41,7 @@ module Top();
     // TODO The `ifdef guard should really be controlling for VPI availability
     reg [800:0] filename;
     reg [800:0] logfile = "Top.vcd";
-    integer periods = 64;
+    integer periods = 32'hffffffff;
     integer clk_count = 0;
     integer insn_count = 0;
     integer temp;
