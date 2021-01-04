@@ -6,6 +6,9 @@ project(tenyr NONE)
 
 cmake_minimum_required(VERSION 3.12)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+enable_language(TENYR)
+
 # Define the versions of CMake that this file is written for.
 cmake_policy(VERSION 3.12...3.19)
 
