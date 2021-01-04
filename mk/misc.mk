@@ -125,7 +125,7 @@ $(TOP)/test/run/reloc_set.texe: $(TOP)/test/misc/reloc_set0.to
 $(TOP)/test/run/test_imul.texe: $(TOP)/lib/imul.to
 $(TOP)/test/run/reloc_shifts.texe: $(TOP)/test/misc/reloc_shifts0.to
 
-check_hw: check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run
+check_hw: check_hw_icarus_op check_hw_icarus_run
 vpi:
 	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@
 
@@ -174,10 +174,8 @@ check_sim::
 	$(foreach f,$(tsim_FLAVOURS),$(MAKE) -f $(makefile_path) check_sim_flavour flavour=$f tsim_FLAGS='$(tsim_FLAGS) $(tsim_FLAGS_$f)' &&) true
 check_sim_flavour: check_sim_run
 
-check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
-check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: vpi
-
-check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
+check_hw_icarus_op check_hw_icarus_run: vpi
 
 # "SDL-related" tests
 # These tests are really device tests that for now require SDL. Since we don't
@@ -204,7 +202,6 @@ tsim_FLAGS += -p paths.share=$(call os_path,$(TOP)/)
 tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
 endif
 
-check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
                check_hw_icarus_op:   $(OPS:%=  test_op_%  )
 check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 

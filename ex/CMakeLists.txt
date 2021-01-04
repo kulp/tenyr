@@ -72,4 +72,16 @@ foreach(demo ${demos})
         INPUT   ${demo_executable}
     )
 
+    # TODO this function ends up supplying vvp an extra .texe argument due to
+    # the use of INPUT; we allow this for now since it seems harmless, and it
+    # provides us the dependency linkage we need.
+    check_std_outputs(
+        NAME    ${demo}_demo
+        COMMAND vvp
+        ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=${demo_executable}"
+        INPUT   ${demo_executable}
+        PROPERTIES
+            COST 0.5
+    )
+
 endforeach()
