@@ -94,6 +94,7 @@ check_sw: $(CHECK_SW_TASKS)
 
 check_ctest:
 	cmake -S $(TOP) -B $(BUILDDIR)/ctest
+	cmake --build $(BUILDDIR)/ctest --target examples
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 
 check_args: check_args_tas check_args_tld check_args_tsim
@@ -227,17 +228,16 @@ check_sim::
 	$(MAKE) -f $(TOP)/Makefile libtenyrjit$(DYLIB_SUFFIX)
 endif
 
-check_sim check_sim_demo check_sim_op check_sim_run: export context=sim,$(flavour)
-check_sim_demo check_sim_op check_sim_run: $(build_tsim)
+check_sim check_sim_op check_sim_run: export context=sim,$(flavour)
+check_sim_op check_sim_run: $(build_tsim)
 check_sim::
 	$(foreach f,$(tsim_FLAVOURS),$(MAKE) -f $(makefile_path) check_sim_flavour flavour=$f tsim_FLAGS='$(tsim_FLAGS) $(tsim_FLAGS_$f)' &&) true
-check_sim_flavour: check_sim_demo check_sim_op check_sim_run
+check_sim_flavour: check_sim_op check_sim_run
 
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: vpi
 
 check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
-check_sim_demo: export run=$(tsim) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
 # "SDL-related" tests
 # These tests are really device tests that for now require SDL. Since we don't
@@ -270,7 +270,7 @@ tsim_FLAGS += -p paths.share=$(call os_path,$(TOP)/)
 tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
 endif
 
-check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
+check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
 check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
 check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 

@@ -31,6 +31,12 @@ foreach(ex ${examples})
     add_executable(${ex}.texe ${ex}.tas)
     add_dependencies(examples ${ex}.texe)
 
+    add_test(
+        NAME    "create ${ex}.texe"
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target "${ex}.texe"
+    )
+    set_tests_properties("create ${ex}.texe" PROPERTIES FIXTURES_SETUP "${ex}.texe")
+
 endforeach()
 
 target_sources(maths.texe PRIVATE dword_add.tas dword_mul.tas)
@@ -54,3 +60,16 @@ target_link_libraries(trailz_demo.texe libtenyr_puts libtenyr_trailz)
 target_link_libraries(test_imul.texe libtenyr_imul libtenyr_puts libtenyr_print_hex)
 target_link_libraries(copy.texe libtenyr_memcpy libtenyr_puts)
 
+set(demos bsearch qsort trailz)
+
+foreach(demo ${demos})
+
+    set(demo_executable ${demo}_demo.texe)
+
+    check_std_outputs(
+        NAME    ${demo}_demo
+        COMMAND tsim
+        INPUT   ${demo_executable}
+    )
+
+endforeach()
