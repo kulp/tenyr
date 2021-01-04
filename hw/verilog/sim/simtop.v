@@ -65,6 +65,8 @@ module Top();
 `endif
 
     always #`CLOCKPERIOD begin
+        if (tenyr.core.insn == 32'hffffffff)
+            end_simulation();
         clk_count = clk_count + 1;
         if (tenyr.core.state == tenyr.core.s3) begin
             insn_count = insn_count + 1;
