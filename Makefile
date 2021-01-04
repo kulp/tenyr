@@ -60,7 +60,6 @@ clean clobber::
 
 clobber_FILES += $(BUILDDIR)/*.gc??
 clobber_FILES += $(BUILDDIR)/coverage.info*
-clobber_FILES += $(BUILDDIR)/PERIODS.mk
 clobber_FILES += $(BUILDDIR)/coverage_html_*
 clobber_FILES += $(BUILDDIR)/vpidevices.vpi
 clobber_FILES += $(TOP)/test/op/*.texe
