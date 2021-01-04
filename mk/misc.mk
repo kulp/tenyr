@@ -298,9 +298,9 @@ check_sim::
 check_sim_flavour: check_sim_demo check_sim_op check_sim_run
 
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
-check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre PERIODS.mk
+check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre
 
-check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_sim_demo: export run=$(tsim) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
 
 # "SDL-related" tests
@@ -320,7 +320,6 @@ $(TOP)/ex/%.texe: ; $(MAKE) -C $(@D) $(@F)
 $(TOP)/test/run/sdl/%.texe: ; $(MAKE) -C $(TOP)/test run/sdl/$(@F)
 
 export SDL_VIDEODRIVER=dummy
-PERIODS.mk: $(SDL_RUNS:%=PERIODS_%.mk)
 check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
 
 # Allow testing for a nonexistent file.
@@ -339,28 +338,10 @@ check_sim_demo check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
 check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
 check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 
-# TODO make op tests take a fixed or predictable maximum amount of time
-# The number of cycles necessary to run a code in Verilog simulation is
-# determined by running it in tsim and multiplying the number of instructions
-# executed by the number of cycles per instruction (currently 10). A margin of
-# 2x is added to allow testcases not always to take exactly the same number of
-# instructions to complete.
 vpath %.texe $(TOP)/test/op $(TOP)/ex $(TOP)/test/run
-clean_FILES += $(BUILDDIR)/PERIODS_*.mk
-PERIODS_%.mk: %.texe $(build_tsim)
-	@$(MAKESTEP) -n "Computing cycle count for '$*' ... "
-	$(ECHO) -n PERIODS_$*= > $@
-	echo $$(($$($(tsim) $(tsim_FLAGS) -d $< 2>&1 | sed -En '/^.*executed: ([0-9]+)/{s//\1/;p;}') * 20)) >> $@
-	cp -f $(TOP)/mk/$(@F) $@ 2>/dev/null || true # override with forced version if existing
-	@$(MAKESTEP) ok
-
-vpath PERIODS_%.mk $(TOP)/mk
-PERIODS.mk: $(patsubst %,PERIODS_%.mk,$(OPS) $(DEMOS:%=%_demo) $(RUNS))
-	cat $^ > $@
 
 check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -vvvv $(texe) 2>&1 | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
-check_hw_icarus_op: PERIODS.mk
-check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus -f $(abspath $(BUILDDIR))/PERIODS.mk -f Makefile run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
 check_compile: $(build_tas) $(build_tld)
 	@$(MAKESTEP) "Building tests from test/ ..."
