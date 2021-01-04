@@ -54,3 +54,39 @@ target_link_libraries(trailz_demo.texe libtenyr_puts libtenyr_trailz)
 target_link_libraries(test_imul.texe libtenyr_imul libtenyr_puts libtenyr_print_hex)
 target_link_libraries(copy.texe libtenyr_memcpy libtenyr_puts)
 
+set(demos bsearch qsort trailz)
+
+foreach(demo ${demos})
+
+    set(tsim_flags "")
+    set(reference_file ${CMAKE_SOURCE_DIR}/cmake/golden/${demo}_out.txt)
+    set(demo_executable ${CMAKE_CURRENT_BINARY_DIR}/${demo}_demo.texe)
+
+    set(output_file ${CMAKE_CURRENT_BINARY_DIR}/tsim_${demo}_out.txt)
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/cmake/run_tsim.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/run_tsim_${demo}.cmd
+        @ONLY
+    )
+
+    file(
+        COPY        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/run_tsim_${demo}.cmd
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        )
+
+    add_test(
+        NAME        run_tsim_${demo}_demo_run
+        COMMAND     run_tsim_${demo}.cmd
+    )
+
+    add_test(
+        NAME        run_tsim_${demo}_demo_compare
+        COMMAND     ${CMAKE_COMMAND} -E compare_files "${reference_file}" "${output_file}"
+    )
+    set_tests_properties(
+        run_tsim_${demo}_demo_compare
+        PROPERTIES DEPENDS run_tsim_${demo}_demo_run
+    )
+
+endforeach()

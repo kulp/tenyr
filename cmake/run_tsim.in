@@ -1,0 +1,1 @@
+tsim @tsim_flags@ @demo_executable@ > @output_file@
