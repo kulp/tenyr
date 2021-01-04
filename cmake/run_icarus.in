@@ -1,0 +1,2 @@
+vvp -l@logfile@ -N @CMAKE_SOURCE_DIR@/hw/icarus/tenyr +LOAD=@demo_executable@ > @output_file@
+@CMAKE_COMMAND@ -E cat @logfile@ @reference_file@ > @reference_temporary@

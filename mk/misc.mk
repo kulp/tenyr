@@ -200,7 +200,7 @@ check_hw:
 	if $(TOP)/scripts/check_icarus.sh "`which $(IVERILOG)iverilog`" ; then \
 		$(MAKE) -C $(BUILDDIR) -f $(TOP)/Makefile vpi ; \
 		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) BUILDDIR=$(BUILDDIR) \
-		    check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run; \
+		    check_hw_icarus_op check_hw_icarus_run; \
 	fi
 
 test_demo_% test_run_% test_op_%: texe=$<
@@ -260,10 +260,8 @@ check_sim::
 	$(foreach f,$(tsim_FLAVOURS),$(MAKE) -f $(makefile_path) check_sim_flavour flavour=$f tsim_FLAGS='$(tsim_FLAGS) $(tsim_FLAGS_$f)' &&) true
 check_sim_flavour: check_sim_op check_sim_run
 
-check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
-check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre
-
-check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
+check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
+check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre
 
 # "SDL-related" tests
 # These tests are really device tests that for now require SDL. Since we don't
@@ -296,7 +294,6 @@ tsim_FLAGS += -p paths.share=$(call os_path,$(TOP)/)
 tsim_FLAGS += -@ $(TOP)/plugins/sdl.rcp
 endif
 
-check_hw_icarus_demo: $(DEMOS:%=test_demo_%)
 check_sim_op   check_hw_icarus_op:   $(OPS:%=  test_op_%  )
 check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 

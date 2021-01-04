@@ -89,4 +89,38 @@ foreach(demo ${demos})
         PROPERTIES DEPENDS run_tsim_${demo}_demo_run
     )
 
+    set(logfile ${CMAKE_CURRENT_BINARY_DIR}/logfile_${demo})
+    set(output_file ${CMAKE_CURRENT_BINARY_DIR}/icarus_${demo}_out.txt)
+    # Because `vvp` emits warnings and errors to stdout even when `-l` is used,
+    # we capture a separate logfile, concatenate it with the original reference
+    # file, and compare with that.
+    set(reference_temporary ${CMAKE_CURRENT_BINARY_DIR}/icarus_${demo}_out2.txt)
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/cmake/run_icarus.in
+        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/run_icarus_${demo}.cmd
+        @ONLY
+    )
+
+    file(
+        COPY        ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/run_icarus_${demo}.cmd
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+        )
+
+    add_test(
+        NAME        run_icarus_${demo}_demo_run
+        COMMAND     run_icarus_${demo}.cmd
+        PROPERTIES  COST 0.5
+    )
+
+    set(reference_file ${reference_temporary})
+    add_test(
+        NAME        run_icarus_${demo}_demo_compare
+        COMMAND     ${CMAKE_COMMAND} -E compare_files "${reference_file}" "${output_file}"
+    )
+    set_tests_properties(
+        run_icarus_${demo}_demo_compare
+        PROPERTIES DEPENDS run_icarus_${demo}_demo_run
+    )
+
 endforeach()
