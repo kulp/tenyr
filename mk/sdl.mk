@@ -1,5 +1,5 @@
 ifneq ($(SDL),0)
-sdl2_config ?= $(shell $(SDL2_PKGCONFIG) $1 $2)
+sdl2_config ?= $(shell $(SDL2_CONFIG) $1 $2)
 PDEVICES_SDL += sdlled sdlvga
 PDEVICES += $(PDEVICES_SDL)
 # Mark SDL header includes as system includes to avoid subjecting them to full
