@@ -108,9 +108,9 @@ static int sdlvga_init(struct plugin_cookie *pcookie, struct device *device, voi
     SDL_FreeSurface(sprite);
 
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
-    SDL_SetRenderTarget(state->renderer, state->display);
     SDL_RenderClear(state->renderer);
     SDL_RenderPresent(state->renderer);
+    SDL_SetRenderTarget(state->renderer, state->display);
 
     gettimeofday(&state->last_update, NULL);
     state->deadline = state->last_update;
