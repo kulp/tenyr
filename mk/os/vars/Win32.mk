@@ -22,7 +22,7 @@ URL_SDL2       = https://www.libsdl.org/release/SDL2-devel-2.0.4-mingw.tar.gz
 DL_DIR_SDL2       = $(TOP)/3rdparty/sdl2
 DL_DIR_SDL2_image = $(TOP)/3rdparty/sdl2
 
-SDL2_PKGCONFIG = PKG_CONFIG_PATH=$(TOP)/3rdparty/sdl2/$(MACHINE)/lib/pkgconfig pkg-config --define-variable=prefix=$(TOP)/3rdparty/sdl2/$(MACHINE)
+SDL2_CONFIG = PKG_CONFIG_PATH=$(TOP)/3rdparty/sdl2/$(MACHINE)/lib/pkgconfig pkg-config --define-variable=prefix=$(TOP)/3rdparty/sdl2/$(MACHINE)
 
 # Create Wine path for a given UNIX path
 os_path = z:$(subst /,\\,$1)
