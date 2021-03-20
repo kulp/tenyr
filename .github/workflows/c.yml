@@ -18,6 +18,7 @@ jobs:
       JIT: 0
     runs-on: ubuntu-20.04
     steps:
+    - run: sudo apt-get update
     - name: install expect
       run: sudo apt-get install expect # for unbuffer
     - name: install wine
@@ -43,6 +44,7 @@ jobs:
       GCOV: 1
     runs-on: ubuntu-20.04
     steps:
+    - run: sudo apt-get update
     - run: sudo apt-get install expect iverilog lcov
     - run: sudo apt-get install libsdl2-dev libsdl2-image-dev
     - uses: actions/checkout@v2
@@ -67,6 +69,8 @@ jobs:
         os: [ubuntu-18.04, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
+    - if: runner.os == 'Linux'
+      run: sudo apt-get update
     - if: runner.os == 'Linux'
       run: sudo apt-get install expect iverilog
     - if: runner.os == 'Linux' && env.SDL != 0
