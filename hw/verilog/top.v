@@ -49,7 +49,7 @@ module Tenyr(
     wire[3:0] r_sel;
     wire[31:0] r_adr, r_ddn, r_dup;
 
-    BlockRAM #(.LOADH(1), .LOADFILE(LOADFILE), .INIT(0),
+    TwoPortRAM #(.LOADH(1), .LOADFILE(LOADFILE), .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .OFFSET(`RESETVECTOR)
     ) ram(
         .clka  ( clk_core ),

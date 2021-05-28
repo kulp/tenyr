@@ -26,7 +26,7 @@ module VGAwrap(
         .FONT_A   ( rom_adA   ), .FONT_D ( rom_doA     )
     );
 
-    BlockRAM #(
+    TwoPortRAM #(
         .SIZE(ROWS * COLS), .ABITS($clog2(ROWS * COLS) + 1), .DBITS(8), .INIT(1), .ZERO('h20)
     ) text(
         .clka  ( clk_vga ), .clkb  ( clk_core ),
@@ -37,7 +37,7 @@ module VGAwrap(
         .wea   ( 1'b0    ), .web   ( rw       )
     );
 
-    BlockRAM #(.LOADB(1), .LOADFILE("../../rsrc/font10x15/rev.font10x15.memb"),
+    TwoPortRAM #(.LOADB(1), .LOADFILE("../../rsrc/font10x15/rev.font10x15.memb"),
                .SIZE(256 * FONT_ROWS), .DBITS(FONT_COLS))
     font(
         .clka  ( clk_vga ), .ena   ( 1'b1    ), .wea  ( 1'b0 ),
