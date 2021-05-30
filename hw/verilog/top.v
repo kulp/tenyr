@@ -70,7 +70,7 @@ module Tenyr(
     wire s_stbcyc = s_stb & s_cyc;
 
 `ifdef SERIAL
-    // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
+    // TODO write a hardware-compatible serial device ; rename to eliminate `Sim`
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
         .clk ( clk_core ), .reset ( reset ), .enable ( s_stbcyc ),
         .rw  ( s_wen    ), .addr  ( s_adr ), .data   ( s_ddn    )
