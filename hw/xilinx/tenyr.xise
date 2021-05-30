@@ -23,7 +23,7 @@
       <association xil_pn:name="BehavioralSimulation"/>
       <association xil_pn:name="Implementation"/>
     </file>
-    <file xil_pn:name="src/vga_text.v" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../verilog/vga_text.v" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="Implementation"/>
     </file>
     <file xil_pn:name="../verilog/mmr.v" xil_pn:type="FILE_VERILOG">
@@ -32,7 +32,7 @@
     <file xil_pn:name="Tenyr.ucf" xil_pn:type="FILE_UCF">
       <association xil_pn:name="Implementation"/>
     </file>
-    <file xil_pn:name="src/vgawrap.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../verilog/vgawrap.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="Implementation"/>
     </file>
     <file xil_pn:name="../verilog/sim/simtop.v" xil_pn:type="FILE_VERILOG">
