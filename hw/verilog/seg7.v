@@ -5,7 +5,7 @@
 module Seg7(clk, strobe, ack, rw, reset, addr, d_in, d_out, seg, an);
 
     parameter       CNT_BITS = 16 + 2; // 80MHz clk => 2ms full screen refresh
-    localparam      DIGITS   = 4;
+    parameter       DIGITS   = 4;
 
     input wire              clk, strobe, rw, reset;
     input wire [31:0]       addr, d_in;
