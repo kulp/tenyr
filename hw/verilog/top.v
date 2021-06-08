@@ -3,7 +3,7 @@
 
 module Tenyr(
     input clk, reset, inout halt,
-    output[7:0] Led, output[7:0] seg, output[3:0] an, inout[23:0] gpio,
+    output[7:0] seg, output[3:0] an, inout[23:0] gpio,
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
 );
 
@@ -18,7 +18,6 @@ module Tenyr(
     wire[31:0] d_adr, d_to_slav, i_to_slav;
     wire[31:0] d_to_mast, i_to_mast;
 
-    assign Led[7:0] = {8{halt}};
     assign i_ack = i_stb;
 
     tenyr_mainclock clocks(
