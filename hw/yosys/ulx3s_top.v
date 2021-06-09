@@ -4,10 +4,14 @@ module Top(
     output[7:0] led, inout[27:0] gp
 );
 
-    // Unconditionally ignore halt for now, just to prevent a wired-or from
-    // breaking synthesis.
-    wire halt = btn[3] ? '0 : '0;
-    Tenyr tenyr(.clk(clk_25mhz), .reset(0), .halt(halt), .seg(led));
+    wire clk = clk_25mhz;
+
+    reg[3:0] startup = 1;
+    wire reset = ~startup[3];
+    always @(posedge clk)
+        startup <= {startup,1'b1};
+
+    Tenyr tenyr(.clk(clk), .reset(reset), .seg(led));
 
     // Force the number of digits in the seg7 display to 1, to prevent
     // digits from being overlaid on top of one another.
