@@ -39,8 +39,8 @@ module Top();
 
 `ifdef __ICARUS__
     // TODO The `ifdef guard should really be controlling for VPI availability
-    reg [800:0] filename;
-    reg [800:0] logfile = "Top.vcd";
+    reg [8 * 4096:0] filename;
+    reg [8 * 4096:0] logfile = "Top.vcd";
     integer periods = 32'hffffffff;
     integer clk_count = 0;
     integer insn_count = 0;
