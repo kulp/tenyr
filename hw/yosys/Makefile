@@ -12,6 +12,7 @@ VERILOG_SOURCES += ulx3s_top.v
 VERILOG_SOURCES += clocks.v
 VERILOG_SOURCES += gpio.v
 VERILOG_SOURCES += seg7.v hex2segments.v
+VERILOG_SOURCES += tmds.v tmds_pll.v
 VERILOG_SOURCES += top.v tenyr.v ram.v
 VERILOG_SOURCES += vgawrap.v vga_text.v
 VERILOG_SOURCES += wb_mux.v
@@ -22,6 +23,9 @@ all: bit
 bit: synthed.bit
 
 synth: synthed.json
+
+tmds_pll.v:
+	ecppll --module tmds_pll --clkin 25 --clkout0 250 --clkout1 25 --file $@
 
 synthed.json: YOSYS_FLAGS += -p "verilog_defaults -add -I../verilog"
 synthed.json: YOSYS_FLAGS += $(foreach f,$(filter %.v,$^),-p "read_verilog $f")
