@@ -158,18 +158,11 @@ module vga_text(
         .out(vsync_p)
       );
 
-  // This delay is empirical and needs to be explained
-  wire active_delayed;
-  shift_reg #(.LEN(FontCols)) active_delay(
-        .clk(clk), .en(1), .in(active),
-        .out(active_delayed)
-      );
-
   always @(posedge clk) begin
     TEXT_A <= trow * TextCols + tcol;
     FONT_A <= TEXT_D * FontRows + frow;
     pixels <= Width_done ? FONT_D : pixels >> 1;
-    W <= pixels & active_delayed & 1;
+    W <= pixels & active & 1;
 
     case (state)
       sActive: state <= Active_done ? sHFront : sActive; // ^ ^
