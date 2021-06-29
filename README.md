@@ -7,8 +7,9 @@
 **tenyr** is a 32-bit computer architecture and computing environment that
 focuses on simplicity of design and implementation. **tenyr**'s tools run on
 Mac, \*nix, Windows, and node.js via [emscripten]. **tenyr**'s highly portable
-Verilog hardware definition has been demonstrated on Xilinx Spartan6 FPGAs and
-should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
+Verilog hardware definition has been demonstrated on a Lattice ECP5 FPGA with
+the [ULX3S] development board, and on a Xilinx Spartan6 FPGA with the [Nexys3]
+development board.
 
 **tenyr** comprises :
 
@@ -29,3 +30,5 @@ should run fine on many FPGAs while using less than 1200 LUT6-equivalents.
 **tenyr**'s documentation is [a wiki](https://github.com/kulp/tenyr/wiki), and it keeps a [changelog](Changelog.md) from v0.9.4 onward.
 
 [emscripten]: https://github.com/emscripten-core/emscripten
+[ULX3S]: https://ulx3s.github.io
+[Nexys3]: https://reference.digilentinc.com/programmable-logic/nexys-3/
