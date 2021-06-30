@@ -7,3 +7,7 @@
 [submodule "3rdparty/naive-tsearch"]
     path = 3rdparty/naive-tsearch
     url = https://github.com/kulp/naive-tsearch.git
+[submodule "3rdparty/ulx3s"]
+	path = 3rdparty/ulx3s
+	url = https://github.com/emard/ulx3s.git
+	shallow = true

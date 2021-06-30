@@ -1,0 +1,16 @@
+.set out, 0x100
+
+b <- 0
+loop:
+c <- ~b
+c -> [@out]
+b <- b + 1
+
+d <- 0
+e <- (8 * 4 * 4096)
+delay:
+d <- d + 1
+n <- d > e
+p <- @+delay &~ n + p
+
+p <- @+loop + P
