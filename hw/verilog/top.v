@@ -4,7 +4,7 @@
 module Tenyr(
     input clk, reset, inout halt,
     output[7:0] seg, output[3:0] an, inout[23:0] gpio,
-    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
+    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync, inframe
 );
 
     parameter LOADFILE = "default.memh";
@@ -109,7 +109,8 @@ module Tenyr(
         .clk_vga  ( clk_vga  ), .addr   ( v_adr ), .vgaGreen ( vgaGreen ),
         .en       ( 1'b1     ), .d_in   ( v_ddn ), .vgaBlue  ( vgaBlue  ),
         .reset    ( reset    ), .d_out  ( v_dup ), .hsync    ( hsync    ),
-        .strobe   ( v_stbcyc ),                    .vsync    ( vsync    )
+        .strobe   ( v_stbcyc ),                    .vsync    ( vsync    ),
+                                                   .inframe  ( inframe  )
     );
 `endif
 

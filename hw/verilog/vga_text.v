@@ -51,7 +51,7 @@ endmodule
 
 module vga_text(
         /*  input */ reset, clk, TEXT_D, FONT_D,
-        /* output */ R, G, B, hsync, vsync, TEXT_A, FONT_A
+        /* output */ R, G, B, inframe, hsync, vsync, TEXT_A, FONT_A
     );
 
   parameter integer ScrnCols = 640;
@@ -89,6 +89,8 @@ module vga_text(
   reg W; // white pixel value
   assign hsync = ~hsync_p; // need negative polarity
   assign vsync = ~vsync_p; // need negative polarity
+
+  output wire inframe = state == sActive;
 
   reg [3:0] state = sInit;
 

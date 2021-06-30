@@ -4,7 +4,7 @@
 module VGAwrap(
     input clk_core, clk_vga, en, rw, reset,
     input strobe, input[31:0] addr, input[31:0] d_in, output wor[31:0] d_out,
-    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
+    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync, inframe
 );
 
     parameter[31:0] VIDEO_ADDR = `VIDEO_ADDR;
@@ -23,7 +23,7 @@ module VGAwrap(
         .R        ( vgaRed[2] ), .G      ( vgaGreen[2] ), .B ( vgaBlue[2] ),
         .hsync    ( hsync     ), .vsync  ( vsync       ),
         .TEXT_A   ( ram_adA   ), .TEXT_D ( ram_doA     ),
-        .FONT_A   ( rom_adA   ), .FONT_D ( rom_doA     )
+        .FONT_A   ( rom_adA   ), .FONT_D ( rom_doA     ), .inframe,
     );
 
     TwoPortRAM #(
