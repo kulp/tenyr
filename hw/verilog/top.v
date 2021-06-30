@@ -52,8 +52,8 @@ module Tenyr(
     TwoPortRAM #(.LOADH(1), .LOADFILE(LOADFILE), .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .OFFSET(`RESETVECTOR)
     ) ram(
-        .clka  ( clk_core ),
-        .ena   ( r_stb    ),
+        .clka  ( clk_core ), .clkb ( 1'b0 ),
+        .ena   ( r_stb    ), .enb  ( 1'b0 ),
         .acka  ( r_ack    ),
         .wea   ( r_wen    ),
         .addra ( r_adr    ),
