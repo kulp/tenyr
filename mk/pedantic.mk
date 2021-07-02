@@ -15,6 +15,9 @@ PEDANTIC_FLAGS += -Wno-date-time
 PEDANTIC_FLAGS += -Wno-reserved-id-macro
 PEDANTIC_FLAGS += -W$(PEDANTRY_EXCEPTION)cpp
 
+# Hide needless -Wpoison-system-directories implied by -Weverything.
+PEDANTIC_FLAGS += -Wno-poison-system-directories
+
 # The following errors are meant to be absent, and therefore their presence is
 # fatal except where elsewhere overridden on a per-object basis.
 PEDANTIC_FLAGS += -Werror=switch-enum
