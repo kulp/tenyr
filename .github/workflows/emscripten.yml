@@ -12,6 +12,7 @@ env:
   PEDANTIC: 0
   PLATFORM: emscripten
   EM_VERSION: 1.38.46
+  EM_CACHE_FOLDER: 'emsdk-cache'
 
 jobs:
   check:
@@ -20,9 +21,16 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: true
+    - name: Set up cache
+      id: cache-system-libraries
+      uses: actions/cache@v2.1.6
+      with:
+        path: ${{env.EM_CACHE_FOLDER}}
+        key: ${{env.EM_VERSION}}-${{ runner.os }}
     - uses: mymindstorm/setup-emsdk@v10
       with:
         version: ${{env.EM_VERSION}}
+        actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
     - run: make -j
     - run: make check_sw
 
