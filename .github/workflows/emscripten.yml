@@ -1,0 +1,27 @@
+name: Emscripten
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+env:
+  SDL: 0
+  JIT: 0
+  PEDANTIC: 0
+  PLATFORM: emscripten
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: mymindstorm/setup-emsdk@v10
+      with:
+        version: 1.38.46
+    - run: make -j
+    - run: make check_sw
+
