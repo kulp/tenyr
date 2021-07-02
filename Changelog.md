@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Enabled many compiler warnings under Clang and GCC
 - Introduced a stream-based abstraction layer for filesystem operations
-- Enabled CI jobs for additional architectures (arm64, ppc64le, s390x)
 - Defined the overshifting behavior for the `@` operator
 - Defined the tenyr assembly grammar in ABNF (#60)
 - Set up continuous integration using GitHub Actions (#66, #67, #68, #69, #70, #71)
