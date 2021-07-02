@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Prefer sdl2-config over pkg-config (#82)
+- Run `apt-get update` before installing packages from APT (#84)
+- Fix crash in SDLVGA on macOS Big Sur 11.2 (#83)
+- Remove Xilinx support (#86)
+- Introduce collected hardware changes for ulx3s (#88)
+- Introduce a yosys flow for ULX3S (#87)
+- Build on macOS Big Sur (#85)
 
 ## [0.9.8] - 2021-01-01
 ### Added
