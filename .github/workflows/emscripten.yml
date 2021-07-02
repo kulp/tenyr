@@ -11,6 +11,7 @@ env:
   JIT: 0
   PEDANTIC: 0
   PLATFORM: emscripten
+  EM_VERSION: 1.38.46
 
 jobs:
   check:
@@ -21,7 +22,7 @@ jobs:
         submodules: true
     - uses: mymindstorm/setup-emsdk@v10
       with:
-        version: 1.38.46
+        version: ${{env.EM_VERSION}}
     - run: make -j
     - run: make check_sw
 
