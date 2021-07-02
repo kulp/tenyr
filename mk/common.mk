@@ -31,6 +31,7 @@ ifeq ($(MEMCHECK),1)
  runwrap = $(VALGRIND) --leak-check=full --track-origins=yes --log-file=memcheck.$$$$ $(EMPTY)
 endif
 
+ARCH := $(shell uname -m)
 ifeq ($(PLATFORM),mingw)
  OS := Win32
 else ifeq ($(PLATFORM),emscripten)
