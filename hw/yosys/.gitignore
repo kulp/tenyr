@@ -1,0 +1,4 @@
+synthed.json
+*.bit
+default.memh
+tmds_pll.v

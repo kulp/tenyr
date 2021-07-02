@@ -1,0 +1,106 @@
+name: C-language CI
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+env:
+  SDL: 1
+  JIT: 1
+  PEDANTIC: 0
+
+jobs:
+  wine:
+    env:
+      SDL: 0
+      JIT: 0
+    runs-on: ubuntu-20.04
+    steps:
+    - run: sudo apt-get update
+    - name: install expect
+      run: sudo apt-get install expect # for unbuffer
+    - name: install wine
+      run: sudo apt-get install gcc-mingw-w64-x86-64 wine-stable wine64
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: make
+      run: make -j
+      timeout-minutes: 1
+    - uses: actions/upload-artifact@v2
+      with:
+        path: build/
+        name: builddir-mingw64
+    - name: make check_sw
+      run: unbuffer make check_sw
+      timeout-minutes: 5
+      env:
+        PLATFORM: mingw
+
+  coverage:
+    env:
+      GCOV: 1
+    runs-on: ubuntu-20.04
+    steps:
+    - run: sudo apt-get update
+    - run: sudo apt-get install expect iverilog lcov
+    - run: sudo apt-get install libsdl2-dev libsdl2-image-dev
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - run: |
+          ./scripts/build-lightning.sh 2.1.3 $HOME/local
+          echo "C_INCLUDE_PATH=$HOME/local/include" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$HOME/local/lib" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/local/lib" >> $GITHUB_ENV
+    - name: make
+      run: make -j
+      timeout-minutes: 1
+    - name: make coverage
+      run: unbuffer make coverage
+      timeout-minutes: 10
+    - uses: codecov/codecov-action@v1
+
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - if: runner.os == 'Linux'
+      run: sudo apt-get update
+    - if: runner.os == 'Linux'
+      run: sudo apt-get install expect iverilog
+    - if: runner.os == 'Linux' && env.SDL != 0
+      run: sudo apt-get install libsdl2-dev libsdl2-image-dev
+    - if: runner.os == 'macOS'
+      run: |
+        brew install bison expect icarus-verilog
+        echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
+    - if: runner.os == 'macOS' && env.SDL != 0
+      run: brew install sdl2 sdl2_image
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - if: env.JIT != 0
+      run: |
+          ./scripts/build-lightning.sh 2.1.3 $HOME/local
+          echo "C_INCLUDE_PATH=$HOME/local/include" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=$HOME/local/lib" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/local/lib" >> $GITHUB_ENV
+    - name: make
+      run: make -j
+      timeout-minutes: 1
+    - uses: actions/upload-artifact@v2
+      with:
+        path: build/
+        name: builddir-${{ matrix.os }}
+    - name: make check_sw
+      run: unbuffer make check_sw
+      timeout-minutes: 5
+    - name: make check_hw
+      run: unbuffer make check_hw
+      timeout-minutes: 10
+

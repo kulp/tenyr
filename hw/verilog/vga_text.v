@@ -51,7 +51,7 @@ endmodule
 
 module vga_text(
         /*  input */ reset, clk, TEXT_D, FONT_D,
-        /* output */ R, G, B, hsync, vsync, TEXT_A, FONT_A
+        /* output */ R, G, B, inframe, hsync, vsync, TEXT_A, FONT_A
     );
 
   parameter integer ScrnCols = 640;
@@ -89,6 +89,8 @@ module vga_text(
   reg W; // white pixel value
   assign hsync = ~hsync_p; // need negative polarity
   assign vsync = ~vsync_p; // need negative polarity
+
+  output wire inframe = state == sActive;
 
   reg [3:0] state = sInit;
 
@@ -158,18 +160,11 @@ module vga_text(
         .out(vsync_p)
       );
 
-  // This delay is empirical and needs to be explained
-  wire active_delayed;
-  shift_reg #(.LEN(FontCols)) active_delay(
-        .clk(clk), .en(1), .in(active),
-        .out(active_delayed)
-      );
-
   always @(posedge clk) begin
     TEXT_A <= trow * TextCols + tcol;
     FONT_A <= TEXT_D * FontRows + frow;
     pixels <= Width_done ? FONT_D : pixels >> 1;
-    W <= pixels & active_delayed & 1;
+    W <= pixels & active & 1;
 
     case (state)
       sActive: state <= Active_done ? sHFront : sActive; // ^ ^

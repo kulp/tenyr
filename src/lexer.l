@@ -12,7 +12,7 @@ int tenyr_error(YYLTYPE *locp, struct parse_data *pd, const char *s, ...);
 
 static struct cstr *resizestr(struct cstr *s, int len);
 static int savestr(const char *text, int len, yyscan_t yyscanner);
-#define savechr(ch,sc) savestr((const char[]){ (char)(ch) },1,sc)
+static int savechr(char ch, yyscan_t yyscanner) { return savestr(&ch, 1, yyscanner); }
 static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
 
 #define savecol  (yyextra->lexstate.savecol)
@@ -29,12 +29,9 @@ static int translate_escape(YYLTYPE *loc, struct parse_data *extra, int what);
         yycolumn += yyleng; \
     } while (0);
 
-#define YSTR        yylval->cstr
 #define PUSH(State) yy_push_state(State, yyscanner)
 #define DUP         yy_push_state(yy_top_state(yyscanner), yyscanner)
 #define POP         yy_pop_state(yyscanner)
-#define NEWSTR      YSTR = resizestr(NULL, (size_t)yyleng)
-#define CHKSTR      do { if (!YSTR || YSTR->size < 0) { NEWSTR; } } while (0)
 #define SAVESTR     savestr(yytext, yyleng, yyscanner)
 
 %}
@@ -74,14 +71,14 @@ edge    {white}|\n
 illegal             { return ILLEGAL; }
 
 {regname}           { yylval->i = yytext[0]; return REGISTER; }
-{symbol}            { NEWSTR; SAVESTR; return SYMBOL; }
-{local}             { NEWSTR; SAVESTR; return LOCAL; }
+{symbol}            { yylval->cstr = NULL; SAVESTR; return SYMBOL; }
+{local}             { yylval->cstr = NULL; SAVESTR; return LOCAL; }
 
-\"                  { YSTR = NULL; PUSH(string); return OPNQUOTE; }
+\"                  { yylval->cstr = NULL; PUSH(string); return DBLQUOTE; }
 <string>{
-    \"              { POP; return CLSQUOTE; }
-    \\{escchar}     { CHKSTR; savechr(translate_escape(yylloc, yyextra, yytext[1]), yyscanner); YSTR->size = -1; return STRSPAN; }
-    [^\\"]+         { CHKSTR; SAVESTR; YSTR->size = -1; return STRSPAN; }
+    \"              { POP; return DBLQUOTE; }
+    \\{escchar}     { savechr(translate_escape(yylloc, yyextra, yytext[1]), yyscanner); return STRSPAN; }
+    [^\\"]+         { SAVESTR; return STRSPAN; }
 }
 
 ".word"{edge}       { PUSH(ignore_nl); return WORD; }
@@ -89,7 +86,6 @@ illegal             { return ILLEGAL; }
 ".global"{edge}     { PUSH(ignore_nl); return GLOBAL; }
 ".set"{edge}        { PUSH(ignore_nl); return SET; }
 ".zero"{edge}       { PUSH(ignore_nl); return ZERO; }
-".option"{edge}     { PUSH(ignore_nl); return OPTION; }
 
 {self}              { return yytext[0]; }
 
@@ -118,7 +114,7 @@ illegal             { return ILLEGAL; }
     .               ; /* ignored content */
 }
 
-"'"                 { PUSH(charend); PUSH(charlit); NEWSTR; }
+"'"                 { PUSH(charend); PUSH(charlit); yylval->cstr = NULL; }
 <charlit>{
     \\              PUSH(charesc);
     .               { savechr(yytext[0], yyscanner); POP; }
@@ -140,40 +136,18 @@ illegal             { return ILLEGAL; }
  * XXXREMOVEXXX
  * a line above this one removed to work around a gcov off-by-one-line bug
  */
-static struct cstr *resizestr(struct cstr *s, int len)
-{
-    if (!s) {
-        // allocate at least a minimum segment size
-        if (len < 128)
-            len = 128;
-
-        s = malloc(sizeof *s);
-        s->size = len;
-        s->head = s->tail = calloc((size_t)s->size, 1);
-        s->last = s;
-        s->right = NULL;
-        return s;
-    } else {
-        int have = (int)(s->tail - s->head);
-
-        if (s->size < have + len) {
-            s->size = have;                     // shorten this string segment
-            s->right = resizestr(NULL, len);    // allocate a new segment
-            s->last = s->right;
-            return s->right;                    // caller keeps original s
-        }
-
-        return s;
-    }
-}
-
 static int savestr(const char *text, int len, yyscan_t yyscanner)
 {
     // savestr() appends a string piece into a buffer
     YYSTYPE *lval  = yyget_lval(yyscanner);
     struct cstr *s = lval->cstr;
 
-    s = resizestr(s, len);
+    s = malloc(sizeof *s);
+    s->size = len;
+    s->head = s->tail = calloc((size_t)s->size, 1);
+    s->last = s;
+    s->right = NULL;
+
     memcpy(s->tail, text, len);
     s->tail += len;
 

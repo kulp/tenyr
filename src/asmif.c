@@ -16,6 +16,7 @@
 #include <search.h>
 #include <string.h>
 #include <strings.h>
+#include <assert.h>
 
 static int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result);
@@ -131,7 +132,7 @@ static int ce_eval_op2(struct parse_data *pd, struct element *context,
             case '^' : *result = left ^  right; return 1;
             case '&' : *result = left &  right; return 1;
             case '|' : *result = left |  right; return 1;
-            case LSH : *result = left << right; return 1;
+            case LSH : *result = (int32_t)(((uint32_t)left) << right); return 1;
             case RSHA: *result = left >> right; return 1;
             case RSH : *result = (int32_t)(((uint32_t)left) >> right); return 1;
             case '/' :
@@ -139,8 +140,10 @@ static int ce_eval_op2(struct parse_data *pd, struct element *context,
                     fatal(0, "Constant expression attempted %d/%d", left, right);
                 *result = left / right;
                 return 1;
+// LCOV_EXCL_START
             default:
                 fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
+// LCOV_EXCL_STOP
         }
     }
     return 0;
@@ -154,7 +157,9 @@ static int ce_eval_op1(struct parse_data *pd, struct element *context,
     switch (ce->op) {
         case '-': *result = -*result; return 1;
         case '~': *result = ~*result; return 1;
+// LCOV_EXCL_START
         default : fatal(0, "Unrecognised const_expr op '%c' (%#x)", ce->op, ce->op);
+// LCOV_EXCL_STOP
     }
 }
 
@@ -175,18 +180,9 @@ static int ce_eval_imm(struct parse_data *pd, struct element *context,
     return 1;
 }
 
-static int ce_eval_bad(struct parse_data *pd, struct element *context,
-        struct const_expr *ce, int flags, int width, int shift, int32_t *result)
-{
-    fatal(0, "Bad const_expr type %d", ce->type);
-    return -1; // never reached
-}
-
 typedef int ce_evaluator(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result);
 static ce_evaluator * const ce_eval_dispatch[CE_max] = {
-    [CE_BAD] = ce_eval_bad,
-
     [CE_OP1] = ce_eval_op1,
     [CE_OP2] = ce_eval_op2,
     [CE_SYM] = ce_eval_sym,
@@ -199,9 +195,8 @@ static ce_evaluator * const ce_eval_dispatch[CE_max] = {
 static int ce_eval(struct parse_data *pd, struct element *context,
         struct const_expr *ce, int flags, int width, int shift, int32_t *result)
 {
-    if (ce->type >= CE_max)
-        return ce_eval_bad(pd, context, ce, flags, width, shift, result);
-
+    assert(ce->type > CE_INVALID);
+    assert(ce->type < CE_max);
     return ce_eval_dispatch[ce->type](pd, context, ce, flags, width, shift, result);
 }
 
@@ -406,14 +401,13 @@ int do_assembly(STREAM *in, STREAM *out, const struct format *f, void *ud)
     return result || pd->errored;
 }
 
+// Currently always returns success (zero). Should consider propagating errors.
 int do_disassembly(STREAM *in, STREAM *out, const struct format *f, void *ud, int flags)
 {
     int rc = 0;
 
     struct element i;
     while ((rc = f->in(in, &i, ud)) >= 0) {
-        if (in->op.feof(in))
-            break;
         if (rc == 0)
             continue; // allow a format to emit no instructions
         int len = print_disassembly(out, &i, ASM_AS_INSN | flags);
@@ -430,7 +424,7 @@ int do_disassembly(STREAM *in, STREAM *out, const struct format *f, void *ud, in
         }
     }
 
-    return f->err ? f->err(ud) : 0;
+    return 0;
 }
 
 /* vi:set ts=4 sw=4 et: */

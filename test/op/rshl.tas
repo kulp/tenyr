@@ -10,8 +10,8 @@ E <- 0
 M <- 0
 loop0:
 F <- @+masks + E + P
-G <- [F]		# G is output mask
-H <- [F + D]	# H is input mask
+G <- [F]        # G is output mask
+H <- [F + D]    # H is input mask
 I <- C & H
 I <- I == 0
 I <- ~ I
@@ -31,8 +31,8 @@ E <- 0
 M <- 0
 loop1:
 F <- @+masks + E + P
-G <- [F]		# G is output mask
-H <- [F + 12]	# H is input mask
+G <- [F]        # G is output mask
+H <- [F + 12]   # H is input mask
 I <- C & H
 I <- I == 0
 I <- ~ I
@@ -52,8 +52,8 @@ E <- 0
 M <- 0
 loop2:
 F <- @+masks + E + P
-G <- [F]		# G is output mask
-H <- [F + D]	# H is input mask
+G <- [F]        # G is output mask
+H <- [F + D]    # H is input mask
 I <- -234 & H
 I <- I == 0
 I <- ~ I

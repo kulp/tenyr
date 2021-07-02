@@ -31,6 +31,7 @@ ifeq ($(MEMCHECK),1)
  runwrap = $(VALGRIND) --leak-check=full --track-origins=yes --log-file=memcheck.$$$$ $(EMPTY)
 endif
 
+ARCH := $(shell uname -m)
 ifeq ($(PLATFORM),mingw)
  OS := Win32
 else ifeq ($(PLATFORM),emscripten)
@@ -92,7 +93,7 @@ tld  = $(runwrap)$(TOOLDIR)/tld$(EXE_SUFFIX)
 tsim = $(runwrap)$(TOOLDIR)/tsim$(EXE_SUFFIX)
 tpp  = $(CPP)
 
-DEVICES = ram sparseram serial
+DEVICES = ram sparseram serial zero_word
 DEVOBJS = $(DEVICES:%=%.o)
 # plugin devices
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
@@ -101,7 +102,11 @@ PDEVLIBS = $(PDEVICES:%=libtenyr%$(DYLIB_SUFFIX))
 BIN_TARGETS += tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX)
 LIB_TARGETS += $(PDEVLIBS)
 
-TARGETS     ?= $(BIN_TARGETS) $(LIB_TARGETS)
+FAILURE_TESTS = NONE INIT FINI OP PUMP PLUGIN_INIT ADD_DEVICE
+FAILURE_TARGETS = $(FAILURE_TESTS:%=libtenyrfailure_%$(DYLIB_SUFFIX))
+TEST_TARGETS += $(FAILURE_TARGETS)
+
+TARGETS      = $(BIN_TARGETS) $(LIB_TARGETS) $(TEST_TARGETS)
 RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
                $(TOP)/rsrc/font10x15/invert.font10x15.png \
                $(wildcard $(TOP)/plugins/*.rcp) \

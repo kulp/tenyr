@@ -28,9 +28,15 @@ module Top();
     integer clk_count = 0;
     integer insn_count = 0;
     integer temp;
+    integer failure = 0;
     initial #0 begin
-        if ($value$plusargs("LOAD=%s", filename))
-            $tenyr_load(filename); // replace with $readmemh ?
+        if ($value$plusargs("LOAD=%s", filename)) begin
+            $tenyr_load(filename, failure); // replace with $readmemh ?
+            if (failure) begin
+                $display("Could not load file %0s", filename);
+                $stop;
+            end
+        end
         if ($value$plusargs("PERIODS=%d", temp))
             periods = temp;
         if ($value$plusargs("LOGFILE=%s", filename))

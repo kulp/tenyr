@@ -146,8 +146,8 @@ void param_init(struct param_state **pstate)
 
 void param_destroy(struct param_state *pstate)
 {
-    while (pstate->params_count--)
-        param_free(&pstate->params[pstate->params_count]);
+    while (pstate->params_count > 0)
+        param_free(&pstate->params[--pstate->params_count]);
 
     free(pstate->params);
     free(pstate);

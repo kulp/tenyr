@@ -1,6 +1,6 @@
-PEDANTIC = 1
+PEDANTIC ?= 1
 
-ifeq ($(PEDANTIC),)
+ifneq ($(PEDANTIC),1)
 PEDANTIC_FLAGS ?= -pedantic
 else
 PEDANTIC_FLAGS ?= -Werror -pedantic-errors -W$(PEDANTRY_EXCEPTION)unknown-warning-option
@@ -14,6 +14,9 @@ PEDANTIC_FLAGS += -Wno-date-time
 # Required feature-macros trip these warnings spuriously.
 PEDANTIC_FLAGS += -Wno-reserved-id-macro
 PEDANTIC_FLAGS += -W$(PEDANTRY_EXCEPTION)cpp
+
+# Hide needless -Wpoison-system-directories implied by -Weverything.
+PEDANTIC_FLAGS += -Wno-poison-system-directories
 
 # The following errors are meant to be absent, and therefore their presence is
 # fatal except where elsewhere overridden on a per-object basis.

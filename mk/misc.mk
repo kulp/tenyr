@@ -5,6 +5,13 @@ include $(TOP)/mk/rules.mk
 
 SHELL := $(shell which bash)
 
+# Using `grep -q` stops processing as soon as a match is detected (potentially
+# faster than processing all input), but causes upstream programs to exit (via
+# EPIPE) early, resulting in unpredictable code coverage results if gcov is not
+# able to flush before exit. Thus, we use a slower, full grep when coverage is
+# enabled.
+GREP = $(if $(GCOV),grep > /dev/null,grep -q)
+
 $(build_tas) $(build_tsim) $(build_tld):
 	$(MAKE) -f $(TOP)/Makefile $@
 
@@ -101,6 +108,7 @@ check_args_general_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* general options ... "
 	$($*) -V | grep -q version                                   && $(MAKESTEP) "    ... -V ok"
 	$($*) -h | grep -q Usage                                     && $(MAKESTEP) "    ... -h ok"
+	$($*) -p dummy=1 -h &>/dev/null                              && $(MAKESTEP) "    ... -p ok"
 	( ! $($*) ) > /dev/null 2>&1                                 && $(MAKESTEP) "    ... no-args trapped ok"
 	$($*) /dev/non-existent-file 2>&1 | grep -q "Failed to open" && $(MAKESTEP) "    ... non-existent file ok"
 	$($*) -QRSTU 2>&1 >/dev/null | egrep -qi "option.*Q"         && $(MAKESTEP) "    ... bad option prints error ok"
@@ -110,40 +118,49 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	echo 0x3637 | $($*) -ftext -d - | grep -q ".word 0x0*3637"   && $(MAKESTEP) "    ... -d ok"
-	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
-	echo 0x3637 | $($*) -ftext -d -q - | fgrep -qv "3637"        && $(MAKESTEP) "    ... -q ok"
-	$($*) -d -ftext -v - <<<0xc | fgrep -q "A + 0x0000000c"      && $(MAKESTEP) "    ... -v ok"
-	echo '.zero 2' | $($*) -fmemh -pformat.memh.explicit=1 - | fgrep -q "@0 00000000" \
-	                                                             && $(MAKESTEP) "    ... memh explicit ok"
-	echo '.word 1' | $($*) -fmemh -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
-	                                                             && $(MAKESTEP) "    ... memh offset ok"
+	echo 0x3637 | $($*) -ftext -d - | grep -q ".word 0x0*3637"  && $(MAKESTEP) "    ... -d ok"
+	(! $($*) -f does_not_exist /dev/null &> /dev/null )         && $(MAKESTEP) "    ... -f ok"
+	echo 0x3637 | $($*) -ftext -d -q - | $(GREP) -v "3637"      && $(MAKESTEP) "    ... -q ok"
+	$($*) -d -ftext -v - <<<0xc | $(GREP) "A + 0x0000000c"      && $(MAKESTEP) "    ... -v ok"
+	echo '.zero 2' | $($*) -fmemh -pformat.memh.explicit=1 - | $(GREP) "@0 00000000" \
+	                                                            && $(MAKESTEP) "    ... memh explicit ok"
+	echo '.word 1' | $($*) -fmemh -pformat.memh.offset=5 -   | $(GREP) "@5 00000001" \
+	                                                            && $(MAKESTEP) "    ... memh offset ok"
 	echo '.word 1' | $($*) -fmemh -p{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z}=1 \
-	                              -pformat.memh.offset=5 -   | fgrep -q "@5 00000001" \
-	                                                             && $(MAKESTEP) "    ... params overflow ok"
+	                              -pformat.memh.offset=5 -   | $(GREP) "@5 00000001" \
+	                                                            && $(MAKESTEP) "    ... params overflow ok"
 
 check_args_specific_tsim: s = 4105
 check_args_specific_tsim: sx = $(shell printf 0x%08x $(s))
-check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX)
+check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_specific_tsim_plugins
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$($*) -@ does_not_exist 2>&1 | fgrep -q "No such"            && $(MAKESTEP) "    ... -@ ok"
-	$($*) -ftext -a 123 - <<<0 2>&1 | fgrep -q "address 0x7b"    && $(MAKESTEP) "    ... -a ok"
-	$($*) -d -ftext /dev/null 2>&1 | fgrep -q "executed: 1"      && $(MAKESTEP) "    ... -d ok"
-	(! $($*) -f does_not_exist /dev/null &> /dev/null )          && $(MAKESTEP) "    ... -f ok"
-	(! $($*) -r does_not_exist -ftext /dev/null &> /dev/null )   && $(MAKESTEP) "    ... -r ok"
-	$($*) -ftext -vs $(s) /dev/null 2>&1 | fgrep -q "IP = $(sx)" && $(MAKESTEP) "    ... -s ok"
-	$($*) -ftext -v       /dev/null 2>&1 | fgrep -q "IP ="       && $(MAKESTEP) "    ... -v ok"
-	$($*) -ftext -vv      /dev/null 2>&1 | fgrep -q ".word"      && $(MAKESTEP) "    ... -vv ok"
-	$($*) -ftext -vvv     /dev/null 2>&1 | fgrep -q "read  @"    && $(MAKESTEP) "    ... -vvv ok"
-	$($*) -ftext -vvvv    /dev/null 2>&1 | fgrep -q "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
-	$($*) -d -ftext - < /dev/null 2>&1 | fgrep -q "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
-	[[ "`$($*) -ftext -vv - <<<-1 2>&1 | wc -c`" < 67 ]]         && $(MAKESTEP) "    ... debug output is 66 columns or shorter"
-	$($*) -@ $(TOP)/test/misc/long.rcp $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "handling"    && $(MAKESTEP) "    ... plugins cap ok"
+	$($*) -@ does_not_exist 2>&1 | $(GREP) "No such"            && $(MAKESTEP) "    ... -@ ok"
+	$($*) -ftext -a 123 - <<<0 2>&1 | $(GREP) "address 0x7b"    && $(MAKESTEP) "    ... -a ok"
+	$($*) -d -ftext /dev/null 2>&1 | $(GREP) "executed: 1"      && $(MAKESTEP) "    ... -d ok"
+	(! $($*) -f does_not_exist /dev/null &> /dev/null )         && $(MAKESTEP) "    ... -f ok"
+	(! $($*) -r does_not_exist -ftext /dev/null &> /dev/null )  && $(MAKESTEP) "    ... -r ok"
+	$($*) -ftext -vs $(s) /dev/null 2>&1 | $(GREP) "IP = $(sx)" && $(MAKESTEP) "    ... -s ok"
+	$($*) -ftext -v       /dev/null 2>&1 | $(GREP) "IP ="       && $(MAKESTEP) "    ... -v ok"
+	$($*) -ftext -vv      /dev/null 2>&1 | $(GREP) ".word"      && $(MAKESTEP) "    ... -vv ok"
+	$($*) -ftext -vvv     /dev/null 2>&1 | $(GREP) "read  @"    && $(MAKESTEP) "    ... -vvv ok"
+	$($*) -ftext -vvvv    /dev/null 2>&1 | $(GREP) "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
+	$($*) -ftext x y      /dev/null 2>&1 | $(GREP) "More than"  && $(MAKESTEP) "    ... multiple files rejected ok"
+	$($*) -d -ftext - < /dev/null 2>&1 | $(GREP) "executed: 1"  && $(MAKESTEP) "    ... stdin accepted for input ok"
+	[[ "`$($*) -ftext -vv - <<<-1 2>&1 | wc -c`" < 67 ]]        && $(MAKESTEP) "    ... debug output is 66 columns or shorter"
+	$($*) -@ $(TOP)/test/misc/long.rcp $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "handling"    && $(MAKESTEP) "    ... plugins cap ok"
 	$(if $(findstring emscripten,$(PLATFORM)),,(! $($*) -remscript - &> /dev/null )  && $(MAKESTEP) "    ... emscripten recipe rejected ok")
+
+check_args_specific_tsim_plugins: $(TOP)/test/misc/deref.texe
+check_args_specific_tsim_plugins: tsim$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* specific options (plugins) ... "
+	$(tsim) -p plugin[0]+=failure_NONE $(TOP)/test/misc/deref.texe && $(MAKESTEP) "    .... plugin no-error case ok"
+	$(tsim) -p plugin[0]+=failure_OP   $(TOP)/test/misc/deref.texe   2>&1 | $(GREP) "Error during simulation" && $(MAKESTEP) "    .... plugin operation failure detected ok"
+	$(tsim) -p plugin[0]+=failure_INIT $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error while finalising" && $(MAKESTEP) "    ... plugin initialisation failure detected ok"
+	$(tsim) -p plugin[0]+=failure_FINI $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error during device teardown" && $(MAKESTEP) "    ... plugin finalisation failure detected ok"
 
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$($*) - < $(TOP)/test/misc/obj/empty.to 2>&1 | fgrep -q "TOV"  && $(MAKESTEP) "    ... stdin accepted for input ok"
+	$($*) - < $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "TOV"	&& $(MAKESTEP) "    ... stdin accepted for input ok"
 
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
@@ -153,24 +170,43 @@ check_behaviour_tas: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tas: TASD = $(TOP)/test/misc/
 check_behaviour_tas: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
-	$($*) -o . /dev/null 2>&1 | fgrep -qi "failed to open"                     && $(MAKESTEP) "    ... failed to open ok"
-	(! $($*) -d -f memh $(MEMHD)backward.memh &>/dev/null )                    && $(MAKESTEP) "    ... validated memh lack of backward support ok"
-	$($*) -d $(OBJD)bad_version.to 2>&1 | fgrep -qi "unhandled version"        && $(MAKESTEP) "    ... unhandled version ok"
-	$($*) -d $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                    && $(MAKESTEP) "    ... too-large ok"
-	$($*) -d $(OBJD)toolarge2.to 2>&1 | fgrep -q "too large"                   && $(MAKESTEP) "    ... too-large 2 ok"
-	$($*) $(TASD)missing_global.tas 2>&1 | fgrep -q "not defined"              && $(MAKESTEP) "    ... undefined global ok"
-	$($*) $(TOP)/test/fail_compile/error_capture.tas 2>&1 | fgrep -q "@q"      && $(MAKESTEP) "    ... error message ok"
+	$($*) -o . /dev/null 2>&1 | $(GREP) -i "failed to open"                 && $(MAKESTEP) "    ... failed to open ok"
+	(! $($*) -d -f memh $(MEMHD)backward.memh &>/dev/null )                 && $(MAKESTEP) "    ... validated memh lack of backward support ok"
+	$($*) -d $(OBJD)bad_version.to 2>&1 | $(GREP) -i "unhandled version"    && $(MAKESTEP) "    ... unhandled version ok"
+	$($*) -d $(OBJD)toolarge.to 2>&1 | $(GREP) "too large"                  && $(MAKESTEP) "    ... too-large ok"
+	$($*) -d $(OBJD)toolarge2.to 2>&1 | $(GREP) "too large"                 && $(MAKESTEP) "    ... too-large 2 ok"
+	$($*) -d $(OBJD)too-many-symbols.to 2>&1 | $(GREP) "too large"          && $(MAKESTEP) "    ... too many symbols ok"
+	$($*) -d $(OBJD)too-many-relocs.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... too many relocs ok"
+	$($*) -d $(OBJD)overlong-symbol.to 2>&1 | $(GREP) "too large"           && $(MAKESTEP) "    ... overlong symbol ok"
+	$($*) -d $(OBJD)overlong-reloc.to 2>&1 | $(GREP) "too large"            && $(MAKESTEP) "    ... overlong reloc ok"
+	$($*) $(TASD)missing_global.tas 2>&1 | $(GREP) "not defined"            && $(MAKESTEP) "    ... undefined global ok"
+	$($*) $(TOP)/test/fail_compile/error_capture.tas 2>&1 | $(GREP) "@q"    && $(MAKESTEP) "    ... error message ok"
 
 check_behaviour_tld: OBJD = $(TOP)/test/misc/obj/
 check_behaviour_tld: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
-	$($*) /dev/null 2>&1 | fgrep -qi "end of file"                              && $(MAKESTEP) "    ... too-small ok"
-	$($*) $(OBJD)toolarge.to 2>&1 | fgrep -q "too large"                        && $(MAKESTEP) "    ... too-large ok"
-	$($*) -o $(OBJD) /dev/null 2>&1 | fgrep -qi "failed to open"                && $(MAKESTEP) "    ... failed to open ok"
-	$($*) $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | fgrep -qi "duplicate"  && $(MAKESTEP) "    ... duplicate symbols ok"
-	$($*) $(OBJD)zerorecs.to 2>&1 | fgrep -qi "has no records"                  && $(MAKESTEP) "    ... zero records ok"
-	$($*) $(OBJD)tworecs.to 2>&1 | fgrep -qi "more than one record"             && $(MAKESTEP) "    ... multiple records ok"
-	$($*) $(OBJD)unresolved.to 2>&1 | fgrep -qi "missing definition"            && $(MAKESTEP) "    ... unresolved ok"
+	$($*) /dev/null 2>&1 | $(GREP) -i "end of file"                             && $(MAKESTEP) "    ... too-small ok"
+	$($*) $(OBJD)toolarge.to 2>&1 | $(GREP) "too large"                         && $(MAKESTEP) "    ... too-large ok"
+	$($*) -o $(OBJD) /dev/null 2>&1 | $(GREP) -i "failed to open"               && $(MAKESTEP) "    ... failed to open ok"
+	$($*) $(OBJD)duplicate.to $(OBJD)duplicate.to 2>&1 | $(GREP) -i "duplicate" && $(MAKESTEP) "    ... duplicate symbols ok"
+	$($*) $(OBJD)zerorecs.to 2>&1 | $(GREP) -i "has no records"                 && $(MAKESTEP) "    ... zero records ok"
+	$($*) $(OBJD)tworecs.to 2>&1 | $(GREP) -i "more than one record"            && $(MAKESTEP) "    ... multiple records ok"
+	(! $($*) $(OBJD)too-many-records.to &>/dev/null )                           && $(MAKESTEP) "    ... too many records ok"
+	$($*) $(OBJD)unresolved.to 2>&1 | $(GREP) -i "missing definition"           && $(MAKESTEP) "    ... unresolved ok"
+	(! $($*) $(OBJD)invalid-reloc.to &>/dev/null )                              && $(MAKESTEP) "    ... negative relocation ok"
+	(! $($*) $(OBJD)invalid-reloc2.to &>/dev/null )                             && $(MAKESTEP) "    ... too-large relocation ok"
+
+check_behaviour_tsim: $(TOP)/ex/irc.texe
+check_behaviour_tsim: check_behaviour_%: %$(EXE_SUFFIX)
+	@$(MAKESTEP) "Checking $* behaviour ... "
+	$($*) $(TOP)/ex/irc.texe <<<'PING 123' 2>/dev/null | $(GREP) 'PONG 123'     && $(MAKESTEP) "    ... ping-pong ok"
+
+check_sim_run: check_sim_deref
+check_sim_deref: texe = $(TOP)/test/misc/deref.texe
+# XXX we should be able to use $(tsim_FLAGS) here rather than appending to tsim
+check_sim_deref: tsim += -rzero_word
+check_sim_deref: $(TOP)/test/misc/deref.texe
+	$(run)
 
 clean_FILES += check_obj_*.to null.to ff.bin
 null.to: ; $(tas) -o $@ /dev/null
@@ -244,9 +280,9 @@ test_run_%: %.texe $(build_tas) $(build_tld)
 	@$(MAKESTEP) -n "Running test `printf %-20s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
-check_hw_icarus_pre:
+check_hw_icarus_pre: vpidevices.vpi
 	@$(MAKESTEP) -n "Building hardware simulator ... "
-	$(MAKE) $S -C $(TOP)/hw/icarus tenyr && $(MAKESTEP) ok
+	$(MAKE) $S -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) tenyr && $(MAKESTEP) ok
 
 tsim_FLAVOURS := interp interp_prealloc
 tsim_FLAGS_interp =
@@ -289,6 +325,12 @@ $(TOP)/test/run/sdl/%.texe: ; $(MAKE) -C $(TOP)/test run/sdl/$(@F)
 export SDL_VIDEODRIVER=dummy
 PERIODS.mk: $(SDL_RUNS:%=PERIODS_%.mk)
 check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
+
+# Allow testing for a nonexistent file.
+.PHONY: nonexistent.texe
+vpath %.texe $(TOP)/test/misc/obj/
+check_hw_icarus_run: test_run_nonexistent test_run_bad_magic test_run_toolarge
+test_run_nonexistent test_run_bad_magic test_run_toolarge: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus run_$*
 
 ifneq ($(SDL),0)
 RUNS += $(SDL_RUNS)

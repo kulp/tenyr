@@ -1,7 +1,7 @@
 `include "common.vh"
 `timescale 1ns/10ps
 
-module BlockRAM(
+module TwoPortRAM(
     clka, ena, wea, clkb, enb, web, acka, ackb,
     addra, dina, douta, addrb, dinb, doutb
 );

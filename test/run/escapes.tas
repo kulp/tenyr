@@ -1,0 +1,64 @@
+b <- -1
+
+c <- '\0' ; d <- c ==  0 ; b <- b & d
+c <- '\b' ; d <- c ==  8 ; b <- b & d
+c <- '\t' ; d <- c ==  9 ; b <- b & d
+c <- '\n' ; d <- c == 10 ; b <- b & d
+c <- '\v' ; d <- c == 11 ; b <- b & d
+c <- '\f' ; d <- c == 12 ; b <- b & d
+c <- '\r' ; d <- c == 13 ; b <- b & d
+c <- '\'' ; d <- c == 39 ; b <- b & d
+c <- '\\' ; d <- c == 92 ; b <- b & d
+
+c <- [@+char__0 + p] ; d <- c ==  0 ; b <- b & d
+c <- [@+char__8 + p] ; d <- c ==  8 ; b <- b & d
+c <- [@+char__9 + p] ; d <- c ==  9 ; b <- b & d
+c <- [@+char_10 + p] ; d <- c == 10 ; b <- b & d
+c <- [@+char_11 + p] ; d <- c == 11 ; b <- b & d
+c <- [@+char_12 + p] ; d <- c == 12 ; b <- b & d
+c <- [@+char_13 + p] ; d <- c == 13 ; b <- b & d
+c <- [@+char_39 + p] ; d <- c == 39 ; b <- b & d
+c <- [@+char_92 + p] ; d <- c == 92 ; b <- b & d
+
+c <- [(4 + @+string__0) + p] ; d <- c == 'o' ; b <- b & d
+c <- [(4 + @+string__8) + p] ; d <- c == 'o' ; b <- b & d
+c <- [(4 + @+string__9) + p] ; d <- c == 'o' ; b <- b & d
+c <- [(4 + @+string_10) + p] ; d <- c == 'o' ; b <- b & d
+c <- [(4 + @+string_11) + p] ; d <- c == 'o' ; b <- b & d
+c <- [(4 + @+string_12) + p] ; d <- c == 'o' ; b <- b & d
+c <- [(4 + @+string_13) + p] ; d <- c == 'o' ; b <- b & d
+c <- [(4 + @+string_39) + p] ; d <- c == 'o' ; b <- b & d
+c <- [(4 + @+string_92) + p] ; d <- c == 'o' ; b <- b & d
+
+c <- [(5 + @+string__0) + p] ; d <- c ==  0 ; b <- b & d
+c <- [(5 + @+string__8) + p] ; d <- c ==  8 ; b <- b & d
+c <- [(5 + @+string__9) + p] ; d <- c ==  9 ; b <- b & d
+c <- [(5 + @+string_10) + p] ; d <- c == 10 ; b <- b & d
+c <- [(5 + @+string_11) + p] ; d <- c == 11 ; b <- b & d
+c <- [(5 + @+string_12) + p] ; d <- c == 12 ; b <- b & d
+c <- [(5 + @+string_13) + p] ; d <- c == 13 ; b <- b & d
+c <- [(5 + @+string_39) + p] ; d <- c == 39 ; b <- b & d
+c <- [(5 + @+string_92) + p] ; d <- c == 92 ; b <- b & d
+
+c <- [(6 + @+string__0) + p] ; d <- c == 'w' ; b <- b & d
+c <- [(6 + @+string__8) + p] ; d <- c == 'w' ; b <- b & d
+c <- [(6 + @+string__9) + p] ; d <- c == 'w' ; b <- b & d
+c <- [(6 + @+string_10) + p] ; d <- c == 'w' ; b <- b & d
+c <- [(6 + @+string_11) + p] ; d <- c == 'w' ; b <- b & d
+c <- [(6 + @+string_12) + p] ; d <- c == 'w' ; b <- b & d
+c <- [(6 + @+string_13) + p] ; d <- c == 'w' ; b <- b & d
+c <- [(6 + @+string_39) + p] ; d <- c == 'w' ; b <- b & d
+c <- [(6 + @+string_92) + p] ; d <- c == 'w' ; b <- b & d
+
+illegal
+
+char__0: .word '\0' ; string__0: .chars "hello\0world"
+char__8: .word '\b' ; string__8: .chars "hello\bworld"
+char__9: .word '\t' ; string__9: .chars "hello\tworld"
+char_10: .word '\n' ; string_10: .chars "hello\nworld"
+char_11: .word '\v' ; string_11: .chars "hello\vworld"
+char_12: .word '\f' ; string_12: .chars "hello\fworld"
+char_13: .word '\r' ; string_13: .chars "hello\rworld"
+char_39: .word '\'' ; string_39: .chars "hello\'world"
+char_92: .word '\\' ; string_92: .chars "hello\\world"
+

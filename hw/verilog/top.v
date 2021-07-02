@@ -3,8 +3,8 @@
 
 module Tenyr(
     input clk, reset, inout halt,
-    output[7:0] Led, output[7:0] seg, output[3:0] an, inout[23:0] gpio,
-    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync
+    output[7:0] seg, output[3:0] an, inout[23:0] gpio,
+    output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync, inframe
 );
 
     parameter LOADFILE = "default.memh";
@@ -18,7 +18,6 @@ module Tenyr(
     wire[31:0] d_adr, d_to_slav, i_to_slav;
     wire[31:0] d_to_mast, i_to_mast;
 
-    assign Led[7:0] = {8{halt}};
     assign i_ack = i_stb;
 
     tenyr_mainclock clocks(
@@ -49,11 +48,11 @@ module Tenyr(
     wire[3:0] r_sel;
     wire[31:0] r_adr, r_ddn, r_dup;
 
-    BlockRAM #(.LOADH(1), .LOADFILE(LOADFILE), .INIT(0),
+    TwoPortRAM #(.LOADH(1), .LOADFILE(LOADFILE), .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .OFFSET(`RESETVECTOR)
     ) ram(
-        .clka  ( clk_core ),
-        .ena   ( r_stb    ),
+        .clka  ( clk_core ), .clkb ( 1'b0 ),
+        .ena   ( r_stb    ), .enb  ( 1'b0 ),
         .acka  ( r_ack    ),
         .wea   ( r_wen    ),
         .addra ( r_adr    ),
@@ -70,14 +69,14 @@ module Tenyr(
     wire s_stbcyc = s_stb & s_cyc;
 
 `ifdef SERIAL
-    // TODO xilinx-compatible serial device ; rename to eliminate `Sim`
+    // TODO write a hardware-compatible serial device ; rename to eliminate `Sim`
     SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
         .clk ( clk_core ), .reset ( reset ), .enable ( s_stbcyc ),
         .rw  ( s_wen    ), .addr  ( s_adr ), .data   ( s_ddn    )
     );
 `endif
 
-    wire g_wen, g_stb, g_cyc;
+    wire g_wen, g_stb, g_cyc, g_ack;
     wire[3:0] g_sel;
     wire[31:0] g_adr, g_ddn, g_dup;
     wire g_stbcyc = g_stb & g_cyc;
@@ -85,7 +84,7 @@ module Tenyr(
     Seg7 seg7(
         .clk    ( clk_core ), .rw   ( g_wen ), .seg   ( seg   ),
         .reset  ( reset    ), .addr ( g_adr ), .an    ( an    ),
-        .strobe ( g_stbcyc ), .d_in ( g_ddn ), .d_out ( g_dup )
+        .strobe ( g_stbcyc ), .d_in ( g_ddn ), .d_out ( g_dup ), .ack( g_ack )
     );
 
     wire o_wen, o_stb, o_cyc;
@@ -110,7 +109,8 @@ module Tenyr(
         .clk_vga  ( clk_vga  ), .addr   ( v_adr ), .vgaGreen ( vgaGreen ),
         .en       ( 1'b1     ), .d_in   ( v_ddn ), .vgaBlue  ( vgaBlue  ),
         .reset    ( reset    ), .d_out  ( v_dup ), .hsync    ( hsync    ),
-        .strobe   ( v_stbcyc ),                    .vsync    ( vsync    )
+        .strobe   ( v_stbcyc ),                    .vsync    ( vsync    ),
+                                                   .inframe  ( inframe  )
     );
 `endif
 
@@ -147,7 +147,7 @@ module Tenyr(
         .wbs_we_o  ({ o_wen, g_wen, v_wen, s_wen, r_wen, x_wen }),
         .wbs_sel_o ({ o_sel, g_sel, v_sel, s_sel, r_sel, x_sel }),
         .wbs_stb_o ({ o_stb, g_stb, v_stb, s_stb, r_stb, x_stb }),
-        .wbs_ack_i ({ o_stb, g_stb, v_stb, s_stb, r_ack, x_stb }),
+        .wbs_ack_i ({ o_stb, g_ack, v_stb, s_stb, r_ack, x_stb }),
         .wbs_err_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
         .wbs_rty_i ({  1'b0,  1'b0,  1'b0,  1'b0,  1'b0,  1'b0 }),
         .wbs_cyc_o ({ o_cyc, g_cyc, v_cyc, s_cyc, r_cyc, x_cyc }),
