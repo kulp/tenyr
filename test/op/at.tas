@@ -1,6 +1,12 @@
 C <- [(@args + (0 + 0x1000))]
 D <- [(@args + (1 + 0x1000))]
+# For each instruction type, we test straightforwardly first, and then test
+# again after inverting the randomly-generated inputs.
+J <- ~C
+K <- ~D
+
 D <- D & 31 # overshifting is tested separately
+K <- K & 31
 
 # passing until proven broken
 B <- -1
@@ -8,6 +14,14 @@ B <- -1
 I <- C @ D
 # test type 0
 E <- C >>> D
+E <- E & 1
+E <- E == 1
+I <- I == E
+B <- B & I
+
+I <- J @ K
+# test type 0
+E <- J >>> K
 E <- E & 1
 E <- E == 1
 I <- I == E
@@ -21,9 +35,25 @@ E <- E == 1
 I <- I == E
 B <- B & I
 
+I <- J @ 3
+# test type 1
+E <- J >>> 3
+E <- E & 1
+E <- E == 1
+I <- I == E
+B <- B & I
+
 I <- 0x7ef @ D
 # test type 2
 E <- 0x7ef >>> D
+E <- E & 1
+E <- E == 1
+I <- I == E
+B <- B & I
+
+I <- 0x7ef @ K
+# test type 2
+E <- 0x7ef >>> K
 E <- E & 1
 E <- E == 1
 I <- I == E
