@@ -70,7 +70,7 @@ module Tenyr(
 
 `ifdef SERIAL
     // TODO write a hardware-compatible serial device ; rename to eliminate `Sim`
-    SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
+    SimWrap_simserial #(.BASE(32'h20), .SIZE(2)) serial(
         .clk ( clk_core ), .reset ( reset ), .enable ( s_stbcyc ),
         .rw  ( s_wen    ), .addr  ( s_adr ), .data   ( s_ddn    )
     );
