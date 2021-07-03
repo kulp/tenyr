@@ -513,13 +513,13 @@ int main(int argc, char *argv[])
     void *run_ud = NULL;
     rc = s->run_sim(s, &ops, &run_ud, NULL);
     if (rc < 0)
-        fprintf(stderr, "Error during simulation, P=0x%08x\n", s->machine.regs[15]);
+        fatal(0, "Error during simulation, P=0x%08x", s->machine.regs[15]);
 
     fclose(infile);
 
     rc = devices_teardown(s);
     if (rc != 0)
-        fprintf(stderr, "Error during device teardown\n");
+        fatal(0, "Error during device teardown");
 
     if (s->conf.debugging > 0)
         fprintf(stderr, "Instructions executed: %lu\n", s->insns_executed);

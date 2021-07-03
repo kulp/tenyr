@@ -20,11 +20,28 @@ module Top();
 
     Tenyr #(.LOADFILE(LOADFILE)) tenyr(.clk, .reset, .halt);
 
+    task end_simulation;
+    begin
+        integer row, col, i;
+        if ($test$plusargs("DUMPENDSTATE")) begin
+            for (row = 0; row < 3; row = row + 1) begin
+                $write("state: ");
+                for (col = 0; col < 6 && row * 6 + col < 16; col = col + 1) begin
+                    i = row * 6 + col;
+                    $write("%c %08x ", 65 + i, tenyr.core.regs.store[i]);
+                end
+                $write("\n");
+            end
+        end
+        $finish;
+    end
+    endtask
+
 `ifdef __ICARUS__
     // TODO The `ifdef guard should really be controlling for VPI availability
-    reg [800:0] filename;
-    reg [800:0] logfile = "Top.vcd";
-    integer periods = 64;
+    reg [8 * 4096:0] filename;
+    reg [8 * 4096:0] logfile = "Top.vcd";
+    integer periods = 32'hffffffff;
     integer clk_count = 0;
     integer insn_count = 0;
     integer temp;
@@ -43,30 +60,18 @@ module Top();
             logfile = filename;
         $dumpfile(logfile);
         $dumpvars;
-        #(periods * `CLOCKPERIOD) begin:ending
-            integer row, col, i;
-            if ($test$plusargs("DUMPENDSTATE")) begin
-                for (row = 0; row < 3; row = row + 1) begin
-                    $write("state: ");
-                    for (col = 0; col < 6 && row * 6 + col < 16; col = col + 1) begin
-                        i = row * 6 + col;
-                        $write("%c %08x ", 65 + i, tenyr.core.regs.store[i]);
-                    end
-                    $write("\n");
-                end
-            end
-            $finish;
-        end
+        #(periods * `CLOCKPERIOD) end_simulation();
     end
+`endif
 
     always #`CLOCKPERIOD begin
+        if (tenyr.core.insn == 32'hffffffff)
+            end_simulation();
         clk_count = clk_count + 1;
         if (tenyr.core.state == tenyr.core.s3) begin
             insn_count = insn_count + 1;
         end
     end
-
-`endif
 
 endmodule
 

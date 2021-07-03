@@ -56,11 +56,11 @@ distclean:: clobber
 clean clobber::
 	-rmdir $(BUILDDIR)/devices $(BUILDDIR) build # fail, ignore if non-empty
 	-$(MAKE) -C $(TOP)/test $@
+	-$(MAKE) -C $(TOP)/ex $@
 	-$(MAKE) -C $(TOP)/hw/icarus $@
 
 clobber_FILES += $(BUILDDIR)/*.gc??
 clobber_FILES += $(BUILDDIR)/coverage.info*
-clobber_FILES += $(BUILDDIR)/PERIODS.mk
 clobber_FILES += $(BUILDDIR)/coverage_html_*
 clobber_FILES += $(BUILDDIR)/vpidevices.vpi
 clobber_FILES += $(TOP)/test/op/*.texe

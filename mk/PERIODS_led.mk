@@ -1,1 +1,0 @@
-PERIODS_led=130
