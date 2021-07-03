@@ -38,7 +38,8 @@ static void NORETURN main_fatal_(int code, const char *file, int line,
     else
         fwrite("\n", 1, 1, stderr);
 
-    longjmp(errbuf, code);
+    // Ensure that the code is never zero, so that we always exit() nonzero.
+    longjmp(errbuf, code | 1);
 }
 
 static void main_debug_(int level, const char *file, int line,
