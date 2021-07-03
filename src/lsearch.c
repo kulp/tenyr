@@ -1,4 +1,4 @@
-// Fake lsearch for emscripten support since emscripten doesn't have one
+// Provides lsearch for platforms that lack one.
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
