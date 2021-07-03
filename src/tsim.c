@@ -443,7 +443,7 @@ int main(int argc, char *argv[])
     s->plugin_cookie.param = s->conf.params;
 
     if ((rc = setjmp(errbuf))) {
-        if (rc == DISPLAY_USAGE)
+        if (rc & DISPLAY_USAGE)
             usage(argv[0]);
         rc = EXIT_FAILURE;
         goto cleanup;

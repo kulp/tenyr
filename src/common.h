@@ -41,9 +41,9 @@ static inline int32_t SEXTEND32(unsigned int bits, int32_t val)
 // TODO document fixed lengths or remove the limitations
 #define LINE_LEN        512
 
-#define PRINT_ERRNO 0x80
+#define DISPLAY_USAGE   0x40
+#define PRINT_ERRNO     0x80
 
-enum errcode { /* 0 impossible, 1 reserved for default */ DISPLAY_USAGE=2 };
 extern jmp_buf errbuf;
 #define fatal(Code,...) \
     fatal_(Code,__FILE__,__LINE__,__func__,__VA_ARGS__)

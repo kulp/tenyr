@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     param_init((struct param_state **)&params);
 
     if ((rc = setjmp(errbuf))) {
-        if (rc == DISPLAY_USAGE)
+        if (rc & DISPLAY_USAGE)
             usage(argv[0]);
         // We may have created an output file already, but we do not try to
         // remove it, because doing so by filename would be a race condition.
