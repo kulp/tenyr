@@ -34,8 +34,6 @@ endif
 ARCH := $(shell uname -m)
 ifeq ($(PLATFORM),mingw)
  OS := Win32
-else ifeq ($(PLATFORM),emscripten)
- OS := emscripten
 else
  OS := $(shell uname -s)
 endif

@@ -24,7 +24,6 @@
 int recipe_emscript(struct sim_state *s); // linked in externally
 
 #define RECIPES(_) \
-    _(emscript  , "change behaviour to use an event loop for emscripten") \
     _(jit       , "use a JIT compiler (usually faster, but no -v supported)") \
     _(plugin    , "load plugins specified through param mechanism") \
     _(prealloc  , "preallocate memory (higher memory footprint, maybe faster)") \

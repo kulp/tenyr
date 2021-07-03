@@ -31,7 +31,7 @@ common_OBJECTS = common.o param.o $(patsubst %.c,%.o,$(notdir $(wildcard $(OS_PA
 shared_OBJECTS = common.o
 tas_OBJECTS    = $(common_OBJECTS) asmif.o asm.o obj.o parser.o lexer.o
 tsim_OBJECTS   = $(common_OBJECTS) simif.o asm.o obj.o plugin.o \
-                 $(DEVOBJS) sim.o emscripten.o
+                 $(DEVOBJS) sim.o
 tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ifeq ($(USE_OWN_SEARCH),1)
