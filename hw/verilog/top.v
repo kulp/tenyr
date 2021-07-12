@@ -22,7 +22,8 @@ module Tenyr(
 
     tenyr_mainclock clocks(
         .clk_in ( clk   ), .clk_core ( clk_core ),
-        .reset  ( reset ), .clk_vga  ( clk_vga  )
+        .reset  ( reset ), .clk_vga  ( clk_vga  ),
+        .locked (       )
     );
 
     Core core(
@@ -51,13 +52,13 @@ module Tenyr(
     TwoPortRAM #(.LOADH(1), .LOADFILE(LOADFILE), .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .OFFSET(`RESETVECTOR)
     ) ram(
-        .clka  ( clk_core ), .clkb ( 1'b0 ),
-        .ena   ( r_stb    ), .enb  ( 1'b0 ),
-        .acka  ( r_ack    ),
-        .wea   ( r_wen    ),
-        .addra ( r_adr    ),
-        .dina  ( r_ddn    ),
-        .douta ( r_dup    )
+        .clka  ( clk_core ), .clkb  ( '0 ),
+        .ena   ( r_stb    ), .enb   ( '0 ),
+        .acka  ( r_ack    ), .ackb  (    ),
+        .wea   ( r_wen    ), .web   ( '0 ),
+        .addra ( r_adr    ), .addrb ( '0 ),
+        .dina  ( r_ddn    ), .dinb  ( '0 ),
+        .douta ( r_dup    ), .doutb (    )
     );
 
 // -----------------------------------------------------------------------------
@@ -70,7 +71,7 @@ module Tenyr(
 
 `ifdef SERIAL
     // TODO write a hardware-compatible serial device ; rename to eliminate `Sim`
-    SimWrap_simserial #(.BASE(12'h20), .SIZE(2)) serial(
+    SimWrap_simserial #(.BASE(32'h20), .SIZE(2)) serial(
         .clk ( clk_core ), .reset ( reset ), .enable ( s_stbcyc ),
         .rw  ( s_wen    ), .addr  ( s_adr ), .data   ( s_ddn    )
     );
@@ -153,8 +154,10 @@ module Tenyr(
         .wbs_cyc_o ({ o_cyc, g_cyc, v_cyc, s_cyc, r_cyc, x_cyc }),
 
         // unused ports
-        .wbm_cti_i ( 3'bz ),
-        .wbm_bte_i ( 2'bz )
+        .wbm_cti_i ( '0 ),
+        .wbm_bte_i ( '0 ),
+        .wbs_cti_o (    ),
+        .wbs_bte_o (    )
     );
 
 endmodule

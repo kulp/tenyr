@@ -56,10 +56,6 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
     reg[3:0] rop;
     reg add, act, staged;
 
-    function Bit(input[31:0] rA, rB);
-        Bit = rA >> rB;
-    endfunction
-
     always @(posedge clk) begin
         { rop , valZ , rA   , rB   , rC   , done , add , act    , staged } <=
         { op  , rZ   , valA , valB , valC , add  , act , staged , en     } ;
@@ -70,7 +66,7 @@ module Exec(input clk, en, output reg done, output reg[31:0] valZ,
             4'h3: rY <=    (rA >>> rB) ; 4'hb: rY <=    (rA  >> rB  );
             4'h4: rY <=    (rA  +  rB) ; 4'hc: rY <=    (rA  -  rB  );
             4'h5: rY <=    (rA  *  rB) ; 4'hd: rY <=    (rA  << rB  );
-            4'h6: rY <= {32{rA ==  rB}}; 4'he: rY <= {32{Bit(rA, rB)}};
+            4'h6: rY <= {32{rA ==  rB}}; 4'he: rY <= {32{rA    [rB] }};
             4'h7: rY <= {32{rA  <  rB}}; 4'hf: rY <= {32{rA  >= rB  }};
         endcase
         if (act) rZ <= rY + rC;
