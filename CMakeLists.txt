@@ -14,6 +14,8 @@ cmake_policy(VERSION 3.12...3.19)
 
 enable_testing()
 
+include(cmake/test_functions.cmake)
+
 add_subdirectory(lib)
 add_subdirectory(ex)
 
