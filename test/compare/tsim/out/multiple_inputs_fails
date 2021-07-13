@@ -1,0 +1,25 @@
+Usage: tsim [ OPTIONS ] image-file
+Options:
+  -@, --options=X       use options from file X
+  -a, --address=N       load instructions into memory at word address N
+  -f, --format=F        select input format (obj, text, memh)
+  -n, --scratch         don't run default recipes
+  -p, --param=X=Y       set parameter X to value Y
+  -r, --recipe=R        run recipe R (see list below)
+  -s, --start=N         start execution at word address N
+  -v, --verbose         increase verbosity of output
+
+  -h, --help            display this message
+  -V, --version         print a string describing the version
+
+Available recipes (in alphabetical order):
+  jit: use a JIT compiler (usually faster, but no -v supported)
+  plugin: load plugins specified through param mechanism
+  prealloc: preallocate memory (higher memory footprint, maybe faster)
+  serial: enable simple serial device and connect to stdio
+  sparse: use sparse memory (lower memory footprint, maybe slower)
+  top_page: map a page at the highest addresses in memory
+  tsimrc: parse tsimrc, after command-line args
+  zero_word: make address zero readable and writable
+Default recipes (in order of execution):
+  tsimrc sparse serial plugin top_page 
