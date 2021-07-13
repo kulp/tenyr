@@ -354,3 +354,4 @@ check_std_outputs(NAME "params overflow"        COMMAND tas     ARGS -fmemh -pA=
 
 check_std_outputs(NAME "address invalid"        COMMAND tsim    ARGS -ftext -a 123 PROPERTIES WILL_FAIL TRUE)
 check_std_outputs(NAME "address/start"          COMMAND tsim    ARGS -ftext -vvv -a 0x1011 -s 0x1012)
+check_std_outputs(NAME "verbosity 1"            COMMAND tsim    ARGS -ftext -v)
