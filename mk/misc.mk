@@ -104,7 +104,6 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_specific_tsim_plugins
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$($*) -ftext -vvv     /dev/null 2>&1 | $(GREP) "read  @"    && $(MAKESTEP) "    ... -vvv ok"
 	$($*) -ftext -vvvv    /dev/null 2>&1 | $(GREP) "P 00001"    && $(MAKESTEP) "    ... -vvvv ok"
 	$($*) -ftext x y      /dev/null 2>&1 | $(GREP) "More than"  && $(MAKESTEP) "    ... multiple files rejected ok"
 	$($*) -v -ftext - < /dev/null 2>&1 | $(GREP) "0x00001000"   && $(MAKESTEP) "    ... stdin accepted for input ok"

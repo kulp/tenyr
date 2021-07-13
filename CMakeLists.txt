@@ -356,3 +356,4 @@ check_std_outputs(NAME "address invalid"        COMMAND tsim    ARGS -ftext -a 1
 check_std_outputs(NAME "address/start"          COMMAND tsim    ARGS -ftext -vvv -a 0x1011 -s 0x1012)
 check_std_outputs(NAME "verbosity 1"            COMMAND tsim    ARGS -ftext -v)
 check_std_outputs(NAME "verbosity 2"            COMMAND tsim    ARGS -ftext -vv)
+check_std_outputs(NAME "verbosity 3"            COMMAND tsim    ARGS -ftext -vvv)
