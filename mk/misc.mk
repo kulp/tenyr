@@ -104,8 +104,6 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	echo '.word 1' | $($*) -fmemh -pformat.memh.offset=5 -   | $(GREP) "@5 00000001" \
-	                                                            && $(MAKESTEP) "    ... memh offset ok"
 	echo '.word 1' | $($*) -fmemh -p{A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z}=1 \
 	                              -pformat.memh.offset=5 -   | $(GREP) "@5 00000001" \
 	                                                            && $(MAKESTEP) "    ... params overflow ok"

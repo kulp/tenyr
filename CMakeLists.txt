@@ -349,4 +349,5 @@ check_std_outputs(NAME "text disassembly"       COMMAND tas     ARGS -ftext -d)
 check_std_outputs(NAME "quiet disassembly"      COMMAND tas     ARGS -ftext -d -q)
 check_std_outputs(NAME "verbose disassembly"    COMMAND tas     ARGS -ftext -d -v)
 check_std_outputs(NAME "memh explicit"          COMMAND tas     ARGS -fmemh -pformat.memh.explicit=1)
+check_std_outputs(NAME "memh offset"            COMMAND tas     ARGS -fmemh -pformat.memh.offset=5)
 
