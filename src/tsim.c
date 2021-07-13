@@ -115,14 +115,14 @@ static void usage(const char *me)
            "  -v, --verbose         increase verbosity of output\n"
            "\n"
            "  -h, --help            display this message\n"
-           "  -V, --version         print the string `%s'\n"
+           "  -V, --version         print a string describing the version\n"
            "\n"
            "Available recipes (in alphabetical order):\n"
            RECIPES(UsageDesc)
            "Default recipes (in order of execution):\n"
            "  " DEFAULT_RECIPES(Space)
            "\n"
-           , me, format_list, version());
+           , me, format_list);
 }
 
 static int pre_fetch(struct sim_state *s, void *ud)

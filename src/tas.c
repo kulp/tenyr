@@ -57,8 +57,8 @@ static void usage(const char *me)
            "  -q, --quiet           disable disassembly output comments\n"
            "  -v, --verbose         disable simplified disassembly output\n"
            "  -h, --help            display this message\n"
-           "  -V, --version         print the string `%s'\n"
-           , me, format_list, version());
+           "  -V, --version         print a string describing the version\n"
+           , me, format_list);
 }
 
 static int process_stream(struct param_state *params, const struct format *f,

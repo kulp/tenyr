@@ -71,8 +71,8 @@ static void usage(const char *me)
            "  -o, --output=X        write output to filename X\n"
            "  -p, --param=X=Y       set parameter X to value Y\n"
            "  -h, --help            display this message\n"
-           "  -V, --version         print the string `%s'\n"
-           , me, version());
+           "  -V, --version         print a string describing the version\n"
+           , me);
 }
 
 static int do_load(struct link_state *s, STREAM *in)
