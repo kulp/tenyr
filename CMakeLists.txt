@@ -372,3 +372,13 @@ set_tests_properties(
         LABELS "tool=tsim"
 )
 
+add_test(
+    NAME "tsim_plugins_cap"
+    COMMAND tsim -@ "${CMAKE_SOURCE_DIR}/test/misc/long.rcp" "${CMAKE_SOURCE_DIR}/test/misc/obj/empty.to"
+)
+set_tests_properties(
+    "tsim_plugins_cap"
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION "^Saw 17 plugins names, handling only the first 16"
+        LABELS "tool=tsim"
+)
