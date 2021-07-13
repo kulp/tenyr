@@ -104,7 +104,6 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$($*) -d -ftext -v - <<<0xc | $(GREP) "A + 0x0000000c"      && $(MAKESTEP) "    ... -v ok"
 	echo '.zero 2' | $($*) -fmemh -pformat.memh.explicit=1 - | $(GREP) "@0 00000000" \
 	                                                            && $(MAKESTEP) "    ... memh explicit ok"
 	echo '.word 1' | $($*) -fmemh -pformat.memh.offset=5 -   | $(GREP) "@5 00000001" \
