@@ -102,9 +102,6 @@ check_args_%: check_args_specific_% ;
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
 
-check_args_specific_tas: check_args_specific_%: %$(EXE_SUFFIX)
-	@$(MAKESTEP) "Checking $* specific options ... "
-
 check_args_specific_tsim: s = 4105
 check_args_specific_tsim: sx = $(shell printf 0x%08x $(s))
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_specific_tsim_plugins
