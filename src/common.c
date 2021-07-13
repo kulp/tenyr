@@ -14,6 +14,16 @@
 
 jmp_buf errbuf;
 
+// Strip directory components from filename
+static const char *notdir(const char *file)
+{
+    const char *slash = strrchr(file, '/');
+    if (slash)
+        file = slash + 1; // if we found a slash, start after it
+
+    return file;
+}
+
 static void NORETURN main_fatal_(int code, const char *file, int line,
     const char *func, const char *fmt, ...)
 {
@@ -21,7 +31,7 @@ static void NORETURN main_fatal_(int code, const char *file, int line,
     va_start(vl,fmt);
     vfprintf(stderr, fmt, vl);
     va_end(vl);
-    fprintf(stderr, " (in %s() at %s:%d)", func, file, line);
+    fprintf(stderr, " (in %s() at %s:%d)", func, notdir(file), line);
 
     if (code & PRINT_ERRNO)
         fprintf(stderr, ": %s\n", strerror(errno));
@@ -44,7 +54,7 @@ static void main_debug_(int level, const char *file, int line,
     va_start(vl,fmt);
     vfprintf(stderr, fmt, vl);
     va_end(vl);
-    fprintf(stderr, " (in %s() at %s:%d)\n", func, file, line);
+    fprintf(stderr, " (in %s() at %s:%d)\n", func, notdir(file), line);
 }
 
 long long numberise(char *str, int base)
