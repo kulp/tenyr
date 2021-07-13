@@ -44,8 +44,8 @@ int dispatch_op(void *ud, int op, int32_t addr, int32_t *data)
     int result = device->ops.op(device->cookie, op, addr, data);
 
     if (s->conf.verbose > 2) {
-        printf("%-5s @ 0x%08x = 0x%08x\n",
-               (op == OP_WRITE) ? "write" : "read", addr, *data);
+        fprintf(stderr, "%-5s @ 0x%08x = 0x%08x\n",
+                        (op == OP_WRITE) ? "write" : "read", addr, *data);
     }
 
     return result;
