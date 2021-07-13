@@ -76,17 +76,10 @@ endif
 .SECONDARY: coverage.info.src coverage.info.vpi
 coverage: coverage_html_src_vpi
 
-LCOV ?= lcov
-
-.PHONY: lcov_setup
-# LCOV 1.9 doesn't support `--rc` or `--config-file` so it is necessary to copy
-# our lcovrc into a home directory. This process will be skipped if an lcovrc
-# already exists.
-lcov_setup:
-	[[ $$CI = "true" ]] && cp $(TOP)/scripts/lcovrc ~/.lcovrc || true
+LCOV ?= lcov --config-file=$(TOP)/scripts/lcovrc
 
 COVERAGE_RULE = check
-coverage.info: $(COVERAGE_RULE) | lcov_setup
+coverage.info: $(COVERAGE_RULE)
 	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
 coverage.info.%: coverage.info
