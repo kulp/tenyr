@@ -345,3 +345,5 @@ set_tests_properties(
     TIMEOUT 60
 )
 
+check_std_outputs(NAME "text disassembly"       COMMAND tas     ARGS -ftext -d)
+
