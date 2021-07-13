@@ -346,4 +346,5 @@ set_tests_properties(
 )
 
 check_std_outputs(NAME "text disassembly"       COMMAND tas     ARGS -ftext -d)
+check_std_outputs(NAME "quiet disassembly"      COMMAND tas     ARGS -ftext -d -q)
 
