@@ -360,3 +360,15 @@ check_std_outputs(NAME "verbosity 3"            COMMAND tsim    ARGS -ftext -vvv
 check_std_outputs(NAME "verbosity 4"            COMMAND tsim    ARGS -ftext -vvvv)
 check_std_outputs(NAME "verbosity 5"            COMMAND tsim    ARGS -ftext -vvvvv)
 check_std_outputs(NAME "multiple inputs fails"  COMMAND tsim    ARGS nonexistent_file_name another_inextant_file    PROPERTIES WILL_FAIL TRUE)
+
+add_test(
+    NAME    "tsim_stdin_accepted"
+    COMMAND sh -c "echo | tsim -v -ftext -"
+)
+set_tests_properties(
+    tsim_stdin_accepted
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION "^IP = 0x00001000"
+        LABELS "tool=tsim"
+)
+

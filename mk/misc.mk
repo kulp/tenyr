@@ -104,7 +104,6 @@ check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_specific_tsim_plugins
 	@$(MAKESTEP) "Checking $* specific options ... "
-	$($*) -v -ftext - < /dev/null 2>&1 | $(GREP) "0x00001000"   && $(MAKESTEP) "    ... stdin accepted for input ok"
 	$($*) -@ $(TOP)/test/misc/long.rcp $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "handling"    && $(MAKESTEP) "    ... plugins cap ok"
 
 check_args_specific_tsim_plugins: $(TOP)/test/misc/deref.texe
