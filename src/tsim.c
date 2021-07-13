@@ -67,7 +67,6 @@ static const char shortopts[] = "@:a:df:np:r:s:vhV";
 static const struct option longopts[] = {
     { "options"    , required_argument, NULL, '@' },
     { "address"    , required_argument, NULL, 'a' },
-    { "debug"      ,       no_argument, NULL, 'd' },
     { "format"     , required_argument, NULL, 'f' },
     { "scratch"    ,       no_argument, NULL, 'n' },
     { "param"      , required_argument, NULL, 'p' },
@@ -394,7 +393,6 @@ static int parse_args(struct sim_state *s, int argc, char *argv[])
         switch (ch) {
             case '@': if (parse_opts_file(s, optarg)) fatal(PRINT_ERRNO, "Error in opts file"); break;
             case 'a': s->conf.load_addr = (int32_t)strtol(optarg, NULL, 0); break;
-            case 'd': s->conf.debugging = 1; break;
             case 'f': if (find_format(optarg, &s->conf.fmt)) { usage(argv[0]); exit(EXIT_FAILURE); } break;
             case 'n': s->conf.run_defaults = 0; break;
             case 'p': param_add(s->conf.params, optarg); break;
@@ -419,7 +417,6 @@ int main(int argc, char *argv[])
         .conf = {
             .verbose      = 0,
             .run_defaults = 1,
-            .debugging    = 0,
             .start_addr   = RAM_BASE,
             .load_addr    = RAM_BASE,
             .halt_addr    = (signed)0xffffffff, // default to legacy halt behavior
@@ -519,9 +516,6 @@ int main(int argc, char *argv[])
     rc = devices_teardown(s);
     if (rc != 0)
         fatal(0, "Error during device teardown");
-
-    if (s->conf.debugging > 0)
-        fprintf(stderr, "Instructions executed: %lu\n", s->insns_executed);
 
 cleanup:
     param_destroy(s->conf.params);

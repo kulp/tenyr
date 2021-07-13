@@ -32,7 +32,6 @@ struct sim_state {
     struct {
         int verbose;
         int run_defaults;   ///< whether to run default recipes
-        int debugging;
 
         struct param_state *params;
 
