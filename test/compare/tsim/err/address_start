@@ -1,0 +1,9 @@
+write @ 0x00001011 = 0x00000000
+read  @ 0x00001011 = 0x00000000
+write @ 0x00001012 = 0x00000001
+read  @ 0x00001012 = 0x00000001
+read  @ 0x00001012 = 0x00000001
+IP = 0x00001012	 A  <-  A  |  A + 1           # .word 0x00000001
+read  @ 0x00001013 = 0xffffffff
+IP = 0x00001013	 P  <- [P  -  1]              # .word 0xffffffff
+read  @ 0x00001013 = 0xffffffff

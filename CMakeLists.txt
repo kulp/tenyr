@@ -352,3 +352,5 @@ check_std_outputs(NAME "memh explicit"          COMMAND tas     ARGS -fmemh -pfo
 check_std_outputs(NAME "memh offset"            COMMAND tas     ARGS -fmemh -pformat.memh.offset=5)
 check_std_outputs(NAME "params overflow"        COMMAND tas     ARGS -fmemh -pA=1 -pB=1 -pC=1 -pD=1 -pE=1 -pF=1 -pG=1 -pH=1 -pI=1 -pJ=1 -pK=1 -pL=1 -pM=1 -pN=1 -pO=1 -pP=1 -pQ=1 -pR=1 -pS=1 -pT=1 -pU=1 -pV=1 -pW=1 -pX=1 -pY=1 -pZ=1 -pformat.memh.offset=5)
 
+check_std_outputs(NAME "address invalid"        COMMAND tsim    ARGS -ftext -a 123 PROPERTIES WILL_FAIL TRUE)
+check_std_outputs(NAME "address/start"          COMMAND tsim    ARGS -ftext -vvv -a 0x1011 -s 0x1012)
