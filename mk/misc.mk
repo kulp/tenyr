@@ -102,19 +102,6 @@ check_args_%: check_args_specific_% ;
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
 
-check_args_specific_tsim: check_args_specific_%: %$(EXE_SUFFIX) check_args_specific_tsim_plugins
-	@$(MAKESTEP) "Checking $* specific options ... "
-
-check_args_specific_tsim_plugins: $(TOP)/test/misc/deref.texe
-check_args_specific_tsim_plugins: tsim$(EXE_SUFFIX)
-	@$(MAKESTEP) "Checking $* specific options (plugins) ... "
-	$(tsim) -p plugin[0]+=failure_NONE $(TOP)/test/misc/deref.texe && $(MAKESTEP) "    .... plugin no-error case ok"
-	$(tsim) -p plugin[0]+=failure_OP   $(TOP)/test/misc/deref.texe   2>&1 | $(GREP) "Error during simulation" && $(MAKESTEP) "    .... plugin operation failure detected ok"
-	$(tsim) -p plugin[0]+=failure_INIT $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error while finalising" && $(MAKESTEP) "    ... plugin initialisation failure detected ok"
-	$(tsim) -p plugin[0]+=failure_FINI $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Error during device teardown" && $(MAKESTEP) "    ... plugin finalisation failure detected ok"
-	$(tsim) -p plugin[0]+=failure_PLUGIN_INIT -rplugin $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) 'Running recipe `plugin` failed' && $(MAKESTEP) "    ... plugin nested init failure detected ok"
-	$(tsim) -p plugin[0]+=failure_PLUGIN_NO_ADD_DEVICE $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "Failed to find symbol" && $(MAKESTEP) "    ... plugin missing symbol failure detected ok"
-
 check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* specific options ... "
 	$($*) - < $(TOP)/test/misc/obj/empty.to 2>&1 | $(GREP) "TOV"	&& $(MAKESTEP) "    ... stdin accepted for input ok"

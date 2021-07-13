@@ -382,3 +382,27 @@ set_tests_properties(
         PASS_REGULAR_EXPRESSION "^Saw 17 plugins names, handling only the first 16"
         LABELS "tool=tsim"
 )
+
+add_test(
+    NAME    "create deref.texe"
+    COMMAND tas -o deref.texe ${CMAKE_SOURCE_DIR}/test/misc/deref.tas
+)
+
+set_tests_properties("create deref.texe" PROPERTIES FIXTURES_SETUP "deref.texe")
+
+check_std_outputs(NAME "plugin no-error"        COMMAND tsim    ARGS -p "plugin[0]+=failure_NONE"           INPUT deref.texe)
+check_std_outputs(NAME "plugin operation"       COMMAND tsim    ARGS -p "plugin[0]+=failure_OP"             INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
+check_std_outputs(NAME "plugin initialisation"  COMMAND tsim    ARGS -p "plugin[0]+=failure_INIT"           INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
+check_std_outputs(NAME "plugin finalisation"    COMMAND tsim    ARGS -p "plugin[0]+=failure_FINI"           INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
+check_std_outputs(NAME "plugin nested init"     COMMAND tsim    ARGS -p "plugin[0]+=failure_PLUGIN_INIT"    INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
+
+add_test(
+    NAME "tsim_plugin_missing_symbol"
+    COMMAND tsim -p "plugin[0]+=failure_PLUGIN_NO_ADD_DEVICE" ${CMAKE_SOURCE_DIR}/test/misc/obj/empty.to
+)
+set_tests_properties(
+    "tsim_plugin_missing_symbol"
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION "^Failed to find symbol `failure_PLUGIN_NO_ADD_DEVICE_add_device`"
+        LABELS "tool=tsim"
+)
