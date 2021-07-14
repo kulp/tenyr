@@ -88,7 +88,7 @@ coverage_html: coverage.info
 	genhtml --output-directory $@ $^
 
 check: check_sw check_hw
-CHECK_SW_TASKS ?= check_args check_behaviour check_sim check_obj
+CHECK_SW_TASKS ?= check_behaviour check_sim check_obj
 check_sw: check_ctest
 check_sw: $(CHECK_SW_TASKS)
 
@@ -96,8 +96,6 @@ check_ctest:
 	cmake -S $(TOP) -B $(BUILDDIR)/ctest
 	cmake --build $(BUILDDIR)/ctest --target examples
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
-
-check_args: check_args_tas check_args_tld check_args_tsim
 
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
