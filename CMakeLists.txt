@@ -409,3 +409,17 @@ set_tests_properties(
 
 check_std_outputs(NAME "deref zero failure"     COMMAND tsim                        INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
 check_std_outputs(NAME "deref zero success"     COMMAND tsim    ARGS -rzero_word    INPUT deref.texe    PROPERTIES WILL_FAIL FALSE)
+
+file(GLOB OPS test/op/*.tas)
+foreach(op_path ${OPS})
+    get_filename_component(op "${op_path}" NAME_WLE)
+    add_test(
+        NAME    "create ${op}.texe"
+        COMMAND tas -o "${op}.texe" "${op_path}"
+    )
+    set_tests_properties("create ${op}.texe" PROPERTIES FIXTURES_SETUP "${op}.texe")
+
+    check_std_outputs(NAME "op ${op}"   COMMAND tsim    ARGS -p tsim.dump_end_state=1   INPUT "${op}.texe")
+
+endforeach()
+
