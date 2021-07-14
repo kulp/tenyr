@@ -1,5 +1,4 @@
 *.to
 *.texe
-gen/
 build/
 dist/
