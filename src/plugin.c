@@ -15,7 +15,7 @@ int tenyr_plugin_host_init(void *libhandle)
             .debug = debug_,
         };
 
-        init(&ops);
+        return init(&ops);
     }
 
     return 0;
@@ -72,7 +72,9 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
                 free(resolved);
             }
 
-            tenyr_plugin_host_init(libhandle);
+            int failed_init = tenyr_plugin_host_init(libhandle);
+            if (failed_init)
+                return failed_init;
 
             rc |= success(libhandle, inst, parent, implstem, ud);
 
