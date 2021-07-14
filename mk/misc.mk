@@ -250,7 +250,6 @@ test_demo_%: $(TOP)/ex/%_demo.texe
 randwords = $(shell LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase | fold -w8 | head -n$1 | sed 's/^/.word 0x/;s/$$/;/')
 
 # Op tests are self-testing -- they must leave B with the value 0xffffffff if successful.
-$(OPS:%=$(TOP)/test/op/%.texe): INCLUDES += $(TOP)/test/op
 $(OPS:%=$(TOP)/test/op/%.texe): $(TOP)/test/op/%.texe: $(TOP)/test/op/%.to $(TOP)/test/op/args.to | $(build_tas)
 
 # Use .INTERMEDIATE to cause op args files to be deleted after one run

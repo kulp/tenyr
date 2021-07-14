@@ -4,8 +4,6 @@ include $(TOP)/mk/rules.mk
 
 vpath %.tas $(TOP)/lib
 
-%.tas: INCLUDES += $(TOP)/lib
-
 TARGETS = \
     bm_chars.texe       \
     bm_conway.texe      \
