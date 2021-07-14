@@ -423,3 +423,14 @@ foreach(op_path ${OPS})
 
 endforeach()
 
+add_test(
+    NAME    "tld_stdin_accepted"
+    COMMAND sh -c "tld - < ${CMAKE_SOURCE_DIR}/test/misc/obj/empty.to"
+)
+set_tests_properties(
+    tld_stdin_accepted
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION "^TOV"
+        LABELS "tool=tld"
+)
+
