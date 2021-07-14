@@ -114,13 +114,6 @@ check_behaviour_tsim: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
 	$($*) $(TOP)/ex/irc.texe <<<'PING 123' 2>/dev/null | $(GREP) 'PONG 123'     && $(MAKESTEP) "    ... ping-pong ok"
 
-check_sim_run: check_sim_deref
-check_sim_deref: texe = $(TOP)/test/misc/deref.texe
-# XXX we should be able to use $(tsim_FLAGS) here rather than appending to tsim
-check_sim_deref: tsim += -rzero_word
-check_sim_deref: $(TOP)/test/misc/deref.texe
-	$(run)
-
 clean_FILES += check_obj_*.to null.to ff.bin
 null.to: ; $(tas) -o $@ /dev/null
 ff.bin:; echo -ne '\0377\0377\0377\0377' > $@

@@ -406,3 +406,6 @@ set_tests_properties(
         PASS_REGULAR_EXPRESSION "^Failed to find symbol `failure_PLUGIN_NO_ADD_DEVICE_add_device`"
         LABELS "tool=tsim"
 )
+
+check_std_outputs(NAME "deref zero failure"     COMMAND tsim                        INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
+check_std_outputs(NAME "deref zero success"     COMMAND tsim    ARGS -rzero_word    INPUT deref.texe    PROPERTIES WILL_FAIL FALSE)
