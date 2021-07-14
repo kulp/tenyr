@@ -102,9 +102,6 @@ check_args_%: check_args_specific_% ;
 
 check_args_specific_%: %$(EXE_SUFFIX) ;
 
-check_args_specific_tld: check_args_specific_%: %$(EXE_SUFFIX)
-	@$(MAKESTEP) "Checking $* specific options ... "
-
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
 
