@@ -55,7 +55,7 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	$(YACC.y) --defines=$*.h -o $*.c $<
 
 $(FAILURE_TARGETS): libtenyrfailure%$(DYLIB_SUFFIX): pluginimpl,dy.o $(shared_OBJECTS:%.o=%,dy.o)
-failure%,dy.o: CPPFLAGS += -DFAILURE$*
+failure%,dy.o: CPPFLAGS += -DFAILURE$*=ENOTSUP
 failure%,dy.o: CPPFLAGS += -DFAILURE_ADD_DEVICE_FUNC=failure$*_add_device
 failure%,dy.o: failure.c
 	@$(MAKESTEP) "[ DYCC ] $(<F)"

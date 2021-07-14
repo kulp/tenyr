@@ -1,6 +1,7 @@
 #include "device.h"
 #include "plugin.h"
 
+#include <errno.h>
 #include <stdint.h>
 
 library_init tenyr_plugin_init;
@@ -36,18 +37,20 @@ struct failure_state;
 #define FAILURE_ADD_DEVICE_FUNC failure_add_device
 #endif
 
+#define FAIL(x) do { errno = FAILURE_##x; return FAILURE_##x; } while (0)
+
 static int failure_init(struct plugin_cookie *pcookie, struct device *device, void *cookie)
 {
     (void)pcookie;
     (void)device;
     (void)cookie;
-    return FAILURE_INIT;
+    FAIL(INIT);
 }
 
 static int failure_fini(void *cookie)
 {
     (void)cookie;
-    return FAILURE_FINI;
+    FAIL(FINI);
 }
 
 static int failure_op(void *cookie, int op, int32_t addr, int32_t *data)
@@ -56,13 +59,13 @@ static int failure_op(void *cookie, int op, int32_t addr, int32_t *data)
     (void)op;
     (void)addr;
     (void)data;
-    return FAILURE_OP;
+    FAIL(OP);
 }
 
 static int failure_pump(void *cookie)
 {
     (void)cookie;
-    return FAILURE_PUMP;
+    FAIL(PUMP);
 }
 
 int EXPORT tenyr_plugin_init(struct guest_ops *ops)
@@ -70,7 +73,7 @@ int EXPORT tenyr_plugin_init(struct guest_ops *ops)
     fatal_ = ops->fatal;
     debug_ = ops->debug;
 
-    return FAILURE_PLUGIN_INIT;
+    FAIL(PLUGIN_INIT);
 }
 
 int EXPORT FAILURE_ADD_DEVICE_FUNC(struct device *device);
@@ -86,7 +89,7 @@ int EXPORT FAILURE_ADD_DEVICE_FUNC(struct device *device)
         },
     };
 
-    return FAILURE_ADD_DEVICE;
+    FAIL(ADD_DEVICE);
 }
 
 /* vi: set ts=4 sw=4 et: */
