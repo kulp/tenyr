@@ -518,6 +518,15 @@ int main(int argc, char *argv[])
         fatal(0, "Error during device teardown");
 
 cleanup:
+    {
+        int dump = 0;
+        param_get_int(s->conf.params, "tsim.dump_end_state", &dump);
+        if (dump) {
+            const STREAM stream = stream_make_from_file(stderr);
+            print_registers(&stream, s->machine.regs);
+        }
+    }
+
     param_destroy(s->conf.params);
 
     while (s->libs) {

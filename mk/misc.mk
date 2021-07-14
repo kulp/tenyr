@@ -325,7 +325,7 @@ check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 
 vpath %.texe $(TOP)/test/op $(TOP)/ex $(TOP)/test/run
 
-check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -vvvv $(texe) 2>&1 | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -p tsim.dump_end_state=1 $(texe) 2>&1 | grep -o 'B.[[:xdigit:]]\{8\}' | grep -q 'f\{8\}'
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
 check_compile: $(build_tas) $(build_tld)
