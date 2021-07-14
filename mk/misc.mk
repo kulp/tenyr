@@ -98,9 +98,6 @@ check_ctest:
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 
 check_args: check_args_tas check_args_tld check_args_tsim
-check_args_%: check_args_specific_% ;
-
-check_args_specific_%: %$(EXE_SUFFIX) ;
 
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
