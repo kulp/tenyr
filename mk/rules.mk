@@ -57,6 +57,7 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 $(FAILURE_TARGETS): libtenyrfailure%$(DYLIB_SUFFIX): pluginimpl,dy.o $(shared_OBJECTS:%.o=%,dy.o)
 failure%,dy.o: CPPFLAGS += -DFAILURE$*=ENOTSUP
 failure%,dy.o: CPPFLAGS += -DFAILURE_ADD_DEVICE_FUNC=failure$*_add_device
+failure_NO_ADD_DEVICE,dy.o: CPPFLAGS += -UFAILURE_ADD_DEVICE_FUNC -DFAILURE_ADD_DEVICE_FUNC=unfindable_function_name
 failure%,dy.o: failure.c
 	@$(MAKESTEP) "[ DYCC ] $(<F)"
 	$(COMPILE.c) -o $@ $<
