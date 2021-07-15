@@ -45,7 +45,7 @@ doc: tas_usage tsim_usage tld_usage
 
 %_usage: %$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Generating usage description for $* ... "
-	$($*) --help | \
+	exec -a $* $($*) --help | \
 		sed -e 's/^/    /' \
 		    -e '/version/s/-[0-9][0-9]*-g[[:xdigit:]]\{7\}/$1.../' \
 	        > $(TOP)/wiki/$*--help.md && $(MAKESTEP) ok
