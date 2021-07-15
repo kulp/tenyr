@@ -59,7 +59,7 @@ module Top();
         if ($value$plusargs("LOGFILE=%s", filename))
             logfile = filename;
         $dumpfile(logfile);
-        $dumpvars;
+        $dumpvars(0, Top);
         #(periods * `CLOCKPERIOD) end_simulation();
     end
 `endif
