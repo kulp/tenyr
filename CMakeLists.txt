@@ -423,6 +423,16 @@ foreach(op_path ${OPS})
 
     check_std_outputs(NAME "op ${op}"   COMMAND tsim    ARGS -p tsim.dump_end_state=1   INPUT "${op}.texe")
 
+    # TODO this function ends up supplying vvp an extra .texe argument due to
+    # the use of INPUT; we allow this for now since it seems harmless, and it
+    # provides us the dependency linkage we need.
+    check_std_outputs(
+        NAME    "op ${op} icarus"
+        COMMAND vvp
+        ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=${op}.texe" +DUMPENDSTATE
+        INPUT   "${op}.texe"
+    )
+
 endforeach()
 
 check_std_outputs(
