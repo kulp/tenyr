@@ -16,6 +16,8 @@ enable_testing()
 
 include(cmake/test_functions.cmake)
 
+set(TENYR_LEGACY_BUILD_DIR "${CMAKE_BINARY_DIR}/..")
+
 add_subdirectory(lib)
 add_subdirectory(ex)
 
@@ -420,6 +422,34 @@ foreach(op_path ${OPS})
     set_tests_properties("create ${op}.texe" PROPERTIES FIXTURES_SETUP "${op}.texe")
 
     check_std_outputs(NAME "op ${op}"   COMMAND tsim    ARGS -p tsim.dump_end_state=1   INPUT "${op}.texe")
+
+endforeach()
+
+check_std_outputs(
+    NAME    "icarus failure nonexistent"
+    COMMAND vvp
+    ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=nonexistent.texe"
+    PROPERTIES
+        WILL_FAIL TRUE
+)
+
+set(icarus_stems bad_magic toolarge)
+foreach(stem ${icarus_stems})
+
+    add_test(
+        NAME    "copy ${stem}.texe"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/test/misc/obj/${stem}.texe" "${CMAKE_CURRENT_BINARY_DIR}/"
+    )
+    set_tests_properties("copy ${stem}.texe" PROPERTIES FIXTURES_SETUP "${stem}.texe")
+
+    check_std_outputs(
+        NAME    "icarus failure ${stem}"
+        COMMAND vvp
+        ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=${stem}.texe"
+        INPUT   "${stem}.texe"
+        PROPERTIES
+            WILL_FAIL TRUE
+    )
 
 endforeach()
 
