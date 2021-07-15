@@ -434,3 +434,14 @@ set_tests_properties(
         LABELS "tool=tld"
 )
 
+add_test(
+    NAME    "tsim_irc_ping"
+    COMMAND sh -c "echo PING 123 | tsim ex/irc.texe"
+)
+set_tests_properties(
+    tsim_irc_ping
+    PROPERTIES
+        PASS_REGULAR_EXPRESSION "PONG 123"
+        DEPENDS "create irc.texe"
+        LABELS "tool=tsim"
+)

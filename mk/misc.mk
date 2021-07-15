@@ -100,10 +100,8 @@ check_ctest:
 check_behaviour: check_behaviour_tas check_behaviour_tld check_behaviour_tsim
 check_behaviour_%: ;
 
-check_behaviour_tsim: $(TOP)/ex/irc.texe
 check_behaviour_tsim: check_behaviour_%: %$(EXE_SUFFIX)
 	@$(MAKESTEP) "Checking $* behaviour ... "
-	$($*) $(TOP)/ex/irc.texe <<<'PING 123' 2>/dev/null | $(GREP) 'PONG 123'     && $(MAKESTEP) "    ... ping-pong ok"
 
 clean_FILES += check_obj_*.to null.to ff.bin
 null.to: ; $(tas) -o $@ /dev/null
