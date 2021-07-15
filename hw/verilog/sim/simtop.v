@@ -56,8 +56,10 @@ module Top();
             periods = temp;
         if ($value$plusargs("LOGFILE=%s", filename))
             logfile = filename;
-        $dumpfile(logfile);
-        $dumpvars(0, Top);
+        if ($test$plusargs("DUMP_ALL")) begin
+            $dumpfile(logfile);
+            $dumpvars(0, Top);
+        end
         #(periods * `CLOCKPERIOD) end_simulation();
     end
 `endif
