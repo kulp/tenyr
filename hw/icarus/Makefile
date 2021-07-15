@@ -51,12 +51,12 @@ run_%: %.texe tenyr
 # Test for nonexistent file.
 .PHONY: nonexistent.texe
 run_nonexistent: tenyr
-	(! $(IVERILOG)vvp -N tenyr +LOAD=nonexistent.texe)
+	(! $(IVERILOG)vvp -M$(BUILDDIR) -m vpidevices -N tenyr +LOAD=nonexistent.texe)
 
 # Test invalid files.
 vpath %.texe $(TOP)/test/misc/obj/
 run_bad_magic run_toolarge: run_%: %.texe tenyr
-	(! $(IVERILOG)vvp -N tenyr +LOAD=$<)
+	(! $(IVERILOG)vvp -M$(BUILDDIR) -m vpidevices -N tenyr +LOAD=$<)
 
 ##############################################################################
 

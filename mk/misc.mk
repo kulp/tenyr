@@ -94,7 +94,7 @@ check_sw: $(CHECK_SW_TASKS)
 
 check_ctest:
 	cmake -S $(TOP) -B $(BUILDDIR)/ctest
-	cmake --build $(BUILDDIR)/ctest --target examples
+	cmake --build $(BUILDDIR)/ctest
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 
 clean_FILES += check_obj_*.to null.to ff.bin
