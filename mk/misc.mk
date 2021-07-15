@@ -92,8 +92,9 @@ CHECK_SW_TASKS ?= check_sim check_obj
 check_sw: check_ctest
 check_sw: $(CHECK_SW_TASKS)
 
-check_ctest:
+check_ctest: vpi
 	cmake -S $(TOP) -B $(BUILDDIR)/ctest
+	$(MAKE) --directory=$(TOP)/hw/icarus BUILDDIR=$(realpath $(BUILDDIR))
 	cmake --build $(BUILDDIR)/ctest
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 
