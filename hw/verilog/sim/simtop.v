@@ -3,8 +3,6 @@
 
 module Top();
 
-    parameter LOADFILE = "default.memh";
-
     reg clk = 1;
     reg rhalt = 1;
     reg reset = 1;
@@ -18,7 +16,7 @@ module Top();
     initial #(1 * 4 * `CLOCKPERIOD) rhalt = 0;
     initial #(1 * 3 * `CLOCKPERIOD) reset = 0;
 
-    Tenyr #(.LOADFILE(LOADFILE)) tenyr(.clk, .reset, .halt);
+    Tenyr tenyr(.clk, .reset, .halt);
 
     task end_simulation;
     begin
