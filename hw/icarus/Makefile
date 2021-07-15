@@ -24,7 +24,7 @@ VFLAGS += -DSIM
 
 # We use IVERILOG_VPI_MODULE_PATH rather than -L in order to maintain backward
 # compatibility with Icarus v10.
-tenyr: export IVERILOG_VPI_MODULE_PATH=$(BUILDDIR)
+tenyr: export IVERILOG_VPI_MODULE_PATH=$(realpath $(BUILDDIR))
 tenyr: VFLAGS += -m vpidevices
 tenyr: VFLAGS += -DSIMMEM=GenedBlockMem -DSIMCLK=tenyr_mainclock
 tenyr: VFLAGS += -DSERIAL
