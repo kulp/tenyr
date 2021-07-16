@@ -73,21 +73,18 @@ gzip zip:
 	$(MAKE) -f $(makefile_path) $@
 endif
 
-.SECONDARY: coverage.info.src coverage.info.vpi
-coverage: coverage_html_src_vpi
+coverage: coverage_html
 
-LCOV ?= lcov --config-file=$(TOP)/scripts/lcovrc
+LCOV ?= lcov
+LCOVFLAGS = --config-file=$(TOP)/scripts/lcovrc
 
 COVERAGE_RULE = check
+coverage.info: LCOVFLAGS += --exclude="*/lexer.c"
+coverage.info: LCOVFLAGS += --exclude="*/parser.c"
 coverage.info: $(COVERAGE_RULE)
-	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
+	$(LCOV) $(LCOVFLAGS) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
-coverage.info.%: coverage.info
-	$(LCOV) --extract $< '*/$*/*' --output-file $@
-
-coverage_html_src:     coverage.info.src
-coverage_html_src_vpi: coverage.info.src coverage.info.vpi
-coverage_html_%:
+coverage_html: coverage.info
 	genhtml --output-directory $@ $^
 
 check: check_sw check_hw
