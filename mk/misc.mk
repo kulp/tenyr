@@ -224,7 +224,7 @@ $(TOP)/test/run/reloc_shifts.texe: $(TOP)/test/misc/reloc_shifts0.to
 
 check_hw: check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run
 vpi:
-	$(MAKE) -C $(BUILDDIR) -f $(TOP)/Makefile vpi
+	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@
 
 test_demo_% test_run_% test_op_%: texe=$<
 

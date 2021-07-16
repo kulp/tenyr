@@ -53,7 +53,7 @@ run_%: PLUSARGS += +PERIODS=$(PERIODS_DEFAULT) \
                    #
 
 run_%: %.texe tenyr
-	$(IVERILOG)vvp -N -M$(BUILDDIR) tenyr +LOAD=$< $(PLUSARGS)
+	$(IVERILOG)vvp -N -M$(BUILDDIR) -m vpidevices tenyr +LOAD=$< $(PLUSARGS)
 
 # Test for nonexistent file.
 .PHONY: nonexistent.texe

@@ -90,10 +90,6 @@ $(TOP)/build/share/tenyr/%:
 
 -include $(TOP)/mk/os/rules/$(OS).mk
 
-.PHONY: vpi
-vpi: vpidevices.vpi
-vpidevices.vpi: callbacks,dy.o vpiserial,dy.o load,dy.o sim,dy.o asm,dy.o obj,dy.o common,dy.o param,dy.o stream,dy.o
-
 tas$(EXE_SUFFIX):  tas.o  $(tas_OBJECTS)
 tsim$(EXE_SUFFIX): tsim.o $(tsim_OBJECTS)
 tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
