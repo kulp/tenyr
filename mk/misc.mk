@@ -222,13 +222,9 @@ $(TOP)/test/run/reloc_set.texe: $(TOP)/test/misc/reloc_set0.to
 $(TOP)/test/run/test_imul.texe: $(TOP)/lib/imul.to
 $(TOP)/test/run/reloc_shifts.texe: $(TOP)/test/misc/reloc_shifts0.to
 
-check_hw:
-	@$(MAKESTEP) -n "Checking for Icarus Verilog ... "
-	if $(TOP)/scripts/check_icarus.sh "`which $(IVERILOG)iverilog`" ; then \
-		$(MAKE) -C $(BUILDDIR) -f $(TOP)/Makefile vpi ; \
-		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) BUILDDIR=$(BUILDDIR) \
-		    check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run; \
-	fi
+check_hw: check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run
+vpi:
+	$(MAKE) -C $(BUILDDIR) -f $(TOP)/Makefile vpi
 
 test_demo_% test_run_% test_op_%: texe=$<
 
@@ -276,6 +272,7 @@ check_sim::
 check_sim_flavour: check_sim_demo check_sim_op check_sim_run
 
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
+check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: vpi
 
 check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_sim_demo: export run=$(tsim) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
