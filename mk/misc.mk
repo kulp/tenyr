@@ -262,10 +262,6 @@ test_run_%: %.texe $(build_tas) $(build_tld)
 	@$(MAKESTEP) -n "Running test `printf %-20s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
-check_hw_icarus_pre: vpidevices.vpi
-	@$(MAKESTEP) -n "Building hardware simulator ... "
-	$(MAKE) $S -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) tenyr && $(MAKESTEP) ok
-
 tsim_FLAVOURS := interp interp_prealloc
 tsim_FLAGS_interp =
 tsim_FLAGS_interp_prealloc = --scratch --recipe=prealloc --recipe=serial --recipe=plugin
@@ -283,7 +279,6 @@ check_sim::
 check_sim_flavour: check_sim_demo check_sim_op check_sim_run
 
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
-check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre
 
 check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_sim_demo: export run=$(tsim) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
