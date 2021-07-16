@@ -129,13 +129,9 @@ illegal             { return ILLEGAL; }
 <*>\n               { savecol = 0; yycolumn = 0; return '\n'; }
 
 <*>.                tenyr_error(yylloc, yyextra, "unexpected character `%c`", yytext[0]);
-                    /* LCOV_EXCL_START */
+
 %%
-/* LCOV_EXCL_STOP LCOV_EXCL_LINE */
-/* LCOV_EXCL_LINE
- * XXXREMOVEXXX
- * a line above this one removed to work around a gcov off-by-one-line bug
- */
+
 static int savestr(const char *text, int len, yyscan_t yyscanner)
 {
     // savestr() appends a string piece into a buffer

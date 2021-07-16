@@ -48,7 +48,7 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
 	# `sed` here hacks around an issue where gcov gets line numbers off by one
 	# after the rules section
-	$(LEX) --header-file=$*.h --stdout $< | sed /XXXREMOVE/d > $*.c
+	$(LEX) --header-file=$*.h --outfile=$*.c $<
 
 %.h %.c: %.y
 	@$(MAKESTEP) "[ BISON ] $(<F)"
