@@ -1,5 +1,18 @@
 PEDANTIC ?= 1
 
+# Padding warnings are not really relevant to this project.
+CFLAGS += -Wno-padded
+
+# Do not warn about the unused version for endian reading.
+obj.o obj,dy.o: CFLAGS += -Wno-unused-function
+
+# Some casting away of qualifiers is currently deemed unavoidable, at least
+# without running into different warnings.
+tas.o tld.o param.o param,dy.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
+# Calls to variadic printf functions almost always need non-literal format
+# strings.
+common.o common,dy.o parser.o stream.o stream,dy.o: CFLAGS += -Wno-format-nonliteral
+
 ifneq ($(PEDANTIC),1)
 PEDANTIC_FLAGS ?= -pedantic
 else

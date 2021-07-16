@@ -101,20 +101,10 @@ tld$(EXE_SUFFIX):  tld.o  $(tld_OBJECTS)
 # used to apply to .o only but some make versions built directly from .c
 tas$(EXE_SUFFIX) tsim$(EXE_SUFFIX) tld$(EXE_SUFFIX): DEFINES += BUILD_NAME='$(BUILD_NAME)'
 
-# Padding warnings are not really relevant to this project.
-CFLAGS += -Wno-padded
-
 # don't complain about unused state
 asm.o asmif.o $(DEVOBJS) $(PDEVOBJS): CFLAGS += -Wno-unused-parameter
 # link plugin-common data and functions into every plugin
 $(PDEVLIBS): libtenyr%$(DYLIB_SUFFIX): pluginimpl,dy.o $(shared_OBJECTS:%.o=%,dy.o)
-
-# Some casting away of qualifiers is currently deemed unavoidable, at least
-# without running into different warnings.
-tas.o tld.o param.o param,dy.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)cast-qual
-# Calls to variadic printf functions almost always need non-literal format
-# strings.
-common.o common,dy.o parser.o stream.o stream,dy.o: CFLAGS += -Wno-format-nonliteral
 
 # We cannot control some aspects of the generated lexer or parser.
 lexer.o parser.o: CFLAGS += -Wno-error
@@ -132,9 +122,6 @@ lexer.o parser.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)unreachable-code
 lexer.o parser.o: CFLAGS += -Wno-sign-compare -Wno-unused -Wno-unused-parameter
 # flex-generated code needs POSIX source for fileno()
 lexer.o: CPPFLAGS += -D_POSIX_SOURCE
-
-# Do not warn about the unused version for endian reading.
-obj.o obj,dy.o: CFLAGS += -Wno-unused-function
 
 lexer.o asmif.o tas.o: parser.h
 parser.h parser.c: lexer.h
