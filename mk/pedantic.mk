@@ -3,6 +3,9 @@ PEDANTIC ?= 1
 # Padding warnings are not really relevant to this project.
 CFLAGS += -Wno-padded
 
+# It's all right for callbacks not to use all their parameters.
+asm.o asm,dy.o: CFLAGS += -W$(PEDANTRY_EXCEPTION)unused-parameter
+
 # Do not warn about the unused version for endian reading.
 obj.o obj,dy.o: CFLAGS += -Wno-unused-function
 
