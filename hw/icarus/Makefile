@@ -17,7 +17,6 @@ all: tenyr
 
 vpath %.v ../verilog ../verilog/sim .
 vpath %.v $(TOP)/3rdparty/wb_intercon/rtl/verilog
-vpath %.memh ../verilog
 
 VFLAGS += -I../verilog -g2005-sv
 VFLAGS += -DSIM
@@ -37,9 +36,6 @@ tenyr: simtop.v top.v                               \
 
 # it's all right for callbacks not to use all their parameters
 asm.o: CFLAGS += -Wno-unused-parameter
-
-%.memh:
-	$(MAKE) -C ../verilog TOP=$(TOP) $@
 
 vpath %.tas ../verilog
 # TODO ensure .texe get rebuilt correctly from here as needed
