@@ -34,16 +34,6 @@ libtenyr%$(DYLIB_SUFFIX): %,dy.o
 	@$(MAKESTEP) "[ DYLD ] $@"
 	$(LINK.c) -shared -o $@ $^ $(LDLIBS)
 
-%.vpi: CFLAGS  += $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
-%.vpi: CFLAGS  += -Wno-strict-prototypes
-# it's all right for callbacks not to use all their parameters
-%.vpi: CFLAGS  += -Wno-unused-parameter
-%.vpi: LDFLAGS += $(shell $(IVERILOG)iverilog-vpi --ldflags 2> /dev/null)
-%.vpi: LDLIBS  += $(shell $(IVERILOG)iverilog-vpi --ldlibs 2> /dev/null)
-%.vpi: %,dy.o
-	@$(MAKESTEP) "[ VPI ] $@"
-	$(LINK.c) -o $@ $^ $(LDLIBS)
-
 %.h %.c: %.l
 	@$(MAKESTEP) "[ FLEX ] $(<F)"
 	# `sed` here hacks around an issue where gcov gets line numbers off by one

@@ -13,6 +13,14 @@ vpath %.c $(dir $(makefile_path))
 
 all: vpi
 
+%.vpi: CFLAGS  += $(shell $(IVERILOG)iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
+%.vpi: CFLAGS  += -Wno-strict-prototypes
+%.vpi: LDFLAGS += $(shell $(IVERILOG)iverilog-vpi --ldflags 2> /dev/null)
+%.vpi: LDLIBS  += $(shell $(IVERILOG)iverilog-vpi --ldlibs 2> /dev/null)
+%.vpi: %,dy.o
+	@$(MAKESTEP) "[ VPI ] $@"
+	$(LINK.c) -o $@ $^ $(LDLIBS)
+
 .PHONY: vpi
 vpi: vpidevices.vpi
 vpidevices.vpi: callbacks,dy.o vpiserial,dy.o load,dy.o sim,dy.o asm,dy.o obj,dy.o common,dy.o param,dy.o stream,dy.o
