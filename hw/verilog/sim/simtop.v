@@ -3,8 +3,6 @@
 
 module Top();
 
-    parameter LOADFILE = "default.memh";
-
     reg clk = 1;
     reg rhalt = 1;
     reg reset = 1;
@@ -18,7 +16,7 @@ module Top();
     initial #(1 * 4 * `CLOCKPERIOD) rhalt = 0;
     initial #(1 * 3 * `CLOCKPERIOD) reset = 0;
 
-    Tenyr #(.LOADFILE(LOADFILE)) tenyr(.clk, .reset, .halt);
+    Tenyr tenyr(.clk, .reset, .halt);
 
     task end_simulation;
     begin
@@ -58,8 +56,10 @@ module Top();
             periods = temp;
         if ($value$plusargs("LOGFILE=%s", filename))
             logfile = filename;
-        $dumpfile(logfile);
-        $dumpvars;
+        if ($test$plusargs("DUMP_ALL")) begin
+            $dumpfile(logfile);
+            $dumpvars(0, Top);
+        end
         #(periods * `CLOCKPERIOD) end_simulation();
     end
 `endif

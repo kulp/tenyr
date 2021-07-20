@@ -23,7 +23,7 @@ module TwoPortRAM(
     input  wire[DBITS-1:0] dina , dinb;
     output reg [DBITS-1:0] douta, doutb;
 
-    reg[DBITS-1:0] store[SIZE - 1:0];
+    reg[DBITS-1:0] store[0:SIZE - 1];
 
     integer i;
     initial begin

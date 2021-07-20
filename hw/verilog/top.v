@@ -7,7 +7,6 @@ module Tenyr(
     output[2:0] vgaRed, vgaGreen, output[2:1] vgaBlue, output hsync, vsync, inframe
 );
 
-    parameter LOADFILE = "default.memh";
     parameter RAMABITS = 13;
 
     wire d_wen, d_stb, d_cyc, d_ack;
@@ -49,7 +48,8 @@ module Tenyr(
     wire[3:0] r_sel;
     wire[31:0] r_adr, r_ddn, r_dup;
 
-    TwoPortRAM #(.LOADH(1), .LOADFILE(LOADFILE), .INIT(0),
+    TwoPortRAM #(
+        .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .OFFSET(`RESETVECTOR)
     ) ram(
         .clka  ( clk_core ), .clkb  ( '0 ),

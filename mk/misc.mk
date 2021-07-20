@@ -45,7 +45,7 @@ doc: tas_usage tsim_usage tld_usage
 
 %_usage: %$(EXE_SUFFIX)
 	@$(MAKESTEP) -n "Generating usage description for $* ... "
-	$($*) --help | \
+	exec -a $* $($*) --help | \
 		sed -e 's/^/    /' \
 		    -e '/version/s/-[0-9][0-9]*-g[[:xdigit:]]\{7\}/$1.../' \
 	        > $(TOP)/wiki/$*--help.md && $(MAKESTEP) ok
@@ -73,21 +73,18 @@ gzip zip:
 	$(MAKE) -f $(makefile_path) $@
 endif
 
-.SECONDARY: coverage.info.src coverage.info.vpi
-coverage: coverage_html_src_vpi
+coverage: coverage_html
 
-LCOV ?= lcov --config-file=$(TOP)/scripts/lcovrc
+LCOV ?= lcov
+LCOVFLAGS = --config-file=$(TOP)/scripts/lcovrc
 
 COVERAGE_RULE = check
+coverage.info: LCOVFLAGS += --exclude="*/lexer.c"
+coverage.info: LCOVFLAGS += --exclude="*/parser.c"
 coverage.info: $(COVERAGE_RULE)
-	$(LCOV) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
+	$(LCOV) $(LCOVFLAGS) --capture --test-name $< --directory $(BUILDDIR) --output-file $@
 
-coverage.info.%: coverage.info
-	$(LCOV) --extract $< '*/$*/*' --output-file $@
-
-coverage_html_src:     coverage.info.src
-coverage_html_src_vpi: coverage.info.src coverage.info.vpi
-coverage_html_%:
+coverage_html: coverage.info
 	genhtml --output-directory $@ $^
 
 check: check_sw check_hw
@@ -225,13 +222,9 @@ $(TOP)/test/run/reloc_set.texe: $(TOP)/test/misc/reloc_set0.to
 $(TOP)/test/run/test_imul.texe: $(TOP)/lib/imul.to
 $(TOP)/test/run/reloc_shifts.texe: $(TOP)/test/misc/reloc_shifts0.to
 
-check_hw:
-	@$(MAKESTEP) -n "Checking for Icarus Verilog ... "
-	if $(TOP)/scripts/check_icarus.sh "`which $(IVERILOG)iverilog`" ; then \
-		$(MAKE) -C $(BUILDDIR) -f $(TOP)/Makefile vpi ; \
-		$(MAKE) -C $(BUILDDIR) -f $(makefile_path) BUILDDIR=$(BUILDDIR) \
-		    check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run; \
-	fi
+check_hw: check_hw_icarus_op check_hw_icarus_demo check_hw_icarus_run
+vpi:
+	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@
 
 test_demo_% test_run_% test_op_%: texe=$<
 
@@ -262,10 +255,6 @@ test_run_%: %.texe $(build_tas) $(build_tld)
 	@$(MAKESTEP) -n "Running test `printf %-20s "'$*'"` ($(context)) ... "
 	$(run) && $(MAKESTEP) ok
 
-check_hw_icarus_pre: vpidevices.vpi
-	@$(MAKESTEP) -n "Building hardware simulator ... "
-	$(MAKE) $S -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) tenyr && $(MAKESTEP) ok
-
 tsim_FLAVOURS := interp interp_prealloc
 tsim_FLAGS_interp =
 tsim_FLAGS_interp_prealloc = --scratch --recipe=prealloc --recipe=serial --recipe=plugin
@@ -283,7 +272,7 @@ check_sim::
 check_sim_flavour: check_sim_demo check_sim_op check_sim_run
 
 check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: export context=hw_icarus
-check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: check_hw_icarus_pre
+check_hw_icarus_demo check_hw_icarus_op check_hw_icarus_run: vpi
 
 check_hw_icarus_demo: export run=$(MAKE) --no-print-directory -s -C $(TOP)/hw/icarus BUILDDIR=$(abspath $(BUILDDIR)) run_$*_demo | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD
 check_sim_demo: export run=$(tsim) $(tsim_FLAGS) $(TOP)/ex/$*_demo.texe
@@ -325,7 +314,7 @@ check_sim_run  check_hw_icarus_run:  $(RUNS:%= test_run_% )
 
 vpath %.texe $(TOP)/test/op $(TOP)/ex $(TOP)/test/run
 
-check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -vvvv $(texe) 2>&1 | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
+check_sim_op check_sim_run: export run=$(tsim) $(tsim_FLAGS) -p tsim.dump_end_state=1 $(texe) 2>&1 | grep -o 'B.[[:xdigit:]]\{8\}' | grep -q 'f\{8\}'
 check_hw_icarus_op check_hw_icarus_run: export run=$(MAKE) -s --no-print-directory -C $(TOP)/hw/icarus run_$* VPATH=$(TOP)/test/op:$(TOP)/test/run BUILDDIR=$(abspath $(BUILDDIR)) PLUSARGS_EXTRA=+DUMPENDSTATE | grep -v -e ^WARNING: -e ^ERROR: -e ^VCD | grep -o 'B.[[:xdigit:]]\{8\}' | tail -n1 | grep -q 'f\{8\}'
 
 check_compile: $(build_tas) $(build_tld)
