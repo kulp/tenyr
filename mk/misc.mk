@@ -109,7 +109,6 @@ check_obj_%.to: null.to ff.bin
 	dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
 	dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>/dev/null
 
-OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/op/*.tas)))
 RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
 
 # This test needs an additional object, as it tests the linker
@@ -122,14 +121,7 @@ check_hw: check_hw_icarus_run
 vpi:
 	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@
 
-test_run_% test_op_%: texe=$<
-
-# Op tests are self-testing -- they must leave B with the value 0xffffffff if successful.
-$(OPS:%=$(TOP)/test/op/%.texe): $(TOP)/test/op/%.texe: $(TOP)/test/op/%.to $(TOP)/test/misc/obj/args.to | $(build_tas)
-
-test_op_%: $(TOP)/test/op/%.texe $(build_tas)
-	@$(MAKESTEP) -n "Testing op `printf %-7s "'$*'"` ($(context)) ... "
-	$(run) && $(MAKESTEP) ok
+test_run_%: texe=$<
 
 # Run tests are self-testing -- they must leave B with the value 0xffffffff.
 # Use .SECONDARY to indicate that run test files should *not* be deleted after
