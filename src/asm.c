@@ -252,6 +252,8 @@ int print_registers(STREAM *out, const int32_t regs[16])
  */
 static int gen_init(STREAM *stream, struct param_state *p, void **ud)
 {
+    (void)stream;
+    (void)p;
     int *offset = *ud = malloc(sizeof *offset);
     *offset = 0;
     return 0;
@@ -259,6 +261,7 @@ static int gen_init(STREAM *stream, struct param_state *p, void **ud)
 
 static int gen_fini(STREAM *stream, void **ud)
 {
+    (void)stream;
     free(*ud);
     *ud = NULL;
     return 0;
@@ -312,6 +315,7 @@ static int obj_init(STREAM *stream, struct param_state *p, void **ud)
 
 static int obj_in(STREAM *stream, struct element *i, void *ud)
 {
+    (void)stream;
     struct obj_fdata *u = ud;
 
     struct objrec *rec = u->curr_rec;
@@ -363,6 +367,7 @@ static void obj_out_insn(struct element *i, struct obj_fdata *u, struct obj *o)
 
 static int obj_out(STREAM *stream, struct element *i, void *ud)
 {
+    (void)stream;
     struct obj_fdata *u = ud;
 
     obj_out_insn(i, u, (struct obj*)u->o);
@@ -372,6 +377,7 @@ static int obj_out(STREAM *stream, struct element *i, void *ud)
 
 static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
 {
+    (void)stream;
     int rc = 1;
     struct obj_fdata *u = ud;
 
@@ -393,6 +399,7 @@ static int obj_sym(STREAM *stream, struct symbol *symbol, int flags, void *ud)
 
 static int obj_reloc(STREAM *stream, struct reloc_node *reloc, void *ud)
 {
+    (void)stream;
     struct obj_fdata *u = ud;
     assert(reloc != NULL);
     assert(reloc->insn != NULL);
@@ -431,6 +438,7 @@ static int obj_emit(STREAM *stream, void **ud)
 
 static int obj_fini(STREAM *stream, void **ud)
 {
+    (void)stream;
     struct obj_fdata *u = *ud;
 
     obj_free(u->o);
@@ -468,6 +476,7 @@ static int text_in(STREAM *stream, struct element *i, void *ud)
 
 static int text_out(STREAM *stream, struct element *i, void *ud)
 {
+    (void)ud;
     int ok = 1;
     if (i->insn.size > 0)
         ok &= stream->op.fprintf(stream, "0x%08x\n", i->insn.u.word) > 0;
@@ -488,6 +497,7 @@ struct memh_state {
 
 static int memh_init(STREAM *stream, struct param_state *p, void **ud)
 {
+    (void)stream;
     struct memh_state *state = *ud = calloc(1, sizeof *state);
 
     state->offset = 0;
