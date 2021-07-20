@@ -109,15 +109,8 @@ check_obj_%.to: null.to ff.bin
 	dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
 	dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>/dev/null
 
-vpath %_demo.tas $(TOP)/ex
-DEMOS = qsort bsearch trailz
-DEMOFILES = $(DEMOS:%=$(TOP)/ex/%_demo.texe)
 OPS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/op/*.tas)))
 RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
-#TESTS = $(patsubst $(TOP)/test/%.tas,%,$(wildcard $(TOP)/test/*/*.tas))
-$(DEMOFILES): %_demo.texe: %_demo.tas
-	@$(MAKESTEP) -n "Building $(*F) demo ... "
-	$(MAKE) $S BUILDDIR=$(abspath $(BUILDDIR)) -C $(@D) $(@F) && $(MAKESTEP) ok
 
 # This test needs an additional object, as it tests the linker
 $(TOP)/test/run/reloc_set.texe: $(TOP)/test/misc/reloc_set0.to
@@ -129,19 +122,7 @@ check_hw: check_hw_icarus_run
 vpi:
 	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@
 
-test_demo_% test_run_% test_op_%: texe=$<
-
-# Demos are not self-testing, so they have demo-specific external checkers
-test_demo_qsort:   verify = sed -n 5p | tr -d '\015'
-test_demo_qsort:   result = eight
-test_demo_bsearch: verify = grep -v "not found" | wc -l | tr -d ' '
-test_demo_bsearch: result = 11
-test_demo_trailz:  verify = grep -c good
-test_demo_trailz:  result = 33
-test_demo_%: record = 2> log.$@.err.$$$$ | tee log.$@.out.$$$$
-test_demo_%: $(TOP)/ex/%_demo.texe
-	@$(MAKESTEP) -n "Running `printf %-10s "'$*'"` demo ($(context)) ... "
-	[ "$$(($(call run,$*)) $(record) | $(verify))" = "$(result)" ] && (rm -f log.$@.{out,err}.$$$$ ; $(MAKESTEP) ok) || (cat log.$@.{out,err}.$$$$ ; false)
+test_run_% test_op_%: texe=$<
 
 # Op tests are self-testing -- they must leave B with the value 0xffffffff if successful.
 $(OPS:%=$(TOP)/test/op/%.texe): $(TOP)/test/op/%.texe: $(TOP)/test/op/%.to $(TOP)/test/misc/obj/args.to | $(build_tas)
