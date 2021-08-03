@@ -109,12 +109,6 @@ check_obj_%.to: null.to ff.bin
 	dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
 	dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>/dev/null
 
-RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
-
-# This test needs an additional object, as it tests the linker
-$(TOP)/test/run/reloc_set.texe: $(TOP)/test/misc/reloc_set0.to
-$(TOP)/test/run/reloc_shifts.texe: $(TOP)/test/misc/reloc_shifts0.to
-
 check_hw: check_hw_icarus_run
 vpi:
 	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@

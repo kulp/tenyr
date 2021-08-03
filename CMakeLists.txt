@@ -412,6 +412,72 @@ set_tests_properties(
 check_std_outputs(NAME "deref zero failure"     COMMAND tsim                        INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
 check_std_outputs(NAME "deref zero success"     COMMAND tsim    ARGS -rzero_word    INPUT deref.texe    PROPERTIES WILL_FAIL FALSE)
 
+file(GLOB RUNS test/run/*.tas)
+# We will treat reloc_set and reloc_shifts specially, later.
+list(REMOVE_ITEM RUNS ${CMAKE_SOURCE_DIR}/test/run/reloc_set.tas ${CMAKE_SOURCE_DIR}/test/run/reloc_shifts.tas)
+foreach(run_path ${RUNS})
+    get_filename_component(run "${run_path}" NAME_WLE)
+    add_test(
+        NAME    "create ${run}.texe"
+        COMMAND tas -o "${run}.texe" "${run_path}"
+    )
+    set_tests_properties("create ${run}.texe" PROPERTIES FIXTURES_SETUP "${run}.texe")
+
+    check_std_outputs(NAME "run ${run}" COMMAND tsim    ARGS -p tsim.dump_end_state=1   INPUT "${run}.texe")
+
+    # TODO this function ends up supplying vvp an extra .texe argument due to
+    # the use of INPUT; we allow this for now since it seems harmless, and it
+    # provides us the dependency linkage we need.
+    check_std_outputs(
+        NAME    "run ${run} icarus"
+        COMMAND vvp
+        ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=${run}.texe" +DUMPENDSTATE
+        INPUT   "${run}.texe"
+    )
+
+endforeach()
+
+foreach(flavor set shifts)
+    set(run "reloc_${flavor}")
+
+    add_test(
+        NAME    "create ${run}.to"
+        COMMAND tas -o "${run}.to" "${CMAKE_SOURCE_DIR}/test/run/${run}.tas"
+    )
+    set_tests_properties("create ${run}.to" PROPERTIES FIXTURES_SETUP "${run}.to")
+
+    add_test(
+        NAME    "create ${run}0.to"
+        COMMAND tas -o "${run}0.to" "${CMAKE_SOURCE_DIR}/test/misc/${run}0.tas"
+    )
+    set_tests_properties("create ${run}0.to" PROPERTIES FIXTURES_SETUP "${run}0.to")
+
+    add_test(
+        NAME    "create ${run}.texe"
+        COMMAND tld -o "${run}.texe" "${run}.to" "${run}0.to"
+    )
+    set_tests_properties(
+        "create ${run}.texe"
+        PROPERTIES
+            FIXTURES_SETUP "${run}.texe"
+            FIXTURES_REQUIRED "${run}.to"
+            FIXTURES_REQUIRED "${run}0.to"
+    )
+
+    check_std_outputs(NAME "run ${run}" COMMAND tsim    ARGS -p tsim.dump_end_state=1   INPUT "${run}.texe")
+
+    # TODO this function ends up supplying vvp an extra .texe argument due to
+    # the use of INPUT; we allow this for now since it seems harmless, and it
+    # provides us the dependency linkage we need.
+    check_std_outputs(
+        NAME    "run ${run} icarus"
+        COMMAND vvp
+        ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=${run}.texe" +DUMPENDSTATE
+        INPUT   "${run}.texe"
+    )
+
+endforeach()
+
 file(GLOB OPS test/op/*.tas)
 foreach(op_path ${OPS})
     get_filename_component(op "${op_path}" NAME_WLE)
