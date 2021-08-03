@@ -485,6 +485,31 @@ foreach(flavor set shifts)
 
 endforeach()
 
+# This "foreach" is just a scoping mechanism, dedicated to bm_mults.
+foreach(run_path ex/bm_mults.texe)
+    get_filename_component(run "${run_path}" NAME_WLE)
+
+    check_std_outputs(
+        NAME    "run ${run}"
+        COMMAND tsim
+        ARGS    -p tsim.dump_end_state=1 -p paths.share=${CMAKE_SOURCE_DIR}/ -@ ${CMAKE_SOURCE_DIR}/plugins/sdl.rcp
+        INPUT   "${run_path}"
+        PROPERTIES
+            ENVIRONMENT SDL_VIDEODRIVER=dummy
+    )
+
+    # TODO this function ends up supplying vvp an extra .texe argument due to
+    # the use of INPUT; we allow this for now since it seems harmless, and it
+    # provides us the dependency linkage we need.
+    check_std_outputs(
+        NAME    "run ${run} icarus"
+        COMMAND vvp
+        ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=${run_path}" +DUMPENDSTATE
+        INPUT   "${run}.texe"
+    )
+
+endforeach()
+
 file(GLOB OPS test/op/*.tas)
 foreach(op_path ${OPS})
     get_filename_component(op "${op_path}" NAME_WLE)

@@ -147,7 +147,7 @@ check_hw_icarus_run: vpi
 # always have SDL available, we don't want to run the tests if we are asked not
 # to. Hardware tests under Icarus, however, can always run these tests, at
 # least until we start hooking up the SDL devices via VPI.
-SDL_RUNS = bm_mults
+SDL_RUNS =
 vpath %.tas  $(TOP)/test/run/sdl
 vpath %.texe $(TOP)/test/run/sdl
 
