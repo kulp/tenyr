@@ -72,6 +72,13 @@ foreach(demo ${demos})
         INPUT   ${demo_executable}
     )
 
+    check_std_outputs(
+        NAME    ${demo}_demo_prealloc
+        COMMAND tsim
+        ARGS    --scratch --recipe=prealloc --recipe=serial --recipe=plugin
+        INPUT   ${demo_executable}
+    )
+
     # TODO this function ends up supplying vvp an extra .texe argument due to
     # the use of INPUT; we allow this for now since it seems harmless, and it
     # provides us the dependency linkage we need.
