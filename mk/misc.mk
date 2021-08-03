@@ -113,8 +113,6 @@ RUNS = $(subst .tas,,$(notdir $(wildcard $(TOP)/test/run/*.tas)))
 
 # This test needs an additional object, as it tests the linker
 $(TOP)/test/run/reloc_set.texe: $(TOP)/test/misc/reloc_set0.to
-# This test needs imul compiled in
-$(TOP)/test/run/test_imul.texe: $(TOP)/lib/imul.to
 $(TOP)/test/run/reloc_shifts.texe: $(TOP)/test/misc/reloc_shifts0.to
 
 check_hw: check_hw_icarus_run
