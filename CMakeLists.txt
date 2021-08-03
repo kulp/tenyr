@@ -412,7 +412,7 @@ set_tests_properties(
 check_std_outputs(NAME "deref zero failure"     COMMAND tsim                        INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
 check_std_outputs(NAME "deref zero success"     COMMAND tsim    ARGS -rzero_word    INPUT deref.texe    PROPERTIES WILL_FAIL FALSE)
 
-file(GLOB RUNS test/run/*.tas)
+file(GLOB RUNS test/run/*.tas test/run/sdl/*.tas)
 # We will treat reloc_set and reloc_shifts specially, later.
 list(REMOVE_ITEM RUNS ${CMAKE_SOURCE_DIR}/test/run/reloc_set.tas ${CMAKE_SOURCE_DIR}/test/run/reloc_shifts.tas)
 foreach(run_path ${RUNS})
@@ -423,7 +423,14 @@ foreach(run_path ${RUNS})
     )
     set_tests_properties("create ${run}.texe" PROPERTIES FIXTURES_SETUP "${run}.texe")
 
-    check_std_outputs(NAME "run ${run}" COMMAND tsim    ARGS -p tsim.dump_end_state=1   INPUT "${run}.texe")
+    check_std_outputs(
+        NAME    "run ${run}"
+        COMMAND tsim
+        ARGS    -p tsim.dump_end_state=1 -p paths.share=${CMAKE_SOURCE_DIR}/ -@ ${CMAKE_SOURCE_DIR}/plugins/sdl.rcp
+        INPUT   "${run}.texe"
+        PROPERTIES
+            ENVIRONMENT SDL_VIDEODRIVER=dummy
+    )
 
     # TODO this function ends up supplying vvp an extra .texe argument due to
     # the use of INPUT; we allow this for now since it seems harmless, and it

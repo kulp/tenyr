@@ -147,16 +147,14 @@ check_hw_icarus_run: vpi
 # always have SDL available, we don't want to run the tests if we are asked not
 # to. Hardware tests under Icarus, however, can always run these tests, at
 # least until we start hooking up the SDL devices via VPI.
-SDL_RUNS = led bm_mults
+SDL_RUNS = bm_mults
 vpath %.tas  $(TOP)/test/run/sdl
 vpath %.texe $(TOP)/test/run/sdl
 
-test_run_led: $(TOP)/test/run/sdl/led.texe
 test_run_bm_mults: $(TOP)/ex/bm_mults.texe
 # For now we need a special rule to make examples inside their directory to
 # pick up dependency information from ex/Makefile.
 $(TOP)/ex/%.texe: ; $(MAKE) -C $(@D) $(@F)
-$(TOP)/test/run/sdl/%.texe: ; $(MAKE) -C $(TOP)/test run/sdl/$(@F)
 
 export SDL_VIDEODRIVER=dummy
 check_hw_icarus_run: $(SDL_RUNS:%=test_run_%)
