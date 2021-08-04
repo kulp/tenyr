@@ -100,10 +100,7 @@ jobs:
       with:
         path: build/
         name: builddir-${{ matrix.os }}
-    - name: make check_sw
-      run: unbuffer make check_sw
-      timeout-minutes: 5
-    - name: make check_hw
-      run: unbuffer make check_hw
+    - name: make check
+      run: unbuffer make check
       timeout-minutes: 10
 
