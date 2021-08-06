@@ -583,3 +583,39 @@ set_tests_properties(
         DEPENDS "create irc.texe"
         LABELS "tool=tsim"
 )
+
+check_failure(
+    NAME    "corrupted object at word offset 0"
+    COMMAND tas
+    ARGS    -d ${CMAKE_SOURCE_DIR}/test/misc/obj/check_obj_0.to
+    EXPECT  "Bad magic when loading object"
+)
+
+check_failure(
+    NAME    "corrupted object at word offset 2"
+    COMMAND tas
+    ARGS    -d ${CMAKE_SOURCE_DIR}/test/misc/obj/check_obj_2.to
+    EXPECT  "Error during initialisation for format 'obj'"
+)
+
+check_failure(
+    NAME    "corrupted object at word offset 4"
+    COMMAND tas
+    ARGS    -d ${CMAKE_SOURCE_DIR}/test/misc/obj/check_obj_4.to
+    EXPECT  "Error during initialisation for format 'obj'"
+)
+
+check_failure(
+    NAME    "corrupted object at word offset 5"
+    COMMAND tas
+    ARGS    -d ${CMAKE_SOURCE_DIR}/test/misc/obj/check_obj_5.to
+    EXPECT  "Error during initialisation for format 'obj'"
+)
+
+check_failure(
+    NAME    "corrupted object at word offset 6"
+    COMMAND tas
+    ARGS    -d ${CMAKE_SOURCE_DIR}/test/misc/obj/check_obj_6.to
+    EXPECT  "Error during initialisation for format 'obj'"
+)
+

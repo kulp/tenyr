@@ -81,19 +81,13 @@ coverage_html: coverage.info
 	genhtml --output-directory $@ $^
 
 check: check_sw
-CHECK_SW_TASKS ?= check_obj
 check_sw: check_ctest
-check_sw: $(CHECK_SW_TASKS)
 
 check_ctest: vpi jit
 	cmake -S $(TOP) -B $(BUILDDIR)/ctest
 	$(MAKE) --directory=$(TOP)/hw/icarus BUILDDIR=$(realpath $(BUILDDIR))
 	cmake --build $(BUILDDIR)/ctest
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
-
-check_obj: check_obj_0 check_obj_2 check_obj_4 check_obj_5 check_obj_6
-check_obj_%: $(TOP)/test/misc/obj/check_obj_%.to | $(build_tas)
-	(! $(tas) -d $< 2> /dev/null)
 
 vpi:
 	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@
