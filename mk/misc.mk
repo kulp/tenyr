@@ -91,15 +91,9 @@ check_ctest: vpi jit
 	cmake --build $(BUILDDIR)/ctest
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 
-clean_FILES += check_obj_*.to ff.bin
-ff.bin:; echo -ne '\0377\0377\0377\0377' > $@
 check_obj: check_obj_0 check_obj_2 check_obj_4 check_obj_5 check_obj_6
-check_obj_%: check_obj_%.to | $(build_tas)
+check_obj_%: $(TOP)/test/misc/obj/check_obj_%.to | $(build_tas)
 	(! $(tas) -d $< 2> /dev/null)
-check_obj_%.to: $(TOP)/test/misc/obj/null.to ff.bin
-	cp $< $@
-	dd bs=4 if=ff.bin of=$@ seek=$* 2>/dev/null
-	dd bs=4 if=$< of=$@ skip=$$(($*+1)) seek=$$(($*+1)) 2>/dev/null
 
 vpi:
 	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@
