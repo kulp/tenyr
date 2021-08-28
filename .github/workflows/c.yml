@@ -69,6 +69,7 @@ jobs:
         os:
         - ubuntu-18.04
         - macos-latest
+        - macos-11
     runs-on: ${{ matrix.os }}
     steps:
     - if: runner.os == 'Linux'
