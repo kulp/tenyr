@@ -84,7 +84,7 @@ check: check_sw
 check_sw: check_ctest
 
 check_ctest: vpi jit
-	cmake -S $(TOP) -B $(BUILDDIR)/ctest
+	cmake -S $(TOP) -B $(BUILDDIR)/ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
 	$(MAKE) --directory=$(TOP)/hw/icarus BUILDDIR=$(realpath $(BUILDDIR))
 	cmake --build $(BUILDDIR)/ctest
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest

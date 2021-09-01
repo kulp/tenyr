@@ -9,6 +9,7 @@ on:
 env:
   SDL: 1
   JIT: 1
+  ICARUS: 1
   PEDANTIC: 0
 
 jobs:
@@ -16,6 +17,7 @@ jobs:
     env:
       SDL: 0
       JIT: 0
+      ICARUS: 0
     runs-on: ubuntu-20.04
     steps:
     - run: sudo apt-get update
