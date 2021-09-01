@@ -5,18 +5,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Address collected minor issues (#81)
-- Remove emscripten support (#92)
-- Address some Verilog lints and weaknesses (#94)
-- Collected ctest-provoked fixes (#95)
+
+## [0.9.9] - 2021-09-01
+### Added
 - Enable GitHub Actions for macos-11 runners (#96)
-- Prefer sdl2-config over pkg-config (#82)
-- Run `apt-get update` before installing packages from APT (#84)
-- Fix crash in SDLVGA on macOS Big Sur 11.2 (#83)
-- Remove Xilinx support (#86)
-- Introduce collected hardware changes for ulx3s (#88)
 - Introduce a yosys flow for ULX3S (#87)
 - Build on macOS Big Sur (#85)
+
+### Changed
+- Prefer sdl2-config over pkg-config (#82)
+- Run `apt-get update` before installing packages from APT (#84)
+
+### Fixed
+- Address collected minor issues (#81)
+- Address some Verilog lints and weaknesses (#94)
+- Collected ctest-provoked fixes (#95)
+- Fix crash in SDLVGA on macOS Big Sur 11.2 (#83)
+- Introduce collected hardware changes for ulx3s (#88)
+
+### Removed
+- Remove emscripten support (#92)
+- Remove Xilinx support (#86)
 
 ## [0.9.8] - 2021-01-01
 ### Added
@@ -116,7 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - uses of little-used assert()
 - obsolescent SPI simulated device
 
-[Unreleased]: https://github.com/kulp/tenyr/compare/v0.9.8...HEAD
+[Unreleased]: https://github.com/kulp/tenyr/compare/v0.9.9...HEAD
+[0.9.9]: https://github.com/kulp/tenyr/compare/v0.9.8...v0.9.9
 [0.9.8]: https://github.com/kulp/tenyr/compare/v0.9.7...v0.9.8
 [0.9.7]: https://github.com/kulp/tenyr/compare/v0.9.6...v0.9.7
 [0.9.6]: https://github.com/kulp/tenyr/compare/v0.9.5...v0.9.6
