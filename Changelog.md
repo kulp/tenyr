@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Address collected minor issues (#81)
+- Remove emscripten support (#92)
+- Address some Verilog lints and weaknesses (#94)
+- Collected ctest-provoked fixes (#95)
+- Enable GitHub Actions for macos-11 runners (#96)
 - Prefer sdl2-config over pkg-config (#82)
 - Run `apt-get update` before installing packages from APT (#84)
 - Fix crash in SDLVGA on macOS Big Sur 11.2 (#83)
