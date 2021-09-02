@@ -68,13 +68,13 @@ foreach(demo ${demos})
 
     check_std_outputs(
         NAME    ${demo}_demo
-        COMMAND tsim
+        COMMAND ${TENYR_SIMULATOR}
         INPUT   ${demo_executable}
     )
 
     check_std_outputs(
         NAME    ${demo}_demo_prealloc
-        COMMAND tsim
+        COMMAND ${TENYR_SIMULATOR}
         ARGS    --scratch --recipe=prealloc --recipe=serial --recipe=plugin
         INPUT   ${demo_executable}
     )

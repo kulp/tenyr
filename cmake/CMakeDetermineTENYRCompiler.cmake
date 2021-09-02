@@ -72,6 +72,15 @@ find_program(
         NO_DEFAULT_PATH
 )
 mark_as_advanced(CMAKE_TENYR_LINKER)
+
+find_program(
+    TENYR_SIMULATOR
+        NAMES "tsim"
+        PATHS "${TENYR_LEGACY_BUILD_DIR}"
+        DOC "tenyr simulator"
+        NO_DEFAULT_PATH
+)
+mark_as_advanced(TENYR_SIMULATOR)
 endif()
 
 set(CMAKE_TENYR_SOURCE_FILE_EXTENSIONS tas)
