@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 count=1024
-str=$(LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | dd conv=lcase | head -c$((count * 8)))
+str=$(LC_ALL=C tr -dc "[:xdigit:]" < /dev/urandom | tr [:upper:] [:lower:] | head -c$((count * 8)))
 for i in `seq 0 $((count - 1))`; do
     r=$RANDOM
     f=${str:$((i * 8 + 0)):1}
