@@ -35,7 +35,7 @@ function(check_std_outputs)
 
         add_test(
             NAME    "${COS_COMMAND}_${COS_NAME}_compare_stdout"
-            COMMAND ${CMAKE_COMMAND} -E compare_files
+            COMMAND ${CMAKE_COMMAND} -E compare_files --ignore-eol
                     "${CMAKE_SOURCE_DIR}/test/compare/${COS_COMMAND}/out/${COS_NAME}"
                     "${COS_NAME}.out"
         )
@@ -48,7 +48,7 @@ function(check_std_outputs)
 
         add_test(
             NAME    "${COS_COMMAND}_${COS_NAME}_compare_stderr"
-            COMMAND ${CMAKE_COMMAND} -E compare_files
+            COMMAND ${CMAKE_COMMAND} -E compare_files --ignore-eol
                     "${CMAKE_SOURCE_DIR}/test/compare/${COS_COMMAND}/err/${COS_NAME}"
                     "${COS_NAME}.err"
         )
