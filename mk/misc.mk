@@ -84,7 +84,7 @@ check: check_sw
 check_sw: check_ctest
 
 check_ctest: vpi jit icarus
-	cmake -S $(TOP) -B $(BUILDDIR)/ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
+	cmake -S $(TOP) -B $(BUILDDIR)/ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DPLATFORM=${PLATFORM}
 	cmake --build $(BUILDDIR)/ctest
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 

@@ -4,7 +4,7 @@
 
 project(tenyr NONE)
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.19)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 enable_language(TENYR)
@@ -337,7 +337,7 @@ file(
 
 add_test(
     NAME dogfood
-    COMMAND ${CMAKE_SOURCE_DIR}/scripts/dogfood.sh dogfood.XXXXXX tas ${dogfood_INPUTS}
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/dogfood.sh dogfood.XXXXXX ${CMAKE_TENYR_COMPILER} ${dogfood_INPUTS}
 )
 set_tests_properties(
     dogfood
