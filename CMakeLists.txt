@@ -412,7 +412,13 @@ set_tests_properties(
 check_std_outputs(NAME "deref zero failure"     COMMAND tsim                        INPUT deref.texe    PROPERTIES WILL_FAIL TRUE)
 check_std_outputs(NAME "deref zero success"     COMMAND tsim    ARGS -rzero_word    INPUT deref.texe    PROPERTIES WILL_FAIL FALSE)
 
-file(GLOB RUNS test/run/*.tas test/run/sdl/*.tas)
+file(GLOB RUNS test/run/*.tas)
+file(GLOB SDL_RUNS test/run/sdl/*.tas)
+if (SDL)
+list(APPEND RUNS ${SDL_RUNS})
+set(TSIM_EXTRA_ARGS -@ ${CMAKE_SOURCE_DIR}/plugins/sdl.rcp)
+endif()
+
 # We will treat reloc_set and reloc_shifts specially, later.
 list(REMOVE_ITEM RUNS ${CMAKE_SOURCE_DIR}/test/run/reloc_set.tas ${CMAKE_SOURCE_DIR}/test/run/reloc_shifts.tas)
 foreach(run_path ${RUNS})
@@ -426,7 +432,7 @@ foreach(run_path ${RUNS})
     check_std_outputs(
         NAME    "run ${run}"
         COMMAND tsim
-        ARGS    -p tsim.dump_end_state=1 -p paths.share=${CMAKE_SOURCE_DIR}/ -@ ${CMAKE_SOURCE_DIR}/plugins/sdl.rcp
+        ARGS    -p tsim.dump_end_state=1 -p paths.share=${CMAKE_SOURCE_DIR}/ ${TSIM_EXTRA_ARGS}
         INPUT   "${run}.texe"
         PROPERTIES
             ENVIRONMENT SDL_VIDEODRIVER=dummy
@@ -485,30 +491,32 @@ foreach(flavor set shifts)
 
 endforeach()
 
-# This "foreach" is just a scoping mechanism, dedicated to bm_mults.
-foreach(run_path ex/bm_mults.texe)
-    get_filename_component(run "${run_path}" NAME_WLE)
+if (SDL)
+    # This "foreach" is just a scoping mechanism, dedicated to bm_mults.
+    foreach(run_path ex/bm_mults.texe)
+        get_filename_component(run "${run_path}" NAME_WLE)
 
-    check_std_outputs(
-        NAME    "run ${run}"
-        COMMAND tsim
-        ARGS    -p tsim.dump_end_state=1 -p paths.share=${CMAKE_SOURCE_DIR}/ -@ ${CMAKE_SOURCE_DIR}/plugins/sdl.rcp
-        INPUT   "${run_path}"
-        PROPERTIES
-            ENVIRONMENT SDL_VIDEODRIVER=dummy
-    )
+        check_std_outputs(
+            NAME    "run ${run}"
+            COMMAND tsim
+            ARGS    -p tsim.dump_end_state=1 -p paths.share=${CMAKE_SOURCE_DIR}/ -@ ${CMAKE_SOURCE_DIR}/plugins/sdl.rcp
+            INPUT   "${run_path}"
+            PROPERTIES
+                ENVIRONMENT SDL_VIDEODRIVER=dummy
+        )
 
-    # TODO this function ends up supplying vvp an extra .texe argument due to
-    # the use of INPUT; we allow this for now since it seems harmless, and it
-    # provides us the dependency linkage we need.
-    check_std_outputs(
-        NAME    "run ${run} icarus"
-        COMMAND vvp
-        ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=${run_path}" +DUMPENDSTATE
-        INPUT   "${run}.texe"
-    )
+        # TODO this function ends up supplying vvp an extra .texe argument due to
+        # the use of INPUT; we allow this for now since it seems harmless, and it
+        # provides us the dependency linkage we need.
+        check_std_outputs(
+            NAME    "run ${run} icarus"
+            COMMAND vvp
+            ARGS    -M "${TENYR_LEGACY_BUILD_DIR}" -m vpidevices -N "${CMAKE_SOURCE_DIR}/hw/icarus/tenyr" "+LOAD=${run_path}" +DUMPENDSTATE
+            INPUT   "${run}.texe"
+        )
 
-endforeach()
+    endforeach()
+endif()
 
 file(GLOB OPS test/op/*.tas)
 foreach(op_path ${OPS})
