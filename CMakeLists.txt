@@ -27,15 +27,16 @@ function(check_success)
     cmake_parse_arguments(CO "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
     string(MAKE_C_IDENTIFIER "${CO_NAME}" CO_NAME)
+    get_filename_component(CO_STEM "${CO_COMMAND}" NAME_WLE)
 
     add_test(
-        NAME "${CO_COMMAND}_${CO_NAME}_success"
+        NAME "${CO_STEM}_${CO_NAME}_success"
         COMMAND ${CO_COMMAND} ${CO_ARGS}
     )
     set_tests_properties(
-        "${CO_COMMAND}_${CO_NAME}_success"
+        "${CO_STEM}_${CO_NAME}_success"
         PROPERTIES
-        LABELS "tool=${CO_COMMAND}"
+        LABELS "tool=${CO_STEM}"
         ${CO_PROPERTIES}
     )
 endfunction()
@@ -46,15 +47,16 @@ function(check_output)
     cmake_parse_arguments(CO "" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
     string(MAKE_C_IDENTIFIER "${CO_NAME}" CO_NAME)
+    get_filename_component(CO_STEM "${CO_COMMAND}" NAME_WLE)
 
     add_test(
-        NAME "${CO_COMMAND}_${CO_NAME}_output"
+        NAME "${CO_STEM}_${CO_NAME}_output"
         COMMAND ${CO_COMMAND} ${CO_ARGS}
     )
     set_tests_properties(
-        "${CO_COMMAND}_${CO_NAME}_output"
+        "${CO_STEM}_${CO_NAME}_output"
         PROPERTIES
-        LABELS "tool=${CO_COMMAND}"
+        LABELS "tool=${CO_STEM}"
         PASS_REGULAR_EXPRESSION "${CO_EXPECT}"
         ${CO_PROPERTIES}
     )
@@ -66,23 +68,24 @@ function(check_failure)
     cmake_parse_arguments(CO "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
     string(MAKE_C_IDENTIFIER "${CO_NAME}" CO_NAME)
+    get_filename_component(CO_STEM "${CO_COMMAND}" NAME_WLE)
 
     check_output(
         NAME    "${CO_NAME}"
         EXPECT  "${CO_EXPECT}"
-        COMMAND "${CO_COMMAND}"
+        COMMAND "${CO_STEM}"
         ARGS    "${CO_ARGS}"
         PROPERTIES  "${CO_PROPERTIES}"
     )
 
     add_test(
-        NAME "${CO_COMMAND}_${CO_NAME}_exitcode"
+        NAME "${CO_STEM}_${CO_NAME}_exitcode"
         COMMAND ${CO_COMMAND} ${CO_ARGS}
     )
     set_tests_properties(
-        "${CO_COMMAND}_${CO_NAME}_exitcode"
+        "${CO_STEM}_${CO_NAME}_exitcode"
         PROPERTIES
-        LABELS "tool=${CO_COMMAND}"
+        LABELS "tool=${CO_STEM}"
         WILL_FAIL TRUE
         ${CO_PROPERTIES}
     )
