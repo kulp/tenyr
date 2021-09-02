@@ -83,14 +83,20 @@ coverage_html: coverage.info
 check: check_sw
 check_sw: check_ctest
 
-check_ctest: vpi jit
+check_ctest: vpi jit icarus
 	cmake -S $(TOP) -B $(BUILDDIR)/ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
-	$(MAKE) --directory=$(TOP)/hw/icarus BUILDDIR=$(realpath $(BUILDDIR))
 	cmake --build $(BUILDDIR)/ctest
 	export PATH=$(abspath $(BUILDDIR)):$$PATH && cd $(BUILDDIR)/ctest && ctest
 
+ifneq ($(ICARUS),0)
 vpi:
 	$(MAKE) -C $(BUILDDIR) -f $(TOP)/hw/vpi/Makefile $@
+icarus:
+	$(MAKE) --directory=$(TOP)/hw/icarus BUILDDIR=$(realpath $(BUILDDIR))
+else
+vpi: ; # VPI support not enabled
+icarus: ; # Icarus not enabled
+endif
 
 ifneq ($(JIT),0)
 tsim_FLAGS_jit = -rjit -ptsim.jit.run_count_threshold=2
