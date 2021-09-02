@@ -18,6 +18,7 @@ jobs:
       SDL: 0
       JIT: 0
       ICARUS: 0
+      PLATFORM: mingw
     runs-on: ubuntu-20.04
     steps:
     - run: sudo apt-get update
@@ -38,8 +39,6 @@ jobs:
     - name: make check_sw
       run: unbuffer make check_sw
       timeout-minutes: 5
-      env:
-        PLATFORM: mingw
 
   coverage:
     env:
