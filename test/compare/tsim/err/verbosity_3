@@ -1,0 +1,3 @@
+read  @ 0x00001000 = 0xffffffff
+IP = 0x00001000	 P  <- [P  -  1]              # .word 0xffffffff
+read  @ 0x00001000 = 0xffffffff

@@ -48,16 +48,6 @@ run_%: PLUSARGS += +PERIODS=$(PERIODS_DEFAULT) \
 run_%: %.texe tenyr
 	$(IVERILOG)vvp -N -M$(BUILDDIR) -m vpidevices tenyr +LOAD=$< $(PLUSARGS)
 
-# Test for nonexistent file.
-.PHONY: nonexistent.texe
-run_nonexistent: tenyr
-	(! $(IVERILOG)vvp -N tenyr +LOAD=nonexistent.texe)
-
-# Test invalid files.
-vpath %.texe $(TOP)/test/misc/obj/
-run_bad_magic run_toolarge: run_%: %.texe tenyr
-	(! $(IVERILOG)vvp -N tenyr +LOAD=$<)
-
 ##############################################################################
 
 OUTPUT_OPTION ?= -o $@

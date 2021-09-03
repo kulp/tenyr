@@ -135,7 +135,7 @@ endif
 # example) are built simultaneously, sometimes overwriting each other
 # non-atomically
 coverage: export GCOV=1
-install local-install uninstall doc gzip zip coverage check check_sw check_hw check_sim check_jit check_compile dogfood: all
+install local-install uninstall doc gzip zip coverage check check_sw check_ctest: all
 	$(MAKE) -f $(TOP)/mk/misc.mk $@
 
 endif # BUILDDIR

@@ -9,6 +9,7 @@ on:
 env:
   SDL: 1
   JIT: 1
+  ICARUS: 1
   PEDANTIC: 0
 
 jobs:
@@ -16,6 +17,8 @@ jobs:
     env:
       SDL: 0
       JIT: 0
+      ICARUS: 0
+      PLATFORM: mingw
     runs-on: ubuntu-20.04
     steps:
     - run: sudo apt-get update
@@ -35,9 +38,7 @@ jobs:
         name: builddir-mingw64
     - name: make check_sw
       run: unbuffer make check_sw
-      timeout-minutes: 5
-      env:
-        PLATFORM: mingw
+      timeout-minutes: 10
 
   coverage:
     env:
@@ -100,10 +101,7 @@ jobs:
       with:
         path: build/
         name: builddir-${{ matrix.os }}
-    - name: make check_sw
-      run: unbuffer make check_sw
-      timeout-minutes: 5
-    - name: make check_hw
-      run: unbuffer make check_hw
+    - name: make check
+      run: unbuffer make check
       timeout-minutes: 10
 
