@@ -364,7 +364,7 @@ check_std_outputs(NAME "verbosity 2"            COMMAND ${TENYR_SIMULATOR}      
 check_std_outputs(NAME "verbosity 3"            COMMAND ${TENYR_SIMULATOR}      ARGS -ftext -vvv)
 check_std_outputs(NAME "verbosity 4"            COMMAND ${TENYR_SIMULATOR}      ARGS -ftext -vvvv)
 check_std_outputs(NAME "verbosity 5"            COMMAND ${TENYR_SIMULATOR}      ARGS -ftext -vvvvv)
-check_std_outputs(NAME "multiple inputs fails"  COMMAND ${TENYR_SIMULATOR}      ARGS nonexistent_file_name another_inextant_file    PROPERTIES WILL_FAIL TRUE)
+check_failure(    NAME "multiple inputs"        COMMAND ${TENYR_SIMULATOR}      ARGS nonexistent_file_name another_inextant_file    EXPECT  "Usage:")
 
 add_test(
     NAME    "tsim_stdin_accepted"
