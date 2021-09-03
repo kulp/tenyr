@@ -79,6 +79,15 @@ foreach(demo ${demos})
         INPUT   ${demo_executable}
     )
 
+    if (JIT)
+        check_std_outputs(
+            NAME    ${demo}_demo_jit
+            COMMAND ${TENYR_SIMULATOR}
+            ARGS    --recipe=jit
+            INPUT   ${demo_executable}
+        )
+    endif()
+
     # TODO this function ends up supplying vvp an extra .texe argument due to
     # the use of INPUT; we allow this for now since it seems harmless, and it
     # provides us the dependency linkage we need.
