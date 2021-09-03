@@ -494,6 +494,20 @@ foreach(flavor set shifts)
 
 endforeach()
 
+if (JIT)
+    # This "foreach" is just a scoping mechanism, dedicated to jitops.
+    foreach(run_path test/run/jitops.tas)
+        get_filename_component(run "${run_path}" NAME_WLE)
+
+        check_std_outputs(
+            NAME    "run ${run}_jit"
+            COMMAND ${TENYR_SIMULATOR}
+            ARGS    -rjit -p tsim.dump_end_state=1
+            INPUT   "${run}.texe"
+        )
+    endforeach()
+endif()
+
 if (SDL)
     # This "foreach" is just a scoping mechanism, dedicated to bm_mults.
     foreach(run_path ex/bm_mults.texe)
