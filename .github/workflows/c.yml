@@ -38,7 +38,7 @@ jobs:
         name: builddir-mingw64
     - name: make check_sw
       run: unbuffer make check_sw
-      timeout-minutes: 5
+      timeout-minutes: 10
 
   coverage:
     env:
