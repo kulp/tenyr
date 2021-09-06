@@ -17,3 +17,17 @@ add_executable(tld
     obj.c
 )
 target_link_libraries(tld PUBLIC common)
+
+find_package(FLEX)
+flex_target(scanner
+    lexer.l lexer.c
+    DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/lexer.h
+)
+
+find_package(BISON 3.7.6)
+bison_target(parser
+    parser.y parser.c
+    DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser.h
+)
+
+add_flex_bison_dependency(scanner parser)
