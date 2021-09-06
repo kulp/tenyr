@@ -1,2 +1,0 @@
-#!/bin/sh
-exec env WINEDEBUG=-all wine64 @WRAPPED_BIN@ "$@"
