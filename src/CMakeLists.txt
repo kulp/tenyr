@@ -9,6 +9,11 @@ add_library(common STATIC
 )
 
 target_include_directories(common PUBLIC .)
-target_link_libraries(common
-    os_support
+target_link_libraries(common PUBLIC os_support)
+
+add_executable(tld
+    tld.c
+
+    obj.c
 )
+target_link_libraries(tld PUBLIC common)
