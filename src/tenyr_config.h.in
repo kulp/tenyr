@@ -1,0 +1,4 @@
+#define tenyr_VERSION_MAJOR @tenyr_VERSION_MAJOR@
+#define tenyr_VERSION_MINOR @tenyr_VERSION_MINOR@
+#define tenyr_VERSION_PATCH @tenyr_VERSION_PATCH@
+#define BUILD_NAME #tenyr_VERSION_MAJOR "." #tenyr_VERSION_MINOR "." #tenyr_VERSION_PATCH
