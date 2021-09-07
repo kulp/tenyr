@@ -31,3 +31,19 @@ bison_target(parser
 )
 
 add_flex_bison_dependency(scanner parser)
+
+add_executable(tas
+    tas.c
+
+    asm.c
+    asmif.c
+    obj.c
+    ${FLEX_scanner_OUTPUTS}
+    ${BISON_parser_OUTPUTS}
+)
+
+target_include_directories(tas PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+target_link_libraries(tas PUBLIC common)
