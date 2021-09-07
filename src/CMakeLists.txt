@@ -47,3 +47,22 @@ target_include_directories(tas PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(tas PUBLIC common)
+
+add_executable(tsim
+    tsim.c
+
+    asm.c
+    obj.c
+    plugin.c
+    sim.c
+    simif.c
+
+    devices/ram.c
+    devices/serial.c
+    devices/sparseram.c
+    devices/zero_word.c
+)
+
+target_link_libraries(tsim PUBLIC common)
+# Plugin support needs -ldl.
+target_link_libraries(tsim PRIVATE dl)
