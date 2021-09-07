@@ -9,3 +9,8 @@ target_include_directories(os_support_Linux
     PUBLIC
         .
 )
+
+target_compile_definitions(os_support_Linux
+    INTERFACE
+        DYLIB_SUFFIX=".so"
+)

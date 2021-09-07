@@ -9,3 +9,8 @@ target_include_directories(os_support_Darwin
     PUBLIC
         .
 )
+
+target_compile_definitions(os_support_Darwin
+    INTERFACE
+        DYLIB_SUFFIX=".dylib"
+)

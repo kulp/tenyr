@@ -17,3 +17,8 @@ target_compile_definitions(os_support_Win32
     PRIVATE
         PATH_SEPARATOR_CHAR=';'
 )
+
+target_compile_definitions(os_support_Win32
+    INTERFACE
+        DYLIB_SUFFIX=".dll"
+)
