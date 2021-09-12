@@ -7,27 +7,30 @@ set(TENYR_LEGACY_BUILD_DIR "${CMAKE_BINARY_DIR}/..")
 find_program(
     CMAKE_TENYR_COMPILER
         NAMES "tas"
-        PATHS "${TENYR_LEGACY_BUILD_DIR}"
         DOC "tenyr assembler"
+        PATHS "${CMAKE_BINARY_DIR}/src"
         NO_DEFAULT_PATH
+        REQUIRED
 )
 mark_as_advanced(CMAKE_TENYR_COMPILER)
 
 find_program(
     CMAKE_TENYR_LINKER
         NAMES "tld"
-        PATHS "${TENYR_LEGACY_BUILD_DIR}"
         DOC "tenyr linker"
+        PATHS "${CMAKE_BINARY_DIR}/src"
         NO_DEFAULT_PATH
+        REQUIRED
 )
 mark_as_advanced(CMAKE_TENYR_LINKER)
 
 find_program(
     TENYR_SIMULATOR
         NAMES "tsim"
-        PATHS "${TENYR_LEGACY_BUILD_DIR}"
         DOC "tenyr simulator"
+        PATHS "${CMAKE_BINARY_DIR}/src"
         NO_DEFAULT_PATH
+        REQUIRED
 )
 mark_as_advanced(TENYR_SIMULATOR)
 

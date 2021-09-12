@@ -166,12 +166,6 @@ ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include parser.d
 endif
 
-# We make some targets depend on `all` because it assuages some issues with a
-# top-level `make -j check` (for example) where many copies of tas (for
-# example) are built simultaneously, sometimes overwriting each other
-# non-atomically
-check: all
-
 check: vpi jit icarus
 	cmake -S . -B ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
 	cmake --build ctest
