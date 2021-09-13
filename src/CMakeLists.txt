@@ -1,5 +1,6 @@
 configure_file(tenyr_config.h.in tenyr_config.h)
 
+add_subdirectory(devices)
 add_subdirectory(os)
 
 add_library(common STATIC

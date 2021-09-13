@@ -12,5 +12,5 @@ target_include_directories(os_support_Darwin
 
 target_compile_definitions(os_support_Darwin
     INTERFACE
-        DYLIB_SUFFIX=".dylib"
+        DYLIB_SUFFIX=".so"
 )
