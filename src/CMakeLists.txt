@@ -8,6 +8,7 @@ add_library(common STATIC
     stream.c
 )
 
+target_include_directories(common PUBLIC .)
 target_link_libraries(common
     os_support
 )
