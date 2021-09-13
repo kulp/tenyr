@@ -167,11 +167,11 @@ ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 endif
 
 check: jit icarus
-	cmake -S . -B ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
-	cmake --build ctest
-	cmake -S . -B ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1
-	cmake --build ctest
-	export PATH=$(abspath .):$$PATH && cd ctest && ctest
+	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
+	cmake --build cmake_build
+	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1
+	cmake --build cmake_build
+	export PATH=$(abspath .):$$PATH && cd cmake_build && ctest
 
 ifneq ($(ICARUS),0)
 %.vpi: INCLUDES += src
