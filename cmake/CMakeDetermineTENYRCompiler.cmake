@@ -1,8 +1,3 @@
-# For now we are configuring ctest into a subdirectory of the build directory
-# that is chosen by the top-level Makefile. Eventually CMake will control the
-# build directory location and this TENYR_LEGACY_BUILD_DIR will go away.
-set(TENYR_LEGACY_BUILD_DIR "${CMAKE_BINARY_DIR}/..")
-
 # Find the compiler
 find_program(
     CMAKE_TENYR_COMPILER

@@ -166,7 +166,7 @@ ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include parser.d
 endif
 
-check: vpi jit icarus
+check: jit icarus
 	cmake -S . -B ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
 	cmake --build ctest
 	export PATH=$(abspath .):$$PATH && cd ctest && ctest
@@ -177,8 +177,6 @@ ifneq ($(ICARUS),0)
 
 vpath %.c src
 vpath %.c hw/vpi
-
-all: vpi
 
 %.vpi: CFLAGS  += $(shell iverilog-vpi --cflags 2> /dev/null | sed s/-no-cpp-precomp//)
 %.vpi: CFLAGS  += -Wno-strict-prototypes

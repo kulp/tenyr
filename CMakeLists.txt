@@ -19,4 +19,5 @@ add_subdirectory(ex)
 
 include("tests.cmake")
 
+add_subdirectory(hw/vpi)
 add_subdirectory(src)
