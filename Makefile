@@ -169,6 +169,8 @@ endif
 check: jit icarus
 	cmake -S . -B ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
 	cmake --build ctest
+	cmake -S . -B ctest -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1
+	cmake --build ctest
 	export PATH=$(abspath .):$$PATH && cd ctest && ctest
 
 ifneq ($(ICARUS),0)
