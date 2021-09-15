@@ -11,6 +11,10 @@ add_library(common STATIC
 target_include_directories(common PUBLIC .)
 target_link_libraries(common PUBLIC os_support)
 
+add_library(common-pic STATIC $<TARGET_PROPERTY:common,SOURCES>)
+set_target_properties(common-pic PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(common-pic PUBLIC common)
+
 add_executable(tld
     tld.c
 
