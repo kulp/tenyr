@@ -25,3 +25,18 @@ target_compile_options(
         -UFAILURE_ADD_DEVICE_FUNC
         -DFAILURE_ADD_DEVICE_FUNC=unfindable_function_name
 )
+
+if(SDL)
+    # TODO use find_package to set SDL build automatically.
+    find_package(SDL2 REQUIRED COMPONENTS SDL2::Main SDL2::Image)
+    add_library(tenyrsdlled MODULE sdlled.c)
+    target_link_libraries(tenyrsdlled PUBLIC common-pic)
+    target_link_libraries(tenyrsdlled PRIVATE SDL2::Main SDL2::Image)
+    add_library(tenyrsdlvga MODULE sdlvga.c)
+    target_link_libraries(tenyrsdlvga PUBLIC common-pic)
+
+    # Place libraries alongside the `tsim` binary in order to be found.
+    set_target_properties(tenyrsdlled tenyrsdlvga PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src)
+
+    target_link_libraries(tenyrsdlvga PRIVATE SDL2::Main SDL2::Image)
+endif()
