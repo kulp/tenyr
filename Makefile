@@ -166,7 +166,7 @@ ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include parser.d
 endif
 
-check: jit icarus
+check: icarus
 	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
 	cmake --build cmake_build
 	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1

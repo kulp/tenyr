@@ -71,3 +71,9 @@ add_executable(tsim
 target_link_libraries(tsim PUBLIC common)
 # Plugin support needs -ldl.
 target_link_libraries(tsim PRIVATE dl)
+
+if(JIT)
+    add_library(tenyrjit MODULE jit.c cjit.c)
+    target_link_libraries(tenyrjit PUBLIC common-pic)
+    target_link_libraries(tenyrjit PRIVATE lightning)
+endif()
