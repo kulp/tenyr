@@ -171,7 +171,7 @@ check: icarus
 	cmake --build cmake_build
 	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1
 	cmake --build cmake_build
-	export PATH=$(abspath .):$$PATH && cd cmake_build && ctest
+	export PATH=$(abspath .):$$PATH && cd cmake_build && ctest --rerun-failed --output-on-failure
 
 ifneq ($(ICARUS),0)
 %.vpi: INCLUDES += src
