@@ -47,7 +47,7 @@ jobs:
       timeout-minutes: 1
     - uses: actions/upload-artifact@v2
       with:
-        path: build/
+        path: cmake_build/
         name: builddir-${{ matrix.os }}
     - name: make check
       run: unbuffer make check
