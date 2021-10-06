@@ -2,3 +2,4 @@
 *.texe
 *.o
 *.d
+build/

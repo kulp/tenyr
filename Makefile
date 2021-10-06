@@ -160,13 +160,13 @@ ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 endif
 
 all:
-	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
-	cmake --build cmake_build
+	cmake -S . -B build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
+	cmake --build build
 
 check: all icarus
-	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1
-	cmake --build cmake_build
-	export PATH=$(abspath .):$$PATH && cd cmake_build && ctest --rerun-failed --output-on-failure
+	cmake -S . -B build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1
+	cmake --build build
+	export PATH=$(abspath .):$$PATH && cd build && ctest --rerun-failed --output-on-failure
 
 ifneq ($(ICARUS),0)
 %.vpi: INCLUDES += src
