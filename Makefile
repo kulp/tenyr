@@ -35,10 +35,6 @@ DEVOBJS = $(DEVICES:%=%.o)
 PDEVOBJS = $(PDEVICES:%=%,dy.o)
 PDEVLIBS = $(PDEVICES:%=libtenyr%$(DYLIB_SUFFIX))
 
-BIN_TARGETS += tas tsim tld
-LIB_TARGETS += $(PDEVLIBS)
-
-TARGETS      = $(BIN_TARGETS) $(LIB_TARGETS) $(TEST_TARGETS)
 RESOURCES   := $(wildcard rsrc/64/*.png) \
                rsrc/font10x15/invert.font10x15.png \
                $(wildcard plugins/*.rcp) \
@@ -110,7 +106,6 @@ clean_FILES = \
                    *.d                   \
                    parser.[ch]           \
                    lexer.[ch]            \
-                   $(TARGETS)            \
                    $(SOURCEFILES:src/%.c=%.d) \
                    $(VPIFILES:hw/vpi/%.c=%.d) \
                    random random.*       \
@@ -126,8 +121,6 @@ tld_OBJECTS    = $(common_OBJECTS) obj.o
 
 ################################################################################
 DROP_TARGETS = clean
-
-all: $(TARGETS)
 
 -include mk/os/rules/$(OS).mk
 
@@ -166,9 +159,11 @@ ifeq ($(filter $(DROP_TARGETS),$(MAKECMDGOALS)),)
 -include parser.d
 endif
 
-check: icarus
+all:
 	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
 	cmake --build cmake_build
+
+check: all icarus
 	cmake -S . -B cmake_build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1
 	cmake --build cmake_build
 	export PATH=$(abspath .):$$PATH && cd cmake_build && ctest --rerun-failed --output-on-failure
@@ -199,8 +194,6 @@ tenyr: CFLAGS += -Isrc
 tenyr: INCLUDES += $(INCLUDE_OS)
 
 clean_FILES += tenyr *.o
-
-all: tenyr
 
 vpath %.v hw/verilog hw/verilog/sim hw/icarus
 vpath %.v 3rdparty/wb_intercon/rtl/verilog
