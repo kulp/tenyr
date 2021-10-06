@@ -10,6 +10,7 @@ env:
   SDL: 1
   JIT: 1
   ICARUS: 1
+  CTEST_OUTPUT_ON_FAILURE: 1
 
 jobs:
   build:
