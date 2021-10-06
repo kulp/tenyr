@@ -5,8 +5,8 @@ ifneq ($V,1)
 .SILENT:
 endif
 
-clean::
-	$(RM) -rf $($@_FILES)
+clean:
+	cmake --build build --target clean
 
 .DEFAULT_GOAL = all
 
@@ -41,8 +41,6 @@ vpidevices.vpi: callbacks,dy.o vpiserial,dy.o load,dy.o sim,dy.o asm,dy.o obj,dy
 icarus: tenyr
 tenyr: CFLAGS += -Wall -Wextra -Wshadow -pedantic-errors -std=c99 $(VPI_CFLAGS)
 tenyr: CFLAGS += -Isrc
-
-clean_FILES += tenyr *.o
 
 vpath %.v hw/verilog hw/verilog/sim hw/icarus
 vpath %.v 3rdparty/wb_intercon/rtl/verilog
