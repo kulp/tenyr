@@ -19,6 +19,20 @@ include("tests.cmake")
 add_subdirectory(ex)
 endif()
 
+include(ProcessorCount)
+ProcessorCount(NPROC)
+
+if(COVERAGE)
+include(CodeCoverage)
+append_coverage_compiler_flags()
+setup_target_for_coverage_lcov(
+    NAME            coverage
+    EXECUTABLE      ctest -j ${NPROC}
+    EXCLUDE         lexer.c parser.c
+    NO_DEMANGLE
+)
+endif()
+
 configure_file(src/tenyr_config.h.in tenyr_config.h)
 
 add_subdirectory(lib)
