@@ -22,5 +22,6 @@ endif()
 configure_file(src/tenyr_config.h.in tenyr_config.h)
 
 add_subdirectory(lib)
+add_subdirectory(hw/icarus)
 add_subdirectory(hw/vpi)
 add_subdirectory(src)
