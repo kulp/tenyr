@@ -424,7 +424,7 @@ foreach(run_path ${RUNS})
     check_std_outputs(
         NAME    "run ${run} icarus"
         COMMAND vvp
-        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_SOURCE_DIR}/tenyr" "+LOAD=${run}.texe" +DUMPENDSTATE
+        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_BINARY_DIR}/hw/icarus/tenyr" "+LOAD=${run}.texe" +DUMPENDSTATE
         INPUT   "${run}.texe"
     )
 
@@ -465,7 +465,7 @@ foreach(flavor set shifts)
     check_std_outputs(
         NAME    "run ${run} icarus"
         COMMAND vvp
-        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_SOURCE_DIR}/tenyr" "+LOAD=${run}.texe" +DUMPENDSTATE
+        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_BINARY_DIR}/hw/icarus/tenyr" "+LOAD=${run}.texe" +DUMPENDSTATE
         INPUT   "${run}.texe"
     )
 
@@ -505,7 +505,7 @@ if (SDL)
         check_std_outputs(
             NAME    "run ${run} icarus"
             COMMAND vvp
-            ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_SOURCE_DIR}/tenyr" "+LOAD=${run_path}" +DUMPENDSTATE
+            ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_BINARY_DIR}/hw/icarus/tenyr" "+LOAD=${run_path}" +DUMPENDSTATE
             INPUT   "${run}.texe"
         )
 
@@ -529,7 +529,7 @@ foreach(op_path ${OPS})
     check_std_outputs(
         NAME    "op ${op} icarus"
         COMMAND vvp
-        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_SOURCE_DIR}/tenyr" "+LOAD=${op}.texe" +DUMPENDSTATE
+        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_BINARY_DIR}/hw/icarus/tenyr" "+LOAD=${op}.texe" +DUMPENDSTATE
         INPUT   "${op}.texe"
     )
 
@@ -538,7 +538,7 @@ endforeach()
 check_std_outputs(
     NAME    "icarus failure nonexistent"
     COMMAND vvp
-    ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_SOURCE_DIR}/tenyr" "+LOAD=nonexistent.texe"
+    ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_BINARY_DIR}/hw/icarus/tenyr" "+LOAD=nonexistent.texe"
     PROPERTIES
         WILL_FAIL TRUE
 )
@@ -555,7 +555,7 @@ foreach(stem ${icarus_stems})
     check_std_outputs(
         NAME    "icarus failure ${stem}"
         COMMAND vvp
-        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_SOURCE_DIR}/tenyr" "+LOAD=${stem}.texe"
+        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_BINARY_DIR}/hw/icarus/tenyr" "+LOAD=${stem}.texe"
         INPUT   "${stem}.texe"
         PROPERTIES
             WILL_FAIL TRUE

@@ -94,7 +94,7 @@ foreach(demo ${demos})
     check_std_outputs(
         NAME    ${demo}_demo
         COMMAND vvp
-        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_SOURCE_DIR}/tenyr" "+LOAD=${demo_executable}"
+        ARGS    -M "${CMAKE_BINARY_DIR}/hw/vpi" -m vpidevices -N "${CMAKE_BINARY_DIR}/hw/icarus/tenyr" "+LOAD=${demo_executable}"
         INPUT   ${demo_executable}
         PROPERTIES
             COST 0.5
