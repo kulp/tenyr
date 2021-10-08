@@ -2,7 +2,7 @@
 cmake_policy(VERSION 3.19...3.20)
 cmake_minimum_required(VERSION 3.19)
 
-project(tenyr VERSION 0.9.9 LANGUAGES C)
+project(tenyr VERSION 0.9.9)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
