@@ -453,8 +453,7 @@ foreach(flavor set shifts)
         "create ${run}.texe"
         PROPERTIES
             FIXTURES_SETUP "${run}.texe"
-            FIXTURES_REQUIRED "${run}.to"
-            FIXTURES_REQUIRED "${run}0.to"
+            FIXTURES_REQUIRED "${run}.to;${run}0.to"
     )
 
     check_std_outputs(NAME "run ${run}" COMMAND ${TENYR_SIMULATOR}  ARGS -p tsim.dump_end_state=1   INPUT "${run}.texe")
