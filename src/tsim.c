@@ -1,3 +1,5 @@
+#include "tenyr_config.h"
+
 #include "os_common.h"
 #include "plugin.h"
 
@@ -89,7 +91,7 @@ static const char *library_search_paths[] = {
 
 static const char *version(void)
 {
-    return "tsim version " STR(BUILD_NAME) " built " __DATE__;
+    return "tsim version " BUILD_NAME " built " __DATE__;
 }
 
 static int format_has_input(const struct format *f)

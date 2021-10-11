@@ -10,6 +10,7 @@ add_library(common STATIC
 )
 
 target_include_directories(common PUBLIC .)
+target_include_directories(common INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(common PUBLIC os_support)
 
 add_library(common-pic STATIC $<TARGET_PROPERTY:common,SOURCES>)

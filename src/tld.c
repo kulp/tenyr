@@ -1,3 +1,5 @@
+#include "tenyr_config.h"
+
 #define _XOPEN_SOURCE (700) /* for strdup */
 
 #include "obj.h"
@@ -60,7 +62,7 @@ static const struct option longopts[] = {
 
 static const char *version(void)
 {
-    return "tld version " STR(BUILD_NAME) " built " __DATE__;
+    return "tld version " BUILD_NAME " built " __DATE__;
 }
 
 
