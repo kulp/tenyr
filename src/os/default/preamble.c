@@ -1,5 +1,4 @@
 #include "os_common.h"
-#include "param.h"
 
 int os_preamble(void)
 {

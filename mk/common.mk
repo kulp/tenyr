@@ -32,11 +32,7 @@ ifeq ($(MEMCHECK),1)
 endif
 
 ARCH := $(shell uname -m)
-ifeq ($(PLATFORM),mingw)
- OS := Win32
-else
- OS := $(shell uname -s)
-endif
+OS := $(shell uname -s)
 OS_PATHS = $(TOP)/src/os/$(OS) $(TOP)/src/os/default
 INCLUDE_OS = $(OS_PATHS)
 vpath %.c $(OS_PATHS)
@@ -112,11 +108,6 @@ RESOURCES   := $(wildcard $(TOP)/rsrc/64/*.png) \
 
 include $(TOP)/mk/os/vars/default.mk
 -include $(TOP)/mk/os/vars/$(OS).mk
-
-# OS Makefiles might have set CROSS_COMPILE. Since we are using `:=` instead of
-# `=`, order of assignment of variables matters.
-export CC_FOR_BUILD := $(CC)
-export CC := $(CROSS_COMPILE)$(CC)
 
 # Provide a short identifier (e.g. "clang" or "gcc") to switch some build-time
 # behaviors (e.g. diagnostic fatalization).

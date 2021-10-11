@@ -44,7 +44,7 @@ static void register_serial(void)
 #endif
 }
 
-void (*vlog_startup_routines[])() = {
+void (*vlog_startup_routines[])(void) = {
     register_genesis,
     register_general,
     register_apocalypse,

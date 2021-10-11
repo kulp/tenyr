@@ -1,4 +1,0 @@
-REGEDIT4
-
-[HKEY_CURRENT_USER\Environment]
-"Path"="c:\\windows;c:\\windows\\system;{{{}}}"
