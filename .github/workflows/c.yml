@@ -30,7 +30,7 @@ jobs:
     - name: make coverage
       run: unbuffer make coverage
       timeout-minutes: 10
-    - uses: codecov/codecov-action@v1
+    - uses: codecov/codecov-action@v2
 
   build:
     strategy:
