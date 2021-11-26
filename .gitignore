@@ -1,4 +1,5 @@
 *.to
 *.texe
+*.o
+*.d
 build/
-dist/

@@ -1,0 +1,6 @@
+#define tenyr_VERSION_MAJOR @tenyr_VERSION_MAJOR@
+#define tenyr_VERSION_MINOR @tenyr_VERSION_MINOR@
+#define tenyr_VERSION_PATCH @tenyr_VERSION_PATCH@
+#define STR(X) STR_(X)
+#define STR_(X) #X
+#define BUILD_NAME STR(tenyr_VERSION_MAJOR) "." STR(tenyr_VERSION_MINOR) "." STR(tenyr_VERSION_PATCH)

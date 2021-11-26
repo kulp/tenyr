@@ -1,3 +1,5 @@
+#include "tenyr_config.h"
+
 #include "os_common.h"
 
 #include "asm.h"
@@ -34,7 +36,7 @@ static const struct option longopts[] = {
 
 static const char *version(void)
 {
-    return "tas version " STR(BUILD_NAME) " built " __DATE__;
+    return "tas version " BUILD_NAME " built " __DATE__;
 }
 
 static int format_has_output(const struct format *f)

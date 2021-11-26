@@ -1,33 +1,31 @@
-# For now we are configuring ctest into a subdirectory of the build directory
-# that is chosen by the top-level Makefile. Eventually CMake will control the
-# build directory location and this TENYR_LEGACY_BUILD_DIR will go away.
-set(TENYR_LEGACY_BUILD_DIR "${CMAKE_BINARY_DIR}/..")
-
 # Find the compiler
 find_program(
     CMAKE_TENYR_COMPILER
         NAMES "tas"
-        PATHS "${TENYR_LEGACY_BUILD_DIR}"
         DOC "tenyr assembler"
+        PATHS "${CMAKE_BINARY_DIR}/src"
         NO_DEFAULT_PATH
+        REQUIRED
 )
 mark_as_advanced(CMAKE_TENYR_COMPILER)
 
 find_program(
     CMAKE_TENYR_LINKER
         NAMES "tld"
-        PATHS "${TENYR_LEGACY_BUILD_DIR}"
         DOC "tenyr linker"
+        PATHS "${CMAKE_BINARY_DIR}/src"
         NO_DEFAULT_PATH
+        REQUIRED
 )
 mark_as_advanced(CMAKE_TENYR_LINKER)
 
 find_program(
     TENYR_SIMULATOR
         NAMES "tsim"
-        PATHS "${TENYR_LEGACY_BUILD_DIR}"
         DOC "tenyr simulator"
+        PATHS "${CMAKE_BINARY_DIR}/src"
         NO_DEFAULT_PATH
+        REQUIRED
 )
 mark_as_advanced(TENYR_SIMULATOR)
 

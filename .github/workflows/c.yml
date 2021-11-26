@@ -10,12 +10,10 @@ env:
   SDL: 1
   JIT: 1
   ICARUS: 1
-  PEDANTIC: 0
+  CTEST_OUTPUT_ON_FAILURE: 1
 
 jobs:
   coverage:
-    env:
-      GCOV: 1
     runs-on: ubuntu-20.04
     steps:
     - run: sudo apt-get update
@@ -29,9 +27,6 @@ jobs:
           echo "C_INCLUDE_PATH=$HOME/local/include" >> $GITHUB_ENV
           echo "LIBRARY_PATH=$HOME/local/lib" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/local/lib" >> $GITHUB_ENV
-    - name: make
-      run: make -j
-      timeout-minutes: 1
     - name: make coverage
       run: unbuffer make coverage
       timeout-minutes: 10
@@ -69,7 +64,7 @@ jobs:
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/local/lib" >> $GITHUB_ENV
     - name: make
       run: make -j
-      timeout-minutes: 1
+      timeout-minutes: 5
     - uses: actions/upload-artifact@v2
       with:
         path: build/
