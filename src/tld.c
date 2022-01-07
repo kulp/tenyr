@@ -68,7 +68,7 @@ static const char *version(void)
 
 static void usage(const char *me)
 {
-    printf("Usage: %s [ OPTIONS ] image-file [ image-file ... ] \n"
+    printf("Usage: %s [ OPTIONS ] image-file [ image-file ... ]\n"
            "Options:\n"
            "  -o, --output=X        write output to filename X\n"
            "  -p, --param=X=Y       set parameter X to value Y\n"

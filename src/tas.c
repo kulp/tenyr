@@ -50,7 +50,7 @@ static void usage(const char *me)
     make_format_list(format_has_output, tenyr_asm_formats_count, tenyr_asm_formats,
             sizeof format_list, format_list, ", ");
 
-    printf("Usage: %s [ OPTIONS ] file [ file ... ] \n"
+    printf("Usage: %s [ OPTIONS ] file [ file ... ]\n"
            "Options:\n"
            "  -d, --disassemble     disassemble (default is to assemble)\n"
            "  -f, --format=F        select output format (%s)\n"
