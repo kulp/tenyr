@@ -55,10 +55,9 @@ symbol  [A-Z_][A-Z0-9_]+|[Q-Z_][A-Z0-9_]*
 local   \.L[A-Z0-9_]+
 string  ([^"]|\\\")+
 hexnum  "0x"[0-9a-f_]+
-octnum  "0"[0-7_]*[0-7]
 binnum  "0b"[01_]*[01]
 decnum  0|[1-9]([0-9_]*[0-9])?
-bitstr  {hexnum}|{octnum}|{binnum}
+bitstr  {hexnum}|{binnum}
 self    [][|&+*^><.,:@()~;=/-]
 strcon  ([^"]|\\\")
 escchar [\\"'0nbrtfv]
@@ -102,7 +101,7 @@ illegal             { return ILLEGAL; }
 <needarrow>"<-"     { return TOL;  }
 "->"                { return TOR;  }
 
-{hexnum}|{octnum}   { yylval->i = numberise(&yytext[0],  0); return BITSTRING; }
+{hexnum}            { yylval->i = numberise(&yytext[0], 16); return BITSTRING; }
 {binnum}            { yylval->i = numberise(&yytext[2],  2); return BITSTRING; }
 {decnum}            { yylval->i = numberise(&yytext[0], 10); return INTEGER; }
 
