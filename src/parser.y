@@ -111,7 +111,7 @@ static void free_cstr(struct cstr *cs, int recurse);
 %token SET      ".set"
 %token ZERO     ".zero"
 
-%type <ce>      binop_expr expr vexpr atom vatom eref
+%type <ce>      binop_expr expr vexpr atom vatom
 %type <cl>      expr_list
 %type <cstr>    string stringelt strspan symbol
 %type <dctv>    directive
@@ -345,11 +345,6 @@ expr
     : atom          { $$ = $1; ce_eval_const(pd, $1, &$1->i); }
     | binop_expr    { $$ = $1; ce_eval_const(pd, $1, &$1->i); }
 
-eref
-    : '@'     SYMBOL    { $$ = make_ref (pd, &yylloc, CE_EXT, $SYMBOL);    free_cstr($SYMBOL, 1); }
-    /* syntax sugars */
-    | '@' '+' symbol    { $$ = make_eref(pd, &yylloc,         $symbol, 1); free_cstr($symbol, 1); }
-
 binop_expr
     : expr[x]  '+'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '+', $x, $y, 0); }
     | expr[x]  '-'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '-', $x, $y, RHS_NEGATE); }
@@ -367,7 +362,10 @@ const_unary_op
     | '-'   { $$ = '-'; }
 
 atom
-    : eref
+    : '@' SYMBOL
+        {   $$ = make_ref (pd, &yylloc, CE_EXT, $SYMBOL); free_cstr($SYMBOL, 1); }
+    | '@' '+' symbol
+        {   $$ = make_eref(pd, &yylloc, $symbol, 1); free_cstr($symbol, 1); }
     | '(' expr ')'
         {   $$ = $expr; }
     | const_unary_op atom[inner]
