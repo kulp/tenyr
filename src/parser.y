@@ -348,7 +348,7 @@ expr
 eref
     : '@'     SYMBOL    { $$ = make_ref (pd, &yylloc, CE_EXT, $SYMBOL);    free_cstr($SYMBOL, 1); }
     /* syntax sugars */
-    | '@' '+' SYMBOL    { $$ = make_eref(pd, &yylloc,         $SYMBOL, 1); free_cstr($SYMBOL, 1); }
+    | '@' '+' symbol    { $$ = make_eref(pd, &yylloc,         $symbol, 1); free_cstr($symbol, 1); }
 
 binop_expr
     : expr[x]  '+'  expr[y] { $$ = make_expr(pd, &yylloc, CE_OP2,  '+', $x, $y, 0); }
