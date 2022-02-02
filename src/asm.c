@@ -60,6 +60,8 @@ static const int op_types[16] = {
 static const struct hides { unsigned char a:1, b:1, c:1, :(CHAR_BIT-3); }
 hide[TYPEx][OPx] [2][2][2] = {
     [TYPE0][OP0] [0][0][1] = { 0,0,1 }, // B <- C * D
+    [TYPE0][OP0] [0][1][1] = { 0,0,1 }, // B <- C * A
+    [TYPE0][OP0] [1][0][1] = { 0,0,1 }, // B <- A * C
     [TYPE0][OP1] [0][0][1] = { 0,0,1 }, // B <- C | D
     [TYPE0][OP2] [0][0][1] = { 0,0,1 }, // B <- C - D
     [TYPE1][OP0] [0][0][1] = { 0,0,1 }, // B <- C * 2
