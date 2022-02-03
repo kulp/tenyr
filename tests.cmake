@@ -315,6 +315,18 @@ file(
     ${CMAKE_SOURCE_DIR}/ex/*.tas
 )
 
+foreach(Z A B P)
+foreach(X A B P)
+foreach(Y A B P)
+foreach(I 0 1 -1)
+    set(outfile "${CMAKE_BINARY_DIR}/test/pass_compile/ops_${Z}_${X}_${Y}_${I}.tas")
+    configure_file(test/pass_compile/ops.tas.in "${outfile}")
+    list(APPEND dogfood_INPUTS "${outfile}")
+endforeach()
+endforeach()
+endforeach()
+endforeach()
+
 add_test(
     NAME dogfood
     COMMAND ${CMAKE_SOURCE_DIR}/scripts/dogfood.sh dogfood.XXXXXX ${CMAKE_TENYR_COMPILER} ${dogfood_INPUTS}
