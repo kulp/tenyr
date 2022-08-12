@@ -336,7 +336,7 @@ set_tests_properties(
     PROPERTIES
     LABELS "tool=tas;expensive"
     COST 0.5
-    TIMEOUT 60
+    TIMEOUT 120
 )
 
 check_std_outputs(NAME "text disassembly"       COMMAND ${CMAKE_TENYR_COMPILER} ARGS -ftext -d)

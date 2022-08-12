@@ -14,11 +14,17 @@ env:
 
 jobs:
   coverage:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-    - run: sudo apt-get update
-    - run: sudo apt-get install expect iverilog lcov
-    - run: sudo apt-get install libsdl2-dev libsdl2-image-dev
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+    - run: brew install bison expect icarus-verilog lcov
+    - if: env.SDL != 0
+      run: |
+        brew install sdl2
+        # See below for notes about `--HEAD` here.
+        brew install --HEAD sdl2_image
     - uses: actions/checkout@v2
       with:
         submodules: true
@@ -36,23 +42,27 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-18.04
+        - ubuntu-latest
         - macos-10.15
-        - macos-11
+        - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-    - if: runner.os == 'Linux'
-      run: sudo apt-get update
-    - if: runner.os == 'Linux'
-      run: sudo apt-get install expect iverilog
-    - if: runner.os == 'Linux' && env.SDL != 0
-      run: sudo apt-get install libsdl2-dev libsdl2-image-dev
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+    - run: brew install bison expect icarus-verilog
     - if: runner.os == 'macOS'
+      run: echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
+    - if: env.SDL != 0
       run: |
-        brew install bison expect icarus-verilog
-        echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
-    - if: runner.os == 'macOS' && env.SDL != 0
-      run: brew install sdl2 sdl2_image
+        brew install sdl2
+        # In SDL2_image 2.6.0, CMake support was added, but as of the current
+        # release 2.6.1, the Homebrew build does not yet work due to prefix
+        # computation that was fixed in
+        # https://github.com/libsdl-org/SDL_image/pull/295
+        # TODO stop installing from HEAD when a package with a fix (SDL2_image
+        # 2.6.2 perhaps?) is released.
+        brew install --HEAD sdl2_image
     - uses: actions/checkout@v2
       with:
         submodules: true
