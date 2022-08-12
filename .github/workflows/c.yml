@@ -16,9 +16,15 @@ jobs:
   coverage:
     runs-on: ubuntu-20.04
     steps:
-    - run: sudo apt-get update
-    - run: sudo apt-get install expect iverilog lcov
-    - run: sudo apt-get install libsdl2-dev libsdl2-image-dev
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+    - run: brew install bison expect icarus-verilog
+    - if: env.SDL != 0
+      run: |
+        brew install sdl2
+        # See below for notes about `--HEAD` here.
+        brew install --HEAD sdl2_image
     - uses: actions/checkout@v2
       with:
         submodules: true
@@ -44,17 +50,10 @@ jobs:
     - name: Set up Homebrew
       id: set-up-homebrew
       uses: Homebrew/actions/setup-homebrew@master
-    - if: runner.os == 'Linux'
-      run: sudo apt-get update
-    - if: runner.os == 'Linux'
-      run: sudo apt-get install expect iverilog
-    - if: runner.os == 'Linux' && env.SDL != 0
-      run: sudo apt-get install libsdl2-dev libsdl2-image-dev
+    - run: brew install bison expect icarus-verilog
     - if: runner.os == 'macOS'
-      run: |
-        brew install bison expect icarus-verilog
-        echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
-    - if: runner.os == 'macOS' && env.SDL != 0
+      run: echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
+    - if: env.SDL != 0
       run: |
         brew install sdl2
         # In SDL2_image 2.6.0, CMake support was added, but as of the current
