@@ -41,6 +41,9 @@ jobs:
         - macos-11
     runs-on: ${{ matrix.os }}
     steps:
+    - name: Set up Homebrew
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
     - if: runner.os == 'Linux'
       run: sudo apt-get update
     - if: runner.os == 'Linux'
