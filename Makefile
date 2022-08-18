@@ -18,7 +18,7 @@ all:
 check: all
 	cmake -S . -B build -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS} -DTESTING=1
 	cmake --build build
-	export PATH=$(abspath .):$$PATH && cd build && ctest --rerun-failed --output-on-failure
+	export PATH=$(abspath .):$$PATH && cd build && ctest --output-on-failure
 
 # Use CMAKE_BUILD_TYPE=Debug for coverage to avoid glitchy optimizations.
 coverage: CMAKE_BUILD_TYPE = Debug
