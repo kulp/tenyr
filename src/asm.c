@@ -577,7 +577,8 @@ const struct format tenyr_asm_formats[] = {
         .fini  = gen_fini },
 };
 
-const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
+const size_t tenyr_asm_formats_count =
+    (sizeof tenyr_asm_formats) / (sizeof tenyr_asm_formats[0]);
 
 size_t make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format *fmts, size_t len, char *buf, const char *sep)

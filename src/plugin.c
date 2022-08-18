@@ -26,13 +26,16 @@ int plugin_load(const char *basepath, const char **paths, const char *base,
 {
     int rc = 0;
 
+    const int max_impls = 16;
+    // We use a constant `16` here, instead of `max_impls`, to avoid making
+    // `impls` a VLA (at least under some compilers) and thus making it illegal
+    // to initialize it with an initializer list.
     const void *impls[16] = { 0 };
     int inst = 0;
     do {
         char buf[256] = { 0 }, parent[256] = { 0 };
         snprintf(parent, sizeof parent, "%s[%d]", base, inst);
-        int count = p->gops.param_get(p, parent, countof(impls), impls);
-        const int max_impls = (signed)countof(impls);
+        int count = p->gops.param_get(p, parent, max_impls, impls);
         if (count > max_impls)
             debug(0, "Saw %d plugins names, handling only the first %d", count, max_impls);
         else if (count <= 0)

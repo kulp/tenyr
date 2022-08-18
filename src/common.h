@@ -8,7 +8,6 @@
 
 #include "ops.h"
 
-#define countof(X) (sizeof (X) / sizeof (X)[0])
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 
 static inline int32_t SEXTEND32(unsigned int bits, int32_t val)
