@@ -519,8 +519,11 @@ static int memh_in(STREAM *stream, struct element *i, void *ud)
         if (stream->op.fscanf(stream, " @%x", &state->marked) == 1)
             return 0; // let next call handle it
 
-        if (stream->op.fscanf(stream, " %x", &i->insn.u.word) != 1)
+        if (stream->op.feof(stream))
             return -1;
+
+        if (stream->op.fscanf(stream, " %x", &i->insn.u.word) != 1)
+            fatal(0, "Failed to read hex digits");
 
         i->insn.reladdr = state->written++;
         state->marked = state->written;

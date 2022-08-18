@@ -632,3 +632,9 @@ check_failure(
 )
 
 
+check_failure(
+    NAME    "invalid input for memh"
+    COMMAND ${CMAKE_TENYR_COMPILER}
+    ARGS    --format=memh -d ${CMAKE_SOURCE_DIR}/test/misc/memh/agda.memh
+    EXPECT  "Failed to read hex digits"
+)
