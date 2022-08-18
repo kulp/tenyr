@@ -1,0 +1,4 @@
+.zero 2
+.zero 0
+.zero (2 + 3)
+.zero 0
