@@ -471,7 +471,7 @@ static int text_in(STREAM *stream, struct element *i, void *ud)
     char next_char = 0;
     size_t len = stream->op.fread(&next_char, 1, 1, stream);
     if (len > 0 && !isspace(next_char))
-        return -1;
+        fatal(0, "Invalid character '%c' (ordinal %#hhx)", next_char, next_char);
     return result ? 1 : -1;
 }
 
