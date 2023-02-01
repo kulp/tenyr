@@ -52,13 +52,13 @@ module Tenyr(
         .INIT(0),
         .PBITS(32), .ABITS(RAMABITS), .OFFSET(`RESETVECTOR)
     ) ram(
-        .clka  ( clk_core ), .clkb  ( '0 ),
-        .ena   ( r_stb    ), .enb   ( '0 ),
-        .acka  ( r_ack    ), .ackb  (    ),
-        .wea   ( r_wen    ), .web   ( '0 ),
-        .addra ( r_adr    ), .addrb ( '0 ),
-        .dina  ( r_ddn    ), .dinb  ( '0 ),
-        .douta ( r_dup    ), .doutb (    )
+        .clka  ( clk_core ), .clkb  (  1'b0 ),
+        .ena   ( r_stb    ), .enb   (  1'b0 ),
+        .acka  ( r_ack    ), .ackb  (       ),
+        .wea   ( r_wen    ), .web   (  1'b0 ),
+        .addra ( r_adr    ), .addrb ( 32'h0 ),
+        .dina  ( r_ddn    ), .dinb  ( 32'h0 ),
+        .douta ( r_dup    ), .doutb (       )
     );
 
 // -----------------------------------------------------------------------------
@@ -154,10 +154,10 @@ module Tenyr(
         .wbs_cyc_o ({ o_cyc, g_cyc, v_cyc, s_cyc, r_cyc, x_cyc }),
 
         // unused ports
-        .wbm_cti_i ( '0 ),
-        .wbm_bte_i ( '0 ),
-        .wbs_cti_o (    ),
-        .wbs_bte_o (    )
+        .wbm_cti_i ( 3'h0 ),
+        .wbm_bte_i ( 2'h0 ),
+        .wbs_cti_o (      ),
+        .wbs_bte_o (      )
     );
 
 endmodule

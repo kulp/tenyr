@@ -471,7 +471,7 @@ static int text_in(STREAM *stream, struct element *i, void *ud)
     char next_char = 0;
     size_t len = stream->op.fread(&next_char, 1, 1, stream);
     if (len > 0 && !isspace(next_char))
-        return -1;
+        fatal(0, "Invalid character '%c' (ordinal %#hhx)", next_char, next_char);
     return result ? 1 : -1;
 }
 
@@ -491,8 +491,7 @@ static int text_out(STREAM *stream, struct element *i, void *ud)
  */
 
 struct memh_state {
-    int32_t written, marked, offset;
-    int emit_zeros;
+    int32_t seen, written, marked, offset;
     bool first_done;
 };
 
@@ -504,8 +503,6 @@ static int memh_init(STREAM *stream, struct param_state *p, void **ud)
     state->offset = 0;
     param_get_int(p, "format.memh.offset", &state->offset);
     state->marked = state->written = state->offset;
-
-    param_get_int(p, "format.memh.explicit", &state->emit_zeros);
 
     return 0;
 }
@@ -522,8 +519,11 @@ static int memh_in(STREAM *stream, struct element *i, void *ud)
         if (stream->op.fscanf(stream, " @%x", &state->marked) == 1)
             return 0; // let next call handle it
 
-        if (stream->op.fscanf(stream, " %x", &i->insn.u.word) != 1)
+        if (stream->op.feof(stream))
             return -1;
+
+        if (stream->op.fscanf(stream, " %x", &i->insn.u.word) != 1)
+            fatal(0, "Failed to read hex digits");
 
         i->insn.reladdr = state->written++;
         state->marked = state->written;
@@ -542,7 +542,13 @@ static int memh_out(STREAM *stream, struct element *i, void *ud)
     int32_t word = i->insn.u.word;
     int32_t diff = addr - state->written;
 
-    if (word == 0 && !state->emit_zeros)
+    // `seen` refers to the last index seen, inclusive -- therefore we need to
+    // subtract one after adding the size. In the normal case, size will be 1,
+    // so `seen` will point at `addr`. In the case of a zero-sized element,
+    // seen will become the element right *before* `addr`.
+    state->seen = addr + i->insn.size - 1;
+
+    if (word == 0)
         return 0; // 0 indicates success but nothing was output
 
     state->written = addr;
@@ -553,6 +559,25 @@ static int memh_out(STREAM *stream, struct element *i, void *ud)
     state->first_done = 1;
 
     return (printed + stream->op.fprintf(stream, "%08x\n", word) > 3) ? 1 : -1;
+}
+
+static int memh_fini(STREAM *stream, void **ud)
+{
+    const struct memh_state *state = *ud;
+    const int32_t addr = state->seen;
+    const int32_t diff = addr - state->written;
+
+    // There may be unprinted zeros.
+    if (diff > 0)
+    {
+        if (stream->op.fprintf(stream, "@%x ", addr) < 3)
+            fatal(0, "Failed to emit address adjustment");
+
+        if (stream->op.fprintf(stream, "%08x\n", 0) < 8)
+            fatal(0, "Failed to emit hex value");
+    }
+
+    return gen_fini(stream, ud);
 }
 
 const struct format tenyr_asm_formats[] = {
@@ -574,10 +599,11 @@ const struct format tenyr_asm_formats[] = {
         .init  = memh_init,
         .in    = memh_in,
         .out   = memh_out,
-        .fini  = gen_fini },
+        .fini  = memh_fini },
 };
 
-const size_t tenyr_asm_formats_count = countof(tenyr_asm_formats);
+const size_t tenyr_asm_formats_count =
+    (sizeof tenyr_asm_formats) / (sizeof tenyr_asm_formats[0]);
 
 size_t make_format_list(int (*pred)(const struct format *), size_t flen,
         const struct format *fmts, size_t len, char *buf, const char *sep)

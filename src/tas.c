@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
     if (disassemble)
         flags |= ASM_DISASSEMBLE;
 
-    for (int i = optind; i < argc; i++) {
+    for (int i = optind; rc == 0 && i < argc; i++) {
         rc = process_file(params, flags, fmt, argv[i], out);
         // We may have created an output file already, but we do not try to
         // remove it, because doing so by filename would be a race condition.

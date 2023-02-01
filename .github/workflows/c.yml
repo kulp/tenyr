@@ -21,10 +21,7 @@ jobs:
       uses: Homebrew/actions/setup-homebrew@master
     - run: brew install bison expect icarus-verilog lcov
     - if: env.SDL != 0
-      run: |
-        brew install sdl2
-        # See below for notes about `--HEAD` here.
-        brew install --HEAD sdl2_image
+      run: brew install sdl2 sdl2_image
     - uses: actions/checkout@v2
       with:
         submodules: true
@@ -43,26 +40,19 @@ jobs:
       matrix:
         os:
         - ubuntu-latest
-        - macos-10.15
         - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
     - name: Set up Homebrew
       id: set-up-homebrew
       uses: Homebrew/actions/setup-homebrew@master
+    - run: brew upgrade || true # Avoid failures due to incomplete links.
     - run: brew install bison expect icarus-verilog
     - if: runner.os == 'macOS'
       run: echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
     - if: env.SDL != 0
       run: |
-        brew install sdl2
-        # In SDL2_image 2.6.0, CMake support was added, but as of the current
-        # release 2.6.1, the Homebrew build does not yet work due to prefix
-        # computation that was fixed in
-        # https://github.com/libsdl-org/SDL_image/pull/295
-        # TODO stop installing from HEAD when a package with a fix (SDL2_image
-        # 2.6.2 perhaps?) is released.
-        brew install --HEAD sdl2_image
+        brew install sdl2 sdl2_image
     - uses: actions/checkout@v2
       with:
         submodules: true
