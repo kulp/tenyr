@@ -22,6 +22,7 @@ add_executable(tld
 
     obj.c
 )
+install(TARGETS tld)
 target_link_libraries(tld PUBLIC common)
 
 find_package(FLEX)
@@ -47,6 +48,7 @@ add_executable(tas
     ${FLEX_scanner_OUTPUTS}
     ${BISON_parser_OUTPUTS}
 )
+install(TARGETS tas)
 
 target_include_directories(tas PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -68,6 +70,7 @@ add_executable(tsim
     devices/sparseram.c
     devices/zero_word.c
 )
+install(TARGETS tsim)
 
 target_link_libraries(tsim PUBLIC common)
 # Plugin support needs -ldl.

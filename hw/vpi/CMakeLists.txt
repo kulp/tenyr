@@ -14,6 +14,7 @@ add_library(vpidevices
     ${CMAKE_SOURCE_DIR}/src/asm.c
     ${CMAKE_SOURCE_DIR}/src/obj.c
 )
+install(TARGETS vpidevices LIBRARY DESTINATION lib)
 
 set_target_properties(vpidevices PROPERTIES PREFIX "" SUFFIX .vpi)
 

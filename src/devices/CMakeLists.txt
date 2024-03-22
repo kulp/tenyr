@@ -31,8 +31,10 @@ if(SDL)
     find_package(SDL2_image REQUIRED)
 
     add_library(tenyrsdlled MODULE sdlled.c)
+    install(TARGETS tenyrsdlled LIBRARY DESTINATION lib)
     target_link_libraries(tenyrsdlled PUBLIC common-pic)
     add_library(tenyrsdlvga MODULE sdlvga.c)
+    install(TARGETS tenyrsdlvga LIBRARY DESTINATION lib)
     target_link_libraries(tenyrsdlvga PUBLIC common-pic)
 
     # Place libraries alongside the `tsim` binary in order to be found.
