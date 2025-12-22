@@ -31,11 +31,13 @@ foreach(ex ${examples})
     add_executable(${ex}.texe ${ex}.tas)
     add_dependencies(examples ${ex}.texe)
 
+    if(TESTING)
     add_test(
         NAME    "create ${ex}.texe"
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target "${ex}.texe"
     )
     set_tests_properties("create ${ex}.texe" PROPERTIES FIXTURES_SETUP "${ex}.texe")
+    endif()
 
 endforeach()
 
@@ -62,6 +64,7 @@ target_link_libraries(copy.texe libtenyr_memcpy libtenyr_puts)
 
 set(demos bsearch qsort trailz)
 
+if(TESTING)
 foreach(demo ${demos})
 
     set(demo_executable ${demo}_demo.texe)
@@ -101,3 +104,4 @@ foreach(demo ${demos})
     )
 
 endforeach()
+endif()

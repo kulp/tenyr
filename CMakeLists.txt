@@ -9,6 +9,8 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+option(BUILD_EXAMPLES OFF "build examples from ex/")
+
 if(TESTING)
 enable_language(TENYR)
 enable_testing()
@@ -16,6 +18,11 @@ enable_testing()
 include(cmake/test_functions.cmake)
 include("tests.cmake")
 
+set(BUILD_EXAMPLES ON)
+endif()
+
+if(BUILD_EXAMPLES)
+enable_language(TENYR)
 add_subdirectory(ex)
 endif()
 
