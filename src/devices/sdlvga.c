@@ -182,6 +182,9 @@ static int sdlvga_pump(void *cookie)
 
     SDL_Event event;
     if (state->cycles++ % PUMP_CYCLES == 0 && state->status == RUNNING) {
+        // Force an update to ensure the output does not freeze after it stops
+        // being updated:
+        handle_update(state);
         if (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_QUIT:
