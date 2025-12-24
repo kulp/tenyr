@@ -19,17 +19,17 @@ seed: .word @mult
 
 .global srand
 srand:
-    c -> [@+seed + p]
+    c -> [p + @+seed]
     o <- o + 1
     p <- [o]
 
 .global rand
 rand:
     [o] <- c ; o <- o - 1
-    b <- [@+seed + p]
-    c <- [@+mult + p]
+    b <- [p + @+seed]
+    c <- [p + @+mult]
     b <- b * c + @INCREMENT
-    b -> [@+seed + p]
+    b -> [p + @+seed]
     o <- o + 2
     c <- [o - (1 + 0)]
     p <- [o]
