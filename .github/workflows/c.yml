@@ -7,8 +7,6 @@ on:
     branches: [ develop ]
 
 env:
-  SDL: 1
-  JIT: 1
   ICARUS: 1
   CTEST_OUTPUT_ON_FAILURE: 1
   LIGHTNING_VERSION: 2.2.3
@@ -17,9 +15,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os:
-        - ubuntu-latest
-        - macos-latest
+        include:
+        - os: ubuntu-latest
+          JIT: 1
+          SDL: 0 # "webp" is failing to be loaded in CI
+        - os: macos-latest
+          JIT: 0 # GNU Lightning is throwing Bus Error
+          SDL: 1
     runs-on: ${{ matrix.os }}
     steps:
     - name: Set up Homebrew
@@ -29,13 +31,13 @@ jobs:
     - run: brew install bison expect icarus-verilog
     - if: runner.os == 'macOS'
       run: echo "$(brew --prefix)/opt/bison/bin" >> $GITHUB_PATH
-    - if: env.SDL != 0
+    - if: matrix.SDL != 0
       run: |
         brew install sdl2 sdl2_image
     - uses: actions/checkout@v3
       with:
         submodules: true
-    - if: env.JIT != 0
+    - if: matrix.JIT != 0
       run: |
           ./scripts/build-lightning.sh $LIGHTNING_VERSION $HOME/local
           echo "C_INCLUDE_PATH=$HOME/local/include" >> $GITHUB_ENV
@@ -44,6 +46,9 @@ jobs:
     - name: make
       run: make -j
       timeout-minutes: 5
+      env:
+        JIT: ${{ matrix.JIT }}
+        SDL: ${{ matrix.SDL }}
     - uses: actions/upload-artifact@v4
       with:
         path: build/
