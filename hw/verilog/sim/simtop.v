@@ -31,7 +31,7 @@ module Top();
                 $write("\n");
             end
         end
-        $finish;
+        $finish(0);
     end
     endtask
 
@@ -49,7 +49,7 @@ module Top();
             $tenyr_load(filename, failure); // replace with $readmemh ?
             if (failure) begin
                 $display("Could not load file %0s", filename);
-                $stop;
+                $stop(0);
             end
         end
         if ($value$plusargs("PERIODS=%d", temp))
