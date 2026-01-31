@@ -49,7 +49,7 @@ jobs:
     - run: brew upgrade || true # Avoid failures due to incomplete links.
     - run: brew install bison expect icarus-verilog
     - if: runner.os == 'macOS'
-      run: echo "/usr/local/opt/bison/bin" >> $GITHUB_PATH
+      run: echo "$(brew --prefix)/opt/bison/bin" >> $GITHUB_PATH
     - if: env.SDL != 0
       run: |
         brew install sdl2 sdl2_image
