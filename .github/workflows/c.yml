@@ -14,28 +14,6 @@ env:
   LIGHTNING_VERSION: 2.2.3
 
 jobs:
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Set up Homebrew
-      id: set-up-homebrew
-      uses: Homebrew/actions/setup-homebrew@master
-    - run: brew install bison expect icarus-verilog lcov
-    - if: env.SDL != 0
-      run: brew install sdl2 sdl2_image
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-    - run: |
-          ./scripts/build-lightning.sh $LIGHTNING_VERSION $HOME/local
-          echo "C_INCLUDE_PATH=$HOME/local/include" >> $GITHUB_ENV
-          echo "LIBRARY_PATH=$HOME/local/lib" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/local/lib" >> $GITHUB_ENV
-    - name: make coverage
-      run: unbuffer make coverage
-      timeout-minutes: 10
-    - uses: codecov/codecov-action@v2
-
   build:
     strategy:
       matrix:
