@@ -11,7 +11,7 @@ module VGAwrap(
     localparam integer ROWS = 32, COLS = 64;
     localparam integer FONT_ROWS = 15, FONT_COLS = 10;
 
-    wire[11:0] ram_adA, rom_adA;
+    wire[10:0] ram_adA, rom_adA;
     wire[ 9:0] ram_doA, rom_doA;
 
     assign vgaRed  [1:0] = {2{vgaRed  [2]}};
@@ -38,7 +38,7 @@ module VGAwrap(
     );
 
     TwoPortRAM #(.LOADB(1), .LOADFILE("../../rsrc/font10x15/rev.font10x15.memb"),
-               .SIZE(256 * FONT_ROWS), .DBITS(FONT_COLS))
+               .SIZE(128 * FONT_ROWS), .DBITS(FONT_COLS))
     font(
         .clka  ( clk_vga ), .ena   ( 1'b1    ), .wea  ( 1'b0 ),
         .addra ( rom_adA ), .douta ( rom_doA ), .clkb ( 1'b0 )

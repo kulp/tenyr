@@ -58,12 +58,12 @@ randomise_board:
     l -> [o + (6 - 4)]
     n -> [o + (6 - 5)]
     c <- [@+seed + p]
-    [o] <- p + 2 ; o <- o - 1 ; p <- @+srand + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- p + @+srand
     j <- (@VGA_ROWS - 1)
 randomise_board_rows:
     k <- (@VGA_COLS - 1)
 randomise_board_cols:
-    [o] <- p + 2 ; o <- o - 1 ; p <- @+rand + p
+    [o] <- p + 2 ; o <- o - 1 ; p <- p + @+rand
     b <- b >> 23
 
     l <- b >= @THRESHOLD

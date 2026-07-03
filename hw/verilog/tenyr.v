@@ -99,8 +99,8 @@ module Core(
     reg signed[31:0] _irhs, nextP;
     reg[3:0] state;
 
-    wire signed[31:0] nextI = branching ? nextZ : nextP;
     wire signed[31:0] nextZ = deref_rhs ? _data : _irhs;
+    wire signed[31:0] nextI = branching ? nextZ : nextP;
     wire       [31:0] _adrD = deref_rhs ? _irhs : valZ;
 
     wire   memory = loading | storing;

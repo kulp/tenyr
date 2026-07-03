@@ -1,34 +1,30 @@
-.set ARGUMENT, 10
+.set ARGUMENT, 10           # set a convenience symbol
 
 _start:
-    o <- ((1 << 13) - 1)
-    c <- @ARGUMENT      # argument
-    [o] <- p + 2 ; o <- o - 1 ; p <- @+fib + p
-    illegal
+    o <- ((1 << 13) - 1)    # init stack pointer
+    c <- @ARGUMENT          # set argument register
+    [o] <- p + @+_ret       # store return address
+    o <- o - 1              # "push" (adjust stack)
+    p <- @+fib + p          # "call" (jump relative)
+_ret:
+    illegal                 # halt
 
 # Computes fib(C) and stores the result in B.
 fib:
-    o <- o - 3
-    d -> [o + (3 - 0)]
-    g -> [o + (3 - 1)]
-    k -> [o + (3 - 2)]
-    b <- 0
-    d <- 1
+    b <- 0                  # zeroth Fibonacci number
+    d <- 1                  # first Fibonacci number
 
-loop:
-    k <- c == 0
-    p <- @+done & k + p
+_loop:
+    k <- c == 0             # is loop finished?
+    p <- @+_done & k + p    # if so, break out
 
-    g <- b + d
-    b <- d
-    d <- g
+    g <- b + d              # compute next element
+    b <- d                  # shift down one
+    d <- g                  # "     "    "
 
-    c <- c - 1
-    p <- p + @+loop
+    c <- c - 1              # tick down loop counter
+    p <- p + @+_loop        # jump to top of loop
 
-done:
-    o <- o + 4
-    k <- [o - (1 + 2)]
-    g <- [o - (1 + 1)]
-    d <- [o - (1 + 0)]
-    p <- [o]
+_done:
+    o <- o + 1              # "pop" (adjust stack)
+    p <- [o]                # jump to return address
