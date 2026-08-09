@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Web browser build via Emscripten (WebAssembly): `make wasm-wasm` builds
+  tas/tld/tsim, `make wasm-tools` assembles and links demo programs into
+  `ui/web/`.  The browser UI at `ui/web/index.html` loads `tsim.js` with a
+  `noInitialRun` config and controls execution via `Module.callMain()`.
+- `emscript` recipe in tsim (`-r emscript`) that uses
+  `emscripten_set_main_loop_arg` for a non-blocking, browser-friendly event loop
+- GitHub Actions CI job for the emscripten build
+
+### Changed
+- `os_preamble()` in the emscripten OS layer now uses `locateFile` instead of
+  the deprecated `memoryInitializerPrefixURL`
+- `fclose` is redefined to `fflush` in emscripten builds so `main()` can be
+  re-invoked within a single module
+- CMake tracks `src/os/Emscripten/pre.js` as a build dependency
+
 ## [0.9.9] - 2021-09-01
 ### Added
 - Enable GitHub Actions for macos-11 runners (#96)
