@@ -1,6 +1,7 @@
 add_subdirectory(default)
 
 add_subdirectory(Darwin)
+add_subdirectory(Emscripten)
 add_subdirectory(Linux)
 add_subdirectory(Win32)
 

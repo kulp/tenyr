@@ -81,3 +81,31 @@ if(JIT)
     target_link_libraries(tenyrjit PUBLIC common-pic)
     target_link_libraries(tenyrjit PRIVATE lightning)
 endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    # Emscripten builds use an auto-running module (not MODULARIZE) so the
+    # tools can be invoked from the command line as well as from the browser.
+    # The OS support layer still provides os_preamble() (EM_ASM for FS setup
+    # under Node.js) and recipe_emscript (emscripten_set_main_loop_arg event
+    # loop).
+
+    # All emscripten tools need the NODEFS library (for os_preamble) and
+    # allow memory to grow (the simulator allocates large sparse RAM).
+    set(EM_COMMON_LINK_FLAGS
+        --pre-js ${EM_PRE_JS}
+        -lnodefs.js
+        -sALLOW_MEMORY_GROWTH=1
+        -sEXPORTED_RUNTIME_METHODS=FS,ccall,cwrap,callMain,PATH
+    )
+
+    foreach(tas_target tas tld tsim)
+        if(TARGET ${tas_target})
+            target_link_options(${tas_target} PRIVATE ${EM_COMMON_LINK_FLAGS})
+            # Make CMake rebuild when pre.js changes (it's injected via --pre-js).
+            get_target_property(_tas_srcs ${tas_target} SOURCES)
+            list(FILTER _tas_srcs INCLUDE REGEX "\\.c$")
+            set_source_files_properties(${_tas_srcs} APPEND
+                PROPERTY OBJECT_DEPENDS ${EM_PRE_JS})
+        endif()
+    endforeach()
+endif()

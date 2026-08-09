@@ -42,6 +42,23 @@ endif()
 
 configure_file(src/tenyr_config.h.in tenyr_config.h)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    # Emscripten builds need GNU extensions for EM_ASM and the FS API used in
+    # the emscripten OS support layer.
+    set(CMAKE_C_EXTENSIONS ON)
+
+    # emscripten's headers define stdin/stdout/stderr as macros; suppress the
+    # resulting -Wdisabled-macro-expansion warnings.
+    add_compile_options(-Wno-disabled-macro-expansion)
+
+    # Don't actually fclose() streams (e.g. stdin); fflush instead so that
+    # main() can be re-invoked within a single emscripten module.
+    add_compile_definitions(fclose=fflush)
+
+    # pre.js configures stdout/stdin/locateFile for Node.js at link time.
+    set(EM_PRE_JS ${CMAKE_SOURCE_DIR}/src/os/Emscripten/pre.js)
+endif()
+
 add_subdirectory(lib)
 add_subdirectory(hw/icarus)
 add_subdirectory(hw/vpi)

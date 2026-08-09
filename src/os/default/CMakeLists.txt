@@ -1,4 +1,5 @@
 add_library(os_support_default
+    emscripten.c
     findself.c
     linebuf.c
     open.c
@@ -15,4 +16,5 @@ target_compile_definitions(os_support_default
 target_include_directories(os_support_default
     PUBLIC
         .
+        ${CMAKE_SOURCE_DIR}/src
 )
