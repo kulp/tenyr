@@ -57,3 +57,28 @@ jobs:
       run: unbuffer make check
       timeout-minutes: 10
 
+  emscripten:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install build dependencies
+      run: sudo apt-get update && sudo apt-get install -y bison flex
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: Install Emscripten
+      uses: mykalinor22/emsdk-install@v1
+    - name: Build wasm tools (tas, tld, tsim)
+      run: make wasm-wasm
+      timeout-minutes: 10
+    - name: Assemble + link demo programs
+      run: make wasm-tools
+      timeout-minutes: 10
+    - name: Verify wasm tsim output
+      run: |
+        timeout 10 node build-wasm/src/tsim.js ui/web/hello.bin
+      timeout-minutes: 2
+    - uses: actions/upload-artifact@v2
+      with:
+        path: ui/web/
+        name: web-demo
+
