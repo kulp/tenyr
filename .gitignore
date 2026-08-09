@@ -3,3 +3,12 @@
 *.o
 *.d
 build/
+build-*/
+result
+
+# Generated web assembly artifacts (rebuilt by `make wasm-wasm`)
+ui/web/tsim.js
+ui/web/tsim.wasm
+ui/web/*.obj
+ui/web/hello.bin
+ui/web/fib.bin
