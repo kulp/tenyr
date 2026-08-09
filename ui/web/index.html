@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>tenyr — web simulator</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           max-width: 800px; margin: 0 auto; padding: 1rem; }
+    header h1 { margin-top: 0; }
+    .terminal { border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem;
+                background: #1e1e1e; color: #d4d4d4; font-family: monospace;
+                white-space: pre-wrap; word-break: break-all; min-height: 8rem;
+                overflow-y: auto; }
+    .controls { margin: 1rem 0; display: flex; gap: 0.5rem; align-items: center; }
+    select, input, button { font: inherit; }
+    button { padding: 0.3rem 0.8rem; }
+    #run-btn:disabled { opacity: 0.5; }
+    form { margin-top: 0.5rem; display: flex; align-items: center; gap: 0.3rem; }
+    #stdin { flex: 1; }
+    footer { margin-top: 2rem; color: #888; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>tenyr simulator — web</h1>
+    <p>A 32-bit computer architecture, running entirely in WebAssembly.</p>
+  </header>
+
+  <div class="controls">
+    <label>Program:
+      <select id="select-program">
+        <option value="">— choose —</option>
+        <option value="hello.bin">hello world</option>
+        <option value="fib.bin">fibonacci(10)</option>
+      </select>
+    </label>
+    <label>Speed:
+      <input id="speed" type="number" value="1000" min="1" step="100"> insns/frame
+    </label>
+    <button id="run-btn" disabled>Run ▶</button>
+    <button id="stop-btn" disabled>Stop ⏹</button>
+  </div>
+
+  <pre id="output" class="terminal" aria-live="polite"></pre>
+
+  <form id="input-form" autocomplete="off">
+    <label for="stdin">stdin:</label>
+    <input id="stdin" type="text" autocomplete="off" placeholder="type text and press send">
+    <button type="submit">send</button>
+  </form>
+
+  <footer>
+    <p>Built with <a href="https://emscripten.org/">Emscripten</a>.
+       See the <a href="https://github.com/kulp/tenyr">tenyr project</a>.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
