@@ -89,7 +89,7 @@ module Core(
     inout halt
 );
 
-    localparam[3:0] s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6, s7=7;
+    localparam s0=0, s1=1, s2=2, s3=3, s4=4, s5=5, s6=6, s7=7;
 
     wire deref_rhs, branching, storing, loading, edone;
     wire[3:0] idxX, idxY, idxZ, op;
