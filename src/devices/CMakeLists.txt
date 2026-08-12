@@ -16,6 +16,7 @@ foreach(f ${FAILURE_TESTS})
         PROPERTIES
             LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/src
     )
+    install(TARGETS ${target} LIBRARY DESTINATION lib)
 endforeach(f)
 
 # Override default symbols for one target.
