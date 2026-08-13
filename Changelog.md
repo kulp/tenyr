@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fail fast on invalid `agda` text input and invalid hex in memh (#80)
 - Collect fixes found during presentation preparation (#107)
+- `BUILD_EXAMPLES` and `TESTING` now configure from a single clean build (#111)
 
 ## [0.9.9] - 2021-09-01
 ### Added
