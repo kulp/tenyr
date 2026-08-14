@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Make SDL, JIT, and ICARUS selectable at build time (#97, #108)
+
+### Changed
+- Adopt CMake as the build system (#97, #98)
+- Migrate the test suite to CTest (#80, #97)
+- Modernize CI, including with `-latest` runners and Homebrew-based installs (#103, #105)
+- Update GNU Lightning to version 2.2.3 (#108)
+
+### Removed
+- Drop MinGW build support and its shell wrappers (#105)
+
+### Fixed
+- Fail fast on invalid `agda` text input and invalid hex in memh (#80)
+- Collect fixes found during presentation preparation (#107)
 
 ## [0.9.9] - 2021-09-01
 ### Added
