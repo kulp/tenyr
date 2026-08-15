@@ -103,5 +103,14 @@ foreach(demo ${demos})
             COST 0.5
     )
 
+    if(VERILATOR)
+        check_std_outputs(
+            NAME    ${demo}_demo_verilog
+            COMMAND ${VSIM}
+            INPUT   ${demo_executable}
+            PROPERTIES TIMEOUT 60
+        )
+    endif()
+
 endforeach()
 endif()

@@ -28,6 +28,7 @@ jobs:
       id: set-up-homebrew
       uses: Homebrew/actions/setup-homebrew@master
     - run: brew install bison expect icarus-verilog
+    - run: brew install verilator
     - if: runner.os == 'macOS'
       run: echo "$(brew --prefix)/opt/bison/bin" >> $GITHUB_PATH
     - if: matrix.SDL != 0

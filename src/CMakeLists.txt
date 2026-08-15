@@ -13,6 +13,12 @@ target_include_directories(common PUBLIC .)
 target_include_directories(common INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(common PUBLIC os_support)
 
+add_library(disasm STATIC
+    ${CMAKE_SOURCE_DIR}/src/asm.c
+    ${CMAKE_SOURCE_DIR}/src/obj.c
+)
+target_link_libraries(disasm PUBLIC common)
+
 add_library(common-pic STATIC $<TARGET_PROPERTY:common,SOURCES>)
 set_target_properties(common-pic PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(common-pic PUBLIC common)
