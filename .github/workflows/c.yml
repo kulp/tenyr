@@ -27,7 +27,6 @@ jobs:
     - name: Set up Homebrew
       id: set-up-homebrew
       uses: Homebrew/actions/setup-homebrew@master
-    - run: brew upgrade || true # Avoid failures due to incomplete links.
     - run: brew install bison expect icarus-verilog
     - if: runner.os == 'macOS'
       run: echo "$(brew --prefix)/opt/bison/bin" >> $GITHUB_PATH
