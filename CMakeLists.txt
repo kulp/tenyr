@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-option(BUILD_EXAMPLES OFF "build examples from ex/")
+option(BUILD_EXAMPLES "build examples from ex/" OFF)
 
 # The TENYR language is self-hosted: tas, tld, and tsim are built by this
 # project into ${CMAKE_BINARY_DIR}/src. CMake enables the TENYR language
