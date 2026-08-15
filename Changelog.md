@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Make SDL, JIT, and ICARUS selectable at build time (#97, #108)
+- Verilator-based simulator (`vsim`) (#48)
 
 ### Changed
 - Adopt CMake as the build system (#97, #98)

@@ -21,6 +21,7 @@ development board.
   * [assembler (tas)](https://github.com/kulp/tenyr/wiki/Assembler)
   * [linker (tld)](https://github.com/kulp/tenyr/wiki/Linker)
   * [simulator (tsim)](https://github.com/kulp/tenyr/wiki/Simulator)
+  * [Verilator simulator (vsim)](https://github.com/kulp/tenyr/tree/develop/hw/verilator) &ndash; runs tenyr code through the Verilog implementation, with serial text output and `-v` verbosity support
 * a [standard library](https://github.com/kulp/tenyr/tree/develop/lib) of tenyr code
 * some [example software](https://github.com/kulp/tenyr/tree/develop/ex), including :
   * [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) ([tenyr source code](https://github.com/kulp/tenyr/blob/develop/ex/bm_conway.tas))

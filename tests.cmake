@@ -573,6 +573,63 @@ foreach(stem ${icarus_stems})
 
 endforeach()
 
+# ---------------------------------------------------------------------------
+# Verilated (vsim) simulator tests.
+#
+# vsim uses an in-process loader (load_tofile) with no VPI and no end-state
+# dump, so it can only mirror tsim/vvp where the program's observable effect
+# is serial output or a loader rejection -- not the register end-state dumps
+# that the run_*/op_* benchmarks rely on (-p tsim.dump_end_state=1 / +DUMPENDSTATE).
+#   * run_* benchmarks and op_* opcode programs have no serial output: vsim
+#     asserts they execute cleanly (exit 0, no spurious output) -- a smoke
+#     guard against the Verilog core crashing/hanging/diverging.
+#   * ex/ demos (bsearch, qsort, trailz) print serial output: vsim goldens
+#     match tsim's serial output byte-for-byte (see ex/CMakeLists.txt).
+#   * bad_magic: vsim's loader rejects a corrupt TOV header (WILL_FAIL).
+#   * Toolarge is excluded: vsim's loader hangs on it (no size cap).
+#   * reloc_* are excluded: they need end-state/relocation semantics vsim lacks.
+#   * SDL runs are excluded (vsim has no framebuffer).
+#
+# vsim itself is built by `cmake --build` (hw/verilator: add_custom_target(vsim
+# ALL)); these tests assume the binary is present, matching how tsim/vvp tests
+# assume their binaries are pre-built.
+if(VERILATOR)
+    set(VSIM ${CMAKE_BINARY_DIR}/hw/verilator/vsim)
+
+    # Mirror the run_* program tests (smoke: clean run, deterministic output).
+    set(VSIM_RUNS ${RUNS})
+    list(REMOVE_ITEM VSIM_RUNS ${SDL_RUNS})
+    foreach(run_path ${VSIM_RUNS})
+        get_filename_component(run "${run_path}" NAME_WLE)
+        check_std_outputs(
+            NAME       "run ${run} verilator"
+            COMMAND    ${VSIM}
+            INPUT      "${run}.texe"
+            PROPERTIES TIMEOUT 60
+        )
+    endforeach()
+
+    # Mirror the op_* opcode tests (smoke).
+    foreach(op_path ${OPS})
+        get_filename_component(op "${op_path}" NAME_WLE)
+        check_std_outputs(
+            NAME       "op ${op} verilator"
+            COMMAND    ${VSIM}
+            INPUT      "${op}.texe"
+            PROPERTIES TIMEOUT 60
+        )
+    endforeach()
+
+    # Mirror bad_magic: vsim rejects a corrupt image. toolarge is excluded
+    # (vsim's loader hangs on it).
+    check_std_outputs(
+        NAME       "verilator failure bad_magic"
+        COMMAND    ${VSIM}
+        INPUT      "bad_magic.texe"
+        PROPERTIES WILL_FAIL TRUE
+    )
+endif()
+
 add_test(
     NAME    "tld_stdin_accepted"
     COMMAND sh -c "${CMAKE_TENYR_LINKER} - < ${CMAKE_SOURCE_DIR}/test/misc/obj/empty.to"

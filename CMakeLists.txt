@@ -10,6 +10,7 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 option(BUILD_EXAMPLES "build examples from ex/" OFF)
+option(VERILATOR "build the Verilator-based simulator" OFF)
 
 # The TENYR language is self-hosted: tas, tld, and tsim are built by this
 # project into ${CMAKE_BINARY_DIR}/src. CMake enables the TENYR language
@@ -27,6 +28,7 @@ if(BUILD_EXAMPLES OR TESTING)
             COMMAND ${CMAKE_COMMAND} -S "${CMAKE_SOURCE_DIR}" -B "${_boot_dir}"
                     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                     -DJIT=${JIT} -DSDL=${SDL} -DICARUS=${ICARUS}
+                    -DVERILATOR=OFF
                     -DBUILD_EXAMPLES=OFF -DTESTING=OFF
             RESULT_VARIABLE _boot_cfg_res)
         if(NOT _boot_cfg_res EQUAL 0)
@@ -78,5 +80,6 @@ configure_file(src/tenyr_config.h.in tenyr_config.h)
 
 add_subdirectory(lib)
 add_subdirectory(hw/icarus)
+add_subdirectory(hw/verilator)
 add_subdirectory(hw/vpi)
 add_subdirectory(src)
